@@ -58,3 +58,9 @@ temp_uploads/
 !example*.pdf
 !tests/**/*.pdf
 *.log
+
+# Database files (SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
