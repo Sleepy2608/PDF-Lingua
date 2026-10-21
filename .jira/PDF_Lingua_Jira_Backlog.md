@@ -1,3 +1,46 @@
+# PDF-Lingua — Jira Product Backlog
+
+- **Tên phần mềm**: **PDF Lingua** – Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI hỗ trợ người dùng, tóm tắt văn bản.
+- **Thành viên thực hiện**:
+  1. Nguyễn Lê Huy Tâm – `056206011188`
+  2. Huỳnh Đình Chấn – `077206002307`
+- **Jira Project Key**: `PDFL`
+- **Jira Board & Summary**: [https://pdflingua.atlassian.net/jira/software/projects/PDFL/summary](https://pdflingua.atlassian.net/jira/software/projects/PDFL/summary)
+- **Bảng phân công nhiệm vụ**: [Assignment.md](./Assignment.md)
+
+> [!IMPORTANT]
+> **Lưu ý lộ trình triển khai**:
+> - Các tính năng cơ bản (Quản lý tài khoản, Tải PDF Free tối đa 20 MB/tệp, Trích xuất PDF & OCR, Dịch thuật đa ngôn ngữ, Xuất file kết quả) sẽ được ưu tiên thực hiện trước.
+> - Các tính năng thuộc **Gói Pro** (AI tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu, Quản lý lịch sử xử lý, Hạn mức tải lên 100 MB/tệp) sẽ được thực hiện sau khi các tính năng cơ bản đã hoàn thành và hoạt động ổn định.
+> - Trong quá trình thực hiện, nhóm có thể linh hoạt bổ sung thêm các tính năng mở rộng (xem Mục 3) nhằm nâng cao chất lượng sản phẩm và trải nghiệm người dùng.
+
+---
+
+# 1. Danh sách Epic tổng quan
+
+Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển của dự án PDF-Lingua:
+
+| STT | Mã Epic | Tên Epic | Mục tiêu & Phạm vi chính |
+| :---: | :--- | :--- | :--- |
+| 01 | **EPIC 01** | Phân tích yêu cầu và thiết kế hệ thống | Khảo sát người dùng, xây dựng Use Case, Activity Diagram, kiến trúc hệ thống và mô hình dữ liệu ERD. |
+| 02 | **EPIC 02** | Khởi tạo dự án và môi trường phát triển | Thiết lập cấu trúc repo GitHub, môi trường Frontend/Backend, database, git convention và CI/CD cơ bản. |
+| 03 | **EPIC 03** | Thiết kế giao diện Frontend | Xây dựng bộ UI/UX, responsive cho trang chủ, upload PDF, giao diện đọc, dịch thuật, AI chat và quản trị. |
+| 04 | **EPIC 04** | Backend API và kiến trúc xử lý | Thiết kế module hóa kiến trúc FastAPI, chuẩn hóa request/response, CORS, logging và middleware xử lý lỗi. |
+| 05 | **EPIC 05** | Tài khoản, xác thực và phân quyền | Quản lý đăng ký, đăng nhập, JWT authentication, phân quyền (Guest, User, Admin) và bảo mật dữ liệu. |
+| 06 | **EPIC 06** | Tải lên và quản lý tài liệu PDF | Xây dựng API upload, kiểm tra tính hợp lệ/an toàn của PDF, lưu trữ file, quản lý dung lượng và xóa file tạm. |
+| 07 | **EPIC 07** | Trích xuất văn bản và OCR | Bóc tách text số từ PDF (pypdf/pdfplumber) và tích hợp OCR (Tesseract/EasyOCR) xử lý PDF scan dạng ảnh. |
+| 08 | **EPIC 08** | Dịch thuật đa ngôn ngữ | Dịch thuật đoạn văn/tài liệu sang nhiều ngôn ngữ, phát hiện ngôn ngữ tự động và tối ưu thời gian phản hồi. |
+| 09 | **EPIC 09** | AI tóm tắt văn bản | Tích hợp mô hình AI để tóm tắt ý chính tài liệu PDF theo nhiều độ dài hoặc danh sách gạch đầu dòng. |
+| 10 | **EPIC 10** | Trợ lý AI hỏi đáp tài liệu | Trò chuyện, giải đáp thắc mắc trực tiếp dựa trên ngữ cảnh nội dung của tài liệu (RAG/Document QA). |
+| 11 | **EPIC 11** | Xuất và tải kết quả | Xuất văn bản trích xuất, kết quả dịch và tóm tắt ra các định dạng TXT, PDF, sao chép vào clipboard. |
+| 12 | **EPIC 12** | Lịch sử xử lý tài liệu | Lưu trữ và hiển thị danh sách các tài liệu đã tải lên, bản dịch đã thực hiện để người dùng xem lại. |
+| 13 | **EPIC 13** | Gói Free/Pro và hạn mức sử dụng | Phân chia hạn mức dung lượng (20MB vs 100MB), số trang, lượt gọi AI/OCR giữa gói Free và Pro. |
+| 14 | **EPIC 14** | Quản trị hệ thống Admin | Dashboard quản trị người dùng, theo dõi trạng thái tài khoản, nâng cấp/hạ cấp gói Pro và ghi log quản trị. |
+| 15 | **EPIC 15** | Kiểm thử, bảo mật và tối ưu | Viết Unit/Integration tests, kiểm thử an toàn file, SQL injection, XSS, rate limit và tối ưu hiệu năng. |
+| 16 | **EPIC 16** | Triển khai, tài liệu và bàn giao | Triển khai Frontend & Backend lên server/cloud, viết tài liệu README, API docs và chuẩn bị demo. |
+
+---
+
 # 2. Danh sách task chi tiết
 
 ## EPIC 01 — Phân tích yêu cầu và thiết kế hệ thống
