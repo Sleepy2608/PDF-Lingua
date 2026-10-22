@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+import time
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import check_db_connection
+from app.core.logger import logger
+from app.core.exceptions import setup_exception_handlers
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -17,6 +20,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# HTTP Request Logging & Latency Middleware
+@app.middleware("http")
+async def log_requests_middleware(request: Request, call_next):
+    start_time = time.time()
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"--> {request.method} {request.url.path} from {client_host}")
+
+    try:
+        response = await call_next(request)
+        process_time_ms = (time.time() - start_time) * 1000
+        logger.info(f"<-- {request.method} {request.url.path} {response.status_code} ({process_time_ms:.1f}ms)")
+        return response
+    except Exception as e:
+        process_time_ms = (time.time() - start_time) * 1000
+        logger.error(f"<-- {request.method} {request.url.path} failed after {process_time_ms:.1f}ms: {e}")
+        raise
+
+
+# Register Global Exception Handlers
+setup_exception_handlers(app)
 
 
 @app.get("/")
