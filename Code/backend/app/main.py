@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.core.database import check_db_connection
 
 app = FastAPI(
-    title="PDF-Lingua API",
-    description="Backend API for PDF text extraction, OCR, and translation",
+    title=settings.APP_NAME,
+    description="Backend API for PDF text extraction, OCR, translation, and AI assistant",
     version="1.0.0",
 )
 
@@ -20,7 +22,7 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {
-        "app": "PDF-Lingua API",
+        "app": settings.APP_NAME,
         "status": "online",
         "version": "1.0.0",
     }
@@ -28,4 +30,9 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    db_ok = check_db_connection()
+    return {
+        "status": "healthy" if db_ok else "degraded",
+        "database": "connected" if db_ok else "disconnected",
+        "version": "1.0.0",
+    }
