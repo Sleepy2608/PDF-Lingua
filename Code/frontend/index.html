@@ -3,59 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF-Lingua — Trích xuất & Dịch thuật PDF thông minh</title>
+    <title>PDF-Lingua | Trích xuất & Dịch thuật PDF thông minh</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
 </head>
 <body>
-    <header>
+    <header class="site-header">
         <div class="container header-container">
-            <div class="brand">
-                <h1>PDF-Lingua</h1>
-                <p>Trình dịch thuật & nhận dạng văn bản PDF thông minh</p>
-            </div>
-            <div class="server-status" id="serverStatus" title="Trạng thái kết nối Backend API">
-                <span class="status-dot checking"></span>
-                <span id="statusText">Đang kiểm tra kết nối Backend...</span>
+            <a href="#" class="brand-link" title="PDF-Lingua">
+                <div class="brand-icon-wrap">
+                    <svg class="brand-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </div>
+                <div class="brand-title">
+                    <span class="brand-badge-pdf">PDF</span>
+                    <span>Lingua</span>
+                    <span class="brand-badge-lingua">文/A</span>
+                </div>
+            </a>
+
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#translate" class="nav-link active">Dịch PDF</a></li>
+                    <li><a href="#ai-copilot" class="nav-link">Hỏi đáp AI</a></li>
+                    <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions">
+                <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <!-- System Status Banner (Sprint 1 Verification) -->
-        <section class="status-card" id="systemInfoCard">
-            <h2>Kiểm tra hệ thống (Sprint 1: Milestone Kết nối)</h2>
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="status-label">API Server:</span>
-                    <span class="status-value" id="apiStatusValue">Đang tải...</span>
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container hero-grid">
+                <!-- Left Column: Value Proposition -->
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        <span>AI Document Workspace Thế Hệ Mới</span>
+                    </div>
+
+                    <h1 class="hero-title">Trình Dịch Thuật & Trợ Lý PDF AI</h1>
+                    <p class="hero-desc">Dịch tài liệu song ngữ thông minh, nhận dạng OCR và tương tác hỏi đáp với Trợ lý AI chuyên sâu.</p>
+
+                    <ul class="hero-checklist">
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Dịch tài liệu song ngữ thông minh giữ nguyên định dạng</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Nhận dạng OCR chuyên sâu cho tài liệu scan và chữ mờ</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Trợ lý AI hỏi đáp tài liệu tức thì có trích dẫn số trang</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Tóm tắt nhanh văn bản và bảng thuật ngữ chỉ trong vài giây</span>
+                        </li>
+                    </ul>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">Cơ sở dữ liệu (SQLite):</span>
-                    <span class="status-value" id="dbStatusValue">Đang tải...</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">CORS & Giao tiếp FE-BE:</span>
-                    <span class="status-value" id="corsStatusValue">Đang tải...</span>
+
+                <!-- Right Column: Dropzone Box -->
+                <div class="hero-dropzone-wrap">
+                    <div class="dropzone-card" id="dropzoneCard">
+                        <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" hidden>
+
+                        <!-- Prompt View -->
+                        <div id="dropzonePrompt" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                            <div class="dropzone-art">
+                                <svg class="dropzone-art-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <!-- Soft pastel ambient aura behind the artwork -->
+                                        <radialGradient id="artGlow" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" stop-color="#818CF8" stop-opacity="0.18"/>
+                                            <stop offset="60%" stop-color="#C7D2FE" stop-opacity="0.08"/>
+                                            <stop offset="100%" stop-color="#4F46E5" stop-opacity="0"/>
+                                        </radialGradient>
+
+                                        <!-- Harmonious 3D Ring Gradient - Left Sky Blue (#93C5FD) to Right Periwinkle/Indigo (#6366F1) -->
+                                        <linearGradient id="ringBackGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" stop-color="#6366F1"/>
+                                            <stop offset="45%" stop-color="#4F46E5"/>
+                                            <stop offset="80%" stop-color="#60A5FA"/>
+                                            <stop offset="100%" stop-color="#93C5FD"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="ringFrontGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#93C5FD"/>
+                                            <stop offset="35%" stop-color="#60A5FA"/>
+                                            <stop offset="70%" stop-color="#818CF8"/>
+                                            <stop offset="100%" stop-color="#6366F1"/>
+                                        </linearGradient>
+
+                                        <!-- Front ring specular highlight for 3D gloss reflection -->
+                                        <linearGradient id="ringHighlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+                                            <stop offset="40%" stop-color="#E0F2FE" stop-opacity="0.6"/>
+                                            <stop offset="85%" stop-color="#C7D2FE" stop-opacity="0.3"/>
+                                            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="pdfBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#F87171"/>
+                                            <stop offset="40%" stop-color="#EF4444"/>
+                                            <stop offset="100%" stop-color="#DC2626"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="linguaBrandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#1D4ED8"/>
+                                            <stop offset="100%" stop-color="#2563EB"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="glyphGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4F46E5"/>
+                                            <stop offset="100%" stop-color="#7C3AED"/>
+                                        </linearGradient>
+
+                                        <filter id="docShadow" x="-15%" y="-15%" width="130%" height="130%">
+                                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+                                        </filter>
+
+                                        <filter id="frontRingShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#4F46E5" flood-opacity="0.2"/>
+                                        </filter>
+
+                                        <filter id="bubbleShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.12"/>
+                                        </filter>
+                                    </defs>
+
+                                    <!-- Ambient Glow -->
+                                    <ellipse cx="60" cy="62" rx="54" ry="40" fill="url(#artGlow)"/>
+
+                                    <!-- Ring Back Arc (behind document) -->
+                                    <g transform="rotate(-18 60 64)">
+                                        <path d="M 106 64 A 46 17 0 0 0 14 64" fill="none" stroke="url(#ringBackGrad)" stroke-width="6" stroke-linecap="round"/>
+                                    </g>
+
+                                    <!-- Document Sheet -->
+                                    <g filter="url(#docShadow)">
+                                        <path d="M 42 20 H 68 L 84 36 V 84 A 6 6 0 0 1 78 90 H 42 A 6 6 0 0 1 36 84 V 26 A 6 6 0 0 1 42 20 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+                                        <path d="M 68 20 V 33 A 3 3 0 0 0 71 36 H 84 Z" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.2"/>
+                                    </g>
+
+                                    <!-- Elements on Document -->
+                                    <rect x="28" y="24" width="34" height="19" rx="5.5" fill="url(#pdfBadgeGrad)" filter="drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3))"/>
+                                    <text x="45" y="37.5" fill="#FFFFFF" font-size="9.5" font-weight="900" font-family="'Plus Jakarta Sans', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.5">PDF</text>
+                                    <text x="40" y="54" fill="url(#linguaBrandGrad)" font-size="11.5" font-weight="800" font-family="'Plus Jakarta Sans', system-ui, sans-serif" text-anchor="start">Lingua</text>
+                                    <rect x="40" y="60" width="32" height="3" rx="1.5" fill="#BFDBFE"/>
+                                    <rect x="40" y="66" width="22" height="3" rx="1.5" fill="#BFDBFE"/>
+                                    <rect x="40" y="72" width="14" height="3" rx="1.5" fill="#DBEAFE"/>
+
+                                    <!-- Ring Front Arc with Soft Shadow & 3D Specular Highlight -->
+                                    <g transform="rotate(-18 60 64)" filter="url(#frontRingShadow)">
+                                        <!-- Main 3D Tube Body -->
+                                        <path d="M 14 64 A 46 17 0 0 0 106 64" fill="none" stroke="url(#ringFrontGrad)" stroke-width="6" stroke-linecap="round"/>
+                                        <!-- Specular Highlight along the crest of the tube -->
+                                        <path d="M 17 63 A 44 15.5 0 0 0 103 63" fill="none" stroke="url(#ringHighlightGrad)" stroke-width="1.5" stroke-linecap="round"/>
+                                    </g>
+
+                                    <!-- Speech Bubble positioned at bottom-right corner -->
+                                    <g filter="url(#bubbleShadow)" transform="translate(62, 67)">
+                                        <rect x="0" y="0" width="38" height="28" rx="9" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+                                        <path d="M 8 27 L 3 33 L 14 27 Z" fill="#FFFFFF"/>
+                                        <path d="M 8 28 L 3 33 L 14 28" stroke="#E2E8F0" stroke-width="1.5" stroke-linejoin="round"/>
+                                        <text x="19" y="18" fill="url(#glyphGrad)" font-size="12" font-weight="800" font-family="'Plus Jakarta Sans', system-ui, sans-serif" text-anchor="middle">文/A</text>
+                                    </g>
+                                </svg>
+                            </div>
+
+                            <p class="dropzone-title">Kéo thả tệp PDF vào đây</p>
+                            <div class="dropzone-divider">hoặc</div>
+
+                            <button type="button" class="btn btn-gradient btn-lg dropzone-btn" id="btnSelectPdf">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span>Chọn tệp PDF</span>
+                            </button>
+
+                            <p class="dropzone-limit">Tệp miễn phí tối đa 20 MB (Nâng cấp Pro để hỗ trợ 100 MB)</p>
+                        </div>
+
+                        <!-- Selected File Preview -->
+                        <div class="dropzone-selected" id="dropzoneSelected">
+                            <div class="file-preview-box">
+                                <span class="badge badge-pdf">PDF</span>
+                                <div class="file-preview-info">
+                                    <div class="file-preview-name" id="previewFileName">tai-lieu.pdf</div>
+                                    <div class="file-preview-size" id="previewFileSize">2.4 MB</div>
+                                </div>
+                                <button type="button" class="btn-file-remove" id="btnRemoveFile" title="Hủy chọn tệp">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-gradient btn-lg" id="btnProcessPdf">
+                                <span>Bắt đầu xử lý & Dịch thuật</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <button id="btnRetryCheck" class="btn-secondary" style="margin-top: 1rem;">Kiểm tra lại kết nối</button>
         </section>
 
-        <section class="upload-section">
-            <!-- Khu vực tải tệp PDF (Sẽ triển khai trong Sprint 3) -->
-        </section>
-
-        <section class="result-section">
-            <!-- Khu vực hiển thị kết quả trích xuất/dịch thuật -->
-        </section>
     </main>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 PDF-Lingua Project — Nhóm phát triển: Nguyễn Lê Huy Tâm & Huỳnh Đình Chấn</p>
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <p>&copy; 2026 PDF-Lingua Project</p>
+            <ul class="footer-links">
+                <li><a href="#">Điều khoản</a></li>
+                <li><a href="#">Bảo mật</a></li>
+                <li><a href="#">Liên hệ</a></li>
+            </ul>
         </div>
     </footer>
 
     <script src="js/app.js"></script>
+    <script src="js/upload.js"></script>
 </body>
 </html>
