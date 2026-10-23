@@ -6,17 +6,41 @@
     <title>PDF-Lingua — Trích xuất & Dịch thuật PDF thông minh</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
 </head>
 <body>
-    <header>
+    <header class="site-header">
         <div class="container header-container">
-            <div class="brand">
-                <h1>PDF-Lingua</h1>
-                <p>Trình dịch thuật & nhận dạng văn bản PDF thông minh</p>
-            </div>
-            <div class="server-status" id="serverStatus" title="Trạng thái kết nối Backend API">
-                <span class="status-dot checking"></span>
-                <span id="statusText">Đang kiểm tra kết nối Backend...</span>
+            <a href="#" class="brand-link" title="PDF-Lingua">
+                <div class="brand-icon-wrap">
+                    <svg class="brand-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </div>
+                <div class="brand-title">
+                    <span class="brand-badge-pdf">PDF</span>
+                    <span>PDF-Lingua</span>
+                    <span class="brand-badge-lingua">文/A</span>
+                </div>
+            </a>
+
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#translate" class="nav-link active">Dịch PDF</a></li>
+                    <li><a href="#ai-copilot" class="nav-link">Hỏi đáp AI</a></li>
+                    <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions">
+                <div class="server-status" id="serverStatus" title="Trạng thái kết nối Backend API">
+                    <span class="status-dot checking"></span>
+                    <span id="statusText">Đang kiểm tra kết nối...</span>
+                </div>
+                <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
             </div>
         </div>
     </header>
@@ -39,11 +63,11 @@
                     <span class="status-value" id="corsStatusValue">Đang tải...</span>
                 </div>
             </div>
-            <button id="btnRetryCheck" class="btn-secondary" style="margin-top: 1rem;">Kiểm tra lại kết nối</button>
+            <button id="btnRetryCheck" class="btn btn-secondary" style="margin-top: 1rem;">Kiểm tra lại kết nối</button>
         </section>
 
         <section class="upload-section">
-            <!-- Khu vực tải tệp PDF (Sẽ triển khai trong Sprint 3) -->
+            <!-- Khu vực tải tệp PDF (Sẽ triển khai trong Bước 3) -->
         </section>
 
         <section class="result-section">
@@ -51,9 +75,14 @@
         </section>
     </main>
 
-    <footer>
-        <div class="container">
+    <footer class="site-footer">
+        <div class="container footer-content">
             <p>&copy; 2026 PDF-Lingua Project — Nhóm phát triển: Nguyễn Lê Huy Tâm & Huỳnh Đình Chấn</p>
+            <ul class="footer-links">
+                <li><a href="#">Điều khoản</a></li>
+                <li><a href="#">Bảo mật</a></li>
+                <li><a href="#">Liên hệ</a></li>
+            </ul>
         </div>
     </footer>
 
