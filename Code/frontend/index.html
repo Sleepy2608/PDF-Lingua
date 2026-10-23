@@ -45,33 +45,158 @@
         </div>
     </header>
 
-    <main class="container">
-        <!-- System Status Banner (Sprint 1 Verification) -->
-        <section class="status-card" id="systemInfoCard">
-            <h2>Kiểm tra hệ thống (Sprint 1: Milestone Kết nối)</h2>
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="status-label">API Server:</span>
-                    <span class="status-value" id="apiStatusValue">Đang tải...</span>
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container hero-grid">
+                <!-- Left Column: Value Proposition -->
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        <span>AI Document Workspace Thế Hệ Mới</span>
+                    </div>
+
+                    <h1 class="hero-title">Trình Dịch Thuật & Trợ Lý PDF AI</h1>
+                    <p class="hero-desc">Dịch tài liệu song ngữ thông minh, nhận dạng OCR và tương tác hỏi đáp với Trợ lý AI chuyên sâu.</p>
+
+                    <ul class="hero-checklist">
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Dịch tài liệu song ngữ thông minh giữ nguyên định dạng</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Nhận dạng OCR chuyên sâu cho tài liệu scan và chữ mờ</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Trợ lý AI hỏi đáp tài liệu tức thì có trích dẫn số trang</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Tóm tắt nhanh văn bản và bảng thuật ngữ chỉ trong vài giây</span>
+                        </li>
+                    </ul>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">Cơ sở dữ liệu (SQLite):</span>
-                    <span class="status-value" id="dbStatusValue">Đang tải...</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">CORS & Giao tiếp FE-BE:</span>
-                    <span class="status-value" id="corsStatusValue">Đang tải...</span>
+
+                <!-- Right Column: Dropzone Box -->
+                <div class="hero-dropzone-wrap">
+                    <div class="dropzone-card" id="dropzoneCard">
+                        <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" hidden>
+
+                        <!-- Prompt View -->
+                        <div id="dropzonePrompt" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                            <div class="dropzone-art">
+                                <svg class="dropzone-art-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="60" cy="60" r="50" fill="url(#artGlow)" opacity="0.4"/>
+                                    <rect x="36" y="22" width="48" height="66" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+                                    <path d="M68 22H84V38H68V22Z" fill="#F1F5F9"/>
+                                    <path d="M68 22L84 38H68V22Z" fill="#CBD5E1"/>
+                                    <rect x="30" y="32" width="34" height="18" rx="4" fill="#EF4444"/>
+                                    <text x="47" y="44" fill="#FFFFFF" font-size="9" font-weight="800" font-family="system-ui, sans-serif" text-anchor="middle" alignment-baseline="middle">PDF</text>
+                                    <rect x="42" y="56" width="36" height="3" rx="1.5" fill="#CBD5E1"/>
+                                    <rect x="42" y="63" width="28" height="3" rx="1.5" fill="#E2E8F0"/>
+                                    <rect x="42" y="70" width="32" height="3" rx="1.5" fill="#E2E8F0"/>
+                                    <ellipse cx="60" cy="68" rx="46" ry="16" stroke="url(#ringGrad)" stroke-width="3.5" transform="rotate(-15 60 68)" stroke-linecap="round"/>
+                                    <g transform="translate(62, 60)">
+                                        <rect width="36" height="26" rx="8" fill="#06B6D4" stroke="#FFFFFF" stroke-width="2"/>
+                                        <path d="M8 26L4 31V26H8Z" fill="#06B6D4"/>
+                                        <text x="18" y="16" fill="#FFFFFF" font-size="11" font-weight="800" font-family="system-ui, sans-serif" text-anchor="middle" alignment-baseline="middle">文/A</text>
+                                    </g>
+                                    <defs>
+                                        <radialGradient id="artGlow" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.25"/>
+                                            <stop offset="100%" stop-color="#4F46E5" stop-opacity="0"/>
+                                        </radialGradient>
+                                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#38BDF8"/>
+                                            <stop offset="100%" stop-color="#6366F1"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+
+                            <p class="dropzone-title">Kéo thả tệp PDF vào đây</p>
+                            <div class="dropzone-divider">hoặc</div>
+
+                            <button type="button" class="btn btn-gradient btn-lg dropzone-btn" id="btnSelectPdf">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span>Chọn tệp PDF</span>
+                            </button>
+
+                            <p class="dropzone-limit">Tệp miễn phí tối đa 20 MB (Nâng cấp Pro để hỗ trợ 100 MB)</p>
+                        </div>
+
+                        <!-- Selected File Preview -->
+                        <div class="dropzone-selected" id="dropzoneSelected">
+                            <div class="file-preview-box">
+                                <span class="badge badge-pdf">PDF</span>
+                                <div class="file-preview-info">
+                                    <div class="file-preview-name" id="previewFileName">tai-lieu.pdf</div>
+                                    <div class="file-preview-size" id="previewFileSize">2.4 MB</div>
+                                </div>
+                                <button type="button" class="btn-file-remove" id="btnRemoveFile" title="Hủy chọn tệp">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-gradient btn-lg" id="btnProcessPdf">
+                                <span>Bắt đầu xử lý & Dịch thuật</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <button id="btnRetryCheck" class="btn btn-secondary" style="margin-top: 1rem;">Kiểm tra lại kết nối</button>
         </section>
 
-        <section class="upload-section">
-            <!-- Khu vực tải tệp PDF (Sẽ triển khai trong Bước 3) -->
-        </section>
-
-        <section class="result-section">
-            <!-- Khu vực hiển thị kết quả trích xuất/dịch thuật -->
+        <!-- System Status Banner (Sprint 1 Connection Test) -->
+        <section class="container" style="padding-bottom: 2rem;">
+            <div class="status-card" id="systemInfoCard">
+                <h2>Kiểm tra hệ thống (Sprint 1: Milestone Kết nối)</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">API Server:</span>
+                        <span class="status-value" id="apiStatusValue">Đang tải...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Cơ sở dữ liệu (SQLite):</span>
+                        <span class="status-value" id="dbStatusValue">Đang tải...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">CORS & Giao tiếp FE-BE:</span>
+                        <span class="status-value" id="corsStatusValue">Đang tải...</span>
+                    </div>
+                </div>
+                <button id="btnRetryCheck" class="btn btn-secondary" style="margin-top: 1rem;">Kiểm tra lại kết nối</button>
+            </div>
         </section>
     </main>
 
@@ -87,5 +212,6 @@
     </footer>
 
     <script src="js/app.js"></script>
+    <script src="js/upload.js"></script>
 </body>
 </html>
