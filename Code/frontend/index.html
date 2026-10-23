@@ -36,10 +36,6 @@
             </nav>
 
             <div class="header-actions">
-                <div class="server-status" id="serverStatus" title="Trạng thái kết nối Backend API">
-                    <span class="status-dot checking"></span>
-                    <span id="statusText">Đang kiểm tra kết nối...</span>
-                </div>
                 <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
             </div>
         </div>
@@ -248,37 +244,11 @@
             </div>
         </section>
 
-        <!-- System Status Diagnostic (Sprint 1 Verification) -->
-        <section class="container" style="padding-bottom: 3rem;">
-            <div class="status-card" id="systemInfoCard">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span class="badge badge-subtle">Sprint 1 Milestone</span>
-                        <h2 style="font-size: 1.125rem; margin: 0;">Kiểm tra kết nối hệ thống</h2>
-                    </div>
-                    <button id="btnRetryCheck" class="btn btn-secondary btn-sm">Kiểm tra lại kết nối</button>
-                </div>
-                <div class="status-grid">
-                    <div class="status-item">
-                        <span class="status-label">API Server:</span>
-                        <span class="status-value" id="apiStatusValue">Đang tải...</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Cơ sở dữ liệu (SQLite):</span>
-                        <span class="status-value" id="dbStatusValue">Đang tải...</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">CORS & Giao tiếp FE-BE:</span>
-                        <span class="status-value" id="corsStatusValue">Đang tải...</span>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <footer class="site-footer">
         <div class="container footer-content">
-            <p>&copy; 2026 PDF-Lingua Project — Nhóm phát triển: Nguyễn Lê Huy Tâm & Huỳnh Đình Chấn</p>
+            <p>&copy; 2026 PDF-Lingua Project</p>
             <ul class="footer-links">
                 <li><a href="#">Điều khoản</a></li>
                 <li><a href="#">Bảo mật</a></li>
