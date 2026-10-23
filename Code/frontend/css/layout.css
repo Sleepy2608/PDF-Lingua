@@ -56,14 +56,17 @@
 }
 
 .brand-badge-pdf {
-  font-size: 0.625rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  padding: 0.15rem 0.35rem;
+  padding: 0.2rem 0.5rem;
   background-color: var(--color-pdf-coral);
   color: var(--text-inverse);
-  border-radius: 4px;
-  line-height: 1;
-  letter-spacing: 0.05em;
+  border-radius: 6px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .brand-badge-lingua {
