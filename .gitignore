@@ -30,6 +30,7 @@ ENV/
 env/
 env.bak/
 venv.bak/
+uv.lock
 
 # Environment variables & secrets
 .env
