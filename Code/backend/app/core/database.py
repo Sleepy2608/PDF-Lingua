@@ -32,7 +32,7 @@ def check_db_connection() -> bool:
 
 def init_db() -> None:
     """
-    Create all database tables defined in ORM models (PDFL-72).
+    Create all database tables defined in ORM models.
 
     This function is called once during application startup (lifespan hook
     in main.py). It is idempotent — existing tables are never dropped or

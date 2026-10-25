@@ -1,6 +1,6 @@
 """
-User Pydantic Schemas — PDFL-72 / PDFL-73 / PDFL-79
-------------------------------------------------------
+User Pydantic Schemas
+---------------------
 Defines the request/response shapes for the Auth subsystem.
 
 Schema hierarchy
@@ -42,7 +42,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """
-    Payload for POST /api/auth/register (PDFL-73).
+    Payload for POST /api/auth/register.
     Password strength is validated here before it reaches the service layer.
     """
 
@@ -58,7 +58,7 @@ class UserCreate(UserBase):
     @classmethod
     def password_strength(cls, value: str) -> str:
         """
-        PDFL-74: Reject weak passwords.
+        Reject weak passwords.
         Rules: ≥ 8 characters, at least one letter, at least one digit.
         """
         if not any(c.isalpha() for c in value):
@@ -78,7 +78,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """
-    Payload for PATCH /api/users/me (PDFL-79).
+    Payload for PATCH /api/users/me.
     All fields are optional — only provided fields will be updated.
     """
 
@@ -89,7 +89,7 @@ class UserUpdate(BaseModel):
     )
     current_password: Optional[str] = Field(
         default=None,
-        description="Current password — required when changing password (PDFL-80).",
+        description="Current password — required when changing password.",
     )
     new_password: Optional[str] = Field(
         default=None,

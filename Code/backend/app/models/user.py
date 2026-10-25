@@ -1,18 +1,18 @@
 """
-User ORM Model — PDFL-72
--------------------------
+User ORM Model
+--------------
 Defines the `users` table schema for the PDF-Lingua database.
 
 Columns
 -------
 id              : Integer primary key (auto-increment).
 email           : Unique, case-folded email — used as login identifier.
-hashed_password : bcrypt/argon2 hash — never store plaintext (PDFL-75).
+hashed_password : bcrypt/argon2 hash — never store plaintext.
 full_name       : Optional display name shown in the UI.
-role            : Enum(free | pro | admin) — drives feature access gates (PDFL-81, PDFL-82).
-is_active       : Soft-disable without deleting the account (PDFL-84).
+role            : Enum(free | pro | admin) — drives feature access gates.
+is_active       : Soft-disable without deleting the account.
 created_at      : Timestamp set automatically on INSERT.
-updated_at      : Timestamp updated automatically on every UPDATE (PDFL-79).
+updated_at      : Timestamp updated automatically on every UPDATE.
 """
 
 import enum
@@ -51,7 +51,7 @@ class User(Base):
     hashed_password: str = Column(
         String(255),
         nullable=False,
-        comment="bcrypt hash of the user's password (PDFL-75). Never plaintext.",
+        comment="bcrypt hash of the user's password. Never plaintext.",
     )
     full_name: str | None = Column(
         String(150),
@@ -66,7 +66,7 @@ class User(Base):
         nullable=False,
         default=UserRole.FREE,
         server_default=UserRole.FREE.value,
-        comment="Privilege level: free | pro | admin (PDFL-81).",
+        comment="Privilege level: free | pro | admin.",
     )
 
     # ── Account Status ────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ class User(Base):
         nullable=False,
         default=True,
         server_default="1",
-        comment="False = account is suspended / locked (PDFL-84).",
+        comment="False = account is suspended / locked.",
     )
 
     # ── Audit Timestamps ──────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ class User(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
-        comment="UTC timestamp of the last profile update (PDFL-79).",
+        comment="UTC timestamp of the last profile update.",
     )
 
     # ── Validators ────────────────────────────────────────────────────────────

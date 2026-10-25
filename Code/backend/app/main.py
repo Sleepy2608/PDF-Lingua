@@ -10,7 +10,7 @@ from app.core.exceptions import setup_exception_handlers
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Application lifespan: run startup tasks before serving requests."""
-    logger.info("[Startup] Initialising database tables (PDFL-72)...")
+    logger.info("[Startup] Initialising database tables...")
     init_db()
     logger.info("[Startup] PDF-Lingua backend is ready.")
     yield
