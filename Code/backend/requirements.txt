@@ -8,6 +8,12 @@ python-dotenv>=1.0.1
 # Database & ORM
 sqlalchemy>=2.0.0
 
+# Authentication & Security
+bcrypt>=4.0.0
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+email-validator>=2.1.0
+
 # PDF Processing
 pypdf>=4.1.0
 pdfplumber>=0.10.4

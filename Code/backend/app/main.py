@@ -1,15 +1,27 @@
 import time
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.core.database import check_db_connection
+from app.core.database import check_db_connection, init_db
 from app.core.logger import logger
 from app.core.exceptions import setup_exception_handlers
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Application lifespan: run startup tasks before serving requests."""
+    logger.info("[Startup] Initialising database tables...")
+    init_db()
+    logger.info("[Startup] PDF-Lingua backend is ready.")
+    yield
+    logger.info("[Shutdown] PDF-Lingua backend shutting down.")
+
 
 app = FastAPI(
     title=settings.APP_NAME,
     description="Backend API for PDF text extraction, OCR, translation, and AI assistant",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for frontend integration
