@@ -35,11 +35,16 @@ class NotFoundException(AppException):
 
 class BadRequestException(AppException):
     """Exception raised for invalid client requests."""
-    def __init__(self, message: str = "Bad request", details: Optional[Any] = None):
+    def __init__(
+        self,
+        message: str = "Bad request",
+        error_code: str = "BAD_REQUEST",
+        details: Optional[Any] = None,
+    ):
         super().__init__(
             message=message,
             status_code=status.HTTP_400_BAD_REQUEST,
-            error_code="BAD_REQUEST",
+            error_code=error_code,
             details=details,
         )
 
