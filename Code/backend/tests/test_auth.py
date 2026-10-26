@@ -196,3 +196,115 @@ def test_register_cannot_tamper_role(client, db_session):
     # Verify in DB
     db_user = db_session.query(User).filter(User.email == "hacker@example.com").first()
     assert db_user.role == UserRole.FREE
+
+
+def test_register_cannot_tamper_internal_fields(client, db_session):
+    """TC-REG-09: Client cannot tamper with is_active, role, or id."""
+    payload = {
+        "email": "tamper@example.com",
+        "password": "Password12345",
+        "role": "admin",
+        "is_active": False,
+        "id": 999999,
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 201
+    user_data = response.json()["data"]
+    assert user_data["role"] == "free"
+    assert user_data["is_active"] is True
+    assert user_data["id"] != 999999
+
+    db_user = db_session.query(User).filter(User.email == "tamper@example.com").first()
+    assert db_user.role == UserRole.FREE
+    assert db_user.is_active is True
+    assert db_user.id != 999999
+
+
+def test_register_whitespace_full_name_sanitized(client):
+    """TC-REG-10: Whitespace-only full_name is converted to None."""
+    payload = {
+        "email": "spacesname@example.com",
+        "password": "Password12345",
+        "full_name": "     ",
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 201
+    user_data = response.json()["data"]
+    assert user_data["full_name"] is None
+
+
+def test_register_unicode_vietnamese_password(client, db_session):
+    """TC-REG-11: Password with Vietnamese unicode characters registers and verifies securely."""
+    raw_pwd = "MậtKhẩuBảoMật@123"
+    payload = {
+        "email": "unicodeuser@example.com",
+        "password": raw_pwd,
+        "full_name": "Người Dùng Tiếng Việt",
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 201
+    db_user = db_session.query(User).filter(User.email == "unicodeuser@example.com").first()
+    assert db_user is not None
+    assert verify_password(raw_pwd, db_user.hashed_password) is True
+    assert verify_password("MatKhauBaoMat@123", db_user.hashed_password) is False
+
+
+def test_register_long_password_consistent_bcrypt(client, db_session):
+    """TC-REG-12: Password > 72 bytes registers safely and verifies consistently."""
+    long_pwd = "SecurePass123" + "A" * 70  # 83 characters
+    payload = {
+        "email": "longpwd@example.com",
+        "password": long_pwd,
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 201
+    db_user = db_session.query(User).filter(User.email == "longpwd@example.com").first()
+    assert db_user is not None
+    assert verify_password(long_pwd, db_user.hashed_password) is True
+    assert verify_password(long_pwd[:72], db_user.hashed_password) is True
+    assert verify_password("WrongPassword123", db_user.hashed_password) is False
+
+
+def test_register_response_has_no_sensitive_fields(client):
+    """TC-REG-13: Registration response data keys contain only public safe fields."""
+    payload = {
+        "email": "safecheck@example.com",
+        "password": "Password12345",
+        "full_name": "Check Public Keys",
+    }
+    response = client.post("/api/auth/register", json=payload)
+    assert response.status_code == 201
+    user_data = response.json()["data"]
+
+    allowed_keys = {"id", "email", "full_name", "role", "is_active", "created_at", "updated_at"}
+    assert set(user_data.keys()) == allowed_keys
+    assert "password" not in user_data
+    assert "hashed_password" not in user_data
+
+
+def test_register_concurrent_race_condition_handled(db_session):
+    """TC-REG-14: Database IntegrityError during concurrent registration raises 400 and rolls back."""
+    from unittest.mock import patch
+    from sqlalchemy.exc import IntegrityError
+    from app.services.auth_service import AuthService
+    from app.schemas.user import UserCreate
+    from app.core.exceptions import BadRequestException
+
+    user_in = UserCreate(
+        email="concurrent@example.com",
+        password="Password12345",
+        full_name="Concurrent User",
+    )
+
+    # Simulate an IntegrityError occurring during db.commit (race condition)
+    with patch.object(db_session, "commit", side_effect=IntegrityError("duplicate", params=None, orig=None)):
+        with pytest.raises(BadRequestException) as exc_info:
+            AuthService.register_user(db=db_session, user_in=user_in)
+
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.error_code == "EMAIL_ALREADY_EXISTS"
+
