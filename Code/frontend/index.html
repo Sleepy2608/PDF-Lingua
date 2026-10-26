@@ -37,6 +37,7 @@
 
             <div class="header-actions">
                 <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
+                <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
             </div>
         </div>
     </header>
@@ -258,7 +259,121 @@
         </div>
     </footer>
 
+    <!-- Registration Modal (PDFL-73.4) -->
+    <div class="modal-backdrop" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle" hidden>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="registerModalTitle">Đăng ký tài khoản</h2>
+                    <p class="modal-subtitle">Trải nghiệm không gian làm việc dịch thuật và trợ lý AI thông minh</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseRegisterModal" aria-label="Đóng cửa sổ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="registerForm" class="modal-form" novalidate>
+                <!-- Alert notification -->
+                <div class="form-alert" id="registerAlert" role="alert" style="display: none;"></div>
+
+                <!-- Full Name (Optional) -->
+                <div class="form-group">
+                    <label for="regFullName" class="form-label">
+                        Họ và tên <span class="label-hint">(Không bắt buộc)</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="text" id="regFullName" name="full_name" class="form-input" placeholder="Nguyễn Văn A" autocomplete="name" maxlength="150">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="regEmail" class="form-label">
+                        Địa chỉ Email <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <input type="email" id="regEmail" name="email" class="form-input" placeholder="ban@example.com" required autocomplete="email">
+                    </div>
+                    <p class="field-error" id="regEmailError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="regPassword" class="form-label">
+                        Mật khẩu <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="regPassword" name="password" class="form-input" placeholder="Tối thiểu 8 ký tự (chữ & số)" required autocomplete="new-password">
+                        <button type="button" class="btn-toggle-eye" id="toggleRegPassword" aria-label="Hiện mật khẩu">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="regPasswordError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="regConfirmPassword" class="form-label">
+                        Xác nhận mật khẩu <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="regConfirmPassword" name="confirm_password" class="form-input" placeholder="Nhập lại mật khẩu" required autocomplete="new-password">
+                        <button type="button" class="btn-toggle-eye" id="toggleRegConfirmPassword" aria-label="Hiện mật khẩu xác nhận">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="regConfirmPasswordError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-gradient btn-block" id="btnSubmitRegister">
+                    <span class="btn-spinner" id="regSpinner" aria-hidden="true" style="display: none;"></span>
+                    <span id="regBtnText">Tạo tài khoản</span>
+                </button>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer-text">
+                    Đã có tài khoản? <a href="#" id="linkSwitchLogin">Đăng nhập ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>
