@@ -55,7 +55,7 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
+    with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
     app.dependency_overrides.clear()
 
@@ -301,10 +301,77 @@ def test_register_concurrent_race_condition_handled(db_session):
     )
 
     # Simulate an IntegrityError occurring during db.commit (race condition)
-    with patch.object(db_session, "commit", side_effect=IntegrityError("duplicate", params=None, orig=None)):
-        with pytest.raises(BadRequestException) as exc_info:
-            AuthService.register_user(db=db_session, user_in=user_in)
+    with patch.object(db_session, "rollback", wraps=db_session.rollback) as mock_rollback:
+        with patch.object(db_session, "commit", side_effect=IntegrityError("duplicate", params=None, orig=None)):
+            with pytest.raises(BadRequestException) as exc_info:
+                AuthService.register_user(db=db_session, user_in=user_in)
 
-        assert exc_info.value.status_code == 400
-        assert exc_info.value.error_code == "EMAIL_ALREADY_EXISTS"
+            assert exc_info.value.status_code == 400
+            assert exc_info.value.error_code == "EMAIL_ALREADY_EXISTS"
+        mock_rollback.assert_called_once()
+
+
+def test_register_session_usable_after_rollback(client, db_session):
+    """TC-REG-15: Database session remains usable for subsequent requests after rollback."""
+    from unittest.mock import patch
+    from sqlalchemy.exc import IntegrityError
+
+    payload1 = {
+        "email": "first_fail@example.com",
+        "password": "Password12345",
+        "full_name": "Will Fail First",
+    }
+    payload2 = {
+        "email": "second_success@example.com",
+        "password": "Password12345",
+        "full_name": "Will Succeed Next",
+    }
+
+    # Simulate an error on the first call and assert rollback is called
+    with patch.object(db_session, "rollback", wraps=db_session.rollback) as mock_rollback:
+        with patch.object(db_session, "commit", side_effect=IntegrityError("forced error", params=None, orig=None)):
+            res1 = client.post("/api/auth/register", json=payload1)
+            assert res1.status_code == 400
+            assert res1.json()["error_code"] == "EMAIL_ALREADY_EXISTS"
+        mock_rollback.assert_called_once()
+
+    # Verify first user was not persisted
+    assert db_session.query(User).filter(User.email == "first_fail@example.com").first() is None
+
+    # Subsequent request using the same session must succeed without transaction-abort issues
+    res2 = client.post("/api/auth/register", json=payload2)
+    assert res2.status_code == 201
+    assert res2.json()["success"] is True
+    assert res2.json()["data"]["email"] == "second_success@example.com"
+    assert db_session.query(User).filter(User.email == "second_success@example.com").first() is not None
+
+
+def test_register_internal_db_error_masked_no_leak(client, db_session):
+    """TC-REG-16: Unexpected database errors return generic 500 without leaking stack traces or internal schema details."""
+    from unittest.mock import patch
+    from sqlalchemy.exc import OperationalError
+
+    payload = {
+        "email": "db_crash@example.com",
+        "password": "Password12345",
+        "full_name": "Crash Test",
+    }
+
+    # Simulate an unexpected operational error (e.g. disk I/O, database corrupted) and assert rollback is called
+    with patch.object(db_session, "rollback", wraps=db_session.rollback) as mock_rollback:
+        with patch.object(db_session, "commit", side_effect=OperationalError("disk I/O error on users.ibd", params=None, orig=None)):
+            response = client.post("/api/auth/register", json=payload)
+        mock_rollback.assert_called_once()
+
+    assert response.status_code == 500
+    data = response.json()
+    assert data["success"] is False
+    assert data["error_code"] == "INTERNAL_SERVER_ERROR"
+    # Ensure raw database strings or stack traces are NOT leaked in response
+    assert "disk I/O" not in str(data)
+    assert "users.ibd" not in str(data)
+    assert "OperationalError" not in str(data)
+    assert "Traceback" not in str(data)
+    assert data["details"] is None
+
 
