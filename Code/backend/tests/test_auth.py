@@ -478,3 +478,190 @@ def test_register_email_with_spaces_inside(client, db_session):
 
     # Verify database is untouched
     assert db_session.query(User).filter(User.email.ilike("%space%")).first() is None
+
+
+# ── Login Test Cases ──────────────────────────────────────────────────────────
+
+def test_login_success(client, db_session):
+    """TC-LOG-01: Valid credentials return HTTP 200 and safe UserResponse without passwords."""
+    # Setup registered user
+    reg_payload = {
+        "email": "loginuser@example.com",
+        "password": "ValidPassword123",
+        "full_name": "Login User",
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    login_payload = {
+        "email": "loginuser@example.com",
+        "password": "ValidPassword123",
+    }
+    response = client.post("/api/auth/login", json=login_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["message"] == "Đăng nhập thành công."
+
+    user_data = data["data"]
+    assert user_data["email"] == "loginuser@example.com"
+    assert user_data["full_name"] == "Login User"
+    assert user_data["role"] == "free"
+    assert user_data["is_active"] is True
+    assert "id" in user_data
+
+    # Security: No sensitive password fields in response
+    assert "password" not in user_data
+    assert "hashed_password" not in user_data
+
+
+def test_login_email_normalization_and_whitespace(client):
+    """TC-LOG-02: Email with surrounding spaces or uppercase letters logs in successfully."""
+    reg_payload = {
+        "email": "normaluser@example.com",
+        "password": "ValidPassword123",
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    login_payload = {
+        "email": "   NORMALUSER@EXAMPLE.COM   ",
+        "password": "ValidPassword123",
+    }
+    response = client.post("/api/auth/login", json=login_payload)
+
+    assert response.status_code == 200
+    assert response.json()["data"]["email"] == "normaluser@example.com"
+
+
+def test_login_wrong_password(client):
+    """TC-LOG-03: Wrong password returns 401 Unauthorized with INVALID_CREDENTIALS."""
+    reg_payload = {
+        "email": "wrongpwd@example.com",
+        "password": "ValidPassword123",
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    login_payload = {
+        "email": "wrongpwd@example.com",
+        "password": "WrongPassword999",
+    }
+    response = client.post("/api/auth/login", json=login_payload)
+
+    assert response.status_code == 401
+    err = response.json()
+    assert err["success"] is False
+    assert err["error_code"] == "INVALID_CREDENTIALS"
+    assert err["message"] == "Email hoặc mật khẩu không chính xác."
+
+
+def test_login_nonexistent_email(client):
+    """TC-LOG-04: Non-existent email returns identical 401 response as wrong password (anti-enumeration)."""
+    login_payload = {
+        "email": "nonexistent@example.com",
+        "password": "AnyPassword123",
+    }
+    response = client.post("/api/auth/login", json=login_payload)
+
+    assert response.status_code == 401
+    err = response.json()
+    assert err["success"] is False
+    assert err["error_code"] == "INVALID_CREDENTIALS"
+    assert err["message"] == "Email hoặc mật khẩu không chính xác."
+
+
+def test_login_inactive_account(client, db_session):
+    """TC-LOG-05: Account with is_active=False returns 403 Forbidden with ACCOUNT_INACTIVE."""
+    reg_payload = {
+        "email": "inactive@example.com",
+        "password": "ValidPassword123",
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    # Deactivate user directly in DB
+    user = db_session.query(User).filter(User.email == "inactive@example.com").first()
+    user.is_active = False
+    db_session.commit()
+
+    login_payload = {
+        "email": "inactive@example.com",
+        "password": "ValidPassword123",
+    }
+    response = client.post("/api/auth/login", json=login_payload)
+
+    assert response.status_code == 403
+    err = response.json()
+    assert err["success"] is False
+    assert err["error_code"] == "ACCOUNT_INACTIVE"
+    assert "vô hiệu hóa" in err["message"]
+
+
+def test_login_validation_errors(client):
+    """TC-LOG-06: Missing fields or invalid email format returns 422 Unprocessable Entity."""
+    # Missing email
+    r1 = client.post("/api/auth/login", json={"password": "Password123"})
+    assert r1.status_code == 422
+    assert r1.json()["error_code"] == "VALIDATION_ERROR"
+
+    # Missing password
+    r2 = client.post("/api/auth/login", json={"email": "valid@example.com"})
+    assert r2.status_code == 422
+    assert r2.json()["error_code"] == "VALIDATION_ERROR"
+
+    # Invalid email format
+    r3 = client.post("/api/auth/login", json={"email": "not-an-email", "password": "Password123"})
+    assert r3.status_code == 422
+    assert r3.json()["error_code"] == "VALIDATION_ERROR"
+
+
+def test_login_failed_does_not_mutate_db(client, db_session):
+    """TC-LOG-07: Failed login attempts do not modify user data in the database."""
+    reg_payload = {
+        "email": "unmodified@example.com",
+        "password": "ValidPassword123",
+        "full_name": "Original Name",
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    u_before = db_session.query(User).filter(User.email == "unmodified@example.com").first()
+    updated_at_before = u_before.updated_at
+
+    # Perform failed login
+    client.post("/api/auth/login", json={"email": "unmodified@example.com", "password": "WrongPassword"})
+
+    db_session.expire_all()
+    u_after = db_session.query(User).filter(User.email == "unmodified@example.com").first()
+
+    assert u_after.full_name == "Original Name"
+    assert u_after.role == UserRole.FREE
+    assert u_after.is_active is True
+    assert u_after.updated_at == updated_at_before
+
+
+def test_login_payload_tampering_ignored(client, db_session):
+    """TC-LOG-08: Extra fields like role, id, or is_active in login payload are ignored."""
+    reg_payload = {
+        "email": "tamperlogin@example.com",
+        "password": "ValidPassword123",
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    tampered_login = {
+        "email": "tamperlogin@example.com",
+        "password": "ValidPassword123",
+        "role": "admin",
+        "id": 99999,
+        "is_active": False,
+    }
+    response = client.post("/api/auth/login", json=tampered_login)
+
+    assert response.status_code == 200
+    user_data = response.json()["data"]
+    assert user_data["role"] == "free"
+    assert user_data["is_active"] is True
+    assert user_data["id"] != 99999
+
+    # Confirm DB state unchanged
+    db_user = db_session.query(User).filter(User.email == "tamperlogin@example.com").first()
+    assert db_user.role == UserRole.FREE
+    assert db_user.is_active is True
+
