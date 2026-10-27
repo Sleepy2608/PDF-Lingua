@@ -147,7 +147,7 @@
     const fullNameInput = document.getElementById('regFullName');
 
     // Live validation cleanup on user input
-    [emailInput, passwordInput, confirmPasswordInput].forEach((input) => {
+    [fullNameInput, emailInput, passwordInput, confirmPasswordInput].forEach((input) => {
       if (!input) return;
       input.addEventListener('input', () => {
         clearFieldError(input);
@@ -164,6 +164,7 @@
 
       // Client-side Validation
       const isValid = validateRegistrationForm({
+        fullNameInput,
         emailInput,
         passwordInput,
         confirmPasswordInput,
@@ -189,12 +190,22 @@
   /**
    * Validate all form fields according to business rules
    */
-  function validateRegistrationForm({ emailInput, passwordInput, confirmPasswordInput }) {
+  function validateRegistrationForm({ fullNameInput, emailInput, passwordInput, confirmPasswordInput }) {
     let isValid = true;
     let firstInvalidInput = null;
 
+    // 0. Full name validation (Optional, max 150 chars)
+    if (fullNameInput && fullNameInput.value) {
+      const fullNameVal = fullNameInput.value.trim();
+      if (fullNameVal.length > 150) {
+        showFieldError(fullNameInput, 'Họ và tên không được vượt quá 150 ký tự.');
+        isValid = false;
+        firstInvalidInput = firstInvalidInput || fullNameInput;
+      }
+    }
+
     // 1. Email validation
-    const emailVal = emailInput.value.trim();
+    const emailVal = emailInput ? emailInput.value.trim() : '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailVal) {
       showFieldError(emailInput, 'Vui lòng nhập địa chỉ email.');
@@ -207,13 +218,17 @@
     }
 
     // 2. Password validation
-    const pwdVal = passwordInput.value;
+    const pwdVal = passwordInput ? passwordInput.value : '';
     if (!pwdVal) {
       showFieldError(passwordInput, 'Vui lòng nhập mật khẩu.');
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (pwdVal.length < 8) {
       showFieldError(passwordInput, 'Mật khẩu phải có tối thiểu 8 ký tự.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || passwordInput;
+    } else if (pwdVal.length > 128) {
+      showFieldError(passwordInput, 'Mật khẩu không được vượt quá 128 ký tự.');
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (!/[a-zA-Z]/.test(pwdVal)) {
@@ -227,9 +242,13 @@
     }
 
     // 3. Confirm Password validation
-    const confirmVal = confirmPasswordInput.value;
+    const confirmVal = confirmPasswordInput ? confirmPasswordInput.value : '';
     if (!confirmVal) {
       showFieldError(confirmPasswordInput, 'Vui lòng nhập lại mật khẩu xác nhận.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || confirmPasswordInput;
+    } else if (confirmVal.length > 128) {
+      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không được vượt quá 128 ký tự.');
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     } else if (pwdVal && confirmVal !== pwdVal) {
@@ -246,6 +265,80 @@
   }
 
   /**
+   * Format or translate raw validation messages from backend into user-friendly text.
+   */
+  function formatValidationErrorMessage(fieldKey, rawMessage) {
+    const raw = String(rawMessage || '').trim();
+    const lower = raw.toLowerCase();
+
+    if (fieldKey === 'email') {
+      if (lower.includes('valid email') || lower.includes('email address')) {
+        return 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).';
+      }
+      if (lower.includes('field required') || lower.includes('missing')) {
+        return 'Vui lòng nhập địa chỉ email.';
+      }
+    }
+
+    if (fieldKey === 'password') {
+      if (lower.includes('at least 8') || lower.includes('min_length')) {
+        return 'Mật khẩu phải có tối thiểu 8 ký tự.';
+      }
+      if (lower.includes('at most 128') || lower.includes('max_length') || lower.includes('128 characters')) {
+        return 'Mật khẩu không được vượt quá 128 ký tự.';
+      }
+      if (lower.includes('at least one letter') || lower.includes('one letter')) {
+        return 'Mật khẩu phải chứa ít nhất một chữ cái.';
+      }
+      if (lower.includes('at least one digit') || lower.includes('one digit') || lower.includes('one number')) {
+        return 'Mật khẩu phải chứa ít nhất một chữ số.';
+      }
+      if (lower.includes('field required') || lower.includes('missing')) {
+        return 'Vui lòng nhập mật khẩu.';
+      }
+    }
+
+    if (fieldKey === 'full_name') {
+      if (lower.includes('at most 150') || lower.includes('max_length') || lower.includes('150 characters')) {
+        return 'Họ và tên không được vượt quá 150 ký tự.';
+      }
+    }
+
+    // Strip "Value error, " prefix if present from Pydantic validator exceptions
+    const cleaned = raw.replace(/^value error,\s*/i, '');
+    return cleaned || 'Dữ liệu không hợp lệ.';
+  }
+
+  /**
+   * Resolve which input element and field key an error relates to.
+   */
+  function resolveFieldTarget(err, inputs) {
+    if (!err) return null;
+    let fieldIdentifier = '';
+
+    if (typeof err.field === 'string') {
+      fieldIdentifier = err.field;
+    } else if (Array.isArray(err.loc)) {
+      fieldIdentifier = err.loc.map(String).join(' -> ');
+    } else if (typeof err.loc === 'string') {
+      fieldIdentifier = err.loc;
+    }
+
+    const normalized = fieldIdentifier.toLowerCase();
+    if (normalized.includes('email')) {
+      return { input: inputs.emailInput, key: 'email' };
+    }
+    if (normalized.includes('password') && !normalized.includes('confirm')) {
+      return { input: inputs.passwordInput, key: 'password' };
+    }
+    if (normalized.includes('full_name') || normalized.includes('fullname')) {
+      return { input: inputs.fullNameInput, key: 'full_name' };
+    }
+
+    return null;
+  }
+
+  /**
    * Send registration request to backend API
    */
   async function submitRegistration(payload) {
@@ -253,7 +346,10 @@
     const spinner = document.getElementById('regSpinner');
     const btnText = document.getElementById('regBtnText');
     const form = document.getElementById('registerForm');
+    const fullNameInput = document.getElementById('regFullName');
     const emailInput = document.getElementById('regEmail');
+    const passwordInput = document.getElementById('regPassword');
+    const confirmPasswordInput = document.getElementById('regConfirmPassword');
 
     setLoadingState(true);
 
@@ -301,11 +397,46 @@
           showAlert(msg, 'error');
         }
       } else if (response.status === 422) {
-        // Schema validation error
-        showAlert(
-          'Dữ liệu nhập vào chưa đúng định dạng. Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số.',
-          'error'
-        );
+        // Schema validation error: Parse details and map to inputs
+        let hasMappedField = false;
+        let firstInvalidInput = null;
+        const unmappedErrors = [];
+
+        const inputsMap = { fullNameInput, emailInput, passwordInput };
+
+        if (responseData && Array.isArray(responseData.details) && responseData.details.length > 0) {
+          responseData.details.forEach((err) => {
+            const target = resolveFieldTarget(err, inputsMap);
+            if (target && target.input) {
+              const friendlyMsg = formatValidationErrorMessage(target.key, err.message || err.msg);
+              showFieldError(target.input, friendlyMsg);
+              hasMappedField = true;
+              firstInvalidInput = firstInvalidInput || target.input;
+            } else {
+              unmappedErrors.push(err);
+            }
+          });
+        }
+
+        if (hasMappedField) {
+          const alertText = unmappedErrors.length > 0
+            ? `Thông tin chưa hợp lệ: ${unmappedErrors.map((e) => e.message || e.msg || 'Lỗi dữ liệu').join('; ')}`
+            : 'Thông tin đăng ký chưa hợp lệ. Vui lòng kiểm tra lại các trường được đánh dấu.';
+          showAlert(alertText, 'error');
+          if (firstInvalidInput) {
+            firstInvalidInput.focus();
+          }
+        } else {
+          // Fallback if details is missing, empty, or unmappable
+          let fallbackMsg = (responseData && responseData.message)
+            ? responseData.message
+            : 'Dữ liệu nhập vào chưa đúng định dạng. Vui lòng kiểm tra lại thông tin đăng ký.';
+          if (unmappedErrors.length > 0) {
+            const unmappedText = unmappedErrors.map((e) => e.message || e.msg).filter(Boolean).join('; ');
+            if (unmappedText) fallbackMsg = unmappedText;
+          }
+          showAlert(fallbackMsg, 'error');
+        }
       } else {
         // Server error (500, etc.)
         showAlert(
@@ -397,4 +528,17 @@
       btn.setAttribute('aria-label', 'Hiện mật khẩu');
     });
   }
+
+  // Expose helpers globally for testing or integration
+  window.pdfLinguaAuth = Object.assign(window.pdfLinguaAuth || {}, {
+    validateRegistrationForm,
+    formatValidationErrorMessage,
+    resolveFieldTarget,
+    submitRegistration,
+    showFieldError,
+    clearFieldError,
+    clearAllFieldErrors,
+    showAlert,
+    clearAlert,
+  });
 })();
