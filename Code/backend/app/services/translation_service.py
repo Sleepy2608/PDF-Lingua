@@ -1,4 +1,7 @@
+import json
 import re
+import urllib.parse
+import urllib.request
 from typing import Any
 from deep_translator import GoogleTranslator, MyMemoryTranslator
 
@@ -19,8 +22,24 @@ class TranslationService:
         "ru": "ru-RU",
     }
 
+    VI_CHARS = set("àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ")
+
     def __init__(self, default_target_lang: str = "vi"):
         self.default_target_lang = default_target_lang
+
+    def detect_language(self, text: str) -> str:
+        if not text:
+            return "en"
+        lower = text.lower()
+        if any(c in self.VI_CHARS for c in lower):
+            return "vi"
+        if re.search(r"[\u3040-\u30ff]", text):
+            return "ja"
+        if re.search(r"[\uac00-\ud7af]", text):
+            return "ko"
+        if re.search(r"[\u4e00-\u9fff]", text):
+            return "zh-CN"
+        return "en"
 
     def chunk_text(self, text: str, max_chars: int = 2500) -> list[str]:
         if not text or len(text) <= max_chars:
@@ -60,28 +79,53 @@ class TranslationService:
 
         return chunks
 
+    def _translate_google_gtx(self, chunk: str, target_lang: str, source_lang: str = "auto") -> tuple[str, str]:
+        encoded = urllib.parse.quote(chunk)
+        url = (
+            f"https://translate.googleapis.com/translate_a/single"
+            f"?client=gtx&sl={source_lang}&tl={target_lang}&dt=t&q={encoded}"
+        )
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            translated = "".join([item[0] for item in data[0] if item and item[0]])
+            detected = data[2] if len(data) > 2 and data[2] else source_lang
+            return translated, detected
+
     def translate_chunk(self, chunk: str, target_lang: str, source_lang: str = "auto") -> tuple[str, str]:
         if not chunk.strip():
             return "", "none"
 
         try:
-            translated = GoogleTranslator(source=source_lang, target=target_lang).translate(chunk)
-            if translated:
+            translated, detected = self._translate_google_gtx(chunk, target_lang=target_lang, source_lang=source_lang)
+            if translated and translated.strip():
                 return translated, "google"
         except Exception as e:
-            logger.warning(f"[Translation] GoogleTranslator failed or rate-limited: {e}. Falling back to MyMemory.")
+            logger.warning(f"[Translation] Google GTX endpoint failed: {e}. Trying GoogleTranslator fallback.")
 
         try:
-            mm_source = self.MYMEMORY_LANG_MAP.get(source_lang, "auto" if source_lang == "auto" else "en-US")
+            translated = GoogleTranslator(source=source_lang, target=target_lang).translate(chunk)
+            if translated and translated.strip():
+                return translated, "google_web"
+        except Exception as e:
+            logger.warning(f"[Translation] GoogleTranslator failed: {e}. Trying MyMemory fallback.")
+
+        try:
+            detected = self.detect_language(chunk) if source_lang == "auto" else source_lang
+            if detected == target_lang:
+                return chunk, "same_language"
+
+            mm_source = self.MYMEMORY_LANG_MAP.get(detected, "en-US")
             mm_target = self.MYMEMORY_LANG_MAP.get(target_lang, "vi-VN")
-            if mm_source == "auto":
-                mm_source = "en-US"
 
             translated = MyMemoryTranslator(source=mm_source, target=mm_target).translate(chunk)
-            if translated:
+            if translated and translated.strip():
                 return translated, "mymemory"
         except Exception as e:
-            logger.error(f"[Translation] MyMemory fallback also failed: {e}")
+            logger.error(f"[Translation] MyMemory fallback failed: {e}")
 
         return chunk, "fallback_raw"
 
