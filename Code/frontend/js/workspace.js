@@ -72,6 +72,38 @@ function initWorkspace() {
   if (btnNewFile) {
     btnNewFile.addEventListener('click', resetToUpload);
   }
+
+  const paneOriginal = document.getElementById('paneOriginal');
+  const paneTranslated = document.getElementById('paneTranslated');
+
+  if (paneOriginal && paneTranslated) {
+    let isSyncingLeft = false;
+    let isSyncingRight = false;
+
+    paneOriginal.addEventListener('scroll', () => {
+      if (!isSyncingLeft) {
+        isSyncingRight = true;
+        const maxScroll = paneOriginal.scrollHeight - paneOriginal.clientHeight;
+        if (maxScroll > 0) {
+          const ratio = paneOriginal.scrollTop / maxScroll;
+          paneTranslated.scrollTop = ratio * (paneTranslated.scrollHeight - paneTranslated.clientHeight);
+        }
+      }
+      isSyncingLeft = false;
+    });
+
+    paneTranslated.addEventListener('scroll', () => {
+      if (!isSyncingRight) {
+        isSyncingLeft = true;
+        const maxScroll = paneTranslated.scrollHeight - paneTranslated.clientHeight;
+        if (maxScroll > 0) {
+          const ratio = paneTranslated.scrollTop / maxScroll;
+          paneOriginal.scrollTop = ratio * (paneOriginal.scrollHeight - paneOriginal.clientHeight);
+        }
+      }
+      isSyncingRight = false;
+    });
+  }
 }
 
 async function handleProcessPdf() {
@@ -79,6 +111,9 @@ async function handleProcessPdf() {
     showToast('Vui lòng chọn một tệp PDF trước khi bắt đầu!', 'error');
     return;
   }
+
+  const btnProcessPdf = document.getElementById('btnProcessPdf');
+  if (btnProcessPdf) btnProcessPdf.disabled = true;
 
   const targetLang = document.getElementById('targetLangSelect')?.value || 'vi';
   const formData = new FormData();
@@ -127,6 +162,8 @@ async function handleProcessPdf() {
       ? 'Không thể kết nối đến máy chủ Backend (http://localhost:8000). Vui lòng đảm bảo Backend đang chạy!'
       : (error.message || 'Có lỗi kết nối đến máy chủ Backend!');
     showToast(msg, 'error');
+  } finally {
+    if (btnProcessPdf) btnProcessPdf.disabled = false;
   }
 }
 
