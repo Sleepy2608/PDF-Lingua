@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/workspace.css">
 </head>
 <body>
     <header class="site-header">
@@ -43,7 +44,7 @@
 
     <main>
         <!-- Hero Section -->
-        <section class="hero-section">
+        <section class="hero-section" id="heroSection">
             <div class="container hero-grid">
                 <!-- Left Column: Value Proposition -->
                 <div class="hero-content">
@@ -245,7 +246,166 @@
             </div>
         </section>
 
+        <!-- Bilingual Workspace Section (Initially Hidden) -->
+        <section class="workspace-section" id="workspaceSection" style="display: none;">
+            <div class="container">
+                <!-- Workspace Toolbar -->
+                <div class="workspace-toolbar">
+                    <div class="doc-meta">
+                        <span class="badge badge-pdf">PDF</span>
+                        <span class="doc-name" id="docNameDisplay">tai-lieu.pdf</span>
+                        <span class="meta-pill" id="docPagesDisplay">1 trang</span>
+                        <span class="meta-pill" id="docSizeDisplay">1.2 MB</span>
+                        <span class="meta-pill digital" id="docTypeDisplay">PDF Số</span>
+                    </div>
+
+                    <div class="toolbar-actions">
+                        <div class="lang-select-wrap">
+                            <span class="lang-select-label">Dịch sang:</span>
+                            <select class="lang-select" id="targetLangSelect">
+                                <option value="vi" selected>Tiếng Việt (vi)</option>
+                                <option value="en">English (en)</option>
+                                <option value="ja">日本語 (ja)</option>
+                                <option value="ko">한국어 (ko)</option>
+                                <option value="zh-CN">中文 (zh)</option>
+                                <option value="fr">Français (fr)</option>
+                                <option value="de">Deutsch (de)</option>
+                                <option value="es">Español (es)</option>
+                                <option value="ru">Русский (ru)</option>
+                            </select>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary" id="btnRetranslate" title="Dịch lại theo ngôn ngữ đã chọn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            <span>Dịch lại</span>
+                        </button>
+
+                        <div class="download-wrap">
+                            <button type="button" class="btn btn-gradient" id="btnDownloadMenu">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Tải bản dịch</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" id="downloadDropdown">
+                                <button type="button" class="dropdown-item" id="btnDownloadTxt">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span>Tải file TXT (.txt)</span>
+                                </button>
+                                <button type="button" class="dropdown-item" id="btnDownloadPdf">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    <span>Tải file PDF (.pdf)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary" id="btnNewFile" title="Tải lên tệp PDF khác">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Tệp khác</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dual-Pane Split View -->
+                <div class="dual-pane-grid">
+                    <!-- Left: Original Text Pane -->
+                    <div class="pane-card">
+                        <div class="pane-header">
+                            <div class="pane-title-group">
+                                <span class="pane-title">Văn bản gốc</span>
+                                <span class="pane-tag">Gốc</span>
+                            </div>
+                            <div class="pane-actions">
+                                <span class="char-counter" id="countOriginal">0 từ</span>
+                                <button type="button" class="btn-icon-copy" id="btnCopyOriginal" title="Sao chép văn bản gốc">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Sao chép</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pane-body" id="paneOriginal" tabindex="0"></div>
+                    </div>
+
+                    <!-- Right: Translated Text Pane -->
+                    <div class="pane-card">
+                        <div class="pane-header">
+                            <div class="pane-title-group">
+                                <span class="pane-title">Bản dịch</span>
+                                <span class="pane-tag" style="background-color:rgba(16,185,129,0.1);color:#059669;">Bản Dịch</span>
+                            </div>
+                            <div class="pane-actions">
+                                <span class="char-counter" id="countTranslated">0 từ</span>
+                                <button type="button" class="btn-icon-copy" id="btnCopyTranslated" title="Sao chép bản dịch">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Sao chép</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pane-body" id="paneTranslated" tabindex="0"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
+
+    <!-- Progress Processing Modal -->
+    <div class="modal-overlay" id="processingModal" style="display: none;">
+        <div class="progress-card">
+            <div class="progress-spinner"></div>
+            <h3 class="progress-title">Đang xử lý tài liệu</h3>
+            <p class="progress-desc" id="progressDesc">Đang chuẩn bị...</p>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <div class="steps-list">
+                <div class="step-item active" id="stepItem1">
+                    <span class="step-circle">1</span>
+                    <span>Tải tệp PDF lên máy chủ</span>
+                </div>
+                <div class="step-item" id="stepItem2">
+                    <span class="step-circle">2</span>
+                    <span>Phân tích văn bản PDF (Kiểm tra OCR)</span>
+                </div>
+                <div class="step-item" id="stepItem3">
+                    <span class="step-circle">3</span>
+                    <span>Dịch thuật văn bản đa ngôn ngữ</span>
+                </div>
+                <div class="step-item" id="stepItem4">
+                    <span class="step-circle">4</span>
+                    <span>Hoàn tất & Chuẩn bị Workspace</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <footer class="site-footer">
         <div class="container footer-content">
@@ -260,5 +420,6 @@
 
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
+    <script src="js/workspace.js"></script>
 </body>
 </html>
