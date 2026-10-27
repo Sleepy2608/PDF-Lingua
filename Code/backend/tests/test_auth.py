@@ -375,3 +375,106 @@ def test_register_internal_db_error_masked_no_leak(client, db_session):
     assert data["details"] is None
 
 
+def test_register_password_exceeds_max_length(client, db_session):
+    """TC-REG-17: Password exceeding 128 characters is rejected with 422 and does not create user."""
+    too_long_pwd = "A1" + "a" * 127  # 129 characters
+    payload = {
+        "email": "toolongpwd@example.com",
+        "password": too_long_pwd,
+        "full_name": "Too Long Password",
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["success"] is False
+    assert data["error_code"] == "VALIDATION_ERROR"
+    assert any("password" in err.get("field", "") for err in data.get("details", []))
+
+    # Verify database is untouched
+    assert db_session.query(User).filter(User.email == "toolongpwd@example.com").first() is None
+
+
+def test_register_full_name_exceeds_max_length(client, db_session):
+    """TC-REG-18: full_name exceeding 150 characters is rejected with 422 and does not create user."""
+    too_long_name = "N" * 151
+    payload = {
+        "email": "toolongname@example.com",
+        "password": "SecurePassword123",
+        "full_name": too_long_name,
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["success"] is False
+    assert data["error_code"] == "VALIDATION_ERROR"
+    assert any("full_name" in err.get("field", "") for err in data.get("details", []))
+
+    # Verify database is untouched
+    assert db_session.query(User).filter(User.email == "toolongname@example.com").first() is None
+
+
+def test_register_missing_required_fields(client, db_session):
+    """TC-REG-19: Missing required fields (email or password) are rejected with 422 and do not create user."""
+    # Missing email
+    payload_no_email = {
+        "password": "SecurePassword123",
+        "full_name": "No Email User",
+    }
+    res_no_email = client.post("/api/auth/register", json=payload_no_email)
+    assert res_no_email.status_code == 422
+    data_email = res_no_email.json()
+    assert data_email["success"] is False
+    assert data_email["error_code"] == "VALIDATION_ERROR"
+    assert any("email" in err.get("field", "") for err in data_email.get("details", []))
+
+    # Missing password
+    payload_no_pwd = {
+        "email": "nopwd@example.com",
+        "full_name": "No Password User",
+    }
+    res_no_pwd = client.post("/api/auth/register", json=payload_no_pwd)
+    assert res_no_pwd.status_code == 422
+    data_pwd = res_no_pwd.json()
+    assert data_pwd["success"] is False
+    assert data_pwd["error_code"] == "VALIDATION_ERROR"
+    assert any("password" in err.get("field", "") for err in data_pwd.get("details", []))
+
+    # Verify database is untouched
+    assert db_session.query(User).filter(User.email == "nopwd@example.com").first() is None
+
+
+def test_register_empty_payload(client, db_session):
+    """TC-REG-20: Empty payload {} is rejected with 422 and does not create user."""
+    response = client.post("/api/auth/register", json={})
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["success"] is False
+    assert data["error_code"] == "VALIDATION_ERROR"
+    fields_with_errors = [err.get("field", "") for err in data.get("details", [])]
+    assert any("email" in f for f in fields_with_errors)
+    assert any("password" in f for f in fields_with_errors)
+
+    # Verify database has zero users created
+    assert db_session.query(User).count() == 0
+
+
+def test_register_email_with_spaces_inside(client, db_session):
+    """TC-REG-21: Email containing spaces inside is rejected with 422 and does not create user."""
+    payload = {
+        "email": "user name@example.com",
+        "password": "SecurePassword123",
+        "full_name": "Space In Email",
+    }
+    response = client.post("/api/auth/register", json=payload)
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["success"] is False
+    assert data["error_code"] == "VALIDATION_ERROR"
+    assert any("email" in err.get("field", "") for err in data.get("details", []))
+
+    # Verify database is untouched
+    assert db_session.query(User).filter(User.email.ilike("%space%")).first() is None
