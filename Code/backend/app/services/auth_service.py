@@ -8,10 +8,10 @@ from typing import Optional
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import BadRequestException
-from app.core.security import hash_password
+from app.core.exceptions import BadRequestException, ForbiddenException, UnauthorizedException
+from app.core.security import hash_password, verify_password
 from app.models.user import User, UserRole
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserLogin
 
 
 class AuthService:
@@ -85,4 +85,24 @@ class AuthService:
             raise
 
         return db_user
+
+
+    @classmethod
+    def authenticate_user(cls, db: Session, user_in: "UserLogin") -> User:
+        """Authenticate an active user without exposing whether an email exists."""
+        user = cls.get_user_by_email(db, user_in.email)
+        if user is None or not verify_password(user_in.password, user.hashed_password):
+            raise UnauthorizedException(
+                message="Email hoặc mật khẩu không chính xác.",
+                error_code="INVALID_CREDENTIALS",
+            )
+
+        if not user.is_active:
+            raise ForbiddenException(
+                message="Tài khoản này đã bị vô hiệu hóa.",
+                error_code="ACCOUNT_INACTIVE",
+            )
+
+        return user
+
 

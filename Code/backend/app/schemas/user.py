@@ -73,6 +73,32 @@ class UserCreate(UserBase):
         """Fold email to lowercase to match DB normalisation in User model."""
         return value.strip().lower()
 
+# ── Login (Authentication) ────────────────────────────────────────────────────
+
+class UserLogin(BaseModel):
+    """
+    Credentials accepted by POST /api/auth/login.
+    No password-strength validation here — only existence and max-length checks.
+    """
+
+    email: EmailStr = Field(
+        ...,
+        description="Email address used to identify the account.",
+        examples=["user@example.com"],
+    )
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Plaintext password for credential verification.",
+    )
+
+    @field_validator("email")
+    @classmethod
+    def normalise_email(cls, value: str) -> str:
+        """Fold email to lowercase before authentication."""
+        return value.strip().lower()
+
 
 # ── Update (Profile Edit) ─────────────────────────────────────────────────────
 
