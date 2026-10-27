@@ -52,8 +52,13 @@ async def log_requests_middleware(request: Request, call_next):
         raise
 
 
+from app.api.process import router as process_router
+
 # Register Global Exception Handlers
 setup_exception_handlers(app)
+
+# Register API Routers
+app.include_router(process_router)
 
 
 @app.get("/")
