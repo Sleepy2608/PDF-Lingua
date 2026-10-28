@@ -513,3 +513,73 @@
 .modal-footer-text a:hover {
   text-decoration: underline;
 }
+
+/* Auth Header User State (PDFL-78.4) */
+.auth-guest-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auth-user-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-guest-group[hidden],
+.auth-user-group[hidden] {
+  display: none !important;
+}
+
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  color: var(--text-title);
+  font-weight: 500;
+  max-width: 220px;
+}
+
+.user-profile-badge .user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-gradient-cta);
+  color: #FFFFFF;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.user-profile-badge .user-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-logout {
+  background-color: transparent;
+  color: var(--text-body);
+  border: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}

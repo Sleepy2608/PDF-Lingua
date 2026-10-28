@@ -36,8 +36,17 @@
             </nav>
 
             <div class="header-actions">
-                <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
-                <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
+                <div class="auth-guest-group" id="authGuestGroup">
+                    <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
+                </div>
+                <div class="auth-user-group" id="authUserGroup" hidden>
+                    <div class="user-profile-badge">
+                        <span class="user-avatar" id="userAvatar"></span>
+                        <span class="user-name" id="userDisplayName"></span>
+                    </div>
+                    <button type="button" class="btn btn-logout" id="btnLogout">Đăng xuất</button>
+                </div>
             </div>
         </div>
     </header>

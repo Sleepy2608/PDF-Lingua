@@ -14,12 +14,20 @@
     : '';
 
   let isSubmitting = false;
+  let isRestoringSession = false;
+
+  let openRegisterModal = () => {};
+  let closeRegisterModal = () => {};
+  let openLoginModal = () => {};
+  let closeLoginModal = () => {};
 
   document.addEventListener('DOMContentLoaded', () => {
     initAuthModals();
     initPasswordToggles();
     initRegistrationForm();
     initLoginForm();
+    initAuthHeader();
+    restoreSession();
   });
 
   /**
@@ -38,7 +46,7 @@
 
     // ── Register Modal ──
 
-    function openRegisterModal() {
+    openRegisterModal = function () {
       closeLoginModal();
       if (!registerModal) return;
       registerModal.removeAttribute('hidden');
@@ -49,18 +57,18 @@
       if (firstInput) {
         setTimeout(() => firstInput.focus(), 50);
       }
-    }
+    };
 
-    function closeRegisterModal() {
+    closeRegisterModal = function () {
       if (!registerModal) return;
       registerModal.setAttribute('hidden', '');
       document.body.style.overflow = '';
       clearRegisterAlert();
-    }
+    };
 
     // ── Login Modal ──
 
-    function openLoginModal() {
+    openLoginModal = function () {
       closeRegisterModal();
       if (!loginModal) return;
       loginModal.removeAttribute('hidden');
@@ -71,14 +79,14 @@
       if (emailInput) {
         setTimeout(() => emailInput.focus(), 50);
       }
-    }
+    };
 
-    function closeLoginModal() {
+    closeLoginModal = function () {
       if (!loginModal) return;
       loginModal.setAttribute('hidden', '');
       document.body.style.overflow = '';
       clearLoginAlert();
-    }
+    };
 
     // ── Button Wiring ──
 
@@ -636,7 +644,21 @@
 
       if (response.status === 200) {
         // Successful login
-        const userData = responseData && responseData.data ? responseData.data : null;
+        const tokenData = responseData && responseData.data ? responseData.data : null;
+        const accessToken = tokenData && tokenData.access_token ? tokenData.access_token : null;
+        const userData = tokenData && tokenData.user ? tokenData.user : null;
+
+        if (!accessToken || !userData) {
+          showLoginAlert('Phản hồi từ máy chủ không hợp lệ (thiếu token xác thực).', 'error');
+          return;
+        }
+
+        // Save session in localStorage (never stores password or hash)
+        setStoredSession(accessToken, userData);
+
+        // Update header UI immediately
+        updateHeaderAuthState(userData);
+
         const displayName = userData && (userData.full_name || userData.email)
           ? (userData.full_name || userData.email)
           : '';
@@ -650,6 +672,10 @@
 
         form.reset();
         resetLoginPasswordToggle();
+
+        setTimeout(() => {
+          closeLoginModal();
+        }, 1200);
 
       } else if (response.status === 401) {
         // Invalid credentials (wrong email or password — same message for anti-enumeration)
@@ -857,6 +883,201 @@
     return div.innerHTML;
   }
 
+  // ── Session & Auth State Management (PDFL-78.4) ──
+
+  function getLocalStorage() {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage;
+      }
+      if (typeof localStorage !== 'undefined') {
+        return localStorage;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function getStoredToken() {
+    const storage = getLocalStorage();
+    if (!storage) return null;
+    try {
+      return storage.getItem('pdfl_token');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getStoredUser() {
+    const storage = getLocalStorage();
+    if (!storage) return null;
+    try {
+      const data = storage.getItem('pdfl_user');
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setStoredSession(token, user) {
+    const storage = getLocalStorage();
+    if (!storage) return;
+    try {
+      storage.setItem('pdfl_token', token);
+      if (user) {
+        storage.setItem('pdfl_user', JSON.stringify({
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          role: user.role,
+        }));
+      }
+    } catch (e) {
+      console.warn('[PDF-Lingua Auth] Không thể lưu vào localStorage:', e);
+    }
+  }
+
+  function clearStoredSession() {
+    const storage = getLocalStorage();
+    if (!storage) return;
+    try {
+      storage.removeItem('pdfl_token');
+      storage.removeItem('pdfl_user');
+    } catch (e) {
+      console.warn('[PDF-Lingua Auth] Không thể xóa localStorage:', e);
+    }
+  }
+
+  function updateHeaderAuthState(user) {
+    const guestGroup = document.getElementById('authGuestGroup');
+    const userGroup = document.getElementById('authUserGroup');
+    const displayNameEl = document.getElementById('userDisplayName');
+    const userAvatarEl = document.getElementById('userAvatar');
+
+    if (user && (user.full_name || user.email)) {
+      if (guestGroup) guestGroup.setAttribute('hidden', '');
+      if (userGroup) userGroup.removeAttribute('hidden');
+
+      const name = user.full_name || user.email;
+      if (displayNameEl) {
+        displayNameEl.textContent = name;
+      }
+      if (userAvatarEl) {
+        const initial = (user.full_name ? user.full_name.charAt(0) : user.email.charAt(0)).toUpperCase();
+        userAvatarEl.textContent = initial;
+      }
+    } else {
+      if (guestGroup) guestGroup.removeAttribute('hidden');
+      if (userGroup) userGroup.setAttribute('hidden', '');
+      if (displayNameEl) {
+        displayNameEl.textContent = '';
+      }
+      if (userAvatarEl) {
+        userAvatarEl.textContent = '';
+      }
+    }
+  }
+
+  function initAuthHeader() {
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleLogout();
+      });
+    }
+  }
+
+  async function restoreSession() {
+    if (isRestoringSession) return;
+
+    const token = getStoredToken();
+    const cachedUser = getStoredUser();
+
+    if (!token) {
+      updateHeaderAuthState(null);
+      return;
+    }
+
+    // Show cached user optimistically if present
+    if (cachedUser) {
+      updateHeaderAuthState(cachedUser);
+    }
+
+    isRestoringSession = true;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.status === 200) {
+        const resData = await response.json();
+        const freshUser = resData && resData.data ? resData.data : null;
+        if (freshUser) {
+          setStoredSession(token, freshUser);
+          updateHeaderAuthState(freshUser);
+        }
+      } else if (response.status === 401 || response.status === 403) {
+        // Token expired, invalid or account inactive -> clear session
+        clearStoredSession();
+        updateHeaderAuthState(null);
+      } else {
+        // Other 5xx or server errors: do NOT clear token! Allow user to retry
+        console.warn('[PDF-Lingua Auth] Máy chủ tạm thời không thể xác thực phiên:', response.status);
+      }
+    } catch (err) {
+      // Network failure / offline: do NOT clear token! Keep cached user state
+      console.warn('[PDF-Lingua Auth] Lỗi kết nối khi khôi phục phiên (giữ nguyên token):', err);
+    } finally {
+      isRestoringSession = false;
+    }
+  }
+
+  async function handleLogout() {
+    const btnLogout = document.getElementById('btnLogout');
+    const token = getStoredToken();
+
+    if (btnLogout) {
+      btnLogout.disabled = true;
+      btnLogout.textContent = 'Đang đăng xuất...';
+    }
+
+    try {
+      if (token) {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('[PDF-Lingua Auth] Lỗi mạng khi gọi logout API (vẫn xóa phiên client):', err);
+    } finally {
+      clearStoredSession();
+      updateHeaderAuthState(null);
+      if (btnLogout) {
+        btnLogout.disabled = false;
+        btnLogout.textContent = 'Đăng xuất';
+      }
+      closeLoginModal();
+      closeRegisterModal();
+    }
+  }
+
+  async function authFetch(url, options = {}) {
+    const headers = Object.assign({}, options.headers || {});
+    const token = getStoredToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return fetch(url, Object.assign({}, options, { headers }));
+  }
+
   // Expose helpers globally for testing or integration
   window.pdfLinguaAuth = Object.assign(window.pdfLinguaAuth || {}, {
     validateRegistrationForm,
@@ -873,5 +1094,17 @@
     showLoginAlert,
     clearLoginAlert,
     escapeHtml,
+    getStoredToken,
+    getStoredUser,
+    setStoredSession,
+    clearStoredSession,
+    updateHeaderAuthState,
+    restoreSession,
+    handleLogout,
+    authFetch,
+    openLoginModal,
+    closeLoginModal,
+    openRegisterModal,
+    closeRegisterModal,
   });
 })();
