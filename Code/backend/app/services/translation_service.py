@@ -31,11 +31,13 @@ class TranslationService:
 
     def is_isolated_char_list(self, text: str) -> bool:
         lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
+        if not lines:
+            return False
         for line in lines:
             tokens = line.split()
-            if len(tokens) >= 3 and all(len(t) == 1 for t in tokens):
-                return True
-        return False
+            if len(tokens) < 3 or not all(len(t) == 1 for t in tokens):
+                return False
+        return True
 
     def get_script_category(self, text: str) -> str:
         if self.is_isolated_char_list(text):
@@ -73,7 +75,7 @@ class TranslationService:
         if not text or not text.strip():
             return []
 
-        paragraphs = text.split("\n\n")
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
         chunks: list[str] = []
         current_chunk = ""
         current_cat = ""

@@ -81,10 +81,20 @@ async def upload_and_translate(
                 detail="Không thể trích xuất văn bản từ tài liệu này (tài liệu rỗng hoặc máy chủ chưa bật OCR).",
             )
 
+        logger.info(
+            f"[Upload-and-Translate Request] file={file.filename!r}, target_lang={target_lang!r}, "
+            f"text_len={len(original_text)}, text_preview={original_text[:80]!r}"
+        )
+
         translation_result = translation_service.translate_text(
             original_text,
             target_lang=target_lang,
             source_lang="auto",
+        )
+
+        logger.info(
+            f"[Upload-and-Translate Response] engine={translation_result.get('engine_used')!r}, "
+            f"result_preview={translation_result.get('translated_text', '')[:80]!r}"
         )
 
         response_data = ProcessResponseData(
@@ -116,10 +126,20 @@ async def retranslate(request: RetranslateRequest):
             detail="Văn bản cần dịch không được để trống.",
         )
 
+    logger.info(
+        f"[Retranslate Request] target_lang={request.target_lang!r}, source_lang={request.source_lang!r}, "
+        f"text_len={len(request.text)}, text_preview={request.text[:80]!r}"
+    )
+
     result = translation_service.translate_text(
         text=request.text,
         target_lang=request.target_lang,
         source_lang=request.source_lang,
+    )
+
+    logger.info(
+        f"[Retranslate Response] target_lang={result.get('target_lang')!r}, engine={result.get('engine_used')!r}, "
+        f"result_preview={result.get('translated_text', '')[:80]!r}"
     )
 
     return ApiResponse(

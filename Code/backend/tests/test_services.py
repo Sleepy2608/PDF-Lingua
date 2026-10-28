@@ -60,6 +60,39 @@ def test_translation_service_empty_text():
     assert res["chunk_count"] == 0
 
 
+def test_pdf_service_whitespace_cleaning_with_spaces_on_newlines():
+    raw_text = "Đoạn văn 1.\n \nĐoạn văn 2.\n   \nĐoạn văn 3."
+    cleaned = PDFService._clean_whitespace(raw_text)
+    assert cleaned == "Đoạn văn 1.\n\nĐoạn văn 2.\n\nĐoạn văn 3."
+
+
+def test_translation_service_is_isolated_char_list():
+    service = TranslationService()
+
+    # Isolated character list (e.g. alphabet)
+    assert service.is_isolated_char_list("Ă Â Ơ Ô Ê Ư Á À Ạ Ã Ả Ỏ Ò Ó Ỏ Ọ Õ") is True
+    assert service.is_isolated_char_list("A B C D E\nF G H I J") is True
+
+    # Multi-line text with regular paragraphs containing an alphabet line (must NOT be treated as isolated char list)
+    mixed_text = "Đây là văn bản thử nghiệm.\nĂ Â Ơ Ô Ê Ư Á À Ạ Ã Ả Ỏ Ò Ó Ỏ Ọ Õ\nNội dung tiếp theo."
+    assert service.is_isolated_char_list(mixed_text) is False
+
+    # Regular single sentences or normal words
+    assert service.is_isolated_char_list("Xin chào mọi người") is False
+    assert service.is_isolated_char_list("") is False
+
+
+def test_translation_service_chunking_with_spaced_newlines():
+    service = TranslationService()
+    # Paragraphs with different script categories separated by spaced newlines
+    text = "Đoạn tiếng Việt.\n \nこんにちは世界\n  \nĂ Â Ơ Ô Ê Ư Á À Ạ"
+    chunks = service.chunk_text(text)
+    assert len(chunks) == 3
+    assert chunks[0] == "Đoạn tiếng Việt."
+    assert chunks[1] == "こんにちは世界"
+    assert chunks[2] == "Ă Â Ơ Ô Ê Ư Á À Ạ"
+
+
 def test_export_service_txt():
     service = ExportService()
     content = "Nội dung tiếng Việt thử nghiệm: Xin chào thế giới."
