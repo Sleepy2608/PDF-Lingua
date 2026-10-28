@@ -17,6 +17,7 @@ email-validator>=2.1.0
 # PDF Processing
 pypdf>=4.1.0
 pdfplumber>=0.10.4
+reportlab>=4.0.0
 # PyMuPDF (fitz) - alternative fast PDF parser:
 # pymupdf>=1.23.0
 
