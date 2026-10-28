@@ -4,6 +4,10 @@ extraPaths = ["Code/backend"]
 venvPath = "Code/backend"
 venv = "venv"
 
+[tool.pyrefly]
+python-interpreter-path = "Code/backend/venv/Scripts/python.exe"
+search-path = ["Code/backend"]
+
 [tool.pytest.ini_options]
 pythonpath = ["Code/backend"]
 testpaths = ["Code/tests"]
