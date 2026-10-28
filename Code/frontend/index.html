@@ -411,8 +411,8 @@
     </footer>
 
     <!-- Legal & Contact Modal (Terms, Privacy, Contact) -->
-    <div class="modal-overlay legal-modal-overlay" id="legalModalOverlay" aria-hidden="true">
-        <div class="modal-container legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">
+    <div class="legal-modal-overlay" id="legalModalOverlay" aria-hidden="true" style="display: none;">
+        <div class="legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">
             <div class="legal-modal-header">
                 <div class="legal-modal-title-group">
                     <div class="legal-title-badge-row">
@@ -428,7 +428,7 @@
                     <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
                         <span class="btn-icon">🖨️</span> In
                     </button>
-                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng">&times;</button>
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng" title="Đóng">&times;</button>
                 </div>
             </div>
 
@@ -446,16 +446,6 @@
                     <span class="tab-icon">✉️</span>
                     <span class="tab-label">Liên hệ</span>
                 </button>
-            </div>
-
-            <!-- Live Search in Policy -->
-            <div class="legal-search-bar" id="legalSearchBar">
-                <div class="legal-search-input-wrap">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="legalSearchInput" placeholder="Tìm kiếm nhanh trong chính sách (ví dụ: Free, 20MB, xóa file, Bcrypt...)" autocomplete="off">
-                    <button type="button" class="btn-clear-search" id="btnClearLegalSearch" aria-label="Xóa tìm kiếm" style="display: none;">&times;</button>
-                </div>
-                <span class="legal-search-count" id="legalSearchCount" style="display: none;">0 kết quả</span>
             </div>
 
             <!-- Tab Content Panels -->
@@ -629,7 +619,6 @@
                 </div>
                 <div class="legal-footer-right">
                     <button type="button" class="btn btn-gradient btn-sm" id="btnAcceptLegal">✓ Tôi đã hiểu & Đồng ý</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="legalModalCloseFooterBtn">Đóng</button>
                 </div>
             </div>
         </div>
