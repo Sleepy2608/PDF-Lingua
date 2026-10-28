@@ -93,3 +93,28 @@ def test_upload_and_translate_success():
     assert payload["page_count"] == 1
     assert len(payload["original_text"]) > 0
     assert len(payload["translated_text"]) > 0
+
+
+def create_multipage_pdf_bytes(page_count: int) -> bytes:
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=letter)
+    for i in range(page_count):
+        c.drawString(100, 700, f"Page {i + 1} content for testing.")
+        c.showPage()
+    c.save()
+    return buf.getvalue()
+
+
+def test_upload_exceeds_max_pages():
+    # settings.MAX_PAGES_FREE is 100
+    pdf_bytes = create_multipage_pdf_bytes(105)
+    files = {"file": ("large_doc.pdf", pdf_bytes, "application/pdf")}
+    data = {"target_lang": "vi"}
+
+    response = client.post("/api/process/upload-and-translate", files=files, data=data)
+    assert response.status_code == 400
+    resp_body = response.json()
+    msg = resp_body.get("message", "") or resp_body.get("detail", "")
+    assert "vượt quá giới hạn" in msg
+    assert "105" in msg
+
