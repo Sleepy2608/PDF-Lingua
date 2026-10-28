@@ -204,4 +204,124 @@ function initLegalModal() {
             }
         });
     }
+
+    // ── Phase 4: Fullscreen Toggle, Policy Acceptance & Live Search ──────
+    // Fullscreen Toggle
+    const btnFullscreen = document.getElementById('btnToggleFullscreenLegal');
+    const modalContainer = overlay.querySelector('.legal-modal-container');
+    const fullscreenIcon = document.getElementById('fullscreenIcon');
+    const fullscreenText = document.getElementById('fullscreenText');
+
+    if (btnFullscreen && modalContainer) {
+        btnFullscreen.addEventListener('click', () => {
+            const isFull = modalContainer.classList.toggle('fullscreen');
+            if (fullscreenIcon) fullscreenIcon.textContent = isFull ? '❐' : '⛶';
+            if (fullscreenText) fullscreenText.textContent = isFull ? 'Thu nhỏ' : 'Phóng to';
+            btnFullscreen.setAttribute('title', isFull ? 'Thu nhỏ cửa sổ' : 'Phóng to toàn màn hình');
+        });
+    }
+
+    // Accept Terms & Privacy Button
+    const btnAccept = document.getElementById('btnAcceptLegal');
+    if (btnAccept) {
+        btnAccept.addEventListener('click', () => {
+            try {
+                localStorage.setItem('pdf_lingua_legal_accepted', 'true');
+                localStorage.setItem('pdf_lingua_legal_accepted_at', new Date().toISOString());
+            } catch (_err) {
+                // Ignore localStorage errors in private mode
+            }
+            closeModal();
+            if (typeof showToast === 'function') {
+                showToast('Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.', 'success');
+            }
+        });
+    }
+
+    // In-Modal Live Search & Highlight
+    const searchInput = document.getElementById('legalSearchInput');
+    const btnClearSearch = document.getElementById('btnClearLegalSearch');
+    const searchCount = document.getElementById('legalSearchCount');
+    const modalBody = overlay.querySelector('.legal-modal-body');
+
+    // Helper to remove existing highlights
+    function clearHighlights() {
+        if (!modalBody) return;
+        const marks = modalBody.querySelectorAll('mark.legal-highlight');
+        marks.forEach((mark) => {
+            const parent = mark.parentNode;
+            if (parent) {
+                parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                parent.normalize();
+            }
+        });
+        if (searchCount) searchCount.style.display = 'none';
+        if (btnClearSearch) btnClearSearch.style.display = 'none';
+    }
+
+    // Recursive text highlighter
+    function highlightText(node, regex) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const match = node.data.match(regex);
+            if (match && match[0].trim()) {
+                const mark = document.createElement('mark');
+                mark.className = 'legal-highlight';
+                const splitIdx = match.index;
+                const matchedText = match[0];
+                const matchedNode = node.splitText(splitIdx);
+                matchedNode.splitText(matchedText.length);
+                mark.appendChild(matchedNode.cloneNode(true));
+                matchedNode.parentNode.replaceChild(mark, matchedNode);
+                return 1;
+            }
+            return 0;
+        } else if (node.nodeType === Node.ELEMENT_NODE && node.childNodes && !['SCRIPT', 'STYLE', 'BUTTON'].includes(node.nodeName)) {
+            let count = 0;
+            for (let i = 0; i < node.childNodes.length; i++) {
+                count += highlightText(node.childNodes[i], regex);
+            }
+            return count;
+        }
+        return 0;
+    }
+
+    if (searchInput && modalBody) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim();
+            clearHighlights();
+
+            if (!query || query.length < 2) return;
+
+            if (btnClearSearch) btnClearSearch.style.display = 'inline-block';
+
+            try {
+                const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(safeQuery, 'i');
+                const activePanel = modalBody.querySelector('.legal-tab-panel.active') || modalBody;
+                const count = highlightText(activePanel, regex);
+
+                if (searchCount) {
+                    searchCount.style.display = 'inline-block';
+                    searchCount.textContent = count > 0 ? `${count} kết quả` : 'Không có';
+                }
+
+                if (count > 0) {
+                    const firstMatch = activePanel.querySelector('mark.legal-highlight');
+                    if (firstMatch) {
+                        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            } catch (_err) {
+                // Ignore regex errors
+            }
+        });
+
+        if (btnClearSearch) {
+            btnClearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                clearHighlights();
+                searchInput.focus();
+            });
+        }
+    }
 }

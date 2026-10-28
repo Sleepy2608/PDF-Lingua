@@ -415,10 +415,16 @@
         <div class="modal-container legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">
             <div class="legal-modal-header">
                 <div class="legal-modal-title-group">
-                    <h3 class="legal-modal-title" id="legalModalTitle">Thông Tin & Chính Sách</h3>
+                    <div class="legal-title-badge-row">
+                        <h3 class="legal-modal-title" id="legalModalTitle">Thông Tin & Chính Sách</h3>
+                        <span class="legal-version-badge">v1.0.0</span>
+                    </div>
                     <p class="legal-modal-subtitle">Quy định sử dụng, cam kết bảo mật & thông tin hỗ trợ PDF-Lingua</p>
                 </div>
                 <div class="legal-header-actions">
+                    <button type="button" class="legal-action-btn" id="btnToggleFullscreenLegal" title="Phóng to / Thu nhỏ modal">
+                        <span class="btn-icon" id="fullscreenIcon">⛶</span> <span id="fullscreenText">Phóng to</span>
+                    </button>
                     <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
                         <span class="btn-icon">🖨️</span> In
                     </button>
@@ -440,6 +446,16 @@
                     <span class="tab-icon">✉️</span>
                     <span class="tab-label">Liên hệ</span>
                 </button>
+            </div>
+
+            <!-- Live Search in Policy -->
+            <div class="legal-search-bar" id="legalSearchBar">
+                <div class="legal-search-input-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="legalSearchInput" placeholder="Tìm kiếm nhanh trong chính sách (ví dụ: Free, 20MB, xóa file, Bcrypt...)" autocomplete="off">
+                    <button type="button" class="btn-clear-search" id="btnClearLegalSearch" aria-label="Xóa tìm kiếm" style="display: none;">&times;</button>
+                </div>
+                <span class="legal-search-count" id="legalSearchCount" style="display: none;">0 kết quả</span>
             </div>
 
             <!-- Tab Content Panels -->
@@ -607,8 +623,14 @@
             </div>
 
             <div class="legal-modal-footer">
-                <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang">⬆ Lên đầu trang</button>
-                <button type="button" class="btn btn-secondary" id="legalModalCloseFooterBtn">Đóng</button>
+                <div class="legal-footer-left">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang">⬆ Lên đầu trang</button>
+                    <span class="legal-footer-meta">Phiên bản: v1.0.0 • Hiệu lực từ: 28/10/2026</span>
+                </div>
+                <div class="legal-footer-right">
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnAcceptLegal">✓ Tôi đã hiểu & Đồng ý</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="legalModalCloseFooterBtn">Đóng</button>
+                </div>
             </div>
         </div>
     </div>
