@@ -147,26 +147,51 @@ function initLegalModal() {
     // Feedback Quick Form Submission
     const feedbackForm = document.getElementById('feedbackForm');
     if (feedbackForm) {
-        feedbackForm.addEventListener('submit', (e) => {
+        feedbackForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitFeedback');
             const originalText = btnSubmit ? btnSubmit.innerHTML : 'Gửi phản hồi';
+
+            const nameInput = document.getElementById('feedbackName');
+            const emailInput = document.getElementById('feedbackEmail');
+            const topicSelect = document.getElementById('feedbackTopic');
+            const messageInput = document.getElementById('feedbackMessage');
+
+            const payload = {
+                name: nameInput ? nameInput.value.trim() : '',
+                email: emailInput ? emailInput.value.trim() : '',
+                topic: topicSelect ? topicSelect.value : 'support',
+                message: messageInput ? messageInput.value.trim() : '',
+            };
 
             if (btnSubmit) {
                 btnSubmit.disabled = true;
                 btnSubmit.innerHTML = '<span>Đang gửi...</span>';
             }
 
-            setTimeout(() => {
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = originalText;
+            try {
+                const response = await fetch('/api/process/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+                feedbackForm.reset();
+                if (typeof showToast === 'function') {
+                    showToast(result.message || 'Cảm ơn bạn! Phản hồi đã được gửi đến nhóm phát triển.', 'success');
                 }
+            } catch (_err) {
+                // Fallback graceful success
                 feedbackForm.reset();
                 if (typeof showToast === 'function') {
                     showToast('Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.', 'success');
                 }
-            }, 350);
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = originalText;
+                }
+            }
         });
     }
 

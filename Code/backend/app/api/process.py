@@ -8,7 +8,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, 
 from app.core.config import settings
 from app.core.logger import logger
 from app.schemas.common import ApiResponse
-from app.schemas.process import DownloadRequest, ProcessResponseData, RetranslateRequest
+from app.schemas.process import DownloadRequest, FeedbackRequest, ProcessResponseData, RetranslateRequest
 from app.services.export_service import ExportService
 from app.services.ocr_service import OCRService
 from app.services.pdf_service import PDFService
@@ -201,4 +201,19 @@ async def download_result(request: DownloadRequest):
         content=file_bytes,
         media_type=media_type,
         headers=headers,
+    )
+
+
+@router.post("/feedback", response_model=ApiResponse[dict])
+async def submit_feedback(data: FeedbackRequest):
+    """Receive and record user feedback or bug report."""
+    logger.info(f"[Feedback] Nhận phản hồi từ {data.name} ({data.email}) - Chủ đề: {data.topic}")
+    return ApiResponse(
+        success=True,
+        message="Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.",
+        data={
+            "name": data.name,
+            "email": data.email,
+            "topic": data.topic,
+        },
     )

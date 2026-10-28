@@ -25,3 +25,10 @@ class DownloadRequest(BaseModel):
     filename: str = Field(default="translated_document", description="Tên tệp tải về không gồm đuôi")
     title: Optional[str] = Field(default="PDF-Lingua Translation", description="Tiêu đề tài liệu")
     original_content: Optional[str] = Field(default=None, description="Nội dung văn bản gốc nếu muốn xuất song ngữ")
+
+
+class FeedbackRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=150, description="Họ và tên người gửi")
+    email: str = Field(..., min_length=5, max_length=255, description="Email người gửi")
+    topic: str = Field(default="support", description="Chủ đề góp ý: bug | feature | support | other")
+    message: str = Field(..., min_length=5, max_length=3000, description="Nội dung phản hồi")

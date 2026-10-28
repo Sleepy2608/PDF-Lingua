@@ -118,3 +118,28 @@ def test_upload_exceeds_max_pages():
     assert "vượt quá giới hạn" in msg
     assert "105" in msg
 
+
+def test_submit_feedback_success():
+    payload = {
+        "name": "Nguyễn Văn A",
+        "email": "user@example.com",
+        "topic": "bug",
+        "message": "Phát hiện lỗi dịch thuật trên đoạn văn tiếng Nhật.",
+    }
+    response = client.post("/api/process/feedback", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["email"] == "user@example.com"
+    assert "ghi nhận" in body["message"]
+
+
+def test_submit_feedback_invalid_payload():
+    payload = {
+        "name": "",
+        "email": "invalid",
+        "message": "abc",  # less than 5 chars
+    }
+    response = client.post("/api/process/feedback", json=payload)
+    assert response.status_code in [400, 422]
+
