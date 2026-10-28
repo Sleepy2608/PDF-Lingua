@@ -5,6 +5,13 @@
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.workspace-section .container {
+  width: 100%;
+  max-width: min(96vw, 1750px);
+  padding: 0 1.5rem;
+  transition: max-width 0.3s ease;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -42,7 +49,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--text-title);
-  max-width: 260px;
+  max-width: 450px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -162,22 +169,33 @@
   color: var(--color-primary-indigo);
 }
 
-/* Dual Pane Layout */
+/* Dual Pane Layout (Flexbox) */
 .dual-pane-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: stretch;
   gap: 1.5rem;
+  width: 100%;
 }
 
 .pane-card {
   display: flex;
   flex-direction: column;
+  flex: 1 1 50%;
+  min-width: 360px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   height: 680px;
+  transition: flex 0.25s ease, width 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pane-card:focus-within {
+  border-color: var(--color-primary-indigo);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12), var(--shadow-card);
 }
 
 .pane-header {
@@ -246,15 +264,18 @@
 
 .pane-body {
   flex: 1;
-  padding: 1.25rem;
+  padding: 1.25rem 1.5rem;
   overflow-y: auto;
+  overflow-x: auto;
   font-size: 0.9375rem;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--text-body);
   white-space: pre-wrap;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
   background-color: var(--bg-page);
   font-family: inherit;
+  outline: none;
 }
 
 .pane-body:focus {
@@ -434,10 +455,12 @@
 /* Responsive */
 @media (max-width: 900px) {
   .dual-pane-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .pane-card {
+    flex: 1 1 auto;
+    width: 100%;
     height: 480px;
   }
 

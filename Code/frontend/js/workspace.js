@@ -103,6 +103,20 @@ function initWorkspace() {
       }
       isSyncingRight = false;
     });
+
+    paneOriginal.addEventListener('input', () => {
+      if (currentDocData) {
+        currentDocData.original_text = paneOriginal.innerText;
+      }
+      updateCounters();
+    });
+
+    paneTranslated.addEventListener('input', () => {
+      if (currentDocData) {
+        currentDocData.translated_text = paneTranslated.innerText;
+      }
+      updateCounters();
+    });
   }
 }
 
@@ -244,15 +258,18 @@ async function triggerDownload(format) {
   showToast(`Đang chuẩn bị tệp .${format.toUpperCase()}...`, 'info');
 
   try {
+    const translatedContent = document.getElementById('paneTranslated')?.innerText || currentDocData.translated_text;
+    const originalContent = document.getElementById('paneOriginal')?.innerText || currentDocData.original_text;
+
     const response = await fetch(`${API_BASE_URL}/download`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: currentDocData.translated_text,
+        content: translatedContent,
         format: format,
         filename: `${baseName}_dich`,
         title: title,
-        original_content: currentDocData.original_text,
+        original_content: originalContent,
       }),
     });
 
