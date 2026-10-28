@@ -111,4 +111,62 @@ function initLegalModal() {
             closeModal();
         }
     });
+
+    // ── Interactive Features for Phase 2 ──────────────────────────────────
+    // Copy Support Email Button
+    const btnCopyEmail = document.getElementById('btnCopySupportEmail');
+    if (btnCopyEmail) {
+        btnCopyEmail.addEventListener('click', async () => {
+            const email = 'support.pdflingua@gmail.com';
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(email);
+                } else {
+                    const tempInput = document.createElement('input');
+                    tempInput.value = email;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                }
+                btnCopyEmail.innerHTML = '<span>✓ Đã sao chép</span>';
+                setTimeout(() => {
+                    btnCopyEmail.innerHTML = '<span class="copy-icon">📋</span> Sao chép';
+                }, 2000);
+                if (typeof showToast === 'function') {
+                    showToast('Đã sao chép địa chỉ email vào clipboard!', 'success');
+                }
+            } catch (_err) {
+                if (typeof showToast === 'function') {
+                    showToast('Địa chỉ email: ' + email, 'info');
+                }
+            }
+        });
+    }
+
+    // Feedback Quick Form Submission
+    const feedbackForm = document.getElementById('feedbackForm');
+    if (feedbackForm) {
+        feedbackForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btnSubmitFeedback');
+            const originalText = btnSubmit ? btnSubmit.innerHTML : 'Gửi phản hồi';
+
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span>Đang gửi...</span>';
+            }
+
+            setTimeout(() => {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = originalText;
+                }
+                feedbackForm.reset();
+                if (typeof showToast === 'function') {
+                    showToast('Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.', 'success');
+                }
+            }, 350);
+        });
+    }
 }

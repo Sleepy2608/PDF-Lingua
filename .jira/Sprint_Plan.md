@@ -126,7 +126,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 ### 🔹 Sprint 3: Tải Tài Liệu PDF, Trích Xuất Số & Nhận Dạng Chữ Scan OCR
 - **Thời gian**: 29/10/2026 – 05/11/2026 (Tuần 3)
 - **Mục tiêu**: Xây dựng luồng tải tài liệu PDF với hạn mức Free (20MB), kiểm tra an toàn file, trích xuất text số (`pypdf`) và nhận dạng chữ từ PDF scan thông qua OCR (`Tesseract`).
-- **Trạng thái**: 📋 **Chuẩn bị triển khai** – 32 Work Items
+- **Trạng thái**: 📋 **Chuẩn bị triển khai** – 33 Work Items
 
 | Mã Task | Tên nhiệm vụ | Epic | Trạng thái Jira |
 | :--- | :--- | :---: | :---: |
@@ -162,6 +162,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-46` | Xây dựng giao diện hiển thị tiến trình tải lên và xử lý tài liệu | EPIC 03 | To Do |
 | `PDFL-47` | Xây dựng giao diện hiển thị văn bản sau khi trích xuất | EPIC 03 | To Do |
 | `PDFL-57` | Thiết kế trạng thái loading, lỗi, thành công và giao diện khi chưa có dữ liệu | EPIC 03 | To Do |
+| `PDFL-267` | Điều khoản và bảo mật cho người dùng | EPIC 03 | To Do |
 
 ---
 

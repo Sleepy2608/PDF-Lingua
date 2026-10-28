@@ -442,6 +442,13 @@
                 <!-- Panel 1: Điều khoản -->
                 <div class="legal-tab-panel active" id="tabTerms" role="tabpanel">
                     <div class="legal-content">
+                        <div class="legal-callout-box info">
+                            <span class="callout-icon">💡</span>
+                            <div class="callout-body">
+                                <strong>Tóm tắt quyền lợi:</strong> Bạn giữ toàn bộ quyền sở hữu đối với tài liệu PDF tải lên. Bản dịch máy móc mang tính chất tham khảo học thuật.
+                            </div>
+                        </div>
+
                         <h4>1. Quyền sở hữu trí tuệ & Bản quyền</h4>
                         <p>Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu cầu.</p>
 
@@ -462,6 +469,13 @@
                 <!-- Panel 2: Bảo mật -->
                 <div class="legal-tab-panel" id="tabPrivacy" role="tabpanel">
                     <div class="legal-content">
+                        <div class="legal-callout-box success">
+                            <span class="callout-icon">🛡️</span>
+                            <div class="callout-body">
+                                <strong>Cam kết bảo mật:</strong> Tệp PDF được xử lý trong phiên cô lập và tự động xóa sạch. Mật khẩu được mã hóa an toàn bằng Bcrypt.
+                            </div>
+                        </div>
+
                         <h4>1. Thu thập dữ liệu & Phạm vi sử dụng</h4>
                         <p>PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch thuật tài liệu:</p>
                         <ul>
@@ -513,11 +527,58 @@
                         </div>
 
                         <h4>Kênh tiếp nhận phản hồi & Đóng góp</h4>
-                        <p>Nếu bạn gặp lỗi hoặc có câu hỏi, đề xuất cải tiến tính năng, vui lòng liên hệ:</p>
-                        <ul>
-                            <li><strong>Email hỗ trợ:</strong> <a href="mailto:support.pdflingua@gmail.com">support.pdflingua@gmail.com</a></li>
-                            <li><strong>Mã nguồn & Báo lỗi:</strong> <a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener">GitHub Repository (Issues)</a></li>
-                        </ul>
+                        <div class="contact-channels-box">
+                            <div class="contact-channel-item">
+                                <span class="channel-icon">📧</span>
+                                <div class="channel-text">
+                                    <strong>Email hỗ trợ:</strong>
+                                    <span id="supportEmailText">support.pdflingua@gmail.com</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnCopySupportEmail" title="Sao chép email">
+                                    <span class="copy-icon">📋</span> Sao chép
+                                </button>
+                            </div>
+                            <div class="contact-channel-item">
+                                <span class="channel-icon">🐙</span>
+                                <div class="channel-text">
+                                    <strong>Mã nguồn & Issue:</strong>
+                                    <span>github.com/Sleepy2608/PDF-Lingua</span>
+                                </div>
+                                <a href="https://github.com/Sleepy2608/PDF-Lingua/issues" target="_blank" rel="noopener" class="btn btn-sm btn-secondary">
+                                    Gửi Issue
+                                </a>
+                            </div>
+                        </div>
+
+                        <h4>Gửi phản hồi nhanh cho nhóm</h4>
+                        <form class="feedback-form" id="feedbackForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="feedbackName">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" id="feedbackName" class="form-control" placeholder="Ví dụ: Nguyễn Văn A" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feedbackEmail">Email liên hệ <span class="text-danger">*</span></label>
+                                    <input type="email" id="feedbackEmail" class="form-control" placeholder="name@example.com" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feedbackTopic">Chủ đề đóng góp</label>
+                                <select id="feedbackTopic" class="form-control">
+                                    <option value="bug">🐛 Báo cáo lỗi dịch thuật / OCR</option>
+                                    <option value="feature">💡 Đề xuất tính năng mới</option>
+                                    <option value="support">❓ Câu hỏi / Hỗ trợ sử dụng</option>
+                                    <option value="other">💬 Đóng góp ý kiến khác</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="feedbackMessage">Nội dung phản hồi <span class="text-danger">*</span></label>
+                                <textarea id="feedbackMessage" class="form-control" rows="3" placeholder="Mô tả chi tiết ý kiến hoặc lỗi bạn gặp phải..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitFeedback">
+                                <span>Gửi phản hồi</span>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
