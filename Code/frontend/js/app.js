@@ -169,4 +169,39 @@ function initLegalModal() {
             }, 350);
         });
     }
+
+    // ── Phase 3: TOC Quick Jump, Print & Scroll to Top ──────────────────
+    // Smooth scroll for TOC chips inside modal body
+    const tocChips = overlay.querySelectorAll('.toc-chip');
+    tocChips.forEach((chip) => {
+        chip.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = chip.getAttribute('href').replace('#', '');
+            const targetEl = document.getElementById(targetId);
+            const modalBody = overlay.querySelector('.legal-modal-body');
+            if (targetEl && modalBody) {
+                const targetOffset = targetEl.offsetTop - modalBody.offsetTop;
+                modalBody.scrollTo({ top: Math.max(0, targetOffset - 15), behavior: 'smooth' });
+            }
+        });
+    });
+
+    // Print Legal Document Button
+    const btnPrintLegal = document.getElementById('btnPrintLegal');
+    if (btnPrintLegal) {
+        btnPrintLegal.addEventListener('click', () => {
+            window.print();
+        });
+    }
+
+    // Scroll to Top Button
+    const btnScrollToTop = document.getElementById('btnScrollToTop');
+    if (btnScrollToTop) {
+        btnScrollToTop.addEventListener('click', () => {
+            const modalBody = overlay.querySelector('.legal-modal-body');
+            if (modalBody) {
+                modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }
 }

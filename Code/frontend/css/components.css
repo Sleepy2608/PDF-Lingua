@@ -616,7 +616,81 @@
   border-top: 1px solid var(--border-subtle, #E2E8F0);
   background-color: #F8FAFC;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Legal Header Actions */
+.legal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legal-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.legal-action-btn:hover {
+  color: var(--color-primary-indigo, #4F46E5);
+  border-color: var(--color-primary-indigo, #4F46E5);
+  background-color: #ffffff;
+}
+
+.legal-action-btn .btn-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+/* Quick Jump TOC Chips */
+.legal-toc-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  padding: 0.65rem 0.85rem;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: var(--radius-md, 10px);
+}
+
+.legal-toc-chips .toc-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748B);
+  margin-right: 0.25rem;
+}
+
+.legal-toc-chips .toc-chip {
+  font-size: 0.785rem;
+  font-weight: 600;
+  color: var(--color-primary-indigo, #4F46E5);
+  background-color: #ffffff;
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius-pill, 9999px);
+  padding: 0.2rem 0.65rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.legal-toc-chips .toc-chip:hover {
+  background-color: var(--color-primary-indigo, #4F46E5);
+  color: #ffffff;
+  border-color: var(--color-primary-indigo, #4F46E5);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 640px) {
@@ -643,5 +717,45 @@
   }
   .contact-channel-item .btn {
     align-self: flex-start;
+  }
+  .legal-toc-chips {
+    gap: 0.35rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .legal-modal-overlay,
+  .legal-modal-container,
+  .legal-modal-container * {
+    visibility: visible;
+  }
+  .legal-modal-overlay {
+    position: static !important;
+    background: none !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+  .legal-modal-container {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .legal-tabs-bar,
+  .legal-header-actions,
+  .legal-modal-close,
+  .legal-modal-footer,
+  .legal-toc-chips,
+  .contact-channels-box,
+  .feedback-form {
+    display: none !important;
+  }
+  .legal-tab-panel {
+    display: block !important;
   }
 }

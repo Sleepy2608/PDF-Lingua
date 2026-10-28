@@ -418,7 +418,12 @@
                     <h3 class="legal-modal-title" id="legalModalTitle">Thông Tin & Chính Sách</h3>
                     <p class="legal-modal-subtitle">Quy định sử dụng, cam kết bảo mật & thông tin hỗ trợ PDF-Lingua</p>
                 </div>
-                <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng">&times;</button>
+                <div class="legal-header-actions">
+                    <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
+                        <span class="btn-icon">🖨️</span> In
+                    </button>
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng">&times;</button>
+                </div>
             </div>
 
             <!-- Tab Navigation Bar -->
@@ -449,19 +454,28 @@
                             </div>
                         </div>
 
-                        <h4>1. Quyền sở hữu trí tuệ & Bản quyền</h4>
+                        <!-- Quick Jump Index -->
+                        <div class="legal-toc-chips">
+                            <span class="toc-label">Mục lục:</span>
+                            <a href="#terms-section-1" class="toc-chip">1. Bản quyền</a>
+                            <a href="#terms-section-2" class="toc-chip">2. Quy định</a>
+                            <a href="#terms-section-3" class="toc-chip">3. Hạn mức</a>
+                            <a href="#terms-section-4" class="toc-chip">4. Miễn trừ</a>
+                        </div>
+
+                        <h4 id="terms-section-1">1. Quyền sở hữu trí tuệ & Bản quyền</h4>
                         <p>Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu cầu.</p>
 
-                        <h4>2. Quy định sử dụng dịch vụ</h4>
+                        <h4 id="terms-section-2">2. Quy định sử dụng dịch vụ</h4>
                         <p>Người dùng cam kết không sử dụng hệ thống để xử lý, phát tán các tài liệu chứa mã độc, nội dung vi phạm pháp luật, xâm phạm quyền riêng tư của cá nhân hoặc tổ chức khác. Không thực hiện các hành vi can thiệp trái phép, đảo ngược mã nguồn hoặc tấn công làm quá tải máy chủ.</p>
 
-                        <h4>3. Giới hạn gói dịch vụ (Tiers)</h4>
+                        <h4 id="terms-section-3">3. Giới hạn gói dịch vụ (Tiers)</h4>
                         <ul>
                             <li><strong>Gói Free (Khách & Người dùng cơ bản):</strong> Hạn mức xử lý tối đa 20 MB/tệp và tối đa 100 trang/tài liệu. Hỗ trợ trích xuất văn bản số và OCR cơ bản.</li>
                             <li><strong>Gói Pro:</strong> Hạn mức xử lý mở rộng lên đến 100 MB/tệp cùng các tính năng AI nâng cao (Tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu).</li>
                         </ul>
 
-                        <h4>4. Miễn trừ trách nhiệm (Disclaimer)</h4>
+                        <h4 id="terms-section-4">4. Miễn trừ trách nhiệm (Disclaimer)</h4>
                         <p>Các tính năng trích xuất văn bản, nhận dạng OCR và dịch thuật tự động được thực hiện dựa trên các mô hình máy học và dịch máy. Hệ thống nỗ lực mang lại kết quả chuẩn xác nhất nhưng không đảm bảo tính hoàn hảo 100% về mặt ngữ nghĩa và không thể thay thế cho bản dịch công chứng có tính pháp lý.</p>
                     </div>
                 </div>
@@ -476,7 +490,16 @@
                             </div>
                         </div>
 
-                        <h4>1. Thu thập dữ liệu & Phạm vi sử dụng</h4>
+                        <!-- Quick Jump Index -->
+                        <div class="legal-toc-chips">
+                            <span class="toc-label">Mục lục:</span>
+                            <a href="#privacy-section-1" class="toc-chip">1. Thu thập dữ liệu</a>
+                            <a href="#privacy-section-2" class="toc-chip">2. Tự động xóa</a>
+                            <a href="#privacy-section-3" class="toc-chip">3. Tiêu chuẩn mã hóa</a>
+                            <a href="#privacy-section-4" class="toc-chip">4. Cam kết bảo vệ</a>
+                        </div>
+
+                        <h4 id="privacy-section-1">1. Thu thập dữ liệu & Phạm vi sử dụng</h4>
                         <p>PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch thuật tài liệu:</p>
                         <ul>
                             <li>Tệp PDF tải lên tạm thời trong phiên làm việc.</li>
@@ -484,17 +507,17 @@
                             <li>Dữ liệu kỹ thuật ẩn danh (IP, thời gian gửi yêu cầu) phục vụ cho cơ chế bảo vệ chống tấn công quá tải (Rate Limiting).</li>
                         </ul>
 
-                        <h4>2. Chính sách lưu trữ & Tự động xóa (Auto-Cleanup)</h4>
+                        <h4 id="privacy-section-2">2. Chính sách lưu trữ & Tự động xóa (Auto-Cleanup)</h4>
                         <p>Mọi tệp tài liệu PDF và file tạm thời phát sinh trong quá trình xử lý đều được lưu trữ trong thư mục tạm có bảo vệ và được tự động dọn dẹp, xóa sạch sau khi hoàn tất phiên làm việc. Người dùng có toàn quyền xóa lịch sử xử lý tài liệu bất cứ khi nào.</p>
 
-                        <h4>3. Tiêu chuẩn mã hóa & An toàn hệ thống</h4>
+                        <h4 id="privacy-section-3">3. Tiêu chuẩn mã hóa & An toàn hệ thống</h4>
                         <ul>
                             <li><strong>Mật khẩu:</strong> Sử dụng thuật toán băm chuẩn công nghiệp <code>bcrypt</code> với 12 rounds muối ngẫu nhiên.</li>
                             <li><strong>Phiên làm việc:</strong> Bảo mật thông qua mã xác thực JSON Web Token (JWT) có thời hạn.</li>
                             <li><strong>Tính cô lập (Data Isolation):</strong> Tài liệu và dữ liệu của người dùng được phân tách biệt lập, ngăn chặn hoàn toàn việc người khác truy cập trái phép.</li>
                         </ul>
 
-                        <h4>4. Cam kết bảo vệ dữ liệu</h4>
+                        <h4 id="privacy-section-4">4. Cam kết bảo vệ dữ liệu</h4>
                         <p>Chúng tôi tuyệt đối không bán, cho thuê, trao đổi hoặc tiết lộ thông tin cá nhân và dữ liệu tài liệu của người dùng cho bất kỳ bên thứ ba nào.</p>
                     </div>
                 </div>
@@ -584,6 +607,7 @@
             </div>
 
             <div class="legal-modal-footer">
+                <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang">⬆ Lên đầu trang</button>
                 <button type="button" class="btn btn-secondary" id="legalModalCloseFooterBtn">Đóng</button>
             </div>
         </div>
