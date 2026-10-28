@@ -59,19 +59,35 @@ async def upload_and_translate(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
         page_count = validation["page_count"]
-        is_scanned = pdf_service.is_scanned_pdf(tmp_path)
+        if page_count <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
+            )
+
+        max_allowed_pages = settings.MAX_PAGES_FREE
+        if page_count > max_allowed_pages:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Tài liệu có {page_count} trang, vượt quá giới hạn của gói Miễn phí "
+                    f"(tối đa {max_allowed_pages} trang/tệp). Vui lòng nâng cấp gói Pro hoặc chia nhỏ tài liệu."
+                ),
+            )
+
+        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
         is_ocr_used = False
         original_text = ""
 
         if not is_scanned:
-            original_text = pdf_service.extract_text(tmp_path)
+            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
 
         if not original_text.strip():
             is_ocr_used = True
             logger.info("[Process] Fallback to OCR for scanned document...")
             ocr_res = ocr_service.extract_text_from_scanned_pdf(
                 tmp_path,
-                max_pages=settings.MAX_PAGES_FREE,
+                max_pages=max_allowed_pages,
             )
             original_text = ocr_res.get("text", "")
 

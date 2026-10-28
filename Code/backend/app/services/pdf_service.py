@@ -35,11 +35,12 @@ class PDFService:
         reader = pypdf.PdfReader(str(file_path))
         return len(reader.pages)
 
-    def extract_text(self, file_path: Path | str) -> str:
+    def extract_text(self, file_path: Path | str, max_pages: int | None = None) -> str:
         reader = pypdf.PdfReader(str(file_path))
         page_texts: list[str] = []
+        pages = reader.pages[:max_pages] if max_pages is not None else reader.pages
 
-        for page in reader.pages:
+        for page in pages:
             raw_text = page.extract_text() or ""
             cleaned = self._clean_whitespace(raw_text)
             if cleaned:
@@ -47,11 +48,12 @@ class PDFService:
 
         return "\n\n".join(page_texts)
 
-    def extract_pages(self, file_path: Path | str) -> list[dict[str, Any]]:
+    def extract_pages(self, file_path: Path | str, max_pages: int | None = None) -> list[dict[str, Any]]:
         reader = pypdf.PdfReader(str(file_path))
         pages_data: list[dict[str, Any]] = []
+        pages = reader.pages[:max_pages] if max_pages is not None else reader.pages
 
-        for idx, page in enumerate(reader.pages):
+        for idx, page in enumerate(pages):
             raw_text = page.extract_text() or ""
             cleaned = self._clean_whitespace(raw_text)
             pages_data.append({
@@ -63,8 +65,8 @@ class PDFService:
 
         return pages_data
 
-    def is_scanned_pdf(self, file_path: Path | str, threshold_chars: int = 25) -> bool:
-        pages = self.extract_pages(file_path)
+    def is_scanned_pdf(self, file_path: Path | str, threshold_chars: int = 25, max_pages: int | None = None) -> bool:
+        pages = self.extract_pages(file_path, max_pages=max_pages)
         if not pages:
             return True
 

@@ -33,6 +33,24 @@ def test_pdf_service_scanned_detection(sample_pdf: Path):
     assert service.is_scanned_pdf(sample_pdf) is True
 
 
+def test_pdf_service_max_pages_constraint(tmp_path: Path):
+    writer = pypdf.PdfWriter()
+    for _ in range(5):
+        writer.add_blank_page(width=200, height=200)
+    pdf_file = tmp_path / "multipage.pdf"
+    with open(pdf_file, "wb") as f:
+        writer.write(f)
+
+    service = PDFService()
+    assert service.get_page_count(pdf_file) == 5
+
+    pages_all = service.extract_pages(pdf_file)
+    assert len(pages_all) == 5
+
+    pages_limited = service.extract_pages(pdf_file, max_pages=2)
+    assert len(pages_limited) == 2
+
+
 def test_ocr_service_availability():
     service = OCRService()
     avail = service.is_available()
