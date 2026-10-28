@@ -503,7 +503,12 @@ def test_login_success(client, db_session):
     assert data["success"] is True
     assert data["message"] == "Đăng nhập thành công."
 
-    user_data = data["data"]
+    token_data = data["data"]
+    assert "access_token" in token_data
+    assert token_data["token_type"] == "bearer"
+    assert isinstance(token_data["access_token"], str)
+    assert len(token_data["access_token"].split(".")) == 3
+    user_data = token_data["user"]
     assert user_data["email"] == "loginuser@example.com"
     assert user_data["full_name"] == "Login User"
     assert user_data["role"] == "free"
@@ -530,7 +535,7 @@ def test_login_email_normalization_and_whitespace(client):
     response = client.post("/api/auth/login", json=login_payload)
 
     assert response.status_code == 200
-    assert response.json()["data"]["email"] == "normaluser@example.com"
+    assert response.json()["data"]["user"]["email"] == "normaluser@example.com"
 
 
 def test_login_wrong_password(client):
@@ -655,7 +660,7 @@ def test_login_payload_tampering_ignored(client, db_session):
     response = client.post("/api/auth/login", json=tampered_login)
 
     assert response.status_code == 200
-    user_data = response.json()["data"]
+    user_data = response.json()["data"]["user"]
     assert user_data["role"] == "free"
     assert user_data["is_active"] is True
     assert user_data["id"] != 99999

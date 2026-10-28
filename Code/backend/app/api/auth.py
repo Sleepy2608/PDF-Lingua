@@ -8,8 +8,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db
+from app.core.security import create_access_token
 from app.schemas.common import ApiResponse
-from app.schemas.user import UserCreate, UserLogin, UserResponse
+from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -40,23 +41,28 @@ def register(
 
 @router.post(
     "/login",
-    response_model=ApiResponse[UserResponse],
+    response_model=ApiResponse[TokenResponse],
     status_code=status.HTTP_200_OK,
     summary="Authenticate user credentials",
-    description="Authenticates an active user using email and password. Returns 200 OK and user information without exposing sensitive fields.",
+    description="Authenticates an active user using email and password. Returns 200 OK with bearer access token and safe user information.",
 )
 def login(
     credentials: UserLogin,
     db: Session = Depends(get_db),
-) -> ApiResponse[UserResponse]:
+) -> ApiResponse[TokenResponse]:
     """
     Authenticate user credentials.
-    Returns 200 OK and safe user object on success.
+    Returns 200 OK with bearer access token and safe user object on success.
     Raises 401 INVALID_CREDENTIALS for invalid email/password, or 403 ACCOUNT_INACTIVE for inactive accounts.
     """
     user = AuthService.authenticate_user(db=db, user_in=credentials)
+    access_token = create_access_token(subject=user.id)
     return ApiResponse(
         success=True,
         message="Đăng nhập thành công.",
-        data=UserResponse.model_validate(user),
+        data=TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            user=UserResponse.model_validate(user),
+        ),
     )

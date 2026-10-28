@@ -154,6 +154,19 @@ class UserResponse(UserBase):
     model_config = {"from_attributes": True}
 
 
+# ── Authentication / Token ───────────────────────────────────────────────────
+
+class TokenResponse(BaseModel):
+    """
+    Response schema returned upon successful user authentication.
+    Contains the signed JWT access token, token scheme, and safe user profile.
+    """
+
+    access_token: str = Field(..., description="Signed JWT bearer access token.")
+    token_type: str = Field(default="bearer", description="Token authorization type (e.g. bearer).")
+    user: UserResponse = Field(..., description="Safe user profile data.")
+
+
 # ── Internal DB Model ─────────────────────────────────────────────────────────
 
 class UserInDB(UserResponse):
@@ -165,3 +178,4 @@ class UserInDB(UserResponse):
     hashed_password: str
 
     model_config = {"from_attributes": True}
+
