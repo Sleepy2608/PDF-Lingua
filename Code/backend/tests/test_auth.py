@@ -670,3 +670,153 @@ def test_login_payload_tampering_ignored(client, db_session):
     assert db_user.role == UserRole.FREE
     assert db_user.is_active is True
 
+
+# ── Me & Logout / Protected Route Tests ────────────────────────────────────────
+
+def test_get_me_success(client):
+    """TC-AUTH-01: Valid Bearer token returns current user profile (HTTP 200)."""
+    client.post("/api/auth/register", json={
+        "email": "me_user@example.com",
+        "password": "Password123",
+        "full_name": "Me User",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "me_user@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["success"] is True
+    assert body["data"]["email"] == "me_user@example.com"
+    assert body["data"]["full_name"] == "Me User"
+    assert "password" not in body["data"]
+    assert "hashed_password" not in body["data"]
+
+
+def test_get_me_missing_token(client):
+    """TC-AUTH-02: Missing Authorization header returns 401 NOT_AUTHENTICATED."""
+    res = client.get("/api/auth/me")
+    assert res.status_code == 401
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "NOT_AUTHENTICATED"
+
+
+def test_get_me_invalid_auth_scheme(client):
+    """TC-AUTH-03: Non-Bearer scheme (e.g. Basic) returns 401 NOT_AUTHENTICATED."""
+    res = client.get("/api/auth/me", headers={"Authorization": "Basic dXNlcjpwYXNz"})
+    assert res.status_code == 401
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "NOT_AUTHENTICATED"
+
+
+def test_get_me_invalid_or_malformed_token(client):
+    """TC-AUTH-04: Malformed or wrong signature token returns 401 INVALID_TOKEN."""
+    res = client.get("/api/auth/me", headers={"Authorization": "Bearer not.a.valid.jwt"})
+    assert res.status_code == 401
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "INVALID_TOKEN"
+
+
+def test_get_me_expired_token(client):
+    """TC-AUTH-05: Expired token returns 401 TOKEN_EXPIRED."""
+    from datetime import timedelta
+    from app.core.security import create_access_token
+
+    expired_token = create_access_token(subject=1, expires_delta=timedelta(seconds=-1))
+    res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {expired_token}"})
+    assert res.status_code == 401
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "TOKEN_EXPIRED"
+
+
+def test_get_me_user_not_found(client):
+    """TC-AUTH-06: Valid token for non-existent user returns 401 USER_NOT_FOUND."""
+    from app.core.security import create_access_token
+
+    ghost_token = create_access_token(subject=999999)
+    res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {ghost_token}"})
+    assert res.status_code == 401
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "USER_NOT_FOUND"
+
+
+def test_get_me_inactive_account(client, db_session):
+    """TC-AUTH-07: Inactive user account returns 403 ACCOUNT_INACTIVE."""
+    client.post("/api/auth/register", json={
+        "email": "inactive_me@example.com",
+        "password": "Password123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "inactive_me@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    user = db_session.query(User).filter(User.email == "inactive_me@example.com").first()
+    user.is_active = False
+    db_session.commit()
+
+    res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 403
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "ACCOUNT_INACTIVE"
+
+
+def test_get_me_response_no_sensitive_fields(client):
+    """TC-AUTH-08: /api/auth/me never leaks password or hashed_password."""
+    client.post("/api/auth/register", json={
+        "email": "safe_me@example.com",
+        "password": "Password123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "safe_me@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 200
+    user_payload = res.json()["data"]
+    assert "password" not in user_payload
+    assert "hashed_password" not in user_payload
+
+
+def test_logout_success(client):
+    """TC-AUTH-09: Logout with valid Bearer token returns 200 OK."""
+    client.post("/api/auth/register", json={
+        "email": "logout_user@example.com",
+        "password": "Password123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "logout_user@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.post("/api/auth/logout", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["success"] is True
+    assert body["message"] == "Đăng xuất thành công."
+
+
+def test_logout_missing_or_invalid_token(client):
+    """TC-AUTH-10: Logout without token or with invalid token returns 401."""
+    # Without token
+    res_no_token = client.post("/api/auth/logout")
+    assert res_no_token.status_code == 401
+    assert res_no_token.json()["error_code"] == "NOT_AUTHENTICATED"
+
+    # With invalid token
+    res_bad_token = client.post("/api/auth/logout", headers={"Authorization": "Bearer bad.token"})
+    assert res_bad_token.status_code == 401
+    assert res_bad_token.json()["error_code"] == "INVALID_TOKEN"

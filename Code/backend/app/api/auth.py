@@ -7,8 +7,9 @@ Endpoints for user registration, login, logout, and token refresh.
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_db
+from app.core.dependencies import get_current_user, get_db
 from app.core.security import create_access_token
+from app.models.user import User
 from app.schemas.common import ApiResponse
 from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
 from app.services.auth_service import AuthService
@@ -65,4 +66,52 @@ def login(
             token_type="bearer",
             user=UserResponse.model_validate(user),
         ),
+    )
+
+
+@router.get(
+    "/me",
+    response_model=ApiResponse[UserResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Get current user profile",
+    description="Returns profile of the currently authenticated user based on Bearer token.",
+)
+def get_me(
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[UserResponse]:
+    """
+    Get current user information.
+    Requires a valid Bearer access token.
+    Returns 200 OK and UserResponse without password or password hash.
+    """
+    return ApiResponse(
+        success=True,
+        message="Lấy thông tin tài khoản thành công.",
+        data=UserResponse.model_validate(current_user),
+    )
+
+
+@router.post(
+    "/logout",
+    response_model=ApiResponse[None],
+    status_code=status.HTTP_200_OK,
+    summary="Log out user",
+    description=(
+        "Confirms client logout request. In stateless JWT architecture, "
+        "tokens are not blacklisted server-side; the client MUST discard the token. "
+        "Token is not revoked immediately on server."
+    ),
+)
+def logout(
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[None]:
+    """
+    Log out the current user session.
+    Requires a valid Bearer token.
+    Returns 200 OK. Frontend must clear the stored token from client storage.
+    """
+    return ApiResponse(
+        success=True,
+        message="Đăng xuất thành công.",
+        data=None,
     )
