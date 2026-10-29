@@ -120,9 +120,74 @@ function initWorkspace() {
   }
 }
 
+/**
+ * Helper to construct authentication headers safely (PDFL-81.4).
+ * Returns { 'Authorization': 'Bearer <token>' } if a valid non-empty token exists;
+ * otherwise returns an empty object {} for Guests. Never sends 'Bearer null' or 'Bearer undefined'.
+ */
+function getAuthHeaders() {
+  const headers = {};
+  let token = null;
+
+  try {
+    if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
+      token = window.pdfLinguaAuth.getStoredToken();
+    } else if (typeof localStorage !== 'undefined' && localStorage) {
+      token = localStorage.getItem('pdfl_token');
+    }
+  } catch (e) {
+    token = null;
+  }
+
+  if (typeof token === 'string') {
+    const trimmed = token.trim();
+    if (trimmed && trimmed !== 'null' && trimmed !== 'undefined') {
+      headers['Authorization'] = `Bearer ${trimmed}`;
+    }
+  }
+
+  return headers;
+}
+
+/**
+ * Handle HTTP 401 Unauthorized errors from process endpoints (PDFL-81.4).
+ * Clears stored token/session, resets header to Guest state and updates upload limits,
+ * but NEVER silently retries the request without authentication.
+ */
+function handleAuthError(result) {
+  showProgressModal(false);
+  try {
+    if (typeof window !== 'undefined' && window.pdfLinguaAuth) {
+      if (typeof window.pdfLinguaAuth.clearStoredSession === 'function') {
+        window.pdfLinguaAuth.clearStoredSession();
+      }
+      if (typeof window.pdfLinguaAuth.updateHeaderAuthState === 'function') {
+        window.pdfLinguaAuth.updateHeaderAuthState(null);
+      }
+    }
+    if (typeof updateUploadLimitsUI === 'function') {
+      updateUploadLimitsUI(null);
+    }
+  } catch (e) {}
+
+  const msg = (result && (result.message || result.detail))
+    ? (result.message || result.detail)
+    : 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.';
+  showToast(msg, 'error');
+}
+
 async function handleProcessPdf() {
   if (typeof selectedFile === 'undefined' || !selectedFile) {
     showToast('Vui lòng chọn một tệp PDF trước khi bắt đầu!', 'error');
+    return;
+  }
+
+  // Pre-check file size against current limits before uploading
+  const limits = (typeof getCurrentUserLimits === 'function')
+    ? getCurrentUserLimits()
+    : { maxFileSizeBytes: 20 * 1024 * 1024, maxFileSizeMb: 20 };
+  if (selectedFile.size > limits.maxFileSizeBytes) {
+    showToast(`Dung lượng tệp (${formatFileSize(selectedFile.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!`, 'error');
     return;
   }
 
@@ -146,18 +211,41 @@ async function handleProcessPdf() {
       updateProgress(75, 'Đang dịch thuật văn bản sang ngôn ngữ đích...', 3);
     }, 1500);
 
-    const response = await fetch(`${API_BASE_URL}/upload-and-translate`, {
+    const authHeaders = getAuthHeaders();
+    const fetchOptions = {
       method: 'POST',
       body: formData,
-    });
+    };
+    if (authHeaders['Authorization']) {
+      fetchOptions.headers = authHeaders;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/upload-and-translate`, fetchOptions);
 
     clearTimeout(progressTimer1);
     clearTimeout(progressTimer2);
 
-    const result = await response.json();
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (e) {}
 
-    if (!response.ok || !result.success) {
-      const msg = result.detail || result.message || 'Xử lý tài liệu thất bại.';
+    if (response.status === 401) {
+      handleAuthError(result);
+      return;
+    }
+
+    if (response.status === 413) {
+      showProgressModal(false);
+      const msg = (result && (result.message || result.detail))
+        ? (result.message || result.detail)
+        : 'Tệp hoặc số trang vượt quá giới hạn cho phép của tài khoản!';
+      showToast(msg, 'error');
+      return;
+    }
+
+    if (!response.ok || !result || !result.success) {
+      const msg = (result && (result.detail || result.message)) || 'Xử lý tài liệu thất bại.';
       throw new Error(msg);
     }
 
@@ -201,9 +289,12 @@ async function handleRetranslate() {
   }
 
   try {
+    const authHeaders = getAuthHeaders();
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+
     const response = await fetch(`${API_BASE_URL}/retranslate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
       body: JSON.stringify({
         text: currentDocData.original_text,
         target_lang: newTargetLang,
@@ -211,9 +302,18 @@ async function handleRetranslate() {
       }),
     });
 
-    const result = await response.json();
-    if (!response.ok || !result.success) {
-      throw new Error(result.detail || result.message || 'Dịch lại thất bại.');
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (e) {}
+
+    if (response.status === 401) {
+      handleAuthError(result);
+      return;
+    }
+
+    if (!response.ok || !result || !result.success) {
+      throw new Error((result && (result.detail || result.message)) || 'Dịch lại thất bại.');
     }
 
     const newTranslatedText = result.data.translated_text;
@@ -261,9 +361,12 @@ async function triggerDownload(format) {
     const translatedContent = document.getElementById('paneTranslated')?.innerText || currentDocData.translated_text;
     const originalContent = document.getElementById('paneOriginal')?.innerText || currentDocData.original_text;
 
+    const authHeaders = getAuthHeaders();
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+
     const response = await fetch(`${API_BASE_URL}/download`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
       body: JSON.stringify({
         content: translatedContent,
         format: format,
@@ -273,8 +376,24 @@ async function triggerDownload(format) {
       }),
     });
 
+    if (response.status === 401) {
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (e) {}
+      handleAuthError(result);
+      return;
+    }
+
     if (!response.ok) {
-      throw new Error('Lỗi khi tải tệp từ máy chủ.');
+      let errorMsg = 'Lỗi khi tải tệp từ máy chủ.';
+      try {
+        const errorJson = await response.json();
+        if (errorJson && (errorJson.message || errorJson.detail)) {
+          errorMsg = errorJson.message || errorJson.detail;
+        }
+      } catch (e) {}
+      throw new Error(errorMsg);
     }
 
     const blob = await response.blob();
@@ -449,4 +568,19 @@ function getLangName(code) {
     ru: 'Tiếng Nga',
   };
   return names[code] || code;
+}
+
+// Expose globals for integration & testing (PDFL-81.4)
+if (typeof window !== 'undefined') {
+  window.pdfLinguaWorkspace = Object.assign(window.pdfLinguaWorkspace || {}, {
+    getAuthHeaders,
+    handleAuthError,
+    handleProcessPdf,
+    handleRetranslate,
+    triggerDownload,
+    showToast,
+    getCurrentDocData: () => currentDocData,
+    setCurrentDocData: (d) => { currentDocData = d; },
+  });
+  window.showToast = showToast;
 }

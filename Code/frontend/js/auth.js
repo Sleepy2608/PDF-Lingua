@@ -160,12 +160,12 @@
     });
 
     // Expose helpers globally for testing or integration
-    window.pdfLinguaAuth = {
+    window.pdfLinguaAuth = Object.assign(window.pdfLinguaAuth || {}, {
       openRegisterModal,
       closeRegisterModal,
       openLoginModal,
       closeLoginModal,
-    };
+    });
   }
 
   /**
@@ -984,6 +984,18 @@
       if (userAvatarEl) {
         userAvatarEl.textContent = '';
       }
+    }
+
+    // PDFL-81.4: Notify upload module to update role-based file limits
+    if (typeof updateUploadLimitsUI === 'function') {
+      try {
+        updateUploadLimitsUI(user);
+      } catch (e) {}
+    }
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      try {
+        window.dispatchEvent(new CustomEvent('pdfl:auth-change', { detail: { user } }));
+      } catch (e) {}
     }
   }
 
