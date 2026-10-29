@@ -321,9 +321,9 @@ def test_upload_pro_user_allows_over_20mb(client, db_session, monkeypatch):
 
     # Mock validation and extraction so it doesn't fail downstream
     from app.api.process import pdf_service, translation_service
-    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path: {"is_valid": True, "page_count": 5, "error": None})
-    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path: False)
-    monkeypatch.setattr(pdf_service, "extract_text", lambda path: "Sample extracted text from Pro document.")
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 5, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "Sample extracted text from Pro document.")
     monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
         "translated_text": "Bản dịch thử nghiệm.",
         "engine_used": "mock",
@@ -347,9 +347,9 @@ def test_upload_admin_user_allows_over_20mb(client, db_session, monkeypatch):
     files = {"file": ("admin_25mb.pdf", content_25mb, "application/pdf")}
 
     from app.api.process import pdf_service, translation_service
-    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path: {"is_valid": True, "page_count": 5, "error": None})
-    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path: False)
-    monkeypatch.setattr(pdf_service, "extract_text", lambda path: "Sample extracted text from Admin document.")
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 5, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "Sample extracted text from Admin document.")
     monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
         "translated_text": "Bản dịch thử nghiệm Admin.",
         "engine_used": "mock",
@@ -390,9 +390,9 @@ def test_ocr_page_limit_free_user_exceeding_100_pages(client, db_session, monkey
     files = {"file": ("scanned_101.pdf", b"%PDF-1.4 scanned", "application/pdf")}
 
     from app.api.process import pdf_service
-    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path: {"is_valid": True, "page_count": 101, "error": None})
-    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path: True)
-    monkeypatch.setattr(pdf_service, "extract_text", lambda path: "")
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 101, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: True)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "")
 
     res = client.post(
         "/api/process/upload-and-translate",
@@ -412,9 +412,9 @@ def test_ocr_page_limit_pro_user_allows_up_to_500_pages(client, db_session, monk
     files = {"file": ("scanned_200.pdf", b"%PDF-1.4 scanned", "application/pdf")}
 
     from app.api.process import ocr_service, pdf_service, translation_service
-    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path: {"is_valid": True, "page_count": 200, "error": None})
-    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path: True)
-    monkeypatch.setattr(pdf_service, "extract_text", lambda path: "")
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 200, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: True)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "")
     monkeypatch.setattr(ocr_service, "extract_text_from_scanned_pdf", lambda path, **kw: {
         "success": True,
         "text": "Recognized text from 200 scanned pages.",
@@ -441,9 +441,9 @@ def test_ocr_page_limit_pro_user_exceeding_500_pages(client, db_session, monkeyp
     files = {"file": ("scanned_505.pdf", b"%PDF-1.4 scanned", "application/pdf")}
 
     from app.api.process import pdf_service
-    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path: {"is_valid": True, "page_count": 505, "error": None})
-    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path: True)
-    monkeypatch.setattr(pdf_service, "extract_text", lambda path: "")
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 505, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: True)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "")
 
     res = client.post(
         "/api/process/upload-and-translate",

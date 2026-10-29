@@ -11,7 +11,7 @@ from app.core.dependencies import get_optional_current_user
 from app.core.logger import logger
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
-from app.schemas.process import DownloadRequest, ProcessResponseData, RetranslateRequest
+from app.schemas.process import DownloadRequest, FeedbackRequest, ProcessResponseData, RetranslateRequest
 from app.services.export_service import ExportService
 from app.services.ocr_service import OCRService
 from app.services.pdf_service import PDFService
@@ -78,12 +78,34 @@ async def upload_and_translate(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
         page_count = validation["page_count"]
-        is_scanned = pdf_service.is_scanned_pdf(tmp_path)
+        if page_count <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
+            )
+
+        max_allowed_pages = max_ocr_pages
+        if page_count > max_allowed_pages:
+            if current_user is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Tài liệu có {page_count} trang, vượt quá giới hạn của gói Miễn phí "
+                        f"(tối đa {max_allowed_pages} trang/tệp). Vui lòng nâng cấp gói Pro hoặc chia nhỏ tài liệu."
+                    ),
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
+                )
+
+        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
         is_ocr_used = False
         original_text = ""
 
         if not is_scanned:
-            original_text = pdf_service.extract_text(tmp_path)
+            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
 
         if not original_text.strip():
             is_ocr_used = True
@@ -215,4 +237,19 @@ async def download_result(
         content=file_bytes,
         media_type=media_type,
         headers=headers,
+    )
+
+
+@router.post("/feedback", response_model=ApiResponse[dict])
+async def submit_feedback(data: FeedbackRequest):
+    """Receive and record user feedback or bug report."""
+    logger.info(f"[Feedback] Nhận phản hồi từ {data.name} ({data.email}) - Chủ đề: {data.topic}")
+    return ApiResponse(
+        success=True,
+        message="Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.",
+        data={
+            "name": data.name,
+            "email": data.email,
+            "topic": data.topic,
+        },
     )

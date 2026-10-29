@@ -94,6 +94,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-57: Thiết kế trạng thái loading, lỗi, thành công và giao diện khi chưa có dữ liệu.
 - PDFL-58: Đảm bảo giao diện responsive trên máy tính, máy tính bảng và điện thoại.
 - PDFL-59: Kiểm tra tính nhất quán về thiết kế và khả năng sử dụng.
+- PDFL-267: Xây dựng nội dung và giao diện Điều khoản và bảo mật cho người dùng.
 
 ## EPIC 04 — Backend API và kiến trúc xử lý
 
@@ -359,3 +360,4 @@ Những task sau chỉ nên đưa vào Backlog nếu nhóm còn thời gian sau 
 - PDFL-263: Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan.
 - PDFL-264: Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối.
 - PDFL-265: Xem xét sử dụng hàng đợi tác vụ cho các file lớn và quy trình OCR/AI kéo dài.
+- PDFL-267: Xây dựng nội dung và giao diện Điều khoản và bảo mật cho người dùng.
