@@ -73,6 +73,32 @@ class UserCreate(UserBase):
         """Fold email to lowercase to match DB normalisation in User model."""
         return value.strip().lower()
 
+# ── Login (Authentication) ────────────────────────────────────────────────────
+
+class UserLogin(BaseModel):
+    """
+    Credentials accepted by POST /api/auth/login.
+    No password-strength validation here — only existence and max-length checks.
+    """
+
+    email: EmailStr = Field(
+        ...,
+        description="Email address used to identify the account.",
+        examples=["user@example.com"],
+    )
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Plaintext password for credential verification.",
+    )
+
+    @field_validator("email")
+    @classmethod
+    def normalise_email(cls, value: str) -> str:
+        """Fold email to lowercase before authentication."""
+        return value.strip().lower()
+
 
 # ── Update (Profile Edit) ─────────────────────────────────────────────────────
 
@@ -111,6 +137,41 @@ class UserUpdate(BaseModel):
         return value
 
 
+# ── Password Change ───────────────────────────────────────────────────────────
+
+class PasswordChangeRequest(BaseModel):
+    """
+    Payload for POST /api/auth/change-password.
+    Requires current password for verification and new password adhering to strength rules.
+    """
+
+    current_password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Current plaintext password for credential verification.",
+    )
+    new_password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="New plaintext password — must be ≥ 8 chars, contain letters and digits.",
+    )
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password_strength(cls, value: str) -> str:
+        """
+        Apply password strength rules:
+        ≥ 8 characters, at least one letter, at least one digit.
+        """
+        if not any(c.isalpha() for c in value):
+            raise ValueError("Password must contain at least one letter.")
+        if not any(c.isdigit() for c in value):
+            raise ValueError("Password must contain at least one digit.")
+        return value
+
+
 # ── Response (Public API Output) ──────────────────────────────────────────────
 
 class UserResponse(UserBase):
@@ -128,6 +189,19 @@ class UserResponse(UserBase):
     model_config = {"from_attributes": True}
 
 
+# ── Authentication / Token ───────────────────────────────────────────────────
+
+class TokenResponse(BaseModel):
+    """
+    Response schema returned upon successful user authentication.
+    Contains the signed JWT access token, token scheme, and safe user profile.
+    """
+
+    access_token: str = Field(..., description="Signed JWT bearer access token.")
+    token_type: str = Field(default="bearer", description="Token authorization type (e.g. bearer).")
+    user: UserResponse = Field(..., description="Safe user profile data.")
+
+
 # ── Internal DB Model ─────────────────────────────────────────────────────────
 
 class UserInDB(UserResponse):
@@ -139,3 +213,4 @@ class UserInDB(UserResponse):
     hashed_password: str
 
     model_config = {"from_attributes": True}
+

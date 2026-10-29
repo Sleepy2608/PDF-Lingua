@@ -2,11 +2,14 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from typing import Optional
 from urllib.parse import quote
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 
 from app.core.config import settings
+from app.core.dependencies import get_optional_current_user
 from app.core.logger import logger
+from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import DownloadRequest, FeedbackRequest, ProcessResponseData, RetranslateRequest
 from app.services.export_service import ExportService
@@ -21,14 +24,30 @@ ocr_service = OCRService()
 translation_service = TranslationService()
 export_service = ExportService()
 
-MAX_BYTES = settings.MAX_UPLOAD_SIZE_FREE_MB * 1024 * 1024
+
+def get_user_limits(user: Optional[User]) -> tuple[int, int]:
+    """
+    Determine (max_upload_size_mb, max_ocr_pages) based on authenticated user role.
+
+    Limits:
+    - Guest (None) & Free (UserRole.FREE): 20 MB, 100 pages
+    - Pro (UserRole.PRO) & Admin (UserRole.ADMIN): 100 MB, 500 pages
+    """
+    role_val = getattr(user.role, "value", str(user.role)).lower() if user and user.role else None
+    if role_val in (UserRole.PRO.value, UserRole.ADMIN.value):
+        return settings.MAX_UPLOAD_SIZE_PRO_MB, settings.MAX_PAGES_PRO
+    return settings.MAX_UPLOAD_SIZE_FREE_MB, settings.MAX_PAGES_FREE
 
 
 @router.post("/upload-and-translate", response_model=ApiResponse[ProcessResponseData])
 async def upload_and_translate(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
+    max_upload_mb, max_ocr_pages = get_user_limits(current_user)
+    max_bytes = max_upload_mb * 1024 * 1024
+
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -36,10 +55,10 @@ async def upload_and_translate(
         )
 
     content = await file.read()
-    if len(content) > MAX_BYTES:
+    if len(content) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Dung lượng tệp vượt quá giới hạn {settings.MAX_UPLOAD_SIZE_FREE_MB}MB.",
+            detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
     if not content.startswith(b"%PDF"):
@@ -65,15 +84,21 @@ async def upload_and_translate(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        max_allowed_pages = settings.MAX_PAGES_FREE
+        max_allowed_pages = max_ocr_pages
         if page_count > max_allowed_pages:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn của gói Miễn phí "
-                    f"(tối đa {max_allowed_pages} trang/tệp). Vui lòng nâng cấp gói Pro hoặc chia nhỏ tài liệu."
-                ),
-            )
+            if current_user is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Tài liệu có {page_count} trang, vượt quá giới hạn của gói Miễn phí "
+                        f"(tối đa {max_allowed_pages} trang/tệp). Vui lòng nâng cấp gói Pro hoặc chia nhỏ tài liệu."
+                    ),
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
+                )
 
         is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
         is_ocr_used = False
@@ -84,10 +109,15 @@ async def upload_and_translate(
 
         if not original_text.strip():
             is_ocr_used = True
-            logger.info("[Process] Fallback to OCR for scanned document...")
+            if page_count > max_ocr_pages:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
+                )
+            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_ocr_pages})...")
             ocr_res = ocr_service.extract_text_from_scanned_pdf(
                 tmp_path,
-                max_pages=max_allowed_pages,
+                max_pages=max_ocr_pages,
             )
             original_text = ocr_res.get("text", "")
 
@@ -135,7 +165,10 @@ async def upload_and_translate(
 
 
 @router.post("/retranslate", response_model=ApiResponse[dict])
-async def retranslate(request: RetranslateRequest):
+async def retranslate(
+    request: RetranslateRequest,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
     if not request.text.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -165,7 +198,10 @@ async def retranslate(request: RetranslateRequest):
 
 
 @router.post("/download")
-async def download_result(request: DownloadRequest):
+async def download_result(
+    request: DownloadRequest,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
     if not request.content.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

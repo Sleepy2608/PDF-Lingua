@@ -1,4 +1,15 @@
-from app.core.security import hash_password, verify_password
+from datetime import timedelta
+import pytest
+from jose import jwt
+
+from app.core.config import settings
+from app.core.exceptions import UnauthorizedException
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
 
 def test_hash_password_format():
     """Hashed password should start with $2b$ and not be plaintext."""
@@ -62,3 +73,88 @@ def test_password_longer_than_72_bytes():
     assert verify_password(long_pwd, hashed) is True
     assert verify_password("A" * 72, hashed) is True
     assert verify_password("B" * 100, hashed) is False
+
+
+# ── JWT Security Tests ────────────────────────────────────────────────────────
+
+def test_create_and_decode_access_token_success():
+    """Verify that a valid JWT token can be created and decoded with stable string sub."""
+    user_id = 42
+    token = create_access_token(subject=user_id)
+
+    assert isinstance(token, str)
+    assert len(token.split(".")) == 3
+
+    payload = decode_access_token(token)
+    assert payload["sub"] == "42"
+    assert "exp" in payload
+    assert "iat" in payload
+
+
+def test_create_access_token_with_custom_claims_and_delta():
+    """Verify custom expiration delta and additional claims."""
+    delta = timedelta(minutes=15)
+    token = create_access_token(
+        subject="admin_user",
+        expires_delta=delta,
+        additional_claims={"role": "admin", "custom": "value123"},
+    )
+
+    payload = decode_access_token(token)
+    assert payload["sub"] == "admin_user"
+    assert payload["role"] == "admin"
+    assert payload["custom"] == "value123"
+
+
+def test_decode_access_token_expired():
+    """Expired token must raise UnauthorizedException with TOKEN_EXPIRED."""
+    expired_token = create_access_token(
+        subject=100,
+        expires_delta=timedelta(seconds=-10),
+    )
+
+    with pytest.raises(UnauthorizedException) as exc_info:
+        decode_access_token(expired_token)
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.error_code == "TOKEN_EXPIRED"
+
+
+def test_decode_access_token_invalid_signature():
+    """Token signed with wrong key must raise UnauthorizedException with INVALID_TOKEN."""
+    fake_token = jwt.encode(
+        {"sub": "999", "exp": 9999999999},
+        "wrong-secret-key-pdf-lingua",
+        algorithm="HS256",
+    )
+
+    with pytest.raises(UnauthorizedException) as exc_info:
+        decode_access_token(fake_token)
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.error_code == "INVALID_TOKEN"
+
+
+def test_decode_access_token_missing_sub():
+    """Token missing 'sub' claim must raise UnauthorizedException with INVALID_TOKEN."""
+    token_without_sub = jwt.encode(
+        {"exp": 9999999999},
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+
+    with pytest.raises(UnauthorizedException) as exc_info:
+        decode_access_token(token_without_sub)
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.error_code == "INVALID_TOKEN"
+
+
+def test_decode_access_token_malformed():
+    """Malformed or garbage string must raise UnauthorizedException with INVALID_TOKEN."""
+    with pytest.raises(UnauthorizedException) as exc_info:
+        decode_access_token("not.a.valid.jwt.token")
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.error_code == "INVALID_TOKEN"
+

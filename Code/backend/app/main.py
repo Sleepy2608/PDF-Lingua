@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.database import check_db_connection, init_db
 from app.core.logger import logger
 from app.core.exceptions import setup_exception_handlers
+from app.api.auth import router as auth_router
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -58,6 +59,7 @@ from app.api.process import router as process_router
 setup_exception_handlers(app)
 
 # Register API Routers
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(process_router)
 
 
