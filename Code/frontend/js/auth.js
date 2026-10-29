@@ -20,6 +20,8 @@
   let closeRegisterModal = () => {};
   let openLoginModal = () => {};
   let closeLoginModal = () => {};
+  let openAccountModal = () => {};
+  let closeAccountModal = () => {};
 
   document.addEventListener('DOMContentLoaded', () => {
     initAuthModals();
@@ -27,6 +29,7 @@
     initRegistrationForm();
     initLoginForm();
     initAuthHeader();
+    initAccountModal();
     restoreSession();
   });
 
@@ -148,6 +151,10 @@
         }
         if (loginModal && !loginModal.hasAttribute('hidden')) {
           closeLoginModal();
+        }
+        const accountModal = document.getElementById('accountModal');
+        if (accountModal && !accountModal.hasAttribute('hidden')) {
+          closeAccountModal();
         }
       }
     });
@@ -1066,6 +1073,174 @@
       }
       closeLoginModal();
       closeRegisterModal();
+      closeAccountModal();
+    }
+  }
+
+  // ── Account Info Modal (PDFL-79.2) ──
+
+  function initAccountModal() {
+    const accountModal = document.getElementById('accountModal');
+    const btnOpenAccountModal = document.getElementById('btnOpenAccountModal');
+    const btnCloseAccountModal = document.getElementById('btnCloseAccountModal');
+    const btnCloseAccountModalBtn = document.getElementById('btnCloseAccountModalBtn');
+
+    openAccountModal = function () {
+      if (!accountModal) return;
+      closeLoginModal();
+      closeRegisterModal();
+      accountModal.removeAttribute('hidden');
+      document.body.style.overflow = 'hidden';
+      clearAccountAlert();
+      fetchAccountDetails();
+    };
+
+    closeAccountModal = function () {
+      if (!accountModal) return;
+      accountModal.setAttribute('hidden', '');
+      document.body.style.overflow = '';
+      clearAccountAlert();
+    };
+
+    if (btnOpenAccountModal) {
+      btnOpenAccountModal.addEventListener('click', (e) => {
+        e.preventDefault();
+        openAccountModal();
+      });
+    }
+
+    if (btnCloseAccountModal) {
+      btnCloseAccountModal.addEventListener('click', closeAccountModal);
+    }
+
+    if (btnCloseAccountModalBtn) {
+      btnCloseAccountModalBtn.addEventListener('click', closeAccountModal);
+    }
+
+    if (accountModal) {
+      accountModal.addEventListener('click', (e) => {
+        if (e.target === accountModal) closeAccountModal();
+      });
+    }
+  }
+
+  function showAccountAlert(message, type = 'error') {
+    const alertBox = document.getElementById('accountAlert');
+    if (!alertBox) return;
+    alertBox.className = `form-alert alert-${type}`;
+    alertBox.textContent = message;
+    alertBox.style.display = 'block';
+  }
+
+  function clearAccountAlert() {
+    const alertBox = document.getElementById('accountAlert');
+    if (!alertBox) return;
+    alertBox.style.display = 'none';
+    alertBox.textContent = '';
+    alertBox.className = 'form-alert';
+  }
+
+  function renderAccountDetails(user) {
+    if (!user) return;
+    const fullNameDisplay = document.getElementById('accountFullNameDisplay');
+    const emailSubDisplay = document.getElementById('accountEmailSubDisplay');
+    const avatarLarge = document.getElementById('accountAvatarLarge');
+    const detailFullName = document.getElementById('accountDetailFullName');
+    const detailEmail = document.getElementById('accountDetailEmail');
+    const detailRole = document.getElementById('accountDetailRole');
+    const detailStatus = document.getElementById('accountDetailStatus');
+
+    const name = user.full_name || 'Chưa đặt tên';
+    const email = user.email || '';
+    const initial = (user.full_name ? user.full_name.charAt(0) : email.charAt(0) || 'U').toUpperCase();
+
+    if (fullNameDisplay) fullNameDisplay.textContent = name;
+    if (emailSubDisplay) emailSubDisplay.textContent = email;
+    if (avatarLarge) avatarLarge.textContent = initial;
+    if (detailFullName) detailFullName.textContent = name;
+    if (detailEmail) detailEmail.textContent = email;
+
+    if (detailRole) {
+      const roleStr = (user.role || 'free').toLowerCase();
+      detailRole.textContent = roleStr.toUpperCase();
+      detailRole.className = `badge-role role-${roleStr}`;
+    }
+
+    if (detailStatus) {
+      if (user.is_active === false) {
+        detailStatus.textContent = 'Bị vô hiệu';
+        detailStatus.style.backgroundColor = '#FEE2E2';
+        detailStatus.style.color = '#DC2626';
+      } else {
+        detailStatus.textContent = 'Hoạt động';
+        detailStatus.style.backgroundColor = '';
+        detailStatus.style.color = '';
+      }
+    }
+  }
+
+  async function fetchAccountDetails() {
+    const loadingWrap = document.getElementById('accountLoading');
+    const contentCard = document.getElementById('accountInfoContent');
+    const token = getStoredToken();
+    const cachedUser = getStoredUser();
+
+    // Optimistically render cached user if available
+    if (cachedUser) {
+      renderAccountDetails(cachedUser);
+    }
+
+    if (!token) {
+      if (contentCard) contentCard.style.display = 'none';
+      if (loadingWrap) loadingWrap.style.display = 'none';
+      showAccountAlert('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.', 'error');
+      updateHeaderAuthState(null);
+      return;
+    }
+
+    if (loadingWrap && !cachedUser) loadingWrap.style.display = 'flex';
+    if (contentCard && !cachedUser) contentCard.style.display = 'none';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (e) {}
+
+      if (response.status === 200) {
+        const freshUser = resData && resData.data ? resData.data : null;
+        if (freshUser) {
+          setStoredSession(token, freshUser);
+          updateHeaderAuthState(freshUser);
+          renderAccountDetails(freshUser);
+          if (contentCard) contentCard.style.display = 'block';
+        }
+      } else if (response.status === 401 || response.status === 403) {
+        // Token expired, invalid or account inactive
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        if (contentCard) contentCard.style.display = 'none';
+        showAccountAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      } else {
+        showAccountAlert('Không thể tải thông tin tài khoản từ máy chủ. Vui lòng thử lại sau.', 'error');
+      }
+    } catch (err) {
+      console.warn('[PDF-Lingua Auth] Lỗi mạng khi gọi /api/auth/me:', err);
+      if (!cachedUser) {
+        if (contentCard) contentCard.style.display = 'none';
+        showAccountAlert('Lỗi kết nối tới máy chủ. Vui lòng kiểm tra đường truyền.', 'error');
+      }
+    } finally {
+      if (loadingWrap) loadingWrap.style.display = 'none';
+      if (cachedUser && contentCard) contentCard.style.display = 'block';
     }
   }
 
@@ -1106,5 +1281,9 @@
     closeLoginModal,
     openRegisterModal,
     closeRegisterModal,
+    openAccountModal,
+    closeAccountModal,
+    fetchAccountDetails,
+    renderAccountDetails,
   });
 })();

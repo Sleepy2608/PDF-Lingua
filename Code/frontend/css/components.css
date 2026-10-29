@@ -544,6 +544,13 @@
   color: var(--text-title);
   font-weight: 500;
   max-width: 220px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-profile-badge:hover {
+  background-color: #E2E8F0;
+  border-color: var(--color-primary-indigo);
 }
 
 .user-profile-badge .user-avatar {
@@ -582,4 +589,153 @@
   background-color: #FEE2E2;
   color: #DC2626;
   border-color: #FCA5A5;
+}
+
+/* Account Info Modal (PDFL-79.2) */
+.account-modal-dialog {
+  max-width: 500px;
+}
+
+.account-modal-body {
+  padding: 1.5rem 2rem;
+}
+
+.account-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: 1rem;
+}
+
+.account-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(99, 102, 241, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--color-primary-indigo);
+  animation: spin 0.7s linear infinite;
+}
+
+.account-loading-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.account-header-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 1.5rem;
+}
+
+.account-avatar-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-gradient-cta);
+  color: #FFFFFF;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.account-hero-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-title);
+  margin-bottom: 0.25rem;
+}
+
+.account-hero-email {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.account-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.account-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.account-detail-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.account-detail-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-title);
+}
+
+.badge-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #EEF2FF;
+  color: #4F46E5;
+  border: 1px solid #C7D2FE;
+}
+
+.badge-role.role-pro {
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  color: #B45309;
+  border-color: #FCD34D;
+}
+
+.badge-role.role-admin {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.badge-status::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10B981;
+}
+
+.account-modal-footer {
+  padding: 1rem 2rem 1.5rem;
 }

@@ -53,7 +53,10 @@ function createEnv() {
     'loginForm', 'loginEmail', 'loginEmailError', 'loginPassword', 'loginPasswordError',
     'loginAlert', 'btnSubmitLogin', 'loginSpinner', 'loginBtnText', 'registerAlert',
     'authGuestGroup', 'authUserGroup', 'userDisplayName', 'userAvatar', 'btnLogout',
-    'registerModal', 'loginModal',
+    'registerModal', 'loginModal', 'accountModal', 'btnOpenAccountModal', 'btnCloseAccountModal',
+    'btnCloseAccountModalBtn', 'accountAlert', 'accountLoading', 'accountInfoContent',
+    'accountAvatarLarge', 'accountFullNameDisplay', 'accountEmailSubDisplay',
+    'accountDetailFullName', 'accountDetailEmail', 'accountDetailRole', 'accountDetailStatus',
   ];
   const e = Object.fromEntries(ids.map((id) => [id, new Element(id)]));
   const localStorage = new MockLocalStorage();
@@ -345,6 +348,61 @@ async function test(name, fn) {
     assert.strictEqual(storage.getItem('pdfl_user'), null);
     assert.strictEqual(e.authGuestGroup.hasAttribute('hidden'), false);
     assert.strictEqual(e.authUserGroup.hasAttribute('hidden'), true);
+  });
+
+  // 13. Account Modal: Fetch and render user details from /api/auth/me
+  await test('Account Details: Renders full user details from /api/auth/me successfully', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'account-token-123');
+
+    c.fetch = async (url, opts) => {
+      assert.strictEqual(url.endsWith('/api/auth/me'), true);
+      assert.strictEqual(opts.headers.Authorization, 'Bearer account-token-123');
+      return {
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            id: 10,
+            email: 'profile@example.com',
+            full_name: 'Trần Văn Profile',
+            role: 'pro',
+            is_active: true,
+          },
+        }),
+      };
+    };
+
+    await a.fetchAccountDetails();
+    assert.strictEqual(e.accountFullNameDisplay.textContent, 'Trần Văn Profile');
+    assert.strictEqual(e.accountDetailFullName.textContent, 'Trần Văn Profile');
+    assert.strictEqual(e.accountDetailEmail.textContent, 'profile@example.com');
+    assert.strictEqual(e.accountDetailRole.textContent, 'PRO');
+    assert.strictEqual(e.accountDetailRole.className, 'badge-role role-pro');
+    assert.strictEqual(e.accountAvatarLarge.textContent, 'T');
+    assert.strictEqual(e.accountDetailStatus.textContent, 'Hoạt động');
+  });
+
+  // 14. Account Modal: Expired token / 401 clears session and prompts login
+  await test('Account Details: 401 unauthorized clears session and shows friendly alert', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'expired-token');
+
+    c.fetch = async () => ({
+      status: 401,
+      json: async () => ({ success: false, error_code: 'TOKEN_EXPIRED' }),
+    });
+
+    await a.fetchAccountDetails();
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.match(e.accountAlert.textContent, /hết hạn.*đăng nhập lại/i);
+  });
+
+  // 15. Account Modal: Missing token shows alert directly without fetch
+  await test('Account Details: Missing token displays not logged in alert', async () => {
+    const { e, a } = createEnv();
+    await a.fetchAccountDetails();
+    assert.match(e.accountAlert.textContent, /chưa đăng nhập/i);
   });
 
   console.log(`\n================================================================`);

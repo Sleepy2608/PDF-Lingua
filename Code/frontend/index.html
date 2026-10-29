@@ -34,10 +34,10 @@
                     <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
                 </div>
                 <div class="auth-user-group" id="authUserGroup" hidden>
-                    <div class="user-profile-badge">
+                    <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản">
                         <span class="user-avatar" id="userAvatar"></span>
                         <span class="user-name" id="userDisplayName"></span>
-                    </div>
+                    </button>
                     <button type="button" class="btn btn-logout" id="btnLogout">Đăng xuất</button>
                 </div>
             </div>
@@ -605,6 +605,73 @@
                     Chưa có tài khoản? <a href="#" id="linkSwitchRegister">Đăng ký ngay</a>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Account Details Modal (PDFL-79.2) -->
+    <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" hidden>
+        <div class="modal-dialog account-modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="accountModalTitle">Thông tin tài khoản</h2>
+                    <p class="modal-subtitle">Chi tiết hồ sơ và gói dịch vụ PDF-Lingua của bạn</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseAccountModal" aria-label="Đóng cửa sổ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="account-modal-body">
+                <!-- Alert notification -->
+                <div class="form-alert" id="accountAlert" role="alert" style="display: none;"></div>
+
+                <!-- Loading State -->
+                <div class="account-loading-wrap" id="accountLoading" style="display: none;">
+                    <span class="account-spinner" aria-hidden="true"></span>
+                    <p class="account-loading-text">Đang tải thông tin tài khoản...</p>
+                </div>
+
+                <!-- Account Info Content -->
+                <div class="account-info-card" id="accountInfoContent">
+                    <div class="account-header-hero">
+                        <div class="account-avatar-large" id="accountAvatarLarge">U</div>
+                        <div class="account-hero-meta">
+                            <h3 class="account-hero-name" id="accountFullNameDisplay">---</h3>
+                            <p class="account-hero-email" id="accountEmailSubDisplay">---</p>
+                        </div>
+                    </div>
+
+                    <div class="account-details-grid">
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Họ và tên</span>
+                            <span class="account-detail-value" id="accountDetailFullName">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Địa chỉ Email</span>
+                            <span class="account-detail-value" id="accountDetailEmail">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Gói tài khoản (Vai trò)</span>
+                            <span class="account-detail-value">
+                                <span class="badge-role" id="accountDetailRole">---</span>
+                            </span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Trạng thái</span>
+                            <span class="account-detail-value">
+                                <span class="badge-status" id="accountDetailStatus">Hoạt động</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-modal-footer">
+                <button type="button" class="btn btn-secondary btn-block" id="btnCloseAccountModalBtn">Đóng</button>
+            </div>
         </div>
     </div>
 
