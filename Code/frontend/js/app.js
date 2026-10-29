@@ -152,7 +152,7 @@ function initLegalModal() {
                 }
                 btnCopyEmail.innerHTML = '<span>✓ Đã sao chép</span>';
                 setTimeout(() => {
-                    btnCopyEmail.innerHTML = '<span class="copy-icon">📋</span> Sao chép';
+                    btnCopyEmail.innerHTML = 'Sao chép';
                 }, 2000);
                 if (typeof showToast === 'function') {
                     showToast('Đã sao chép địa chỉ email vào clipboard!', 'success');
