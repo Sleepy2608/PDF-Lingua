@@ -57,6 +57,9 @@ function createEnv() {
     'btnCloseAccountModalBtn', 'accountAlert', 'accountLoading', 'accountInfoContent',
     'accountAvatarLarge', 'accountFullNameDisplay', 'accountEmailSubDisplay',
     'accountDetailFullName', 'accountDetailEmail', 'accountDetailRole', 'accountDetailStatus',
+    'accountFullNameView', 'accountEditForm', 'btnToggleEditFullName', 'editFullNameInput',
+    'editFullNameInputError', 'btnCancelEditFullName', 'btnSaveFullName', 'editFullNameSpinner',
+    'editFullNameBtnText',
   ];
   const e = Object.fromEntries(ids.map((id) => [id, new Element(id)]));
   const localStorage = new MockLocalStorage();
@@ -403,6 +406,70 @@ async function test(name, fn) {
     const { e, a } = createEnv();
     await a.fetchAccountDetails();
     assert.match(e.accountAlert.textContent, /chưa đăng nhập/i);
+  });
+
+  // 16. Update Profile: Toggle edit mode switches views and populates input
+  await test('Update Profile: toggleAccountEditMode switches visibility and populates name', async () => {
+    const { e, a, storage } = createEnv();
+    storage.setItem('pdfl_user', JSON.stringify({ id: 1, full_name: 'Nguyễn Văn A', email: 'a@example.com' }));
+
+    a.toggleAccountEditMode(true);
+    assert.strictEqual(e.accountFullNameView.style.display, 'none');
+    assert.strictEqual(e.accountEditForm.style.display, 'block');
+    assert.strictEqual(e.btnToggleEditFullName.style.display, 'none');
+    assert.strictEqual(e.editFullNameInput.value, 'Nguyễn Văn A');
+
+    a.toggleAccountEditMode(false);
+    assert.strictEqual(e.accountFullNameView.style.display, 'flex');
+    assert.strictEqual(e.accountEditForm.style.display, 'none');
+    assert.strictEqual(e.btnToggleEditFullName.style.display, 'inline-flex');
+  });
+
+  // 17. Update Profile: Validation error if full_name > 150 chars
+  await test('Update Profile: Reject name exceeding 150 characters', async () => {
+    const { e, a, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+    e.editFullNameInput.value = 'a'.repeat(151);
+
+    await a.handleSaveFullName();
+    assert.match(e.editFullNameInputError.textContent, /không được vượt quá 150/i);
+  });
+
+  // 18. Update Profile: Success PATCH updates local session and UI
+  await test('Update Profile: Successful PATCH updates local storage, header and modal UI', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+    storage.setItem('pdfl_user', JSON.stringify({ id: 1, full_name: 'Old Name', email: 'a@example.com', role: 'free' }));
+    e.editFullNameInput.value = 'New Name';
+
+    let patchCalled = false;
+    let patchBody = null;
+
+    c.fetch = async (url, opts) => {
+      if (opts.method === 'PATCH' && url.endsWith('/api/auth/me')) {
+        patchCalled = true;
+        patchBody = JSON.parse(opts.body);
+        return {
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: { id: 1, email: 'a@example.com', full_name: 'New Name', role: 'free', is_active: true },
+          }),
+        };
+      }
+      return { status: 400 };
+    };
+
+    await a.handleSaveFullName();
+
+    assert.strictEqual(patchCalled, true);
+    assert.strictEqual(patchBody.full_name, 'New Name');
+    assert.match(e.accountAlert.textContent, /thành công/i);
+    assert.strictEqual(e.accountDetailFullName.textContent, 'New Name');
+    assert.strictEqual(e.userDisplayName.textContent, 'New Name');
+
+    const updatedSession = JSON.parse(storage.getItem('pdfl_user'));
+    assert.strictEqual(updatedSession.full_name, 'New Name');
   });
 
   console.log(`\n================================================================`);

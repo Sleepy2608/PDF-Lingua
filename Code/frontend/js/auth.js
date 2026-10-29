@@ -1100,6 +1100,7 @@
       accountModal.setAttribute('hidden', '');
       document.body.style.overflow = '';
       clearAccountAlert();
+      toggleAccountEditMode(false);
     };
 
     if (btnOpenAccountModal) {
@@ -1121,6 +1122,157 @@
       accountModal.addEventListener('click', (e) => {
         if (e.target === accountModal) closeAccountModal();
       });
+    }
+
+    initAccountEditForm();
+  }
+
+  function toggleAccountEditMode(isEditing) {
+    const viewWrap = document.getElementById('accountFullNameView');
+    const editForm = document.getElementById('accountEditForm');
+    const btnToggle = document.getElementById('btnToggleEditFullName');
+    const input = document.getElementById('editFullNameInput');
+
+    clearFieldError(input);
+
+    if (isEditing) {
+      if (viewWrap) viewWrap.style.display = 'none';
+      if (editForm) editForm.style.display = 'block';
+      if (btnToggle) btnToggle.style.display = 'none';
+      if (input) {
+        const user = getStoredUser();
+        input.value = (user && user.full_name) ? user.full_name : '';
+        input.focus();
+      }
+    } else {
+      if (viewWrap) viewWrap.style.display = 'flex';
+      if (editForm) editForm.style.display = 'none';
+      if (btnToggle) btnToggle.style.display = 'inline-flex';
+    }
+  }
+
+  function initAccountEditForm() {
+    const btnToggle = document.getElementById('btnToggleEditFullName');
+    const btnCancel = document.getElementById('btnCancelEditFullName');
+    const form = document.getElementById('accountEditForm');
+    const input = document.getElementById('editFullNameInput');
+
+    if (btnToggle) {
+      btnToggle.addEventListener('click', () => {
+        clearAccountAlert();
+        toggleAccountEditMode(true);
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', () => {
+        clearAccountAlert();
+        toggleAccountEditMode(false);
+      });
+    }
+
+    if (input) {
+      input.addEventListener('input', () => {
+        clearFieldError(input);
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleSaveFullName();
+      });
+    }
+  }
+
+  async function handleSaveFullName() {
+    const input = document.getElementById('editFullNameInput');
+    const btnSave = document.getElementById('btnSaveFullName');
+    const btnCancel = document.getElementById('btnCancelEditFullName');
+    const spinner = document.getElementById('editFullNameSpinner');
+    const btnText = document.getElementById('editFullNameBtnText');
+
+    if (!input) return;
+
+    clearAccountAlert();
+    clearFieldError(input);
+
+    const val = input.value;
+    if (val.length > 150) {
+      showFieldError(input, 'Họ và tên không được vượt quá 150 ký tự.');
+      input.focus();
+      return;
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+      return;
+    }
+
+    setSavingState(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          full_name: val.trim() === '' ? null : val.trim(),
+        }),
+      });
+
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (e) {}
+
+      if (response.status === 200) {
+        const updatedUser = resData && resData.data ? resData.data : null;
+        if (updatedUser) {
+          setStoredSession(token, updatedUser);
+          updateHeaderAuthState(updatedUser);
+          renderAccountDetails(updatedUser);
+        }
+        toggleAccountEditMode(false);
+        showAccountAlert('Cập nhật thông tin tài khoản thành công!', 'success');
+      } else if (response.status === 401 || response.status === 403) {
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        toggleAccountEditMode(false);
+        const card = document.getElementById('accountInfoContent');
+        if (card) card.style.display = 'none';
+        showAccountAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      } else if (response.status === 422) {
+        const details = resData && resData.details;
+        let msg = (resData && resData.message) ? resData.message : 'Dữ liệu không hợp lệ.';
+        if (Array.isArray(details) && details.length > 0) {
+          msg = details[0].message || details[0].msg || msg;
+        }
+        showFieldError(input, msg);
+        showAccountAlert(msg, 'error');
+        input.focus();
+      } else {
+        const errorMsg = (resData && resData.message)
+          ? resData.message
+          : 'Không thể cập nhật thông tin lúc này. Vui lòng thử lại sau.';
+        showAccountAlert(errorMsg, 'error');
+      }
+    } catch (networkError) {
+      console.warn('[PDF-Lingua Auth Update Error]', networkError);
+      showAccountAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền.', 'error');
+    } finally {
+      setSavingState(false);
+    }
+
+    function setSavingState(saving) {
+      if (btnSave) btnSave.disabled = saving;
+      if (btnCancel) btnCancel.disabled = saving;
+      if (spinner) spinner.style.display = saving ? 'inline-block' : 'none';
+      if (btnText) btnText.textContent = saving ? 'Đang lưu...' : 'Lưu';
     }
   }
 
@@ -1285,5 +1437,7 @@
     closeAccountModal,
     fetchAccountDetails,
     renderAccountDetails,
+    toggleAccountEditMode,
+    handleSaveFullName,
   });
 })();

@@ -676,6 +676,64 @@
   border-radius: var(--radius-md);
 }
 
+.account-detail-editable {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.account-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.account-detail-value-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-edit-toggle {
+  background: none;
+  border: none;
+  color: var(--color-primary-indigo);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-edit-toggle:hover {
+  background-color: #EEF2FF;
+  color: var(--color-primary-dark);
+}
+
+.account-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.account-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8125rem;
+}
+
 .account-detail-label {
   font-size: 0.8125rem;
   font-weight: 500;
