@@ -857,13 +857,16 @@ def test_update_me_success(client, db_session):
 
 
 def test_update_me_unauthenticated(client):
-    """TC-UPDATE-02: Missing or invalid token returns 401 NOT_AUTHENTICATED."""
-    # Missing token
+    """TC-UPDATE-02: Missing or invalid token returns 401 NOT_AUTHENTICATED or INVALID_TOKEN or TOKEN_EXPIRED."""
+    from datetime import timedelta
+    from app.core.security import create_access_token
+
+    # 1. Missing token
     res = client.patch("/api/auth/me", json={"full_name": "Hacker"})
     assert res.status_code == 401
     assert res.json()["error_code"] == "NOT_AUTHENTICATED"
 
-    # Invalid token
+    # 2. Invalid token
     res_invalid = client.patch(
         "/api/auth/me",
         headers={"Authorization": "Bearer invalid.token.value"},
@@ -871,6 +874,16 @@ def test_update_me_unauthenticated(client):
     )
     assert res_invalid.status_code == 401
     assert res_invalid.json()["error_code"] == "INVALID_TOKEN"
+
+    # 3. Expired token
+    expired_token = create_access_token(subject=1, expires_delta=timedelta(seconds=-1))
+    res_expired = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {expired_token}"},
+        json={"full_name": "Hacker"},
+    )
+    assert res_expired.status_code == 401
+    assert res_expired.json()["error_code"] == "TOKEN_EXPIRED"
 
 
 def test_update_me_validation_exceeds_max_length(client):
@@ -926,10 +939,38 @@ def test_update_me_cannot_tamper_protected_fields(client, db_session):
     assert res_user["email"] == "notamper@example.com"
     assert res_user["is_active"] is True
     assert res_user["id"] != 99999
+    assert "password" not in res_user
+    assert "hashed_password" not in res_user
 
     # Confirm in database
     db_user = db_session.query(User).filter(User.email == "notamper@example.com").first()
     assert db_user.full_name == "Ten Da Doi"
     assert db_user.role == UserRole.FREE
     assert db_user.is_active is True
+
+
+def test_update_me_empty_fullname_clears_to_null(client, db_session):
+    """TC-UPDATE-05: Empty string or whitespace full_name sets full_name to None."""
+    client.post("/api/auth/register", json={
+        "email": "clear_name@example.com",
+        "password": "Password123",
+        "full_name": "Old Name",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "clear_name@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"full_name": "   "},
+    )
+    assert res.status_code == 200
+    res_user = res.json()["data"]
+    assert res_user["full_name"] is None
+
+    db_user = db_session.query(User).filter(User.email == "clear_name@example.com").first()
+    assert db_user.full_name is None
 

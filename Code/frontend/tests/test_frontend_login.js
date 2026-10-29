@@ -470,6 +470,88 @@ async function test(name, fn) {
 
     const updatedSession = JSON.parse(storage.getItem('pdfl_user'));
     assert.strictEqual(updatedSession.full_name, 'New Name');
+    assert.strictEqual(updatedSession.password, undefined);
+    assert.strictEqual(updatedSession.hashed_password, undefined);
+    assert.strictEqual(e.userAvatar.textContent, 'N');
+    assert.strictEqual(e.accountAvatarLarge.textContent, 'N');
+  });
+
+  // 19. Update Profile: Unauthenticated / Missing token
+  await test('Update Profile: Missing token aborts and prompts login', async () => {
+    const { e, a } = createEnv();
+    e.editFullNameInput.value = 'Unauth User';
+
+    await a.handleSaveFullName();
+    assert.match(e.accountAlert.textContent, /hết hạn.*đăng nhập lại/i);
+  });
+
+  // 20. Update Profile: 401/403 Expired token clears session
+  await test('Update Profile: 401/403 clears session and shows error alert', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'expired-token');
+    storage.setItem('pdfl_user', JSON.stringify({ id: 1, full_name: 'Old', email: 'a@example.com' }));
+    e.editFullNameInput.value = 'Try Update';
+
+    c.fetch = async () => ({
+      status: 401,
+      json: async () => ({ success: false, error_code: 'TOKEN_EXPIRED' }),
+    });
+
+    await a.handleSaveFullName();
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(storage.getItem('pdfl_user'), null);
+    assert.match(e.accountAlert.textContent, /hết hạn hoặc không hợp lệ/i);
+  });
+
+  // 21. Update Profile: 422 Server validation error displays inline and alert
+  await test('Update Profile: 422 validation error highlights field and alert', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+    e.editFullNameInput.value = 'Invalid Val';
+
+    c.fetch = async () => ({
+      status: 422,
+      json: async () => ({
+        success: false,
+        error_code: 'VALIDATION_ERROR',
+        details: [{ field: 'full_name', message: 'Tên không hợp lệ từ máy chủ.' }],
+      }),
+    });
+
+    await a.handleSaveFullName();
+    assert.match(e.editFullNameInputError.textContent, /Tên không hợp lệ từ máy chủ/i);
+    assert.match(e.accountAlert.textContent, /Tên không hợp lệ từ máy chủ/i);
+  });
+
+  // 22. Update Profile: Network error displays friendly message and keeps token
+  await test('Update Profile: Network error preserves session token and shows friendly alert', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+    e.editFullNameInput.value = 'Network Test';
+
+    c.fetch = async () => {
+      throw new Error('Connection failed');
+    };
+
+    await a.handleSaveFullName();
+    assert.strictEqual(storage.getItem('pdfl_token'), 'valid-token');
+    assert.match(e.accountAlert.textContent, /Không thể kết nối đến máy chủ/i);
+  });
+
+  // 23. Update Profile: Server 500 error shows server error alert
+  await test('Update Profile: 500 Internal error shows server error alert and keeps token', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+    e.editFullNameInput.value = 'Server Error Test';
+
+    c.fetch = async () => ({
+      status: 500,
+      json: async () => ({ success: false, message: 'Internal Server Error' }),
+    });
+
+    await a.handleSaveFullName();
+    assert.strictEqual(storage.getItem('pdfl_token'), 'valid-token');
+    assert.match(e.accountAlert.textContent, /Không thể cập nhật thông tin lúc này|Internal Server Error/i);
   });
 
   console.log(`\n================================================================`);
