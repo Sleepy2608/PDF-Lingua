@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import BadRequestException, ForbiddenException, UnauthorizedException
 from app.core.security import hash_password, verify_password
 from app.models.user import User, UserRole
-from app.schemas.user import UserCreate, UserLogin, UserUpdate
+from app.schemas.user import PasswordChangeRequest, UserCreate, UserLogin, UserUpdate
 
 
 class AuthService:
@@ -131,5 +131,45 @@ class AuthService:
             raise
 
         return user
+
+    @classmethod
+    def change_password(
+        cls,
+        db: Session,
+        user: User,
+        data: PasswordChangeRequest,
+    ) -> None:
+        """
+        Change password for an authenticated user.
+
+        Validation & Security rules:
+        1. Verify current password against stored bcrypt hash.
+           If mismatched, raises BadRequestException with INCORRECT_CURRENT_PASSWORD.
+        2. Verify new password is not identical to current password.
+           If matched, raises BadRequestException with PASSWORD_SAME_AS_OLD.
+        3. Securely hash new password using bcrypt (with salt rounds=12).
+        4. Persist updated hash and commit; rollback safely on database errors.
+        """
+        if not verify_password(data.current_password, user.hashed_password):
+            raise BadRequestException(
+                message="Mật khẩu hiện tại không chính xác.",
+                error_code="INCORRECT_CURRENT_PASSWORD",
+            )
+
+        if verify_password(data.new_password, user.hashed_password):
+            raise BadRequestException(
+                message="Mật khẩu mới không được trùng với mật khẩu hiện tại.",
+                error_code="PASSWORD_SAME_AS_OLD",
+            )
+
+        user.hashed_password = hash_password(data.new_password)
+
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except SQLAlchemyError:
+            db.rollback()
+            raise
 
 

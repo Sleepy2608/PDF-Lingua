@@ -11,7 +11,14 @@ from app.core.dependencies import get_current_user, get_db
 from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.common import ApiResponse
-from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse, UserUpdate
+from app.schemas.user import (
+    PasswordChangeRequest,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    UserUpdate,
+)
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -117,6 +124,35 @@ def update_me(
         success=True,
         message="Cập nhật thông tin tài khoản thành công.",
         data=UserResponse.model_validate(updated_user),
+    )
+
+
+@router.post(
+    "/change-password",
+    response_model=ApiResponse[None],
+    status_code=status.HTTP_200_OK,
+    summary="Change user password",
+    description="Changes password for currently authenticated user after verifying current password.",
+)
+def change_password(
+    data: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse[None]:
+    """
+    Change password for the current logged-in user.
+    Requires valid Bearer token, correct current password, and strong new password.
+    Never returns or logs plaintext passwords or hash values.
+    """
+    AuthService.change_password(
+        db=db,
+        user=current_user,
+        data=data,
+    )
+    return ApiResponse(
+        success=True,
+        message="Đổi mật khẩu thành công.",
+        data=None,
     )
 
 

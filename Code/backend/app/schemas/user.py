@@ -137,6 +137,41 @@ class UserUpdate(BaseModel):
         return value
 
 
+# ── Password Change ───────────────────────────────────────────────────────────
+
+class PasswordChangeRequest(BaseModel):
+    """
+    Payload for POST /api/auth/change-password.
+    Requires current password for verification and new password adhering to strength rules.
+    """
+
+    current_password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128,
+        description="Current plaintext password for credential verification.",
+    )
+    new_password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="New plaintext password — must be ≥ 8 chars, contain letters and digits.",
+    )
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password_strength(cls, value: str) -> str:
+        """
+        Apply password strength rules:
+        ≥ 8 characters, at least one letter, at least one digit.
+        """
+        if not any(c.isalpha() for c in value):
+            raise ValueError("Password must contain at least one letter.")
+        if not any(c.isdigit() for c in value):
+            raise ValueError("Password must contain at least one digit.")
+        return value
+
+
 # ── Response (Public API Output) ──────────────────────────────────────────────
 
 class UserResponse(UserBase):
