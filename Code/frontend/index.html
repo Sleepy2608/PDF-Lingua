@@ -403,12 +403,233 @@
         <div class="container footer-content">
             <p>&copy; 2026 PDF-Lingua Project</p>
             <ul class="footer-links">
-                <li><a href="#">Điều khoản</a></li>
-                <li><a href="#">Bảo mật</a></li>
-                <li><a href="#">Liên hệ</a></li>
+                <li><a href="#" id="linkTerms">Điều khoản</a></li>
+                <li><a href="#" id="linkPrivacy">Bảo mật</a></li>
+                <li><a href="#" id="linkContact">Liên hệ</a></li>
             </ul>
         </div>
     </footer>
+
+    <!-- Legal & Contact Modal (Terms, Privacy, Contact) -->
+    <div class="legal-modal-overlay" id="legalModalOverlay" aria-hidden="true" style="display: none;">
+        <div class="legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">
+            <div class="legal-modal-header">
+                <div class="legal-modal-title-group">
+                    <div class="legal-title-badge-row">
+                        <h3 class="legal-modal-title" id="legalModalTitle">Thông Tin & Chính Sách</h3>
+                        <span class="legal-version-badge">v1.0.0</span>
+                    </div>
+                    <p class="legal-modal-subtitle">Quy định sử dụng, cam kết bảo mật & thông tin hỗ trợ PDF-Lingua</p>
+                </div>
+                <div class="legal-header-actions">
+                    <button type="button" class="legal-action-btn" id="btnToggleFullscreenLegal" title="Phóng to / Thu nhỏ modal">
+                        <span class="btn-icon" id="fullscreenIcon">⛶</span> <span id="fullscreenText">Phóng to</span>
+                    </button>
+                    <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
+                        <span class="btn-icon">🖨️</span> In
+                    </button>
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng" title="Đóng">&times;</button>
+                </div>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="legal-tabs-bar" role="tablist">
+                <button type="button" class="legal-tab-btn active" id="tabBtnTerms" role="tab" aria-selected="true" data-tab="tabTerms">
+                    <span class="tab-icon">📜</span>
+                    <span class="tab-label">Điều khoản</span>
+                </button>
+                <button type="button" class="legal-tab-btn" id="tabBtnPrivacy" role="tab" aria-selected="false" data-tab="tabPrivacy">
+                    <span class="tab-icon">🔒</span>
+                    <span class="tab-label">Bảo mật</span>
+                </button>
+                <button type="button" class="legal-tab-btn" id="tabBtnContact" role="tab" aria-selected="false" data-tab="tabContact">
+                    <span class="tab-icon">✉️</span>
+                    <span class="tab-label">Liên hệ</span>
+                </button>
+            </div>
+
+            <!-- Tab Content Panels -->
+            <div class="legal-modal-body">
+                <!-- Panel 1: Điều khoản -->
+                <div class="legal-tab-panel active" id="tabTerms" role="tabpanel">
+                    <div class="legal-content">
+                        <div class="legal-callout-box info">
+                            <span class="callout-icon">💡</span>
+                            <div class="callout-body">
+                                <strong>Tóm tắt quyền lợi:</strong> Bạn giữ toàn bộ quyền sở hữu đối với tài liệu PDF tải lên. Bản dịch máy móc mang tính chất tham khảo học thuật.
+                            </div>
+                        </div>
+
+                        <!-- Quick Jump Index -->
+                        <div class="legal-toc-chips">
+                            <span class="toc-label">Mục lục:</span>
+                            <a href="#terms-section-1" class="toc-chip">1. Bản quyền</a>
+                            <a href="#terms-section-2" class="toc-chip">2. Quy định</a>
+                            <a href="#terms-section-3" class="toc-chip">3. Hạn mức</a>
+                            <a href="#terms-section-4" class="toc-chip">4. Miễn trừ</a>
+                        </div>
+
+                        <h4 id="terms-section-1">1. Quyền sở hữu trí tuệ & Bản quyền</h4>
+                        <p>Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu cầu.</p>
+
+                        <h4 id="terms-section-2">2. Quy định sử dụng dịch vụ</h4>
+                        <p>Người dùng cam kết không sử dụng hệ thống để xử lý, phát tán các tài liệu chứa mã độc, nội dung vi phạm pháp luật, xâm phạm quyền riêng tư của cá nhân hoặc tổ chức khác. Không thực hiện các hành vi can thiệp trái phép, đảo ngược mã nguồn hoặc tấn công làm quá tải máy chủ.</p>
+
+                        <h4 id="terms-section-3">3. Giới hạn gói dịch vụ (Tiers)</h4>
+                        <ul>
+                            <li><strong>Gói Free (Khách & Người dùng cơ bản):</strong> Hạn mức xử lý tối đa 20 MB/tệp và tối đa 100 trang/tài liệu. Hỗ trợ trích xuất văn bản số và OCR cơ bản.</li>
+                            <li><strong>Gói Pro:</strong> Hạn mức xử lý mở rộng lên đến 100 MB/tệp cùng các tính năng AI nâng cao (Tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu).</li>
+                        </ul>
+
+                        <h4 id="terms-section-4">4. Miễn trừ trách nhiệm (Disclaimer)</h4>
+                        <p>Các tính năng trích xuất văn bản, nhận dạng OCR và dịch thuật tự động được thực hiện dựa trên các mô hình máy học và dịch máy. Hệ thống nỗ lực mang lại kết quả chuẩn xác nhất nhưng không đảm bảo tính hoàn hảo 100% về mặt ngữ nghĩa và không thể thay thế cho bản dịch công chứng có tính pháp lý.</p>
+                    </div>
+                </div>
+
+                <!-- Panel 2: Bảo mật -->
+                <div class="legal-tab-panel" id="tabPrivacy" role="tabpanel">
+                    <div class="legal-content">
+                        <div class="legal-callout-box success">
+                            <span class="callout-icon">🛡️</span>
+                            <div class="callout-body">
+                                <strong>Cam kết bảo mật:</strong> Tệp PDF được xử lý trong phiên cô lập và tự động xóa sạch. Mật khẩu được mã hóa an toàn bằng Bcrypt.
+                            </div>
+                        </div>
+
+                        <!-- Quick Jump Index -->
+                        <div class="legal-toc-chips">
+                            <span class="toc-label">Mục lục:</span>
+                            <a href="#privacy-section-1" class="toc-chip">1. Thu thập dữ liệu</a>
+                            <a href="#privacy-section-2" class="toc-chip">2. Tự động xóa</a>
+                            <a href="#privacy-section-3" class="toc-chip">3. Tiêu chuẩn mã hóa</a>
+                            <a href="#privacy-section-4" class="toc-chip">4. Cam kết bảo vệ</a>
+                        </div>
+
+                        <h4 id="privacy-section-1">1. Thu thập dữ liệu & Phạm vi sử dụng</h4>
+                        <p>PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch thuật tài liệu:</p>
+                        <ul>
+                            <li>Tệp PDF tải lên tạm thời trong phiên làm việc.</li>
+                            <li>Thông tin tài khoản đăng ký (Địa chỉ email, Tên hiển thị). Mật khẩu được mã hóa một chiều tuyệt đối không lưu plaintext.</li>
+                            <li>Dữ liệu kỹ thuật ẩn danh (IP, thời gian gửi yêu cầu) phục vụ cho cơ chế bảo vệ chống tấn công quá tải (Rate Limiting).</li>
+                        </ul>
+
+                        <h4 id="privacy-section-2">2. Chính sách lưu trữ & Tự động xóa (Auto-Cleanup)</h4>
+                        <p>Mọi tệp tài liệu PDF và file tạm thời phát sinh trong quá trình xử lý đều được lưu trữ trong thư mục tạm có bảo vệ và được tự động dọn dẹp, xóa sạch sau khi hoàn tất phiên làm việc. Người dùng có toàn quyền xóa lịch sử xử lý tài liệu bất cứ khi nào.</p>
+
+                        <h4 id="privacy-section-3">3. Tiêu chuẩn mã hóa & An toàn hệ thống</h4>
+                        <ul>
+                            <li><strong>Mật khẩu:</strong> Sử dụng thuật toán băm chuẩn công nghiệp <code>bcrypt</code> với 12 rounds muối ngẫu nhiên.</li>
+                            <li><strong>Phiên làm việc:</strong> Bảo mật thông qua mã xác thực JSON Web Token (JWT) có thời hạn.</li>
+                            <li><strong>Tính cô lập (Data Isolation):</strong> Tài liệu và dữ liệu của người dùng được phân tách biệt lập, ngăn chặn hoàn toàn việc người khác truy cập trái phép.</li>
+                        </ul>
+
+                        <h4 id="privacy-section-4">4. Cam kết bảo vệ dữ liệu</h4>
+                        <p>Chúng tôi tuyệt đối không bán, cho thuê, trao đổi hoặc tiết lộ thông tin cá nhân và dữ liệu tài liệu của người dùng cho bất kỳ bên thứ ba nào.</p>
+                    </div>
+                </div>
+
+                <!-- Panel 3: Liên hệ -->
+                <div class="legal-tab-panel" id="tabContact" role="tabpanel">
+                    <div class="legal-content">
+                        <h4>Thông tin đồ án</h4>
+                        <p><strong>Dự án:</strong> PDF-Lingua — Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI.</p>
+
+                        <h4>Thành viên nhóm</h4>
+                        <div class="team-cards-grid">
+                            <div class="team-member-card">
+                                <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener" class="member-avatar" title="GitHub: @Sleepy2608">
+                                    <img src="https://github.com/Sleepy2608.png?size=96" alt="Nguyễn Lê Huy Tâm" class="member-avatar-img" loading="lazy" onerror="this.style.display='none';">
+                                    <span class="member-avatar-fallback">HT</span>
+                                </a>
+                                <div class="member-info">
+                                    <div class="member-name-row">
+                                        <strong>Nguyễn Lê Huy Tâm</strong>
+                                        <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener" class="member-github-badge">@Sleepy2608</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="team-member-card">
+                                <a href="https://github.com/Chan-2006" target="_blank" rel="noopener" class="member-avatar" title="GitHub: @Chan-2006">
+                                    <img src="https://github.com/Chan-2006.png?size=96" alt="Huỳnh Đình Chấn" class="member-avatar-img" loading="lazy" onerror="this.style.display='none';">
+                                    <span class="member-avatar-fallback">ĐC</span>
+                                </a>
+                                <div class="member-info">
+                                    <div class="member-name-row">
+                                        <strong>Huỳnh Đình Chấn</strong>
+                                        <a href="https://github.com/Chan-2006" target="_blank" rel="noopener" class="member-github-badge">@Chan-2006</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4>Thông tin liên hệ</h4>
+                        <div class="contact-channels-box">
+                            <div class="contact-channel-item">
+                                <img src="assets/icons/contacts/gmail-icon.webp" alt="Gmail" class="channel-icon-img">
+                                <div class="channel-text">
+                                    <strong>Email hỗ trợ:</strong>
+                                    <span id="supportEmailText">huytamnguyenle2608@gmail.com</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnCopySupportEmail" title="Sao chép email">
+                                    Sao chép
+                                </button>
+                            </div>
+                            <div class="contact-channel-item">
+                                <img src="assets/icons/contacts/github-icon.png" alt="GitHub" class="channel-icon-img">
+                                <div class="channel-text">
+                                    <strong>Mã nguồn</strong>
+                                    <span>github.com/Sleepy2608/PDF-Lingua</span>
+                                </div>
+                                <a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener" class="btn btn-sm btn-secondary">
+                                    Đi tới repo
+                                </a>
+                            </div>
+                        </div>
+
+                        <h4>Gửi phản hồi cho nhóm</h4>
+                        <form class="feedback-form" id="feedbackForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="feedbackName">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" id="feedbackName" class="form-control" placeholder="Họ và tên" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feedbackEmail">Email liên hệ <span class="text-danger">*</span></label>
+                                    <input type="email" id="feedbackEmail" class="form-control" placeholder="Email" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feedbackTopic">Chủ đề đóng góp</label>
+                                <select id="feedbackTopic" class="form-control">
+                                    <option value="bug">Báo cáo lỗi dịch thuật / OCR</option>
+                                    <option value="feature">Đề xuất tính năng mới</option>
+                                    <option value="support">Câu hỏi / Hỗ trợ sử dụng</option>
+                                    <option value="other">Ý kiến đóng góp khác</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="feedbackMessage">Nội dung phản hồi <span class="text-danger">*</span></label>
+                                <textarea id="feedbackMessage" class="form-control" rows="3" placeholder="Mô tả chi tiết ý kiến hoặc lỗi bạn gặp phải..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitFeedback">
+                                <span>Gửi phản hồi</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="legal-modal-footer">
+                <div class="legal-footer-left">
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang">⬆ Lên đầu trang</button>
+                    <span class="legal-footer-meta">Phiên bản: v1.0.0 • Hiệu lực từ: 28/10/2026</span>
+                </div>
+                <div class="legal-footer-right">
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnAcceptLegal">✓ Tôi đã hiểu & Đồng ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
