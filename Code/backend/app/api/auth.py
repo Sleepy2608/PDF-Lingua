@@ -11,7 +11,7 @@ from app.core.dependencies import get_current_user, get_db
 from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.common import ApiResponse
-from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
+from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse, UserUpdate
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -88,6 +88,35 @@ def get_me(
         success=True,
         message="Lấy thông tin tài khoản thành công.",
         data=UserResponse.model_validate(current_user),
+    )
+
+
+@router.patch(
+    "/me",
+    response_model=ApiResponse[UserResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Update current user profile",
+    description="Updates editable profile fields (full_name) for the currently authenticated user.",
+)
+def update_me(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse[UserResponse]:
+    """
+    Update profile details for the currently logged-in user.
+    Currently supports updating `full_name`.
+    Prevents altering system fields (`id`, `email`, `role`, `is_active`).
+    """
+    updated_user = AuthService.update_user_profile(
+        db=db,
+        user=current_user,
+        user_update=user_update,
+    )
+    return ApiResponse(
+        success=True,
+        message="Cập nhật thông tin tài khoản thành công.",
+        data=UserResponse.model_validate(updated_user),
     )
 
 

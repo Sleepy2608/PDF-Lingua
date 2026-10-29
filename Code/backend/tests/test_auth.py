@@ -820,3 +820,116 @@ def test_logout_missing_or_invalid_token(client):
     res_bad_token = client.post("/api/auth/logout", headers={"Authorization": "Bearer bad.token"})
     assert res_bad_token.status_code == 401
     assert res_bad_token.json()["error_code"] == "INVALID_TOKEN"
+
+
+# ── Update Profile Tests (PDFL-79.3) ──────────────────────────────────────────
+
+def test_update_me_success(client, db_session):
+    """TC-UPDATE-01: Update full_name successfully with valid token."""
+    client.post("/api/auth/register", json={
+        "email": "update_me@example.com",
+        "password": "Password123",
+        "full_name": "Tên Cũ",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "update_me@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"full_name": "Tên Mới Cực Đẹp"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["message"] == "Cập nhật thông tin tài khoản thành công."
+    assert data["data"]["full_name"] == "Tên Mới Cực Đẹp"
+    assert data["data"]["email"] == "update_me@example.com"
+    assert "password" not in data["data"]
+    assert "hashed_password" not in data["data"]
+
+    # Verify directly in DB
+    user = db_session.query(User).filter(User.email == "update_me@example.com").first()
+    assert user.full_name == "Tên Mới Cực Đẹp"
+
+
+def test_update_me_unauthenticated(client):
+    """TC-UPDATE-02: Missing or invalid token returns 401 NOT_AUTHENTICATED."""
+    # Missing token
+    res = client.patch("/api/auth/me", json={"full_name": "Hacker"})
+    assert res.status_code == 401
+    assert res.json()["error_code"] == "NOT_AUTHENTICATED"
+
+    # Invalid token
+    res_invalid = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": "Bearer invalid.token.value"},
+        json={"full_name": "Hacker"},
+    )
+    assert res_invalid.status_code == 401
+    assert res_invalid.json()["error_code"] == "INVALID_TOKEN"
+
+
+def test_update_me_validation_exceeds_max_length(client):
+    """TC-UPDATE-03: full_name exceeding 150 characters returns 422."""
+    client.post("/api/auth/register", json={
+        "email": "update_val@example.com",
+        "password": "Password123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "update_val@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"full_name": "A" * 151},
+    )
+    assert res.status_code == 422
+    assert res.json()["error_code"] == "VALIDATION_ERROR"
+
+
+def test_update_me_cannot_tamper_protected_fields(client, db_session):
+    """TC-UPDATE-04: Client cannot alter role, id, email, or is_active via PATCH /api/auth/me."""
+    client.post("/api/auth/register", json={
+        "email": "notamper@example.com",
+        "password": "Password123",
+        "full_name": "Ban Dau",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "notamper@example.com",
+        "password": "Password123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    # Attempt to elevate to admin, change id, change email, and change is_active
+    res = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "full_name": "Ten Da Doi",
+            "role": "admin",
+            "id": 99999,
+            "email": "hacked@example.com",
+            "is_active": False,
+        },
+    )
+    assert res.status_code == 200
+    res_user = res.json()["data"]
+    assert res_user["full_name"] == "Ten Da Doi"
+    assert res_user["role"] == "free"
+    assert res_user["email"] == "notamper@example.com"
+    assert res_user["is_active"] is True
+    assert res_user["id"] != 99999
+
+    # Confirm in database
+    db_user = db_session.query(User).filter(User.email == "notamper@example.com").first()
+    assert db_user.full_name == "Ten Da Doi"
+    assert db_user.role == UserRole.FREE
+    assert db_user.is_active is True
+

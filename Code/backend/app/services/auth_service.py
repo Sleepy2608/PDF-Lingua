@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import BadRequestException, ForbiddenException, UnauthorizedException
 from app.core.security import hash_password, verify_password
 from app.models.user import User, UserRole
-from app.schemas.user import UserCreate, UserLogin
+from app.schemas.user import UserCreate, UserLogin, UserUpdate
 
 
 class AuthService:
@@ -102,6 +102,33 @@ class AuthService:
                 message="Tài khoản này đã bị vô hiệu hóa.",
                 error_code="ACCOUNT_INACTIVE",
             )
+
+        return user
+
+    @classmethod
+    def update_user_profile(
+        cls,
+        db: Session,
+        user: User,
+        user_update: UserUpdate,
+    ) -> User:
+        """
+        Update the current user's profile details.
+        Currently permits updating `full_name`.
+        Ignores and prevents any modifications to email, role, is_active, or id.
+        """
+        # If full_name is provided in payload (even if empty/whitespace)
+        if user_update.full_name is not None:
+            clean_name = user_update.full_name.strip() if user_update.full_name.strip() else None
+            user.full_name = clean_name
+
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except SQLAlchemyError:
+            db.rollback()
+            raise
 
         return user
 
