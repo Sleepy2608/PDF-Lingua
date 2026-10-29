@@ -974,3 +974,215 @@ def test_update_me_empty_fullname_clears_to_null(client, db_session):
     db_user = db_session.query(User).filter(User.email == "clear_name@example.com").first()
     assert db_user.full_name is None
 
+
+# ── Change Password Tests ──────────────────────────────────────────────────────
+
+def test_change_password_success(client):
+    """TC-PWD-01: Change password successfully with valid credentials."""
+    client.post("/api/auth/register", json={
+        "email": "pwd_success@example.com",
+        "password": "OldPassword123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "pwd_success@example.com",
+        "password": "OldPassword123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "current_password": "OldPassword123",
+            "new_password": "NewPassword456",
+        },
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["success"] is True
+    assert body["message"] == "Đổi mật khẩu thành công."
+    assert body["data"] is None
+    assert "password" not in body
+    assert "hashed_password" not in body
+
+    # Verify old password no longer works for login
+    old_login = client.post("/api/auth/login", json={
+        "email": "pwd_success@example.com",
+        "password": "OldPassword123",
+    })
+    assert old_login.status_code == 401
+
+    # Verify new password works for login
+    new_login = client.post("/api/auth/login", json={
+        "email": "pwd_success@example.com",
+        "password": "NewPassword456",
+    })
+    assert new_login.status_code == 200
+    assert "access_token" in new_login.json()["data"]
+
+
+def test_change_password_incorrect_current_password(client):
+    """TC-PWD-02: Incorrect current password returns 400 INCORRECT_CURRENT_PASSWORD."""
+    client.post("/api/auth/register", json={
+        "email": "pwd_wrong_curr@example.com",
+        "password": "RealPassword123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "pwd_wrong_curr@example.com",
+        "password": "RealPassword123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "current_password": "WrongPassword123",
+            "new_password": "BrandNewPassword456",
+        },
+    )
+    assert res.status_code == 400
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "INCORRECT_CURRENT_PASSWORD"
+
+    # Confirm original password still works
+    valid_login = client.post("/api/auth/login", json={
+        "email": "pwd_wrong_curr@example.com",
+        "password": "RealPassword123",
+    })
+    assert valid_login.status_code == 200
+
+
+def test_change_password_same_as_old(client):
+    """TC-PWD-03: New password same as current returns 400 PASSWORD_SAME_AS_OLD."""
+    client.post("/api/auth/register", json={
+        "email": "pwd_same@example.com",
+        "password": "SamePassword123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "pwd_same@example.com",
+        "password": "SamePassword123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    res = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "current_password": "SamePassword123",
+            "new_password": "SamePassword123",
+        },
+    )
+    assert res.status_code == 400
+    err = res.json()
+    assert err["success"] is False
+    assert err["error_code"] == "PASSWORD_SAME_AS_OLD"
+
+
+def test_change_password_invalid_new_password_strength(client):
+    """TC-PWD-04: Weak new password returns 422 VALIDATION_ERROR."""
+    client.post("/api/auth/register", json={
+        "email": "pwd_invalid@example.com",
+        "password": "ValidPassword123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "pwd_invalid@example.com",
+        "password": "ValidPassword123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    # 1. Password too short (< 8 chars)
+    res_short = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"current_password": "ValidPassword123", "new_password": "Short1"},
+    )
+    assert res_short.status_code == 422
+    assert res_short.json()["error_code"] == "VALIDATION_ERROR"
+
+    # 2. Password missing digits
+    res_no_digits = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"current_password": "ValidPassword123", "new_password": "NoDigitsHere"},
+    )
+    assert res_no_digits.status_code == 422
+    assert res_no_digits.json()["error_code"] == "VALIDATION_ERROR"
+
+    # 3. Password missing letters
+    res_no_letters = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"current_password": "ValidPassword123", "new_password": "1234567890"},
+    )
+    assert res_no_letters.status_code == 422
+    assert res_no_letters.json()["error_code"] == "VALIDATION_ERROR"
+
+
+def test_change_password_unauthenticated_and_tokens(client):
+    """TC-PWD-05: Missing, invalid or expired token returns 401."""
+    from datetime import timedelta
+    from app.core.security import create_access_token
+
+    payload = {
+        "current_password": "OldPassword123",
+        "new_password": "NewPassword456",
+    }
+
+    # 1. Missing token
+    res_missing = client.post("/api/auth/change-password", json=payload)
+    assert res_missing.status_code == 401
+    assert res_missing.json()["error_code"] == "NOT_AUTHENTICATED"
+
+    # 2. Invalid token
+    res_invalid = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": "Bearer invalid.token.str"},
+        json=payload,
+    )
+    assert res_invalid.status_code == 401
+    assert res_invalid.json()["error_code"] == "INVALID_TOKEN"
+
+    # 3. Expired token
+    expired_token = create_access_token(subject=1, expires_delta=timedelta(seconds=-1))
+    res_expired = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {expired_token}"},
+        json=payload,
+    )
+    assert res_expired.status_code == 401
+    assert res_expired.json()["error_code"] == "TOKEN_EXPIRED"
+
+
+def test_change_password_db_error_rollback(client, monkeypatch):
+    """TC-PWD-06: Database error during password commit triggers rollback and masks error."""
+    client.post("/api/auth/register", json={
+        "email": "pwd_dberr@example.com",
+        "password": "OldPassword123",
+    })
+    login_res = client.post("/api/auth/login", json={
+        "email": "pwd_dberr@example.com",
+        "password": "OldPassword123",
+    })
+    token = login_res.json()["data"]["access_token"]
+
+    def mock_commit():
+        from sqlalchemy.exc import SQLAlchemyError
+        raise SQLAlchemyError("Simulated DB Failure during password change")
+
+    # Patch session.commit to fail
+    from sqlalchemy.orm import Session
+    monkeypatch.setattr(Session, "commit", mock_commit)
+
+    res = client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "current_password": "OldPassword123",
+            "new_password": "NewPassword456",
+        },
+    )
+    assert res.status_code == 500
+    assert "Simulated DB Failure" not in res.text
+

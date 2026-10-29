@@ -175,6 +175,9 @@
     setupToggle('toggleRegPassword', 'regPassword');
     setupToggle('toggleRegConfirmPassword', 'regConfirmPassword');
     setupToggle('toggleLoginPassword', 'loginPassword');
+    setupToggle('toggleCurrentPassword', 'currentPasswordInput');
+    setupToggle('toggleNewPassword', 'newPasswordInput');
+    setupToggle('toggleConfirmNewPassword', 'confirmNewPasswordInput');
 
     function setupToggle(buttonId, inputId) {
       const btn = document.getElementById(buttonId);
@@ -1101,6 +1104,7 @@
       document.body.style.overflow = '';
       clearAccountAlert();
       toggleAccountEditMode(false);
+      toggleChangePasswordMode(false);
     };
 
     if (btnOpenAccountModal) {
@@ -1125,6 +1129,7 @@
     }
 
     initAccountEditForm();
+    initChangePasswordForm();
   }
 
   function toggleAccountEditMode(isEditing) {
@@ -1273,6 +1278,290 @@
       if (btnCancel) btnCancel.disabled = saving;
       if (spinner) spinner.style.display = saving ? 'inline-block' : 'none';
       if (btnText) btnText.textContent = saving ? 'Đang lưu...' : 'Lưu';
+    }
+  }
+
+  // ── Change Password Logic (PDFL-80.4) ──
+
+  let isSubmittingPassword = false;
+
+  function showChangePasswordAlert(message, type = 'error') {
+    showAlertInElement('changePasswordAlert', message, type);
+  }
+
+  function clearChangePasswordAlert() {
+    clearAlertInElement('changePasswordAlert');
+  }
+
+  function resetChangePasswordToggles() {
+    ['currentPasswordInput', 'newPasswordInput', 'confirmNewPasswordInput'].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) input.type = 'password';
+    });
+    document.querySelectorAll('#changePasswordForm .btn-toggle-eye').forEach((btn) => {
+      const open = btn.querySelector('.eye-open');
+      const closed = btn.querySelector('.eye-closed');
+      if (open) open.style.display = 'block';
+      if (closed) closed.style.display = 'none';
+      btn.setAttribute('aria-label', 'Hiện mật khẩu');
+    });
+  }
+
+  function validateChangePasswordForm(elements) {
+    const { currentPasswordInput, newPasswordInput, confirmNewPasswordInput } = elements;
+    let isValid = true;
+    let firstInvalidInput = null;
+
+    const currentVal = currentPasswordInput ? currentPasswordInput.value : '';
+    const newVal = newPasswordInput ? newPasswordInput.value : '';
+    const confirmVal = confirmNewPasswordInput ? confirmNewPasswordInput.value : '';
+
+    // 1. Current password
+    if (!currentVal) {
+      showFieldError(currentPasswordInput, 'Vui lòng nhập mật khẩu hiện tại.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || currentPasswordInput;
+    }
+
+    // 2. New password
+    if (!newVal) {
+      showFieldError(newPasswordInput, 'Vui lòng nhập mật khẩu mới.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || newPasswordInput;
+    } else if (newVal.length < 8) {
+      showFieldError(newPasswordInput, 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || newPasswordInput;
+    } else if (newVal.length > 128) {
+      showFieldError(newPasswordInput, 'Mật khẩu mới không được vượt quá 128 ký tự.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || newPasswordInput;
+    } else if (!/[a-zA-Z]/.test(newVal)) {
+      showFieldError(newPasswordInput, 'Mật khẩu mới phải chứa ít nhất một chữ cái.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || newPasswordInput;
+    } else if (!/\d/.test(newVal)) {
+      showFieldError(newPasswordInput, 'Mật khẩu mới phải chứa ít nhất một chữ số.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || newPasswordInput;
+    } else if (currentVal && newVal === currentVal) {
+      showFieldError(newPasswordInput, 'Mật khẩu mới không được trùng với mật khẩu hiện tại.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || newPasswordInput;
+    }
+
+    // 3. Confirm new password
+    if (!confirmVal) {
+      showFieldError(confirmNewPasswordInput, 'Vui lòng xác nhận mật khẩu mới.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || confirmNewPasswordInput;
+    } else if (newVal && confirmVal !== newVal) {
+      showFieldError(confirmNewPasswordInput, 'Mật khẩu xác nhận không khớp với mật khẩu mới.');
+      isValid = false;
+      firstInvalidInput = firstInvalidInput || confirmNewPasswordInput;
+    }
+
+    if (firstInvalidInput && typeof firstInvalidInput.focus === 'function') {
+      firstInvalidInput.focus();
+    }
+
+    return isValid;
+  }
+
+  function toggleChangePasswordMode(isEditing) {
+    const form = document.getElementById('changePasswordForm');
+    const btnToggle = document.getElementById('btnToggleChangePassword');
+    const toggleText = document.getElementById('toggleChangePasswordText');
+    const currentInput = document.getElementById('currentPasswordInput');
+    const newInput = document.getElementById('newPasswordInput');
+    const confirmInput = document.getElementById('confirmNewPasswordInput');
+
+    clearChangePasswordAlert();
+    [currentInput, newInput, confirmInput].forEach((input) => {
+      if (input) clearFieldError(input);
+    });
+
+    if (isEditing) {
+      if (form) form.style.display = 'flex';
+      if (btnToggle) {
+        btnToggle.setAttribute('aria-expanded', 'true');
+        btnToggle.style.display = 'none';
+      }
+      if (currentInput && typeof currentInput.focus === 'function') {
+        currentInput.focus();
+      }
+    } else {
+      if (form) {
+        form.reset();
+        form.style.display = 'none';
+      }
+      resetChangePasswordToggles();
+      if (btnToggle) {
+        btnToggle.setAttribute('aria-expanded', 'false');
+        btnToggle.style.display = 'inline-flex';
+      }
+      if (toggleText) {
+        toggleText.textContent = 'Đổi mật khẩu';
+      }
+    }
+  }
+
+  function initChangePasswordForm() {
+    const btnToggle = document.getElementById('btnToggleChangePassword');
+    const btnCancel = document.getElementById('btnCancelChangePassword');
+    const form = document.getElementById('changePasswordForm');
+    const currentInput = document.getElementById('currentPasswordInput');
+    const newInput = document.getElementById('newPasswordInput');
+    const confirmInput = document.getElementById('confirmNewPasswordInput');
+
+    if (btnToggle) {
+      btnToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearAccountAlert();
+        toggleChangePasswordMode(true);
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearChangePasswordAlert();
+        toggleChangePasswordMode(false);
+      });
+    }
+
+    [currentInput, newInput, confirmInput].forEach((input) => {
+      if (!input) return;
+      input.addEventListener('input', () => {
+        clearFieldError(input);
+      });
+    });
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleChangePasswordSubmit();
+      });
+    }
+  }
+
+  async function handleChangePasswordSubmit() {
+    if (isSubmittingPassword) return;
+
+    const currentPasswordInput = document.getElementById('currentPasswordInput');
+    const newPasswordInput = document.getElementById('newPasswordInput');
+    const confirmNewPasswordInput = document.getElementById('confirmNewPasswordInput');
+    const form = document.getElementById('changePasswordForm');
+    const btnSubmit = document.getElementById('btnSubmitChangePassword');
+    const btnCancel = document.getElementById('btnCancelChangePassword');
+    const spinner = document.getElementById('changePasswordSpinner');
+    const btnText = document.getElementById('changePasswordBtnText');
+
+    clearChangePasswordAlert();
+    [currentPasswordInput, newPasswordInput, confirmNewPasswordInput].forEach((input) => {
+      if (input) clearFieldError(input);
+    });
+
+    const isValid = validateChangePasswordForm({
+      currentPasswordInput,
+      newPasswordInput,
+      confirmNewPasswordInput,
+    });
+    if (!isValid) return;
+
+    const token = getStoredToken();
+    if (!token) {
+      showChangePasswordAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: currentPasswordInput.value,
+          new_password: newPasswordInput.value,
+        }),
+      });
+
+      let responseData = null;
+      try {
+        responseData = await response.json();
+      } catch (e) {}
+
+      if (response.status === 200) {
+        showChangePasswordAlert('Đổi mật khẩu thành công!', 'success');
+        showAccountAlert('Đổi mật khẩu thành công!', 'success');
+        if (form) form.reset();
+        resetChangePasswordToggles();
+        setTimeout(() => {
+          toggleChangePasswordMode(false);
+        }, 1200);
+      } else if (response.status === 400) {
+        const errCode = responseData && responseData.error_code;
+        if (errCode === 'INCORRECT_CURRENT_PASSWORD') {
+          showFieldError(currentPasswordInput, 'Mật khẩu hiện tại không chính xác.');
+          showChangePasswordAlert('Mật khẩu hiện tại không chính xác.', 'error');
+          if (currentPasswordInput && typeof currentPasswordInput.focus === 'function') {
+            currentPasswordInput.focus();
+          }
+        } else if (errCode === 'PASSWORD_SAME_AS_OLD') {
+          showFieldError(newPasswordInput, 'Mật khẩu mới không được trùng với mật khẩu hiện tại.');
+          showChangePasswordAlert('Mật khẩu mới không được trùng với mật khẩu hiện tại.', 'error');
+          if (newPasswordInput && typeof newPasswordInput.focus === 'function') {
+            newPasswordInput.focus();
+          }
+        } else {
+          const msg = (responseData && responseData.message)
+            ? responseData.message
+            : 'Yêu cầu đổi mật khẩu không hợp lệ.';
+          showChangePasswordAlert(msg, 'error');
+        }
+      } else if (response.status === 401 || response.status === 403) {
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        toggleChangePasswordMode(false);
+        const card = document.getElementById('accountInfoContent');
+        if (card) card.style.display = 'none';
+        showAccountAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      } else if (response.status === 422) {
+        let msg = (responseData && responseData.message)
+          ? responseData.message
+          : 'Dữ liệu mật khẩu không hợp lệ.';
+        if (responseData && Array.isArray(responseData.details) && responseData.details.length > 0) {
+          const firstDetail = responseData.details[0];
+          msg = firstDetail.message || firstDetail.msg || msg;
+        }
+        showChangePasswordAlert(msg, 'error');
+      } else {
+        showChangePasswordAlert(
+          'Hệ thống đang gặp sự cố tạm thời. Vui lòng thử lại sau giây lát.',
+          'error'
+        );
+      }
+    } catch (networkError) {
+      console.warn('[PDF-Lingua Change Password Error]', networkError);
+      showChangePasswordAlert(
+        'Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.',
+        'error'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+
+    function setSubmitting(loading) {
+      isSubmittingPassword = loading;
+      if (btnSubmit) btnSubmit.disabled = loading;
+      if (btnCancel) btnCancel.disabled = loading;
+      if (spinner) spinner.style.display = loading ? 'inline-block' : 'none';
+      if (btnText) btnText.textContent = loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu';
     }
   }
 
@@ -1439,5 +1728,11 @@
     renderAccountDetails,
     toggleAccountEditMode,
     handleSaveFullName,
+    showChangePasswordAlert,
+    clearChangePasswordAlert,
+    resetChangePasswordToggles,
+    validateChangePasswordForm,
+    toggleChangePasswordMode,
+    handleChangePasswordSubmit,
   });
 })();

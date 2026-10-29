@@ -797,3 +797,45 @@
 .account-modal-footer {
   padding: 1rem 2rem 1.5rem;
 }
+
+/* ── Change Password Section (PDFL-80.4) ─────────────────────────────────── */
+.account-security-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.account-security-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.security-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-title);
+  margin: 0 0 0.15rem 0;
+}
+
+.security-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.change-password-form {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.change-password-form .form-group {
+  margin-bottom: 0;
+}

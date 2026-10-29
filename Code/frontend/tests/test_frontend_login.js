@@ -60,6 +60,12 @@ function createEnv() {
     'accountFullNameView', 'accountEditForm', 'btnToggleEditFullName', 'editFullNameInput',
     'editFullNameInputError', 'btnCancelEditFullName', 'btnSaveFullName', 'editFullNameSpinner',
     'editFullNameBtnText',
+    'btnToggleChangePassword', 'toggleChangePasswordText', 'changePasswordForm',
+    'changePasswordAlert', 'currentPasswordInput', 'currentPasswordInputError',
+    'toggleCurrentPassword', 'newPasswordInput', 'newPasswordInputError',
+    'toggleNewPassword', 'confirmNewPasswordInput', 'confirmNewPasswordInputError',
+    'toggleConfirmNewPassword', 'btnCancelChangePassword', 'btnSubmitChangePassword',
+    'changePasswordSpinner', 'changePasswordBtnText',
   ];
   const e = Object.fromEntries(ids.map((id) => [id, new Element(id)]));
   const localStorage = new MockLocalStorage();
@@ -552,6 +558,216 @@ async function test(name, fn) {
     await a.handleSaveFullName();
     assert.strictEqual(storage.getItem('pdfl_token'), 'valid-token');
     assert.match(e.accountAlert.textContent, /Không thể cập nhật thông tin lúc này|Internal Server Error/i);
+  });
+
+  // 24. Change Password: Form open, close, and reset
+  await test('Change Password: Form open, close, and reset behaviors', async () => {
+    const { e, a } = createEnv();
+    a.toggleChangePasswordMode(true);
+    assert.strictEqual(e.changePasswordForm.style.display, 'flex');
+    assert.strictEqual(e.btnToggleChangePassword.style.display, 'none');
+
+    a.toggleChangePasswordMode(false);
+    assert.strictEqual(e.changePasswordForm.style.display, 'none');
+    assert.strictEqual(e.btnToggleChangePassword.style.display, 'inline-flex');
+  });
+
+  // 25. Change Password Validation: Empty fields are rejected
+  await test('Change Password Validation: Empty fields show validation errors', async () => {
+    const { e, a } = createEnv();
+    const isValid = a.validateChangePasswordForm({
+      currentPasswordInput: e.currentPasswordInput,
+      newPasswordInput: e.newPasswordInput,
+      confirmNewPasswordInput: e.confirmNewPasswordInput,
+    });
+    assert.strictEqual(isValid, false);
+    assert.match(e.currentPasswordInputError.textContent, /nhập mật khẩu hiện tại/i);
+    assert.match(e.newPasswordInputError.textContent, /nhập mật khẩu mới/i);
+    assert.match(e.confirmNewPasswordInputError.textContent, /xác nhận mật khẩu mới/i);
+  });
+
+  // 26. Change Password Validation: Strength & matching rules
+  await test('Change Password Validation: Strength and matching rules enforced', async () => {
+    const { e, a } = createEnv();
+
+    // Short password
+    e.currentPasswordInput.value = 'Current123';
+    e.newPasswordInput.value = 'Short1';
+    e.confirmNewPasswordInput.value = 'Short1';
+    assert.strictEqual(a.validateChangePasswordForm({
+      currentPasswordInput: e.currentPasswordInput,
+      newPasswordInput: e.newPasswordInput,
+      confirmNewPasswordInput: e.confirmNewPasswordInput,
+    }), false);
+    assert.match(e.newPasswordInputError.textContent, /tối thiểu 8 ký tự/i);
+
+    // Missing letter
+    e.newPasswordInput.value = '123456789';
+    e.confirmNewPasswordInput.value = '123456789';
+    assert.strictEqual(a.validateChangePasswordForm({
+      currentPasswordInput: e.currentPasswordInput,
+      newPasswordInput: e.newPasswordInput,
+      confirmNewPasswordInput: e.confirmNewPasswordInput,
+    }), false);
+    assert.match(e.newPasswordInputError.textContent, /chứa ít nhất một chữ cái/i);
+
+    // Missing digit
+    e.newPasswordInput.value = 'LettersOnlyPassword';
+    e.confirmNewPasswordInput.value = 'LettersOnlyPassword';
+    assert.strictEqual(a.validateChangePasswordForm({
+      currentPasswordInput: e.currentPasswordInput,
+      newPasswordInput: e.newPasswordInput,
+      confirmNewPasswordInput: e.confirmNewPasswordInput,
+    }), false);
+    assert.match(e.newPasswordInputError.textContent, /chứa ít nhất một chữ số/i);
+
+    // Same as current password
+    e.newPasswordInput.value = 'Current123';
+    e.confirmNewPasswordInput.value = 'Current123';
+    assert.strictEqual(a.validateChangePasswordForm({
+      currentPasswordInput: e.currentPasswordInput,
+      newPasswordInput: e.newPasswordInput,
+      confirmNewPasswordInput: e.confirmNewPasswordInput,
+    }), false);
+    assert.match(e.newPasswordInputError.textContent, /không được trùng với mật khẩu hiện tại/i);
+
+    // Mismatched confirmation
+    e.newPasswordInput.value = 'ValidNewPass123';
+    e.confirmNewPasswordInput.value = 'DifferentPass123';
+    assert.strictEqual(a.validateChangePasswordForm({
+      currentPasswordInput: e.currentPasswordInput,
+      newPasswordInput: e.newPasswordInput,
+      confirmNewPasswordInput: e.confirmNewPasswordInput,
+    }), false);
+    assert.match(e.confirmNewPasswordInputError.textContent, /không khớp/i);
+  });
+
+  // 27. Change Password Success: Calls POST /api/auth/change-password with Bearer token
+  await test('Change Password Success: Valid submission sends POST request with Bearer token and updates UI', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'user-bearer-token');
+
+    e.currentPasswordInput.value = 'OldPassword123';
+    e.newPasswordInput.value = 'NewPassword456';
+    e.confirmNewPasswordInput.value = 'NewPassword456';
+
+    let calledUrl = '';
+    let calledOpts = null;
+
+    c.fetch = async (url, opts) => {
+      calledUrl = url;
+      calledOpts = opts;
+      return {
+        status: 200,
+        json: async () => ({
+          success: true,
+          message: 'Đổi mật khẩu thành công.',
+          data: null,
+        }),
+      };
+    };
+
+    await a.handleChangePasswordSubmit();
+
+    assert.match(calledUrl, /\/api\/auth\/change-password$/);
+    assert.strictEqual(calledOpts.method, 'POST');
+    assert.strictEqual(calledOpts.headers['Authorization'], 'Bearer user-bearer-token');
+    const body = JSON.parse(calledOpts.body);
+    assert.strictEqual(body.current_password, 'OldPassword123');
+    assert.strictEqual(body.new_password, 'NewPassword456');
+
+    assert.match(e.changePasswordAlert.textContent, /thành công/i);
+    assert.strictEqual(storage.getItem('current_password'), null);
+    assert.strictEqual(storage.getItem('new_password'), null);
+  });
+
+  // 28. Change Password Error: 400 Incorrect current password
+  await test('Change Password Error: 400 incorrect current password shows inline error and alert', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+
+    e.currentPasswordInput.value = 'WrongCurrent123';
+    e.newPasswordInput.value = 'NewPassword456';
+    e.confirmNewPasswordInput.value = 'NewPassword456';
+
+    c.fetch = async () => ({
+      status: 400,
+      json: async () => ({
+        success: false,
+        error_code: 'INCORRECT_CURRENT_PASSWORD',
+        message: 'Mật khẩu hiện tại không chính xác.',
+      }),
+    });
+
+    await a.handleChangePasswordSubmit();
+
+    assert.match(e.currentPasswordInputError.textContent, /không chính xác/i);
+    assert.match(e.changePasswordAlert.textContent, /không chính xác/i);
+  });
+
+  // 29. Change Password Error: 400 New password same as old password
+  await test('Change Password Error: 400 same as old password shows inline error and alert', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+
+    e.currentPasswordInput.value = 'CurrentPassword123';
+    e.newPasswordInput.value = 'NewPassword123';
+    e.confirmNewPasswordInput.value = 'NewPassword123';
+
+    c.fetch = async () => ({
+      status: 400,
+      json: async () => ({
+        success: false,
+        error_code: 'PASSWORD_SAME_AS_OLD',
+        message: 'Mật khẩu mới không được trùng với mật khẩu hiện tại.',
+      }),
+    });
+
+    await a.handleChangePasswordSubmit();
+
+    assert.match(e.newPasswordInputError.textContent, /không được trùng/i);
+    assert.match(e.changePasswordAlert.textContent, /không được trùng/i);
+  });
+
+  // 30. Change Password Error: 401/403 clears session
+  await test('Change Password Error: 401 unauthorized clears session and directs user to login', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'expired-token');
+    storage.setItem('pdfl_user', JSON.stringify({ id: 1, email: 'user@example.com' }));
+
+    e.currentPasswordInput.value = 'OldPassword123';
+    e.newPasswordInput.value = 'NewPassword456';
+    e.confirmNewPasswordInput.value = 'NewPassword456';
+
+    c.fetch = async () => ({
+      status: 401,
+      json: async () => ({ success: false, error_code: 'TOKEN_EXPIRED' }),
+    });
+
+    await a.handleChangePasswordSubmit();
+
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(storage.getItem('pdfl_user'), null);
+    assert.match(e.accountAlert.textContent, /hết hạn hoặc không hợp lệ/i);
+  });
+
+  // 31. Change Password Error: Network error preserves token and shows message
+  await test('Change Password Error: Network failure displays error and preserves token', async () => {
+    const { e, a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-token');
+
+    e.currentPasswordInput.value = 'OldPassword123';
+    e.newPasswordInput.value = 'NewPassword456';
+    e.confirmNewPasswordInput.value = 'NewPassword456';
+
+    c.fetch = async () => {
+      throw new Error('Connection refused');
+    };
+
+    await a.handleChangePasswordSubmit();
+
+    assert.strictEqual(storage.getItem('pdfl_token'), 'valid-token');
+    assert.match(e.changePasswordAlert.textContent, /Không thể kết nối đến máy chủ/i);
   });
 
   console.log(`\n================================================================`);

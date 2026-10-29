@@ -694,6 +694,112 @@
                             </span>
                         </div>
                     </div>
+
+                    <!-- Security / Change Password Section (PDFL-80.4) -->
+                    <div class="account-security-section">
+                        <div class="account-security-header">
+                            <div>
+                                <h4 class="security-title">Bảo mật tài khoản</h4>
+                                <p class="security-subtitle">Thay đổi mật khẩu đăng nhập của bạn</p>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnToggleChangePassword" aria-expanded="false" aria-controls="changePasswordForm">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                <span id="toggleChangePasswordText">Đổi mật khẩu</span>
+                            </button>
+                        </div>
+
+                        <!-- Change Password Form (Initially Hidden) -->
+                        <form id="changePasswordForm" class="change-password-form" style="display: none;" novalidate>
+                            <div class="form-alert" id="changePasswordAlert" role="alert" style="display: none;"></div>
+
+                            <!-- Current Password -->
+                            <div class="form-group">
+                                <label for="currentPasswordInput" class="form-label">
+                                    Mật khẩu hiện tại <span class="label-required">*</span>
+                                </label>
+                                <div class="input-wrap">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="currentPasswordInput" name="current_password" class="form-input" placeholder="Nhập mật khẩu hiện tại" required autocomplete="current-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleCurrentPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="field-error" id="currentPasswordInputError" role="alert" aria-live="polite"></p>
+                            </div>
+
+                            <!-- New Password -->
+                            <div class="form-group">
+                                <label for="newPasswordInput" class="form-label">
+                                    Mật khẩu mới <span class="label-required">*</span>
+                                </label>
+                                <div class="input-wrap">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="newPasswordInput" name="new_password" class="form-input" placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required autocomplete="new-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleNewPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="field-error" id="newPasswordInputError" role="alert" aria-live="polite"></p>
+                            </div>
+
+                            <!-- Confirm New Password -->
+                            <div class="form-group">
+                                <label for="confirmNewPasswordInput" class="form-label">
+                                    Xác nhận mật khẩu mới <span class="label-required">*</span>
+                                </label>
+                                <div class="input-wrap">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="confirmNewPasswordInput" name="confirm_new_password" class="form-input" placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleConfirmNewPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="field-error" id="confirmNewPasswordInputError" role="alert" aria-live="polite"></p>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="account-edit-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnCancelChangePassword">Hủy</button>
+                                <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitChangePassword">
+                                    <span class="btn-spinner" id="changePasswordSpinner" aria-hidden="true" style="display: none;"></span>
+                                    <span id="changePasswordBtnText">Cập nhật mật khẩu</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
