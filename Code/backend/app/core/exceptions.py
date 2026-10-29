@@ -35,33 +35,48 @@ class NotFoundException(AppException):
 
 class BadRequestException(AppException):
     """Exception raised for invalid client requests."""
-    def __init__(self, message: str = "Bad request", details: Optional[Any] = None):
+    def __init__(
+        self,
+        message: str = "Bad request",
+        error_code: str = "BAD_REQUEST",
+        details: Optional[Any] = None,
+    ):
         super().__init__(
             message=message,
             status_code=status.HTTP_400_BAD_REQUEST,
-            error_code="BAD_REQUEST",
+            error_code=error_code,
             details=details,
         )
 
 
 class UnauthorizedException(AppException):
     """Exception raised when authentication credentials are missing or invalid."""
-    def __init__(self, message: str = "Authentication required", details: Optional[Any] = None):
+    def __init__(
+        self,
+        message: str = "Authentication required",
+        error_code: str = "UNAUTHORIZED",
+        details: Optional[Any] = None,
+    ):
         super().__init__(
             message=message,
             status_code=status.HTTP_401_UNAUTHORIZED,
-            error_code="UNAUTHORIZED",
+            error_code=error_code,
             details=details,
         )
 
 
 class ForbiddenException(AppException):
     """Exception raised when user does not have permission to access a resource."""
-    def __init__(self, message: str = "Permission denied", details: Optional[Any] = None):
+    def __init__(
+        self,
+        message: str = "Permission denied",
+        error_code: str = "FORBIDDEN",
+        details: Optional[Any] = None,
+    ):
         super().__init__(
             message=message,
             status_code=status.HTTP_403_FORBIDDEN,
-            error_code="FORBIDDEN",
+            error_code=error_code,
             details=details,
         )
 

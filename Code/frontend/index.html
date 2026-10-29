@@ -29,7 +29,17 @@
             </nav>
 
             <div class="header-actions">
-                <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
+                <div class="auth-guest-group" id="authGuestGroup">
+                    <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
+                </div>
+                <div class="auth-user-group" id="authUserGroup" hidden>
+                    <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản">
+                        <span class="user-avatar" id="userAvatar"></span>
+                        <span class="user-name" id="userDisplayName"></span>
+                    </button>
+                    <button type="button" class="btn btn-logout" id="btnLogout">Đăng xuất</button>
+                </div>
             </div>
         </div>
     </header>
@@ -207,7 +217,7 @@
                                 <span>Chọn tệp PDF</span>
                             </button>
 
-                            <p class="dropzone-limit">Tệp miễn phí tối đa 20 MB & 100 trang (Nâng cấp Pro để hỗ trợ 100 MB & 500 trang)</p>
+                            <p class="dropzone-limit" id="dropzoneLimitText">Tệp miễn phí tối đa 20 MB & 100 trang (Nâng cấp Pro để hỗ trợ 100 MB & 500 trang)</p>
                         </div>
 
                         <!-- Selected File Preview -->
@@ -409,6 +419,395 @@
             </ul>
         </div>
     </footer>
+
+    <!-- Registration Modal (PDFL-73.4) -->
+    <div class="modal-backdrop" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle" hidden>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="registerModalTitle">Đăng ký tài khoản</h2>
+                    <p class="modal-subtitle">Trải nghiệm không gian làm việc dịch thuật và trợ lý AI thông minh</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseRegisterModal" aria-label="Đóng cửa sổ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="registerForm" class="modal-form" novalidate>
+                <!-- Alert notification -->
+                <div class="form-alert" id="registerAlert" role="alert" style="display: none;"></div>
+
+                <!-- Full Name (Optional) -->
+                <div class="form-group">
+                    <label for="regFullName" class="form-label">
+                        Họ và tên <span class="label-hint">(Không bắt buộc)</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input type="text" id="regFullName" name="full_name" class="form-input" placeholder="Nguyễn Văn A" autocomplete="name" maxlength="150">
+                    </div>
+                    <p class="field-error" id="regFullNameError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="regEmail" class="form-label">
+                        Địa chỉ Email <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <input type="email" id="regEmail" name="email" class="form-input" placeholder="ban@example.com" required autocomplete="email">
+                    </div>
+                    <p class="field-error" id="regEmailError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="regPassword" class="form-label">
+                        Mật khẩu <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="regPassword" name="password" class="form-input" placeholder="Tối thiểu 8 ký tự (chữ & số)" required autocomplete="new-password" maxlength="128">
+                        <button type="button" class="btn-toggle-eye" id="toggleRegPassword" aria-label="Hiện mật khẩu">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="regPasswordError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="regConfirmPassword" class="form-label">
+                        Xác nhận mật khẩu <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="regConfirmPassword" name="confirm_password" class="form-input" placeholder="Nhập lại mật khẩu" required autocomplete="new-password" maxlength="128">
+                        <button type="button" class="btn-toggle-eye" id="toggleRegConfirmPassword" aria-label="Hiện mật khẩu xác nhận">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="regConfirmPasswordError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-gradient btn-block" id="btnSubmitRegister">
+                    <span class="btn-spinner" id="regSpinner" aria-hidden="true" style="display: none;"></span>
+                    <span id="regBtnText">Tạo tài khoản</span>
+                </button>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer-text">
+                    Đã có tài khoản? <a href="#" id="linkSwitchLogin">Đăng nhập ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal (PDFL-76.4) -->
+    <div class="modal-backdrop" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" hidden>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="loginModalTitle">Đăng nhập</h2>
+                    <p class="modal-subtitle">Truy cập không gian làm việc PDF-Lingua của bạn</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseLoginModal" aria-label="Đóng cửa sổ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="loginForm" class="modal-form" novalidate>
+                <!-- Alert notification -->
+                <div class="form-alert" id="loginAlert" role="alert" style="display: none;"></div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="loginEmail" class="form-label">
+                        Địa chỉ Email <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <input type="email" id="loginEmail" name="email" class="form-input" placeholder="ban@example.com" required autocomplete="email">
+                    </div>
+                    <p class="field-error" id="loginEmailError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="loginPassword" class="form-label">
+                        Mật khẩu <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128">
+                        <button type="button" class="btn-toggle-eye" id="toggleLoginPassword" aria-label="Hiện mật khẩu">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="field-error" id="loginPasswordError" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-gradient btn-block" id="btnSubmitLogin">
+                    <span class="btn-spinner" id="loginSpinner" aria-hidden="true" style="display: none;"></span>
+                    <span id="loginBtnText">Đăng nhập</span>
+                </button>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer-text">
+                    Chưa có tài khoản? <a href="#" id="linkSwitchRegister">Đăng ký ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Details Modal (PDFL-79.2) -->
+    <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" hidden>
+        <div class="modal-dialog account-modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="accountModalTitle">Thông tin tài khoản</h2>
+                    <p class="modal-subtitle">Chi tiết hồ sơ và gói dịch vụ PDF-Lingua của bạn</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseAccountModal" aria-label="Đóng cửa sổ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="account-modal-body">
+                <!-- Alert notification -->
+                <div class="form-alert" id="accountAlert" role="alert" style="display: none;"></div>
+
+                <!-- Loading State -->
+                <div class="account-loading-wrap" id="accountLoading" style="display: none;">
+                    <span class="account-spinner" aria-hidden="true"></span>
+                    <p class="account-loading-text">Đang tải thông tin tài khoản...</p>
+                </div>
+
+                <!-- Account Info Content -->
+                <div class="account-info-card" id="accountInfoContent">
+                    <div class="account-header-hero">
+                        <div class="account-avatar-large" id="accountAvatarLarge">U</div>
+                        <div class="account-hero-meta">
+                            <h3 class="account-hero-name" id="accountFullNameDisplay">---</h3>
+                            <p class="account-hero-email" id="accountEmailSubDisplay">---</p>
+                        </div>
+                    </div>
+
+                    <div class="account-details-grid">
+                        <div class="account-detail-item account-detail-editable">
+                            <div class="account-detail-header">
+                                <span class="account-detail-label">Họ và tên</span>
+                                <button type="button" class="btn-edit-toggle" id="btnToggleEditFullName" title="Chỉnh sửa họ tên">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    <span>Chỉnh sửa</span>
+                                </button>
+                            </div>
+
+                            <!-- View mode -->
+                            <div id="accountFullNameView" class="account-detail-value-wrap">
+                                <span class="account-detail-value" id="accountDetailFullName">---</span>
+                            </div>
+
+                            <!-- Edit mode form -->
+                            <form id="accountEditForm" class="account-edit-form" style="display: none;" novalidate>
+                                <div class="input-wrap">
+                                    <input type="text" id="editFullNameInput" name="full_name" class="form-input" placeholder="Nhập họ và tên mới" maxlength="150" autocomplete="name">
+                                </div>
+                                <p class="field-error" id="editFullNameInputError" role="alert" aria-live="polite"></p>
+                                <div class="account-edit-actions">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditFullName">Hủy</button>
+                                    <button type="submit" class="btn btn-gradient btn-sm" id="btnSaveFullName">
+                                        <span class="btn-spinner" id="editFullNameSpinner" aria-hidden="true" style="display: none;"></span>
+                                        <span id="editFullNameBtnText">Lưu</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Địa chỉ Email</span>
+                            <span class="account-detail-value" id="accountDetailEmail">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Gói tài khoản (Vai trò)</span>
+                            <span class="account-detail-value">
+                                <span class="badge-role" id="accountDetailRole">---</span>
+                            </span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Trạng thái</span>
+                            <span class="account-detail-value">
+                                <span class="badge-status" id="accountDetailStatus">Hoạt động</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Security / Change Password Section (PDFL-80.4) -->
+                    <div class="account-security-section">
+                        <div class="account-security-header">
+                            <div>
+                                <h4 class="security-title">Bảo mật tài khoản</h4>
+                                <p class="security-subtitle">Thay đổi mật khẩu đăng nhập của bạn</p>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnToggleChangePassword" aria-expanded="false" aria-controls="changePasswordForm">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                <span id="toggleChangePasswordText">Đổi mật khẩu</span>
+                            </button>
+                        </div>
+
+                        <!-- Change Password Form (Initially Hidden) -->
+                        <form id="changePasswordForm" class="change-password-form" style="display: none;" novalidate>
+                            <div class="form-alert" id="changePasswordAlert" role="alert" style="display: none;"></div>
+
+                            <!-- Current Password -->
+                            <div class="form-group">
+                                <label for="currentPasswordInput" class="form-label">
+                                    Mật khẩu hiện tại <span class="label-required">*</span>
+                                </label>
+                                <div class="input-wrap">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="currentPasswordInput" name="current_password" class="form-input" placeholder="Nhập mật khẩu hiện tại" required autocomplete="current-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleCurrentPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="field-error" id="currentPasswordInputError" role="alert" aria-live="polite"></p>
+                            </div>
+
+                            <!-- New Password -->
+                            <div class="form-group">
+                                <label for="newPasswordInput" class="form-label">
+                                    Mật khẩu mới <span class="label-required">*</span>
+                                </label>
+                                <div class="input-wrap">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="newPasswordInput" name="new_password" class="form-input" placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required autocomplete="new-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleNewPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="field-error" id="newPasswordInputError" role="alert" aria-live="polite"></p>
+                            </div>
+
+                            <!-- Confirm New Password -->
+                            <div class="form-group">
+                                <label for="confirmNewPasswordInput" class="form-label">
+                                    Xác nhận mật khẩu mới <span class="label-required">*</span>
+                                </label>
+                                <div class="input-wrap">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="confirmNewPasswordInput" name="confirm_new_password" class="form-input" placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleConfirmNewPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="field-error" id="confirmNewPasswordInputError" role="alert" aria-live="polite"></p>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="account-edit-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnCancelChangePassword">Hủy</button>
+                                <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitChangePassword">
+                                    <span class="btn-spinner" id="changePasswordSpinner" aria-hidden="true" style="display: none;"></span>
+                                    <span id="changePasswordBtnText">Cập nhật mật khẩu</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-modal-footer">
+                <button type="button" class="btn btn-secondary btn-block" id="btnCloseAccountModalBtn">Đóng</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Legal & Contact Modal (Terms, Privacy, Contact) -->
     <div class="legal-modal-overlay" id="legalModalOverlay" aria-hidden="true" style="display: none;">
@@ -633,6 +1032,7 @@
 
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/workspace.js"></script>
 </body>
 </html>
