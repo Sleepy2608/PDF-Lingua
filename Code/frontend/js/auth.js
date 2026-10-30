@@ -8,9 +8,9 @@
 (function () {
   'use strict';
 
-  // API Base URL Detection (handles localhost:8000 backend with CORS support)
+  // API Base URL Detection (handles localhost/127.0.0.1 backend with CORS support)
   const API_BASE_URL = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
-    ? 'http://localhost:8000'
+    ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${(window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1'}:8000`
     : '';
 
   let isSubmitting = false;
@@ -426,6 +426,7 @@
     const passwordInput = document.getElementById('regPassword');
     const confirmPasswordInput = document.getElementById('regConfirmPassword');
 
+    let keepLoading = false;
     setLoadingState(true);
 
     try {
@@ -446,14 +447,98 @@
       }
 
       if (response.status === 201) {
-        // Successful registration
+        // Successful registration -> Auto-login
+        setLoadingState(true, 'Đang tự động đăng nhập...');
+
+        const regData = responseData && responseData.data ? responseData.data : null;
+        let accessToken = regData && regData.access_token ? regData.access_token : null;
+        let userData = regData && (regData.user || regData);
+
+        // If backend did not return token directly, perform auto-login request
+        if (!accessToken) {
+          try {
+            console.log('[PDF-Lingua Auth] Đang tự động đăng nhập cho tài khoản mới:', payload.email);
+            const autoLoginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify({
+                email: payload.email,
+                password: payload.password,
+              }),
+            });
+
+            let autoLoginData = null;
+            try {
+              autoLoginData = await autoLoginRes.json();
+            } catch (e) {}
+
+            if (autoLoginRes.status === 200 && autoLoginData && autoLoginData.data) {
+              accessToken = autoLoginData.data.access_token;
+              userData = autoLoginData.data.user || autoLoginData.data;
+              console.log('[PDF-Lingua Auth] Tự động đăng nhập thành công.');
+            } else {
+              console.warn('[PDF-Lingua Auth] Tự động đăng nhập không thành công (status):', autoLoginRes.status);
+            }
+          } catch (autoLoginErr) {
+            console.warn('[PDF-Lingua Auth] Lỗi kết nối khi tự động đăng nhập:', autoLoginErr);
+          }
+        }
+
+        // Guarantee safe user structure merged with registration payload
+        const resolvedUser = Object.assign(
+          {},
+          (userData && typeof userData === 'object' ? userData : {}),
+          {
+            email: (userData && userData.email) || payload.email || '',
+            full_name: (userData && userData.full_name) || payload.full_name || '',
+            role: (userData && userData.role) || 'free',
+          }
+        );
+
+        if (accessToken) {
+          // 1. Save session to localStorage & sessionStorage
+          setStoredSession(accessToken, resolvedUser);
+
+          // 2. Immediately update Header navigation
+          updateHeaderAuthState(resolvedUser);
+
+          // 3. User feedback
+          const displayName = resolvedUser.full_name || resolvedUser.email || '';
+          showRegisterAlert(
+            displayName
+              ? `Đăng ký tài khoản thành công! Xin chào, ${escapeHtml(displayName)}.`
+              : 'Đăng ký tài khoản thành công! Đã đăng nhập.',
+            'success'
+          );
+
+          if (typeof showToast === 'function') {
+            try {
+              showToast(`Chào mừng ${displayName}! Đăng ký & đăng nhập thành công.`, 'success');
+            } catch (e) {}
+          }
+
+          if (form) form.reset();
+          resetPasswordToggleView();
+          keepLoading = true;
+
+          // 4. Close modal and clean up
+          setTimeout(() => {
+            closeRegisterModal();
+            setLoadingState(false);
+          }, 500);
+          return;
+        }
+
+        // Fallback if token could not be obtained: Keep form clean and inform user
+        if (form) form.reset();
+        resetPasswordToggleView();
         showRegisterAlert(
-          'Đăng ký tài khoản thành công! Bạn có thể sử dụng tài khoản này để trải nghiệm PDF-Lingua.',
+          'Đăng ký tài khoản thành công! Bạn có thể sử dụng tài khoản này để đăng nhập.',
           'success'
         );
-        form.reset();
-        // Reset password visibility if it was toggled
-        resetPasswordToggleView();
       } else if (response.status === 400) {
         // Duplicate email or business validation error
         if (responseData && responseData.error_code === 'EMAIL_ALREADY_EXISTS') {
@@ -526,10 +611,12 @@
         'error'
       );
     } finally {
-      setLoadingState(false);
+      if (!keepLoading) {
+        setLoadingState(false);
+      }
     }
 
-    function setLoadingState(loading) {
+    function setLoadingState(loading, customText) {
       isSubmitting = loading;
       if (btnSubmit) {
         btnSubmit.disabled = loading;
@@ -538,7 +625,7 @@
         spinner.style.display = loading ? 'inline-block' : 'none';
       }
       if (btnText) {
-        btnText.textContent = loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản';
+        btnText.textContent = customText ? customText : (loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản');
       }
     }
   }
@@ -895,6 +982,9 @@
 
   // ── Session & Auth State Management (PDFL-78.4) ──
 
+  let inMemoryToken = null;
+  let inMemoryUser = null;
+
   function getLocalStorage() {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -907,53 +997,108 @@
     return null;
   }
 
-  function getStoredToken() {
-    const storage = getLocalStorage();
-    if (!storage) return null;
+  function getSessionStorage() {
     try {
-      return storage.getItem('pdfl_token');
-    } catch (e) {
-      return null;
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        return window.sessionStorage;
+      }
+      if (typeof sessionStorage !== 'undefined') {
+        return sessionStorage;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function getStoredToken() {
+    if (inMemoryToken) return inMemoryToken;
+    const storage = getLocalStorage();
+    if (storage) {
+      try {
+        const val = storage.getItem('pdfl_token');
+        if (val) return val;
+      } catch (e) {}
     }
+    const sess = getSessionStorage();
+    if (sess) {
+      try {
+        const val = sess.getItem('pdfl_token');
+        if (val) return val;
+      } catch (e) {}
+    }
+    return null;
   }
 
   function getStoredUser() {
+    if (inMemoryUser) return inMemoryUser;
     const storage = getLocalStorage();
-    if (!storage) return null;
-    try {
-      const data = storage.getItem('pdfl_user');
-      return data ? JSON.parse(data) : null;
-    } catch (e) {
-      return null;
+    if (storage) {
+      try {
+        const data = storage.getItem('pdfl_user');
+        if (data) return JSON.parse(data);
+      } catch (e) {}
     }
+    const sess = getSessionStorage();
+    if (sess) {
+      try {
+        const data = sess.getItem('pdfl_user');
+        if (data) return JSON.parse(data);
+      } catch (e) {}
+    }
+    return null;
   }
 
   function setStoredSession(token, user) {
+    inMemoryToken = token;
+    inMemoryUser = user ? {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+    } : null;
+
     const storage = getLocalStorage();
-    if (!storage) return;
-    try {
-      storage.setItem('pdfl_token', token);
-      if (user) {
-        storage.setItem('pdfl_user', JSON.stringify({
-          id: user.id,
-          email: user.email,
-          full_name: user.full_name,
-          role: user.role,
-        }));
+    if (storage) {
+      try {
+        storage.setItem('pdfl_token', token);
+        if (user) {
+          storage.setItem('pdfl_user', JSON.stringify(inMemoryUser));
+        }
+      } catch (e) {
+        console.warn('[PDF-Lingua Auth] Không thể lưu vào localStorage:', e);
       }
-    } catch (e) {
-      console.warn('[PDF-Lingua Auth] Không thể lưu vào localStorage:', e);
+    }
+
+    const sess = getSessionStorage();
+    if (sess) {
+      try {
+        sess.setItem('pdfl_token', token);
+        if (user) {
+          sess.setItem('pdfl_user', JSON.stringify(inMemoryUser));
+        }
+      } catch (e) {}
     }
   }
 
   function clearStoredSession() {
+    inMemoryToken = null;
+    inMemoryUser = null;
+
     const storage = getLocalStorage();
-    if (!storage) return;
-    try {
-      storage.removeItem('pdfl_token');
-      storage.removeItem('pdfl_user');
-    } catch (e) {
-      console.warn('[PDF-Lingua Auth] Không thể xóa localStorage:', e);
+    if (storage) {
+      try {
+        storage.removeItem('pdfl_token');
+        storage.removeItem('pdfl_user');
+      } catch (e) {
+        console.warn('[PDF-Lingua Auth] Không thể xóa localStorage:', e);
+      }
+    }
+
+    const sess = getSessionStorage();
+    if (sess) {
+      try {
+        sess.removeItem('pdfl_token');
+        sess.removeItem('pdfl_user');
+      } catch (e) {}
     }
   }
 
@@ -963,21 +1108,45 @@
     const displayNameEl = document.getElementById('userDisplayName');
     const userAvatarEl = document.getElementById('userAvatar');
 
-    if (user && (user.full_name || user.email)) {
-      if (guestGroup) guestGroup.setAttribute('hidden', '');
-      if (userGroup) userGroup.removeAttribute('hidden');
+    if (user && (user.full_name || user.email || user.id)) {
+      if (guestGroup) {
+        guestGroup.setAttribute('hidden', '');
+        guestGroup.style.display = 'none';
+        try {
+          guestGroup.style.setProperty('display', 'none', 'important');
+        } catch (e) {}
+      }
+      if (userGroup) {
+        userGroup.removeAttribute('hidden');
+        userGroup.style.display = 'flex';
+        try {
+          userGroup.style.setProperty('display', 'flex', 'important');
+        } catch (e) {}
+      }
 
-      const name = user.full_name || user.email;
+      const name = user.full_name || user.email || 'Người dùng';
       if (displayNameEl) {
         displayNameEl.textContent = name;
       }
       if (userAvatarEl) {
-        const initial = (user.full_name ? user.full_name.charAt(0) : user.email.charAt(0)).toUpperCase();
+        const initial = (user.full_name ? user.full_name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
         userAvatarEl.textContent = initial;
       }
     } else {
-      if (guestGroup) guestGroup.removeAttribute('hidden');
-      if (userGroup) userGroup.setAttribute('hidden', '');
+      if (guestGroup) {
+        guestGroup.removeAttribute('hidden');
+        guestGroup.style.display = 'flex';
+        try {
+          guestGroup.style.setProperty('display', 'flex', 'important');
+        } catch (e) {}
+      }
+      if (userGroup) {
+        userGroup.setAttribute('hidden', '');
+        userGroup.style.display = 'none';
+        try {
+          userGroup.style.setProperty('display', 'none', 'important');
+        } catch (e) {}
+      }
       if (displayNameEl) {
         displayNameEl.textContent = '';
       }

@@ -123,7 +123,7 @@ function createTestEnvironment() {
 
   const windowListeners = {};
   const windowObj = {
-    location: { protocol: 'http:', port: '8000' },
+    location: { protocol: 'http:', port: '8000', hostname: 'localhost' },
     document,
     localStorage,
     addEventListener: (event, fn) => {

@@ -52,6 +52,8 @@ function createEnv() {
   const ids = [
     'loginForm', 'loginEmail', 'loginEmailError', 'loginPassword', 'loginPasswordError',
     'loginAlert', 'btnSubmitLogin', 'loginSpinner', 'loginBtnText', 'registerAlert',
+    'regFullName', 'regEmail', 'regPassword', 'regConfirmPassword', 'btnSubmitRegister', 'regSpinner', 'regBtnText', 'registerForm',
+    'regFullNameError', 'regEmailError', 'regPasswordError', 'regConfirmPasswordError',
     'authGuestGroup', 'authUserGroup', 'userDisplayName', 'userAvatar', 'btnLogout',
     'registerModal', 'loginModal', 'accountModal', 'btnOpenAccountModal', 'btnCloseAccountModal',
     'btnCloseAccountModalBtn', 'accountAlert', 'accountLoading', 'accountInfoContent',
@@ -80,7 +82,7 @@ function createEnv() {
   };
 
   const window = {
-    location: { protocol: 'http:', port: '8000' },
+    location: { protocol: 'http:', port: '8000', hostname: 'localhost' },
     document,
     localStorage,
   };
@@ -768,6 +770,154 @@ async function test(name, fn) {
 
     assert.strictEqual(storage.getItem('pdfl_token'), 'valid-token');
     assert.match(e.changePasswordAlert.textContent, /Không thể kết nối đến máy chủ/i);
+  });
+
+  // 32. Register Success
+  await test('Register Success: Automatically logs in, stores session and updates Header', async () => {
+    const { e, a, c, storage } = createEnv();
+
+    c.fetch = async (url) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/auth/register')) {
+        return {
+          status: 201,
+          json: async () => ({
+            success: true,
+            data: { id: 10, email: 'newuser@example.com', full_name: 'Người Mới', role: 'free' },
+          }),
+        };
+      }
+      if (urlStr.includes('/api/auth/login')) {
+        return {
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              access_token: 'auto-registered-jwt-token',
+              token_type: 'bearer',
+              user: { id: 10, email: 'newuser@example.com', full_name: 'Người Mới', role: 'free' },
+            },
+          }),
+        };
+      }
+      return { status: 404, json: async () => ({}) };
+    };
+
+    await a.submitRegistration({
+      email: 'newuser@example.com',
+      password: 'SecurePassword123',
+      full_name: 'Người Mới',
+    });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), 'auto-registered-jwt-token');
+    const storedUser = JSON.parse(storage.getItem('pdfl_user'));
+    assert.strictEqual(storedUser.email, 'newuser@example.com');
+    assert.strictEqual(storedUser.full_name, 'Người Mới');
+    assert.strictEqual(e.authUserGroup.attributes['hidden'], undefined);
+    assert.strictEqual(e.authGuestGroup.attributes['hidden'], '');
+    assert.strictEqual(e.userDisplayName.textContent, 'Người Mới');
+    assert.strictEqual(e.userAvatar.textContent, 'N');
+    assert.match(e.registerAlert.textContent, /Đăng ký tài khoản thành công/i);
+  });
+
+  await test('Register Success without full_name: Auto-login falls back to email display and initial', async () => {
+    const { e, a, c, storage } = createEnv();
+
+    c.fetch = async (url) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/auth/register')) {
+        return {
+          status: 201,
+          json: async () => ({
+            success: true,
+            data: { id: 11, email: 'noname@example.com', full_name: null, role: 'free' },
+          }),
+        };
+      }
+      if (urlStr.includes('/api/auth/login')) {
+        return {
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              access_token: 'jwt-noname-token',
+              token_type: 'bearer',
+              user: { id: 11, email: 'noname@example.com', full_name: null, role: 'free' },
+            },
+          }),
+        };
+      }
+      return { status: 404, json: async () => ({}) };
+    };
+
+    await a.submitRegistration({
+      email: 'noname@example.com',
+      password: 'SecurePassword123',
+    });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), 'jwt-noname-token');
+    assert.strictEqual(e.authUserGroup.attributes['hidden'], undefined);
+    assert.strictEqual(e.authGuestGroup.attributes['hidden'], '');
+    assert.strictEqual(e.userDisplayName.textContent, 'noname@example.com');
+    assert.strictEqual(e.userAvatar.textContent, 'N');
+  });
+
+  await test('Register Success with Login Error: Preserves Guest state and notifies user', async () => {
+    const { e, a, c, storage } = createEnv();
+
+    c.fetch = async (url) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/auth/register')) {
+        return {
+          status: 201,
+          json: async () => ({
+            success: true,
+            data: { id: 12, email: 'fail_login@example.com', full_name: 'Fail User', role: 'free' },
+          }),
+        };
+      }
+      if (urlStr.includes('/api/auth/login')) {
+        return {
+          status: 401,
+          json: async () => ({
+            success: false,
+            message: 'Email hoặc mật khẩu không chính xác.',
+          }),
+        };
+      }
+      return { status: 404, json: async () => ({}) };
+    };
+
+    await a.submitRegistration({
+      email: 'fail_login@example.com',
+      password: 'SecurePassword123',
+      full_name: 'Fail User',
+    });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(e.authGuestGroup.hasAttribute('hidden'), false);
+    assert.match(e.registerAlert.textContent, /đăng ký tài khoản thành công/i);
+  });
+
+  await test('Session Persistence: Fallback to sessionStorage when localStorage is restricted', async () => {
+    const { e, a, c, storage } = createEnv();
+
+    // Test setStoredSession / getStoredToken
+    a.setStoredSession('session-jwt-token', {
+      id: 99,
+      email: 'sess@example.com',
+      full_name: 'Session User',
+      role: 'free',
+    });
+
+    assert.strictEqual(a.getStoredToken(), 'session-jwt-token');
+    const u = a.getStoredUser();
+    assert.strictEqual(u.email, 'sess@example.com');
+    assert.strictEqual(u.full_name, 'Session User');
+
+    a.clearStoredSession();
+    assert.strictEqual(a.getStoredToken(), null);
+    assert.strictEqual(a.getStoredUser(), null);
   });
 
   console.log(`\n================================================================`);
