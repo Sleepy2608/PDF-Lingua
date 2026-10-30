@@ -8,9 +8,9 @@
 (function () {
   'use strict';
 
-  // API Base URL Detection (handles localhost:8000 backend with CORS support)
+  // API Base URL Detection (handles localhost/127.0.0.1 backend with CORS support)
   const API_BASE_URL = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
-    ? 'http://localhost:8000'
+    ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${(window.location.hostname && window.location.hostname !== '') ? window.location.hostname : 'localhost'}:8000`
     : '';
 
   let isSubmitting = false;
@@ -426,6 +426,7 @@
     const passwordInput = document.getElementById('regPassword');
     const confirmPasswordInput = document.getElementById('regConfirmPassword');
 
+    let keepLoading = false;
     setLoadingState(true);
 
     try {
@@ -446,14 +447,81 @@
       }
 
       if (response.status === 201) {
-        // Successful registration
+        // Successful registration -> Auto-login
+        const regData = responseData && responseData.data ? responseData.data : null;
+        let accessToken = regData && regData.access_token ? regData.access_token : null;
+        let userData = regData && (regData.user || regData);
+
+        // If backend did not return token directly, perform fallback auto-login request
+        if (!accessToken) {
+          try {
+            const autoLoginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify({
+                email: payload.email,
+                password: payload.password,
+              }),
+            });
+
+            let autoLoginData = null;
+            try {
+              autoLoginData = await autoLoginRes.json();
+            } catch (e) {}
+
+            if (autoLoginRes.status === 200 && autoLoginData && autoLoginData.data) {
+              accessToken = autoLoginData.data.access_token;
+              userData = autoLoginData.data.user || autoLoginData.data;
+            }
+          } catch (autoLoginErr) {
+            console.warn('[PDF-Lingua Auth] Fallback auto-login failed:', autoLoginErr);
+          }
+        }
+
+        if (accessToken && userData) {
+          // 1. Save session to localStorage
+          setStoredSession(accessToken, userData);
+
+          // 2. Immediately update Header navigation
+          updateHeaderAuthState(userData);
+
+          // 3. User feedback
+          const displayName = userData.full_name || userData.email || '';
+          showRegisterAlert(
+            displayName
+              ? `Đăng ký tài khoản thành công! Xin chào, ${escapeHtml(displayName)}.`
+              : 'Đăng ký tài khoản thành công! Đã đăng nhập.',
+            'success'
+          );
+
+          if (typeof showToast === 'function') {
+            try {
+              showToast(`Chào mừng ${displayName}! Đăng ký & đăng nhập thành công.`, 'success');
+            } catch (e) {}
+          }
+
+          if (form) form.reset();
+          resetPasswordToggleView();
+          keepLoading = true;
+
+          // 4. Close modal and clean up
+          setTimeout(() => {
+            closeRegisterModal();
+            setLoadingState(false);
+          }, 800);
+          return;
+        }
+
+        // Fallback if token could not be obtained: Keep form clean and inform user
+        if (form) form.reset();
+        resetPasswordToggleView();
         showRegisterAlert(
-          'Đăng ký tài khoản thành công! Bạn có thể sử dụng tài khoản này để trải nghiệm PDF-Lingua.',
+          'Đăng ký tài khoản thành công! Bạn có thể sử dụng tài khoản này để đăng nhập.',
           'success'
         );
-        form.reset();
-        // Reset password visibility if it was toggled
-        resetPasswordToggleView();
       } else if (response.status === 400) {
         // Duplicate email or business validation error
         if (responseData && responseData.error_code === 'EMAIL_ALREADY_EXISTS') {
@@ -526,10 +594,12 @@
         'error'
       );
     } finally {
-      setLoadingState(false);
+      if (!keepLoading) {
+        setLoadingState(false);
+      }
     }
 
-    function setLoadingState(loading) {
+    function setLoadingState(loading, customText) {
       isSubmitting = loading;
       if (btnSubmit) {
         btnSubmit.disabled = loading;
@@ -538,7 +608,7 @@
         spinner.style.display = loading ? 'inline-block' : 'none';
       }
       if (btnText) {
-        btnText.textContent = loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản';
+        btnText.textContent = customText ? customText : (loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản');
       }
     }
   }
@@ -895,6 +965,9 @@
 
   // ── Session & Auth State Management (PDFL-78.4) ──
 
+  let inMemoryToken = null;
+  let inMemoryUser = null;
+
   function getLocalStorage() {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -908,6 +981,7 @@
   }
 
   function getStoredToken() {
+    if (inMemoryToken) return inMemoryToken;
     const storage = getLocalStorage();
     if (!storage) return null;
     try {
@@ -918,6 +992,7 @@
   }
 
   function getStoredUser() {
+    if (inMemoryUser) return inMemoryUser;
     const storage = getLocalStorage();
     if (!storage) return null;
     try {
@@ -929,17 +1004,20 @@
   }
 
   function setStoredSession(token, user) {
+    inMemoryToken = token;
+    inMemoryUser = user ? {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+    } : null;
+
     const storage = getLocalStorage();
     if (!storage) return;
     try {
       storage.setItem('pdfl_token', token);
       if (user) {
-        storage.setItem('pdfl_user', JSON.stringify({
-          id: user.id,
-          email: user.email,
-          full_name: user.full_name,
-          role: user.role,
-        }));
+        storage.setItem('pdfl_user', JSON.stringify(inMemoryUser));
       }
     } catch (e) {
       console.warn('[PDF-Lingua Auth] Không thể lưu vào localStorage:', e);
@@ -947,6 +1025,8 @@
   }
 
   function clearStoredSession() {
+    inMemoryToken = null;
+    inMemoryUser = null;
     const storage = getLocalStorage();
     if (!storage) return;
     try {
@@ -964,8 +1044,14 @@
     const userAvatarEl = document.getElementById('userAvatar');
 
     if (user && (user.full_name || user.email)) {
-      if (guestGroup) guestGroup.setAttribute('hidden', '');
-      if (userGroup) userGroup.removeAttribute('hidden');
+      if (guestGroup) {
+        guestGroup.setAttribute('hidden', '');
+        guestGroup.style.display = 'none';
+      }
+      if (userGroup) {
+        userGroup.removeAttribute('hidden');
+        userGroup.style.display = 'flex';
+      }
 
       const name = user.full_name || user.email;
       if (displayNameEl) {
@@ -976,8 +1062,14 @@
         userAvatarEl.textContent = initial;
       }
     } else {
-      if (guestGroup) guestGroup.removeAttribute('hidden');
-      if (userGroup) userGroup.setAttribute('hidden', '');
+      if (guestGroup) {
+        guestGroup.removeAttribute('hidden');
+        guestGroup.style.display = 'flex';
+      }
+      if (userGroup) {
+        userGroup.setAttribute('hidden', '');
+        userGroup.style.display = 'none';
+      }
       if (displayNameEl) {
         displayNameEl.textContent = '';
       }

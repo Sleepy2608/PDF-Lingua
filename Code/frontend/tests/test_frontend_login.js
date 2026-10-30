@@ -52,6 +52,8 @@ function createEnv() {
   const ids = [
     'loginForm', 'loginEmail', 'loginEmailError', 'loginPassword', 'loginPasswordError',
     'loginAlert', 'btnSubmitLogin', 'loginSpinner', 'loginBtnText', 'registerAlert',
+    'regFullName', 'regEmail', 'regPassword', 'regConfirmPassword', 'btnSubmitRegister', 'regSpinner', 'regBtnText', 'registerForm',
+    'regFullNameError', 'regEmailError', 'regPasswordError', 'regConfirmPasswordError',
     'authGuestGroup', 'authUserGroup', 'userDisplayName', 'userAvatar', 'btnLogout',
     'registerModal', 'loginModal', 'accountModal', 'btnOpenAccountModal', 'btnCloseAccountModal',
     'btnCloseAccountModalBtn', 'accountAlert', 'accountLoading', 'accountInfoContent',
@@ -80,7 +82,7 @@ function createEnv() {
   };
 
   const window = {
-    location: { protocol: 'http:', port: '8000' },
+    location: { protocol: 'http:', port: '8000', hostname: 'localhost' },
     document,
     localStorage,
   };
@@ -768,6 +770,54 @@ async function test(name, fn) {
 
     assert.strictEqual(storage.getItem('pdfl_token'), 'valid-token');
     assert.match(e.changePasswordAlert.textContent, /Không thể kết nối đến máy chủ/i);
+  });
+
+  // 32. Register Success
+  await test('Register Success: Automatically logs in, stores session and updates Header', async () => {
+    const { e, a, c, storage } = createEnv();
+
+    c.fetch = async (url) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/auth/register')) {
+        return {
+          status: 201,
+          json: async () => ({
+            success: true,
+            data: { id: 10, email: 'newuser@example.com', full_name: 'Người Mới', role: 'free' },
+          }),
+        };
+      }
+      if (urlStr.includes('/api/auth/login')) {
+        return {
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              access_token: 'auto-registered-jwt-token',
+              token_type: 'bearer',
+              user: { id: 10, email: 'newuser@example.com', full_name: 'Người Mới', role: 'free' },
+            },
+          }),
+        };
+      }
+      return { status: 404, json: async () => ({}) };
+    };
+
+    await a.submitRegistration({
+      email: 'newuser@example.com',
+      password: 'SecurePassword123',
+      full_name: 'Người Mới',
+    });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), 'auto-registered-jwt-token');
+    const storedUser = JSON.parse(storage.getItem('pdfl_user'));
+    assert.strictEqual(storedUser.email, 'newuser@example.com');
+    assert.strictEqual(storedUser.full_name, 'Người Mới');
+    assert.strictEqual(e.authUserGroup.attributes['hidden'], undefined);
+    assert.strictEqual(e.authGuestGroup.attributes['hidden'], '');
+    assert.strictEqual(e.userDisplayName.textContent, 'Người Mới');
+    assert.strictEqual(e.userAvatar.textContent, 'N');
+    assert.match(e.registerAlert.textContent, /Đăng ký tài khoản thành công/i);
   });
 
   console.log(`\n================================================================`);

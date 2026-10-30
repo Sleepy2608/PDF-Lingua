@@ -163,7 +163,7 @@ function createFreshEnvironment() {
   };
 
   const domWindow = {
-    location: { protocol: 'http:', port: '8000' },
+    location: { protocol: 'http:', port: '8000', hostname: 'localhost' },
     addEventListener: () => {},
     document: {
       addEventListener: () => {},
