@@ -45,9 +45,6 @@ function getCurrentUserLimits(user) {
     try {
       if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredUser === 'function') {
         targetUser = window.pdfLinguaAuth.getStoredUser();
-      } else if (typeof localStorage !== 'undefined' && localStorage) {
-        const raw = localStorage.getItem('pdfl_user');
-        targetUser = raw ? JSON.parse(raw) : null;
       }
     } catch (e) {
       targetUser = null;

@@ -1048,10 +1048,15 @@
     return div.innerHTML;
   }
 
-  // ── Session & Auth State Management (PDFL-78.4) ──
+  // ── Session & Auth State Management (PDFL-78.4, standardised in PDFL-43.3) ──
+
+  const TOKEN_STORAGE_KEY = 'pdfl_token';
+  const USER_STORAGE_KEY = 'pdfl_user';
+  const STORAGE_PROBE_KEY = '__pdfl_storage_probe__';
 
   let inMemoryToken = null;
   let inMemoryUser = null;
+  let activeStorageCache = null;
 
   function getLocalStorage() {
     try {
@@ -1077,97 +1082,184 @@
     return null;
   }
 
+  function isStorageUsable(storage) {
+    if (!storage) return false;
+    try {
+      storage.setItem(STORAGE_PROBE_KEY, '1');
+      storage.removeItem(STORAGE_PROBE_KEY);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * The single storage used for the session: localStorage first, sessionStorage
+   * as fallback. Cached so probing does not run on every read.
+   */
+  function getActiveStorage() {
+    if (activeStorageCache) return activeStorageCache;
+
+    const local = getLocalStorage();
+    if (isStorageUsable(local)) {
+      activeStorageCache = local;
+      return local;
+    }
+
+    const session = getSessionStorage();
+    if (isStorageUsable(session)) {
+      activeStorageCache = session;
+      return session;
+    }
+
+    return null;
+  }
+
+  /** The storage that must NOT hold a session copy (duplicate/legacy cleanup). */
+  function getInactiveStorage() {
+    const active = getActiveStorage();
+    if (!active) return null;
+
+    const local = getLocalStorage();
+    if (local && local !== active) return local;
+
+    const session = getSessionStorage();
+    if (session && session !== active) return session;
+
+    return null;
+  }
+
+  /** Reject empty strings, the literals "null"/"undefined" and non-strings. */
+  function normalizeToken(value) {
+    if (typeof value !== 'string') return null;
+    const token = value.trim();
+    if (!token || token === 'null' || token === 'undefined') return null;
+    return token;
+  }
+
+  function readStorageValue(storage, key) {
+    if (!storage) return null;
+    try {
+      return storage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeStorageValue(storage, key, value) {
+    if (!storage) return false;
+    try {
+      storage.setItem(key, value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function removeStorageValue(storage, key) {
+    if (!storage) return;
+    try {
+      storage.removeItem(key);
+    } catch (e) {}
+  }
+
+  function parseStoredUser(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Legacy sessions were written to both storages. Keep exactly one copy:
+   * an existing session in the active storage always wins (never overwritten
+   * with empty/older data); a session found only in the other storage is moved.
+   */
+  function reconcileStoredSession() {
+    const active = getActiveStorage();
+    if (!active) return;
+
+    const activeToken = normalizeToken(readStorageValue(active, TOKEN_STORAGE_KEY));
+    const inactive = getInactiveStorage();
+
+    if (activeToken) {
+      // Active session is authoritative — drop the stale duplicate.
+      removeStorageValue(inactive, TOKEN_STORAGE_KEY);
+      removeStorageValue(inactive, USER_STORAGE_KEY);
+      return;
+    }
+
+    const legacyToken = normalizeToken(readStorageValue(inactive, TOKEN_STORAGE_KEY));
+    if (!legacyToken) {
+      removeStorageValue(inactive, USER_STORAGE_KEY);
+      return;
+    }
+
+    writeStorageValue(active, TOKEN_STORAGE_KEY, legacyToken);
+
+    const legacyUser = readStorageValue(inactive, USER_STORAGE_KEY);
+    if (legacyUser) {
+      writeStorageValue(active, USER_STORAGE_KEY, legacyUser);
+    }
+
+    removeStorageValue(inactive, TOKEN_STORAGE_KEY);
+    removeStorageValue(inactive, USER_STORAGE_KEY);
+  }
+
   function getStoredToken() {
     if (inMemoryToken) return inMemoryToken;
-    const storage = getLocalStorage();
-    if (storage) {
-      try {
-        const val = storage.getItem('pdfl_token');
-        if (val) return val;
-      } catch (e) {}
-    }
-    const sess = getSessionStorage();
-    if (sess) {
-      try {
-        const val = sess.getItem('pdfl_token');
-        if (val) return val;
-      } catch (e) {}
-    }
-    return null;
+
+    reconcileStoredSession();
+
+    return normalizeToken(readStorageValue(getActiveStorage(), TOKEN_STORAGE_KEY));
   }
 
   function getStoredUser() {
     if (inMemoryUser) return inMemoryUser;
-    const storage = getLocalStorage();
-    if (storage) {
-      try {
-        const data = storage.getItem('pdfl_user');
-        if (data) return JSON.parse(data);
-      } catch (e) {}
-    }
-    const sess = getSessionStorage();
-    if (sess) {
-      try {
-        const data = sess.getItem('pdfl_user');
-        if (data) return JSON.parse(data);
-      } catch (e) {}
-    }
-    return null;
+
+    reconcileStoredSession();
+
+    return parseStoredUser(readStorageValue(getActiveStorage(), USER_STORAGE_KEY));
   }
 
   function setStoredSession(token, user) {
-    inMemoryToken = token;
-    inMemoryUser = user ? {
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      role: user.role,
-    } : null;
+    const normalizedToken = normalizeToken(token);
+    // Never let empty/garbage data wipe an existing valid session.
+    if (!normalizedToken) return;
 
-    const storage = getLocalStorage();
-    if (storage) {
-      try {
-        storage.setItem('pdfl_token', token);
-        if (user) {
-          storage.setItem('pdfl_user', JSON.stringify(inMemoryUser));
-        }
-      } catch (e) {
-        console.warn('[PDF-Lingua Auth] Không thể lưu vào localStorage:', e);
-      }
+    inMemoryToken = normalizedToken;
+    if (user) {
+      inMemoryUser = {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+      };
     }
 
-    const sess = getSessionStorage();
-    if (sess) {
-      try {
-        sess.setItem('pdfl_token', token);
-        if (user) {
-          sess.setItem('pdfl_user', JSON.stringify(inMemoryUser));
-        }
-      } catch (e) {}
+    const active = getActiveStorage();
+    writeStorageValue(active, TOKEN_STORAGE_KEY, normalizedToken);
+    if (user && inMemoryUser) {
+      writeStorageValue(active, USER_STORAGE_KEY, JSON.stringify(inMemoryUser));
     }
+
+    // Only one storage may keep the session.
+    const inactive = getInactiveStorage();
+    removeStorageValue(inactive, TOKEN_STORAGE_KEY);
+    removeStorageValue(inactive, USER_STORAGE_KEY);
   }
 
   function clearStoredSession() {
     inMemoryToken = null;
     inMemoryUser = null;
 
-    const storage = getLocalStorage();
-    if (storage) {
-      try {
-        storage.removeItem('pdfl_token');
-        storage.removeItem('pdfl_user');
-      } catch (e) {
-        console.warn('[PDF-Lingua Auth] Không thể xóa localStorage:', e);
-      }
-    }
-
-    const sess = getSessionStorage();
-    if (sess) {
-      try {
-        sess.removeItem('pdfl_token');
-        sess.removeItem('pdfl_user');
-      } catch (e) {}
-    }
+    [getLocalStorage(), getSessionStorage()].forEach((storage) => {
+      removeStorageValue(storage, TOKEN_STORAGE_KEY);
+      removeStorageValue(storage, USER_STORAGE_KEY);
+    });
   }
 
   function updateHeaderAuthState(user) {
@@ -1264,10 +1356,9 @@
 
     isRestoringSession = true;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const response = await authFetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
@@ -1306,10 +1397,9 @@
 
     try {
       if (token) {
-        await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        await authFetch(`${API_BASE_URL}/api/auth/logout`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
         });
@@ -1467,11 +1557,10 @@
     setSavingState(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const response = await authFetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
         body: JSON.stringify({
@@ -1727,11 +1816,10 @@
     setSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+      const response = await authFetch(`${API_BASE_URL}/api/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
         body: JSON.stringify({
@@ -1892,10 +1980,9 @@
     if (contentCard && !cachedUser) contentCard.style.display = 'none';
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const response = await authFetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
@@ -1934,12 +2021,31 @@
     }
   }
 
+  /**
+   * Authorization header for the current session ({} for guests or invalid tokens).
+   */
+  function getAuthHeaders() {
+    const token = getStoredToken();
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
+
+  /**
+   * Shared authenticated request helper.
+   * - Adds `Authorization: Bearer <token>` when a valid token exists.
+   * - Preserves every header the caller passed in (and an explicit Authorization).
+   * - Never inspects the response, so each feature keeps its own error handling.
+   */
   async function authFetch(url, options = {}) {
     const headers = Object.assign({}, options.headers || {});
-    const token = getStoredToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    const callerProvidesAuth = Object.keys(headers).some((key) => key.toLowerCase() === 'authorization');
+
+    if (!callerProvidesAuth) {
+      const token = getStoredToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
+
     return fetch(url, Object.assign({}, options, { headers }));
   }
 
@@ -1961,6 +2067,7 @@
     escapeHtml,
     getStoredToken,
     getStoredUser,
+    getAuthHeaders,
     setStoredSession,
     clearStoredSession,
     updateHeaderAuthState,

@@ -41,9 +41,12 @@ class Element {
 }
 
 class MockLocalStorage {
-  constructor() { this.store = {}; }
+  constructor() { this.store = {}; this.failOnWrite = false; }
   getItem(k) { return Object.prototype.hasOwnProperty.call(this.store, k) ? this.store[k] : null; }
-  setItem(k, v) { this.store[k] = String(v); }
+  setItem(k, v) {
+    if (this.failOnWrite) throw new Error('Storage is not available');
+    this.store[k] = String(v);
+  }
   removeItem(k) { delete this.store[k]; }
   clear() { this.store = {}; }
 }
@@ -71,6 +74,7 @@ function createEnv() {
   ];
   const e = Object.fromEntries(ids.map((id) => [id, new Element(id)]));
   const localStorage = new MockLocalStorage();
+  const sessionStorage = new MockLocalStorage();
 
   const document = {
     getElementById: (id) => e[id] || null,
@@ -85,12 +89,14 @@ function createEnv() {
     location: { protocol: 'http:', port: '8000', hostname: 'localhost' },
     document,
     localStorage,
+    sessionStorage,
   };
 
   const context = vm.createContext({
     window,
     document,
     localStorage,
+    sessionStorage,
     console,
     setTimeout: (fn) => setTimeout(fn, 0),
     clearTimeout,
@@ -98,7 +104,7 @@ function createEnv() {
   });
 
   vm.runInContext(source, context);
-  return { e, a: window.pdfLinguaAuth, c: context, storage: localStorage };
+  return { e, a: window.pdfLinguaAuth, c: context, storage: localStorage, session: sessionStorage };
 }
 
 let passed = 0;
@@ -980,6 +986,179 @@ async function test(name, fn) {
     assert.match(e.loginAlert.textContent, /Hệ thống đang gặp sự cố/i);
     assert.strictEqual(/traceback|psycopg2/i.test(e.loginAlert.textContent), false);
     assert.strictEqual(e.btnSubmitLogin.disabled, false);
+  });
+
+  // ── PDFL-43.3: TokenStore standardisation ────────────────────────────────
+
+  await test('TokenStore: login stores the session in exactly one storage (localStorage)', async () => {
+    const { a, c, storage, session } = createEnv();
+    c.fetch = async () => ({
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: {
+          access_token: 'jwt-single-storage',
+          token_type: 'bearer',
+          user: { id: 21, email: 'single@example.com', full_name: 'Single User', role: 'free' },
+        },
+      }),
+    });
+
+    await a.submitLogin({ email: 'single@example.com', password: 'Password123' });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), 'jwt-single-storage');
+    assert.notStrictEqual(storage.getItem('pdfl_user'), null);
+    assert.strictEqual(session.getItem('pdfl_token'), null);
+    assert.strictEqual(session.getItem('pdfl_user'), null);
+  });
+
+  await test('TokenStore: reads the token and user back from storage', () => {
+    const { a, storage } = createEnv();
+    storage.setItem('pdfl_token', 'read-me');
+    storage.setItem('pdfl_user', JSON.stringify({ id: 3, email: 'read@example.com', role: 'free' }));
+
+    assert.strictEqual(a.getStoredToken(), 'read-me');
+    assert.strictEqual(a.getStoredUser().email, 'read@example.com');
+  });
+
+  await test('TokenStore: logout clears memory and both storages', () => {
+    const { a, storage, session } = createEnv();
+    storage.setItem('pdfl_token', 'mem-token');
+    storage.setItem('pdfl_user', JSON.stringify({ id: 4 }));
+    session.setItem('pdfl_token', 'legacy-token');
+    session.setItem('pdfl_user', JSON.stringify({ id: 5 }));
+
+    assert.strictEqual(a.getStoredToken(), 'mem-token');
+    a.clearStoredSession();
+
+    assert.strictEqual(a.getStoredToken(), null);
+    assert.strictEqual(a.getStoredUser(), null);
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(storage.getItem('pdfl_user'), null);
+    assert.strictEqual(session.getItem('pdfl_token'), null);
+    assert.strictEqual(session.getItem('pdfl_user'), null);
+
+    // No stale in-memory session is left behind.
+    storage.setItem('pdfl_token', 'after-logout');
+    assert.strictEqual(a.getStoredToken(), 'after-logout');
+  });
+
+  await test('TokenStore: falls back to sessionStorage when localStorage cannot be written', () => {
+    const { a, storage, session } = createEnv();
+    storage.failOnWrite = true;
+
+    a.setStoredSession('session-only-token', { id: 6, email: 'fallback@example.com', role: 'free' });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(session.getItem('pdfl_token'), 'session-only-token');
+    assert.strictEqual(a.getStoredToken(), 'session-only-token');
+    assert.strictEqual(a.getStoredUser().email, 'fallback@example.com');
+  });
+
+  await test('TokenStore: migrates a legacy session from sessionStorage into localStorage', () => {
+    const { a, storage, session } = createEnv();
+    session.setItem('pdfl_token', 'legacy-jwt');
+    session.setItem('pdfl_user', JSON.stringify({ id: 7, email: 'legacy@example.com' }));
+
+    assert.strictEqual(a.getStoredToken(), 'legacy-jwt');
+    assert.strictEqual(storage.getItem('pdfl_token'), 'legacy-jwt');
+    assert.match(storage.getItem('pdfl_user'), /legacy@example\.com/);
+    assert.strictEqual(session.getItem('pdfl_token'), null);
+    assert.strictEqual(session.getItem('pdfl_user'), null);
+  });
+
+  await test('TokenStore: keeps the active session and drops the stale duplicate when both storages have data', () => {
+    const { a, storage, session } = createEnv();
+    storage.setItem('pdfl_token', 'active-jwt');
+    storage.setItem('pdfl_user', JSON.stringify({ id: 8, email: 'active@example.com' }));
+    session.setItem('pdfl_token', 'stale-jwt');
+    session.setItem('pdfl_user', JSON.stringify({ id: 9, email: 'stale@example.com' }));
+
+    assert.strictEqual(a.getStoredToken(), 'active-jwt');
+    assert.strictEqual(storage.getItem('pdfl_token'), 'active-jwt');
+    assert.strictEqual(a.getStoredUser().email, 'active@example.com');
+    assert.strictEqual(session.getItem('pdfl_token'), null);
+    assert.strictEqual(session.getItem('pdfl_user'), null);
+  });
+
+  await test('TokenStore: invalid tokens are never returned nor sent as Authorization', () => {
+    const { a, storage } = createEnv();
+
+    ['', '   ', 'null', 'undefined'].forEach((value) => {
+      a.clearStoredSession();
+      storage.setItem('pdfl_token', value);
+      assert.strictEqual(a.getStoredToken(), null, `Token "${value}" must be rejected`);
+      assert.strictEqual(a.getAuthHeaders()['Authorization'], undefined);
+    });
+  });
+
+  await test('TokenStore: setStoredSession never overwrites a valid session with empty data', () => {
+    const { a, storage } = createEnv();
+    storage.setItem('pdfl_token', 'valid-session');
+
+    a.setStoredSession('', { id: 1 });
+    a.setStoredSession('null', { id: 1 });
+
+    assert.strictEqual(storage.getItem('pdfl_token'), 'valid-session');
+    assert.strictEqual(a.getStoredToken(), 'valid-session');
+  });
+
+  await test('authFetch: adds the Bearer token and preserves caller headers and body', async () => {
+    const { a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'jwt-auth-fetch');
+
+    let captured = null;
+    c.fetch = async (url, options) => {
+      captured = { url, options };
+      return { status: 200, json: async () => ({ success: true }) };
+    };
+
+    const response = await a.authFetch('/api/example', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Trace': 'abc' },
+      body: '{"a":1}',
+    });
+
+    assert.strictEqual(response.status, 200);
+    assert.strictEqual(captured.url, '/api/example');
+    assert.strictEqual(captured.options.method, 'PATCH');
+    assert.strictEqual(captured.options.body, '{"a":1}');
+    assert.strictEqual(captured.options.headers['Content-Type'], 'application/json');
+    assert.strictEqual(captured.options.headers['X-Trace'], 'abc');
+    assert.strictEqual(captured.options.headers['Authorization'], 'Bearer jwt-auth-fetch');
+  });
+
+  await test('authFetch: keeps an explicit Authorization header and omits it for guests', async () => {
+    const { a, c, storage } = createEnv();
+    let captured = null;
+    c.fetch = async (_url, options) => {
+      captured = options;
+      return { status: 200, json: async () => ({}) };
+    };
+
+    storage.setItem('pdfl_token', 'jwt-should-not-win');
+    await a.authFetch('/api/keep', { headers: { Authorization: 'Custom abc' } });
+    assert.strictEqual(captured.headers['Authorization'], 'Custom abc');
+
+    a.clearStoredSession();
+    storage.removeItem('pdfl_token');
+    await a.authFetch('/api/guest', { headers: { 'X-Guest': '1' } });
+    assert.strictEqual(captured.headers['Authorization'], undefined);
+    assert.strictEqual(captured.headers['X-Guest'], '1');
+  });
+
+  await test('authFetch: does not log out on 401/403 (feature-specific handling stays)', async () => {
+    const { a, c, storage } = createEnv();
+    storage.setItem('pdfl_token', 'jwt-still-there');
+    c.fetch = async () => ({
+      status: 401,
+      json: async () => ({ success: false, message: 'Nope' }),
+    });
+
+    const response = await a.authFetch('/api/protected');
+
+    assert.strictEqual(response.status, 401);
+    assert.strictEqual(a.getStoredToken(), 'jwt-still-there');
   });
 
   console.log(`\n================================================================`);

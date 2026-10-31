@@ -121,32 +121,28 @@ function initWorkspace() {
 }
 
 /**
- * Helper to construct authentication headers safely (PDFL-81.4).
- * Returns { 'Authorization': 'Bearer <token>' } if a valid non-empty token exists;
- * otherwise returns an empty object {} for Guests. Never sends 'Bearer null' or 'Bearer undefined'.
+ * Helper to construct authentication headers safely (PDFL-81.4, PDFL-43.3).
+ * Delegates to the auth module, which owns token storage.
+ * Returns an Authorization header when a valid token exists, otherwise {} for Guests.
  */
 function getAuthHeaders() {
-  const headers = {};
-  let token = null;
-
   try {
-    if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
-      token = window.pdfLinguaAuth.getStoredToken();
-    } else if (typeof localStorage !== 'undefined' && localStorage) {
-      token = localStorage.getItem('pdfl_token');
-    }
-  } catch (e) {
-    token = null;
-  }
+    if (typeof window !== 'undefined' && window.pdfLinguaAuth) {
+      if (typeof window.pdfLinguaAuth.getAuthHeaders === 'function') {
+        return window.pdfLinguaAuth.getAuthHeaders() || {};
+      }
 
-  if (typeof token === 'string') {
-    const trimmed = token.trim();
-    if (trimmed && trimmed !== 'null' && trimmed !== 'undefined') {
-      headers['Authorization'] = `Bearer ${trimmed}`;
+      // Defensive fallback for an older auth.js bundle.
+      if (typeof window.pdfLinguaAuth.getStoredToken === 'function') {
+        const token = window.pdfLinguaAuth.getStoredToken();
+        if (typeof token === 'string' && token) {
+          return { 'Authorization': `Bearer ${token}` };
+        }
+      }
     }
-  }
+  } catch (e) {}
 
-  return headers;
+  return {};
 }
 
 /**
