@@ -16,6 +16,14 @@
   let isSubmitting = false;
   let isRestoringSession = false;
 
+  // True when a storage event arrived while a verification was already running.
+  let pendingSessionSync = false;
+  // Coalesces the deferred guest-state refresh after an external logout.
+  let sessionSyncRefreshTimer = null;
+  // Timestamp of the last background re-check triggered by tab visibility.
+  let lastSessionRecheckAt = 0;
+  const SESSION_RECHECK_MIN_INTERVAL_MS = 60000;
+
   // Pending "close the login modal after a successful sign-in" timer.
   let loginCloseTimer = null;
 
@@ -40,6 +48,8 @@
     initLoginForm();
     initAuthHeader();
     initAccountModal();
+    // Listen for session changes from other tabs before the first verification.
+    initSessionSync();
     restoreSession();
   });
 
@@ -1262,6 +1272,15 @@
     });
   }
 
+  /**
+   * Drop the in-memory cache only. Storage is left untouched so a session
+   * written by another tab is never destroyed by this tab.
+   */
+  function resetSessionMemory() {
+    inMemoryToken = null;
+    inMemoryUser = null;
+  }
+
   function updateHeaderAuthState(user) {
     const guestGroup = document.getElementById('authGuestGroup');
     const userGroup = document.getElementById('authUserGroup');
@@ -1338,24 +1357,39 @@
     }
   }
 
-  async function restoreSession() {
-    if (isRestoringSession) return;
+  /**
+   * Validate the stored session against the backend.
+   *
+   * - Optimistically renders the cached user before the request resolves.
+   * - Never runs two verifications at once; `force` queues at most one re-run so
+   *   a newer token from another tab is still verified.
+   * - Never lets the result of an older token overwrite a newer session.
+   */
+  async function restoreSession(options = {}) {
+    const force = !!(options && options.force);
 
-    const token = getStoredToken();
-    const cachedUser = getStoredUser();
-
-    if (!token) {
-      updateHeaderAuthState(null);
+    if (isRestoringSession) {
+      if (force) pendingSessionSync = true;
       return;
     }
 
-    // Show cached user optimistically if present
-    if (cachedUser) {
-      updateHeaderAuthState(cachedUser);
-    }
-
     isRestoringSession = true;
+    if (force) pendingSessionSync = false;
+
     try {
+      const token = getStoredToken();
+      const cachedUser = getStoredUser();
+
+      if (!token) {
+        updateHeaderAuthState(null);
+        return;
+      }
+
+      // Show cached user optimistically if present.
+      if (cachedUser) {
+        updateHeaderAuthState(cachedUser);
+      }
+
       const response = await authFetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
         headers: {
@@ -1363,26 +1397,126 @@
         },
       });
 
+      // Another tab replaced/cleared the session while we were waiting:
+      // this response belongs to an older token and must be ignored.
+      if (getStoredToken() !== token) return;
+
       if (response.status === 200) {
         const resData = await response.json();
+
+        // Parsing the body is asynchronous too: the session can change while the
+        // response is being read. Never let this (older) payload win over it.
+        if (getStoredToken() !== token) return;
+
         const freshUser = resData && resData.data ? resData.data : null;
         if (freshUser) {
-          setStoredSession(token, freshUser);
+          if (!sameSessionUser(cachedUser, freshUser)) {
+            setStoredSession(token, freshUser);
+          }
           updateHeaderAuthState(freshUser);
         }
       } else if (response.status === 401 || response.status === 403) {
-        // Token expired, invalid or account inactive -> clear session
+        // Token expired, invalid or account inactive -> clear session locally.
         clearStoredSession();
         updateHeaderAuthState(null);
+        closeAccountModalIfOpen();
       } else {
-        // Other 5xx or server errors: do NOT clear token! Allow user to retry
+        // Other 5xx or server errors: do NOT clear token! Allow the user to retry.
         console.warn('[PDF-Lingua Auth] Máy chủ tạm thời không thể xác thực phiên:', response.status);
       }
     } catch (err) {
-      // Network failure / offline: do NOT clear token! Keep cached user state
+      // Network failure / offline: do NOT clear token! Keep cached user state.
       console.warn('[PDF-Lingua Auth] Lỗi kết nối khi khôi phục phiên (giữ nguyên token):', err);
     } finally {
       isRestoringSession = false;
+
+      if (pendingSessionSync) {
+        pendingSessionSync = false;
+        setTimeout(() => restoreSession({ force: true }), 0);
+      }
+    }
+  }
+
+  /** Compare only the fields persisted by setStoredSession(). */
+  function sameSessionUser(previousUser, nextUser) {
+    const pick = (user) => (user ? {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+    } : null);
+
+    return JSON.stringify(pick(previousUser)) === JSON.stringify(pick(nextUser));
+  }
+
+  function closeAccountModalIfOpen() {
+    const accountModal = document.getElementById('accountModal');
+    if (!accountModal || accountModal.hasAttribute('hidden')) return;
+    closeAccountModal();
+  }
+
+  /**
+   * Keep this tab in sync with session changes made by other tabs.
+   * Only the token key is observed — reacting to `pdfl_user` as well would make
+   * tabs write to each other in an endless loop.
+   */
+  function handleSessionStorageEvent(event) {
+    if (!event || event.key !== TOKEN_STORAGE_KEY) return;
+
+    const newToken = normalizeToken(event.newValue);
+
+    if (!newToken) {
+      // Another tab logged out: drop local memory + UI, but never touch storage.
+      // Re-applying the guest state is idempotent and safe even if this tab
+      // never cached the session in memory.
+      resetSessionMemory();
+      updateHeaderAuthState(null);
+      closeAccountModalIfOpen();
+
+      // The storage view of the other key can lag one tick behind this event,
+      // so refresh once more after the browser settles to avoid stale limits.
+      refreshGuestStateAfterStorageChange();
+      return;
+    }
+
+    // A newer session exists: forget the stale cache and verify it. This handler
+    // never writes storage, so it cannot bounce events back to the other tabs.
+    resetSessionMemory();
+    restoreSession({ force: true });
+  }
+
+  function refreshGuestStateAfterStorageChange() {
+    if (sessionSyncRefreshTimer !== null) clearTimeout(sessionSyncRefreshTimer);
+    sessionSyncRefreshTimer = setTimeout(() => {
+      sessionSyncRefreshTimer = null;
+      if (getStoredToken()) return; // a newer session already exists
+      updateHeaderAuthState(null);
+    }, 0);
+  }
+
+  /**
+   * sessionStorage cannot emit cross-tab storage events, so re-verify when the
+   * user comes back to this tab. Throttled so /me is never called in a loop.
+   */
+  function handleVisibilityChange() {
+    if (typeof document === 'undefined' || document.visibilityState !== 'visible') return;
+    if (isRestoringSession) return;
+    if (!getStoredToken()) return;
+
+    const now = Date.now();
+    if (now - lastSessionRecheckAt < SESSION_RECHECK_MIN_INTERVAL_MS) return;
+
+    lastSessionRecheckAt = now;
+    restoreSession({ force: true });
+  }
+
+  function initSessionSync() {
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+
+    window.addEventListener('storage', handleSessionStorageEvent);
+
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
     }
   }
 
