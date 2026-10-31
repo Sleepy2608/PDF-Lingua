@@ -773,7 +773,7 @@ async function test(name, fn) {
   });
 
   // 32. Register Success
-  await test('Register Success: Automatically logs in, stores session and updates Header', async () => {
+  await test('Register Success: Shows success, hands the user to the login modal and keeps Guest state', async () => {
     const { e, a, c, storage } = createEnv();
 
     c.fetch = async (url) => {
@@ -809,18 +809,18 @@ async function test(name, fn) {
       full_name: 'Người Mới',
     });
 
-    assert.strictEqual(storage.getItem('pdfl_token'), 'auto-registered-jwt-token');
-    const storedUser = JSON.parse(storage.getItem('pdfl_user'));
-    assert.strictEqual(storedUser.email, 'newuser@example.com');
-    assert.strictEqual(storedUser.full_name, 'Người Mới');
-    assert.strictEqual(e.authUserGroup.attributes['hidden'], undefined);
-    assert.strictEqual(e.authGuestGroup.attributes['hidden'], '');
-    assert.strictEqual(e.userDisplayName.textContent, 'Người Mới');
-    assert.strictEqual(e.userAvatar.textContent, 'N');
-    assert.match(e.registerAlert.textContent, /Đăng ký tài khoản thành công/i);
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(storage.getItem('pdfl_user'), null);
+    assert.strictEqual(e.authGuestGroup.hasAttribute('hidden'), false);
+    assert.strictEqual(e.loginEmail.value, 'newuser@example.com');
+    assert.strictEqual(e.regPassword.value, '');
+    assert.strictEqual(e.regConfirmPassword.value, '');
+    assert.strictEqual(e.btnSubmitRegister.disabled, false);
+    assert.strictEqual(e.registerAlert.textContent, '', 'Register modal must not duplicate the success notice');
+    assert.match(e.loginAlert.textContent, /Đăng ký tài khoản thành công/i);
   });
 
-  await test('Register Success without full_name: Auto-login falls back to email display and initial', async () => {
+  await test('Register Success without full_name: Hands over to login with email pre-filled', async () => {
     const { e, a, c, storage } = createEnv();
 
     c.fetch = async (url) => {
@@ -855,48 +855,39 @@ async function test(name, fn) {
       password: 'SecurePassword123',
     });
 
-    assert.strictEqual(storage.getItem('pdfl_token'), 'jwt-noname-token');
-    assert.strictEqual(e.authUserGroup.attributes['hidden'], undefined);
-    assert.strictEqual(e.authGuestGroup.attributes['hidden'], '');
-    assert.strictEqual(e.userDisplayName.textContent, 'noname@example.com');
-    assert.strictEqual(e.userAvatar.textContent, 'N');
+    assert.strictEqual(storage.getItem('pdfl_token'), null);
+    assert.strictEqual(e.authGuestGroup.hasAttribute('hidden'), false);
+    assert.strictEqual(e.loginEmail.value, 'noname@example.com');
+    assert.match(e.loginAlert.textContent, /Đăng ký tài khoản thành công/i);
   });
 
-  await test('Register Success with Login Error: Preserves Guest state and notifies user', async () => {
+  await test('Register Failure: Keeps the entered data and restores the submit button', async () => {
     const { e, a, c, storage } = createEnv();
 
-    c.fetch = async (url) => {
-      const urlStr = String(url);
-      if (urlStr.includes('/api/auth/register')) {
-        return {
-          status: 201,
-          json: async () => ({
-            success: true,
-            data: { id: 12, email: 'fail_login@example.com', full_name: 'Fail User', role: 'free' },
-          }),
-        };
-      }
-      if (urlStr.includes('/api/auth/login')) {
-        return {
-          status: 401,
-          json: async () => ({
-            success: false,
-            message: 'Email hoặc mật khẩu không chính xác.',
-          }),
-        };
-      }
-      return { status: 404, json: async () => ({}) };
-    };
+    c.fetch = async () => ({
+      status: 500,
+      json: async () => ({ success: false, message: 'Internal server error' }),
+    });
+
+    e.regFullName.value = 'Người Mới';
+    e.regEmail.value = 'kept@example.com';
+    e.regPassword.value = 'SecurePassword123';
+    e.regConfirmPassword.value = 'SecurePassword123';
 
     await a.submitRegistration({
-      email: 'fail_login@example.com',
+      email: 'kept@example.com',
       password: 'SecurePassword123',
-      full_name: 'Fail User',
+      full_name: 'Người Mới',
     });
 
     assert.strictEqual(storage.getItem('pdfl_token'), null);
-    assert.strictEqual(e.authGuestGroup.hasAttribute('hidden'), false);
-    assert.match(e.registerAlert.textContent, /đăng ký tài khoản thành công/i);
+    assert.strictEqual(e.regFullName.value, 'Người Mới');
+    assert.strictEqual(e.regEmail.value, 'kept@example.com');
+    assert.strictEqual(e.regPassword.value, 'SecurePassword123');
+    assert.strictEqual(e.regConfirmPassword.value, 'SecurePassword123');
+    assert.strictEqual(e.btnSubmitRegister.disabled, false);
+    assert.strictEqual(e.regBtnText.textContent, 'Tạo tài khoản');
+    assert.match(e.registerAlert.textContent, /Hệ thống đang gặp sự cố/i);
   });
 
   await test('Session Persistence: Fallback to sessionStorage when localStorage is restricted', async () => {

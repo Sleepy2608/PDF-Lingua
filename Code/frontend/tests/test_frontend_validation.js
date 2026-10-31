@@ -157,6 +157,9 @@ function createFreshEnvironment() {
     regConfirmPassword: new MockElement('regConfirmPassword', 'password'),
     regConfirmPasswordError: new MockElement('regConfirmPasswordError'),
     registerAlert: new MockElement('registerAlert'),
+    loginModal: new MockElement('loginModal'),
+    loginAlert: new MockElement('loginAlert'),
+    loginEmail: new MockElement('loginEmail', 'email'),
     btnSubmitRegister: new MockElement('btnSubmitRegister'),
     regSpinner: new MockElement('regSpinner'),
     regBtnText: new MockElement('regBtnText'),
@@ -434,7 +437,13 @@ function createFreshEnvironment() {
       success: true,
       data: { id: 1, email: 'user@example.com' }
     });
-    assert(elements.registerAlert.textContent.includes('Đăng ký tài khoản thành công'));
+    assert.strictEqual(
+      elements.registerAlert.textContent,
+      '',
+      'Success notice must not be duplicated on the register modal'
+    );
+    assert(elements.loginAlert.textContent.includes('Đăng ký tài khoản thành công'));
+    assert.strictEqual(elements.loginEmail.value, 'user@example.com');
   });
 
   await runAsyncTest('Network Error: Fetch rejection handled gracefully in alert banner', async () => {

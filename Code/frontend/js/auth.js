@@ -16,6 +16,13 @@
   let isSubmitting = false;
   let isRestoringSession = false;
 
+  // Registration fields the user has already interacted with (blur/submit).
+  // Reset every time the registration modal opens.
+  const registrationTouchedFields = new Set();
+
+  // Pragmatic email shape check used by the registration form: local@domain.tld
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   let openRegisterModal = () => {};
   let closeRegisterModal = () => {};
   let openLoginModal = () => {};
@@ -55,7 +62,10 @@
       registerModal.removeAttribute('hidden');
       document.body.style.overflow = 'hidden';
       clearRegisterAlert();
-      clearAllFieldErrors();
+      // Fresh interaction session: only this modal's own errors are reset —
+      // the login/account modals keep theirs.
+      registrationTouchedFields.clear();
+      clearFieldErrorsWithin('registerModal');
       const firstInput = document.getElementById('regFullName');
       if (firstInput) {
         setTimeout(() => firstInput.focus(), 50);
@@ -221,11 +231,55 @@
     const confirmPasswordInput = document.getElementById('regConfirmPassword');
     const fullNameInput = document.getElementById('regFullName');
 
-    // Live validation cleanup on user input
-    [fullNameInput, emailInput, passwordInput, confirmPasswordInput].forEach((input) => {
-      if (!input) return;
-      input.addEventListener('input', () => {
+    const fields = [
+      ['fullName', fullNameInput],
+      ['email', emailInput],
+      ['password', passwordInput],
+      ['confirmPassword', confirmPasswordInput],
+    ].filter(([, input]) => !!input);
+
+    function applyFieldValidation(field, input) {
+      const message = getRegistrationFieldError(field, input.value, {
+        passwordValue: passwordInput ? passwordInput.value : '',
+      });
+
+      if (message) {
+        showFieldError(input, message);
+      } else {
         clearFieldError(input);
+      }
+    }
+
+    // Cross-field feedback for "confirm password" only starts once the user
+    // has interacted with that field (blur or submit).
+    fields.forEach(([field, input]) => {
+      // Validate when the user leaves the field — never on the first keystroke.
+      input.addEventListener('blur', (event) => {
+        // Clicking the show/hide password button must not raise a field error.
+        const related = event.relatedTarget;
+        if (related && related.classList && related.classList.contains('btn-toggle-eye')) {
+          return;
+        }
+        registrationTouchedFields.add(field);
+        applyFieldValidation(field, input);
+      });
+
+      // Typing only refreshes an error that is already visible, so the other
+      // fields keep their own error state untouched.
+      input.addEventListener('input', () => {
+        if (input.classList.contains('has-error')) {
+          applyFieldValidation(field, input);
+        }
+
+        // Editing the password re-checks the confirmation once the user has
+        // already interacted with it — it never appears out of nowhere.
+        if (
+          field === 'password' &&
+          confirmPasswordInput &&
+          registrationTouchedFields.has('confirmPassword')
+        ) {
+          applyFieldValidation('confirmPassword', confirmPasswordInput);
+        }
       });
     });
 
@@ -235,7 +289,9 @@
       if (isSubmitting) return;
 
       clearRegisterAlert();
-      clearAllFieldErrors();
+
+      // Submitting counts as an interaction with every field.
+      fields.forEach(([field]) => registrationTouchedFields.add(field));
 
       // Client-side Validation
       const isValid = validateRegistrationForm({
@@ -263,80 +319,86 @@
   }
 
   /**
+   * Single source of truth for the registration field rules.
+   * Returns a user-facing error message, or null when the value is valid.
+   *
+   * - fullName        : optional, trimmed, max 150 characters
+   * - email           : required, trimmed, valid email shape
+   * - password        : required, 8-128 characters, at least one letter and one digit
+   * - confirmPassword : required, max 128 characters, must match the password
+   */
+  function getRegistrationFieldError(field, value, { passwordValue = '' } = {}) {
+    const raw = typeof value === 'string' ? value : '';
+
+    switch (field) {
+      case 'fullName':
+        return raw.trim().length > 150
+          ? 'Họ và tên không được vượt quá 150 ký tự.'
+          : null;
+
+      case 'email': {
+        const email = raw.trim();
+        if (!email) return 'Vui lòng nhập địa chỉ email.';
+        if (!EMAIL_PATTERN.test(email)) {
+          return 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).';
+        }
+        return null;
+      }
+
+      case 'password':
+        if (!raw) return 'Vui lòng nhập mật khẩu.';
+        if (raw.length < 8) return 'Mật khẩu phải có tối thiểu 8 ký tự.';
+        if (raw.length > 128) return 'Mật khẩu không được vượt quá 128 ký tự.';
+        if (!/[a-zA-Z]/.test(raw)) return 'Mật khẩu phải chứa ít nhất một chữ cái.';
+        if (!/[0-9]/.test(raw)) return 'Mật khẩu phải chứa ít nhất một chữ số.';
+        return null;
+
+      case 'confirmPassword':
+        if (!raw) return 'Vui lòng nhập lại mật khẩu xác nhận.';
+        if (raw.length > 128) return 'Mật khẩu xác nhận không được vượt quá 128 ký tự.';
+        if (passwordValue && raw !== passwordValue) {
+          return 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.';
+        }
+        return null;
+
+      default:
+        return null;
+    }
+  }
+
+  /**
    * Validate all registration form fields according to business rules
+   * and focus the first invalid field.
    */
   function validateRegistrationForm({ fullNameInput, emailInput, passwordInput, confirmPasswordInput }) {
-    let isValid = true;
+    const passwordValue = passwordInput ? passwordInput.value : '';
+    const fields = [
+      ['fullName', fullNameInput],
+      ['email', emailInput],
+      ['password', passwordInput],
+      ['confirmPassword', confirmPasswordInput],
+    ];
+
     let firstInvalidInput = null;
 
-    // 0. Full name validation (Optional, max 150 chars)
-    if (fullNameInput && fullNameInput.value) {
-      const fullNameVal = fullNameInput.value.trim();
-      if (fullNameVal.length > 150) {
-        showFieldError(fullNameInput, 'Họ và tên không được vượt quá 150 ký tự.');
-        isValid = false;
-        firstInvalidInput = firstInvalidInput || fullNameInput;
+    fields.forEach(([field, input]) => {
+      if (!input) return;
+
+      const message = getRegistrationFieldError(field, input.value, { passwordValue });
+
+      if (message) {
+        showFieldError(input, message);
+        firstInvalidInput = firstInvalidInput || input;
+      } else {
+        clearFieldError(input);
       }
-    }
-
-    // 1. Email validation
-    const emailVal = emailInput ? emailInput.value.trim() : '';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailVal) {
-      showFieldError(emailInput, 'Vui lòng nhập địa chỉ email.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || emailInput;
-    } else if (!emailRegex.test(emailVal)) {
-      showFieldError(emailInput, 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || emailInput;
-    }
-
-    // 2. Password validation
-    const pwdVal = passwordInput ? passwordInput.value : '';
-    if (!pwdVal) {
-      showFieldError(passwordInput, 'Vui lòng nhập mật khẩu.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || passwordInput;
-    } else if (pwdVal.length < 8) {
-      showFieldError(passwordInput, 'Mật khẩu phải có tối thiểu 8 ký tự.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || passwordInput;
-    } else if (pwdVal.length > 128) {
-      showFieldError(passwordInput, 'Mật khẩu không được vượt quá 128 ký tự.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || passwordInput;
-    } else if (!/[a-zA-Z]/.test(pwdVal)) {
-      showFieldError(passwordInput, 'Mật khẩu phải chứa ít nhất một chữ cái.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || passwordInput;
-    } else if (!/[0-9]/.test(pwdVal)) {
-      showFieldError(passwordInput, 'Mật khẩu phải chứa ít nhất một chữ số.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || passwordInput;
-    }
-
-    // 3. Confirm Password validation
-    const confirmVal = confirmPasswordInput ? confirmPasswordInput.value : '';
-    if (!confirmVal) {
-      showFieldError(confirmPasswordInput, 'Vui lòng nhập lại mật khẩu xác nhận.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || confirmPasswordInput;
-    } else if (confirmVal.length > 128) {
-      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không được vượt quá 128 ký tự.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || confirmPasswordInput;
-    } else if (pwdVal && confirmVal !== pwdVal) {
-      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || confirmPasswordInput;
-    }
+    });
 
     if (firstInvalidInput) {
       firstInvalidInput.focus();
     }
 
-    return isValid;
+    return !firstInvalidInput;
   }
 
   /**
@@ -420,13 +482,11 @@
     const btnSubmit = document.getElementById('btnSubmitRegister');
     const spinner = document.getElementById('regSpinner');
     const btnText = document.getElementById('regBtnText');
-    const form = document.getElementById('registerForm');
     const fullNameInput = document.getElementById('regFullName');
     const emailInput = document.getElementById('regEmail');
     const passwordInput = document.getElementById('regPassword');
     const confirmPasswordInput = document.getElementById('regConfirmPassword');
 
-    let keepLoading = false;
     setLoadingState(true);
 
     try {
@@ -446,99 +506,41 @@
         // Fallback if response is not JSON
       }
 
-      if (response.status === 201) {
-        // Successful registration -> Auto-login
-        setLoadingState(true, 'Đang tự động đăng nhập...');
+      if (response.status === 201 || response.status === 200) {
+        // Registration succeeded. POST /api/auth/register does not return a token,
+        // so the user is handed over to the login modal instead of being auto-logged in.
+        const createdUser = responseData && responseData.data ? responseData.data : null;
+        const registeredEmail = (createdUser && createdUser.email) || payload.email || '';
 
-        const regData = responseData && responseData.data ? responseData.data : null;
-        let accessToken = regData && regData.access_token ? regData.access_token : null;
-        let userData = regData && (regData.user || regData);
+        // Never keep plaintext passwords in the form once the account exists.
+        if (passwordInput) passwordInput.value = '';
+        if (confirmPasswordInput) confirmPasswordInput.value = '';
+        clearFieldError(passwordInput);
+        clearFieldError(confirmPasswordInput);
+        resetPasswordToggleView();
 
-        // If backend did not return token directly, perform auto-login request
-        if (!accessToken) {
-          try {
-            console.log('[PDF-Lingua Auth] Đang tự động đăng nhập cho tài khoản mới:', payload.email);
-            const autoLoginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-              },
-              body: JSON.stringify({
-                email: payload.email,
-                password: payload.password,
-              }),
-            });
+        // Hand the user over to the login modal with the email pre-filled.
+        // Only switch modals if the user has not already closed the form mid-flight,
+        // and never overwrite an email the user typed in the login form.
+        const registerModalEl = document.getElementById('registerModal');
+        const registerStillOpen = !!(registerModalEl && !registerModalEl.hasAttribute('hidden'));
 
-            let autoLoginData = null;
-            try {
-              autoLoginData = await autoLoginRes.json();
-            } catch (e) {}
-
-            if (autoLoginRes.status === 200 && autoLoginData && autoLoginData.data) {
-              accessToken = autoLoginData.data.access_token;
-              userData = autoLoginData.data.user || autoLoginData.data;
-              console.log('[PDF-Lingua Auth] Tự động đăng nhập thành công.');
-            } else {
-              console.warn('[PDF-Lingua Auth] Tự động đăng nhập không thành công (status):', autoLoginRes.status);
-            }
-          } catch (autoLoginErr) {
-            console.warn('[PDF-Lingua Auth] Lỗi kết nối khi tự động đăng nhập:', autoLoginErr);
-          }
+        if (registerStillOpen) {
+          openLoginModal();
         }
 
-        // Guarantee safe user structure merged with registration payload
-        const resolvedUser = Object.assign(
-          {},
-          (userData && typeof userData === 'object' ? userData : {}),
-          {
-            email: (userData && userData.email) || payload.email || '',
-            full_name: (userData && userData.full_name) || payload.full_name || '',
-            role: (userData && userData.role) || 'free',
-          }
-        );
+        const loginEmailInput = document.getElementById('loginEmail');
+        if (loginEmailInput && registeredEmail && !loginEmailInput.value.trim()) {
+          loginEmailInput.value = registeredEmail;
+        }
 
-        if (accessToken) {
-          // 1. Save session to localStorage & sessionStorage
-          setStoredSession(accessToken, resolvedUser);
-
-          // 2. Immediately update Header navigation
-          updateHeaderAuthState(resolvedUser);
-
-          // 3. User feedback
-          const displayName = resolvedUser.full_name || resolvedUser.email || '';
-          showRegisterAlert(
-            displayName
-              ? `Đăng ký tài khoản thành công! Xin chào, ${escapeHtml(displayName)}.`
-              : 'Đăng ký tài khoản thành công! Đã đăng nhập.',
+        const loginModalEl = document.getElementById('loginModal');
+        if (loginModalEl && !loginModalEl.hasAttribute('hidden')) {
+          showLoginAlert(
+            'Đăng ký tài khoản thành công! Vui lòng đăng nhập để tiếp tục.',
             'success'
           );
-
-          if (typeof showToast === 'function') {
-            try {
-              showToast(`Chào mừng ${displayName}! Đăng ký & đăng nhập thành công.`, 'success');
-            } catch (e) {}
-          }
-
-          if (form) form.reset();
-          resetPasswordToggleView();
-          keepLoading = true;
-
-          // 4. Close modal and clean up
-          setTimeout(() => {
-            closeRegisterModal();
-            setLoadingState(false);
-          }, 500);
-          return;
         }
-
-        // Fallback if token could not be obtained: Keep form clean and inform user
-        if (form) form.reset();
-        resetPasswordToggleView();
-        showRegisterAlert(
-          'Đăng ký tài khoản thành công! Bạn có thể sử dụng tài khoản này để đăng nhập.',
-          'success'
-        );
       } else if (response.status === 400) {
         // Duplicate email or business validation error
         if (responseData && responseData.error_code === 'EMAIL_ALREADY_EXISTS') {
@@ -611,9 +613,7 @@
         'error'
       );
     } finally {
-      if (!keepLoading) {
-        setLoadingState(false);
-      }
+      setLoadingState(false);
     }
 
     function setLoadingState(loading, customText) {
@@ -865,6 +865,7 @@
   function showFieldError(input, message) {
     if (!input) return;
     input.classList.add('has-error');
+    input.setAttribute('aria-invalid', 'true');
     const errorEl = document.getElementById(`${input.id}Error`);
     if (errorEl) {
       errorEl.textContent = message;
@@ -875,6 +876,7 @@
   function clearFieldError(input) {
     if (!input) return;
     input.classList.remove('has-error');
+    input.removeAttribute('aria-invalid');
     const errorEl = document.getElementById(`${input.id}Error`);
     if (errorEl) {
       errorEl.textContent = '';
@@ -882,10 +884,16 @@
     }
   }
 
-  function clearAllFieldErrors() {
-    document.querySelectorAll('.form-input').forEach((input) => {
+  function clearFieldErrorsWithin(scopeId) {
+    const scope = scopeId ? document.getElementById(scopeId) : document;
+    if (!scope || typeof scope.querySelectorAll !== 'function') return;
+    scope.querySelectorAll('.form-input').forEach((input) => {
       clearFieldError(input);
     });
+  }
+
+  function clearAllFieldErrors() {
+    clearFieldErrorsWithin(null);
   }
 
   function clearLoginFieldErrors() {
