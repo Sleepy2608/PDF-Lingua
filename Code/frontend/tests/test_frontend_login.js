@@ -911,6 +911,77 @@ async function test(name, fn) {
     assert.strictEqual(a.getStoredUser(), null);
   });
 
+  // 36. Login validation (PDFL-43.2)
+  await test('Validation: trims the email and accepts padded valid credentials', () => {
+    const { e, a } = createEnv();
+    e.loginEmail.value = '  user@example.com  ';
+    e.loginPassword.value = 'Password123';
+
+    const valid = a.validateLoginForm({ emailInput: e.loginEmail, passwordInput: e.loginPassword });
+
+    assert.strictEqual(valid, true);
+    assert.strictEqual(e.loginEmailError.textContent, '');
+    assert.strictEqual(e.loginPasswordError.textContent, '');
+  });
+
+  await test('Validation: invalid email uses the shared message and clears a now-valid password error', () => {
+    const { e, a } = createEnv();
+    e.loginEmail.value = 'not-an-email';
+    e.loginPassword.value = 'Password123';
+    a.showFieldError(e.loginPassword, 'Lỗi cũ của mật khẩu.');
+
+    const valid = a.validateLoginForm({ emailInput: e.loginEmail, passwordInput: e.loginPassword });
+
+    assert.strictEqual(valid, false);
+    assert.strictEqual(e.loginEmailError.textContent, 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
+    assert.strictEqual(e.loginEmail.getAttribute('aria-invalid'), 'true');
+    assert.strictEqual(e.loginPasswordError.textContent, '');
+    assert.strictEqual(e.loginPassword.getAttribute('aria-invalid'), undefined);
+  });
+
+  // 37. 401 must keep the typed credentials (PDFL-43.2)
+  await test('Login 401: keeps typed credentials, restores the button and shows the anti-enumeration message', async () => {
+    const { e, a, c } = createEnv();
+    e.loginEmail.value = 'user@example.com';
+    e.loginPassword.value = 'WrongPass1';
+    c.fetch = async () => ({
+      status: 401,
+      json: async () => ({
+        success: false,
+        error_code: 'INVALID_CREDENTIALS',
+        message: 'Email hoặc mật khẩu không chính xác.',
+      }),
+    });
+
+    await a.submitLogin({ email: 'user@example.com', password: 'WrongPass1' });
+
+    assert.strictEqual(e.loginEmail.value, 'user@example.com');
+    assert.strictEqual(e.loginPassword.value, 'WrongPass1');
+    assert.strictEqual(e.btnSubmitLogin.disabled, false);
+    assert.strictEqual(e.loginBtnText.textContent, 'Đăng nhập');
+    assert.strictEqual(e.loginSpinner.style.display, 'none');
+    assert.match(e.loginAlert.textContent, /Email hoặc mật khẩu không chính xác/i);
+  });
+
+  // 38. 5xx must not leak backend internals (PDFL-43.2)
+  await test('Login 500: shows a generic message and never exposes backend internals', async () => {
+    const { e, a, c } = createEnv();
+    c.fetch = async () => ({
+      status: 500,
+      json: async () => ({
+        success: false,
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Traceback (most recent call last): psycopg2.OperationalError',
+      }),
+    });
+
+    await a.submitLogin({ email: 'user@example.com', password: 'Password123' });
+
+    assert.match(e.loginAlert.textContent, /Hệ thống đang gặp sự cố/i);
+    assert.strictEqual(/traceback|psycopg2/i.test(e.loginAlert.textContent), false);
+    assert.strictEqual(e.btnSubmitLogin.disabled, false);
+  });
+
   console.log(`\n================================================================`);
   console.log(`SUMMARY: ${passed}/${total} frontend tests passed (0 failed).`);
   console.log(`================================================================\n`);

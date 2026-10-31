@@ -1409,26 +1409,27 @@
   transform: translateY(-1px);
 }
 
-/* ── Register Modal Polish (PDFL-42.1) ─────────────────────────────────────── */
-/* Scoped to #registerModal so the login / account modals keep their current look. */
+/* ── Auth Modals Polish (PDFL-42.1 + PDFL-43.1) ─────────────────────────────── */
+/* Shared by the registration and login dialogs; the account modal keeps its own look. */
 
 /* Lock the page scrollbar behind the open dialog (JS already locks body scrolling) */
-html:has(#registerModal:not([hidden])) {
+html:has(#registerModal:not([hidden])),
+html:has(#loginModal:not([hidden])) {
   overflow: hidden;
 }
 
-#registerModal .modal-dialog {
+:is(#registerModal, #loginModal) .modal-dialog {
   overscroll-behavior: contain;
 }
 
-/* Name / email have no inline button, so they do not need the eye-button gutter */
-#registerModal .input-wrap:not(:has(.btn-toggle-eye)) .form-input {
+/* Inputs without an inline button do not need the eye-button gutter */
+:is(#registerModal, #loginModal) .input-wrap:not(:has(.btn-toggle-eye)) .form-input {
   padding-right: 0.9375rem;
 }
 
 /* Comfortable hit areas for the close and password-visibility buttons */
-#registerModal .modal-close,
-#registerModal .btn-toggle-eye {
+:is(#registerModal, #loginModal) .modal-close,
+:is(#registerModal, #loginModal) .btn-toggle-eye {
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
@@ -1436,87 +1437,87 @@ html:has(#registerModal:not([hidden])) {
   justify-content: center;
 }
 
-#registerModal .btn-toggle-eye {
+:is(#registerModal, #loginModal) .btn-toggle-eye {
   right: 0.5rem;
 }
 
 /* Text that must stay readable at 13-14px (WCAG AA: >= 4.5:1) */
-#registerModal .form-input::placeholder {
+:is(#registerModal, #loginModal) .form-input::placeholder {
   color: var(--text-muted);
 }
 
-#registerModal .label-hint {
+:is(#registerModal, #loginModal) .label-hint {
   color: var(--text-muted);
 }
 
-#registerModal .field-error,
-#registerModal .label-required {
+:is(#registerModal, #loginModal) .field-error,
+:is(#registerModal, #loginModal) .label-required {
   color: var(--color-pdf-coral-dark);
 }
 
-#registerModal .form-group {
+:is(#registerModal, #loginModal) .form-group {
   gap: 0.375rem;
 }
 
 /* Explicit, high-contrast focus indicator for keyboard users */
-#registerModal .form-input:focus-visible,
-#registerModal .btn:focus-visible,
-#registerModal .modal-close:focus-visible,
-#registerModal .btn-toggle-eye:focus-visible,
-#registerModal .modal-footer-text a:focus-visible {
+:is(#registerModal, #loginModal) .form-input:focus-visible,
+:is(#registerModal, #loginModal) .btn:focus-visible,
+:is(#registerModal, #loginModal) .modal-close:focus-visible,
+:is(#registerModal, #loginModal) .btn-toggle-eye:focus-visible,
+:is(#registerModal, #loginModal) .modal-footer-text a:focus-visible {
   outline: 2px solid var(--color-primary-indigo);
   outline-offset: 2px;
 }
 
 @media (hover: none) {
   /* Avoid a stuck hover lift on touch devices */
-  #registerModal .btn-gradient:hover {
+  :is(#registerModal, #loginModal) .btn-gradient:hover {
     transform: none;
   }
 }
 
 @media (max-width: 480px) {
-  #registerModal {
+  :is(#registerModal, #loginModal) {
     padding: 0.75rem;
   }
 
-  #registerModal .modal-dialog {
+  :is(#registerModal, #loginModal) .modal-dialog {
     padding: 1.25rem;
     max-height: calc(100vh - 1.5rem);
     max-height: calc(100dvh - 1.5rem);
   }
 
-  #registerModal .modal-header {
+  :is(#registerModal, #loginModal) .modal-header {
     margin-bottom: 1.125rem;
   }
 
-  #registerModal .modal-form {
+  :is(#registerModal, #loginModal) .modal-form {
     gap: 1rem;
   }
 
   /* Roomier touch targets on phones */
-  #registerModal .modal-close,
-  #registerModal .btn-toggle-eye {
+  :is(#registerModal, #loginModal) .modal-close,
+  :is(#registerModal, #loginModal) .btn-toggle-eye {
     width: 2.5rem;
     height: 2.5rem;
   }
 
-  #registerModal .input-wrap .form-input {
+  :is(#registerModal, #loginModal) .input-wrap .form-input {
     padding-right: 3rem;
   }
 
-  #registerModal .input-wrap:not(:has(.btn-toggle-eye)) .form-input {
+  :is(#registerModal, #loginModal) .input-wrap:not(:has(.btn-toggle-eye)) .form-input {
     padding-right: 0.9375rem;
   }
 
   /* 16px keeps iOS Safari from zooming in on focus */
-  #registerModal .form-input {
+  :is(#registerModal, #loginModal) .form-input {
     font-size: 1rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #registerModal .modal-dialog {
+  :is(#registerModal, #loginModal) .modal-dialog {
     animation: none;
   }
 }

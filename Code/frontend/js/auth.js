@@ -16,6 +16,9 @@
   let isSubmitting = false;
   let isRestoringSession = false;
 
+  // Pending "close the login modal after a successful sign-in" timer.
+  let loginCloseTimer = null;
+
   // Registration fields the user has already interacted with (blur/submit).
   // Reset every time the registration modal opens.
   const registrationTouchedFields = new Set();
@@ -82,6 +85,7 @@
     // ── Login Modal ──
 
     openLoginModal = function () {
+      cancelLoginAutoClose();
       closeRegisterModal();
       if (!loginModal) return;
       loginModal.removeAttribute('hidden');
@@ -95,6 +99,7 @@
     };
 
     closeLoginModal = function () {
+      cancelLoginAutoClose();
       if (!loginModal) return;
       loginModal.setAttribute('hidden', '');
       document.body.style.overflow = '';
@@ -644,11 +649,37 @@
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
 
-    // Live validation cleanup on user input
-    [emailInput, passwordInput].forEach((input) => {
-      if (!input) return;
-      input.addEventListener('input', () => {
+    const fields = [
+      ['email', emailInput],
+      ['password', passwordInput],
+    ].filter(([, input]) => !!input);
+
+    function applyFieldValidation(field, input) {
+      const message = getLoginFieldError(field, input.value);
+
+      if (message) {
+        showFieldError(input, message);
+      } else {
         clearFieldError(input);
+      }
+    }
+
+    fields.forEach(([field, input]) => {
+      // Validate when the user leaves the field — never on the first keystroke.
+      input.addEventListener('blur', (event) => {
+        // Clicking the show/hide password button must not raise a field error.
+        const related = event.relatedTarget;
+        if (related && related.classList && related.classList.contains('btn-toggle-eye')) {
+          return;
+        }
+        applyFieldValidation(field, input);
+      });
+
+      // Typing only refreshes an error that is already visible.
+      input.addEventListener('input', () => {
+        if (input.classList.contains('has-error')) {
+          applyFieldValidation(field, input);
+        }
       });
     });
 
@@ -675,38 +706,54 @@
   }
 
   /**
-   * Validate login form fields
+   * Single source of truth for the login field rules.
+   * Login never enforces password strength — the backend owns credential checks.
+   */
+  function getLoginFieldError(field, value) {
+    const raw = typeof value === 'string' ? value : '';
+
+    switch (field) {
+      case 'email': {
+        const email = raw.trim();
+        if (!email) return 'Vui lòng nhập địa chỉ email.';
+        if (!EMAIL_PATTERN.test(email)) {
+          return 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).';
+        }
+        return null;
+      }
+
+      case 'password':
+        return raw ? null : 'Vui lòng nhập mật khẩu.';
+
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Validate login form fields and focus the first invalid field.
    */
   function validateLoginForm({ emailInput, passwordInput }) {
-    let isValid = true;
     let firstInvalidInput = null;
 
-    // 1. Email validation
-    const emailVal = emailInput ? emailInput.value.trim() : '';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailVal) {
-      showFieldError(emailInput, 'Vui lòng nhập địa chỉ email.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || emailInput;
-    } else if (!emailRegex.test(emailVal)) {
-      showFieldError(emailInput, 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || emailInput;
-    }
+    [['email', emailInput], ['password', passwordInput]].forEach(([field, input]) => {
+      if (!input) return;
 
-    // 2. Password validation (login only checks presence)
-    const pwdVal = passwordInput ? passwordInput.value : '';
-    if (!pwdVal) {
-      showFieldError(passwordInput, 'Vui lòng nhập mật khẩu.');
-      isValid = false;
-      firstInvalidInput = firstInvalidInput || passwordInput;
-    }
+      const message = getLoginFieldError(field, input.value);
+
+      if (message) {
+        showFieldError(input, message);
+        firstInvalidInput = firstInvalidInput || input;
+      } else {
+        clearFieldError(input);
+      }
+    });
 
     if (firstInvalidInput) {
       firstInvalidInput.focus();
     }
 
-    return isValid;
+    return !firstInvalidInput;
   }
 
   /**
@@ -770,7 +817,9 @@
         form.reset();
         resetLoginPasswordToggle();
 
-        setTimeout(() => {
+        cancelLoginAutoClose();
+        loginCloseTimer = setTimeout(() => {
+          loginCloseTimer = null;
           closeLoginModal();
         }, 1200);
 
@@ -901,6 +950,17 @@
       const input = document.getElementById(id);
       if (input) clearFieldError(input);
     });
+  }
+
+  /**
+   * Cancel the pending auto-close timer so a stale timer can never close a
+   * login modal the user has just (re)opened.
+   */
+  function cancelLoginAutoClose() {
+    if (loginCloseTimer !== null) {
+      clearTimeout(loginCloseTimer);
+      loginCloseTimer = null;
+    }
   }
 
   /**
