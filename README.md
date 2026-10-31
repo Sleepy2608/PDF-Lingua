@@ -31,6 +31,7 @@
    - [3. Cấu hình và khởi chạy Backend](#3-cấu-hình-và-khởi-chạy-backend)
    - [4. Khởi chạy Giao diện Frontend](#4-khởi-chạy-giao-diện-frontend)
    - [5. Chạy bộ kiểm thử tự động (Automated Tests)](#5-chạy-bộ-kiểm-thử-tự-động-automated-tests)
+7. [Hướng dẫn sử dụng & Quy chuẩn vận hành (User Guide & Guidelines)](Docs/USER_GUIDE.md)
 
 ---
 
@@ -184,9 +185,17 @@ uvicorn app.main:app --reload --port 8000
 Từ thư mục gốc dự án, đảm bảo môi trường ảo backend đã được kích hoạt:
 
 ```bash
-# Chạy toàn bộ 35 automated test cases:
+# Chạy toàn bộ automated test cases:
 pytest Code/backend/tests -v
 ```
+
+---
+
+## Hướng dẫn sử dụng & Quy chuẩn vận hành (User Guide & Guidelines)
+
+Xem tài liệu hướng dẫn sử dụng chi tiết từng bước (Step-by-step User Manual), quy chuẩn tệp PDF đầu vào và giải quyết sự cố tại:
+
+👉 **[Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)**
 
 ---
 
