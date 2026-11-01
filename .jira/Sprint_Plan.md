@@ -10,8 +10,8 @@
   - Product Backlog chi tiết: [PDF_Lingua_Jira_Backlog.md](./PDF_Lingua_Jira_Backlog.md)
   - Bảng phân công nhiệm vụ: [Assignment.md](./Assignment.md)
 - **Ngày khởi tạo kế hoạch**: `15/10/2026` (Bắt đầu chu kỳ Sprint 1)
-- **Ngày cập nhật lần cuối**: `30/10/2026` (Đồng bộ hóa 100% Sprint 2 theo Jira Board mới với 37 work items)
-- **Tiến độ hiện tại**: Đang thực hiện **Sprint 2 (23/10 – 29/10/2026)** — 27/37 tasks đã hoàn thành (Done)
+- **Ngày cập nhật lần cuối**: `01/11/2026` (Đồng bộ hóa 100% Sprint 2 theo Jira Board với 32 work items đã hoàn thành)
+- **Tiến độ hiện tại**: Đã hoàn thành xuất sắc **Sprint 2 (23/10 – 30/10/2026)** — 32/32 tasks đã hoàn thành (Done). Đang triển khai **Sprint 3 (30/10 – 06/11/2026)**.
 
 ---
 
@@ -40,7 +40,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | Sprint | Thời gian dự kiến | Mục tiêu trọng tâm | Epics phụ trách chính | Số lượng Work Items | Trạng thái |
 | :---: | :---: | :--- | :--- | :---: | :---: |
 | **Sprint 1** | 15/10 – 22/10/2026 | Phân tích yêu cầu, thiết kế hệ thống & khởi tạo khung dự án | **EPIC 01, EPIC 02**, một phần EPIC 03 & 04 | 31 tasks | ✅ Đã hoàn thành |
-| **Sprint 2** | 23/10 – 29/10/2026 | Hệ thống tài khoản, xác thực & Cốt lõi xử lý PDF, OCR | **EPIC 05, EPIC 06, EPIC 07**, EPIC 03 & 04 | 37 tasks | 🚀 **Đang thực hiện** (27 Done, 4 In Progress, 6 To Do) |
+| **Sprint 2** | 23/10 – 30/10/2026 | Hệ thống tài khoản, xác thực & Cốt lõi xử lý PDF, OCR | **EPIC 05, EPIC 06, EPIC 07**, EPIC 03 & 04 | 32 tasks | ✅ **Đã hoàn thành** (32/32 Done) |
 | **Sprint 3** | 29/10 – 05/11/2026 | Quản lý tài liệu người dùng, tối ưu OCR nâng cao & Chính sách | **EPIC 06, EPIC 07**, EPIC 03 | 15 tasks | 📋 Chuẩn bị |
 | **Sprint 4** | 05/11 – 12/11/2026 | Dịch thuật đa ngôn ngữ & xuất file kết quả (*Hoàn tất Gói Free*) | **EPIC 08, EPIC 11**, tiếp tục EPIC 03 | 25 tasks | 📋 Kế hoạch |
 | **Sprint 5** | 12/11 – 19/11/2026 | AI tóm tắt văn bản & Trợ lý AI hỏi đáp tài liệu (*Khởi động Gói Pro*) | **EPIC 09, EPIC 10**, tiếp tục EPIC 03 | 26 tasks | 📋 Kế hoạch |
@@ -96,49 +96,44 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 ---
 
 ### 🔹 Sprint 2: Hệ Thống Tài Khoản, Xác Thực & Cốt Lõi Xử Lý PDF, OCR
-- **Thời gian**: 23/10/2026 – 29/10/2026 (Tuần 2)
+- **Thời gian**: 23/10/2026 – 30/10/2026 (Tuần 2)
 - **Mục tiêu**: Xây dựng toàn diện cơ chế tài khoản & bảo mật mật khẩu bcrypt, đồng thời tích hợp sớm toàn bộ luồng cốt lõi xử lý PDF (Upload, kiểm tra an toàn, giới hạn trang/dung lượng, trích xuất văn bản PyMuPDF/pdfplumber và nhận dạng OCR Tesseract kết hợp giao diện Workspace).
-- **Trạng thái**: 🚀 **Đang thực hiện (In Progress)** – **37 Work Items** (27 Done, 4 In Progress, 6 To Do)
+- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)** — **32 Work Items** (32 Done / 0 In Progress / 0 To Do)
 
 | Mã Task | Tên nhiệm vụ | Epic | Phân công | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: |
+| `PDFL-65` | Xây dựng API lấy thông tin người dùng hiện tại (`/api/auth/me`) | EPIC 04 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-66` | Xây dựng API kiểm tra quyền sử dụng tính năng | EPIC 04 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-72` | Thiết kế bảng dữ liệu tài khoản người dùng (User schema) | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-73` | Xây dựng chức năng đăng ký tài khoản | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-74` | Kiểm tra email và thông tin đăng ký hợp lệ | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
+| `PDFL-73` | Xây dựng chức năng đăng ký tài khoản | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-74` | Kiểm tra email và thông tin đăng ký hợp lệ | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-75` | Mã hóa mật khẩu trước khi lưu vào database (bcrypt 12 rounds) | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-76` | Xây dựng chức năng đăng nhập | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-77` | Xây dựng cơ chế quản lý phiên đăng nhập hoặc token (JWT) | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | To Do |
-| `PDFL-78` | Xây dựng chức năng đăng xuất | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-79` | Xây dựng chức năng xem và cập nhật thông tin tài khoản | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-80` | Xây dựng chức năng đổi mật khẩu | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-81` | Kiểm soát quyền truy cập của khách, người dùng đã đăng nhập và Admin | EPIC 05 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-82` | Kiểm tra quyền truy cập khi người dùng gọi trực tiếp API, không chỉ ẩn chức năng trên giao diện | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | To Do |
-| `PDFL-83` | Xử lý trường hợp token hết hạn, tài khoản không tồn tại hoặc thông tin đăng nhập sai | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | To Do |
-| `PDFL-84` | Kiểm tra khả năng truy cập và chỉnh sửa dữ liệu của người dùng khác | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | To Do |
-| `PDFL-65` | Xây dựng API lấy thông tin người dùng hiện tại (`/api/auth/me`) | EPIC 04 | Nguyễn Lê Huy Tâm (NT) | To Do |
-| `PDFL-66` | Xây dựng API kiểm tra quyền sử dụng tính năng | EPIC 04 | Nguyễn Lê Huy Tâm (NT) | To Do |
-| `PDFL-42` | Xây dựng trang đăng ký tài khoản | EPIC 03 | Huỳnh Đình Chấn (C) | **In Progress** |
-| `PDFL-43` | Xây dựng trang đăng nhập | EPIC 03 | Huỳnh Đình Chấn (C) | **In Progress** |
-| `PDFL-44` | Xây dựng trang thông tin tài khoản | EPIC 03 | Huỳnh Đình Chấn (C) | **In Progress** |
-| `PDFL-59` | Kiểm tra tính nhất quán về thiết kế và khả năng sử dụng form nhập liệu | EPIC 03 | Huỳnh Đình Chấn (C) | **In Progress** |
+| `PDFL-76` | Xây dựng chức năng đăng nhập | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-78` | Xây dựng chức năng đăng xuất | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-79` | Xây dựng chức năng xem và cập nhật thông tin tài khoản | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-80` | Xây dựng chức năng đổi mật khẩu | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-81` | Kiểm soát quyền truy cập của khách, người dùng đã đăng nhập và Admin | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-82` | Kiểm tra quyền truy cập khi người dùng gọi trực tiếp API, không chỉ ẩn chức năng trên giao diện | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-83` | Xử lý trường hợp token hết hạn, tài khoản không tồn tại hoặc thông tin đăng nhập sai | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-84` | Kiểm tra khả năng truy cập và chỉnh sửa dữ liệu của người dùng khác | EPIC 05 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-85` | Xây dựng API tải tài liệu PDF lên Backend (`/api/process/upload-and-translate`) | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-86` | Kiểm tra loại file và nội dung file để hạn chế tải tệp giả mạo định dạng PDF | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-86` | Kiểm tra loại file và nội dung file để hạn chế file giả mạo định dạng PDF | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-87` | Áp dụng giới hạn dung lượng: Free tối đa 20 MB/tệp, Pro tối đa 100 MB/tệp | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-88` | Kiểm tra file PDF bị hỏng, có mật khẩu hoặc không thể đọc | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-88` | Kiểm tra PDF bị hỏng, có mật khẩu hoặc không thể đọc | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-89` | Thiết lập giới hạn số trang được phép xử lý (Free 100 trang) | EPIC 06 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-99` | Tích hợp thư viện PyMuPDF / pdfplumber để đọc và trích xuất văn bản | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-99` | Tích hợp thư viện PyMuPDF để đọc và trích xuất văn bản | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-100` | Trích xuất văn bản theo từng trang | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-101` | Xử lý xuống dòng, khoảng trắng và ký tự bất thường | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-102` | Giữ thứ tự văn bản hợp lý khi tài liệu có nhiều đoạn hoặc nhiều cột (Natural Reading Order) | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-103` | Phát hiện tài liệu có ít hoặc không có văn bản trích xuất được (Scanned PDF) | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-103` | Phát hiện tài liệu có ít hoặc không có văn bản trích xuất được | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-104` | Tích hợp Tesseract OCR để nhận diện văn bản từ PDF scan | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-105` | Cấu hình dữ liệu ngôn ngữ OCR cần hỗ trợ, ưu tiên tiếng Việt và tiếng Anh | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-106` | Kết hợp kết quả OCR với cơ chế trích xuất văn bản thông thường (Hybrid Engine) | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 | `PDFL-107` | Xây dựng API trả về nội dung văn bản được trích xuất | EPIC 07 | Nguyễn Lê Huy Tâm (NT) | **Done** |
-| `PDFL-45` | Xây dựng giao diện tải tài liệu PDF (Dropzone UI) | EPIC 03 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-46` | Xây dựng giao diện hiển thị tiến trình tải lên và xử lý tài liệu (Processing Modal) | EPIC 03 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-47` | Xây dựng giao diện hiển thị văn bản sau khi trích xuất (Dual-pane Workspace) | EPIC 03 | Huỳnh Đình Chấn (C) | **Done** |
-| `PDFL-57` | Thiết kế trạng thái loading, lỗi, thành công và giao diện khi chưa có dữ liệu | EPIC 03 | Huỳnh Đình Chấn (C) | **Done** |
+| `PDFL-45` | Xây dựng giao diện tải tài liệu PDF (Dropzone UI) | EPIC 03 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-46` | Xây dựng giao diện hiển thị tiến trình tải lên và xử lý tài liệu (Processing Modal) | EPIC 03 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-47` | Xây dựng giao diện hiển thị văn bản sau khi trích xuất (Dual-pane Workspace) | EPIC 03 | Nguyễn Lê Huy Tâm (NT) | **Done** |
+| `PDFL-57` | Thiết kế trạng thái loading, lỗi, thành công và giao diện khi chưa có dữ liệu | EPIC 03 | Nguyễn Lê Huy Tâm (NT) | **Done** |
 
 ---
 
