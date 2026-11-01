@@ -2,13 +2,54 @@ import re
 import statistics
 from pathlib import Path
 from typing import Any
-import pdfplumber
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
 import pypdf
+from PIL import Image
 
 
 class PDFService:
     def __init__(self):
         pass
+
+    def is_blank_page(
+        self,
+        image_or_page: Any,
+        content_ratio_threshold: float = 0.0005,
+        dark_pixel_threshold: int = 240,
+    ) -> bool:
+        """
+        Phát hiện trang PDF trống dựa trên mật độ pixel bằng Pillow.
+        - Chuyển ảnh về Grayscale ('L').
+        - Đếm số lượng pixel tối (< dark_pixel_threshold).
+        - Nếu tỷ lệ pixel tối / tổng số pixel < content_ratio_threshold -> Trang trống (True).
+        """
+        try:
+            if isinstance(image_or_page, Image.Image):
+                img = image_or_page
+            elif hasattr(image_or_page, "to_image"):
+                # Đối tượng Page của pdfplumber
+                img = image_or_page.to_image(resolution=72).original
+            else:
+                return False
+
+            gray_img = img.convert("L")
+            width, height = gray_img.size
+            total_pixels = width * height
+            if total_pixels == 0:
+                return True
+
+            # Lấy histogram: mảng 256 phần tử biểu thị số lượng pixel cho từng giá trị mức xám (0-255)
+            histogram = gray_img.histogram()
+            # Ký tự / nét vẽ có mức xám nhỏ hơn dark_pixel_threshold (mặc định 240)
+            dark_pixels = sum(histogram[:dark_pixel_threshold])
+
+            content_ratio = dark_pixels / total_pixels
+            return content_ratio < content_ratio_threshold
+        except Exception:
+            return False
 
     def validate_pdf(self, file_path: Path | str) -> dict[str, Any]:
         path = Path(file_path)
@@ -51,11 +92,18 @@ class PDFService:
                 for idx, page in enumerate(pages):
                     raw_text = self._extract_page_smart_layout(page)
                     cleaned = self._clean_whitespace(raw_text)
+
+                    # Kiểm tra trang trống nếu không trích xuất được text chữ gốc
+                    is_blank = False
+                    if not cleaned:
+                        is_blank = self.is_blank_page(page)
+
                     pages_data.append({
                         "page": idx + 1,
                         "text": cleaned,
                         "char_count": len(cleaned),
                         "has_text": len(cleaned) > 0,
+                        "is_blank": is_blank,
                     })
                 return pages_data
         except Exception:
@@ -70,6 +118,7 @@ class PDFService:
                     "text": cleaned,
                     "char_count": len(cleaned),
                     "has_text": len(cleaned) > 0,
+                    "is_blank": len(cleaned) == 0,
                 })
             return pages_data
 

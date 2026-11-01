@@ -4,7 +4,10 @@ from pathlib import Path
 from typing import Any
 from PIL import Image
 import pytesseract
-import pypdfium2 as pdfium
+try:
+    import pypdfium2 as pdfium
+except ImportError:
+    pdfium = None
 
 from app.core.config import settings
 from app.core.logger import logger
@@ -38,6 +41,41 @@ class OCRService:
     def is_available(self) -> bool:
         cmd = getattr(pytesseract.pytesseract, "tesseract_cmd", "tesseract")
         return bool(shutil.which(cmd) or os.path.exists(cmd))
+
+    def is_blank_page(
+        self,
+        image_input: Path | str | Image.Image,
+        content_ratio_threshold: float = 0.0005,
+        dark_pixel_threshold: int = 240,
+    ) -> bool:
+        """
+        Phát hiện trang scan/ảnh trống bằng Pillow dựa trên tỷ lệ mật độ pixel nội dung.
+        - Chuyển ảnh về Grayscale ('L').
+        - Đếm số lượng pixel tối (< dark_pixel_threshold).
+        - Nếu tỷ lệ pixel tối / tổng số pixel < content_ratio_threshold -> Trang trống (True).
+        """
+        try:
+            if isinstance(image_input, (str, Path)):
+                img = Image.open(image_input)
+            elif isinstance(image_input, Image.Image):
+                img = image_input
+            else:
+                return False
+
+            gray_img = img.convert("L")
+            width, height = gray_img.size
+            total_pixels = width * height
+            if total_pixels == 0:
+                return True
+
+            histogram = gray_img.histogram()
+            dark_pixels = sum(histogram[:dark_pixel_threshold])
+            content_ratio = dark_pixels / total_pixels
+
+            return content_ratio < content_ratio_threshold
+        except Exception as e:
+            logger.error(f"[OCR] Error detecting blank page: {e}")
+            return False
 
     def extract_text_from_image(self, image_input: Path | str | Image.Image, lang: str | None = None) -> str:
         if not self.is_available():
@@ -85,6 +123,12 @@ class OCRService:
             for i in range(total_pages):
                 page = doc.get_page(i)
                 pil_image = page.render(scale=render_scale).to_pil()
+
+                # Kiểm tra trang trống trước khi thực hiện OCR tốn tài nguyên
+                if self.is_blank_page(pil_image):
+                    logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
+                    continue
+
                 page_text = self.extract_text_from_image(pil_image, lang=target_lang)
                 if page_text:
                     pages_text.append(page_text)

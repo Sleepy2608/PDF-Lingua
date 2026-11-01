@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        pass
 
 # Search for .env file in backend directory or root directory
 _backend_dir = Path(__file__).resolve().parent.parent.parent
