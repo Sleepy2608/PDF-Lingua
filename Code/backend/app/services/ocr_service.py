@@ -77,7 +77,51 @@ class OCRService:
             logger.error(f"[OCR] Error detecting blank page: {e}")
             return False
 
-    def extract_text_from_image(self, image_input: Path | str | Image.Image, lang: str | None = None) -> str:
+    def detect_and_correct_orientation(
+        self,
+        image_input: Path | str | Image.Image,
+    ) -> tuple[Image.Image, int]:
+        """
+        Nhận diện hướng trang sử dụng Tesseract OSD (pytesseract.image_to_osd)
+        và tự động xoay ảnh về hướng chuẩn 0° bằng Pillow.
+
+        Trả về:
+            (ảnh_đã_xoay_chuẩn, góc_xoay_đã_hiệu_chỉnh)
+            Nếu trang đã đúng hướng hoặc không xác định được: trả về (ảnh_gốc, 0)
+        """
+        if isinstance(image_input, (str, Path)):
+            img = Image.open(image_input)
+        elif isinstance(image_input, Image.Image):
+            img = image_input
+        else:
+            return image_input, 0
+
+        if not self.is_available():
+            return img, 0
+
+        try:
+            osd_data = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
+            rotate_angle = osd_data.get("rotate", 0)
+
+            # Tesseract OSD báo góc cần xoay (thường là 0, 90, 180, 270)
+            if rotate_angle in (90, 180, 270):
+                logger.info(f"[OCR] Correcting image orientation by rotating {360 - rotate_angle}° (OSD rotate: {rotate_angle}°)")
+                # Pillow rotate nhận góc ngược chiều kim đồng hồ (counter-clockwise).
+                # Nếu OSD rotate = 90 (nghĩa là ảnh bị xoay 90 độ xuôi kim đồng hồ),
+                # để đưa về 0 ta cần xoay (360 - 90) = 270 độ hoặc img.rotate(-rotate_angle, expand=True)
+                corrected_img = img.rotate(360 - rotate_angle, expand=True)
+                return corrected_img, rotate_angle
+            return img, 0
+        except Exception as e:
+            logger.debug(f"[OCR] OSD could not determine orientation (keeping original): {e}")
+            return img, 0
+
+    def extract_text_from_image(
+        self,
+        image_input: Path | str | Image.Image,
+        lang: str | None = None,
+        auto_rotate: bool = True,
+    ) -> str:
         if not self.is_available():
             logger.warning("[OCR] Tesseract OCR is not installed or configured on the system.")
             return ""
@@ -88,6 +132,9 @@ class OCRService:
                 img = Image.open(image_input)
             else:
                 img = image_input
+
+            if auto_rotate:
+                img, _ = self.detect_and_correct_orientation(img)
 
             text = pytesseract.image_to_string(img, lang=target_lang)
             return text.strip()
@@ -129,7 +176,10 @@ class OCRService:
                     logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
                     continue
 
-                page_text = self.extract_text_from_image(pil_image, lang=target_lang)
+                # Nhận diện và tự động xoay trang về hướng chuẩn 0 độ
+                corrected_image, angle = self.detect_and_correct_orientation(pil_image)
+
+                page_text = self.extract_text_from_image(corrected_image, lang=target_lang, auto_rotate=False)
                 if page_text:
                     pages_text.append(page_text)
 
