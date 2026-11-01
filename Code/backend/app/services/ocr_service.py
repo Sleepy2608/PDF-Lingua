@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import Any
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 import pytesseract
 try:
     import pypdfium2 as pdfium
@@ -238,12 +238,125 @@ class OCRService:
             logger.error(f"[OCR] Error during deskew detection: {e}")
             return img, 0.0
 
+    def enhance_image(
+        self,
+        image_input: Path | str | Image.Image,
+        contrast_factor: float = 1.5,
+        sharpness_factor: float = 1.5,
+    ) -> Image.Image:
+        """
+        Nâng cao chất lượng ảnh (Image Enhancement) cho OCR bằng Pillow:
+        - Chuyển xám (Grayscale).
+        - Cân bằng tương phản tự động (Autocontrast).
+        - Tăng độ tương phản (Contrast) và độ sắc nét (Sharpness).
+        - Error handling và an toàn fallback về ảnh ban đầu.
+        """
+        if isinstance(image_input, (str, Path)):
+            img = Image.open(image_input)
+        elif isinstance(image_input, Image.Image):
+            img = image_input
+        else:
+            return image_input
+
+        try:
+            # 1. Chuyển sang ảnh thang độ xám 'L' nếu đang là RGB/RGBA
+            gray_img = img.convert("L")
+
+            # 2. Tự động cân bằng histogram / dải sáng
+            autocontrast_img = ImageOps.autocontrast(gray_img, cutoff=1)
+
+            # 3. Tăng độ tương phản
+            enhancer_contrast = ImageEnhance.Contrast(autocontrast_img)
+            contrast_img = enhancer_contrast.enhance(contrast_factor)
+
+            # 4. Tăng độ sắc nét
+            enhancer_sharp = ImageEnhance.Sharpness(contrast_img)
+            enhanced_img = enhancer_sharp.enhance(sharpness_factor)
+
+            return enhanced_img
+        except Exception as e:
+            logger.error(f"[OCR] Error during image enhancement: {e}")
+            return img
+
+    def preprocess_image(
+        self,
+        image_input: Path | str | Image.Image,
+        check_blank: bool = True,
+        auto_rotate: bool = True,
+        auto_deskew: bool = True,
+        auto_enhance: bool = True,
+    ) -> tuple[Image.Image, dict[str, Any]]:
+        """
+        Pipeline tiền xử lý hình ảnh hoàn chỉnh theo thứ tự:
+        1. Blank Page Detection
+        2. Orientation Correction
+        3. Deskew Correction
+        4. Image Enhancement
+        Kèm error handling và fallback cho từng bước, không làm sập pipeline.
+        """
+        meta: dict[str, Any] = {
+            "is_blank": False,
+            "rotation_applied": 0,
+            "skew_applied": 0.0,
+            "enhanced": False,
+            "error": None,
+        }
+
+        if isinstance(image_input, (str, Path)):
+            try:
+                img = Image.open(image_input)
+            except Exception as e:
+                logger.error(f"[OCR] Cannot open image file: {e}")
+                meta["error"] = str(e)
+                return image_input, meta
+        elif isinstance(image_input, Image.Image):
+            img = image_input
+        else:
+            return image_input, meta
+
+        # Bước 1: Blank Page Detection
+        if check_blank:
+            try:
+                if self.is_blank_page(img):
+                    meta["is_blank"] = True
+                    return img, meta
+            except Exception as e:
+                logger.warning(f"[OCR Pipeline] Warning in is_blank_page fallback: {e}")
+
+        # Bước 2: Orientation Correction
+        if auto_rotate:
+            try:
+                img, rot_angle = self.detect_and_correct_orientation(img)
+                meta["rotation_applied"] = rot_angle
+            except Exception as e:
+                logger.warning(f"[OCR Pipeline] Warning in detect_and_correct_orientation fallback: {e}")
+
+        # Bước 3: Deskew Correction
+        if auto_deskew:
+            try:
+                img, skew_angle = self.detect_and_correct_skew(img)
+                meta["skew_applied"] = skew_angle
+            except Exception as e:
+                logger.warning(f"[OCR Pipeline] Warning in detect_and_correct_skew fallback: {e}")
+
+        # Bước 4: Image Enhancement
+        if auto_enhance:
+            try:
+                img = self.enhance_image(img)
+                meta["enhanced"] = True
+            except Exception as e:
+                logger.warning(f"[OCR Pipeline] Warning in enhance_image fallback: {e}")
+
+        return img, meta
+
     def extract_text_from_image(
         self,
         image_input: Path | str | Image.Image,
         lang: str | None = None,
+        preprocess: bool = True,
         auto_rotate: bool = True,
         auto_deskew: bool = True,
+        auto_enhance: bool = True,
     ) -> str:
         if not self.is_available():
             logger.warning("[OCR] Tesseract OCR is not installed or configured on the system.")
@@ -256,11 +369,17 @@ class OCRService:
             else:
                 img = image_input
 
-            if auto_rotate:
-                img, _ = self.detect_and_correct_orientation(img)
-
-            if auto_deskew:
-                img, _ = self.detect_and_correct_skew(img)
+            # Chỉ tiền xử lý khi được yêu cầu (tránh xử lý lặp lại 2 lần)
+            if preprocess and (auto_rotate or auto_deskew or auto_enhance):
+                img, meta = self.preprocess_image(
+                    img,
+                    check_blank=True,
+                    auto_rotate=auto_rotate,
+                    auto_deskew=auto_deskew,
+                    auto_enhance=auto_enhance,
+                )
+                if meta.get("is_blank", False):
+                    return ""
 
             text = pytesseract.image_to_string(img, lang=target_lang)
             return text.strip()
@@ -283,11 +402,13 @@ class OCRService:
                 "success": False,
                 "text": "",
                 "page_count": 0,
+                "pages": [],
                 "error": "Máy chủ chưa cài đặt công cụ Tesseract OCR.",
             }
 
         target_lang = lang or self.default_lang
         pages_text: list[str] = []
+        pages_detail: list[dict[str, Any]] = []
 
         try:
             doc = pdfium.PdfDocument(str(pdf_path))
@@ -297,18 +418,38 @@ class OCRService:
                 page = doc.get_page(i)
                 pil_image = page.render(scale=render_scale).to_pil()
 
-                # Kiểm tra trang trống trước khi thực hiện OCR tốn tài nguyên
-                if self.is_blank_page(pil_image):
+                # Thực hiện tiền xử lý pipeline 1 lần duy nhất
+                processed_image, meta = self.preprocess_image(
+                    pil_image,
+                    check_blank=True,
+                    auto_rotate=True,
+                    auto_deskew=True,
+                    auto_enhance=True,
+                )
+
+                # Kiểm tra trang trống: bỏ qua OCR nhưng vẫn giữ nguyên số trang và vị trí trang
+                if meta.get("is_blank", False):
                     logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
+                    pages_detail.append({
+                        "page": i + 1,
+                        "text": "",
+                        "is_blank": True,
+                    })
                     continue
 
-                # Nhận diện và tự động xoay trang về hướng chuẩn 0 độ
-                corrected_image, _ = self.detect_and_correct_orientation(pil_image)
+                # Gọi OCR với preprocess=False để tránh xử lý lặp lại
+                page_text = self.extract_text_from_image(
+                    processed_image,
+                    lang=target_lang,
+                    preprocess=False,
+                )
 
-                # Hiệu chỉnh góc nghiêng (Deskew) sau Orientation
-                deskewed_image, _ = self.detect_and_correct_skew(corrected_image)
+                pages_detail.append({
+                    "page": i + 1,
+                    "text": page_text,
+                    "is_blank": False,
+                })
 
-                page_text = self.extract_text_from_image(deskewed_image, lang=target_lang, auto_rotate=False, auto_deskew=False)
                 if page_text:
                     pages_text.append(page_text)
 
@@ -317,6 +458,7 @@ class OCRService:
                 "success": True,
                 "text": full_text,
                 "page_count": total_pages,
+                "pages": pages_detail,
                 "error": None,
             }
         except Exception as e:
@@ -325,5 +467,6 @@ class OCRService:
                 "success": False,
                 "text": "",
                 "page_count": 0,
+                "pages": [],
                 "error": f"Lỗi nhận dạng PDF: {e}",
             }
