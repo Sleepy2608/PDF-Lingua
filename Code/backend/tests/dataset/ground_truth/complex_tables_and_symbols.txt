@@ -1,0 +1,10 @@
+Complex Scientific Report & Financial Summary
+
+Mathematical Formulas & Symbols:
+E = m * c^2 | f(x) = alpha * x + beta | Sum(i=1..N) [ x_i ] = Sigma
+
+Financial Balance Table:
+Item               Q1_Revenue   Q2_Revenue   Growth_Rate
+Hardware Services  $120,500     $145,200     +20.5%
+Software Licenses  $340,000     $390,000     +14.7%
+Special Symbols: @ # $ % & * [ ] { } < > / = + -

@@ -1,0 +1,6 @@
+PDF-Lingua Smart Document Extraction
+
+This is an official single-column academic document.
+It contains standard text paragraphs designed to evaluate digital extraction precision.
+Natural reading order flows from the top line directly to the bottom line without split columns.
+Modern digital PDF extraction should achieve near 100% character accuracy on this clean layout.

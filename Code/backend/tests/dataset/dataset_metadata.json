@@ -1,0 +1,56 @@
+[
+  {
+    "filename": "digital_single_column.pdf",
+    "type": "Digital PDF",
+    "subtype": "single_column",
+    "page_count": 1,
+    "characteristics": "Clean single-column digital text layout with uniform line heights.",
+    "file_path": "dataset\\digital\\digital_single_column.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\digital_single_column.txt"
+  },
+  {
+    "filename": "digital_multi_column.pdf",
+    "type": "Digital PDF",
+    "subtype": "multi_column",
+    "page_count": 1,
+    "characteristics": "Two-column digital layout separated by a central gutter gap to test reading order.",
+    "file_path": "dataset\\digital\\digital_multi_column.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\digital_multi_column.txt"
+  },
+  {
+    "filename": "complex_tables_and_symbols.pdf",
+    "type": "Complex PDF",
+    "subtype": "tables_symbols_formulas",
+    "page_count": 1,
+    "characteristics": "Contains tabular columns, math formulas, dollar currency symbols, and punctuation.",
+    "file_path": "dataset\\complex\\complex_tables_and_symbols.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\complex_tables_and_symbols.txt"
+  },
+  {
+    "filename": "scanned_high_quality.pdf",
+    "type": "Scanned PDF",
+    "subtype": "high_quality",
+    "page_count": 1,
+    "characteristics": "Clean, high-resolution scanned page without noise, upright 0 degrees orientation.",
+    "file_path": "dataset\\scanned\\scanned_high_quality.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\scanned_high_quality.txt"
+  },
+  {
+    "filename": "scanned_medium_skewed.pdf",
+    "type": "Scanned PDF",
+    "subtype": "medium_skewed",
+    "page_count": 1,
+    "characteristics": "Medium quality scan with a 4-degree skew tilt requiring deskew pipeline correction.",
+    "file_path": "dataset\\scanned\\scanned_medium_skewed.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\scanned_medium_skewed.txt"
+  },
+  {
+    "filename": "scanned_low_blurry_noisy.pdf",
+    "type": "Scanned PDF",
+    "subtype": "low_blurry_noisy",
+    "page_count": 1,
+    "characteristics": "Low quality scan with low contrast ink, noise artifacts, and slight blur.",
+    "file_path": "dataset\\scanned\\scanned_low_blurry_noisy.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\scanned_low_blurry_noisy.txt"
+  }
+]
