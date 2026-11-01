@@ -49,14 +49,26 @@ function initWorkspace() {
   }
 
   if (btnDownloadMenu && downloadDropdown) {
+    const setDropdownOpen = (open) => {
+      downloadDropdown.classList.toggle('show', open);
+      btnDownloadMenu.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
     btnDownloadMenu.addEventListener('click', (e) => {
       e.stopPropagation();
-      downloadDropdown.classList.toggle('show');
+      setDropdownOpen(!downloadDropdown.classList.contains('show'));
     });
 
     document.addEventListener('click', (e) => {
       if (!downloadDropdown.contains(e.target) && e.target !== btnDownloadMenu) {
-        downloadDropdown.classList.remove('show');
+        setDropdownOpen(false);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && downloadDropdown.classList.contains('show')) {
+        setDropdownOpen(false);
+        btnDownloadMenu.focus();
       }
     });
   }
@@ -538,7 +550,9 @@ function showToast(message, type = 'info') {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${message}</span>`;
+  const toastText = document.createElement('span');
+  toastText.textContent = message;
+  toast.appendChild(toastText);
 
   container.appendChild(toast);
 

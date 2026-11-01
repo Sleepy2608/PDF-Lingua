@@ -465,3 +465,63 @@
     font-size: 0.8125rem;
   }
 }
+
+/* Header must never overflow on small screens (guest and logged-in states) */
+@media (max-width: 768px) {
+  .header-actions {
+    flex-shrink: 1;
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .auth-user-group {
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .user-profile-badge {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .user-profile-badge .user-name {
+    min-width: 0;
+  }
+
+  .btn-logout {
+    flex-shrink: 0;
+    padding: 0.35rem 0.65rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .header-container {
+    gap: 0.5rem;
+  }
+
+  .auth-guest-group {
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .auth-guest-group .btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .brand-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .user-profile-badge .user-name {
+    display: none;
+  }
+}
+
+@media (max-width: 359px) {
+  .brand-title {
+    display: none;
+  }
+}

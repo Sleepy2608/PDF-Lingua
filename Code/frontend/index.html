@@ -37,8 +37,8 @@
                     <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
                 </div>
                 <div class="auth-user-group" id="authUserGroup" hidden>
-                    <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản">
-                        <span class="user-avatar" id="userAvatar"></span>
+                    <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản" aria-label="Xem thông tin tài khoản">
+                        <span class="user-avatar" id="userAvatar" aria-hidden="true"></span>
                         <span class="user-name" id="userDisplayName"></span>
                     </button>
                     <button type="button" class="btn btn-logout" id="btnLogout">Đăng xuất</button>
@@ -231,7 +231,7 @@
                                     <div class="file-preview-name" id="previewFileName">tai-lieu.pdf</div>
                                     <div class="file-preview-size" id="previewFileSize">2.4 MB</div>
                                 </div>
-                                <button type="button" class="btn-file-remove" id="btnRemoveFile" title="Hủy chọn tệp">
+                                <button type="button" class="btn-file-remove" id="btnRemoveFile" title="Hủy chọn tệp" aria-label="Hủy chọn tệp">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -266,7 +266,7 @@
 
                     <div class="toolbar-actions">
                         <div class="lang-select-wrap">
-                            <span class="lang-select-label">Dịch sang:</span>
+                            <label class="lang-select-label" for="targetLangSelect">Dịch sang:</label>
                             <select class="lang-select" id="targetLangSelect">
                                 <option value="vi" selected>Tiếng Việt (vi)</option>
                                 <option value="en">English (en)</option>
@@ -289,7 +289,7 @@
                         </button>
 
                         <div class="download-wrap">
-                            <button type="button" class="btn btn-gradient" id="btnDownloadMenu">
+                            <button type="button" class="btn btn-gradient" id="btnDownloadMenu" aria-haspopup="true" aria-expanded="false" aria-controls="downloadDropdown">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -380,11 +380,11 @@
     </main>
 
     <!-- Progress Processing Modal -->
-    <div class="modal-overlay" id="processingModal" style="display: none;">
+    <div class="modal-overlay" id="processingModal" role="dialog" aria-modal="true" aria-labelledby="processingTitle" style="display: none;">
         <div class="progress-card">
-            <div class="progress-spinner"></div>
-            <h3 class="progress-title">Đang xử lý tài liệu</h3>
-            <p class="progress-desc" id="progressDesc">Đang chuẩn bị...</p>
+            <div class="progress-spinner" aria-hidden="true"></div>
+            <h3 class="progress-title" id="processingTitle">Đang xử lý tài liệu</h3>
+            <p class="progress-desc" id="progressDesc" aria-live="polite">Đang chuẩn bị...</p>
             <div class="progress-bar-wrap">
                 <div class="progress-bar-fill" id="progressBarFill"></div>
             </div>
@@ -410,7 +410,7 @@
     </div>
 
     <!-- Toast Notification Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
 
     <footer class="site-footer">
         <div class="container footer-content">
@@ -640,7 +640,7 @@
                 <!-- Account Info Content -->
                 <div class="account-info-card" id="accountInfoContent">
                     <div class="account-header-hero">
-                        <div class="account-avatar-large" id="accountAvatarLarge">U</div>
+                        <div class="account-avatar-large" id="accountAvatarLarge" aria-hidden="true">U</div>
                         <div class="account-hero-meta">
                             <h3 class="account-hero-name" id="accountFullNameDisplay">---</h3>
                             <p class="account-hero-email" id="accountEmailSubDisplay">---</p>
@@ -668,7 +668,7 @@
                             <!-- Edit mode form -->
                             <form id="accountEditForm" class="account-edit-form" style="display: none;" novalidate>
                                 <div class="input-wrap">
-                                    <input type="text" id="editFullNameInput" name="full_name" class="form-input" placeholder="Nhập họ và tên mới" maxlength="150" autocomplete="name">
+                                    <input type="text" id="editFullNameInput" name="full_name" class="form-input" placeholder="Nhập họ và tên mới" maxlength="150" autocomplete="name" aria-label="Họ và tên mới" aria-describedby="editFullNameInputError">
                                 </div>
                                 <p class="field-error" id="editFullNameInputError" role="alert" aria-live="polite"></p>
                                 <div class="account-edit-actions">
@@ -728,7 +728,7 @@
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
-                                    <input type="password" id="currentPasswordInput" name="current_password" class="form-input" placeholder="Nhập mật khẩu hiện tại" required autocomplete="current-password" maxlength="128">
+                                    <input type="password" id="currentPasswordInput" name="current_password" class="form-input" placeholder="Nhập mật khẩu hiện tại" required autocomplete="current-password" maxlength="128" aria-describedby="currentPasswordInputError">
                                     <button type="button" class="btn-toggle-eye" id="toggleCurrentPassword" aria-label="Hiện mật khẩu">
                                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -753,10 +753,10 @@
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
-                                    <input type="password" id="newPasswordInput" name="new_password" class="form-input" placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required autocomplete="new-password" maxlength="128">
+                                    <input type="password" id="newPasswordInput" name="new_password" class="form-input" placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required autocomplete="new-password" maxlength="128" aria-describedby="newPasswordInputError">
                                     <button type="button" class="btn-toggle-eye" id="toggleNewPassword" aria-label="Hiện mật khẩu">
                                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
                                         <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
@@ -778,10 +778,10 @@
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
-                                    <input type="password" id="confirmNewPasswordInput" name="confirm_new_password" class="form-input" placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password" maxlength="128">
+                                    <input type="password" id="confirmNewPasswordInput" name="confirm_new_password" class="form-input" placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password" maxlength="128" aria-describedby="confirmNewPasswordInputError">
                                     <button type="button" class="btn-toggle-eye" id="toggleConfirmNewPassword" aria-label="Hiện mật khẩu">
                                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
                                         <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">

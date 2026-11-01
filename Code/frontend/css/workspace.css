@@ -282,6 +282,11 @@
   outline: none;
 }
 
+.pane-body:focus-visible {
+  outline: 2px solid var(--color-primary-indigo);
+  outline-offset: -2px;
+}
+
 /* Loading Modal */
 .modal-overlay {
   position: fixed;
@@ -419,8 +424,8 @@
 
 .toast {
   pointer-events: auto;
-  min-width: 280px;
-  max-width: 380px;
+  min-width: min(280px, calc(100vw - 2rem));
+  max-width: min(380px, calc(100vw - 2rem));
   padding: 0.75rem 1.25rem;
   background: #0F172A;
   color: #FFFFFF;
