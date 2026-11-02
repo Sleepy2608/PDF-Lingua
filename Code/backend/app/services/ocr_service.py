@@ -411,47 +411,81 @@ class OCRService:
         pages_detail: list[dict[str, Any]] = []
 
         try:
-            doc = pdfium.PdfDocument(str(pdf_path))
-            total_pages = min(len(doc), max_pages)
+            if pdfium is not None:
+                doc = pdfium.PdfDocument(str(pdf_path))
+                total_pages = min(len(doc), max_pages)
 
-            for i in range(total_pages):
-                page = doc.get_page(i)
-                pil_image = page.render(scale=render_scale).to_pil()
+                for i in range(total_pages):
+                    page = doc.get_page(i)
+                    pil_image = page.render(scale=render_scale).to_pil()
 
-                # Thực hiện tiền xử lý pipeline 1 lần duy nhất
-                processed_image, meta = self.preprocess_image(
-                    pil_image,
-                    check_blank=True,
-                    auto_rotate=True,
-                    auto_deskew=True,
-                    auto_enhance=True,
-                )
+                    # Thực hiện tiền xử lý pipeline 1 lần duy nhất
+                    processed_image, meta = self.preprocess_image(
+                        pil_image,
+                        check_blank=True,
+                        auto_rotate=True,
+                        auto_deskew=True,
+                        auto_enhance=True,
+                    )
 
-                # Kiểm tra trang trống: bỏ qua OCR nhưng vẫn giữ nguyên số trang và vị trí trang
-                if meta.get("is_blank", False):
-                    logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
+                    # Kiểm tra trang trống: bỏ qua OCR nhưng vẫn giữ nguyên số trang và vị trí trang
+                    if meta.get("is_blank", False):
+                        logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
+                        pages_detail.append({
+                            "page": i + 1,
+                            "text": "",
+                            "is_blank": True,
+                        })
+                        continue
+
+                    # Gọi OCR với preprocess=False để tránh xử lý lặp lại
+                    page_text = self.extract_text_from_image(
+                        processed_image,
+                        lang=target_lang,
+                        preprocess=False,
+                    )
+
                     pages_detail.append({
                         "page": i + 1,
-                        "text": "",
-                        "is_blank": True,
+                        "text": page_text,
+                        "is_blank": False,
                     })
-                    continue
 
-                # Gọi OCR với preprocess=False để tránh xử lý lặp lại
-                page_text = self.extract_text_from_image(
-                    processed_image,
-                    lang=target_lang,
-                    preprocess=False,
-                )
+                    if page_text:
+                        pages_text.append(page_text)
+            else:
+                # Fallback sử dụng PyMuPDF nếu pdfium không được cài đặt trong môi trường hiện tại
+                import io
+                import pymupdf
+                doc = pymupdf.open(str(pdf_path))
+                total_pages = min(len(doc), max_pages)
 
-                pages_detail.append({
-                    "page": i + 1,
-                    "text": page_text,
-                    "is_blank": False,
-                })
+                for i in range(total_pages):
+                    page = doc.load_page(i)
+                    pix = page.get_pixmap(dpi=150)
+                    pil_image = Image.open(io.BytesIO(pix.tobytes("png")))
 
-                if page_text:
-                    pages_text.append(page_text)
+                    processed_image, meta = self.preprocess_image(
+                        pil_image,
+                        check_blank=True,
+                        auto_rotate=True,
+                        auto_deskew=True,
+                        auto_enhance=True,
+                    )
+
+                    if meta.get("is_blank", False):
+                        pages_detail.append({"page": i + 1, "text": "", "is_blank": True})
+                        continue
+
+                    page_text = self.extract_text_from_image(
+                        processed_image,
+                        lang=target_lang,
+                        preprocess=False,
+                    )
+                    pages_detail.append({"page": i + 1, "text": page_text, "is_blank": False})
+                    if page_text:
+                        pages_text.append(page_text)
+                doc.close()
 
             full_text = "\n\n".join(pages_text)
             return {
