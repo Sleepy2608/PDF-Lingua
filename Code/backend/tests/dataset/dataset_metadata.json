@@ -52,5 +52,14 @@
     "characteristics": "Low quality scan with low contrast ink, noise artifacts, and slight blur.",
     "file_path": "dataset\\scanned\\scanned_low_blurry_noisy.pdf",
     "ground_truth_path": "dataset\\ground_truth\\scanned_low_blurry_noisy.txt"
+  },
+  {
+    "filename": "mixed_digital_and_scanned.pdf",
+    "type": "Mixed PDF",
+    "subtype": "digital_and_scanned",
+    "page_count": 2,
+    "characteristics": "Contains Page 1 (Native Digital) and Page 2 (Scanned Image).",
+    "file_path": "dataset\\mixed\\mixed_digital_and_scanned.pdf",
+    "ground_truth_path": "dataset\\ground_truth\\mixed_digital_and_scanned.txt"
   }
 ]
