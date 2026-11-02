@@ -149,6 +149,22 @@ function getAuthHeaders() {
   return headers;
 }
 
+let activeEventSource = null;
+let activePollTimer = null;
+
+function cleanupProgressTracking() {
+  if (activeEventSource) {
+    try {
+      activeEventSource.close();
+    } catch (e) {}
+    activeEventSource = null;
+  }
+  if (activePollTimer) {
+    clearInterval(activePollTimer);
+    activePollTimer = null;
+  }
+}
+
 /**
  * Handle HTTP 401 Unauthorized errors from process endpoints (PDFL-81.4).
  * Clears stored token/session, resets header to Guest state and updates upload limits,
@@ -176,6 +192,97 @@ function handleAuthError(result) {
   showToast(msg, 'error');
 }
 
+/**
+ * Theo dõi tiến độ xử lý Background Job theo thời gian thực (PDFL-111.4).
+ * Sử dụng SSE (Server-Sent Events) và tự động fallback sang polling nếu SSE ngắt kết nối.
+ */
+function listenToJobProgress(jobId, btnProcessPdf) {
+  cleanupProgressTracking();
+
+  const handleJobSuccess = (jobData) => {
+    cleanupProgressTracking();
+    currentDocData = jobData.result;
+    updateProgress(100, jobData.message || 'Xử lý và dịch thuật hoàn tất!', 4);
+    setTimeout(() => {
+      showProgressModal(false);
+      renderWorkspace(jobData.result);
+      showToast('Tài liệu đã được dịch thuật thành công!', 'success');
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+    }, 400);
+  };
+
+  const handleJobFailure = (errorMsg) => {
+    cleanupProgressTracking();
+    showProgressModal(false);
+    const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
+    if (btn) btn.disabled = false;
+    showToast(errorMsg || 'Xử lý tài liệu thất bại.', 'error');
+  };
+
+  // Polling fallback khi EventSource không khả dụng hoặc mạng ngắt kết nối
+  const startPollingFallback = () => {
+    if (activePollTimer) return;
+    activePollTimer = setInterval(async () => {
+      try {
+        const authHeaders = getAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
+          method: 'GET',
+          headers: authHeaders,
+        });
+        if (!res.ok) return;
+        const body = await res.json();
+        if (body && body.data) {
+          const jd = body.data;
+          updateProgress(jd.progress_percentage || 0, jd.message || 'Đang xử lý...', jd.current_step || 2);
+          if (jd.status === 'COMPLETED') {
+            handleJobSuccess(jd);
+          } else if (jd.status === 'FAILED') {
+            handleJobFailure(jd.error || jd.message);
+          }
+        }
+      } catch (e) {}
+    }, 1200);
+  };
+
+  if (typeof EventSource !== 'undefined') {
+    try {
+      const sseUrl = `${API_BASE_URL}/jobs/${jobId}/events`;
+      activeEventSource = new EventSource(sseUrl);
+
+      activeEventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (!data) return;
+
+          const pct = typeof data.progress_percentage === 'number' ? data.progress_percentage : 0;
+          const msg = data.message || 'Đang xử lý...';
+          const step = typeof data.current_step === 'number' ? data.current_step : 2;
+
+          updateProgress(pct, msg, step);
+
+          if (data.status === 'COMPLETED') {
+            handleJobSuccess(data);
+          } else if (data.status === 'FAILED') {
+            handleJobFailure(data.error || data.message);
+          }
+        } catch (e) {}
+      };
+
+      activeEventSource.onerror = () => {
+        if (activeEventSource) {
+          try { activeEventSource.close(); } catch (e) {}
+          activeEventSource = null;
+        }
+        startPollingFallback();
+      };
+    } catch (err) {
+      startPollingFallback();
+    }
+  } else {
+    startPollingFallback();
+  }
+}
+
 async function handleProcessPdf() {
   if (typeof selectedFile === 'undefined' || !selectedFile) {
     showToast('Vui lòng chọn một tệp PDF trước khi bắt đầu!', 'error');
@@ -200,17 +307,9 @@ async function handleProcessPdf() {
   formData.append('target_lang', targetLang);
 
   showProgressModal(true);
-  updateProgress(20, 'Đang tải tệp PDF lên máy chủ...', 1);
+  updateProgress(15, 'Đang tải tệp PDF lên máy chủ...', 1);
 
   try {
-    const progressTimer1 = setTimeout(() => {
-      updateProgress(45, 'Đang đọc và phân tích văn bản PDF (Kiểm tra OCR)...', 2);
-    }, 600);
-
-    const progressTimer2 = setTimeout(() => {
-      updateProgress(75, 'Đang dịch thuật văn bản sang ngôn ngữ đích...', 3);
-    }, 1500);
-
     const authHeaders = getAuthHeaders();
     const fetchOptions = {
       method: 'POST',
@@ -220,10 +319,8 @@ async function handleProcessPdf() {
       fetchOptions.headers = authHeaders;
     }
 
-    const response = await fetch(`${API_BASE_URL}/upload-and-translate`, fetchOptions);
-
-    clearTimeout(progressTimer1);
-    clearTimeout(progressTimer2);
+    // PDFL-111.4: Gửi yêu cầu khởi tạo Background Job (/jobs)
+    const response = await fetch(`${API_BASE_URL}/jobs`, fetchOptions);
 
     let result = null;
     try {
@@ -232,6 +329,7 @@ async function handleProcessPdf() {
 
     if (response.status === 401) {
       handleAuthError(result);
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
       return;
     }
 
@@ -241,31 +339,43 @@ async function handleProcessPdf() {
         ? (result.message || result.detail)
         : 'Tệp hoặc số trang vượt quá giới hạn cho phép của tài khoản!';
       showToast(msg, 'error');
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
       return;
     }
 
     if (!response.ok || !result || !result.success) {
-      const msg = (result && (result.detail || result.message)) || 'Xử lý tài liệu thất bại.';
+      const msg = (result && (result.detail || result.message)) || 'Khởi tạo tác vụ xử lý tài liệu thất bại.';
       throw new Error(msg);
     }
 
-    updateProgress(100, 'Xử lý và dịch thuật hoàn tất!', 4);
-    currentDocData = result.data;
+    // Nếu endpoint trả về ngay kết quả trực tiếp (direct sync data hoặc test mock)
+    if (result.data && result.data.translated_text && !result.data.job_id) {
+      updateProgress(100, 'Xử lý và dịch thuật hoàn tất!', 4);
+      currentDocData = result.data;
+      setTimeout(() => {
+        showProgressModal(false);
+        renderWorkspace(result.data);
+        showToast('Tài liệu đã được dịch thuật thành công!', 'success');
+        if (btnProcessPdf) btnProcessPdf.disabled = false;
+      }, 400);
+      return;
+    }
 
-    setTimeout(() => {
-      showProgressModal(false);
-      renderWorkspace(result.data);
-      showToast('Tài liệu đã được dịch thuật thành công!', 'success');
-    }, 400);
+    const jobId = result.data ? result.data.job_id : null;
+    if (!jobId) {
+      throw new Error('Máy chủ không trả về mã tác vụ (Job ID).');
+    }
+
+    // Theo dõi tiến độ thời gian thực qua Server-Sent Events (SSE)
+    listenToJobProgress(jobId, btnProcessPdf);
 
   } catch (error) {
     showProgressModal(false);
+    if (btnProcessPdf) btnProcessPdf.disabled = false;
     const msg = error.message === 'Failed to fetch'
       ? 'Không thể kết nối đến máy chủ Backend (http://localhost:8000). Vui lòng đảm bảo Backend đang chạy!'
       : (error.message || 'Có lỗi kết nối đến máy chủ Backend!');
     showToast(msg, 'error');
-  } finally {
-    if (btnProcessPdf) btnProcessPdf.disabled = false;
   }
 }
 
@@ -453,6 +563,7 @@ function renderWorkspace(data) {
 }
 
 function resetToUpload() {
+  cleanupProgressTracking();
   currentDocData = null;
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
@@ -513,7 +624,9 @@ function showProgressModal(show) {
   if (!modal) return;
   modal.style.display = show ? 'flex' : 'none';
   if (show) {
-    updateProgress(15, 'Đang chuẩn bị...', 1);
+    updateProgress(10, 'Đang chuẩn bị...', 1);
+  } else {
+    cleanupProgressTracking();
   }
 }
 
@@ -570,7 +683,7 @@ function getLangName(code) {
   return names[code] || code;
 }
 
-// Expose globals for integration & testing (PDFL-81.4)
+// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4)
 if (typeof window !== 'undefined') {
   window.pdfLinguaWorkspace = Object.assign(window.pdfLinguaWorkspace || {}, {
     getAuthHeaders,
@@ -579,6 +692,8 @@ if (typeof window !== 'undefined') {
     handleRetranslate,
     triggerDownload,
     showToast,
+    cleanupProgressTracking,
+    listenToJobProgress,
     getCurrentDocData: () => currentDocData,
     setCurrentDocData: (d) => { currentDocData = d; },
   });

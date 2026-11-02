@@ -1,7 +1,7 @@
 import re
 import statistics
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 try:
     import pdfplumber
 except ImportError:
@@ -341,6 +341,7 @@ class PDFService:
         max_pages: int | None = None,
         threshold_chars: int = 30,
         max_workers: int | None = 2,
+        progress_callback: Optional[Any] = None,
     ) -> dict[str, Any]:
         """
         Cơ chế Hybrid Fast Path:
@@ -367,11 +368,23 @@ class PDFService:
         # Phân loại toàn bộ tài liệu
         classification = self.classify_document(path, threshold_chars=threshold_chars, max_pages=max_pages)
         doc_type = classification["document_type"]
+        total_classified = classification["total_pages"]
+
+        if progress_callback is not None:
+            try:
+                progress_callback(0, total_classified, f"Đã phân loại tài liệu: {doc_type.upper()} ({total_classified} trang)")
+            except Exception:
+                pass
 
         # 1. Nếu toàn bộ là Digital: trích xuất nhanh 100% bằng Fast Path
         if doc_type == "digital":
             pages_data = self.extract_pages(path, max_pages=max_pages)
             full_text = "\n\n".join(p["text"] for p in pages_data if p["text"])
+            if progress_callback is not None:
+                try:
+                    progress_callback(len(pages_data), len(pages_data), f"Trích xuất nhanh {len(pages_data)}/{len(pages_data)} trang Digital")
+                except Exception:
+                    pass
             return {
                 "document_type": "digital",
                 "text": full_text,
@@ -501,6 +514,12 @@ class PDFService:
                         "is_ocr_used": True,
                         "is_blank": is_blank,
                     })
+
+                if progress_callback is not None:
+                    try:
+                        progress_callback(idx + 1, len(pages_extracted), f"Đã hoàn thành phân tích trang {idx + 1}/{len(pages_extracted)}")
+                    except Exception:
+                        pass
 
             full_text = "\n\n".join(p["text"] for p in pages_result if p["text"])
             return {

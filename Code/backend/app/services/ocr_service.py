@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 from PIL import Image, ImageEnhance, ImageOps
 import pytesseract
 try:
@@ -512,6 +512,7 @@ class OCRService:
         max_pages: int = 50,
         render_scale: float = 2.0,
         max_workers: int | None = 2,
+        progress_callback: Optional[Any] = None,
     ) -> dict[str, Any]:
         if not self.is_available():
             return {
@@ -582,6 +583,7 @@ class OCRService:
                         for idx in range(total_pages)
                     }
 
+                    completed_count = 0
                     for future in concurrent.futures.as_completed(future_to_idx):
                         idx = future_to_idx[future]
                         try:
@@ -594,6 +596,12 @@ class OCRService:
                                 "is_blank": False,
                                 "error": str(e),
                             }
+                        completed_count += 1
+                        if progress_callback is not None:
+                            try:
+                                progress_callback(completed_count, total_pages, f"Đang nhận dạng OCR trang {completed_count}/{total_pages}")
+                            except Exception:
+                                pass
 
                 # Bảo đảm đúng thứ tự trang ban đầu (page 1 -> total_pages)
                 pages_detail = [results_by_idx[i] for i in range(total_pages)]
@@ -680,6 +688,12 @@ class OCRService:
                         except Exception:
                             pass
                         del pil_image
+
+                    if progress_callback is not None:
+                        try:
+                            progress_callback(i + 1, total_pages, f"Đang nhận dạng OCR trang {i + 1}/{total_pages}")
+                        except Exception:
+                            pass
             else:
                 import io
                 import pymupdf
@@ -736,6 +750,12 @@ class OCRService:
                         except Exception:
                             pass
                         del pil_image
+
+                    if progress_callback is not None:
+                        try:
+                            progress_callback(i + 1, total_pages, f"Đang nhận dạng OCR trang {i + 1}/{total_pages}")
+                        except Exception:
+                            pass
 
             full_text = "\n\n".join(pages_text)
             return {

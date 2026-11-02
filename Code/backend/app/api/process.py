@@ -1,18 +1,29 @@
+import asyncio
+import json
 import os
 import re
 import tempfile
+import threading
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
 from app.core.dependencies import get_optional_current_user
 from app.core.logger import logger
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
-from app.schemas.process import DownloadRequest, FeedbackRequest, ProcessResponseData, RetranslateRequest
+from app.schemas.process import (
+    DownloadRequest,
+    FeedbackRequest,
+    JobProgressData,
+    ProcessResponseData,
+    RetranslateRequest,
+)
 from app.services.export_service import ExportService
+from app.services.job_service import JobStatus, job_manager
 from app.services.ocr_service import OCRService
 from app.services.pdf_service import PDFService
 from app.services.translation_service import TranslationService
@@ -23,6 +34,10 @@ pdf_service = PDFService()
 ocr_service = OCRService()
 translation_service = TranslationService()
 export_service = ExportService()
+
+# Giới hạn số lượng Background Jobs xử lý đồng thời để kiểm soát RAM và CPU (PDFL-111.4.5)
+MAX_CONCURRENT_BACKGROUND_JOBS = 4
+_job_semaphore = threading.Semaphore(MAX_CONCURRENT_BACKGROUND_JOBS)
 
 
 def get_user_limits(user: Optional[User]) -> tuple[int, int]:
@@ -37,6 +52,208 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     if role_val in (UserRole.PRO.value, UserRole.ADMIN.value):
         return settings.MAX_UPLOAD_SIZE_PRO_MB, settings.MAX_PAGES_PRO
     return settings.MAX_UPLOAD_SIZE_FREE_MB, settings.MAX_PAGES_FREE
+
+
+def _execute_pdf_background_job(
+    job_id: str,
+    tmp_path: Path,
+    filename: str,
+    target_lang: str,
+    max_allowed_pages: int,
+    file_size_mb: float,
+) -> None:
+    """
+    Thực thi xử lý PDF trong Background Thread riêng biệt.
+    Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
+    Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
+    """
+    try:
+        acquired = _job_semaphore.acquire(blocking=False)
+        if not acquired:
+            try:
+                job_manager.update_progress(
+                    job_id,
+                    processed_pages=0,
+                    message="Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
+                    step=1,
+                )
+            except Exception:
+                pass
+            _job_semaphore.acquire(blocking=True)
+
+        try:
+            validation = pdf_service.validate_pdf(tmp_path)
+            if not validation["is_valid"]:
+                job_manager.set_failed(job_id, validation["error"] or "Tệp PDF không hợp lệ.")
+                return
+
+            page_count = validation["page_count"]
+            if page_count <= 0:
+                job_manager.set_failed(job_id, "Tài liệu PDF không có trang nào hợp lệ để xử lý.")
+                return
+
+            if page_count > max_allowed_pages:
+                job_manager.set_failed(
+                    job_id,
+                    f"Tài liệu có {page_count} trang, vượt quá giới hạn ({max_allowed_pages} trang).",
+                )
+                return
+
+            job_manager.set_processing(
+                job_id,
+                total_pages=page_count,
+                message=f"Đang phân tích {page_count} trang PDF...",
+            )
+
+            def on_progress(processed: int, total: int, msg: str) -> None:
+                job_manager.update_progress(job_id, processed_pages=processed, total_pages=total, message=msg)
+
+            # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng
+            extract_res = pdf_service.extract_hybrid_fast_path(
+                tmp_path,
+                ocr_service=ocr_service,
+                max_pages=max_allowed_pages,
+                progress_callback=on_progress,
+            )
+
+            original_text = extract_res.get("text", "")
+            if not original_text.strip():
+                job_manager.set_failed(job_id, "Không thể trích xuất văn bản từ tài liệu này.")
+                return
+
+            job_manager.set_translating(job_id, message="Đang dịch thuật văn bản sang ngôn ngữ đích...")
+            trans_res = translation_service.translate_text(
+                original_text,
+                target_lang=target_lang,
+                source_lang="auto",
+            )
+
+            result_data = {
+                "filename": filename,
+                "page_count": page_count,
+                "file_size_mb": file_size_mb,
+                "target_lang": target_lang,
+                "is_ocr_used": extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False,
+                "original_text": original_text,
+                "translated_text": trans_res["translated_text"],
+                "engine_used": trans_res["engine_used"],
+            }
+            job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
+
+        except Exception as e:
+            logger.error(f"[Job {job_id}] Lỗi xử lý nền: {e}")
+            job_manager.set_failed(job_id, str(e))
+        finally:
+            _job_semaphore.release()
+
+    except Exception as outer_e:
+        logger.error(f"[Job {job_id}] Lỗi chuẩn bị hoặc xếp hàng tác vụ: {outer_e}")
+        job_manager.set_failed(job_id, str(outer_e))
+    finally:
+        if tmp_path.exists():
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+
+@router.post("/jobs", response_model=ApiResponse[JobProgressData], status_code=status.HTTP_202_ACCEPTED)
+async def create_processing_job(
+    file: UploadFile = File(...),
+    target_lang: str = Form("vi"),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """
+    Khởi tạo Background Job xử lý PDF (PDFL-111.4).
+    Trả về ngay Job ID mà không giữ kết nối HTTP chờ toàn bộ quá trình OCR.
+    """
+    max_upload_mb, max_ocr_pages = get_user_limits(current_user)
+    max_bytes = max_upload_mb * 1024 * 1024
+
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tệp tải lên phải có định dạng .pdf.",
+        )
+
+    content = await file.read()
+    if len(content) > max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
+        )
+
+    if not content.startswith(b"%PDF"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+        )
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(content)
+        tmp_path = Path(tmp.name)
+
+    job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
+    file_size_mb = round(len(content) / (1024 * 1024), 2)
+
+    # Khởi chạy Worker trong luồng nền độc lập
+    thread = threading.Thread(
+        target=_execute_pdf_background_job,
+        args=(job.job_id, tmp_path, file.filename, target_lang, max_ocr_pages, file_size_mb),
+        daemon=True,
+    )
+    thread.start()
+
+    return ApiResponse(
+        data=job.to_dict(),
+        message="Tác vụ xử lý tài liệu đã được khởi tạo thành công.",
+    )
+
+
+@router.get("/jobs/{job_id}", response_model=ApiResponse[JobProgressData])
+async def get_job_status(job_id: str):
+    """Lấy thông tin và trạng thái tiến độ hiện tại của một Job"""
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
+    return ApiResponse(data=job.to_dict(), message="Lấy trạng thái tác vụ thành công.")
+
+
+@router.get("/jobs/{job_id}/events")
+async def stream_job_events(job_id: str):
+    """
+    Server-Sent Events (SSE) stream tiến độ xử lý tài liệu theo thời gian thực (PDFL-111.4).
+    Hỗ trợ ngắt kết nối và kết nối lại mà không làm mất trạng thái của Job.
+    """
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
+
+    async def event_generator():
+        q = job_manager.subscribe(job_id)
+        try:
+            while True:
+                try:
+                    data = await asyncio.wait_for(q.get(), timeout=10.0)
+                    payload = json.dumps(data, ensure_ascii=False)
+                    yield f"data: {payload}\n\n"
+                    if data.get("status") in (JobStatus.COMPLETED.value, JobStatus.FAILED.value):
+                        break
+                except asyncio.TimeoutError:
+                    # Gửi heartbeat giữ kết nối
+                    yield ": keepalive\n\n"
+        finally:
+            job_manager.unsubscribe(job_id, q)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post("/upload-and-translate", response_model=ApiResponse[ProcessResponseData])
