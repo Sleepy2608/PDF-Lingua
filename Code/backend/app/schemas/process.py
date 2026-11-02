@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class ProcessResponseData(BaseModel):
+    document_id: Optional[int] = Field(default=None, description="ID tài liệu lưu trong CSDL nếu đã đăng nhập")
     filename: str
     page_count: int
     file_size_mb: float

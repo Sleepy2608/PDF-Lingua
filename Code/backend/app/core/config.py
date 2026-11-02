@@ -37,6 +37,7 @@ class Settings:
 
     # File Upload Constraints
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "temp_uploads/")
+    STORAGE_DIR: str = os.getenv("STORAGE_DIR", "storage/documents")
     MAX_UPLOAD_SIZE_FREE_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_FREE_MB", "20"))
     MAX_UPLOAD_SIZE_PRO_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_PRO_MB", "100"))
     MAX_PAGES_FREE: int = int(os.getenv("MAX_PAGES_FREE", "100"))
