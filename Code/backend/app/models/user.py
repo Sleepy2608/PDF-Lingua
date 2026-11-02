@@ -19,7 +19,7 @@ import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import relationship, validates
 
 from app.core.database import Base
 
@@ -98,6 +98,13 @@ class User(Base):
     def normalise_email(self, _key: str, email: str) -> str:
         """Fold email to lowercase before persisting to prevent duplicate accounts."""
         return email.strip().lower()
+
+    # ── Relationships ─────────────────────────────────────────────────────────
+    documents = relationship(
+        "Document",
+        back_populates="owner",
+        cascade="all, delete-orphan",
+    )
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     @property
