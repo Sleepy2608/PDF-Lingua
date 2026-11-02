@@ -340,6 +340,7 @@ class PDFService:
         ocr_service: Any = None,
         max_pages: int | None = None,
         threshold_chars: int = 30,
+        max_workers: int | None = 2,
     ) -> dict[str, Any]:
         """
         Cơ chế Hybrid Fast Path:
@@ -380,10 +381,49 @@ class PDFService:
                 "ocr_pages_count": 0,
             }
 
-        # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang theo cơ chế Lazy Loading
+        # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang theo cơ chế Parallel / Lazy Loading
         doc_fitz = None
         try:
             pages_extracted = self.extract_pages(path, max_pages=max_pages)
+
+            # Lọc danh sách trang scanned cần OCR
+            scanned_indices: list[int] = []
+            for idx, p_info in enumerate(pages_extracted):
+                cleaned = p_info["text"]
+                page_type = self.classify_page(cleaned, threshold_chars=threshold_chars)
+                if not (page_type == "digital" and cleaned.strip()):
+                    scanned_indices.append(idx)
+
+            # 2a. Xử lý song song với isolated workers nếu có >= 2 trang scanned và ocr_service khả dụng
+            # Nếu chỉ có 1 trang Scanned, xử lý tuần tự trực tiếp ở bước 2b để tránh overhead tạo thread
+            ocr_results_by_idx: dict[int, dict[str, Any]] = {}
+            if len(scanned_indices) > 1 and ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                effective_workers = max_workers if (max_workers is not None and max_workers > 1) else 1
+                effective_workers = min(effective_workers, 4, len(scanned_indices))
+
+                if effective_workers > 1 and hasattr(ocr_service, "_ocr_single_page_isolated"):
+                    try:
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=effective_workers) as executor:
+                            future_to_idx = {
+                                executor.submit(
+                                    ocr_service._ocr_single_page_isolated,
+                                    path,
+                                    s_idx,
+                                    getattr(ocr_service, "default_lang", "vie+eng"),
+                                ): s_idx
+                                for s_idx in scanned_indices
+                            }
+                            for future in concurrent.futures.as_completed(future_to_idx):
+                                s_idx = future_to_idx[future]
+                                try:
+                                    ocr_results_by_idx[s_idx] = future.result()
+                                except Exception as e:
+                                    ocr_results_by_idx[s_idx] = {"page": s_idx + 1, "text": "", "is_blank": False, "error": str(e)}
+                    except Exception:
+                        ocr_results_by_idx = {}
+
+            # 2b. Tổng hợp kết quả theo ĐÚNG THỨ TỰ TRANG BAN ĐẦU (1 -> N)
             ocr_count = 0
 
             # Mở sẵn doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned (tránh nạp lại file liên tục vào RAM)

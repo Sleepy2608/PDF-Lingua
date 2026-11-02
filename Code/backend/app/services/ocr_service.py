@@ -429,12 +429,89 @@ class OCRService:
             logger.error(f"[OCR] Error during image recognition: {e}")
             return ""
 
+    def _ocr_single_page_isolated(
+        self,
+        pdf_path: Path | str,
+        page_idx: int,
+        target_lang: str,
+        render_scale: float = 2.0,
+    ) -> dict[str, Any]:
+        """
+        Xử lý OCR cho duy nhất 1 trang PDF với tài nguyên cô lập hoàn toàn (Thread-safe).
+        Mở tài liệu riêng, render ảnh, preprocess, OCR và giải phóng toàn bộ tài nguyên trong finally.
+        """
+        doc = None
+        pil_image = None
+        processed_image = None
+        try:
+            if pdfium is not None:
+                doc = pdfium.PdfDocument(str(pdf_path))
+                if page_idx >= len(doc):
+                    return {"page": page_idx + 1, "text": "", "is_blank": False, "error": "Index out of range"}
+                page = doc.get_page(page_idx)
+                pil_image = page.render(scale=render_scale).to_pil()
+                del page
+            else:
+                import io
+                import pymupdf
+                doc = pymupdf.open(str(pdf_path))
+                if page_idx >= len(doc):
+                    return {"page": page_idx + 1, "text": "", "is_blank": False, "error": "Index out of range"}
+                page = doc.load_page(page_idx)
+                pix = page.get_pixmap(dpi=150)
+                raw_bytes = pix.tobytes("png")
+                del pix
+                del page
+                pil_image = Image.open(io.BytesIO(raw_bytes))
+
+            processed_image, meta = self.preprocess_image(
+                pil_image,
+                check_blank=True,
+                auto_rotate=True,
+                auto_deskew=True,
+                auto_enhance=True,
+            )
+
+            if meta.get("is_blank", False):
+                return {"page": page_idx + 1, "text": "", "is_blank": True, "error": None}
+
+            page_text = self.extract_text_from_image(
+                processed_image,
+                lang=target_lang,
+                preprocess=False,
+            )
+            return {"page": page_idx + 1, "text": page_text, "is_blank": False, "error": None}
+
+        except Exception as e:
+            logger.error(f"[OCR] Error processing page {page_idx + 1}: {e}")
+            return {"page": page_idx + 1, "text": "", "is_blank": False, "error": str(e)}
+        finally:
+            if processed_image is not None and processed_image is not pil_image:
+                try:
+                    processed_image.close()
+                except Exception:
+                    pass
+                del processed_image
+            if pil_image is not None:
+                try:
+                    pil_image.close()
+                except Exception:
+                    pass
+                del pil_image
+            if doc is not None:
+                try:
+                    doc.close()
+                except Exception:
+                    pass
+                del doc
+
     def extract_text_from_scanned_pdf(
         self,
         pdf_path: Path | str,
         lang: str | None = None,
         max_pages: int = 50,
         render_scale: float = 2.0,
+        max_workers: int | None = 2,
     ) -> dict[str, Any]:
         if not self.is_available():
             return {
@@ -446,6 +523,96 @@ class OCRService:
             }
 
         target_lang = lang or self.default_lang
+
+        # Xác định tổng số trang trước khi xử lý
+        total_pages = 0
+        doc_probe = None
+        try:
+            if pdfium is not None:
+                doc_probe = pdfium.PdfDocument(str(pdf_path))
+                total_pages = min(len(doc_probe), max_pages)
+            else:
+                import pymupdf
+                doc_probe = pymupdf.open(str(pdf_path))
+                total_pages = min(len(doc_probe), max_pages)
+        except Exception as e:
+            return {
+                "success": False,
+                "text": "",
+                "page_count": 0,
+                "pages": [],
+                "error": f"Lỗi đọc tài liệu PDF: {e}",
+            }
+        finally:
+            if doc_probe is not None:
+                try:
+                    doc_probe.close()
+                except Exception:
+                    pass
+                del doc_probe
+
+        if total_pages == 0:
+            return {
+                "success": True,
+                "text": "",
+                "page_count": 0,
+                "pages": [],
+                "error": None,
+            }
+
+        # Kiểm tra điều kiện chạy song song: nếu max_workers > 1 và số trang > 1
+        effective_workers = max_workers if (max_workers is not None and max_workers > 1 and total_pages > 1) else 1
+        effective_workers = min(effective_workers, 4, total_pages)
+
+        # 1. PARALLEL PATH (ThreadPoolExecutor với isolated resources)
+        # Chỉ chạy parallel khi tổng số trang > 1 và effective_workers > 1
+        if effective_workers > 1:
+            results_by_idx: dict[int, dict[str, Any]] = {}
+            try:
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=effective_workers) as executor:
+                    future_to_idx = {
+                        executor.submit(
+                            self._ocr_single_page_isolated,
+                            pdf_path,
+                            idx,
+                            target_lang,
+                            render_scale,
+                        ): idx
+                        for idx in range(total_pages)
+                    }
+
+                    for future in concurrent.futures.as_completed(future_to_idx):
+                        idx = future_to_idx[future]
+                        try:
+                            results_by_idx[idx] = future.result()
+                        except Exception as e:
+                            logger.error(f"[OCR Parallel] Worker exception for page {idx + 1}: {e}")
+                            results_by_idx[idx] = {
+                                "page": idx + 1,
+                                "text": "",
+                                "is_blank": False,
+                                "error": str(e),
+                            }
+
+                # Bảo đảm đúng thứ tự trang ban đầu (page 1 -> total_pages)
+                pages_detail = [results_by_idx[i] for i in range(total_pages)]
+                pages_text = [p["text"] for p in pages_detail if p.get("text")]
+                full_text = "\n\n".join(pages_text)
+
+                return {
+                    "success": True,
+                    "text": full_text,
+                    "page_count": total_pages,
+                    "pages": pages_detail,
+                    "error": None,
+                }
+            except Exception as e:
+                logger.warning(f"[OCR Parallel] Parallel processing failed, falling back to sequential: {e}")
+                # Fallback to sequential below cho các trang chưa hoàn thành
+
+        # 2. SEQUENTIAL PATH / FALLBACK (Lazy loading & eager cleanup từng trang)
+        # Chỉ xử lý tuần tự cho các trang chưa có kết quả (tránh xử lý trùng)
         pages_text: list[str] = []
         pages_detail: list[dict[str, Any]] = []
 
@@ -456,6 +623,14 @@ class OCRService:
                 total_pages = min(len(doc), max_pages)
 
                 for i in range(total_pages):
+                    if effective_workers > 1 and i in results_by_idx and results_by_idx[i].get("error") is None:
+                        # Đã hoàn thành hợp lệ ở parallel path
+                        p_info = results_by_idx[i]
+                        pages_detail.append(p_info)
+                        if p_info.get("text"):
+                            pages_text.append(p_info["text"])
+                        continue
+
                     page = doc.get_page(i)
                     pil_image = page.render(scale=render_scale).to_pil()
                     del page
@@ -512,6 +687,14 @@ class OCRService:
                 total_pages = min(len(doc), max_pages)
 
                 for i in range(total_pages):
+                    if effective_workers > 1 and i in results_by_idx and results_by_idx[i].get("error") is None:
+                        # Đã hoàn thành hợp lệ ở parallel path
+                        p_info = results_by_idx[i]
+                        pages_detail.append(p_info)
+                        if p_info.get("text"):
+                            pages_text.append(p_info["text"])
+                        continue
+
                     page = doc.load_page(i)
                     pix = page.get_pixmap(dpi=150)
                     raw_bytes = pix.tobytes("png")
