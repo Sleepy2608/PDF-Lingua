@@ -380,16 +380,25 @@ class PDFService:
                 "ocr_pages_count": 0,
             }
 
-        # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang
+        # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang theo cơ chế Lazy Loading
+        doc_fitz = None
         try:
             pages_extracted = self.extract_pages(path, max_pages=max_pages)
             ocr_count = 0
+
+            # Mở sẵn doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned (tránh nạp lại file liên tục vào RAM)
+            if ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                try:
+                    import pymupdf
+                    doc_fitz = pymupdf.open(str(path))
+                except Exception:
+                    doc_fitz = None
 
             for idx, p_info in enumerate(pages_extracted):
                 cleaned = p_info["text"]
                 page_type = self.classify_page(cleaned, threshold_chars=threshold_chars)
 
-                # TRANG DIGITAL: Fast Path
+                # TRANG DIGITAL: Fast Path tức thì, không nạp ảnh
                 if page_type == "digital" and cleaned.strip():
                     pages_result.append({
                         "page": idx + 1,
@@ -399,35 +408,51 @@ class PDFService:
                         "is_blank": False,
                     })
                 else:
-                    # TRANG SCANNED / FALLBACK: Gọi OCRService cho trang này
+                    # TRANG SCANNED / FALLBACK: Xử lý ảnh từng trang (Lazy Streaming) & giải phóng RAM ngay
                     ocr_count += 1
                     ocr_text = ""
                     is_blank = False
 
-                    if ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                    if doc_fitz is not None:
                         try:
                             import io
-                            import pymupdf
-                            doc_fitz = pymupdf.open(str(path))
                             fitz_page = doc_fitz.load_page(idx)
                             pix = fitz_page.get_pixmap(dpi=150)
-                            pil_img = Image.open(io.BytesIO(pix.tobytes("png")))
-                            doc_fitz.close()
+                            raw_bytes = pix.tobytes("png")
+                            del pix
+                            del fitz_page
 
-                            # Chạy pipeline tiền xử lý và OCR 1 lần duy nhất cho trang scanned
-                            proc_img, meta = ocr_service.preprocess_image(
-                                pil_img,
-                                check_blank=True,
-                                auto_rotate=True,
-                                auto_deskew=True,
-                                auto_enhance=True,
-                            )
-                            if meta.get("is_blank", False):
-                                is_blank = True
-                            else:
-                                ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
+                            pil_img = Image.open(io.BytesIO(raw_bytes))
+                            try:
+                                proc_img, meta = ocr_service.preprocess_image(
+                                    pil_img,
+                                    check_blank=True,
+                                    auto_rotate=True,
+                                    auto_deskew=True,
+                                    auto_enhance=True,
+                                )
+                                try:
+                                    if meta.get("is_blank", False):
+                                        is_blank = True
+                                    else:
+                                        ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
+                                finally:
+                                    if proc_img is not pil_img:
+                                        try:
+                                            proc_img.close()
+                                        except Exception:
+                                            pass
+                                    del proc_img
+                            finally:
+                                try:
+                                    pil_img.close()
+                                except Exception:
+                                    pass
+                                del pil_img
                         except Exception:
                             ocr_text = cleaned
+                    else:
+                        ocr_text = cleaned
 
                     pages_result.append({
                         "page": idx + 1,
@@ -457,6 +482,13 @@ class PDFService:
                 "fast_path_used": True,
                 "ocr_pages_count": 0,
             }
+        finally:
+            if doc_fitz is not None:
+                try:
+                    doc_fitz.close()
+                except Exception:
+                    pass
+                del doc_fitz
 
     @staticmethod
     def _clean_whitespace(text: str) -> str:

@@ -142,6 +142,10 @@ class OCRService:
         else:
             return image_input, 0.0
 
+        gray_img = None
+        small_img = None
+        bin_img = None
+        rot_outer = None
         try:
             gray_img = img.convert("L")
             w, h = gray_img.size
@@ -237,6 +241,13 @@ class OCRService:
         except Exception as e:
             logger.error(f"[OCR] Error during deskew detection: {e}")
             return img, 0.0
+        finally:
+            for intermediate in (gray_img, small_img, bin_img, rot_outer):
+                if intermediate is not None and intermediate is not img:
+                    try:
+                        intermediate.close()
+                    except Exception:
+                        pass
 
     def enhance_image(
         self,
@@ -258,6 +269,9 @@ class OCRService:
         else:
             return image_input
 
+        gray_img = None
+        autocontrast_img = None
+        contrast_img = None
         try:
             # 1. Chuyển sang ảnh thang độ xám 'L' nếu đang là RGB/RGBA
             gray_img = img.convert("L")
@@ -277,6 +291,13 @@ class OCRService:
         except Exception as e:
             logger.error(f"[OCR] Error during image enhancement: {e}")
             return img
+        finally:
+            for intermediate in (gray_img, autocontrast_img, contrast_img):
+                if intermediate is not None and intermediate is not img:
+                    try:
+                        intermediate.close()
+                    except Exception:
+                        pass
 
     def preprocess_image(
         self,
@@ -326,7 +347,13 @@ class OCRService:
         # Bước 2: Orientation Correction
         if auto_rotate:
             try:
-                img, rot_angle = self.detect_and_correct_orientation(img)
+                rotated_img, rot_angle = self.detect_and_correct_orientation(img)
+                if rotated_img is not img and img is not image_input:
+                    try:
+                        img.close()
+                    except Exception:
+                        pass
+                img = rotated_img
                 meta["rotation_applied"] = rot_angle
             except Exception as e:
                 logger.warning(f"[OCR Pipeline] Warning in detect_and_correct_orientation fallback: {e}")
@@ -334,7 +361,13 @@ class OCRService:
         # Bước 3: Deskew Correction
         if auto_deskew:
             try:
-                img, skew_angle = self.detect_and_correct_skew(img)
+                deskewed_img, skew_angle = self.detect_and_correct_skew(img)
+                if deskewed_img is not img and img is not image_input:
+                    try:
+                        img.close()
+                    except Exception:
+                        pass
+                img = deskewed_img
                 meta["skew_applied"] = skew_angle
             except Exception as e:
                 logger.warning(f"[OCR Pipeline] Warning in detect_and_correct_skew fallback: {e}")
@@ -342,7 +375,13 @@ class OCRService:
         # Bước 4: Image Enhancement
         if auto_enhance:
             try:
-                img = self.enhance_image(img)
+                enhanced_img = self.enhance_image(img)
+                if enhanced_img is not img and img is not image_input:
+                    try:
+                        img.close()
+                    except Exception:
+                        pass
+                img = enhanced_img
                 meta["enhanced"] = True
             except Exception as e:
                 logger.warning(f"[OCR Pipeline] Warning in enhance_image fallback: {e}")
@@ -410,6 +449,7 @@ class OCRService:
         pages_text: list[str] = []
         pages_detail: list[dict[str, Any]] = []
 
+        doc = None
         try:
             if pdfium is not None:
                 doc = pdfium.PdfDocument(str(pdf_path))
@@ -418,43 +458,54 @@ class OCRService:
                 for i in range(total_pages):
                     page = doc.get_page(i)
                     pil_image = page.render(scale=render_scale).to_pil()
+                    del page
 
-                    # Thực hiện tiền xử lý pipeline 1 lần duy nhất
-                    processed_image, meta = self.preprocess_image(
-                        pil_image,
-                        check_blank=True,
-                        auto_rotate=True,
-                        auto_deskew=True,
-                        auto_enhance=True,
-                    )
+                    try:
+                        processed_image, meta = self.preprocess_image(
+                            pil_image,
+                            check_blank=True,
+                            auto_rotate=True,
+                            auto_deskew=True,
+                            auto_enhance=True,
+                        )
+                        try:
+                            if meta.get("is_blank", False):
+                                logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
+                                pages_detail.append({
+                                    "page": i + 1,
+                                    "text": "",
+                                    "is_blank": True,
+                                })
+                                continue
 
-                    # Kiểm tra trang trống: bỏ qua OCR nhưng vẫn giữ nguyên số trang và vị trí trang
-                    if meta.get("is_blank", False):
-                        logger.info(f"[OCR] Page {i + 1} is detected as blank. Skipping OCR.")
-                        pages_detail.append({
-                            "page": i + 1,
-                            "text": "",
-                            "is_blank": True,
-                        })
-                        continue
+                            page_text = self.extract_text_from_image(
+                                processed_image,
+                                lang=target_lang,
+                                preprocess=False,
+                            )
 
-                    # Gọi OCR với preprocess=False để tránh xử lý lặp lại
-                    page_text = self.extract_text_from_image(
-                        processed_image,
-                        lang=target_lang,
-                        preprocess=False,
-                    )
+                            pages_detail.append({
+                                "page": i + 1,
+                                "text": page_text,
+                                "is_blank": False,
+                            })
 
-                    pages_detail.append({
-                        "page": i + 1,
-                        "text": page_text,
-                        "is_blank": False,
-                    })
-
-                    if page_text:
-                        pages_text.append(page_text)
+                            if page_text:
+                                pages_text.append(page_text)
+                        finally:
+                            if processed_image is not pil_image:
+                                try:
+                                    processed_image.close()
+                                except Exception:
+                                    pass
+                            del processed_image
+                    finally:
+                        try:
+                            pil_image.close()
+                        except Exception:
+                            pass
+                        del pil_image
             else:
-                # Fallback sử dụng PyMuPDF nếu pdfium không được cài đặt trong môi trường hiện tại
                 import io
                 import pymupdf
                 doc = pymupdf.open(str(pdf_path))
@@ -463,29 +514,45 @@ class OCRService:
                 for i in range(total_pages):
                     page = doc.load_page(i)
                     pix = page.get_pixmap(dpi=150)
-                    pil_image = Image.open(io.BytesIO(pix.tobytes("png")))
+                    raw_bytes = pix.tobytes("png")
+                    del pix
+                    del page
 
-                    processed_image, meta = self.preprocess_image(
-                        pil_image,
-                        check_blank=True,
-                        auto_rotate=True,
-                        auto_deskew=True,
-                        auto_enhance=True,
-                    )
+                    pil_image = Image.open(io.BytesIO(raw_bytes))
+                    try:
+                        processed_image, meta = self.preprocess_image(
+                            pil_image,
+                            check_blank=True,
+                            auto_rotate=True,
+                            auto_deskew=True,
+                            auto_enhance=True,
+                        )
+                        try:
+                            if meta.get("is_blank", False):
+                                pages_detail.append({"page": i + 1, "text": "", "is_blank": True})
+                                continue
 
-                    if meta.get("is_blank", False):
-                        pages_detail.append({"page": i + 1, "text": "", "is_blank": True})
-                        continue
-
-                    page_text = self.extract_text_from_image(
-                        processed_image,
-                        lang=target_lang,
-                        preprocess=False,
-                    )
-                    pages_detail.append({"page": i + 1, "text": page_text, "is_blank": False})
-                    if page_text:
-                        pages_text.append(page_text)
-                doc.close()
+                            page_text = self.extract_text_from_image(
+                                processed_image,
+                                lang=target_lang,
+                                preprocess=False,
+                            )
+                            pages_detail.append({"page": i + 1, "text": page_text, "is_blank": False})
+                            if page_text:
+                                pages_text.append(page_text)
+                        finally:
+                            if processed_image is not pil_image:
+                                try:
+                                    processed_image.close()
+                                except Exception:
+                                    pass
+                            del processed_image
+                    finally:
+                        try:
+                            pil_image.close()
+                        except Exception:
+                            pass
+                        del pil_image
 
             full_text = "\n\n".join(pages_text)
             return {
@@ -504,3 +571,10 @@ class OCRService:
                 "pages": [],
                 "error": f"Lỗi nhận dạng PDF: {e}",
             }
+        finally:
+            if doc is not None:
+                try:
+                    doc.close()
+                except Exception:
+                    pass
+                del doc
