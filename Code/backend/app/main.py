@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.admin import router as admin_router
 from app.api.auth import router as auth_router
 from app.api.documents import router as documents_router
 from app.api.process import router as process_router
@@ -66,6 +67,7 @@ setup_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(process_router)
 app.include_router(documents_router)
+app.include_router(admin_router)
 
 
 @app.get("/")
