@@ -7,17 +7,15 @@ Unit & Integration Tests for:
 """
 
 import io
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
 import pypdf
+from app.main import app
+from fastapi.testclient import TestClient
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
-from app.main import app
 
 client = TestClient(app)
 

@@ -1,10 +1,9 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-import pytest
-from fastapi.testclient import TestClient
+from unittest.mock import patch
 
 from app.main import app
 from app.services.translation_service import TranslationService
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 

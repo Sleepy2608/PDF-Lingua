@@ -1,13 +1,12 @@
 import io
+
+import pypdf
+from app.main import app
+from app.services.export_service import ExportService
+from app.services.translation_service import TranslationService
 from fastapi.testclient import TestClient
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import pypdf
-
-from app.main import app
-from app.services.pdf_service import PDFService
-from app.services.translation_service import TranslationService
-from app.services.export_service import ExportService
 
 client = TestClient(app)
 
@@ -47,8 +46,6 @@ def test_e2e_digital_pdf_pipeline():
 
 
 def test_e2e_scanned_pdf_detection():
-    service = PDFService()
-
     writer = pypdf.PdfWriter()
     writer.add_blank_page(width=300, height=300)
     buf = io.BytesIO()

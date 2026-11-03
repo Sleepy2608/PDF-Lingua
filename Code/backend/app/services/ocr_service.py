@@ -2,9 +2,10 @@ import os
 import shutil
 from pathlib import Path
 from typing import Any
-from PIL import Image
-import pytesseract
+
 import pypdfium2 as pdfium
+import pytesseract
+from PIL import Image
 
 from app.core.config import settings
 from app.core.logger import logger
