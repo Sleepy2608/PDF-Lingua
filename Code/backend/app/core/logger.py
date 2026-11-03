@@ -1,6 +1,7 @@
 import logging
 import sys
 from pathlib import Path
+
 from app.core.config import settings
 
 # Create logs directory if it does not exist

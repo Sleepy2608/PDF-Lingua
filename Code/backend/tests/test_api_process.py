@@ -1,9 +1,9 @@
 import io
+
+from app.main import app
 from fastapi.testclient import TestClient
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
-from app.main import app
 
 client = TestClient(app)
 

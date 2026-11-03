@@ -2,6 +2,7 @@ import re
 import statistics
 from pathlib import Path
 from typing import Any
+
 import pdfplumber
 import pypdf
 

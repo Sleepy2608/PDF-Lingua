@@ -1,7 +1,6 @@
 from datetime import timedelta
-import pytest
-from jose import jwt
 
+import pytest
 from app.core.config import settings
 from app.core.exceptions import UnauthorizedException
 from app.core.security import (
@@ -10,6 +9,8 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from jose import jwt
+
 
 def test_hash_password_format():
     """Hashed password should start with $2b$ and not be plaintext."""

@@ -21,6 +21,7 @@ updated_at        : UTC timestamp of the last document update.
 """
 
 from datetime import datetime, timezone
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 

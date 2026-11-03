@@ -5,6 +5,7 @@ Handles business logic for user registration, authentication, and password manag
 """
 
 from typing import Optional
+
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
