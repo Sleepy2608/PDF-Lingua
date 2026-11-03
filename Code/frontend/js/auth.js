@@ -1132,7 +1132,32 @@
         const initial = (user.full_name ? user.full_name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
         userAvatarEl.textContent = initial;
       }
+
+      // Update Admin badge button visibility (PDFL-186)
+      const btnOpenAdmin = document.getElementById('btnOpenAdmin');
+      const btnAdminModalShortcut = document.getElementById('btnAdminModalShortcut');
+      const isAdmin = !!(user && user.role === 'admin');
+      if (btnOpenAdmin) {
+        btnOpenAdmin.style.display = isAdmin ? 'inline-flex' : 'none';
+      }
+      if (btnAdminModalShortcut) {
+        btnAdminModalShortcut.style.display = isAdmin ? 'block' : 'none';
+      }
     } else {
+      // Hide admin buttons on logout or guest state
+      const btnOpenAdmin = document.getElementById('btnOpenAdmin');
+      const btnAdminModalShortcut = document.getElementById('btnAdminModalShortcut');
+      if (btnOpenAdmin) btnOpenAdmin.style.display = 'none';
+      if (btnAdminModalShortcut) btnAdminModalShortcut.style.display = 'none';
+
+      // If admin section was visible, return to default view
+      const adminSec = document.getElementById('adminSection');
+      if (adminSec && adminSec.style.display !== 'none') {
+        adminSec.style.display = 'none';
+        const heroSec = document.getElementById('heroSection');
+        if (heroSec) heroSec.style.display = '';
+      }
+
       if (guestGroup) {
         guestGroup.removeAttribute('hidden');
         guestGroup.style.display = 'flex';
