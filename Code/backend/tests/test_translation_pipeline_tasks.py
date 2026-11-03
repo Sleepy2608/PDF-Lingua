@@ -6,12 +6,10 @@ Comprehensive Unit & Integration Tests for:
 - PDFL-125: Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài
 """
 
-from unittest.mock import MagicMock, patch
 import urllib.error
-import pytest
+from unittest.mock import MagicMock, patch
 
 from app.services.translation_service import TranslationService
-
 
 # ==============================================================================
 # PDFL-120: Xử lý lỗi mạng, giới hạn API và lỗi dịch thuật (Multi-Tier Fallback)
@@ -21,50 +19,55 @@ def test_pdfl_120_tier1_gtx_fails_fallback_to_google_web():
     """Verify that when Google GTX fails (e.g. network/timeout), service falls back to GoogleTranslator."""
     service = TranslationService()
 
-    with patch.object(service, "_translate_google_gtx", side_effect=urllib.error.URLError("Network unreachable")):
-        with patch("app.services.translation_service.GoogleTranslator") as mock_gt:
-            mock_instance = MagicMock()
-            mock_instance.translate.return_value = "Bản dịch dự phòng từ Google Web"
-            mock_gt.return_value = mock_instance
+    with (
+        patch.object(service, "_translate_google_gtx", side_effect=urllib.error.URLError("Network unreachable")),
+        patch("app.services.translation_service.GoogleTranslator") as mock_gt,
+    ):
+        mock_instance = MagicMock()
+        mock_instance.translate.return_value = "Bản dịch dự phòng từ Google Web"
+        mock_gt.return_value = mock_instance
 
-            translated, engine = service.translate_chunk("Hello world", target_lang="vi", source_lang="en")
+        translated, engine = service.translate_chunk("Hello world", target_lang="vi", source_lang="en")
 
-            assert translated == "Bản dịch dự phòng từ Google Web"
-            assert engine == "google_web"
-            mock_instance.translate.assert_called_once_with("Hello world")
+        assert translated == "Bản dịch dự phòng từ Google Web"
+        assert engine == "google_web"
+        mock_instance.translate.assert_called_once_with("Hello world")
 
 
 def test_pdfl_120_tier1_and_tier2_fail_fallback_to_mymemory():
     """Verify that when both Google GTX and GoogleTranslator fail, service falls back to MyMemory."""
     service = TranslationService()
 
-    with patch.object(service, "_translate_google_gtx", side_effect=Exception("HTTP 429 Too Many Requests")):
-        with patch("app.services.translation_service.GoogleTranslator") as mock_gt:
-            mock_gt.side_effect = Exception("Google Web Quota Exceeded")
-            with patch("app.services.translation_service.MyMemoryTranslator") as mock_mm:
-                mock_instance = MagicMock()
-                mock_instance.translate.return_value = "Bản dịch dự phòng từ MyMemory"
-                mock_mm.return_value = mock_instance
+    with (
+        patch.object(service, "_translate_google_gtx", side_effect=Exception("HTTP 429 Too Many Requests")),
+        patch("app.services.translation_service.GoogleTranslator", side_effect=Exception("Google Web Quota Exceeded")),
+        patch("app.services.translation_service.MyMemoryTranslator") as mock_mm,
+    ):
+        mock_instance = MagicMock()
+        mock_instance.translate.return_value = "Bản dịch dự phòng từ MyMemory"
+        mock_mm.return_value = mock_instance
 
-                translated, engine = service.translate_chunk("Hello world", target_lang="vi", source_lang="en")
+        translated, engine = service.translate_chunk("Hello world", target_lang="vi", source_lang="en")
 
-                assert translated == "Bản dịch dự phòng từ MyMemory"
-                assert engine == "mymemory"
+        assert translated == "Bản dịch dự phòng từ MyMemory"
+        assert engine == "mymemory"
 
 
 def test_pdfl_120_all_tiers_fail_graceful_fallback_raw():
     """Verify that when all network endpoints fail, service does not crash and preserves original text."""
     service = TranslationService()
 
-    with patch.object(service, "_translate_google_gtx", side_effect=urllib.error.URLError("Connection refused")):
-        with patch("app.services.translation_service.GoogleTranslator", side_effect=Exception("Service Unavailable")):
-            with patch("app.services.translation_service.MyMemoryTranslator", side_effect=Exception("Timeout")):
-                original_text = "Important text that must not be lost."
-                translated, engine = service.translate_chunk(original_text, target_lang="vi", source_lang="en")
+    with (
+        patch.object(service, "_translate_google_gtx", side_effect=urllib.error.URLError("Connection refused")),
+        patch("app.services.translation_service.GoogleTranslator", side_effect=Exception("Service Unavailable")),
+        patch("app.services.translation_service.MyMemoryTranslator", side_effect=Exception("Timeout")),
+    ):
+        original_text = "Important text that must not be lost."
+        translated, engine = service.translate_chunk(original_text, target_lang="vi", source_lang="en")
 
-                # Must gracefully return original text with engine indicator
-                assert translated == original_text
-                assert engine == "fallback_raw"
+        # Must gracefully return original text with engine indicator
+        assert translated == original_text
+        assert engine == "fallback_raw"
 
 
 def test_pdfl_120_empty_chunk_handled_without_network():
@@ -109,13 +112,15 @@ def test_pdfl_123_multilingual_targets_supported():
 def test_pdfl_123_same_language_skips_external_translation():
     """Verify translating to the same detected language returns original content."""
     service = TranslationService()
-    with patch.object(service, "_translate_google_gtx", side_effect=Exception("GTX Fail")):
-        with patch("app.services.translation_service.GoogleTranslator", side_effect=Exception("Web Fail")):
-            # When source is detected as Vietnamese and target is also Vietnamese
-            vn_text = "Hệ thống tự động phát hiện ngôn ngữ tiếng Việt."
-            translated, engine = service.translate_chunk(vn_text, target_lang="vi", source_lang="auto")
-            assert translated == vn_text
-            assert engine == "same_language"
+    with (
+        patch.object(service, "_translate_google_gtx", side_effect=Exception("GTX Fail")),
+        patch("app.services.translation_service.GoogleTranslator", side_effect=Exception("Web Fail")),
+    ):
+        # When source is detected as Vietnamese and target is also Vietnamese
+        vn_text = "Hệ thống tự động phát hiện ngôn ngữ tiếng Việt."
+        translated, engine = service.translate_chunk(vn_text, target_lang="vi", source_lang="auto")
+        assert translated == vn_text
+        assert engine == "same_language"
 
 
 # ==============================================================================
