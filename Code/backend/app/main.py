@@ -1,12 +1,17 @@
 import time
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.auth import router as auth_router
+from app.api.documents import router as documents_router
+from app.api.process import router as process_router
 from app.core.config import settings
 from app.core.database import check_db_connection, init_db
-from app.core.logger import logger
 from app.core.exceptions import setup_exception_handlers
-from app.api.auth import router as auth_router
+from app.core.logger import logger
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -53,8 +58,6 @@ async def log_requests_middleware(request: Request, call_next):
         raise
 
 
-from app.api.documents import router as documents_router
-from app.api.process import router as process_router
 
 # Register Global Exception Handlers
 setup_exception_handlers(app)

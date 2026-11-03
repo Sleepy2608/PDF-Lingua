@@ -7,14 +7,14 @@ Verifies:
 - Safe serialization and metadata properties.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
+
 import pytest
+from app.core.database import Base
+from app.models.document import Document
+from app.models.user import User, UserRole
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
-
-from app.core.database import Base
-from app.models.user import User, UserRole
-from app.models.document import Document
 
 
 @pytest.fixture

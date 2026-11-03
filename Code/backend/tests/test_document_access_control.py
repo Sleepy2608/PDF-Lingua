@@ -11,18 +11,18 @@ Verifies:
 """
 
 from pathlib import Path
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
+import pytest
 from app.core.database import Base
 from app.core.dependencies import get_current_user, get_db
 from app.main import app
 from app.models.document import Document
 from app.models.user import User, UserRole
 from app.services.storage_service import StorageService
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 client = TestClient(app)
 

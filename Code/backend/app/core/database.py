@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import declarative_base, sessionmaker
+
 from app.core.config import settings
 from app.core.logger import logger
 

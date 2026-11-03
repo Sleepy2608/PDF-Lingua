@@ -11,16 +11,15 @@ Tests for user registration:
 """
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
 from app.core.database import Base
 from app.core.dependencies import get_db
 from app.core.security import verify_password
 from app.main import app
 from app.models.user import User, UserRole
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Use an isolated in-memory SQLite database with StaticPool for test threads
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -289,10 +288,11 @@ def test_register_response_has_no_sensitive_fields(client):
 def test_register_concurrent_race_condition_handled(db_session):
     """TC-REG-14: Database IntegrityError during concurrent registration raises 400 and rolls back."""
     from unittest.mock import patch
-    from sqlalchemy.exc import IntegrityError
-    from app.services.auth_service import AuthService
-    from app.schemas.user import UserCreate
+
     from app.core.exceptions import BadRequestException
+    from app.schemas.user import UserCreate
+    from app.services.auth_service import AuthService
+    from sqlalchemy.exc import IntegrityError
 
     user_in = UserCreate(
         email="concurrent@example.com",
@@ -314,6 +314,7 @@ def test_register_concurrent_race_condition_handled(db_session):
 def test_register_session_usable_after_rollback(client, db_session):
     """TC-REG-15: Database session remains usable for subsequent requests after rollback."""
     from unittest.mock import patch
+
     from sqlalchemy.exc import IntegrityError
 
     payload1 = {
@@ -349,6 +350,7 @@ def test_register_session_usable_after_rollback(client, db_session):
 def test_register_internal_db_error_masked_no_leak(client, db_session):
     """TC-REG-16: Unexpected database errors return generic 500 without leaking stack traces or internal schema details."""
     from unittest.mock import patch
+
     from sqlalchemy.exc import OperationalError
 
     payload = {
@@ -726,6 +728,7 @@ def test_get_me_invalid_or_malformed_token(client):
 def test_get_me_expired_token(client):
     """TC-AUTH-05: Expired token returns 401 TOKEN_EXPIRED."""
     from datetime import timedelta
+
     from app.core.security import create_access_token
 
     expired_token = create_access_token(subject=1, expires_delta=timedelta(seconds=-1))
@@ -859,6 +862,7 @@ def test_update_me_success(client, db_session):
 def test_update_me_unauthenticated(client):
     """TC-UPDATE-02: Missing or invalid token returns 401 NOT_AUTHENTICATED or INVALID_TOKEN or TOKEN_EXPIRED."""
     from datetime import timedelta
+
     from app.core.security import create_access_token
 
     # 1. Missing token
@@ -1123,6 +1127,7 @@ def test_change_password_invalid_new_password_strength(client):
 def test_change_password_unauthenticated_and_tokens(client):
     """TC-PWD-05: Missing, invalid or expired token returns 401."""
     from datetime import timedelta
+
     from app.core.security import create_access_token
 
     payload = {

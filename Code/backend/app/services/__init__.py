@@ -10,6 +10,9 @@ __all__ = [
     "OCRService",
     "TranslationService",
     "ExportService",
+    "StorageService",
+    "JobManager",
+    "job_manager",
 ]
 
 def __getattr__(name: str):
@@ -28,5 +31,14 @@ def __getattr__(name: str):
     elif name == "ExportService":
         from app.services.export_service import ExportService
         return ExportService
+    elif name == "StorageService":
+        from app.services.storage_service import StorageService
+        return StorageService
+    elif name == "JobManager":
+        from app.services.job_service import JobManager
+        return JobManager
+    elif name == "job_manager":
+        from app.services.job_service import job_manager
+        return job_manager
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

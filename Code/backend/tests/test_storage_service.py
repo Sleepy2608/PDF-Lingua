@@ -11,20 +11,20 @@ Verifies:
 
 import io
 from pathlib import Path
-import pytest
-from fastapi.testclient import TestClient
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
+import pytest
 from app.core.database import Base
 from app.core.dependencies import get_db, get_optional_current_user
 from app.main import app
 from app.models.document import Document
 from app.models.user import User, UserRole
 from app.services.storage_service import StorageService
+from fastapi.testclient import TestClient
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 client = TestClient(app)
 
