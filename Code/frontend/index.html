@@ -37,6 +37,10 @@
                     <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
                 </div>
                 <div class="auth-user-group" id="authUserGroup" hidden>
+                    <button type="button" class="btn btn-admin-badge" id="btnOpenAdmin" title="Bảng điều khiển quản trị" style="display: none;">
+                        <span class="admin-crown-icon">👑</span>
+                        <span class="admin-badge-text">Quản trị</span>
+                    </button>
                     <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản">
                         <span class="user-avatar" id="userAvatar"></span>
                         <span class="user-name" id="userDisplayName"></span>
@@ -377,6 +381,150 @@
             </div>
         </section>
 
+        <!-- Admin Dashboard Section (Initially Hidden) -->
+        <section class="admin-section" id="adminSection" style="display: none;">
+            <div class="container">
+                <!-- Admin Header Bar -->
+                <div class="admin-header-card">
+                    <div class="admin-title-wrap">
+                        <div class="admin-badge-row">
+                            <span class="admin-crown-badge">👑 HỆ THỐNG QUẢN TRỊ</span>
+                            <span class="admin-tag-pill">Admin Console v1.0</span>
+                        </div>
+                        <h2 class="admin-title">Bảng Điều Khiển Quản Trị Hệ Thống</h2>
+                        <p class="admin-subtitle">Giám sát tổng quan số liệu tài nguyên, thống kê lưu trữ và quản lý người dùng</p>
+                    </div>
+                    <div class="admin-header-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnRefreshAdminData" title="Làm mới dữ liệu">
+                            <span class="btn-icon">🔄</span> Làm mới
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnCloseAdminView" title="Đóng bảng quản trị">
+                            <span class="btn-icon">✕</span> Đóng Quản trị
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Metrics Overview Cards (PDFL-188) -->
+                <div class="admin-stats-grid">
+                    <div class="admin-stat-card card-users">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">👥</span>
+                            <span class="stat-label">Tổng người dùng</span>
+                        </div>
+                        <div class="stat-value" id="statTotalUsers">--</div>
+                        <div class="stat-breakdown">
+                            <span class="badge-sub free" id="statFreeUsers">Free: --</span>
+                            <span class="badge-sub pro" id="statProUsers">Pro: --</span>
+                            <span class="badge-sub admin" id="statAdminUsers">Admin: --</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-stat-card card-status">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">🛡️</span>
+                            <span class="stat-label">Trạng thái tài khoản</span>
+                        </div>
+                        <div class="stat-value" id="statActiveRatio">--</div>
+                        <div class="stat-breakdown">
+                            <span class="badge-sub active" id="statActiveUsers">Hoạt động: --</span>
+                            <span class="badge-sub locked" id="statLockedUsers">Đã khóa: --</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-stat-card card-docs">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">📄</span>
+                            <span class="stat-label">Tài liệu đã lưu</span>
+                        </div>
+                        <div class="stat-value" id="statTotalDocs">--</div>
+                        <div class="stat-breakdown">
+                            <span class="stat-sub-text">Hồ sơ tài liệu trong cơ sở dữ liệu</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-stat-card card-storage">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">💾</span>
+                            <span class="stat-label">Dung lượng máy chủ</span>
+                        </div>
+                        <div class="stat-value" id="statTotalStorage">--</div>
+                        <div class="stat-breakdown">
+                            <span class="stat-sub-text" id="statStorageRaw">0 Bytes dữ liệu</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Section (PDFL-189) -->
+                <div class="admin-table-card">
+                    <div class="admin-table-header">
+                        <div class="table-title-group">
+                            <h3 class="table-title">Quản lý Danh sách Người dùng</h3>
+                            <span class="table-count-badge" id="adminUsersCountBadge">0 tài khoản</span>
+                        </div>
+
+                        <!-- Filter & Search Toolbar -->
+                        <div class="admin-toolbar">
+                            <div class="admin-search-wrap">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="adminSearchInput" class="admin-search-input" placeholder="Tìm theo email hoặc họ tên...">
+                            </div>
+
+                            <div class="admin-filter-wrap">
+                                <select id="adminRoleFilter" class="admin-filter-select">
+                                    <option value="all">Tất cả vai trò</option>
+                                    <option value="free">Người dùng Free</option>
+                                    <option value="pro">Tài khoản Pro VIP</option>
+                                    <option value="admin">Quản trị viên (Admin)</option>
+                                </select>
+                            </div>
+
+                            <div class="admin-filter-wrap">
+                                <select id="adminStatusFilter" class="admin-filter-select">
+                                    <option value="all">Tất cả trạng thái</option>
+                                    <option value="true">Đang hoạt động</option>
+                                    <option value="false">Đã bị khóa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Responsive User Table -->
+                    <div class="admin-table-wrapper">
+                        <table class="admin-users-table" id="adminUsersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Người dùng</th>
+                                    <th>Vai trò</th>
+                                    <th>Trạng thái</th>
+                                    <th>Tài liệu</th>
+                                    <th>Ngày tham gia</th>
+                                    <th class="text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody">
+                                <!-- Dynamic user rows inserted via admin.js -->
+                            </tbody>
+                        </table>
+                        <div class="admin-table-empty" id="adminTableEmptyState" style="display: none;">
+                            <span class="empty-icon">📂</span>
+                            <p class="empty-text">Không tìm thấy tài khoản người dùng nào khớp với bộ lọc.</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div class="admin-pagination-footer" id="adminPagination">
+                        <div class="pagination-info" id="adminPaginationInfo">Trang 1 / 1</div>
+                        <div class="pagination-controls">
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnAdminPrevPage" disabled>❮ Trước</button>
+                            <span class="pagination-current-page" id="adminCurrentPageBadge">1</span>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnAdminNextPage" disabled>Sau ❯</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Progress Processing Modal -->
@@ -405,6 +553,27 @@
                     <span class="step-circle">4</span>
                     <span>Hoàn tất & Chuẩn bị Workspace</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- High-Impact Action Confirmation Modal (PDFL-197) -->
+    <div class="modal-overlay" id="adminConfirmModal" style="display: none;">
+        <div class="admin-confirm-card">
+            <div class="confirm-icon-wrap" id="confirmModalIconWrap">
+                <span class="confirm-warning-icon" id="confirmModalIcon">⚠️</span>
+            </div>
+            <div class="confirm-content">
+                <h3 class="confirm-title" id="confirmModalTitle">Xác nhận thao tác trọng yếu</h3>
+                <p class="confirm-desc" id="confirmModalDesc">Thao tác này sẽ làm thay đổi quyền hạn hoặc quyền truy cập của tài khoản.</p>
+                <div class="confirm-target-box" id="confirmModalTargetBox">
+                    <span class="target-label">Tài khoản mục tiêu:</span>
+                    <strong class="target-email" id="confirmModalTargetEmail">user@example.com</strong>
+                </div>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" id="btnCancelAdminConfirm">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger" id="btnProceedAdminConfirm">Xác nhận thực hiện</button>
             </div>
         </div>
     </div>
@@ -807,6 +976,9 @@
             </div>
 
             <div class="account-modal-footer">
+                <button type="button" class="btn btn-admin-badge" id="btnAdminModalShortcut" style="display: none; margin-bottom: 0.5rem; width: 100%;">
+                    <span>👑 Mở Bảng Điều Khiển Quản Trị</span>
+                </button>
                 <button type="button" class="btn btn-secondary btn-block" id="btnCloseAccountModalBtn">Đóng</button>
             </div>
         </div>
@@ -1037,5 +1209,6 @@
     <script src="js/upload.js"></script>
     <script src="js/auth.js?v=2.0.0"></script>
     <script src="js/workspace.js"></script>
+    <script src="js/admin.js"></script>
 </body>
 </html>
