@@ -1,0 +1,9 @@
+Page 1 Digital Header
+
+This is the first page of a mixed PDF document.
+It contains native digital vector text that should be processed instantly via Fast Path.
+
+Page 2 Scanned Content
+
+This second page represents a scanned image page inserted into the document.
+It requires OCR processing and preprocessing pipeline execution.

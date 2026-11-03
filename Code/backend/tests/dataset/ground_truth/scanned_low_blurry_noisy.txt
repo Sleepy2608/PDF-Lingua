@@ -1,0 +1,4 @@
+Historical Document Archive
+Low contrast degraded scan with noise specks and slight gaussian blur.
+Requires image enhancement contrast stretching and thresholding.
+Tests pipeline robustness under degraded optical capture conditions.

@@ -1,6 +1,22 @@
-from typing import Optional
-
+from typing import Any, Optional
 from pydantic import BaseModel, Field
+
+
+class JobProgressData(BaseModel):
+    job_id: str = Field(..., description="Mã định danh duy nhất của tác vụ")
+    filename: str = Field(..., description="Tên tệp PDF được xử lý")
+    target_lang: str = Field(..., description="Ngôn ngữ đích")
+    status: str = Field(..., description="Trạng thái: PENDING | PROCESSING | COMPLETED | FAILED")
+    total_pages: int = Field(default=0, description="Tổng số trang của tài liệu")
+    processed_pages: int = Field(default=0, description="Số trang đã xử lý xong")
+    progress_percentage: float = Field(default=0.0, description="Phần trăm tiến độ hoàn thành (0 - 100)")
+    current_step: int = Field(default=1, description="Bước hiện tại (1: Upload, 2: Phân tích/OCR, 3: Dịch thuật, 4: Hoàn thành)")
+    message: str = Field(default="", description="Thông điệp tiến độ hiển thị cho người dùng")
+    result: Optional[dict[str, Any]] = Field(default=None, description="Kết quả chi tiết khi xử lý thành công")
+    error: Optional[str] = Field(default=None, description="Thông điệp lỗi nếu xử lý thất bại")
+    created_at: float = Field(..., description="Thời điểm khởi tạo tác vụ (timestamp)")
+    updated_at: float = Field(..., description="Thời điểm cập nhật trạng thái gần nhất (timestamp)")
+    completed_at: Optional[float] = Field(default=None, description="Thời điểm hoàn thành hoặc thất bại (timestamp)")
 
 
 class ProcessResponseData(BaseModel):

@@ -1,15 +1,55 @@
 import re
 import statistics
 from pathlib import Path
-from typing import Any
-
-import pdfplumber
+from typing import Any, Callable, Optional
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
 import pypdf
+from PIL import Image
 
 
 class PDFService:
     def __init__(self):
         pass
+
+    def is_blank_page(
+        self,
+        image_or_page: Any,
+        content_ratio_threshold: float = 0.0005,
+        dark_pixel_threshold: int = 240,
+    ) -> bool:
+        """
+        Phát hiện trang PDF trống dựa trên mật độ pixel bằng Pillow.
+        - Chuyển ảnh về Grayscale ('L').
+        - Đếm số lượng pixel tối (< dark_pixel_threshold).
+        - Nếu tỷ lệ pixel tối / tổng số pixel < content_ratio_threshold -> Trang trống (True).
+        """
+        try:
+            if isinstance(image_or_page, Image.Image):
+                img = image_or_page
+            elif hasattr(image_or_page, "to_image"):
+                # Đối tượng Page của pdfplumber
+                img = image_or_page.to_image(resolution=72).original
+            else:
+                return False
+
+            gray_img = img.convert("L")
+            width, height = gray_img.size
+            total_pixels = width * height
+            if total_pixels == 0:
+                return True
+
+            # Lấy histogram: mảng 256 phần tử biểu thị số lượng pixel cho từng giá trị mức xám (0-255)
+            histogram = gray_img.histogram()
+            # Ký tự / nét vẽ có mức xám nhỏ hơn dark_pixel_threshold (mặc định 240)
+            dark_pixels = sum(histogram[:dark_pixel_threshold])
+
+            content_ratio = dark_pixels / total_pixels
+            return content_ratio < content_ratio_threshold
+        except Exception:
+            return False
 
     def validate_pdf(self, file_path: Path | str) -> dict[str, Any]:
         path = Path(file_path)
@@ -52,11 +92,18 @@ class PDFService:
                 for idx, page in enumerate(pages):
                     raw_text = self._extract_page_smart_layout(page)
                     cleaned = self._clean_whitespace(raw_text)
+
+                    # Kiểm tra trang trống nếu không trích xuất được text chữ gốc
+                    is_blank = False
+                    if not cleaned:
+                        is_blank = self.is_blank_page(page)
+
                     pages_data.append({
                         "page": idx + 1,
                         "text": cleaned,
                         "char_count": len(cleaned),
                         "has_text": len(cleaned) > 0,
+                        "is_blank": is_blank,
                     })
                 return pages_data
         except Exception:
@@ -71,6 +118,7 @@ class PDFService:
                     "text": cleaned,
                     "char_count": len(cleaned),
                     "has_text": len(cleaned) > 0,
+                    "is_blank": len(cleaned) == 0,
                 })
             return pages_data
 
@@ -185,6 +233,98 @@ class PDFService:
         except Exception:
             return page.extract_text() or ""
 
+    def classify_page(
+        self,
+        page_or_text: Any,
+        threshold_chars: int = 30,
+        unreliable_ratio_threshold: float = 0.3,
+    ) -> str:
+        """
+        Phân loại loại trang:
+        - 'digital': nếu có text layer rõ ràng, độ dài text >= threshold_chars
+          và tỷ lệ ký tự không đọc được (replacement / control chars) thấp.
+        - 'scanned': nếu không có text layer hoặc text quá ít / không đáng tin cậy.
+        """
+        if isinstance(page_or_text, str):
+            text = self._clean_whitespace(page_or_text)
+        elif hasattr(page_or_text, "extract_text"):
+            try:
+                raw = page_or_text.extract_text() or ""
+                text = self._clean_whitespace(raw)
+            except Exception:
+                text = ""
+        else:
+            text = ""
+
+        if len(text) < threshold_chars:
+            return "scanned"
+
+        # Kiểm tra tính đáng tin cậy: nếu chứa quá nhiều ký tự vô nghĩa / unicode replacement
+        unreliable_chars = sum(1 for c in text if c in ("\ufffd", "?") or (ord(c) < 32 and c not in ("\n", "\t", "\r")))
+        if unreliable_chars / len(text) > unreliable_ratio_threshold:
+            return "scanned"
+
+        return "digital"
+
+    def classify_document(
+        self,
+        file_path: Path | str,
+        threshold_chars: int = 30,
+        max_pages: int | None = None,
+    ) -> dict[str, Any]:
+        """
+        Tự động phân loại tài liệu PDF:
+        - 'digital': tất cả các trang đều là digital.
+        - 'scanned': tất cả các trang đều là scanned.
+        - 'mixed': tài liệu chứa cả trang digital và trang scanned.
+        Trả về metadata chi tiết từng trang.
+        """
+        path = Path(file_path)
+        pages_classification: list[dict[str, Any]] = []
+
+        reader = pypdf.PdfReader(str(path))
+        pages = reader.pages[:max_pages] if max_pages is not None else reader.pages
+
+        digital_count = 0
+        scanned_count = 0
+
+        for idx, page in enumerate(pages):
+            try:
+                raw_text = page.extract_text() or ""
+                cleaned = self._clean_whitespace(raw_text)
+                ptype = self.classify_page(cleaned, threshold_chars=threshold_chars)
+            except Exception:
+                ptype = "scanned"
+                cleaned = ""
+
+            if ptype == "digital":
+                digital_count += 1
+            else:
+                scanned_count += 1
+
+            pages_classification.append({
+                "page": idx + 1,
+                "type": ptype,
+                "char_count": len(cleaned),
+                "has_text": len(cleaned) > 0,
+            })
+
+        total = len(pages)
+        if total == 0 or scanned_count == total:
+            doc_type = "scanned"
+        elif digital_count == total:
+            doc_type = "digital"
+        else:
+            doc_type = "mixed"
+
+        return {
+            "document_type": doc_type,
+            "total_pages": total,
+            "digital_pages": digital_count,
+            "scanned_pages": scanned_count,
+            "pages": pages_classification,
+        }
+
     def is_scanned_pdf(self, file_path: Path | str, threshold_chars: int = 25, max_pages: int | None = None) -> bool:
         pages = self.extract_pages(file_path, max_pages=max_pages)
         if not pages:
@@ -193,6 +333,221 @@ class PDFService:
         total_chars = sum(p["char_count"] for p in pages)
         avg_chars = total_chars / len(pages)
         return avg_chars < threshold_chars
+
+    def extract_hybrid_fast_path(
+        self,
+        file_path: Path | str,
+        ocr_service: Any = None,
+        max_pages: int | None = None,
+        threshold_chars: int = 30,
+        max_workers: int | None = 2,
+        progress_callback: Optional[Any] = None,
+    ) -> dict[str, Any]:
+        """
+        Cơ chế Hybrid Fast Path:
+        Tự động phân loại từng trang PDF (digital/scanned/mixed).
+        - Trang Digital: trích xuất nhanh trực tiếp bằng PDFService layout, KHÔNG render ảnh hay chạy Tesseract.
+        - Trang Scanned: chỉ chạy OCRService và preprocessing pipeline cho các trang này.
+        - Giữ nguyên số trang và thứ tự trang chính xác.
+        - Có cơ chế Fallback an toàn nếu extraction trang digital thất bại.
+        """
+        path = Path(file_path)
+        if not path.exists():
+            return {
+                "document_type": "error",
+                "text": "",
+                "page_count": 0,
+                "pages": [],
+                "fast_path_used": False,
+                "ocr_pages_count": 0,
+                "error": "Tệp không tồn tại.",
+            }
+
+        pages_result: list[dict[str, Any]] = []
+
+        # Phân loại toàn bộ tài liệu
+        classification = self.classify_document(path, threshold_chars=threshold_chars, max_pages=max_pages)
+        doc_type = classification["document_type"]
+        total_classified = classification["total_pages"]
+
+        if progress_callback is not None:
+            try:
+                progress_callback(0, total_classified, f"Đã phân loại tài liệu: {doc_type.upper()} ({total_classified} trang)")
+            except Exception:
+                pass
+
+        # 1. Nếu toàn bộ là Digital: trích xuất nhanh 100% bằng Fast Path
+        if doc_type == "digital":
+            pages_data = self.extract_pages(path, max_pages=max_pages)
+            full_text = "\n\n".join(p["text"] for p in pages_data if p["text"])
+            if progress_callback is not None:
+                try:
+                    progress_callback(len(pages_data), len(pages_data), f"Trích xuất nhanh {len(pages_data)}/{len(pages_data)} trang Digital")
+                except Exception:
+                    pass
+            return {
+                "document_type": "digital",
+                "text": full_text,
+                "page_count": len(pages_data),
+                "pages": pages_data,
+                "fast_path_used": True,
+                "ocr_pages_count": 0,
+            }
+
+        # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang theo cơ chế Parallel / Lazy Loading
+        doc_fitz = None
+        try:
+            pages_extracted = self.extract_pages(path, max_pages=max_pages)
+
+            # Lọc danh sách trang scanned cần OCR
+            scanned_indices: list[int] = []
+            for idx, p_info in enumerate(pages_extracted):
+                cleaned = p_info["text"]
+                page_type = self.classify_page(cleaned, threshold_chars=threshold_chars)
+                if not (page_type == "digital" and cleaned.strip()):
+                    scanned_indices.append(idx)
+
+            # 2a. Xử lý song song với isolated workers nếu có >= 2 trang scanned và ocr_service khả dụng
+            # Nếu chỉ có 1 trang Scanned, xử lý tuần tự trực tiếp ở bước 2b để tránh overhead tạo thread
+            ocr_results_by_idx: dict[int, dict[str, Any]] = {}
+            if len(scanned_indices) > 1 and ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                effective_workers = max_workers if (max_workers is not None and max_workers > 1) else 1
+                effective_workers = min(effective_workers, 4, len(scanned_indices))
+
+                if effective_workers > 1 and hasattr(ocr_service, "_ocr_single_page_isolated"):
+                    try:
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=effective_workers) as executor:
+                            future_to_idx = {
+                                executor.submit(
+                                    ocr_service._ocr_single_page_isolated,
+                                    path,
+                                    s_idx,
+                                    getattr(ocr_service, "default_lang", "vie+eng"),
+                                ): s_idx
+                                for s_idx in scanned_indices
+                            }
+                            for future in concurrent.futures.as_completed(future_to_idx):
+                                s_idx = future_to_idx[future]
+                                try:
+                                    ocr_results_by_idx[s_idx] = future.result()
+                                except Exception as e:
+                                    ocr_results_by_idx[s_idx] = {"page": s_idx + 1, "text": "", "is_blank": False, "error": str(e)}
+                    except Exception:
+                        ocr_results_by_idx = {}
+
+            # 2b. Tổng hợp kết quả theo ĐÚNG THỨ TỰ TRANG BAN ĐẦU (1 -> N)
+            ocr_count = 0
+
+            # Mở sẵn doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned (tránh nạp lại file liên tục vào RAM)
+            if ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                try:
+                    import pymupdf
+                    doc_fitz = pymupdf.open(str(path))
+                except Exception:
+                    doc_fitz = None
+
+            for idx, p_info in enumerate(pages_extracted):
+                cleaned = p_info["text"]
+                page_type = self.classify_page(cleaned, threshold_chars=threshold_chars)
+
+                # TRANG DIGITAL: Fast Path tức thì, không nạp ảnh
+                if page_type == "digital" and cleaned.strip():
+                    pages_result.append({
+                        "page": idx + 1,
+                        "text": cleaned,
+                        "type": "digital",
+                        "is_ocr_used": False,
+                        "is_blank": False,
+                    })
+                else:
+                    # TRANG SCANNED / FALLBACK: Xử lý ảnh từng trang (Lazy Streaming) & giải phóng RAM ngay
+                    ocr_count += 1
+                    ocr_text = ""
+                    is_blank = False
+
+                    if doc_fitz is not None:
+                        try:
+                            import io
+                            fitz_page = doc_fitz.load_page(idx)
+                            pix = fitz_page.get_pixmap(dpi=150)
+                            raw_bytes = pix.tobytes("png")
+                            del pix
+                            del fitz_page
+
+                            pil_img = Image.open(io.BytesIO(raw_bytes))
+                            try:
+                                proc_img, meta = ocr_service.preprocess_image(
+                                    pil_img,
+                                    check_blank=True,
+                                    auto_rotate=True,
+                                    auto_deskew=True,
+                                    auto_enhance=True,
+                                )
+                                try:
+                                    if meta.get("is_blank", False):
+                                        is_blank = True
+                                    else:
+                                        ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
+                                finally:
+                                    if proc_img is not pil_img:
+                                        try:
+                                            proc_img.close()
+                                        except Exception:
+                                            pass
+                                    del proc_img
+                            finally:
+                                try:
+                                    pil_img.close()
+                                except Exception:
+                                    pass
+                                del pil_img
+                        except Exception:
+                            ocr_text = cleaned
+                    else:
+                        ocr_text = cleaned
+
+                    pages_result.append({
+                        "page": idx + 1,
+                        "text": ocr_text,
+                        "type": "scanned",
+                        "is_ocr_used": True,
+                        "is_blank": is_blank,
+                    })
+
+                if progress_callback is not None:
+                    try:
+                        progress_callback(idx + 1, len(pages_extracted), f"Đã hoàn thành phân tích trang {idx + 1}/{len(pages_extracted)}")
+                    except Exception:
+                        pass
+
+            full_text = "\n\n".join(p["text"] for p in pages_result if p["text"])
+            return {
+                "document_type": doc_type,
+                "text": full_text,
+                "page_count": len(pages_result),
+                "pages": pages_result,
+                "fast_path_used": doc_type != "scanned",
+                "ocr_pages_count": ocr_count,
+            }
+        except Exception:
+            pages_data = self.extract_pages(path, max_pages=max_pages)
+            full_text = "\n\n".join(p["text"] for p in pages_data if p["text"])
+            return {
+                "document_type": "fallback",
+                "text": full_text,
+                "page_count": len(pages_data),
+                "pages": pages_data,
+                "fast_path_used": True,
+                "ocr_pages_count": 0,
+            }
+        finally:
+            if doc_fitz is not None:
+                try:
+                    doc_fitz.close()
+                except Exception:
+                    pass
+                del doc_fitz
 
     @staticmethod
     def _clean_whitespace(text: str) -> str:

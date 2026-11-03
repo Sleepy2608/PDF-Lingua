@@ -1,0 +1,11 @@
+Column 1 Header
+
+First section discusses artificial intelligence and machine learning pipelines.
+Left column text must be read sequentially before crossing the gutter gap.
+Column separation must be strictly respected.
+
+Column 2 Header
+
+Second section covers multilingual neural machine translation systems.
+Right column contents follow after column one in natural reading order.
+Evaluating natural column boundary parsing.

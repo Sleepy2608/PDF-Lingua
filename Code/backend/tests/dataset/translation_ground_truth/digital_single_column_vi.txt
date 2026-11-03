@@ -1,0 +1,6 @@
+Trích xuất tài liệu thông minh PDF-Lingua
+
+Đây là tài liệu học thuật định dạng một cột chuẩn.
+Tài liệu bao gồm các đoạn văn bản chuẩn mực được thiết kế để đánh giá độ chính xác của quá trình trích xuất kỹ thuật số.
+Thứ tự đọc tự nhiên diễn ra liền mạch từ dòng trên cùng xuống dòng dưới cùng mà không bị chia cột.
+Hệ thống trích xuất PDF số hóa hiện đại cần đạt độ chính xác ký tự gần 100% trên bố cục rõ ràng này.

@@ -1,0 +1,11 @@
+Tiêu đề Cột 1
+
+Phần đầu tiên thảo luận về quy trình trí tuệ nhân tạo và học máy.
+Văn bản ở cột bên trái phải được đọc tuần tự trước khi bước qua rãnh ngăn cách giữa các cột.
+Ranh giới phân tách cột phải được tuân thủ nghiêm ngặt.
+
+Tiêu đề Cột 2
+
+Phần thứ hai đề cập đến hệ thống dịch máy nơ-ron đa ngôn ngữ.
+Nội dung cột bên phải tiếp nối sau cột thứ nhất theo thứ tự đọc tự nhiên.
+Đánh giá khả năng phân tích ranh giới cột tự nhiên.

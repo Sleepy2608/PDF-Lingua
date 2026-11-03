@@ -444,7 +444,7 @@ async function test(name, fn) {
 
     await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
 
-    assert(capturedUrl.includes('/upload-and-translate'));
+    assert(capturedUrl.includes('/upload-and-translate') || capturedUrl.includes('/jobs'));
     assert.strictEqual(capturedOptions.headers, undefined); // Guest sends NO Authorization header
   });
 
