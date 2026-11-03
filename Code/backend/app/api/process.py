@@ -9,10 +9,12 @@ from typing import Optional
 from urllib.parse import quote
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.dependencies import get_optional_current_user
+from app.core.dependencies import get_db, get_optional_current_user
 from app.core.logger import logger
+from app.models.document import Document
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import (
@@ -26,6 +28,7 @@ from app.services.export_service import ExportService
 from app.services.job_service import JobStatus, job_manager
 from app.services.ocr_service import OCRService
 from app.services.pdf_service import PDFService
+from app.services.storage_service import StorageService
 from app.services.translation_service import TranslationService
 
 router = APIRouter(prefix="/api/process", tags=["Document Processing"])
@@ -34,6 +37,7 @@ pdf_service = PDFService()
 ocr_service = OCRService()
 translation_service = TranslationService()
 export_service = ExportService()
+storage_service = StorageService()
 
 # Giới hạn số lượng Background Jobs xử lý đồng thời để kiểm soát RAM và CPU (PDFL-111.4.5)
 MAX_CONCURRENT_BACKGROUND_JOBS = 4
@@ -261,6 +265,7 @@ async def upload_and_translate(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
     current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
 ):
     max_upload_mb, max_ocr_pages = get_user_limits(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
@@ -360,7 +365,39 @@ async def upload_and_translate(
             f"result_preview={translation_result.get('translated_text', '')[:80]!r}"
         )
 
+        document_id: Optional[int] = None
+        if current_user is not None:
+            try:
+                stored_filename, rel_path, _ = storage_service.save_document_file(
+                    user_id=current_user.id,
+                    original_filename=file.filename,
+                    content=content,
+                )
+                doc_record = Document(
+                    user_id=current_user.id,
+                    original_filename=file.filename,
+                    stored_filename=stored_filename,
+                    stored_path=rel_path,
+                    file_size_bytes=len(content),
+                    page_count=page_count,
+                    target_lang=target_lang,
+                    is_ocr_used=is_ocr_used,
+                )
+                db.add(doc_record)
+                db.commit()
+                db.refresh(doc_record)
+                document_id = doc_record.id
+                logger.info(
+                    f"[Process] Saved document id={document_id} for user_id={current_user.id}"
+                )
+            except Exception as e:
+                db.rollback()
+                logger.error(
+                    f"[Process] Failed to persist document record for user_id={current_user.id}: {e}"
+                )
+
         response_data = ProcessResponseData(
+            document_id=document_id,
             filename=file.filename,
             page_count=page_count,
             file_size_mb=round(len(content) / (1024 * 1024), 2),
