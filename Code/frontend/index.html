@@ -38,7 +38,9 @@
                 </div>
                 <div class="auth-user-group" id="authUserGroup" hidden>
                     <button type="button" class="btn btn-admin-badge" id="btnOpenAdmin" title="Bảng điều khiển quản trị" style="display: none;">
-                        <span class="admin-crown-icon">👑</span>
+                        <svg class="admin-crown-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
                         <span class="admin-badge-text">Quản trị</span>
                     </button>
                     <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản">
@@ -383,73 +385,126 @@
 
         <!-- Admin Dashboard Section (Initially Hidden) -->
         <section class="admin-section" id="adminSection" style="display: none;">
-            <div class="container">
+            <div class="container admin-container">
                 <!-- Admin Header Bar -->
                 <div class="admin-header-card">
                     <div class="admin-title-wrap">
                         <div class="admin-badge-row">
-                            <span class="admin-crown-badge">👑 HỆ THỐNG QUẢN TRỊ</span>
-                            <span class="admin-tag-pill">Admin Console v1.0</span>
+                            <span class="admin-live-badge">
+                                <span class="admin-live-dot"></span>
+                                HỆ THỐNG QUẢN TRỊ
+                            </span>
+                            <span class="admin-tag-pill font-mono">Console v1.0</span>
                         </div>
                         <h2 class="admin-title">Bảng Điều Khiển Quản Trị Hệ Thống</h2>
-                        <p class="admin-subtitle">Giám sát tổng quan số liệu tài nguyên, thống kê lưu trữ và quản lý người dùng</p>
+                        <p class="admin-subtitle">Giám sát tổng quan số liệu tài nguyên, lưu trữ và điều phối quyền hạn tài khoản theo thời gian thực</p>
                     </div>
                     <div class="admin-header-actions">
-                        <button type="button" class="btn btn-secondary btn-sm" id="btnRefreshAdminData" title="Làm mới dữ liệu">
-                            <span class="btn-icon">🔄</span> Làm mới
+                        <button type="button" class="btn btn-admin-secondary" id="btnRefreshAdminData" title="Làm mới dữ liệu">
+                            <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Làm mới</span>
                         </button>
-                        <button type="button" class="btn btn-secondary btn-sm" id="btnCloseAdminView" title="Đóng bảng quản trị">
-                            <span class="btn-icon">✕</span> Đóng Quản trị
+                        <button type="button" class="btn btn-admin-secondary btn-admin-close" id="btnCloseAdminView" title="Đóng bảng quản trị">
+                            <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Đóng Quản trị</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Admin Metrics Overview Cards (PDFL-188) -->
-                <div class="admin-stats-grid">
-                    <div class="admin-stat-card card-users">
-                        <div class="stat-card-header">
-                            <span class="stat-icon">👥</span>
-                            <span class="stat-label">Tổng người dùng</span>
+                <!-- Admin Metrics Overview Bento Grid (PDFL-188) -->
+                <div class="admin-bento-grid">
+                    <!-- Cell 1: Hero Metric (Spans 2 columns on desktop) -->
+                    <div class="admin-bento-cell cell-hero-users">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-indigo">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Cộng đồng Người dùng</span>
                         </div>
-                        <div class="stat-value" id="statTotalUsers">--</div>
-                        <div class="stat-breakdown">
+                        <div class="bento-hero-metric">
+                            <span class="stat-value font-mono" id="statTotalUsers">--</span>
+                            <span class="stat-unit">tài khoản</span>
+                        </div>
+                        <!-- Proportional Distribution Bar -->
+                        <div class="bento-dist-bar" id="statUsersDistBar">
+                            <div class="dist-seg dist-free" id="distSegFree" style="width: 70%;" title="Free accounts"></div>
+                            <div class="dist-seg dist-pro" id="distSegPro" style="width: 20%;" title="Pro accounts"></div>
+                            <div class="dist-seg dist-admin" id="distSegAdmin" style="width: 10%;" title="Admin accounts"></div>
+                        </div>
+                        <div class="bento-pills-row">
                             <span class="badge-sub free" id="statFreeUsers">Free: --</span>
                             <span class="badge-sub pro" id="statProUsers">Pro: --</span>
                             <span class="badge-sub admin" id="statAdminUsers">Admin: --</span>
                         </div>
                     </div>
 
-                    <div class="admin-stat-card card-status">
-                        <div class="stat-card-header">
-                            <span class="stat-icon">🛡️</span>
-                            <span class="stat-label">Trạng thái tài khoản</span>
+                    <!-- Cell 2: Security & Status Ratio -->
+                    <div class="admin-bento-cell cell-security">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-emerald">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    <polyline points="9 12 11 14 15 10"></polyline>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Tỷ lệ Hoạt động</span>
                         </div>
-                        <div class="stat-value" id="statActiveRatio">--</div>
+                        <div class="stat-value font-mono" id="statActiveRatio">--</div>
                         <div class="stat-breakdown">
                             <span class="badge-sub active" id="statActiveUsers">Hoạt động: --</span>
                             <span class="badge-sub locked" id="statLockedUsers">Đã khóa: --</span>
                         </div>
                     </div>
 
-                    <div class="admin-stat-card card-docs">
-                        <div class="stat-card-header">
-                            <span class="stat-icon">📄</span>
-                            <span class="stat-label">Tài liệu đã lưu</span>
+                    <!-- Cell 3: Processed Documents -->
+                    <div class="admin-bento-cell cell-docs">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-cyan">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Tài liệu đã lưu</span>
                         </div>
-                        <div class="stat-value" id="statTotalDocs">--</div>
+                        <div class="bento-hero-metric">
+                            <span class="stat-value font-mono" id="statTotalDocs">--</span>
+                            <span class="stat-unit">hồ sơ</span>
+                        </div>
                         <div class="stat-breakdown">
-                            <span class="stat-sub-text">Hồ sơ tài liệu trong cơ sở dữ liệu</span>
+                            <span class="stat-sub-text">Lưu trữ tài liệu xử lý trong cơ sở dữ liệu</span>
                         </div>
                     </div>
 
-                    <div class="admin-stat-card card-storage">
-                        <div class="stat-card-header">
-                            <span class="stat-icon">💾</span>
-                            <span class="stat-label">Dung lượng máy chủ</span>
+                    <!-- Cell 4: Storage Footprint -->
+                    <div class="admin-bento-cell cell-storage">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-amber">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Dung lượng máy chủ</span>
                         </div>
-                        <div class="stat-value" id="statTotalStorage">--</div>
+                        <div class="stat-value font-mono" id="statTotalStorage">--</div>
                         <div class="stat-breakdown">
-                            <span class="stat-sub-text" id="statStorageRaw">0 Bytes dữ liệu</span>
+                            <span class="stat-sub-text font-mono text-xs" id="statStorageRaw">0 Bytes dữ liệu</span>
                         </div>
                     </div>
                 </div>
@@ -458,14 +513,28 @@
                 <div class="admin-table-card">
                     <div class="admin-table-header">
                         <div class="table-title-group">
-                            <h3 class="table-title">Quản lý Danh sách Người dùng</h3>
-                            <span class="table-count-badge" id="adminUsersCountBadge">0 tài khoản</span>
+                            <div class="table-icon-pill">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="table-title">Danh bạ Tài khoản Người dùng</h3>
+                                <p class="table-subtitle">Tra cứu, phân quyền hạn và kiểm soát trạng thái hoạt động tài khoản</p>
+                            </div>
+                            <span class="table-count-badge font-mono" id="adminUsersCountBadge">0 tài khoản</span>
                         </div>
 
                         <!-- Filter & Search Toolbar -->
                         <div class="admin-toolbar">
                             <div class="admin-search-wrap">
-                                <span class="search-icon">🔍</span>
+                                <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
                                 <input type="text" id="adminSearchInput" class="admin-search-input" placeholder="Tìm theo email hoặc họ tên...">
                             </div>
 
@@ -507,18 +576,35 @@
                             </tbody>
                         </table>
                         <div class="admin-table-empty" id="adminTableEmptyState" style="display: none;">
-                            <span class="empty-icon">📂</span>
-                            <p class="empty-text">Không tìm thấy tài khoản người dùng nào khớp với bộ lọc.</p>
+                            <div class="empty-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title">Không tìm thấy tài khoản</h4>
+                            <p class="empty-text">Không có tài khoản người dùng nào khớp với bộ lọc hoặc từ khóa tìm kiếm hiện tại.</p>
                         </div>
                     </div>
 
                     <!-- Pagination Footer -->
                     <div class="admin-pagination-footer" id="adminPagination">
-                        <div class="pagination-info" id="adminPaginationInfo">Trang 1 / 1</div>
+                        <div class="pagination-info font-mono" id="adminPaginationInfo">Trang 1 / 1</div>
                         <div class="pagination-controls">
-                            <button type="button" class="btn btn-secondary btn-sm" id="btnAdminPrevPage" disabled>❮ Trước</button>
-                            <span class="pagination-current-page" id="adminCurrentPageBadge">1</span>
-                            <button type="button" class="btn btn-secondary btn-sm" id="btnAdminNextPage" disabled>Sau ❯</button>
+                            <button type="button" class="btn btn-admin-pager" id="btnAdminPrevPage" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                                <span>Trước</span>
+                            </button>
+                            <span class="pagination-current-page font-mono" id="adminCurrentPageBadge">1</span>
+                            <button type="button" class="btn btn-admin-pager" id="btnAdminNextPage" disabled>
+                                <span>Sau</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -561,14 +647,18 @@
     <div class="modal-overlay" id="adminConfirmModal" style="display: none;">
         <div class="admin-confirm-card">
             <div class="confirm-icon-wrap" id="confirmModalIconWrap">
-                <span class="confirm-warning-icon" id="confirmModalIcon">⚠️</span>
+                <svg class="confirm-warning-svg" id="confirmModalIconSvg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
             </div>
             <div class="confirm-content">
                 <h3 class="confirm-title" id="confirmModalTitle">Xác nhận thao tác trọng yếu</h3>
                 <p class="confirm-desc" id="confirmModalDesc">Thao tác này sẽ làm thay đổi quyền hạn hoặc quyền truy cập của tài khoản.</p>
                 <div class="confirm-target-box" id="confirmModalTargetBox">
                     <span class="target-label">Tài khoản mục tiêu:</span>
-                    <strong class="target-email" id="confirmModalTargetEmail">user@example.com</strong>
+                    <strong class="target-email font-mono" id="confirmModalTargetEmail">user@example.com</strong>
                 </div>
             </div>
             <div class="confirm-actions">
@@ -1106,7 +1196,7 @@
                 <div class="legal-tab-panel" id="tabContact" role="tabpanel">
                     <div class="legal-content">
                         <h4>Thông tin đồ án</h4>
-                        <p><strong>Dự án:</strong> PDF-Lingua — Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI.</p>
+                        <p><strong>Dự án:</strong> PDF-Lingua - Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI.</p>
 
                         <h4>Thành viên nhóm</h4>
                         <div class="team-cards-grid">

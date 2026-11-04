@@ -177,17 +177,36 @@
     const elProUsers = document.getElementById('statProUsers');
     const elAdminUsers = document.getElementById('statAdminUsers');
 
-    if (elTotalUsers) elTotalUsers.textContent = (stats.total_users || 0).toLocaleString('vi-VN');
-    if (elFreeUsers) elFreeUsers.textContent = `Free: ${stats.free_users || 0}`;
-    if (elProUsers) elProUsers.textContent = `Pro: ${stats.pro_users || 0}`;
-    if (elAdminUsers) elAdminUsers.textContent = `Admin: ${stats.admin_users || 0}`;
+    const total = stats.total_users || 0;
+    const freeCount = stats.free_users || 0;
+    const proCount = stats.pro_users || 0;
+    const adminCount = stats.admin_users || 0;
+
+    if (elTotalUsers) elTotalUsers.textContent = total.toLocaleString('vi-VN');
+    if (elFreeUsers) elFreeUsers.textContent = `Free: ${freeCount}`;
+    if (elProUsers) elProUsers.textContent = `Pro: ${proCount}`;
+    if (elAdminUsers) elAdminUsers.textContent = `Admin: ${adminCount}`;
+
+    // Bento Distribution Bar segments
+    const segFree = document.getElementById('distSegFree');
+    const segPro = document.getElementById('distSegPro');
+    const segAdmin = document.getElementById('distSegAdmin');
+
+    if (total > 0) {
+      const freePct = Math.round((freeCount / total) * 100);
+      const proPct = Math.round((proCount / total) * 100);
+      const adminPct = Math.round((adminCount / total) * 100);
+
+      if (segFree) segFree.style.width = `${Math.max(freePct, freeCount > 0 ? 5 : 0)}%`;
+      if (segPro) segPro.style.width = `${Math.max(proPct, proCount > 0 ? 5 : 0)}%`;
+      if (segAdmin) segAdmin.style.width = `${Math.max(adminPct, adminCount > 0 ? 5 : 0)}%`;
+    }
 
     // Card 2: Account Status
     const elActiveRatio = document.getElementById('statActiveRatio');
     const elActiveUsers = document.getElementById('statActiveUsers');
     const elLockedUsers = document.getElementById('statLockedUsers');
 
-    const total = stats.total_users || 0;
     const active = stats.active_users || 0;
     const ratio = total > 0 ? Math.round((active / total) * 100) : 100;
 
@@ -208,6 +227,28 @@
     if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} Bytes dữ liệu`;
   }
 
+  function renderSkeletonRows(count = 5) {
+    return Array.from({ length: count }).map(() => `
+      <tr class="admin-skeleton-row">
+        <td><div class="skeleton-pill" style="width: 28px; height: 16px;"></div></td>
+        <td>
+          <div class="user-cell-meta">
+            <div class="skeleton-circle" style="width: 38px; height: 38px;"></div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div class="skeleton-pill" style="width: 120px; height: 14px;"></div>
+              <div class="skeleton-pill" style="width: 170px; height: 12px;"></div>
+            </div>
+          </div>
+        </td>
+        <td><div class="skeleton-pill" style="width: 72px; height: 22px; border-radius: 9999px;"></div></td>
+        <td><div class="skeleton-pill" style="width: 80px; height: 22px; border-radius: 9999px;"></div></td>
+        <td><div class="skeleton-pill" style="width: 44px; height: 16px;"></div></td>
+        <td><div class="skeleton-pill" style="width: 110px; height: 14px;"></div></td>
+        <td class="text-right"><div class="skeleton-pill" style="width: 130px; height: 26px; border-radius: 6px; margin-left: auto;"></div></td>
+      </tr>
+    `).join('');
+  }
+
   // ── API Fetch: User Directory (PDFL-189) ─────────────────────────────────────
   async function fetchAdminUsers(targetPage = 1) {
     if (isFetching) return;
@@ -219,16 +260,7 @@
 
     const tbody = document.getElementById('adminUsersTableBody');
     if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-            <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
-              <span class="account-spinner" style="width: 18px; height: 18px;"></span>
-              <span>Đang tải danh sách người dùng...</span>
-            </div>
-          </td>
-        </tr>
-      `;
+      tbody.innerHTML = renderSkeletonRows(5);
     }
 
     try {
@@ -306,33 +338,35 @@
       const displayName = u.full_name ? escapeHtml(u.full_name) : '<em>Chưa đặt tên</em>';
       const email = escapeHtml(u.email);
 
-      // Role badge
+      // Role badge with sleek inline SVG
       let roleBadgeClass = 'role-badge free';
-      let roleLabel = 'Free';
+      let roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Free';
       if (u.role === 'pro') {
         roleBadgeClass = 'role-badge pro';
-        roleLabel = '👑 Pro VIP';
+        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Pro VIP';
       } else if (u.role === 'admin') {
         roleBadgeClass = 'role-badge admin';
-        roleLabel = '⭐ Admin';
+        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Admin';
       }
 
-      // Status pill
+      // Status pill with pulsing dot or locked icon
       const statusPillClass = u.is_active ? 'status-pill active' : 'status-pill locked';
-      const statusLabel = u.is_active ? 'Hoạt động' : 'Đã khóa';
+      const statusLabel = u.is_active
+        ? '<span class="status-dot"></span>Hoạt động'
+        : '<svg class="status-lock-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Đã khóa';
 
-      // Action buttons
+      // Action buttons with tactile feedback and crisp SVG icons
       let actionButtons = '';
       if (isSelf) {
-        actionButtons = `<span class="admin-self-tag">(Tài khoản của bạn)</span>`;
+        actionButtons = `<span class="admin-self-tag">(Tài khoản hiện tại)</span>`;
       } else {
         const toggleStatusBtn = u.is_active
-          ? `<button type="button" class="btn-action btn-action-lock" data-action="lock" data-user-id="${u.id}" data-user-email="${email}">🔒 Khóa</button>`
-          : `<button type="button" class="btn-action btn-action-unlock" data-action="unlock" data-user-id="${u.id}" data-user-email="${email}">🔓 Mở khóa</button>`;
+          ? `<button type="button" class="btn-action btn-action-lock" data-action="lock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Khóa</button>`
+          : `<button type="button" class="btn-action btn-action-unlock" data-action="unlock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg> Mở khóa</button>`;
 
         const nextRole = u.role === 'pro' ? 'free' : 'pro';
         const roleBtnLabel = u.role === 'pro' ? 'Hạ Free' : 'Cấp Pro';
-        const changeRoleBtn = `<button type="button" class="btn-action btn-action-role" data-action="change-role" data-user-id="${u.id}" data-user-email="${email}" data-target-role="${nextRole}">⚡ ${roleBtnLabel}</button>`;
+        const changeRoleBtn = `<button type="button" class="btn-action btn-action-role" data-action="change-role" data-user-id="${u.id}" data-user-email="${email}" data-target-role="${nextRole}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> ${roleBtnLabel}</button>`;
 
         actionButtons = `
           <div class="user-actions-group">
@@ -344,7 +378,7 @@
 
       html += `
         <tr>
-          <td><span style="font-weight: 700; color: var(--text-muted); font-size: 0.8125rem;">#${u.id}</span></td>
+          <td><span class="user-id-mono">#${u.id}</span></td>
           <td>
             <div class="user-cell-meta">
               <div class="user-cell-avatar">${escapeHtml(initial)}</div>
@@ -355,9 +389,9 @@
             </div>
           </td>
           <td><span class="${roleBadgeClass}">${roleLabel}</span></td>
-          <td><span class="${statusPillClass}"><span class="status-dot"></span>${statusLabel}</span></td>
-          <td><span style="font-weight: 600;">${u.document_count || 0}</span> tệp</td>
-          <td style="color: var(--text-muted); font-size: 0.8125rem;">${formatDate(u.created_at)}</td>
+          <td><span class="${statusPillClass}">${statusLabel}</span></td>
+          <td><span class="doc-count-mono">${u.document_count || 0}</span> <span class="doc-unit">tệp</span></td>
+          <td><span class="date-mono">${formatDate(u.created_at)}</span></td>
           <td class="text-right">${actionButtons}</td>
         </tr>
       `;
@@ -400,7 +434,7 @@
       if (iconWrap) {
         iconWrap.style.background = '#FEF2F2';
         iconWrap.style.borderColor = '#FEE2E2';
-        iconWrap.innerHTML = '<span class="confirm-warning-icon">🚫</span>';
+        iconWrap.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>';
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-danger';
@@ -408,9 +442,9 @@
       }
     } else if (config.actionType === 'success') {
       if (iconWrap) {
-        iconWrap.style.background = '#F0FDF4';
-        iconWrap.style.borderColor = '#DCFCE7';
-        iconWrap.innerHTML = '<span class="confirm-warning-icon">🔓</span>';
+        iconWrap.style.background = '#ECFDF5';
+        iconWrap.style.borderColor = '#A7F3D0';
+        iconWrap.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>';
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
@@ -420,7 +454,7 @@
       if (iconWrap) {
         iconWrap.style.background = '#FEF3C7';
         iconWrap.style.borderColor = '#FDE68A';
-        iconWrap.innerHTML = '<span class="confirm-warning-icon">⚠️</span>';
+        iconWrap.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
