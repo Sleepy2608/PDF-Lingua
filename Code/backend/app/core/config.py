@@ -20,6 +20,15 @@ for env_path in _env_candidates:
         break
 
 
+def _resolve_database_url() -> str:
+    raw_url = os.getenv("DATABASE_URL", "sqlite:///./pdf_lingua.db")
+    if raw_url.startswith("sqlite:///./"):
+        rel_path = raw_url[len("sqlite:///./") :]
+        abs_path = (_backend_dir / rel_path).resolve().as_posix()
+        return f"sqlite:///{abs_path}"
+    return raw_url
+
+
 class Settings:
     # Application Configuration
     APP_NAME: str = os.getenv("APP_NAME", "PDF-Lingua")
@@ -34,7 +43,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./pdf_lingua.db")
+    DATABASE_URL: str = _resolve_database_url()
 
     # File Upload Constraints
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "temp_uploads/")
