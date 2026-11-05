@@ -119,3 +119,104 @@ async def download_document_file(
         },
     )
 
+
+@router.delete("/{document_id}", response_model=ApiResponse[dict])
+async def delete_document(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Delete a document record and its corresponding physical PDF file (PDFL-94.1).
+    Enforces ownership / ADMIN permission (Anti-IDOR) and transactional safety
+    between database and filesystem storage.
+    """
+    query = db.query(Document).filter(Document.id == document_id)
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(Document.user_id == current_user.id)
+
+    doc = query.first()
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tài liệu không tồn tại hoặc bạn không có quyền truy cập.",
+        )
+
+    owner_user_id = doc.user_id
+    stored_filename = doc.stored_filename
+    original_filename = doc.original_filename
+
+    # Read physical file backup before deletion so we can restore if DB commit fails
+    file_path = storage_service.get_document_path(
+        user_id=owner_user_id,
+        stored_filename=stored_filename,
+    )
+    file_existed = bool(file_path and file_path.is_file())
+    file_backup_bytes: bytes | None = None
+
+    if file_existed and file_path is not None:
+        try:
+            file_backup_bytes = file_path.read_bytes()
+        except Exception as e:
+            logger.error(
+                f"[DeleteDocument] Cannot read physical file prior to deletion "
+                f"(document_id={document_id}, file={stored_filename}): {e}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Không thể truy cập tệp tin lưu trữ để xóa tài liệu.",
+            ) from e
+
+        deleted_ok = storage_service.delete_document_file(
+            user_id=owner_user_id,
+            stored_filename=stored_filename,
+        )
+        if not deleted_ok:
+            logger.error(
+                f"[DeleteDocument] Storage deletion failed for document_id={document_id}, "
+                f"user_id={owner_user_id}, file={stored_filename}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Không thể xóa tệp tin vật lý trên hệ thống lưu trữ.",
+            )
+
+    try:
+        db.delete(doc)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        # Restore physical file if it was deleted before the DB commit failure
+        if file_existed and file_backup_bytes is not None and file_path is not None:
+            try:
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                file_path.write_bytes(file_backup_bytes)
+                logger.info(
+                    f"[DeleteDocument] Restored physical file after DB rollback: {file_path}"
+                )
+            except Exception as restore_err:
+                logger.error(
+                    f"[DeleteDocument] Failed to restore physical file {file_path}: {restore_err}"
+                )
+
+        logger.error(
+            f"[DeleteDocument] Database commit failed for document_id={document_id}: {e}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi cơ sở dữ liệu khi xóa tài liệu. Đã hoàn tác thao tác.",
+        ) from e
+
+    logger.info(
+        f"[DeleteDocument] User {current_user.id} (role={current_user.role}) deleted "
+        f"document_id={document_id} (owner={owner_user_id}, file={original_filename!r})"
+    )
+
+    return ApiResponse(
+        data={
+            "id": document_id,
+            "original_filename": original_filename,
+        },
+        message="Xóa tài liệu thành công.",
+    )
+

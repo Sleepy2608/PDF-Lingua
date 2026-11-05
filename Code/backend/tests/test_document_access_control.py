@@ -226,3 +226,159 @@ def test_pdfl_98_list_documents_tenant_isolation(access_control_env):
     docs_admin = res_admin.json()["data"]
     assert len(docs_admin) == 2
 
+
+# ---------------------------------------------------------------------------
+# PDFL-94.1: Document Delete API Tests
+# ---------------------------------------------------------------------------
+
+def test_pdfl_94_1_delete_unauthenticated_returns_401():
+    """Unauthenticated users cannot delete documents."""
+    app.dependency_overrides.pop(get_current_user, None)
+    res = client.delete("/api/documents/1")
+    assert res.status_code == 401
+
+
+def test_pdfl_94_1_delete_owner_success_removes_db_and_file(access_control_env):
+    """Document owner can delete their document; both DB record and physical file are removed."""
+    env = access_control_env
+    doc_a_id = env["doc_a"].id
+    stored_filename_a = env["doc_a"].stored_filename
+    user_a_id = env["user_a"].id
+
+    # Verify physical file and DB record exist before delete
+    assert env["storage"].get_document_path(user_a_id, stored_filename_a) is not None
+    assert env["session"].query(Document).filter(Document.id == doc_a_id).first() is not None
+
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+    res = client.delete(f"/api/documents/{doc_a_id}")
+    assert res.status_code == 200
+
+    body = res.json()
+    assert body["success"] is True
+    assert body["message"] == "Xóa tài liệu thành công."
+    assert body["data"]["id"] == doc_a_id
+    assert body["data"]["original_filename"] == "Tài liệu bí mật của A.pdf"
+
+    # Verify DB record is removed
+    env["session"].expire_all()
+    assert env["session"].query(Document).filter(Document.id == doc_a_id).first() is None
+
+    # Verify physical file is removed from storage
+    assert env["storage"].get_document_path(user_a_id, stored_filename_a) is None
+
+
+def test_pdfl_94_1_delete_non_existent_document_returns_404(access_control_env):
+    """Deleting a non-existent document ID returns 404 Not Found."""
+    env = access_control_env
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+
+    res = client.delete("/api/documents/999999")
+    assert res.status_code == 404
+    data = res.json()
+    msg = data.get("message") or data.get("detail", "")
+    assert "Tài liệu không tồn tại hoặc bạn không có quyền truy cập" in msg
+
+
+def test_pdfl_94_1_delete_other_user_document_returns_404_and_preserves_data(access_control_env):
+    """User B cannot delete User A's document (Anti-IDOR); DB record and physical file remain intact."""
+    env = access_control_env
+    doc_a_id = env["doc_a"].id
+    stored_filename_a = env["doc_a"].stored_filename
+    user_a_id = env["user_a"].id
+
+    # Authenticate as User B
+    app.dependency_overrides[get_current_user] = lambda: env["user_b"]
+
+    res = client.delete(f"/api/documents/{doc_a_id}")
+    assert res.status_code == 404
+    data = res.json()
+    msg = data.get("message") or data.get("detail", "")
+    assert "Tài liệu không tồn tại hoặc bạn không có quyền truy cập" in msg
+
+    # Verify User A's DB record and physical file are completely untouched
+    env["session"].expire_all()
+    assert env["session"].query(Document).filter(Document.id == doc_a_id).first() is not None
+    assert env["storage"].get_document_path(user_a_id, stored_filename_a) is not None
+
+
+def test_pdfl_94_1_admin_can_delete_user_document(access_control_env):
+    """ADMIN can delete any user's document; both DB record and physical file are removed."""
+    env = access_control_env
+    doc_b_id = env["doc_b"].id
+    stored_filename_b = env["doc_b"].stored_filename
+    user_b_id = env["user_b"].id
+
+    app.dependency_overrides[get_current_user] = lambda: env["admin"]
+
+    res = client.delete(f"/api/documents/{doc_b_id}")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["success"] is True
+    assert body["data"]["id"] == doc_b_id
+
+    env["session"].expire_all()
+    assert env["session"].query(Document).filter(Document.id == doc_b_id).first() is None
+    assert env["storage"].get_document_path(user_b_id, stored_filename_b) is None
+
+
+def test_pdfl_94_1_delete_storage_failure_aborts_db_deletion(access_control_env, monkeypatch):
+    """If physical file deletion fails on storage, DB record is NOT deleted and 500 is returned."""
+    env = access_control_env
+    doc_a_id = env["doc_a"].id
+    stored_filename_a = env["doc_a"].stored_filename
+    user_a_id = env["user_a"].id
+
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+
+    # Simulate filesystem unlink failure
+    monkeypatch.setattr(
+        env["storage"],
+        "delete_document_file",
+        lambda user_id, stored_filename: False,
+    )
+
+    res = client.delete(f"/api/documents/{doc_a_id}")
+    assert res.status_code == 500
+    data = res.json()
+    msg = data.get("message") or data.get("detail", "")
+    assert "Không thể xóa tệp tin vật lý" in msg
+
+    # DB record and physical file must still exist
+    env["session"].expire_all()
+    assert env["session"].query(Document).filter(Document.id == doc_a_id).first() is not None
+    assert env["storage"].get_document_path(user_a_id, stored_filename_a) is not None
+
+
+def test_pdfl_94_1_delete_db_commit_failure_rolls_back_and_restores_file(access_control_env, monkeypatch):
+    """If DB commit fails after physical file deletion, DB is rolled back and physical file is restored."""
+    env = access_control_env
+    doc_a_id = env["doc_a"].id
+    stored_filename_a = env["doc_a"].stored_filename
+    user_a_id = env["user_a"].id
+
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+
+    from sqlalchemy.orm import Session as OrmSession
+
+    def failing_commit(self):
+        raise RuntimeError("Simulated database commit failure")
+
+    monkeypatch.setattr(OrmSession, "commit", failing_commit)
+
+    res = client.delete(f"/api/documents/{doc_a_id}")
+    assert res.status_code == 500
+    data = res.json()
+    msg = data.get("message") or data.get("detail", "")
+    assert "Lỗi cơ sở dữ liệu khi xóa tài liệu" in msg
+
+    # Verify DB record still exists after rollback
+    env["session"].expire_all()
+    assert env["session"].query(Document).filter(Document.id == doc_a_id).first() is not None
+
+    # Verify physical file was restored back to storage with exact contents
+    restored_path = env["storage"].get_document_path(user_a_id, stored_filename_a)
+    assert restored_path is not None
+    assert restored_path.is_file()
+    assert b"User A confidential document content" in restored_path.read_bytes()
+
+
