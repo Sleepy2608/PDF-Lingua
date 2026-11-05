@@ -72,6 +72,7 @@ class MockElement {
       this.listeners['click'].forEach((fn) => fn({ target: this, preventDefault: () => {}, stopPropagation: () => {} }));
     }
   }
+  remove() {}
   scrollIntoView() {}
   appendChild(child) {
     child.parentElement = this;
@@ -79,8 +80,19 @@ class MockElement {
     return child;
   }
   querySelector(sel) {
-    if (sel === '.sidebar-doc-download-btn') {
-      return this.children.find((c) => c.className && c.className.includes('sidebar-doc-download-btn')) || null;
+    if (sel === '.sidebar-doc-download-btn' || sel === '.doc-table-download-btn' || sel === '.doc-table-detail-btn') {
+      const cls = sel.slice(1);
+      const found = this.children.find((c) => c.className && c.className.includes(cls));
+      if (found) return found;
+      if (this._innerHTML && this._innerHTML.includes(cls)) {
+        this._queryCache = this._queryCache || {};
+        if (!this._queryCache[sel]) {
+          const btn = new MockElement('', 'button');
+          btn.className = cls;
+          this._queryCache[sel] = btn;
+        }
+        return this._queryCache[sel];
+      }
     }
     return null;
   }
@@ -148,6 +160,9 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     btnCloseDocumentDetailModal: new MockElement('btnCloseDocumentDetailModal', 'button'),
     btnCloseDocumentDetailFooter: new MockElement('btnCloseDocumentDetailFooter', 'button'),
     btnDocDetailDownload: new MockElement('btnDocDetailDownload', 'button'),
+    docDetailDownloadSpinner: new MockElement('docDetailDownloadSpinner', 'span'),
+    docDetailDownloadIcon: new MockElement('docDetailDownloadIcon', 'svg'),
+    docDetailDownloadText: new MockElement('docDetailDownloadText', 'span'),
     btnDocDetailDelete: new MockElement('btnDocDetailDelete', 'button'),
     docDetailHeroFilename: new MockElement('docDetailHeroFilename', 'h3'),
     docDetailHeroSub: new MockElement('docDetailHeroSub', 'p'),
@@ -1174,6 +1189,250 @@ async function main() {
     assert.strictEqual(env.elements.docDetailId.textContent, '#702');
     assert.strictEqual(env.elements.docDetailPageCount.textContent, '15 trang');
     assert.strictEqual(env.elements.docDetailTargetLang.textContent, 'Tiếng Pháp (fr)');
+  });
+
+  // 5d. PDFL-93.3: Document Detail Actions (Download & Delete Integration Point)
+  await runTest('PDFL-93.3: Clicking #btnDocDetailDownload downloads the currently open document with loading state and does not affect table row download', async () => {
+    const downloadCalls = [];
+    let resolveModalDownload = null;
+
+    const docsList = [
+      {
+        id: 801,
+        original_filename: 'Doc_801_List.pdf',
+        file_size_bytes: 102400,
+        page_count: 4,
+        target_lang: 'vi',
+        is_ocr_used: false,
+        created_at: '2026-11-05T08:00:00Z',
+      },
+      {
+        id: 802,
+        original_filename: 'Doc_802_Detail.pdf',
+        file_size_bytes: 204800,
+        page_count: 9,
+        target_lang: 'en',
+        is_ocr_used: true,
+        created_at: '2026-11-05T09:00:00Z',
+      },
+    ];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-detail-action-token',
+      },
+      (url, options = {}) => {
+        if (url.endsWith('/api/documents')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList }),
+          });
+        }
+        if (url.endsWith('/api/documents/802')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList[1] }),
+          });
+        }
+        if (url.includes('/api/documents/802/download')) {
+          downloadCalls.push({ url, auth: options.headers ? options.headers['Authorization'] : null });
+          return new Promise((resolve) => {
+            resolveModalDownload = resolve;
+          });
+        }
+        if (url.includes('/api/documents/801/download')) {
+          downloadCalls.push({ url, auth: options.headers ? options.headers['Authorization'] : null });
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            blob: async () => ({ size: 102400 }),
+          });
+        }
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+      }
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    // 1. Open Detail Modal for Doc #802
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 802 });
+    assert.strictEqual(env.elements.docDetailId.textContent, '#802');
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, false);
+
+    // 2. Click #btnDocDetailDownload -> verify loading state and request to /api/documents/802/download
+    env.elements.btnDocDetailDownload.click();
+    assert.strictEqual(downloadCalls.length, 1, 'Must trigger download request for doc #802');
+    assert.ok(downloadCalls[0].url.endsWith('/api/documents/802/download'));
+    assert.strictEqual(downloadCalls[0].auth, 'Bearer jwt-detail-action-token');
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, true, 'Button must be disabled while downloading');
+    assert.strictEqual(env.elements.docDetailDownloadSpinner.style.display, 'inline-block', 'Spinner must show while downloading');
+    assert.strictEqual(env.elements.docDetailDownloadText.textContent, 'Đang tải xuống...');
+
+    // Resolve download
+    resolveModalDownload({
+      ok: true,
+      status: 200,
+      blob: async () => ({ size: 204800 }),
+    });
+    await new Promise((r) => setTimeout(r, 10));
+
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, false, 'Button re-enabled after download completes');
+    assert.strictEqual(env.elements.docDetailDownloadSpinner.style.display, 'none');
+    assert.strictEqual(env.elements.docDetailDownloadText.textContent, 'Tải xuống PDF');
+
+    // 3. Verify table row download button for Doc #801 still works independently
+    const row801 = env.elements.documentsTableBody.children[0];
+    const row801DownloadBtn = row801.querySelector('.doc-table-download-btn');
+    assert.ok(row801DownloadBtn, 'Row download button must exist');
+    row801DownloadBtn.click();
+    await new Promise((r) => setTimeout(r, 10));
+
+    assert.strictEqual(downloadCalls.length, 2, 'Table row download button must trigger its own download');
+    assert.ok(downloadCalls[1].url.endsWith('/api/documents/801/download'));
+  });
+
+  await runTest('PDFL-93.3: Closing modal or switching documents prevents downloading stale document ID, and handles unauthenticated / missing ID safely', async () => {
+    const downloadCalls = [];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-switch-doc-token',
+      },
+      async (url) => {
+        if (url.endsWith('/api/documents/901')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                id: 901,
+                original_filename: 'First_Doc_901.pdf',
+                file_size_bytes: 102400,
+                page_count: 2,
+                target_lang: 'vi',
+                is_ocr_used: false,
+                created_at: '2026-11-05T10:00:00Z',
+              },
+            }),
+          };
+        }
+        if (url.endsWith('/api/documents/902')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                id: 902,
+                original_filename: 'Second_Doc_902.pdf',
+                file_size_bytes: 204800,
+                page_count: 5,
+                target_lang: 'en',
+                is_ocr_used: true,
+                created_at: '2026-11-05T11:00:00Z',
+              },
+            }),
+          };
+        }
+        if (url.includes('/download')) {
+          downloadCalls.push(url);
+          return {
+            ok: true,
+            status: 200,
+            blob: async () => ({ size: 1024 }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+      }
+    );
+
+    // 1. Open Doc #901, then switch to Doc #902 and click download -> must download #902, NEVER #901
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 901 });
+    assert.strictEqual(env.elements.btnDocDetailDownload.dataset.docId, '901');
+
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 902 });
+    assert.strictEqual(env.elements.btnDocDetailDownload.dataset.docId, '902');
+
+    env.elements.btnDocDetailDownload.click();
+    await new Promise((r) => setTimeout(r, 10));
+
+    assert.strictEqual(downloadCalls.length, 1);
+    assert.ok(downloadCalls[0].endsWith('/api/documents/902/download'), 'Must download newly switched doc #902');
+
+    // 2. Close modal -> dataset.docId is cleared and clicking download while closed does nothing
+    env.sandbox.window.PDFLinguaSidebar.closeDocumentDetailModal();
+    assert.strictEqual(env.elements.btnDocDetailDownload.dataset.docId, undefined, 'docId dataset must be cleared on close');
+    env.elements.btnDocDetailDownload.click();
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(downloadCalls.length, 1, 'Clicking download when modal is closed must not trigger API call');
+
+    // 3. Re-open Doc #902, then simulate token removal (unauthenticated) before clicking download
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 902 });
+    delete env.store['pdfl_token'];
+    env.elements.btnDocDetailDownload.click();
+    await new Promise((r) => setTimeout(r, 10));
+
+    assert.strictEqual(downloadCalls.length, 1, 'Unauthenticated download attempt must not call download endpoint');
+    assert.strictEqual(env.elements.documentDetailAlert.style.display, 'flex');
+    assert.ok(env.elements.documentDetailAlert.textContent.includes('đăng nhập'));
+
+    // 4. Missing document ID when opening modal -> download button disabled and does not call API
+    env.store['pdfl_token'] = 'jwt-switch-doc-token';
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({});
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, true);
+    env.elements.btnDocDetailDownload.click();
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(downloadCalls.length, 1, 'Missing doc ID must not call download endpoint');
+  });
+
+  await runTest('PDFL-93.3: #btnDocDetailDelete emits integration event without calling DELETE API or mutating document list', async () => {
+    let deleteApiCalled = false;
+    let capturedDeleteIntent = null;
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-delete-intent-token',
+      },
+      async (url, options = {}) => {
+        if (options.method === 'DELETE') {
+          deleteApiCalled = true;
+        }
+        if (url.endsWith('/api/documents/999')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                id: 999,
+                original_filename: 'Keep_Safe_Doc.pdf',
+                file_size_bytes: 512000,
+                page_count: 6,
+                target_lang: 'vi',
+                is_ocr_used: false,
+                created_at: '2026-11-05T12:00:00Z',
+              },
+            }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+      }
+    );
+
+    env.sandbox.window.addEventListener('pdfl:document-delete-intent', (e) => {
+      capturedDeleteIntent = e.detail;
+    });
+
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 999 });
+    env.elements.btnDocDetailDelete.click();
+
+    assert.strictEqual(deleteApiCalled, false, 'Must NOT call DELETE API in PDFL-93.3');
+    assert.ok(capturedDeleteIntent, 'Must emit pdfl:document-delete-intent for PDFL-94 integration');
+    assert.strictEqual(capturedDeleteIntent.id, 999);
+    assert.strictEqual(capturedDeleteIntent.original_filename, 'Keep_Safe_Doc.pdf');
   });
 
   // 6. Default & Toggle Behavior

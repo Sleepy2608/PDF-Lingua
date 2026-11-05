@@ -15,6 +15,7 @@
   let isCollapsed = false;
   let isMobileOpen = false;
   let isDocDetailOpen = false;
+  let isDetailDownloading = false;
   let currentDetailDoc = null;
   let detailRequestSequence = 0;
   let cachedDocuments = [];
@@ -841,13 +842,14 @@
   }
 
   /**
-   * Initialize Document Detail Modal events (PDFL-93.1)
+   * Initialize Document Detail Modal events (PDFL-93.1 & PDFL-93.3)
    */
   function initDocumentDetailModal() {
     const modalEl = document.getElementById('documentDetailModal');
     const btnCloseTop = document.getElementById('btnCloseDocumentDetailModal');
     const btnCloseFooter = document.getElementById('btnCloseDocumentDetailFooter');
     const btnDownload = document.getElementById('btnDocDetailDownload');
+    const btnDelete = document.getElementById('btnDocDetailDelete');
 
     if (btnCloseTop) {
       btnCloseTop.addEventListener('click', (e) => {
@@ -874,15 +876,132 @@
     if (btnDownload) {
       btnDownload.addEventListener('click', (e) => {
         e.preventDefault();
-        if (currentDetailDoc && currentDetailDoc.id) {
-          downloadDocumentFile(
-            currentDetailDoc.id,
-            currentDetailDoc.original_filename || `document_${currentDetailDoc.id}.pdf`,
-            cachedToken || getStoredAuthToken()
-          );
-        }
+        handleDocumentDetailDownload();
       });
     }
+
+    if (btnDelete) {
+      btnDelete.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleDocumentDetailDeleteIntent();
+      });
+    }
+  }
+
+  /**
+   * Update loading UI state for #btnDocDetailDownload (PDFL-93.3)
+   */
+  function setDetailDownloadLoadingState(loading) {
+    isDetailDownloading = Boolean(loading);
+    const btnDownload = document.getElementById('btnDocDetailDownload');
+    const spinnerEl = document.getElementById('docDetailDownloadSpinner');
+    const iconEl = document.getElementById('docDetailDownloadIcon');
+    const textEl = document.getElementById('docDetailDownloadText');
+
+    if (spinnerEl) spinnerEl.style.display = isDetailDownloading ? 'inline-block' : 'none';
+    if (iconEl) iconEl.style.display = isDetailDownloading ? 'none' : '';
+    if (textEl) textEl.textContent = isDetailDownloading ? 'Đang tải xuống...' : 'Tải xuống PDF';
+
+    if (btnDownload) {
+      if (isDetailDownloading) {
+        btnDownload.disabled = true;
+      } else {
+        const hasValidOpenDoc = Boolean(
+          isDocDetailOpen &&
+          currentDetailDoc &&
+          currentDetailDoc.id !== undefined &&
+          currentDetailDoc.id !== null &&
+          currentDetailDoc.id !== ''
+        );
+        btnDownload.disabled = !hasValidOpenDoc;
+      }
+    }
+  }
+
+  /**
+   * Handle download action inside Document Detail Modal (PDFL-93.3)
+   * Guarantees downloading the exact currently open document ID and handles missing auth/ID or errors.
+   */
+  async function handleDocumentDetailDownload() {
+    if (!isDocDetailOpen || isDetailDownloading) {
+      return false;
+    }
+
+    const activeDoc = currentDetailDoc;
+    const docId = activeDoc && activeDoc.id !== undefined && activeDoc.id !== null && activeDoc.id !== ''
+      ? activeDoc.id
+      : null;
+
+    if (docId === null) {
+      setDocumentDetailModalState('error', 'Không xác định được ID tài liệu để tải xuống.');
+      if (typeof showToast === 'function') {
+        showToast('Không xác định được ID tài liệu để tải xuống.', 'error');
+      }
+      return false;
+    }
+
+    const token = getStoredAuthToken();
+    if (!token) {
+      const alertEl = document.getElementById('documentDetailAlert');
+      if (alertEl) {
+        alertEl.style.display = 'flex';
+        alertEl.textContent = 'Vui lòng đăng nhập để tải xuống tài liệu PDF.';
+      }
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để tải xuống tài liệu PDF.', 'error');
+      }
+      return false;
+    }
+
+    const requestSeqAtStart = detailRequestSequence;
+    const filename = activeDoc.original_filename || `document_${docId}.pdf`;
+
+    setDetailDownloadLoadingState(true);
+
+    try {
+      const ok = await downloadDocumentFile(docId, filename, token);
+      if (requestSeqAtStart === detailRequestSequence && isDocDetailOpen) {
+        setDetailDownloadLoadingState(false);
+        if (!ok) {
+          const alertEl = document.getElementById('documentDetailAlert');
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = 'Không thể tải xuống tệp PDF. Vui lòng thử lại sau.';
+          }
+        }
+      }
+      return ok;
+    } catch (_err) {
+      if (requestSeqAtStart === detailRequestSequence && isDocDetailOpen) {
+        setDetailDownloadLoadingState(false);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Integration hook for #btnDocDetailDelete (PDFL-93.3 -> PDFL-94)
+   * Prepares delete target metadata without calling DELETE API or mutating data yet.
+   */
+  function handleDocumentDetailDeleteIntent() {
+    if (!isDocDetailOpen || !currentDetailDoc || currentDetailDoc.id === undefined || currentDetailDoc.id === null) {
+      return null;
+    }
+
+    const targetPayload = {
+      id: currentDetailDoc.id,
+      original_filename: currentDetailDoc.original_filename || `document_${currentDetailDoc.id}.pdf`,
+    };
+
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      window.dispatchEvent(
+        new CustomEvent('pdfl:document-delete-intent', {
+          detail: targetPayload,
+        })
+      );
+    }
+
+    return targetPayload;
   }
 
   /**
@@ -1007,6 +1126,7 @@
 
     isDocDetailOpen = true;
     currentDetailDoc = null;
+    setDetailDownloadLoadingState(false);
 
     // Clear previous document metadata immediately so old data is never shown
     resetDocumentDetailMetadata();
@@ -1102,13 +1222,15 @@
   }
 
   /**
-   * Close Document Detail Modal (PDFL-93.1 & PDFL-93.2)
+   * Close Document Detail Modal (PDFL-93.1, PDFL-93.2 & PDFL-93.3)
    */
   function closeDocumentDetailModal() {
     const modalEl = document.getElementById('documentDetailModal');
     detailRequestSequence += 1;
     isDocDetailOpen = false;
     currentDetailDoc = null;
+    setDetailDownloadLoadingState(false);
+    resetDocumentDetailMetadata();
 
     if (modalEl) {
       modalEl.setAttribute('hidden', '');
@@ -1175,12 +1297,19 @@
   }
 
   async function downloadDocumentFile(docId, filename, token) {
+    if (docId === undefined || docId === null || docId === '') {
+      if (typeof showToast === 'function') {
+        showToast('Không xác định được ID tài liệu để tải xuống!', 'error');
+      }
+      return false;
+    }
+
     try {
       if (typeof showToast === 'function') {
         showToast(`Đang tải xuống tài liệu ${filename}...`, 'info');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/documents/${docId}/download`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(docId)}/download`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
@@ -1195,12 +1324,16 @@
       a.download = filename || `document_${docId}.pdf`;
       document.body.appendChild(a);
       a.click();
-      a.remove();
+      if (typeof a.remove === 'function') {
+        a.remove();
+      }
       window.URL.revokeObjectURL(url);
+      return true;
     } catch (_err) {
       if (typeof showToast === 'function') {
         showToast('Có lỗi xảy ra khi tải xuống tệp PDF!', 'error');
       }
+      return false;
     }
   }
 
