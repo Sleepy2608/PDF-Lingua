@@ -1,0 +1,30 @@
+[
+  {
+    "source_doc": "digital_single_column.pdf",
+    "source_lang": "en",
+    "target_lang": "vi",
+    "filename": "digital_single_column_vi.txt",
+    "ground_truth_path": "dataset\\translation_ground_truth\\digital_single_column_vi.txt"
+  },
+  {
+    "source_doc": "digital_multi_column.pdf",
+    "source_lang": "en",
+    "target_lang": "vi",
+    "filename": "digital_multi_column_vi.txt",
+    "ground_truth_path": "dataset\\translation_ground_truth\\digital_multi_column_vi.txt"
+  },
+  {
+    "source_doc": "complex_tables_and_symbols.pdf",
+    "source_lang": "en",
+    "target_lang": "vi",
+    "filename": "complex_tables_and_symbols_vi.txt",
+    "ground_truth_path": "dataset\\translation_ground_truth\\complex_tables_and_symbols_vi.txt"
+  },
+  {
+    "source_doc": "scanned_high_quality.pdf",
+    "source_lang": "en",
+    "target_lang": "vi",
+    "filename": "scanned_high_quality_vi.txt",
+    "ground_truth_path": "dataset\\translation_ground_truth\\scanned_high_quality_vi.txt"
+  }
+]

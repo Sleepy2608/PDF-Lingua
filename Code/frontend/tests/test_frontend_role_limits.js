@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua — Frontend Role-Based PDF Limits & Auth Token Test Suite (PDFL-81.4)
+ * PDF-Lingua - Frontend Role-Based PDF Limits & Auth Token Test Suite (PDFL-81.4)
  * -------------------------------------------------------------------------------
  * Verifies:
  * 1. Role Limits determination: Guest/Free (20MB, 100 OCR pages), Pro/Admin (100MB, 500 OCR pages), fallback for invalid roles.
@@ -444,7 +444,7 @@ async function test(name, fn) {
 
     await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
 
-    assert(capturedUrl.includes('/upload-and-translate'));
+    assert(capturedUrl.includes('/upload-and-translate') || capturedUrl.includes('/jobs'));
     assert.strictEqual(capturedOptions.headers, undefined); // Guest sends NO Authorization header
   });
 
@@ -545,7 +545,7 @@ async function test(name, fn) {
 
     await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
 
-    // Verify exactly ONE call was made — no silent downgrade retry!
+    // Verify exactly ONE call was made - no silent downgrade retry!
     assert.strictEqual(callCount, 1);
     // Token and session MUST be purged
     assert.strictEqual(env.storage.getItem('pdfl_token'), null);

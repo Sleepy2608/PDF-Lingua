@@ -1,0 +1,10 @@
+Báo cáo Khoa học Phức tạp & Tổng kết Tài chính
+
+Công thức Toán học & Ký hiệu:
+E = m * c^2 | f(x) = alpha * x + beta | Sum(i=1..N) [ x_i ] = Sigma
+
+Bảng Cân đối Tài chính:
+Mục                Doanh_thu_Q1   Doanh_thu_Q2   Tỷ_lệ_tăng_trưởng
+Dịch vụ Phần cứng  $120,500       $145,200       +20.5%
+Bản quyền Phần mềm $340,000       $390,000       +14.7%
+Ký hiệu Đặc biệt: @ # $ % & * [ ] { } < > / = + -
