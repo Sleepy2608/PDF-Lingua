@@ -14,6 +14,8 @@
 
   let isCollapsed = false;
   let isMobileOpen = false;
+  let isDocDetailOpen = false;
+  let currentDetailDoc = null;
   let cachedDocuments = [];
   let cachedToken = null;
   let inFlightDocsPromise = null;
@@ -81,16 +83,25 @@
       });
     }
 
-    // Keyboard navigation (Escape to close mobile drawer, Ctrl+B to toggle sidebar)
+    // Keyboard navigation (Escape to close detail modal or mobile drawer, Ctrl+B to toggle sidebar)
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isMobileOpen) {
-        closeMobileSidebar();
+      if (e.key === 'Escape') {
+        if (isDocDetailOpen) {
+          closeDocumentDetailModal();
+          return;
+        }
+        if (isMobileOpen) {
+          closeMobileSidebar();
+        }
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
         e.preventDefault();
         toggleSidebar();
       }
     });
+
+    // Document Detail Modal controls (PDFL-93.1)
+    initDocumentDetailModal();
 
     // Upload PDF Primary Action button handler
     if (btnSidebarUpload) {
@@ -786,6 +797,13 @@
       <td class="date-mono doc-cell-date">${escapeHtml(formattedDate)}</td>
       <td class="text-right">
         <div class="user-actions-group">
+          <button type="button" class="btn btn-secondary btn-sm doc-table-detail-btn" title="Xem chi tiết tài liệu" aria-label="Chi tiết ${escapeHtml(filename)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span>Chi tiết</span>
+          </button>
           <button type="button" class="btn btn-secondary btn-sm doc-table-download-btn" title="Tải xuống PDF" aria-label="Tải xuống ${escapeHtml(filename)}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -798,6 +816,14 @@
       </td>
     `;
 
+    const detailBtn = tr.querySelector('.doc-table-detail-btn');
+    if (detailBtn) {
+      detailBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDocumentDetailModal(doc);
+      });
+    }
+
     const downloadBtn = tr.querySelector('.doc-table-download-btn');
     if (downloadBtn) {
       downloadBtn.addEventListener('click', (e) => {
@@ -806,7 +832,128 @@
       });
     }
 
+    tr.addEventListener('click', () => {
+      openDocumentDetailModal(doc);
+    });
+
     return tr;
+  }
+
+  /**
+   * Initialize Document Detail Modal events (PDFL-93.1)
+   */
+  function initDocumentDetailModal() {
+    const modalEl = document.getElementById('documentDetailModal');
+    const btnCloseTop = document.getElementById('btnCloseDocumentDetailModal');
+    const btnCloseFooter = document.getElementById('btnCloseDocumentDetailFooter');
+    const btnDownload = document.getElementById('btnDocDetailDownload');
+
+    if (btnCloseTop) {
+      btnCloseTop.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeDocumentDetailModal();
+      });
+    }
+
+    if (btnCloseFooter) {
+      btnCloseFooter.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeDocumentDetailModal();
+      });
+    }
+
+    if (modalEl) {
+      modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) {
+          closeDocumentDetailModal();
+        }
+      });
+    }
+
+    if (btnDownload) {
+      btnDownload.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentDetailDoc && currentDetailDoc.id) {
+          downloadDocumentFile(
+            currentDetailDoc.id,
+            currentDetailDoc.original_filename || `document_${currentDetailDoc.id}.pdf`,
+            cachedToken || getStoredAuthToken()
+          );
+        }
+      });
+    }
+  }
+
+  /**
+   * Populate and open Document Detail Modal (PDFL-93.1)
+   */
+  function openDocumentDetailModal(doc) {
+    const modalEl = document.getElementById('documentDetailModal');
+    if (!modalEl) return;
+
+    const targetDoc = doc || {};
+    currentDetailDoc = targetDoc;
+    isDocDetailOpen = true;
+
+    const filename = targetDoc.original_filename || 'document.pdf';
+    const docIdText = targetDoc.id !== undefined && targetDoc.id !== null ? `#${targetDoc.id}` : '---';
+    const formattedSize = formatFileSize(targetDoc.file_size_bytes) || '0 B';
+    const pageCountVal = targetDoc.page_count !== undefined && targetDoc.page_count !== null
+      ? `${targetDoc.page_count} trang`
+      : '1 trang';
+    const formattedLang = formatTargetLang(targetDoc.target_lang);
+    const isOcr = Boolean(targetDoc.is_ocr_used);
+    const formattedDate = formatDate(targetDoc.created_at) || '---';
+
+    const heroFilenameEl = document.getElementById('docDetailHeroFilename');
+    const heroSubEl = document.getElementById('docDetailHeroSub');
+    const filenameEl = document.getElementById('docDetailFilename');
+    const idEl = document.getElementById('docDetailId');
+    const sizeEl = document.getElementById('docDetailSize');
+    const pageCountEl = document.getElementById('docDetailPageCount');
+    const targetLangEl = document.getElementById('docDetailTargetLang');
+    const ocrStatusEl = document.getElementById('docDetailOcrStatus');
+    const createdAtEl = document.getElementById('docDetailCreatedAt');
+    const btnDownload = document.getElementById('btnDocDetailDownload');
+    const btnDelete = document.getElementById('btnDocDetailDelete');
+
+    if (heroFilenameEl) heroFilenameEl.textContent = filename;
+    if (heroSubEl) heroSubEl.textContent = `Mã tài liệu: ${docIdText}`;
+    if (filenameEl) filenameEl.textContent = filename;
+    if (idEl) idEl.textContent = docIdText;
+    if (sizeEl) sizeEl.textContent = formattedSize;
+    if (pageCountEl) pageCountEl.textContent = pageCountVal;
+    if (targetLangEl) targetLangEl.textContent = formattedLang;
+    if (ocrStatusEl) {
+      ocrStatusEl.innerHTML = isOcr
+        ? '<span class="meta-pill ocr">Quét OCR</span>'
+        : '<span class="meta-pill digital">PDF Số</span>';
+    }
+    if (createdAtEl) createdAtEl.textContent = formattedDate;
+
+    if (btnDownload && targetDoc.id !== undefined && targetDoc.id !== null) {
+      btnDownload.dataset.docId = String(targetDoc.id);
+    }
+    if (btnDelete && targetDoc.id !== undefined && targetDoc.id !== null) {
+      btnDelete.dataset.docId = String(targetDoc.id);
+    }
+
+    modalEl.removeAttribute('hidden');
+    modalEl.style.display = 'flex';
+  }
+
+  /**
+   * Close Document Detail Modal (PDFL-93.1)
+   */
+  function closeDocumentDetailModal() {
+    const modalEl = document.getElementById('documentDetailModal');
+    isDocDetailOpen = false;
+    currentDetailDoc = null;
+
+    if (modalEl) {
+      modalEl.setAttribute('hidden', '');
+      modalEl.style.display = 'none';
+    }
   }
 
   function formatTargetLang(code) {
@@ -940,5 +1087,7 @@
     triggerUpload: triggerPdfUpload,
     openDocumentsView: openDocumentsView,
     closeDocumentsView: closeDocumentsView,
+    openDocumentDetailModal: openDocumentDetailModal,
+    closeDocumentDetailModal: closeDocumentDetailModal,
   };
 })();

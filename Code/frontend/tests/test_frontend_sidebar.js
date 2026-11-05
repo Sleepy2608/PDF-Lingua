@@ -69,7 +69,7 @@ class MockElement {
   }
   click() {
     if (this.listeners['click']) {
-      this.listeners['click'].forEach((fn) => fn({ preventDefault: () => {}, stopPropagation: () => {} }));
+      this.listeners['click'].forEach((fn) => fn({ target: this, preventDefault: () => {}, stopPropagation: () => {} }));
     }
   }
   scrollIntoView() {}
@@ -141,6 +141,20 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     btnDocsLoginPrompt: new MockElement('btnDocsLoginPrompt', 'button'),
     documentsEmptyState: new MockElement('documentsEmptyState', 'div'),
     documentsSearchInput: new MockElement('documentsSearchInput', 'input'),
+    documentDetailModal: new MockElement('documentDetailModal', 'div'),
+    btnCloseDocumentDetailModal: new MockElement('btnCloseDocumentDetailModal', 'button'),
+    btnCloseDocumentDetailFooter: new MockElement('btnCloseDocumentDetailFooter', 'button'),
+    btnDocDetailDownload: new MockElement('btnDocDetailDownload', 'button'),
+    btnDocDetailDelete: new MockElement('btnDocDetailDelete', 'button'),
+    docDetailHeroFilename: new MockElement('docDetailHeroFilename', 'h3'),
+    docDetailHeroSub: new MockElement('docDetailHeroSub', 'p'),
+    docDetailFilename: new MockElement('docDetailFilename', 'span'),
+    docDetailId: new MockElement('docDetailId', 'span'),
+    docDetailSize: new MockElement('docDetailSize', 'span'),
+    docDetailPageCount: new MockElement('docDetailPageCount', 'span'),
+    docDetailTargetLang: new MockElement('docDetailTargetLang', 'span'),
+    docDetailOcrStatus: new MockElement('docDetailOcrStatus', 'span'),
+    docDetailCreatedAt: new MockElement('docDetailCreatedAt', 'span'),
     btnOpenAdmin: new MockElement('btnOpenAdmin', 'button'),
   };
 
@@ -819,6 +833,107 @@ async function main() {
       env.sandbox.window.pdfLinguaWorkspace.getCurrentDocData().translated_text,
       'Xin chào thế giới',
       'currentDocData must remain intact after auto-refresh'
+    );
+  });
+
+  // 5b. PDFL-93.1: Document Detail Modal UI
+  await runTest('PDFL-93.1: HTML markup includes #documentDetailModal with all 7 metadata areas and action buttons', () => {
+    assert.ok(htmlSource.includes('id="documentDetailModal"'), 'documentDetailModal must exist');
+    assert.ok(htmlSource.includes('id="docDetailFilename"'), 'docDetailFilename must exist');
+    assert.ok(htmlSource.includes('id="docDetailId"'), 'docDetailId must exist');
+    assert.ok(htmlSource.includes('id="docDetailSize"'), 'docDetailSize must exist');
+    assert.ok(htmlSource.includes('id="docDetailPageCount"'), 'docDetailPageCount must exist');
+    assert.ok(htmlSource.includes('id="docDetailTargetLang"'), 'docDetailTargetLang must exist');
+    assert.ok(htmlSource.includes('id="docDetailOcrStatus"'), 'docDetailOcrStatus must exist');
+    assert.ok(htmlSource.includes('id="docDetailCreatedAt"'), 'docDetailCreatedAt must exist');
+    assert.ok(htmlSource.includes('id="btnCloseDocumentDetailModal"'), 'Top close button must exist');
+    assert.ok(htmlSource.includes('id="btnCloseDocumentDetailFooter"'), 'Footer close button must exist');
+    assert.ok(htmlSource.includes('id="btnDocDetailDownload"'), 'Download action placeholder button must exist');
+    assert.ok(htmlSource.includes('id="btnDocDetailDelete"'), 'Delete action placeholder button must exist');
+  });
+
+  await runTest('PDFL-93.1: Opening Document Detail Modal populates all 7 metadata fields and closing via close buttons works', () => {
+    const env = createTestEnvironment();
+    const sampleDoc = {
+      id: 931,
+      original_filename: 'Deep_Learning_Architecture.pdf',
+      file_size_bytes: 3145728, // 3 MB
+      page_count: 24,
+      target_lang: 'vi',
+      is_ocr_used: true,
+      created_at: '2026-11-05T10:30:00Z',
+    };
+
+    // Open modal
+    env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal(sampleDoc);
+
+    assert.strictEqual(env.elements.documentDetailModal.hasAttribute('hidden'), false, 'Modal hidden attribute must be removed');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex', 'Modal display must be flex');
+    assert.strictEqual(env.elements.docDetailHeroFilename.textContent, 'Deep_Learning_Architecture.pdf');
+    assert.strictEqual(env.elements.docDetailFilename.textContent, 'Deep_Learning_Architecture.pdf');
+    assert.strictEqual(env.elements.docDetailId.textContent, '#931');
+    assert.strictEqual(env.elements.docDetailSize.textContent, '3 MB');
+    assert.strictEqual(env.elements.docDetailPageCount.textContent, '24 trang');
+    assert.strictEqual(env.elements.docDetailTargetLang.textContent, 'Tiếng Việt (vi)');
+    assert.ok(env.elements.docDetailOcrStatus.innerHTML.includes('Quét OCR'), 'OCR status must show Quét OCR');
+    assert.strictEqual(env.elements.docDetailCreatedAt.textContent, '05/11/2026');
+    assert.strictEqual(env.elements.btnDocDetailDownload.dataset.docId, '931');
+    assert.strictEqual(env.elements.btnDocDetailDelete.dataset.docId, '931');
+
+    // Close via top close button (#btnCloseDocumentDetailModal)
+    env.elements.btnCloseDocumentDetailModal.click();
+    assert.strictEqual(env.elements.documentDetailModal.hasAttribute('hidden'), true, 'Modal must have hidden attribute after close');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'none', 'Modal display must be none after close');
+
+    // Re-open and close via footer close button (#btnCloseDocumentDetailFooter)
+    env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({
+      ...sampleDoc,
+      is_ocr_used: false,
+    });
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex');
+    assert.ok(env.elements.docDetailOcrStatus.innerHTML.includes('PDF Số'), 'OCR status must show PDF Số when is_ocr_used is false');
+
+    env.elements.btnCloseDocumentDetailFooter.click();
+    assert.strictEqual(env.elements.documentDetailModal.hasAttribute('hidden'), true);
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'none');
+  });
+
+  await runTest('PDFL-93.1: Pressing Escape key or clicking backdrop closes Document Detail Modal without disrupting workspace state', () => {
+    const env = createTestEnvironment();
+    env.sandbox.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => ({ filename: 'active.pdf', translated_text: 'Bản dịch đang mở' }),
+    };
+
+    const sampleDoc = {
+      id: 932,
+      original_filename: 'Research_Notes.pdf',
+      file_size_bytes: 512000,
+      page_count: 8,
+      target_lang: 'en',
+      is_ocr_used: false,
+      created_at: '2026-11-05T11:00:00Z',
+    };
+
+    // Open modal and press Escape
+    env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal(sampleDoc);
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex');
+
+    env.triggerDocKeydown({ key: 'Escape' });
+    assert.strictEqual(env.elements.documentDetailModal.hasAttribute('hidden'), true, 'Escape key must close Document Detail Modal');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'none');
+
+    // Re-open modal and click backdrop
+    env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal(sampleDoc);
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex');
+
+    env.elements.documentDetailModal.click();
+    assert.strictEqual(env.elements.documentDetailModal.hasAttribute('hidden'), true, 'Backdrop click must close Document Detail Modal');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'none');
+
+    // Verify workspace state is preserved
+    assert.strictEqual(
+      env.sandbox.window.pdfLinguaWorkspace.getCurrentDocData().translated_text,
+      'Bản dịch đang mở'
     );
   });
 
