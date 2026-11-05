@@ -1610,6 +1610,15 @@
             </div>
 
             <div class="account-modal-body" id="documentDetailModalBody">
+                <!-- Alert notification (PDFL-93.2) -->
+                <div class="form-alert alert-error" id="documentDetailAlert" role="alert" style="display: none; margin-bottom: 1rem;"></div>
+
+                <!-- Loading State (PDFL-93.2) -->
+                <div class="account-loading-wrap" id="documentDetailLoading" style="display: none;">
+                    <span class="account-spinner" aria-hidden="true"></span>
+                    <p class="account-loading-text">Đang tải thông tin chi tiết tài liệu...</p>
+                </div>
+
                 <div class="account-info-card" id="documentDetailContent">
                     <div class="account-header-hero">
                         <div class="account-avatar-large" id="docDetailIconBadge" style="border-radius: 12px; font-size: 0.95rem; letter-spacing: 0.04em;">PDF</div>

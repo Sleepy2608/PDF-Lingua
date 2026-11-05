@@ -16,6 +16,7 @@
   let isMobileOpen = false;
   let isDocDetailOpen = false;
   let currentDetailDoc = null;
+  let detailRequestSequence = 0;
   let cachedDocuments = [];
   let cachedToken = null;
   let inFlightDocsPromise = null;
@@ -885,25 +886,48 @@
   }
 
   /**
-   * Populate and open Document Detail Modal (PDFL-93.1)
+   * Reset all 7 metadata display fields in #documentDetailModal to prevent stale data (PDFL-93.2)
    */
-  function openDocumentDetailModal(doc) {
-    const modalEl = document.getElementById('documentDetailModal');
-    if (!modalEl) return;
+  function resetDocumentDetailMetadata() {
+    const heroFilenameEl = document.getElementById('docDetailHeroFilename');
+    const heroSubEl = document.getElementById('docDetailHeroSub');
+    const filenameEl = document.getElementById('docDetailFilename');
+    const idEl = document.getElementById('docDetailId');
+    const sizeEl = document.getElementById('docDetailSize');
+    const pageCountEl = document.getElementById('docDetailPageCount');
+    const targetLangEl = document.getElementById('docDetailTargetLang');
+    const ocrStatusEl = document.getElementById('docDetailOcrStatus');
+    const createdAtEl = document.getElementById('docDetailCreatedAt');
+    const btnDownload = document.getElementById('btnDocDetailDownload');
+    const btnDelete = document.getElementById('btnDocDetailDelete');
 
-    const targetDoc = doc || {};
-    currentDetailDoc = targetDoc;
-    isDocDetailOpen = true;
+    if (heroFilenameEl) heroFilenameEl.textContent = '---';
+    if (heroSubEl) heroSubEl.textContent = 'Mã tài liệu: #---';
+    if (filenameEl) filenameEl.textContent = '---';
+    if (idEl) idEl.textContent = '---';
+    if (sizeEl) sizeEl.textContent = '---';
+    if (pageCountEl) pageCountEl.textContent = '---';
+    if (targetLangEl) targetLangEl.textContent = '---';
+    if (ocrStatusEl) ocrStatusEl.innerHTML = '---';
+    if (createdAtEl) createdAtEl.textContent = '---';
+    if (btnDownload && btnDownload.dataset) delete btnDownload.dataset.docId;
+    if (btnDelete && btnDelete.dataset) delete btnDelete.dataset.docId;
+  }
 
-    const filename = targetDoc.original_filename || 'document.pdf';
-    const docIdText = targetDoc.id !== undefined && targetDoc.id !== null ? `#${targetDoc.id}` : '---';
-    const formattedSize = formatFileSize(targetDoc.file_size_bytes) || '0 B';
-    const pageCountVal = targetDoc.page_count !== undefined && targetDoc.page_count !== null
-      ? `${targetDoc.page_count} trang`
+  /**
+   * Render document metadata into the 7 fields of #documentDetailModal (PDFL-93.1 & PDFL-93.2)
+   */
+  function populateDocumentDetailMetadata(targetDoc) {
+    const docData = targetDoc || {};
+    const filename = docData.original_filename || 'document.pdf';
+    const docIdText = docData.id !== undefined && docData.id !== null ? `#${docData.id}` : '---';
+    const formattedSize = formatFileSize(docData.file_size_bytes) || '0 B';
+    const pageCountVal = docData.page_count !== undefined && docData.page_count !== null
+      ? `${docData.page_count} trang`
       : '1 trang';
-    const formattedLang = formatTargetLang(targetDoc.target_lang);
-    const isOcr = Boolean(targetDoc.is_ocr_used);
-    const formattedDate = formatDate(targetDoc.created_at) || '---';
+    const formattedLang = formatTargetLang(docData.target_lang);
+    const isOcr = Boolean(docData.is_ocr_used);
+    const formattedDate = formatDate(docData.created_at) || '---';
 
     const heroFilenameEl = document.getElementById('docDetailHeroFilename');
     const heroSubEl = document.getElementById('docDetailHeroSub');
@@ -931,22 +955,158 @@
     }
     if (createdAtEl) createdAtEl.textContent = formattedDate;
 
-    if (btnDownload && targetDoc.id !== undefined && targetDoc.id !== null) {
-      btnDownload.dataset.docId = String(targetDoc.id);
+    if (btnDownload && docData.id !== undefined && docData.id !== null) {
+      btnDownload.dataset.docId = String(docData.id);
     }
-    if (btnDelete && targetDoc.id !== undefined && targetDoc.id !== null) {
-      btnDelete.dataset.docId = String(targetDoc.id);
+    if (btnDelete && docData.id !== undefined && docData.id !== null) {
+      btnDelete.dataset.docId = String(docData.id);
     }
-
-    modalEl.removeAttribute('hidden');
-    modalEl.style.display = 'flex';
   }
 
   /**
-   * Close Document Detail Modal (PDFL-93.1)
+   * Toggle UI states inside #documentDetailModal: 'loading' | 'content' | 'error' (PDFL-93.2)
+   */
+  function setDocumentDetailModalState(state, errorMessage) {
+    const loadingEl = document.getElementById('documentDetailLoading');
+    const alertEl = document.getElementById('documentDetailAlert');
+    const contentEl = document.getElementById('documentDetailContent');
+    const btnDownload = document.getElementById('btnDocDetailDownload');
+    const btnDelete = document.getElementById('btnDocDetailDelete');
+
+    if (loadingEl) loadingEl.style.display = state === 'loading' ? 'flex' : 'none';
+    if (contentEl) contentEl.style.display = state === 'content' ? 'block' : 'none';
+
+    if (alertEl) {
+      if (state === 'error') {
+        alertEl.style.display = 'flex';
+        alertEl.textContent = errorMessage || 'Không thể tải thông tin chi tiết tài liệu.';
+      } else {
+        alertEl.style.display = 'none';
+        alertEl.textContent = '';
+      }
+    }
+
+    const disableActions = state !== 'content';
+    if (btnDownload) btnDownload.disabled = disableActions;
+    if (btnDelete) btnDelete.disabled = disableActions;
+  }
+
+  /**
+   * Open Document Detail Modal and fetch latest detail from GET /api/documents/{document_id}
+   * Prevents stale metadata display and out-of-order response overwriting (PDFL-93.1 & PDFL-93.2)
+   */
+  async function openDocumentDetailModal(docOrId) {
+    const modalEl = document.getElementById('documentDetailModal');
+    if (!modalEl) return null;
+
+    const isObj = docOrId && typeof docOrId === 'object';
+    const docId = isObj ? docOrId.id : docOrId;
+
+    detailRequestSequence += 1;
+    const requestSeq = detailRequestSequence;
+
+    isDocDetailOpen = true;
+    currentDetailDoc = null;
+
+    // Clear previous document metadata immediately so old data is never shown
+    resetDocumentDetailMetadata();
+
+    modalEl.removeAttribute('hidden');
+    modalEl.style.display = 'flex';
+
+    const token = getStoredAuthToken() || cachedToken;
+
+    // Fallback when invoked without a valid token and with a static object (offline/UI-only preview)
+    if (!token) {
+      if (isObj && docOrId.original_filename && !cachedToken) {
+        currentDetailDoc = docOrId;
+        populateDocumentDetailMetadata(docOrId);
+        setDocumentDetailModalState('content');
+        return docOrId;
+      }
+      setDocumentDetailModalState('error', 'Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+      return null;
+    }
+
+    if (docId === undefined || docId === null || docId === '') {
+      setDocumentDetailModalState('error', 'Không xác định được ID tài liệu.');
+      return null;
+    }
+
+    setDocumentDetailModalState('loading');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(docId)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // Discard out-of-order response or if modal was closed
+      if (requestSeq !== detailRequestSequence || !isDocDetailOpen) {
+        return null;
+      }
+
+      if (response.status === 401) {
+        resetDocumentDetailMetadata();
+        setDocumentDetailModalState('error', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.');
+        return null;
+      }
+
+      if (response.status === 404) {
+        resetDocumentDetailMetadata();
+        setDocumentDetailModalState('error', 'Tài liệu không tồn tại hoặc bạn không có quyền truy cập (404).');
+        return null;
+      }
+
+      if (!response.ok) {
+        let errMsg = 'Lỗi máy chủ khi tải thông tin chi tiết tài liệu.';
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) errMsg = errData.detail;
+        } catch (_e) {}
+        resetDocumentDetailMetadata();
+        setDocumentDetailModalState('error', errMsg);
+        return null;
+      }
+
+      const result = await response.json();
+
+      // Re-check sequence after awaiting JSON parsing
+      if (requestSeq !== detailRequestSequence || !isDocDetailOpen) {
+        return null;
+      }
+
+      const detailData = result && result.data ? result.data : (isObj ? docOrId : null);
+      if (!detailData || typeof detailData !== 'object') {
+        resetDocumentDetailMetadata();
+        setDocumentDetailModalState('error', 'Dữ liệu tài liệu trả về không hợp lệ.');
+        return null;
+      }
+
+      currentDetailDoc = detailData;
+      populateDocumentDetailMetadata(detailData);
+      setDocumentDetailModalState('content');
+      return detailData;
+    } catch (err) {
+      if (requestSeq !== detailRequestSequence || !isDocDetailOpen) {
+        return null;
+      }
+      resetDocumentDetailMetadata();
+      const errMsg = err && err.message
+        ? err.message
+        : 'Không thể kết nối tới máy chủ để lấy chi tiết tài liệu.';
+      setDocumentDetailModalState('error', errMsg);
+      return null;
+    }
+  }
+
+  /**
+   * Close Document Detail Modal (PDFL-93.1 & PDFL-93.2)
    */
   function closeDocumentDetailModal() {
     const modalEl = document.getElementById('documentDetailModal');
+    detailRequestSequence += 1;
     isDocDetailOpen = false;
     currentDetailDoc = null;
 

@@ -142,6 +142,9 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     documentsEmptyState: new MockElement('documentsEmptyState', 'div'),
     documentsSearchInput: new MockElement('documentsSearchInput', 'input'),
     documentDetailModal: new MockElement('documentDetailModal', 'div'),
+    documentDetailAlert: new MockElement('documentDetailAlert', 'div'),
+    documentDetailLoading: new MockElement('documentDetailLoading', 'div'),
+    documentDetailContent: new MockElement('documentDetailContent', 'div'),
     btnCloseDocumentDetailModal: new MockElement('btnCloseDocumentDetailModal', 'button'),
     btnCloseDocumentDetailFooter: new MockElement('btnCloseDocumentDetailFooter', 'button'),
     btnDocDetailDownload: new MockElement('btnDocDetailDownload', 'button'),
@@ -935,6 +938,242 @@ async function main() {
       env.sandbox.window.pdfLinguaWorkspace.getCurrentDocData().translated_text,
       'Bản dịch đang mở'
     );
+  });
+
+  // 5c. PDFL-93.2: Document Detail API Integration
+  await runTest('PDFL-93.2: Fetches GET /api/documents/{document_id} with Bearer token, shows loading state, and renders all 7 metadata fields from API response', async () => {
+    let capturedUrl = null;
+    let capturedAuthHeader = null;
+    let resolveDetailFetch = null;
+
+    const apiDetailDoc = {
+      id: 9320,
+      original_filename: 'Quantum_Computing_2026_Final.pdf',
+      file_size_bytes: 4194304, // 4 MB
+      page_count: 32,
+      target_lang: 'en',
+      is_ocr_used: true,
+      created_at: '2026-11-06T09:15:00Z',
+    };
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-detail-token-93-2',
+      },
+      (url, options = {}) => {
+        if (url.includes('/api/documents/9320')) {
+          capturedUrl = url;
+          capturedAuthHeader = options.headers ? options.headers['Authorization'] : null;
+          return new Promise((resolve) => {
+            resolveDetailFetch = resolve;
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, data: [] }),
+        });
+      }
+    );
+
+    // Call openDocumentDetailModal with summary object that has older/partial values
+    const openPromise = env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({
+      id: 9320,
+      original_filename: 'Old_Cached_Name.pdf',
+    });
+
+    // Verify Loading State while request is in-flight
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex');
+    assert.strictEqual(env.elements.documentDetailLoading.style.display, 'flex', 'Loading indicator must be visible while fetching detail');
+    assert.strictEqual(env.elements.documentDetailContent.style.display, 'none', 'Content card must be hidden while loading');
+    assert.strictEqual(env.elements.documentDetailAlert.style.display, 'none');
+    assert.strictEqual(env.elements.docDetailFilename.textContent, '---', 'Must not display unverified/old metadata while loading');
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, true, 'Download button disabled during loading');
+    assert.strictEqual(env.elements.btnDocDetailDelete.disabled, true, 'Delete button disabled during loading');
+
+    // Resolve API call
+    resolveDetailFetch({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: apiDetailDoc,
+      }),
+    });
+
+    await openPromise;
+
+    assert.ok(capturedUrl.endsWith('/api/documents/9320'), 'Must request GET /api/documents/9320');
+    assert.strictEqual(capturedAuthHeader, 'Bearer jwt-detail-token-93-2', 'Must attach Authorization Bearer token');
+    assert.strictEqual(env.elements.documentDetailLoading.style.display, 'none', 'Loading state hidden after response');
+    assert.strictEqual(env.elements.documentDetailContent.style.display, 'block', 'Content card displayed after response');
+    assert.strictEqual(env.elements.documentDetailAlert.style.display, 'none');
+
+    // Check all 7 metadata fields populated from actual API response
+    assert.strictEqual(env.elements.docDetailFilename.textContent, 'Quantum_Computing_2026_Final.pdf');
+    assert.strictEqual(env.elements.docDetailId.textContent, '#9320');
+    assert.strictEqual(env.elements.docDetailSize.textContent, '4 MB');
+    assert.strictEqual(env.elements.docDetailPageCount.textContent, '32 trang');
+    assert.strictEqual(env.elements.docDetailTargetLang.textContent, 'Tiếng Anh (en)');
+    assert.ok(env.elements.docDetailOcrStatus.innerHTML.includes('Quét OCR'));
+    assert.strictEqual(env.elements.docDetailCreatedAt.textContent, '06/11/2026');
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, false);
+    assert.strictEqual(env.elements.btnDocDetailDelete.disabled, false);
+  });
+
+  await runTest('PDFL-93.2: Handles 401, 404, and 500 errors gracefully and clears previous metadata so stale data is never shown', async () => {
+    let mockStatus = 200;
+    let mockDetail = '';
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-error-handling-token',
+      },
+      async (url) => {
+        if (url.includes('/api/documents/')) {
+          if (mockStatus === 200) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({
+                success: true,
+                data: {
+                  id: 100,
+                  original_filename: 'Valid_First_Doc.pdf',
+                  file_size_bytes: 1048576,
+                  page_count: 10,
+                  target_lang: 'vi',
+                  is_ocr_used: false,
+                  created_at: '2026-11-05T08:00:00Z',
+                },
+              }),
+            };
+          }
+          return {
+            ok: false,
+            status: mockStatus,
+            json: async () => ({ detail: mockDetail }),
+          };
+        }
+        return { ok: true, json: async () => ({ success: true, data: [] }) };
+      }
+    );
+
+    // 1. First load a valid document so metadata fields are populated
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 100 });
+    assert.strictEqual(env.elements.docDetailFilename.textContent, 'Valid_First_Doc.pdf');
+    assert.strictEqual(env.elements.docDetailId.textContent, '#100');
+
+    // 2. Switch to another document that returns 404 Not Found
+    mockStatus = 404;
+    mockDetail = 'Tài liệu không tồn tại hoặc bạn không có quyền truy cập.';
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 404 });
+
+    assert.strictEqual(env.elements.documentDetailLoading.style.display, 'none');
+    assert.strictEqual(env.elements.documentDetailContent.style.display, 'none', 'Metadata content must be hidden on 404 error');
+    assert.strictEqual(env.elements.documentDetailAlert.style.display, 'flex', 'Error alert must be displayed on 404');
+    assert.ok(env.elements.documentDetailAlert.textContent.includes('404'), 'Alert must mention 404 not found');
+    // Verify stale metadata from doc #100 was cleared
+    assert.strictEqual(env.elements.docDetailFilename.textContent, '---', 'Stale filename must be cleared');
+    assert.strictEqual(env.elements.docDetailId.textContent, '---', 'Stale ID must be cleared');
+    assert.strictEqual(env.elements.btnDocDetailDownload.disabled, true);
+    assert.strictEqual(env.elements.btnDocDetailDelete.disabled, true);
+
+    // 3. Test 401 Unauthorized
+    mockStatus = 401;
+    mockDetail = 'Not authenticated';
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 401 });
+
+    assert.strictEqual(env.elements.documentDetailContent.style.display, 'none');
+    assert.strictEqual(env.elements.documentDetailAlert.style.display, 'flex');
+    assert.ok(env.elements.documentDetailAlert.textContent.includes('401'), 'Alert must mention 401 unauthorized');
+    assert.strictEqual(env.elements.docDetailFilename.textContent, '---');
+
+    // 4. Test 500 Internal Server Error
+    mockStatus = 500;
+    mockDetail = 'Lỗi kết nối cơ sở dữ liệu máy chủ.';
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 500 });
+
+    assert.strictEqual(env.elements.documentDetailContent.style.display, 'none');
+    assert.strictEqual(env.elements.documentDetailAlert.style.display, 'flex');
+    assert.ok(env.elements.documentDetailAlert.textContent.includes('Lỗi kết nối cơ sở dữ liệu máy chủ.'));
+    assert.strictEqual(env.elements.docDetailFilename.textContent, '---');
+  });
+
+  await runTest('PDFL-93.2: Rapid switching between two documents ignores out-of-order responses from earlier requests', async () => {
+    let resolveDocA = null;
+    let resolveDocB = null;
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-race-condition-token',
+      },
+      (url) => {
+        if (url.includes('/api/documents/701')) {
+          return new Promise((resolve) => {
+            resolveDocA = resolve;
+          });
+        }
+        if (url.includes('/api/documents/702')) {
+          return new Promise((resolve) => {
+            resolveDocB = resolve;
+          });
+        }
+        return Promise.resolve({ ok: true, json: async () => ({ success: true, data: [] }) });
+      }
+    );
+
+    // User clicks Doc A (#701), then rapidly switches to Doc B (#702) before Doc A finishes
+    const promiseA = env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 701 });
+    const promiseB = env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 702 });
+
+    // Doc B (#702) resolves FIRST
+    resolveDocB({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: {
+          id: 702,
+          original_filename: 'Second_Selected_Doc_B.pdf',
+          file_size_bytes: 2097152,
+          page_count: 15,
+          target_lang: 'fr',
+          is_ocr_used: false,
+          created_at: '2026-11-06T12:00:00Z',
+        },
+      }),
+    });
+
+    await promiseB;
+
+    assert.strictEqual(env.elements.docDetailFilename.textContent, 'Second_Selected_Doc_B.pdf');
+    assert.strictEqual(env.elements.docDetailId.textContent, '#702');
+
+    // Now Doc A (#701) resolves LATE (out-of-order)
+    resolveDocA({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: {
+          id: 701,
+          original_filename: 'Stale_First_Doc_A.pdf',
+          file_size_bytes: 512000,
+          page_count: 3,
+          target_lang: 'vi',
+          is_ocr_used: true,
+          created_at: '2026-11-01T10:00:00Z',
+        },
+      }),
+    });
+
+    await promiseA;
+
+    // UI must still display Doc B (#702) and NOT be overwritten by stale Doc A (#701)
+    assert.strictEqual(env.elements.docDetailFilename.textContent, 'Second_Selected_Doc_B.pdf', 'Late response from Doc A must not overwrite Doc B');
+    assert.strictEqual(env.elements.docDetailId.textContent, '#702');
+    assert.strictEqual(env.elements.docDetailPageCount.textContent, '15 trang');
+    assert.strictEqual(env.elements.docDetailTargetLang.textContent, 'Tiếng Pháp (fr)');
   });
 
   // 6. Default & Toggle Behavior
