@@ -68,8 +68,20 @@ function createEnv() {
     'toggleNewPassword', 'confirmNewPasswordInput', 'confirmNewPasswordInputError',
     'toggleConfirmNewPassword', 'btnCancelChangePassword', 'btnSubmitChangePassword',
     'changePasswordSpinner', 'changePasswordBtnText',
+    'toggleRegPassword', 'toggleRegConfirmPassword', 'toggleLoginPassword',
   ];
   const e = Object.fromEntries(ids.map((id) => [id, new Element(id)]));
+  ['toggleRegPassword', 'toggleRegConfirmPassword', 'toggleLoginPassword'].forEach((btnId) => {
+    const eyeOpen = new Element(`${btnId}_eyeOpen`);
+    const eyeClosed = new Element(`${btnId}_eyeClosed`);
+    e[btnId].eyeOpen = eyeOpen;
+    e[btnId].eyeClosed = eyeClosed;
+    e[btnId].querySelector = (sel) => {
+      if (sel === '.eye-open') return eyeOpen;
+      if (sel === '.eye-closed') return eyeClosed;
+      return null;
+    };
+  });
   const localStorage = new MockLocalStorage();
 
   const document = {
@@ -980,6 +992,114 @@ async function test(name, fn) {
     assert.match(cssContent, /\.btn-edit-toggle:hover\s*\{[^}]*color:\s*var\(--color-primary-indigo-dark\);/s);
     const btnSmMatches = cssContent.match(/^\.btn-sm\s*\{/gm) || [];
     assert.strictEqual(btnSmMatches.length, 1, `Expected exactly 1 .btn-sm definition, found ${btnSmMatches.length}`);
+  });
+
+  // 37. PDFL-59 Group 2 (#3): Closing Login and Register modals resets password visibility, errors, alerts, and inputs
+  await test('PDFL-59 (#3): Closing Login and Register modals resets password visibility, field errors, alerts, and inputs', () => {
+    const { e, a } = createEnv();
+
+    // Open Login modal and dirty its state
+    a.openLoginModal();
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), false);
+    e.loginEmail.value = 'dirty@example.com';
+    e.loginPassword.value = 'Secret123';
+    e.loginPassword.type = 'text';
+    e.toggleLoginPassword.eyeOpen.style.display = 'none';
+    e.toggleLoginPassword.eyeClosed.style.display = 'block';
+    e.toggleLoginPassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+    a.showFieldError(e.loginEmail, 'Lỗi email cũ');
+    a.showFieldError(e.loginPassword, 'Lỗi mật khẩu cũ');
+    a.showLoginAlert('Thông báo lỗi cũ', 'error');
+
+    // Close Login modal -> everything must be reset
+    a.closeLoginModal();
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.loginEmail.value, '');
+    assert.strictEqual(e.loginPassword.value, '');
+    assert.strictEqual(e.loginPassword.type, 'password');
+    assert.strictEqual(e.toggleLoginPassword.getAttribute('aria-label'), 'Hiện mật khẩu');
+    assert.strictEqual(e.toggleLoginPassword.eyeOpen.style.display, 'block');
+    assert.strictEqual(e.toggleLoginPassword.eyeClosed.style.display, 'none');
+    assert.strictEqual(e.loginEmailError.textContent, '');
+    assert.strictEqual(e.loginEmail.classList.contains('has-error'), false);
+    assert.strictEqual(e.loginPasswordError.textContent, '');
+    assert.strictEqual(e.loginAlert.textContent, '');
+    assert.strictEqual(e.loginAlert.style.display, 'none');
+
+    // Open Register modal and dirty its state
+    a.openRegisterModal();
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), false);
+    e.regFullName.value = 'Người Dùng Cũ';
+    e.regEmail.value = 'regdirty@example.com';
+    e.regPassword.value = 'Pass12345';
+    e.regConfirmPassword.value = 'Pass12345';
+    e.regPassword.type = 'text';
+    e.regConfirmPassword.type = 'text';
+    e.toggleRegPassword.eyeOpen.style.display = 'none';
+    e.toggleRegPassword.eyeClosed.style.display = 'block';
+    e.toggleRegPassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+    e.toggleRegConfirmPassword.eyeOpen.style.display = 'none';
+    e.toggleRegConfirmPassword.eyeClosed.style.display = 'block';
+    e.toggleRegConfirmPassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+    a.showFieldError(e.regEmail, 'Email đã tồn tại');
+    a.showFieldError(e.regPassword, 'Mật khẩu yếu');
+    a.showAlert('Đăng ký thất bại', 'error');
+
+    // Close Register modal -> everything must be reset
+    a.closeRegisterModal();
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.regFullName.value, '');
+    assert.strictEqual(e.regEmail.value, '');
+    assert.strictEqual(e.regPassword.value, '');
+    assert.strictEqual(e.regConfirmPassword.value, '');
+    assert.strictEqual(e.regPassword.type, 'password');
+    assert.strictEqual(e.regConfirmPassword.type, 'password');
+    assert.strictEqual(e.toggleRegPassword.getAttribute('aria-label'), 'Hiện mật khẩu');
+    assert.strictEqual(e.toggleRegConfirmPassword.getAttribute('aria-label'), 'Hiện mật khẩu xác nhận');
+    assert.strictEqual(e.toggleRegPassword.eyeOpen.style.display, 'block');
+    assert.strictEqual(e.toggleRegPassword.eyeClosed.style.display, 'none');
+    assert.strictEqual(e.toggleRegConfirmPassword.eyeOpen.style.display, 'block');
+    assert.strictEqual(e.toggleRegConfirmPassword.eyeClosed.style.display, 'none');
+    assert.strictEqual(e.regEmailError.textContent, '');
+    assert.strictEqual(e.regPasswordError.textContent, '');
+    assert.strictEqual(e.registerAlert.textContent, '');
+    assert.strictEqual(e.registerAlert.style.display, 'none');
+  });
+
+  // 38. PDFL-59 Group 2 (#3): Switching between Login and Register modals guarantees clean state
+  await test('PDFL-59 (#3): Switching between Login and Register cleans up errors, alerts, and password toggles', () => {
+    const { e, a } = createEnv();
+
+    // Start in Login modal with errors and visible password
+    a.openLoginModal();
+    e.loginEmail.value = 'switch@example.com';
+    e.loginPassword.value = '12345';
+    e.loginPassword.type = 'text';
+    a.showFieldError(e.loginEmail, 'Lỗi email');
+    a.showLoginAlert('Cảnh báo đăng nhập', 'error');
+
+    // Switch to Register modal
+    a.openRegisterModal();
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), false);
+    assert.strictEqual(e.loginEmail.value, '');
+    assert.strictEqual(e.loginPassword.type, 'password');
+    assert.strictEqual(e.loginEmailError.textContent, '');
+    assert.strictEqual(e.loginAlert.textContent, '');
+
+    // Dirty Register modal then switch back to Login modal
+    e.regEmail.value = 'switchreg@example.com';
+    e.regPassword.type = 'text';
+    a.showFieldError(e.regEmail, 'Lỗi đăng ký');
+    a.showAlert('Cảnh báo đăng ký', 'error');
+
+    a.openLoginModal();
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), false);
+    assert.strictEqual(e.regEmail.value, '');
+    assert.strictEqual(e.regPassword.type, 'password');
+    assert.strictEqual(e.regEmailError.textContent, '');
+    assert.strictEqual(e.registerAlert.textContent, '');
   });
 
   console.log(`\n================================================================`);

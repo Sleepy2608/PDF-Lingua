@@ -133,10 +133,18 @@
       });
     }
 
-    // User profile click in sidebar -> open Account modal or Login modal
+    // User profile click & keyboard accessibility in sidebar -> open Account modal or Login modal
     if (sidebarUserProfile) {
       sidebarUserProfile.addEventListener('click', () => {
         handleProfileClick();
+      });
+      sidebarUserProfile.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          if (typeof e.preventDefault === 'function') {
+            e.preventDefault();
+          }
+          handleProfileClick();
+        }
       });
     }
 
