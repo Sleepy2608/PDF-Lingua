@@ -531,8 +531,12 @@ async function triggerDownload(format) {
 function renderWorkspace(data) {
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
+  const documentsSection = document.getElementById('documentsSection');
+  const adminSection = document.getElementById('adminSection');
 
   if (heroSection) heroSection.style.display = 'none';
+  if (documentsSection) documentsSection.style.display = 'none';
+  if (adminSection) adminSection.style.display = 'none';
   if (workspaceSection) workspaceSection.style.display = 'block';
 
   const docName = document.getElementById('docNameDisplay');
@@ -573,8 +577,10 @@ function resetToUpload() {
   currentDocData = null;
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
+  const documentsSection = document.getElementById('documentsSection');
 
   if (workspaceSection) workspaceSection.style.display = 'none';
+  if (documentsSection) documentsSection.style.display = 'none';
   if (heroSection) heroSection.style.display = 'block';
 
   const btnRemoveFile = document.getElementById('btnRemoveFile');

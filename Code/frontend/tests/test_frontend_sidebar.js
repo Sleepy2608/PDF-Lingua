@@ -125,7 +125,11 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     btnNewFile: new MockElement('btnNewFile', 'button'),
     pdfFileInput: new MockElement('pdfFileInput', 'input'),
     heroSection: new MockElement('heroSection', 'section'),
+    workspaceSection: new MockElement('workspaceSection', 'section'),
+    documentsSection: new MockElement('documentsSection', 'section'),
     adminSection: new MockElement('adminSection', 'section'),
+    btnCloseDocumentsView: new MockElement('btnCloseDocumentsView', 'button'),
+    btnDocsUploadNew: new MockElement('btnDocsUploadNew', 'button'),
     btnOpenAdmin: new MockElement('btnOpenAdmin', 'button'),
   };
 
@@ -409,6 +413,58 @@ async function main() {
     env.elements.sideNavAdmin.click();
     assert.strictEqual(env.elements.sideNavAdmin.classList.contains('active'), true);
     assert.strictEqual(adminOpened, true);
+  });
+
+  await runTest('PDFL-92.1: Sidebar item renamed to "Tài liệu" and main #documentsSection layout exists', () => {
+    assert.ok(
+      htmlSource.includes('id="sideNavDocuments" data-tooltip="Tài liệu"'),
+      'sideNavDocuments must have data-tooltip="Tài liệu"'
+    );
+    assert.ok(
+      htmlSource.includes('<span class="nav-item-text">Tài liệu</span>'),
+      'sideNavDocuments label must be "Tài liệu"'
+    );
+    assert.ok(
+      !htmlSource.includes('<span class="nav-item-text">Quản lý tài liệu</span>'),
+      'Old label "Quản lý tài liệu" must be replaced'
+    );
+    assert.ok(
+      htmlSource.includes('id="documentsSection"'),
+      'Main content area must include #documentsSection'
+    );
+  });
+
+  await runTest('PDFL-92.1: Clicking "Tài liệu" opens #documentsSection in main content and preserves workspace translation state', () => {
+    const env = createTestEnvironment();
+
+    // Click "Tài liệu" (#sideNavDocuments)
+    env.elements.sideNavDocuments.click();
+    assert.strictEqual(env.elements.sideNavDocuments.classList.contains('active'), true);
+    assert.strictEqual(env.elements.documentsSection.style.display, 'block');
+    assert.strictEqual(env.elements.heroSection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none');
+    assert.strictEqual(env.elements.adminSection.style.display, 'none');
+
+    // Click "Quay lại Dịch PDF" (#btnCloseDocumentsView) when no active translation -> shows heroSection
+    env.elements.btnCloseDocumentsView.click();
+    assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), true);
+    assert.strictEqual(env.elements.documentsSection.style.display, 'none');
+    assert.strictEqual(env.elements.heroSection.style.display, 'block');
+
+    // Simulate active translated document in workspace
+    env.sandbox.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => ({ filename: 'translated.pdf', translated_text: 'Xin chào' }),
+    };
+
+    // Switch to "Tài liệu" and back to "Dịch PDF" -> restores workspaceSection with translation
+    env.elements.sideNavDocuments.click();
+    assert.strictEqual(env.elements.documentsSection.style.display, 'block');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none');
+
+    env.elements.sideNavTranslate.click();
+    assert.strictEqual(env.elements.documentsSection.style.display, 'none');
+    assert.strictEqual(env.elements.heroSection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'block');
   });
 
   await runTest('HTML: Admin button in account modal is removed', () => {

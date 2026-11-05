@@ -131,14 +131,27 @@
 
   function triggerPdfUpload() {
     const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
     const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const sideNavTranslate = document.getElementById('sideNavTranslate');
     const btnNewFile = document.getElementById('btnNewFile');
     const pdfFileInput = document.getElementById('pdfFileInput');
 
-    // If currently in admin view, return to user workspace
+    // If currently in admin or documents view, return to user workspace
     if (adminSection && adminSection.style.display !== 'none') {
       adminSection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
+    }
+
+    if (documentsSection && documentsSection.style.display !== 'none') {
+      documentsSection.style.display = 'none';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'block';
+    }
+
+    if (sideNavTranslate) {
+      setActiveNavItem(sideNavTranslate);
     }
 
     // If workspace is active with previous file, trigger reset
@@ -156,6 +169,54 @@
       pdfFileInput.click();
     }
 
+    if (window.innerWidth < 768) {
+      closeMobileSidebar();
+    }
+  }
+
+  function openDocumentsView() {
+    const sideNavDocuments = document.getElementById('sideNavDocuments');
+    const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
+
+    if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
+    if (heroSection) heroSection.style.display = 'none';
+    if (workspaceSection) workspaceSection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'block';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) {
+      closeMobileSidebar();
+    }
+  }
+
+  function closeDocumentsView() {
+    const sideNavTranslate = document.getElementById('sideNavTranslate');
+    const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
+
+    if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+
+    const hasActiveDoc = window.pdfLinguaWorkspace
+      && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function'
+      && Boolean(window.pdfLinguaWorkspace.getCurrentDocData());
+
+    if (hasActiveDoc && workspaceSection) {
+      if (heroSection) heroSection.style.display = 'none';
+      workspaceSection.style.display = 'block';
+    } else {
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'block';
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.innerWidth < 768) {
       closeMobileSidebar();
     }
@@ -247,14 +308,20 @@
     const sideNavDocuments = document.getElementById('sideNavDocuments');
     const sideNavPricing = document.getElementById('sideNavPricing');
     const sideNavAdmin = document.getElementById('sideNavAdmin');
+    const btnCloseDocumentsView = document.getElementById('btnCloseDocumentsView');
+    const btnDocsUploadNew = document.getElementById('btnDocsUploadNew');
 
     if (sideNavHome) {
       sideNavHome.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavHome);
         const adminSection = document.getElementById('adminSection');
+        const documentsSection = document.getElementById('documentsSection');
+        const workspaceSection = document.getElementById('workspaceSection');
         const heroSection = document.getElementById('heroSection');
         if (adminSection) adminSection.style.display = 'none';
+        if (documentsSection) documentsSection.style.display = 'none';
+        if (workspaceSection) workspaceSection.style.display = 'none';
         if (heroSection) heroSection.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (window.innerWidth < 768) closeMobileSidebar();
@@ -264,13 +331,7 @@
     if (sideNavTranslate) {
       sideNavTranslate.addEventListener('click', (e) => {
         e.preventDefault();
-        setActiveNavItem(sideNavTranslate);
-        const adminSection = document.getElementById('adminSection');
-        const heroSection = document.getElementById('heroSection');
-        if (adminSection) adminSection.style.display = 'none';
-        if (heroSection) heroSection.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (window.innerWidth < 768) closeMobileSidebar();
+        closeDocumentsView();
       });
     }
 
@@ -299,15 +360,21 @@
     if (sideNavDocuments) {
       sideNavDocuments.addEventListener('click', (e) => {
         e.preventDefault();
-        setActiveNavItem(sideNavDocuments);
-        const recentSection = document.getElementById('sidebarRecentSection');
-        if (recentSection) {
-          recentSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-        if (typeof showToast === 'function') {
-          showToast('Danh mục Quản lý tài liệu: Xem danh sách tài liệu PDF đã xử lý.', 'info');
-        }
-        if (window.innerWidth < 768) closeMobileSidebar();
+        openDocumentsView();
+      });
+    }
+
+    if (btnCloseDocumentsView) {
+      btnCloseDocumentsView.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeDocumentsView();
+      });
+    }
+
+    if (btnDocsUploadNew) {
+      btnDocsUploadNew.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerPdfUpload();
       });
     }
 
@@ -326,11 +393,15 @@
       sideNavAdmin.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavAdmin);
+        const documentsSection = document.getElementById('documentsSection');
+        if (documentsSection) documentsSection.style.display = 'none';
         if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
           window.pdfLinguaAdmin.openAdminView();
         } else {
           const adminSection = document.getElementById('adminSection');
           const heroSection = document.getElementById('heroSection');
+          const workspaceSection = document.getElementById('workspaceSection');
+          if (workspaceSection) workspaceSection.style.display = 'none';
           if (adminSection) adminSection.style.display = 'block';
           if (heroSection) heroSection.style.display = 'none';
         }
@@ -618,5 +689,7 @@
     syncUser: syncUserProfile,
     fetchRecentDocuments: fetchRecentDocuments,
     triggerUpload: triggerPdfUpload,
+    openDocumentsView: openDocumentsView,
+    closeDocumentsView: closeDocumentsView,
   };
 })();
