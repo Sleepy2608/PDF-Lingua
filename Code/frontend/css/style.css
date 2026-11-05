@@ -73,6 +73,10 @@
   --text-color: var(--text-body);
   --border-color: var(--border-subtle);
   --font-family: var(--font-sans);
+
+  /* Layout Dimensions */
+  --header-height: 72px;
+  --footer-height: 68px;
 }
 
 *, *::before, *::after {

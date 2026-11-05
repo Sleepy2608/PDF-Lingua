@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua — Frontend Background Jobs & Progress Streaming Test Suite (PDFL-111.4)
+ * PDF-Lingua - Frontend Background Jobs & Progress Streaming Test Suite (PDFL-111.4)
  * ----------------------------------------------------------------------------------
  * Verifies:
  * 1. Upload submits to /jobs endpoint with file and language.

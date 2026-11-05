@@ -3,6 +3,11 @@ chcp 65001 > nul
 title PDF-Lingua - Quick Launcher
 
 set ROOT_DIR=%~dp0
+if not exist "%ROOT_DIR%Code\backend\venv\Scripts\python.exe" (
+    if exist "C:\University Coding Project\PDF-Lingua\Code\backend\venv\Scripts\python.exe" (
+        set ROOT_DIR=C:\University Coding Project\PDF-Lingua\
+    )
+)
 set BACKEND_DIR=%ROOT_DIR%Code\backend
 set FRONTEND_FILE=%ROOT_DIR%Code\frontend\index.html
 set VENV_PYTHON=%BACKEND_DIR%\venv\Scripts\python.exe

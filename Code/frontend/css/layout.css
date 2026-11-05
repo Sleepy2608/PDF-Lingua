@@ -322,10 +322,13 @@
 /* Footer */
 .site-footer {
   margin-top: auto;
+  height: var(--footer-height, 68px);
+  min-height: var(--footer-height, 68px);
+  box-sizing: border-box;
   background-color: var(--bg-subtle);
   border-top: 1px solid var(--border-subtle);
-  padding: 1.5rem 0;
-  text-align: center;
+  display: flex;
+  align-items: center;
   font-size: 0.875rem;
   color: var(--text-muted);
 }
@@ -334,14 +337,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  width: 100%;
   gap: 1rem;
+}
+
+.footer-content p {
+  margin: 0;
+  line-height: 1.4;
 }
 
 .footer-links {
   display: flex;
   gap: 1.5rem;
   list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .footer-links a {
@@ -400,6 +410,12 @@
   .server-status {
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
+  }
+
+  .site-footer {
+    height: auto;
+    min-height: var(--footer-height, 68px);
+    padding: 1.25rem 0;
   }
 
   .footer-content {
