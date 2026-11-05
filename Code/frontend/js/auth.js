@@ -1803,19 +1803,36 @@
 
     if (detailRole) {
       const roleStr = (user.role || 'free').toLowerCase();
-      detailRole.textContent = roleStr.toUpperCase();
+      const roleLabels = {
+        admin: 'Quản trị viên',
+        pro: 'Gói Pro VIP',
+        free: 'Gói Miễn phí',
+      };
+      detailRole.textContent = roleLabels[roleStr] || 'Gói Miễn phí';
       detailRole.className = `badge-role role-${roleStr}`;
     }
 
     if (detailStatus) {
       if (user.is_active === false) {
         detailStatus.textContent = 'Bị vô hiệu';
+        detailStatus.className = 'badge-status status-inactive';
+        if (detailStatus.classList) {
+          detailStatus.classList.remove('status-active');
+          detailStatus.classList.add('status-inactive');
+        }
         detailStatus.style.backgroundColor = '#FEE2E2';
         detailStatus.style.color = '#DC2626';
+        detailStatus.style.borderColor = '#FCA5A5';
       } else {
         detailStatus.textContent = 'Hoạt động';
+        detailStatus.className = 'badge-status status-active';
+        if (detailStatus.classList) {
+          detailStatus.classList.remove('status-inactive');
+          detailStatus.classList.add('status-active');
+        }
         detailStatus.style.backgroundColor = '';
         detailStatus.style.color = '';
+        detailStatus.style.borderColor = '';
       }
     }
   }

@@ -388,10 +388,11 @@ async function test(name, fn) {
     assert.strictEqual(e.accountFullNameDisplay.textContent, 'Trần Văn Profile');
     assert.strictEqual(e.accountDetailFullName.textContent, 'Trần Văn Profile');
     assert.strictEqual(e.accountDetailEmail.textContent, 'profile@example.com');
-    assert.strictEqual(e.accountDetailRole.textContent, 'PRO');
+    assert.strictEqual(e.accountDetailRole.textContent, 'Gói Pro VIP');
     assert.strictEqual(e.accountDetailRole.className, 'badge-role role-pro');
     assert.strictEqual(e.accountAvatarLarge.textContent, 'T');
     assert.strictEqual(e.accountDetailStatus.textContent, 'Hoạt động');
+    assert.strictEqual(e.accountDetailStatus.className, 'badge-status status-active');
   });
 
   // 14. Account Modal: Expired token / 401 clears session and prompts login
@@ -918,6 +919,67 @@ async function test(name, fn) {
     a.clearStoredSession();
     assert.strictEqual(a.getStoredToken(), null);
     assert.strictEqual(a.getStoredUser(), null);
+  });
+
+  // 35. PDFL-59 Group 1 (#4): Role label & status badge synchronization in Account Modal
+  await test('PDFL-59 (#4): Account Modal synchronizes role labels with Sidebar and status badge states', async () => {
+    const { e, a } = createEnv();
+
+    // Free & Active user
+    a.renderAccountDetails({
+      id: 21,
+      email: 'free@example.com',
+      full_name: 'Free User',
+      role: 'free',
+      is_active: true,
+    });
+    assert.strictEqual(e.accountDetailRole.textContent, 'Gói Miễn phí');
+    assert.strictEqual(e.accountDetailRole.className, 'badge-role role-free');
+    assert.strictEqual(e.accountDetailStatus.textContent, 'Hoạt động');
+    assert.strictEqual(e.accountDetailStatus.className, 'badge-status status-active');
+    assert.strictEqual(e.accountDetailStatus.classList.contains('status-active'), true);
+    assert.strictEqual(e.accountDetailStatus.classList.contains('status-inactive'), false);
+
+    // Admin & Inactive user
+    a.renderAccountDetails({
+      id: 22,
+      email: 'admin@example.com',
+      full_name: 'Admin User',
+      role: 'admin',
+      is_active: false,
+    });
+    assert.strictEqual(e.accountDetailRole.textContent, 'Quản trị viên');
+    assert.strictEqual(e.accountDetailRole.className, 'badge-role role-admin');
+    assert.strictEqual(e.accountDetailStatus.textContent, 'Bị vô hiệu');
+    assert.strictEqual(e.accountDetailStatus.className, 'badge-status status-inactive');
+    assert.strictEqual(e.accountDetailStatus.classList.contains('status-inactive'), true);
+    assert.strictEqual(e.accountDetailStatus.style.backgroundColor, '#FEE2E2');
+    assert.strictEqual(e.accountDetailStatus.style.color, '#DC2626');
+    assert.strictEqual(e.accountDetailStatus.style.borderColor, '#FCA5A5');
+  });
+
+  // 36. PDFL-59 Group 1 (#1, #2, #4, #5): CSS Design Consistency Verification
+  await test('PDFL-59 (#1, #2, #4, #5): CSS selectors fix double padding, input padding, status dot, and variables', () => {
+    const cssContent = fs.readFileSync(path.resolve(__dirname, '../css/components.css'), 'utf8');
+
+    // #1: Scoped #accountModal body/footer padding without changing base .modal-dialog padding
+    assert.match(cssContent, /\.modal-dialog\s*\{[^}]*padding:\s*2rem;/s);
+    assert.match(cssContent, /#accountModal\s+\.account-modal-body\s*\{\s*padding:\s*0;\s*\}/);
+    assert.match(cssContent, /#accountModal\s+\.account-modal-footer\s*\{\s*padding:\s*1\.5rem\s+0\s+0;\s*\}/);
+
+    // #2: Normalized padding for #editFullNameInput and inputs without toggle button
+    assert.match(cssContent, /#editFullNameInput[\s\S]*?padding-left:\s*1rem;\s*padding-right:\s*1rem;/);
+    assert.match(cssContent, /\.input-wrap:not\(:has\(\.btn-toggle-eye\)\)\s+\.form-input\s*\{\s*padding-right:\s*1rem;\s*\}/);
+
+    // #4: Inactive status badge border and dot color rules exist
+    assert.match(cssContent, /\.badge-status\.status-inactive[\s\S]*?border-color:\s*#FCA5A5;/);
+    assert.match(cssContent, /\.badge-status\.status-inactive::before[\s\S]*?background-color:\s*#DC2626;/);
+
+    // #5: Fixed CSS variable --color-primary-indigo-dark and single .btn-sm definition
+    assert.strictEqual(cssContent.includes('--color-primary-dark'), false, 'Should not contain undefined --color-primary-dark');
+    assert.match(cssContent, /\.btn-edit-toggle:hover\s*\{[^}]*color:\s*var\(--color-primary-indigo-dark\);/s);
+    const btnSmMatches = cssContent.match(/^\.btn-sm\s*\{/gm) || [];
+    assert.strictEqual(btnSmMatches.length, 1, `Expected exactly 1 .btn-sm definition, found ${btnSmMatches.length}`);
   });
 
   console.log(`\n================================================================`);
