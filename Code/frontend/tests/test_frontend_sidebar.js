@@ -133,6 +133,12 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     documentsCountBadge: new MockElement('documentsCountBadge', 'span'),
     documentsTable: new MockElement('documentsTable', 'table'),
     documentsTableBody: new MockElement('documentsTableBody', 'tbody'),
+    documentsLoadingState: new MockElement('documentsLoadingState', 'div'),
+    documentsErrorState: new MockElement('documentsErrorState', 'div'),
+    documentsErrorText: new MockElement('documentsErrorText', 'p'),
+    btnDocsRetry: new MockElement('btnDocsRetry', 'button'),
+    documentsUnauthState: new MockElement('documentsUnauthState', 'div'),
+    btnDocsLoginPrompt: new MockElement('btnDocsLoginPrompt', 'button'),
     documentsEmptyState: new MockElement('documentsEmptyState', 'div'),
     documentsSearchInput: new MockElement('documentsSearchInput', 'input'),
     btnOpenAdmin: new MockElement('btnOpenAdmin', 'button'),
@@ -526,12 +532,44 @@ async function main() {
     assert.ok(env.elements.sidebarDocList.children[1].innerHTML.includes('Financial_Statement_Q3.pdf'));
   });
 
-  await runTest('PDFL-92.2: Unauthenticated or empty document list updates #documentsSection to empty state and 0 count', async () => {
+  await runTest('PDFL-92.2 & PDFL-92.3: Unauthenticated user displays #documentsUnauthState and 0 count', async () => {
     const env = createTestEnvironment();
     await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
 
     assert.strictEqual(env.elements.documentsCountBadge.textContent, '0 tài liệu');
     assert.strictEqual(env.elements.documentsTable.style.display, 'none');
+    assert.strictEqual(env.elements.documentsLoadingState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsErrorState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsUnauthState.style.display, 'block');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 0);
+
+    // Clicking login prompt button triggers #btnLogin
+    let loginClicked = false;
+    env.elements.btnLogin.click = () => { loginClicked = true; };
+    env.elements.btnDocsLoginPrompt.click();
+    assert.strictEqual(loginClicked, true, 'btnDocsLoginPrompt must trigger btnLogin.click()');
+  });
+
+  await runTest('PDFL-92.3: Authenticated user with 0 documents displays #documentsEmptyState', async () => {
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-empty-docs-token',
+        pdfl_user: JSON.stringify({ id: 1, email: 'empty@test.com' }),
+      },
+      async () => ({
+        ok: true,
+        json: async () => ({ success: true, data: [] }),
+      })
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '0 tài liệu');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'none');
+    assert.strictEqual(env.elements.documentsLoadingState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsErrorState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsUnauthState.style.display, 'none');
     assert.strictEqual(env.elements.documentsEmptyState.style.display, 'block');
     assert.strictEqual(env.elements.documentsTableBody.children.length, 0);
   });
@@ -581,6 +619,9 @@ async function main() {
     assert.strictEqual(capturedAuthHeader, 'Bearer jwt-test-token-92-2', 'Must send Bearer token');
     assert.strictEqual(env.elements.documentsCountBadge.textContent, '2 tài liệu');
     assert.strictEqual(env.elements.documentsEmptyState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsLoadingState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsErrorState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsUnauthState.style.display, 'none');
     assert.strictEqual(env.elements.documentsTable.style.display, 'table');
     assert.strictEqual(env.elements.documentsTableBody.children.length, 2);
 
@@ -601,24 +642,184 @@ async function main() {
     assert.ok(row2Html.includes('04/11/2026'), 'Row 2 must include formatted created_at');
   });
 
-  await runTest('PDFL-92.2: API error gracefully falls back to empty state in #documentsSection', async () => {
+  await runTest('PDFL-92.3: Loading state displays while GET /api/documents is in-flight and deduplicates concurrent calls', async () => {
+    let resolveFetch = null;
+    let fetchCallCount = 0;
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-loading-token',
+      },
+      (url) => {
+        if (url.includes('/api/documents')) {
+          fetchCallCount++;
+          return new Promise((resolve) => {
+            resolveFetch = resolve;
+          });
+        }
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }
+    );
+
+    // Note: DOMContentLoaded already triggered 1 call in createTestEnvironment
+    assert.strictEqual(fetchCallCount, 1, 'Initial DOMContentLoaded fetch is in-flight');
+    assert.strictEqual(env.elements.documentsLoadingState.style.display, 'block', 'Loading state must be visible while in-flight');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'none');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsErrorState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsUnauthState.style.display, 'none');
+
+    // Concurrent calls while in-flight must reuse the same promise and NOT increment fetchCallCount
+    const p1 = env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    const p2 = env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    assert.strictEqual(fetchCallCount, 1, 'Concurrent calls must be deduplicated');
+
+    // Resolve the in-flight request
+    resolveFetch({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: [
+          {
+            id: 301,
+            original_filename: 'Loaded_Doc.pdf',
+            file_size_bytes: 102400,
+            page_count: 3,
+            target_lang: 'vi',
+            is_ocr_used: false,
+            created_at: '2026-11-05T12:00:00Z',
+          },
+        ],
+      }),
+    });
+
+    await Promise.all([p1, p2]);
+
+    assert.strictEqual(env.elements.documentsLoadingState.style.display, 'none', 'Loading state hidden after completion');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'table', 'Table displayed after completion');
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu');
+  });
+
+  await runTest('PDFL-92.3: Error state displays on API/network failure and retry button (#btnDocsRetry) recovers list', async () => {
+    let shouldFail = true;
     const env = createTestEnvironment(
       {
         pdfl_token: 'jwt-test-token-err',
       },
-      async () => ({
-        ok: false,
-        status: 500,
-        json: async () => ({ detail: 'Server Error' }),
-      })
+      async () => {
+        if (shouldFail) {
+          return {
+            ok: false,
+            status: 500,
+            json: async () => ({ detail: 'Máy chủ đang bảo trì tạm thời.' }),
+          };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                id: 401,
+                original_filename: 'Recovered_Doc.pdf',
+                file_size_bytes: 204800,
+                page_count: 7,
+                target_lang: 'vi',
+                is_ocr_used: false,
+                created_at: '2026-11-05T15:00:00Z',
+              },
+            ],
+          }),
+        };
+      }
     );
 
     await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
 
     assert.strictEqual(env.elements.documentsCountBadge.textContent, '0 tài liệu');
     assert.strictEqual(env.elements.documentsTable.style.display, 'none');
-    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'block');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsLoadingState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsUnauthState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsErrorState.style.display, 'block');
+    assert.ok(env.elements.documentsErrorText.textContent.includes('Máy chủ đang bảo trì tạm thời.'));
     assert.strictEqual(env.elements.documentsTableBody.children.length, 0);
+
+    // Click Retry button (#btnDocsRetry) when backend recovers
+    shouldFail = false;
+    env.elements.btnDocsRetry.click();
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    assert.strictEqual(env.elements.documentsErrorState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'table');
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 1);
+  });
+
+  await runTest('PDFL-92.3: Auto refresh on pdfl:document-processed event and returning to Documents page without losing currentDocData', async () => {
+    const serverDocs = [
+      {
+        id: 501,
+        original_filename: 'Initial_Doc.pdf',
+        file_size_bytes: 102400,
+        page_count: 2,
+        target_lang: 'vi',
+        is_ocr_used: false,
+        created_at: '2026-11-05T09:00:00Z',
+      },
+    ];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-autorefresh-token',
+      },
+      async () => ({
+        ok: true,
+        json: async () => ({ success: true, data: [...serverDocs] }),
+      })
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu');
+
+    // Simulate active translation result in workspace
+    const activeTranslation = {
+      id: 502,
+      filename: 'Newly_Translated.pdf',
+      original_text: 'Hello World',
+      translated_text: 'Xin chào thế giới',
+    };
+    env.sandbox.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => activeTranslation,
+    };
+
+    // Backend now has 2 documents after upload & translation finishes
+    serverDocs.unshift({
+      id: 502,
+      original_filename: 'Newly_Translated.pdf',
+      file_size_bytes: 307200,
+      page_count: 6,
+      target_lang: 'vi',
+      is_ocr_used: true,
+      created_at: '2026-11-05T16:00:00Z',
+    });
+
+    // Dispatch pdfl:document-processed event (auto-refresh after upload + translation)
+    env.sandbox.window.dispatchEvent(
+      new env.sandbox.CustomEvent('pdfl:document-processed', { detail: { document: activeTranslation } })
+    );
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '2 tài liệu');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 2);
+    assert.ok(env.elements.documentsTableBody.children[0].innerHTML.includes('Newly_Translated.pdf'));
+
+    // Verify currentDocData in workspace is untouched and preserved when switching views
+    assert.strictEqual(
+      env.sandbox.window.pdfLinguaWorkspace.getCurrentDocData().translated_text,
+      'Xin chào thế giới',
+      'currentDocData must remain intact after auto-refresh'
+    );
   });
 
   // 6. Default & Toggle Behavior

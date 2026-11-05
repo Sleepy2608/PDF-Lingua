@@ -16,6 +16,8 @@
   let isMobileOpen = false;
   let cachedDocuments = [];
   let cachedToken = null;
+  let inFlightDocsPromise = null;
+  let inFlightToken = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
@@ -127,6 +129,11 @@
     window.addEventListener('pdfl:auth-change', (e) => {
       const user = e.detail ? e.detail.user : null;
       syncUserProfile(user);
+      fetchRecentDocuments();
+    });
+
+    // Listen to document processed events from workspace.js for auto-refresh (PDFL-92.3)
+    window.addEventListener('pdfl:document-processed', () => {
       fetchRecentDocuments();
     });
   }
@@ -315,10 +322,29 @@
     const btnCloseDocumentsView = document.getElementById('btnCloseDocumentsView');
     const btnDocsUploadNew = document.getElementById('btnDocsUploadNew');
     const documentsSearchInput = document.getElementById('documentsSearchInput');
+    const btnDocsRetry = document.getElementById('btnDocsRetry');
+    const btnDocsLoginPrompt = document.getElementById('btnDocsLoginPrompt');
 
     if (documentsSearchInput) {
       documentsSearchInput.addEventListener('input', () => {
         renderDocumentsPageList(cachedDocuments, cachedToken);
+      });
+    }
+
+    if (btnDocsRetry) {
+      btnDocsRetry.addEventListener('click', (e) => {
+        e.preventDefault();
+        fetchRecentDocuments();
+      });
+    }
+
+    if (btnDocsLoginPrompt) {
+      btnDocsLoginPrompt.addEventListener('click', (e) => {
+        e.preventDefault();
+        const btnLogin = document.getElementById('btnLogin');
+        if (btnLogin && typeof btnLogin.click === 'function') {
+          btnLogin.click();
+        }
       });
     }
 
@@ -539,10 +565,51 @@
   }
 
   /**
-   * Fetch and Render User Documents from Backend (PDFL-92.2)
+   * Helper to switch UI states in #documentsSection (PDFL-92.3)
+   * Supported states: 'loading' | 'empty' | 'error' | 'unauthenticated' | 'content'
+   */
+  function setDocumentsSectionState(state, errorMessage) {
+    const tableEl = document.getElementById('documentsTable');
+    const tbodyEl = document.getElementById('documentsTableBody');
+    const loadingStateEl = document.getElementById('documentsLoadingState');
+    const emptyStateEl = document.getElementById('documentsEmptyState');
+    const errorStateEl = document.getElementById('documentsErrorState');
+    const errorTextEl = document.getElementById('documentsErrorText');
+    const unauthStateEl = document.getElementById('documentsUnauthState');
+    const countBadge = document.getElementById('documentsCountBadge');
+
+    if (loadingStateEl) loadingStateEl.style.display = state === 'loading' ? 'block' : 'none';
+    if (emptyStateEl) emptyStateEl.style.display = state === 'empty' ? 'block' : 'none';
+    if (errorStateEl) errorStateEl.style.display = state === 'error' ? 'block' : 'none';
+    if (unauthStateEl) unauthStateEl.style.display = state === 'unauthenticated' ? 'block' : 'none';
+
+    if (state === 'error' && errorTextEl && errorMessage) {
+      errorTextEl.textContent = errorMessage;
+    }
+
+    if (state !== 'content') {
+      if (tableEl) tableEl.style.display = 'none';
+      if (tbodyEl && state !== 'loading') tbodyEl.innerHTML = '';
+      if (countBadge && (state === 'unauthenticated' || state === 'error' || state === 'empty')) {
+        if (state !== 'empty') {
+          countBadge.textContent = '0 tài liệu';
+        }
+      }
+    }
+  }
+
+  /**
+   * Fetch and Render User Documents from Backend (PDFL-92.2 & PDFL-92.3)
    * Updates both Sidebar recent list and Main #documentsSection table.
+   * Deduplicates concurrent requests for the same auth token.
    */
   async function fetchRecentDocuments() {
+    const token = getStoredAuthToken();
+
+    if (inFlightDocsPromise && inFlightToken === token) {
+      return inFlightDocsPromise;
+    }
+
     const emptyStateEl = document.getElementById('sidebarEmptyDocsState');
     let docListEl = document.getElementById('sidebarDocList');
     const container = document.getElementById('sidebarRecentDocs');
@@ -554,10 +621,8 @@
       container.appendChild(docListEl);
     }
 
-    const token = getStoredAuthToken();
-
     if (!token) {
-      // Unauthenticated: Show clean empty state in Sidebar and Main Documents Section
+      // Unauthenticated State
       cachedDocuments = [];
       cachedToken = null;
       if (emptyStateEl) emptyStateEl.style.display = 'block';
@@ -565,56 +630,92 @@
         docListEl.style.display = 'none';
         docListEl.innerHTML = '';
       }
-      renderDocumentsPageList([], null);
-      return;
+      const countBadge = document.getElementById('documentsCountBadge');
+      if (countBadge) countBadge.textContent = '0 tài liệu';
+      setDocumentsSectionState('unauthenticated');
+      return Promise.resolve([]);
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/documents`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+    inFlightToken = token;
+    setDocumentsSectionState('loading');
+
+    inFlightDocsPromise = (async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/documents`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 401) {
+          cachedDocuments = [];
+          cachedToken = null;
+          if (emptyStateEl) emptyStateEl.style.display = 'block';
+          if (docListEl) {
+            docListEl.style.display = 'none';
+            docListEl.innerHTML = '';
+          }
+          const countBadge = document.getElementById('documentsCountBadge');
+          if (countBadge) countBadge.textContent = '0 tài liệu';
+          setDocumentsSectionState('unauthenticated');
+          return [];
         }
-      });
 
-      if (!response.ok) {
-        throw new Error('Không thể tải danh sách tài liệu');
-      }
+        if (!response.ok) {
+          let errMsg = 'Không thể tải danh sách tài liệu từ máy chủ.';
+          try {
+            const errData = await response.json();
+            if (errData && errData.detail) errMsg = errData.detail;
+          } catch (_e) {}
+          throw new Error(errMsg);
+        }
 
-      const result = await response.json();
-      const docs = result && Array.isArray(result.data) ? result.data : [];
+        const result = await response.json();
+        const docs = result && Array.isArray(result.data) ? result.data : [];
 
-      cachedDocuments = docs;
-      cachedToken = token;
+        cachedDocuments = docs;
+        cachedToken = token;
 
-      if (docs.length === 0) {
+        if (docs.length === 0) {
+          if (emptyStateEl) emptyStateEl.style.display = 'block';
+          if (docListEl) {
+            docListEl.style.display = 'none';
+            docListEl.innerHTML = '';
+          }
+        } else {
+          if (emptyStateEl) emptyStateEl.style.display = 'none';
+          if (docListEl) {
+            docListEl.style.display = 'flex';
+            docListEl.innerHTML = '';
+
+            // Display up to 8 recent documents in Sidebar
+            const recentDocs = docs.slice(0, 8);
+            recentDocs.forEach((doc) => {
+              const item = createDocumentItem(doc, token);
+              docListEl.appendChild(item);
+            });
+          }
+        }
+
+        renderDocumentsPageList(docs, token);
+        return docs;
+      } catch (err) {
+        cachedDocuments = [];
+        cachedToken = null;
         if (emptyStateEl) emptyStateEl.style.display = 'block';
-        if (docListEl) {
-          docListEl.style.display = 'none';
-          docListEl.innerHTML = '';
-        }
-      } else {
-        if (emptyStateEl) emptyStateEl.style.display = 'none';
-        if (docListEl) {
-          docListEl.style.display = 'flex';
-          docListEl.innerHTML = '';
-
-          // Display up to 8 recent documents in Sidebar
-          const recentDocs = docs.slice(0, 8);
-          recentDocs.forEach((doc) => {
-            const item = createDocumentItem(doc, token);
-            docListEl.appendChild(item);
-          });
-        }
+        if (docListEl) docListEl.style.display = 'none';
+        const errorMsg = (err && err.message && err.message !== 'Failed to fetch')
+          ? err.message
+          : 'Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.';
+        setDocumentsSectionState('error', errorMsg);
+        return [];
+      } finally {
+        inFlightDocsPromise = null;
+        inFlightToken = null;
       }
+    })();
 
-      renderDocumentsPageList(docs, token);
-    } catch (_err) {
-      cachedDocuments = [];
-      cachedToken = null;
-      if (emptyStateEl) emptyStateEl.style.display = 'block';
-      if (docListEl) docListEl.style.display = 'none';
-      renderDocumentsPageList([], null);
-    }
+    return inFlightDocsPromise;
   }
 
   /**
@@ -624,7 +725,6 @@
     const countBadge = document.getElementById('documentsCountBadge');
     const tableEl = document.getElementById('documentsTable');
     const tbodyEl = document.getElementById('documentsTableBody');
-    const emptyStateEl = document.getElementById('documentsEmptyState');
     const searchInput = document.getElementById('documentsSearchInput');
 
     const allDocs = Array.isArray(docs) ? docs : [];
@@ -643,13 +743,11 @@
       : allDocs;
 
     if (filteredDocs.length === 0) {
-      tableEl.style.display = 'none';
-      tbodyEl.innerHTML = '';
-      if (emptyStateEl) emptyStateEl.style.display = 'block';
+      setDocumentsSectionState('empty');
       return;
     }
 
-    if (emptyStateEl) emptyStateEl.style.display = 'none';
+    setDocumentsSectionState('content');
     tableEl.style.display = 'table';
     tbodyEl.innerHTML = '';
 

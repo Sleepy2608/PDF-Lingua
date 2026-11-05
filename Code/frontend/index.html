@@ -630,6 +630,12 @@
                             </tbody>
                         </table>
 
+                        <div class="admin-table-empty" id="documentsLoadingState" style="display: none;">
+                            <div class="progress-spinner" style="width: 32px; height: 32px; margin: 0 auto 0.75rem;"></div>
+                            <h4 class="empty-title">Đang tải danh sách tài liệu...</h4>
+                            <p class="empty-text">Vui lòng chờ trong giây lát trong khi hệ thống đồng bộ dữ liệu của bạn.</p>
+                        </div>
+
                         <div class="admin-table-empty" id="documentsEmptyState">
                             <div class="empty-icon-wrap">
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -641,6 +647,35 @@
                             </div>
                             <h4 class="empty-title">Bạn chưa có tài liệu nào</h4>
                             <p class="empty-text">Hãy tải lên tệp PDF đầu tiên để bắt đầu trích xuất văn bản và dịch thuật song ngữ.</p>
+                        </div>
+
+                        <div class="admin-table-empty" id="documentsErrorState" style="display: none;">
+                            <div class="empty-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title" id="documentsErrorTitle">Không thể tải danh sách tài liệu</h4>
+                            <p class="empty-text" id="documentsErrorText">Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.</p>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnDocsRetry" style="margin-top: 0.75rem;">
+                                <span>Thử lại</span>
+                            </button>
+                        </div>
+
+                        <div class="admin-table-empty" id="documentsUnauthState" style="display: none;">
+                            <div class="empty-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title">Vui lòng đăng nhập để quản lý tài liệu</h4>
+                            <p class="empty-text">Đăng nhập tài khoản để lưu trữ, tra cứu và tải xuống danh sách các tài liệu PDF của bạn.</p>
+                            <button type="button" class="btn btn-gradient btn-sm" id="btnDocsLoginPrompt" style="margin-top: 0.75rem;">
+                                <span>Đăng nhập ngay</span>
+                            </button>
                         </div>
                     </div>
                 </div>

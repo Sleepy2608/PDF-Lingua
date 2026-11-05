@@ -210,6 +210,11 @@ function listenToJobProgress(jobId, btnProcessPdf) {
       if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
         window.PDFLinguaSidebar.fetchRecentDocuments();
       }
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        try {
+          window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: jobData.result } }));
+        } catch (e) {}
+      }
       if (btnProcessPdf) btnProcessPdf.disabled = false;
     }, 400);
   };
@@ -361,6 +366,11 @@ async function handleProcessPdf() {
         showToast('Tài liệu đã được dịch thuật thành công!', 'success');
         if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
           window.PDFLinguaSidebar.fetchRecentDocuments();
+        }
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+          try {
+            window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: result.data } }));
+          } catch (e) {}
         }
         if (btnProcessPdf) btnProcessPdf.disabled = false;
       }, 400);
