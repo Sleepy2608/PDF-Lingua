@@ -164,6 +164,15 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     docDetailDownloadIcon: new MockElement('docDetailDownloadIcon', 'svg'),
     docDetailDownloadText: new MockElement('docDetailDownloadText', 'span'),
     btnDocDetailDelete: new MockElement('btnDocDetailDelete', 'button'),
+    documentDeleteConfirmModal: new MockElement('documentDeleteConfirmModal', 'div'),
+    docDeleteConfirmTitle: new MockElement('docDeleteConfirmTitle', 'h3'),
+    docDeleteConfirmDesc: new MockElement('docDeleteConfirmDesc', 'p'),
+    docDeleteConfirmFilename: new MockElement('docDeleteConfirmFilename', 'strong'),
+    docDeleteConfirmAlert: new MockElement('docDeleteConfirmAlert', 'div'),
+    btnCancelDocDelete: new MockElement('btnCancelDocDelete', 'button'),
+    btnConfirmDocDelete: new MockElement('btnConfirmDocDelete', 'button'),
+    docDeleteSpinner: new MockElement('docDeleteSpinner', 'span'),
+    docDeleteBtnText: new MockElement('docDeleteBtnText', 'span'),
     docDetailHeroFilename: new MockElement('docDetailHeroFilename', 'h3'),
     docDetailHeroSub: new MockElement('docDetailHeroSub', 'p'),
     docDetailFilename: new MockElement('docDetailFilename', 'span'),
@@ -1433,6 +1442,288 @@ async function main() {
     assert.ok(capturedDeleteIntent, 'Must emit pdfl:document-delete-intent for PDFL-94 integration');
     assert.strictEqual(capturedDeleteIntent.id, 999);
     assert.strictEqual(capturedDeleteIntent.original_filename, 'Keep_Safe_Doc.pdf');
+  });
+
+  // 5e. PDFL-94.2: Document Delete UI Integration
+  await runTest('PDFL-94.2: Clicking #btnDocDetailDelete opens #documentDeleteConfirmModal with filename & irreversible warning, and Cancel does not call DELETE', async () => {
+    let deleteApiCalled = false;
+    const docsList = [
+      {
+        id: 941,
+        original_filename: 'Important_Thesis_2026.pdf',
+        file_size_bytes: 1048576,
+        page_count: 12,
+        target_lang: 'vi',
+        is_ocr_used: false,
+        created_at: '2026-11-05T10:00:00Z',
+      },
+    ];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-delete-ui-token',
+      },
+      async (url, options = {}) => {
+        if (options.method === 'DELETE') {
+          deleteApiCalled = true;
+        }
+        if (url.endsWith('/api/documents')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList }),
+          };
+        }
+        if (url.endsWith('/api/documents/941')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList[0] }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({}) };
+      }
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 941 });
+
+    // Verify static HTML contains irreversible warning and confirmation modal
+    assert.ok(htmlSource.includes('id="documentDeleteConfirmModal"'), 'Confirmation modal must exist in HTML');
+    assert.ok(htmlSource.includes('Thao tác này không thể hoàn tác'), 'Irreversible warning text must exist in HTML');
+
+    // Click Delete button in Detail Modal -> opens Confirmation Modal
+    env.elements.btnDocDetailDelete.click();
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.hasAttribute('hidden'), false);
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'flex');
+    assert.strictEqual(env.elements.docDeleteConfirmFilename.textContent, 'Important_Thesis_2026.pdf');
+
+    // Click Cancel (#btnCancelDocDelete) -> closes Confirmation Modal, keeps Detail Modal open, no DELETE call
+    env.elements.btnCancelDocDelete.click();
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.hasAttribute('hidden'), true);
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex', 'Detail modal remains open on cancel');
+    assert.strictEqual(deleteApiCalled, false, 'Cancel must NOT call DELETE API');
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu', 'Document count remains unchanged');
+  });
+
+  await runTest('PDFL-94.2: Confirming delete calls DELETE /api/documents/{id} with Bearer token, prevents double-click, closes modals, updates list/count, and preserves unrelated currentDocData', async () => {
+    const deleteRequests = [];
+    let resolveDeleteFetch = null;
+    const toasts = [];
+
+    const docsList = [
+      {
+        id: 9421,
+        original_filename: 'Doc_To_Delete.pdf',
+        file_size_bytes: 512000,
+        page_count: 5,
+        target_lang: 'vi',
+        is_ocr_used: false,
+        created_at: '2026-11-05T10:00:00Z',
+      },
+      {
+        id: 9422,
+        original_filename: 'Doc_To_Keep.pdf',
+        file_size_bytes: 1024000,
+        page_count: 10,
+        target_lang: 'en',
+        is_ocr_used: true,
+        created_at: '2026-11-05T11:00:00Z',
+      },
+    ];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-confirm-delete-token',
+      },
+      (url, options = {}) => {
+        if (options.method === 'DELETE' && url.includes('/api/documents/9421')) {
+          deleteRequests.push({
+            url,
+            method: options.method,
+            auth: options.headers ? options.headers['Authorization'] : null,
+          });
+          return new Promise((resolve) => {
+            resolveDeleteFetch = resolve;
+          });
+        }
+        if (url.endsWith('/api/documents')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList }),
+          });
+        }
+        if (url.endsWith('/api/documents/9421')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList[0] }),
+          });
+        }
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+      }
+    );
+
+    env.sandbox.showToast = (msg, type) => {
+      toasts.push({ msg, type });
+    };
+
+    // Simulate active translation of another document (#9422) in Workspace
+    const activeWorkspaceDoc = {
+      id: 9422,
+      document_id: 9422,
+      filename: 'Doc_To_Keep.pdf',
+      translated_text: 'Nội dung bản dịch đang mở trong Workspace',
+    };
+    env.sandbox.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => activeWorkspaceDoc,
+    };
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '2 tài liệu');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 2);
+
+    // Open Detail Modal for #9421 and click Delete -> opens Confirmation Modal
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 9421 });
+    env.elements.btnDocDetailDelete.click();
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'flex');
+
+    // Click Confirm (#btnConfirmDocDelete) twice rapidly to test double-click protection
+    env.elements.btnConfirmDocDelete.click();
+    env.elements.btnConfirmDocDelete.click();
+
+    assert.strictEqual(deleteRequests.length, 1, 'Double-click must only dispatch 1 DELETE request');
+    assert.ok(deleteRequests[0].url.endsWith('/api/documents/9421'));
+    assert.strictEqual(deleteRequests[0].auth, 'Bearer jwt-confirm-delete-token');
+
+    // Verify loading state while DELETE is in-flight
+    assert.strictEqual(env.elements.btnConfirmDocDelete.disabled, true, 'Confirm button disabled during DELETE');
+    assert.strictEqual(env.elements.btnCancelDocDelete.disabled, true, 'Cancel button disabled during DELETE');
+    assert.strictEqual(env.elements.docDeleteSpinner.style.display, 'inline-block');
+    assert.strictEqual(env.elements.docDeleteBtnText.textContent, 'Đang xóa...');
+
+    // Resolve DELETE API with success
+    resolveDeleteFetch({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        message: 'Xóa tài liệu thành công.',
+        data: { id: 9421, original_filename: 'Doc_To_Delete.pdf' },
+      }),
+    });
+    await new Promise((r) => setTimeout(r, 15));
+
+    // Both Confirmation Modal and Detail Modal must be closed
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.hasAttribute('hidden'), true);
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'none');
+    assert.strictEqual(env.elements.documentDetailModal.hasAttribute('hidden'), true);
+
+    // Document #9421 removed from table and sidebar, count updated to 1
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 1);
+    assert.ok(env.elements.documentsTableBody.children[0].innerHTML.includes('Doc_To_Keep.pdf'));
+    assert.strictEqual(env.elements.sidebarDocList.children.length, 1);
+
+    // Success toast displayed
+    assert.ok(toasts.some((t) => t.type === 'success' && t.msg.includes('Xóa tài liệu thành công')));
+
+    // Unrelated currentDocData in Workspace is completely preserved
+    assert.strictEqual(
+      env.sandbox.window.pdfLinguaWorkspace.getCurrentDocData().translated_text,
+      'Nội dung bản dịch đang mở trong Workspace'
+    );
+  });
+
+  await runTest('PDFL-94.2: DELETE error handling (401, 404, 500, network failure) keeps modals open, displays error, and does not remove document from list', async () => {
+    let deleteMode = '401';
+    const docsList = [
+      {
+        id: 9429,
+        original_filename: 'Protected_Doc.pdf',
+        file_size_bytes: 409600,
+        page_count: 7,
+        target_lang: 'vi',
+        is_ocr_used: false,
+        created_at: '2026-11-05T15:00:00Z',
+      },
+    ];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-delete-err-token',
+      },
+      async (url, options = {}) => {
+        if (options.method === 'DELETE') {
+          if (deleteMode === 'network') {
+            throw new Error('Failed to fetch');
+          }
+          const statusMap = { '401': 401, '404': 404, '500': 500 };
+          const detailMap = {
+            '401': 'Not authenticated',
+            '404': 'Tài liệu không tồn tại hoặc bạn không có quyền truy cập.',
+            '500': 'Không thể xóa tệp tin vật lý trên hệ thống lưu trữ.',
+          };
+          return {
+            ok: false,
+            status: statusMap[deleteMode],
+            json: async () => ({ detail: detailMap[deleteMode] }),
+          };
+        }
+        if (url.endsWith('/api/documents')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList }),
+          };
+        }
+        if (url.endsWith('/api/documents/9429')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docsList[0] }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({}) };
+      }
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 9429 });
+    env.elements.btnDocDetailDelete.click();
+
+    // 1. Test 401
+    deleteMode = '401';
+    await env.sandbox.window.PDFLinguaSidebar.confirmDocumentDelete();
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'flex', 'Confirm modal stays open on 401');
+    assert.strictEqual(env.elements.docDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(env.elements.docDeleteConfirmAlert.textContent.includes('401'));
+    assert.strictEqual(env.elements.btnConfirmDocDelete.disabled, false, 'Confirm button re-enabled after error');
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu', 'Document not removed on 401');
+
+    // 2. Test 404
+    deleteMode = '404';
+    await env.sandbox.window.PDFLinguaSidebar.confirmDocumentDelete();
+    assert.strictEqual(env.elements.docDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(env.elements.docDeleteConfirmAlert.textContent.includes('Tài liệu không tồn tại'));
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu', 'Document not removed on 404');
+
+    // 3. Test 500
+    deleteMode = '500';
+    await env.sandbox.window.PDFLinguaSidebar.confirmDocumentDelete();
+    assert.strictEqual(env.elements.docDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(env.elements.docDeleteConfirmAlert.textContent.includes('Không thể xóa tệp tin vật lý'));
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu', 'Document not removed on 500');
+
+    // 4. Test Network Failure
+    deleteMode = 'network';
+    await env.sandbox.window.PDFLinguaSidebar.confirmDocumentDelete();
+    assert.strictEqual(env.elements.docDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(env.elements.docDeleteConfirmAlert.textContent.includes('Không thể kết nối tới máy chủ'));
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu', 'Document not removed on network error');
   });
 
   // 6. Default & Toggle Behavior

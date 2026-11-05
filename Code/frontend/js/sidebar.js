@@ -16,6 +16,9 @@
   let isMobileOpen = false;
   let isDocDetailOpen = false;
   let isDetailDownloading = false;
+  let isDocDeleteConfirmOpen = false;
+  let isDocDeleting = false;
+  let pendingDeleteDoc = null;
   let currentDetailDoc = null;
   let detailRequestSequence = 0;
   let cachedDocuments = [];
@@ -85,9 +88,15 @@
       });
     }
 
-    // Keyboard navigation (Escape to close detail modal or mobile drawer, Ctrl+B to toggle sidebar)
+    // Keyboard navigation (Escape to close delete confirm modal, detail modal, or mobile drawer, Ctrl+B to toggle sidebar)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (isDocDeleteConfirmOpen) {
+          if (!isDocDeleting) {
+            closeDocumentDeleteConfirmModal();
+          }
+          return;
+        }
         if (isDocDetailOpen) {
           closeDocumentDetailModal();
           return;
@@ -102,8 +111,9 @@
       }
     });
 
-    // Document Detail Modal controls (PDFL-93.1)
+    // Document Detail & Delete Confirmation Modal controls (PDFL-93.1 & PDFL-94.2)
     initDocumentDetailModal();
+    initDocumentDeleteConfirmModal();
 
     // Upload PDF Primary Action button handler
     if (btnSidebarUpload) {
@@ -980,8 +990,8 @@
   }
 
   /**
-   * Integration hook for #btnDocDetailDelete (PDFL-93.3 -> PDFL-94)
-   * Prepares delete target metadata without calling DELETE API or mutating data yet.
+   * Integration hook for #btnDocDetailDelete (PDFL-93.3 -> PDFL-94.2)
+   * Dispatches pdfl:document-delete-intent to open the Delete Confirmation Modal.
    */
   function handleDocumentDetailDeleteIntent() {
     if (!isDocDetailOpen || !currentDetailDoc || currentDetailDoc.id === undefined || currentDetailDoc.id === null) {
@@ -999,9 +1009,289 @@
           detail: targetPayload,
         })
       );
+    } else {
+      openDocumentDeleteConfirmModal(targetPayload);
     }
 
     return targetPayload;
+  }
+
+  /**
+   * Initialize Document Delete Confirmation Modal events and pdfl:document-delete-intent listener (PDFL-94.2)
+   */
+  function initDocumentDeleteConfirmModal() {
+    const confirmModalEl = document.getElementById('documentDeleteConfirmModal');
+    const btnCancel = document.getElementById('btnCancelDocDelete');
+    const btnConfirm = document.getElementById('btnConfirmDocDelete');
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('pdfl:document-delete-intent', (e) => {
+        const target = e && e.detail ? e.detail : null;
+        if (target && target.id !== undefined && target.id !== null) {
+          openDocumentDeleteConfirmModal(target);
+        }
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!isDocDeleting) {
+          closeDocumentDeleteConfirmModal();
+        }
+      });
+    }
+
+    if (btnConfirm) {
+      btnConfirm.addEventListener('click', (e) => {
+        e.preventDefault();
+        confirmDocumentDelete();
+      });
+    }
+
+    if (confirmModalEl) {
+      confirmModalEl.addEventListener('click', (e) => {
+        if (e.target === confirmModalEl && !isDocDeleting) {
+          closeDocumentDeleteConfirmModal();
+        }
+      });
+    }
+  }
+
+  /**
+   * Toggle loading state inside #documentDeleteConfirmModal and prevent double-clicks (PDFL-94.2)
+   */
+  function setDocumentDeleteLoadingState(loading) {
+    isDocDeleting = Boolean(loading);
+    const btnConfirm = document.getElementById('btnConfirmDocDelete');
+    const btnCancel = document.getElementById('btnCancelDocDelete');
+    const spinnerEl = document.getElementById('docDeleteSpinner');
+    const btnTextEl = document.getElementById('docDeleteBtnText');
+
+    if (btnConfirm) btnConfirm.disabled = isDocDeleting;
+    if (btnCancel) btnCancel.disabled = isDocDeleting;
+    if (spinnerEl) spinnerEl.style.display = isDocDeleting ? 'inline-block' : 'none';
+    if (btnTextEl) btnTextEl.textContent = isDocDeleting ? 'Đang xóa...' : 'Xác nhận xóa';
+  }
+
+  /**
+   * Open Document Delete Confirmation Modal with target document filename and irreversible warning (PDFL-94.2)
+   */
+  function openDocumentDeleteConfirmModal(docTarget) {
+    const confirmModalEl = document.getElementById('documentDeleteConfirmModal');
+    if (!confirmModalEl || !docTarget || docTarget.id === undefined || docTarget.id === null) {
+      return;
+    }
+
+    pendingDeleteDoc = {
+      id: docTarget.id,
+      original_filename: docTarget.original_filename || `document_${docTarget.id}.pdf`,
+    };
+    isDocDeleteConfirmOpen = true;
+    setDocumentDeleteLoadingState(false);
+
+    const filenameEl = document.getElementById('docDeleteConfirmFilename');
+    const alertEl = document.getElementById('docDeleteConfirmAlert');
+
+    if (filenameEl) {
+      filenameEl.textContent = pendingDeleteDoc.original_filename;
+    }
+    if (alertEl) {
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
+    }
+
+    confirmModalEl.removeAttribute('hidden');
+    confirmModalEl.style.display = 'flex';
+  }
+
+  /**
+   * Close Document Delete Confirmation Modal without mutating document data (PDFL-94.2)
+   */
+  function closeDocumentDeleteConfirmModal() {
+    const confirmModalEl = document.getElementById('documentDeleteConfirmModal');
+    isDocDeleteConfirmOpen = false;
+    pendingDeleteDoc = null;
+    setDocumentDeleteLoadingState(false);
+
+    const alertEl = document.getElementById('docDeleteConfirmAlert');
+    if (alertEl) {
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
+    }
+
+    if (confirmModalEl) {
+      confirmModalEl.setAttribute('hidden', '');
+      confirmModalEl.style.display = 'none';
+    }
+  }
+
+  /**
+   * Sync Sidebar recent list and #documentsSection table after removing a document locally (PDFL-94.2)
+   */
+  function removeDocumentFromLocalLists(deletedDocId) {
+    cachedDocuments = cachedDocuments.filter((d) => String(d.id) !== String(deletedDocId));
+    const token = getStoredAuthToken() || cachedToken;
+
+    const emptyStateEl = document.getElementById('sidebarEmptyDocsState');
+    let docListEl = document.getElementById('sidebarDocList');
+    const container = document.getElementById('sidebarRecentDocs');
+
+    if (container && !docListEl) {
+      docListEl = document.createElement('ul');
+      docListEl.className = 'sidebar-doc-list';
+      docListEl.id = 'sidebarDocList';
+      container.appendChild(docListEl);
+    }
+
+    if (cachedDocuments.length === 0) {
+      if (emptyStateEl) emptyStateEl.style.display = 'block';
+      if (docListEl) {
+        docListEl.style.display = 'none';
+        docListEl.innerHTML = '';
+      }
+    } else {
+      if (emptyStateEl) emptyStateEl.style.display = 'none';
+      if (docListEl) {
+        docListEl.style.display = 'flex';
+        docListEl.innerHTML = '';
+        const recentDocs = cachedDocuments.slice(0, 8);
+        recentDocs.forEach((doc) => {
+          const item = createDocumentItem(doc, token);
+          docListEl.appendChild(item);
+        });
+      }
+    }
+
+    renderDocumentsPageList(cachedDocuments, token);
+  }
+
+  /**
+   * Execute DELETE /api/documents/{document_id} on user confirmation (PDFL-94.2)
+   */
+  async function confirmDocumentDelete() {
+    if (!isDocDeleteConfirmOpen || isDocDeleting || !pendingDeleteDoc || pendingDeleteDoc.id === undefined || pendingDeleteDoc.id === null) {
+      return false;
+    }
+
+    const targetId = pendingDeleteDoc.id;
+    const targetFilename = pendingDeleteDoc.original_filename || `document_${targetId}.pdf`;
+    const alertEl = document.getElementById('docDeleteConfirmAlert');
+
+    const token = getStoredAuthToken();
+    if (!token) {
+      const msg = 'Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập (401). Vui lòng đăng nhập lại.';
+      if (alertEl) {
+        alertEl.style.display = 'flex';
+        alertEl.textContent = msg;
+      }
+      if (typeof showToast === 'function') {
+        showToast(msg, 'error');
+      }
+      return false;
+    }
+
+    setDocumentDeleteLoadingState(true);
+    if (alertEl) {
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(targetId)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
+        setDocumentDeleteLoadingState(false);
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.textContent = msg;
+        }
+        if (typeof showToast === 'function') {
+          showToast(msg, 'error');
+        }
+        return false;
+      }
+
+      if (response.status === 404) {
+        let msg = 'Tài liệu không tồn tại hoặc bạn không có quyền xóa (404).';
+        try {
+          const errData = await response.json();
+          if (errData && (errData.detail || errData.message)) {
+            msg = errData.detail || errData.message;
+          }
+        } catch (_e) {}
+        setDocumentDeleteLoadingState(false);
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.textContent = msg;
+        }
+        if (typeof showToast === 'function') {
+          showToast(msg, 'error');
+        }
+        return false;
+      }
+
+      if (!response.ok) {
+        let msg = 'Lỗi máy chủ khi xóa tài liệu. Vui lòng thử lại.';
+        try {
+          const errData = await response.json();
+          if (errData && (errData.detail || errData.message)) {
+            msg = errData.detail || errData.message;
+          }
+        } catch (_e) {}
+        setDocumentDeleteLoadingState(false);
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.textContent = msg;
+        }
+        if (typeof showToast === 'function') {
+          showToast(msg, 'error');
+        }
+        return false;
+      }
+
+      let successMessage = `Đã xóa tài liệu "${targetFilename}" thành công.`;
+      try {
+        const result = await response.json();
+        if (result && result.message) {
+          successMessage = result.message;
+        }
+      } catch (_e) {}
+
+      // Only on successful DELETE:
+      // 1. Close Delete Confirmation Modal and Detail Modal
+      closeDocumentDeleteConfirmModal();
+      closeDocumentDetailModal();
+
+      // 2. Remove deleted document from current list & update count badge
+      removeDocumentFromLocalLists(targetId);
+
+      // 3. Display success toast notification
+      if (typeof showToast === 'function') {
+        showToast(successMessage, 'success');
+      }
+
+      return true;
+    } catch (err) {
+      setDocumentDeleteLoadingState(false);
+      const msg = (err && err.message && err.message !== 'Failed to fetch')
+        ? err.message
+        : 'Không thể kết nối tới máy chủ để xóa tài liệu. Vui lòng kiểm tra mạng và thử lại.';
+      if (alertEl) {
+        alertEl.style.display = 'flex';
+        alertEl.textContent = msg;
+      }
+      if (typeof showToast === 'function') {
+        showToast(msg, 'error');
+      }
+      return false;
+    }
   }
 
   /**
@@ -1382,5 +1672,8 @@
     closeDocumentsView: closeDocumentsView,
     openDocumentDetailModal: openDocumentDetailModal,
     closeDocumentDetailModal: closeDocumentDetailModal,
+    openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
+    closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
+    confirmDocumentDelete: confirmDocumentDelete,
   };
 })();
