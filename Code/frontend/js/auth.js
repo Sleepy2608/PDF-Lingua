@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua — Authentication & Registration Module (PDFL-73.4 + PDFL-76.4)
+ * PDF-Lingua: Authentication & Registration Module (PDFL-73.4 + PDFL-76.4)
  * --------------------------------------------------------------------------
  * Handles registration and login modal interaction, client-side input validation,
  * password toggle visibility, asynchronous API submission, and UI error states.
@@ -775,7 +775,7 @@
         }, 1200);
 
       } else if (response.status === 401) {
-        // Invalid credentials (wrong email or password — same message for anti-enumeration)
+        // Invalid credentials (wrong email or password: same message for anti-enumeration)
         const msg = (responseData && responseData.message)
           ? responseData.message
           : 'Email hoặc mật khẩu không chính xác.';
@@ -896,7 +896,7 @@
   }
 
   /**
-   * Alert helpers — scoped to the correct modal
+   * Alert helpers: scoped to the correct modal
    */
   function showRegisterAlert(message, type = 'info') {
     showAlertInElement('registerAlert', message, type);
@@ -1133,22 +1133,16 @@
         userAvatarEl.textContent = initial;
       }
 
-      // Update Admin badge button visibility (PDFL-186)
+      // Update Admin badge indicator visibility in header
       const btnOpenAdmin = document.getElementById('btnOpenAdmin');
-      const btnAdminModalShortcut = document.getElementById('btnAdminModalShortcut');
       const isAdmin = !!(user && user.role === 'admin');
       if (btnOpenAdmin) {
         btnOpenAdmin.style.display = isAdmin ? 'inline-flex' : 'none';
       }
-      if (btnAdminModalShortcut) {
-        btnAdminModalShortcut.style.display = isAdmin ? 'block' : 'none';
-      }
     } else {
-      // Hide admin buttons on logout or guest state
+      // Hide admin indicator on logout or guest state
       const btnOpenAdmin = document.getElementById('btnOpenAdmin');
-      const btnAdminModalShortcut = document.getElementById('btnAdminModalShortcut');
       if (btnOpenAdmin) btnOpenAdmin.style.display = 'none';
-      if (btnAdminModalShortcut) btnAdminModalShortcut.style.display = 'none';
 
       // If admin section was visible, return to default view
       const adminSec = document.getElementById('adminSection');

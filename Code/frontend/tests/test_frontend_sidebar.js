@@ -180,6 +180,10 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
       createObjectURL: () => 'blob:mock-url',
       revokeObjectURL: () => {},
     },
+    pdfLinguaAdmin: {
+      openAdminView: () => {},
+      closeAdminView: () => {},
+    },
   };
 
   const defaultFetch = async (url) => {
@@ -398,11 +402,17 @@ async function main() {
     assert.strictEqual(env.elements.sideNavHome.classList.contains('active'), false);
 
     // Click sideNavAdmin
-    let adminClicked = false;
-    env.elements.btnOpenAdmin.click = () => { adminClicked = true; };
+    let adminOpened = false;
+    env.sandbox.window.pdfLinguaAdmin = {
+      openAdminView: () => { adminOpened = true; },
+    };
     env.elements.sideNavAdmin.click();
     assert.strictEqual(env.elements.sideNavAdmin.classList.contains('active'), true);
-    assert.strictEqual(adminClicked, true);
+    assert.strictEqual(adminOpened, true);
+  });
+
+  await runTest('HTML: Admin button in account modal is removed', () => {
+    assert.ok(!htmlSource.includes('id="btnAdminModalShortcut"'), 'btnAdminModalShortcut must be removed');
   });
 
   // 5. Dynamic Document Fetching & Rendering

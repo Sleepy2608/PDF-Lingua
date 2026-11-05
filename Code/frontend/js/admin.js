@@ -548,17 +548,7 @@
 
   // ── Event Bindings ──────────────────────────────────────────────────────────
   function initAdminEvents() {
-    // 1. Navigation Buttons
-    const btnOpenAdmin = document.getElementById('btnOpenAdmin');
-    if (btnOpenAdmin) {
-      btnOpenAdmin.addEventListener('click', openAdminView);
-    }
-
-    const btnAdminModalShortcut = document.getElementById('btnAdminModalShortcut');
-    if (btnAdminModalShortcut) {
-      btnAdminModalShortcut.addEventListener('click', openAdminView);
-    }
-
+    // 1. Navigation Buttons (Admin navigation handled via left sidebar #sideNavAdmin)
     const btnCloseAdminView = document.getElementById('btnCloseAdminView');
     if (btnCloseAdminView) {
       btnCloseAdminView.addEventListener('click', closeAdminView);

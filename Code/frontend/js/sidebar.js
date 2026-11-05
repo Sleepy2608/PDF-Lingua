@@ -326,9 +326,13 @@
       sideNavAdmin.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavAdmin);
-        const btnOpenAdmin = document.getElementById('btnOpenAdmin');
-        if (btnOpenAdmin && typeof btnOpenAdmin.click === 'function') {
-          btnOpenAdmin.click();
+        if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
+          window.pdfLinguaAdmin.openAdminView();
+        } else {
+          const adminSection = document.getElementById('adminSection');
+          const heroSection = document.getElementById('heroSection');
+          if (adminSection) adminSection.style.display = 'block';
+          if (heroSection) heroSection.style.display = 'none';
         }
         if (window.innerWidth < 768) closeMobileSidebar();
       });
