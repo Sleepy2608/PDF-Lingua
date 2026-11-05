@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +13,6 @@
     <link rel="stylesheet" href="css/workspace.css">
     <link rel="stylesheet" href="css/sidebar.css">
 </head>
-
 <body>
     <div class="app-shell" id="appShell">
         <!-- Collapsible Sidebar Navigation (PDF Document Management) -->
@@ -28,10 +26,8 @@
                         <span class="sidebar-brand-text">Lingua</span>
                     </span>
                 </a>
-                <button type="button" class="sidebar-toggle-btn" id="btnToggleSidebar"
-                    aria-label="Thu gọn thanh điều hướng" data-tooltip="Thu gọn thanh điều hướng">
-                    <svg class="toggle-icon-collapse" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="sidebar-toggle-btn" id="btnToggleSidebar" aria-label="Thu gọn thanh điều hướng" data-tooltip="Thu gọn thanh điều hướng">
+                    <svg class="toggle-icon-collapse" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="9" y1="3" x2="9" y2="21"></line>
                         <polyline points="15 9 12 12 15 15"></polyline>
@@ -41,10 +37,8 @@
 
             <!-- Primary Action Button: Upload PDF -->
             <div class="sidebar-action-wrap">
-                <button type="button" class="btn-sidebar-upload" id="btnSidebarUpload" data-tooltip="Tải PDF lên"
-                    aria-label="Tải PDF lên">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                        stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="btn-sidebar-upload" id="btnSidebarUpload" data-tooltip="Tải PDF lên" aria-label="Tải PDF lên">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -61,8 +55,7 @@
                         <li>
                             <a href="#home" class="sidebar-nav-item" id="sideNavHome" data-tooltip="Trang chủ">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                                     </svg>
@@ -71,11 +64,9 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#translate" class="sidebar-nav-item active" id="sideNavTranslate"
-                                data-tooltip="Dịch PDF">
+                            <a href="#translate" class="sidebar-nav-item active" id="sideNavTranslate" data-tooltip="Dịch PDF">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M5 8l6 6"></path>
                                         <path d="M4 14l6-6 2-3"></path>
                                         <path d="M2 5h12"></path>
@@ -88,11 +79,9 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#ai-copilot" class="sidebar-nav-item" id="sideNavAiCopilot"
-                                data-tooltip="Hỏi đáp AI">
+                            <a href="#ai-copilot" class="sidebar-nav-item" id="sideNavAiCopilot" data-tooltip="Hỏi đáp AI">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                     </svg>
                                 </span>
@@ -100,38 +89,29 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#ai-summarize" class="sidebar-nav-item" id="sideNavAiSummarize"
-                                data-tooltip="Tóm tắt văn bản">
+                            <a href="#ai-summarize" class="sidebar-nav-item" id="sideNavAiSummarize" data-tooltip="Tóm tắt văn bản">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path
-                                            d="M12 3c0 4.97-4.03 9-9 9 4.97 0 9 4.03 9 9 0-4.97 4.03-9 9-9-4.97 0-9-4.03-9-9z">
-                                        </path>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 3c0 4.97-4.03 9-9 9 4.97 0 9 4.03 9 9 0-4.97 4.03-9 9-9-4.97 0-9-4.03-9-9z"></path>
                                     </svg>
                                 </span>
                                 <span class="nav-item-text">Tóm tắt văn bản</span>
                             </a>
                         </li>
                         <li>
-                            <a href="#documents" class="sidebar-nav-item" id="sideNavDocuments"
-                                data-tooltip="Quản lý tài liệu">
+                            <a href="#documents" class="sidebar-nav-item" id="sideNavDocuments" data-tooltip="Tài liệu">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path
-                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
-                                        </path>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                     </svg>
                                 </span>
-                                <span class="nav-item-text">Quản lý tài liệu</span>
+                                <span class="nav-item-text">Tài liệu</span>
                             </a>
                         </li>
                         <li>
                             <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá gói">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="2" y="5" width="20" height="14" rx="2"></rect>
                                         <line x1="2" y1="10" x2="22" y2="10"></line>
                                     </svg>
@@ -140,11 +120,9 @@
                             </a>
                         </li>
                         <li id="sideNavAdminItem" style="display: none;">
-                            <a href="#admin" class="sidebar-nav-item" id="sideNavAdmin"
-                                data-tooltip="Quản trị hệ thống">
+                            <a href="#admin" class="sidebar-nav-item" id="sideNavAdmin" data-tooltip="Quản trị hệ thống">
                                 <span class="nav-item-icon nav-icon-admin">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                     </svg>
                                 </span>
@@ -158,7 +136,6 @@
                 <div class="sidebar-section" id="sidebarRecentSection">
                     <div class="sidebar-section-header">
                         <span class="section-title">TÀI LIỆU GẦN ĐÂY</span>
-                        <button type="button" class="sidebar-view-all-btn" id="btnSidebarViewAllDocs" title="Xem tất cả tài liệu">Xem tất cả</button>
                     </div>
                     <div class="sidebar-recent-docs" id="sidebarRecentDocs">
                         <!-- Clean Empty State Matching UI Specification -->
@@ -177,11 +154,9 @@
 
             <!-- Fixed Footer: User Profile -->
             <div class="sidebar-footer">
-                <div class="sidebar-profile-card" id="sidebarUserProfile" tabindex="0" role="button"
-                    aria-label="Xem thông tin tài khoản" data-tooltip="Tài khoản cá nhân">
+                <div class="sidebar-profile-card" id="sidebarUserProfile" tabindex="0" role="button" aria-label="Xem thông tin tài khoản" data-tooltip="Tài khoản cá nhân">
                     <div class="sidebar-avatar" id="sidebarUserAvatar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
@@ -191,8 +166,7 @@
                         <div class="sidebar-user-sub" id="sidebarUserRole">Free / Pro</div>
                     </div>
                     <div class="sidebar-profile-more" id="btnSidebarMore" title="Tùy chọn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="1.5"></circle>
                             <circle cx="19" cy="12" r="1.5"></circle>
                             <circle cx="5" cy="12" r="1.5"></circle>
@@ -210,10 +184,8 @@
             <header class="site-header">
                 <div class="container header-container">
                     <div class="header-left">
-                        <button type="button" class="btn-mobile-sidebar-toggle" id="btnMobileSidebarToggle"
-                            aria-label="Mở menu điều hướng" title="Mở menu điều hướng">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button type="button" class="btn-mobile-sidebar-toggle" id="btnMobileSidebarToggle" aria-label="Mở menu điều hướng" title="Mở menu điều hướng">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="3" y1="12" x2="21" y2="12"></line>
                                 <line x1="3" y1="6" x2="21" y2="6"></line>
                                 <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -221,777 +193,763 @@
                         </button>
                     </div>
 
-                    <nav>
-                        <ul class="nav-menu">
-                            <li><a href="#translate" class="nav-link active">Dịch PDF</a></li>
-                            <li><a href="#ai-copilot" class="nav-link">Hỏi đáp AI</a></li>
-                            <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
-                        </ul>
-                    </nav>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#translate" class="nav-link active">Dịch PDF</a></li>
+                    <li><a href="#ai-copilot" class="nav-link">Hỏi đáp AI</a></li>
+                    <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
+                </ul>
+            </nav>
 
-                    <div class="header-actions">
-                        <div class="auth-guest-group" id="authGuestGroup">
-                            <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
-                            <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
-                        </div>
-                        <div class="auth-user-group" id="authUserGroup" hidden>
-                            <div class="btn btn-admin-badge user-role-indicator" id="btnOpenAdmin"
-                                title="Vai trò: Quản trị viên" style="display: none;">
-                                <svg class="admin-crown-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                </svg>
-                                <span class="admin-badge-text">Quản trị</span>
-                            </div>
-                            <button type="button" class="btn btn-secondary btn-sm" id="btnHeaderDocList"
-                                title="Xem danh sách tài liệu" style="display: none;">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                                <span>Tài liệu</span>
-                            </button>
-                        <button type="button" class="user-profile-badge" id="btnOpenAccountModal"
-                            title="Xem thông tin tài khoản">
-                            <span class="user-avatar" id="userAvatar"></span>
-                            <span class="user-name" id="userDisplayName"></span>
-                        </button>
-                        <button type="button" class="btn btn-logout" id="btnLogout">Đăng xuất</button>
-                    </div>
+            <div class="header-actions">
+                <div class="auth-guest-group" id="authGuestGroup">
+                    <button type="button" class="btn btn-login" id="btnLogin">Đăng nhập</button>
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnOpenRegister">Đăng ký</button>
                 </div>
+                <div class="auth-user-group" id="authUserGroup" hidden>
+                    <div class="btn btn-admin-badge user-role-indicator" id="btnOpenAdmin" title="Vai trò: Quản trị viên" style="display: none;">
+                        <svg class="admin-crown-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <span class="admin-badge-text">Quản trị</span>
+                    </div>
+                    <button type="button" class="user-profile-badge" id="btnOpenAccountModal" title="Xem thông tin tài khoản">
+                        <span class="user-avatar" id="userAvatar"></span>
+                        <span class="user-name" id="userDisplayName"></span>
+                    </button>
+                    <button type="button" class="btn btn-logout" id="btnLogout">Đăng xuất</button>
+                </div>
+            </div>
         </div>
-        </header>
+    </header>
 
-        <main>
-            <!-- Hero Section -->
-            <section class="hero-section" id="heroSection">
-                <div class="container hero-grid">
-                    <!-- Left Column: Value Proposition -->
-                    <div class="hero-content">
-                        <div class="hero-badge">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon
-                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                                </polygon>
-                            </svg>
-                            <span>AI Document Workspace Thế Hệ Mới</span>
-                        </div>
-
-                        <h1 class="hero-title">Trình Dịch Thuật & Trợ Lý PDF AI</h1>
-                        <p class="hero-desc">Dịch tài liệu song ngữ thông minh, nhận dạng OCR và tương tác hỏi đáp với
-                            Trợ lý AI chuyên sâu.</p>
-
-                        <ul class="hero-checklist">
-                            <li class="checklist-item">
-                                <span class="check-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                </span>
-                                <span>Dịch tài liệu song ngữ thông minh giữ nguyên định dạng</span>
-                            </li>
-                            <li class="checklist-item">
-                                <span class="check-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                </span>
-                                <span>Nhận dạng OCR chuyên sâu cho tài liệu scan và chữ mờ</span>
-                            </li>
-                            <li class="checklist-item">
-                                <span class="check-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                </span>
-                                <span>Trợ lý AI hỏi đáp tài liệu tức thì có trích dẫn số trang</span>
-                            </li>
-                            <li class="checklist-item">
-                                <span class="check-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                </span>
-                                <span>Tóm tắt nhanh văn bản và bảng thuật ngữ chỉ trong vài giây</span>
-                            </li>
-                        </ul>
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section" id="heroSection">
+            <div class="container hero-grid">
+                <!-- Left Column: Value Proposition -->
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        <span>AI Document Workspace Thế Hệ Mới</span>
                     </div>
 
-                    <!-- Right Column: Dropzone Box -->
-                    <div class="hero-dropzone-wrap">
-                        <div class="dropzone-card" id="dropzoneCard">
-                            <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" hidden>
+                    <h1 class="hero-title">Trình Dịch Thuật & Trợ Lý PDF AI</h1>
+                    <p class="hero-desc">Dịch tài liệu song ngữ thông minh, nhận dạng OCR và tương tác hỏi đáp với Trợ lý AI chuyên sâu.</p>
 
-                            <!-- Prompt View -->
-                            <div id="dropzonePrompt"
-                                style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                                <div class="dropzone-art">
-                                    <svg class="dropzone-art-svg" viewBox="0 0 120 120" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <defs>
-                                            <!-- Soft pastel ambient aura behind the artwork -->
-                                            <radialGradient id="artGlow" cx="50%" cy="50%" r="50%">
-                                                <stop offset="0%" stop-color="#818CF8" stop-opacity="0.18" />
-                                                <stop offset="60%" stop-color="#C7D2FE" stop-opacity="0.08" />
-                                                <stop offset="100%" stop-color="#4F46E5" stop-opacity="0" />
-                                            </radialGradient>
-
-                                            <!-- Harmonious 3D Ring Gradient - Left Sky Blue (#93C5FD) to Right Periwinkle/Indigo (#6366F1) -->
-                                            <linearGradient id="ringBackGrad" x1="100%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" stop-color="#6366F1" />
-                                                <stop offset="45%" stop-color="#4F46E5" />
-                                                <stop offset="80%" stop-color="#60A5FA" />
-                                                <stop offset="100%" stop-color="#93C5FD" />
-                                            </linearGradient>
-
-                                            <linearGradient id="ringFrontGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#93C5FD" />
-                                                <stop offset="35%" stop-color="#60A5FA" />
-                                                <stop offset="70%" stop-color="#818CF8" />
-                                                <stop offset="100%" stop-color="#6366F1" />
-                                            </linearGradient>
-
-                                            <!-- Front ring specular highlight for 3D gloss reflection -->
-                                            <linearGradient id="ringHighlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8" />
-                                                <stop offset="40%" stop-color="#E0F2FE" stop-opacity="0.6" />
-                                                <stop offset="85%" stop-color="#C7D2FE" stop-opacity="0.3" />
-                                                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
-                                            </linearGradient>
-
-                                            <linearGradient id="pdfBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#F87171" />
-                                                <stop offset="40%" stop-color="#EF4444" />
-                                                <stop offset="100%" stop-color="#DC2626" />
-                                            </linearGradient>
-
-                                            <linearGradient id="linguaBrandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#1D4ED8" />
-                                                <stop offset="100%" stop-color="#2563EB" />
-                                            </linearGradient>
-
-                                            <linearGradient id="glyphGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#4F46E5" />
-                                                <stop offset="100%" stop-color="#7C3AED" />
-                                            </linearGradient>
-
-                                            <filter id="docShadow" x="-15%" y="-15%" width="130%" height="130%">
-                                                <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0F172A"
-                                                    flood-opacity="0.08" />
-                                            </filter>
-
-                                            <filter id="frontRingShadow" x="-20%" y="-20%" width="140%" height="140%">
-                                                <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#4F46E5"
-                                                    flood-opacity="0.2" />
-                                            </filter>
-
-                                            <filter id="bubbleShadow" x="-20%" y="-20%" width="140%" height="140%">
-                                                <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0F172A"
-                                                    flood-opacity="0.12" />
-                                            </filter>
-                                        </defs>
-
-                                        <!-- Ambient Glow -->
-                                        <ellipse cx="60" cy="62" rx="54" ry="40" fill="url(#artGlow)" />
-
-                                        <!-- Ring Back Arc (behind document) -->
-                                        <g transform="rotate(-18 60 64)">
-                                            <path d="M 106 64 A 46 17 0 0 0 14 64" fill="none"
-                                                stroke="url(#ringBackGrad)" stroke-width="6" stroke-linecap="round" />
-                                        </g>
-
-                                        <!-- Document Sheet -->
-                                        <g filter="url(#docShadow)">
-                                            <path
-                                                d="M 42 20 H 68 L 84 36 V 84 A 6 6 0 0 1 78 90 H 42 A 6 6 0 0 1 36 84 V 26 A 6 6 0 0 1 42 20 Z"
-                                                fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
-                                            <path d="M 68 20 V 33 A 3 3 0 0 0 71 36 H 84 Z" fill="#F1F5F9"
-                                                stroke="#CBD5E1" stroke-width="1.2" />
-                                        </g>
-
-                                        <!-- Elements on Document -->
-                                        <rect x="28" y="24" width="34" height="19" rx="5.5" fill="url(#pdfBadgeGrad)"
-                                            filter="drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3))" />
-                                        <text x="45" y="37.5" fill="#FFFFFF" font-size="9.5" font-weight="900"
-                                            font-family="'Plus Jakarta Sans', system-ui, sans-serif"
-                                            text-anchor="middle" letter-spacing="0.5">PDF</text>
-                                        <text x="40" y="54" fill="url(#linguaBrandGrad)" font-size="11.5"
-                                            font-weight="800" font-family="'Plus Jakarta Sans', system-ui, sans-serif"
-                                            text-anchor="start">Lingua</text>
-                                        <rect x="40" y="60" width="32" height="3" rx="1.5" fill="#BFDBFE" />
-                                        <rect x="40" y="66" width="22" height="3" rx="1.5" fill="#BFDBFE" />
-                                        <rect x="40" y="72" width="14" height="3" rx="1.5" fill="#DBEAFE" />
-
-                                        <!-- Ring Front Arc with Soft Shadow & 3D Specular Highlight -->
-                                        <g transform="rotate(-18 60 64)" filter="url(#frontRingShadow)">
-                                            <!-- Main 3D Tube Body -->
-                                            <path d="M 14 64 A 46 17 0 0 0 106 64" fill="none"
-                                                stroke="url(#ringFrontGrad)" stroke-width="6" stroke-linecap="round" />
-                                            <!-- Specular Highlight along the crest of the tube -->
-                                            <path d="M 17 63 A 44 15.5 0 0 0 103 63" fill="none"
-                                                stroke="url(#ringHighlightGrad)" stroke-width="1.5"
-                                                stroke-linecap="round" />
-                                        </g>
-
-                                        <!-- Speech Bubble positioned at bottom-right corner -->
-                                        <g filter="url(#bubbleShadow)" transform="translate(62, 67)">
-                                            <rect x="0" y="0" width="38" height="28" rx="9" fill="#FFFFFF"
-                                                stroke="#E2E8F0" stroke-width="1.5" />
-                                            <path d="M 8 27 L 3 33 L 14 27 Z" fill="#FFFFFF" />
-                                            <path d="M 8 28 L 3 33 L 14 28" stroke="#E2E8F0" stroke-width="1.5"
-                                                stroke-linejoin="round" />
-                                            <text x="19" y="18" fill="url(#glyphGrad)" font-size="12" font-weight="800"
-                                                font-family="'Plus Jakarta Sans', system-ui, sans-serif"
-                                                text-anchor="middle">文/A</text>
-                                        </g>
-                                    </svg>
-                                </div>
-
-                                <p class="dropzone-title">Kéo thả tệp PDF vào đây</p>
-                                <div class="dropzone-divider">hoặc</div>
-
-                                <button type="button" class="btn btn-gradient btn-lg dropzone-btn" id="btnSelectPdf">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="17 8 12 3 7 8"></polyline>
-                                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                                    </svg>
-                                    <span>Chọn tệp PDF</span>
-                                </button>
-
-                                <p class="dropzone-limit" id="dropzoneLimitText">Tệp miễn phí tối đa 20 MB & 100 trang
-                                    (Nâng cấp Pro để hỗ trợ 100 MB & 500 trang)</p>
-                            </div>
-
-                            <!-- Selected File Preview -->
-                            <div class="dropzone-selected" id="dropzoneSelected">
-                                <div class="file-preview-box">
-                                    <span class="badge badge-pdf">PDF</span>
-                                    <div class="file-preview-info">
-                                        <div class="file-preview-name" id="previewFileName">tai-lieu.pdf</div>
-                                        <div class="file-preview-size" id="previewFileSize">2.4 MB</div>
-                                    </div>
-                                    <button type="button" class="btn-file-remove" id="btnRemoveFile"
-                                        title="Hủy chọn tệp">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                        </svg>
-                                    </button>
-                                </div>
-                                <button type="button" class="btn btn-gradient btn-lg" id="btnProcessPdf">
-                                    <span>Bắt đầu xử lý & Dịch thuật</span>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <ul class="hero-checklist">
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Dịch tài liệu song ngữ thông minh giữ nguyên định dạng</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Nhận dạng OCR chuyên sâu cho tài liệu scan và chữ mờ</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Trợ lý AI hỏi đáp tài liệu tức thì có trích dẫn số trang</span>
+                        </li>
+                        <li class="checklist-item">
+                            <span class="check-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                            <span>Tóm tắt nhanh văn bản và bảng thuật ngữ chỉ trong vài giây</span>
+                        </li>
+                    </ul>
                 </div>
-            </section>
 
-            <!-- Bilingual Workspace Section (Initially Hidden) -->
-            <section class="workspace-section" id="workspaceSection" style="display: none;">
-                <div class="container">
-                    <!-- Workspace Toolbar -->
-                    <div class="workspace-toolbar">
-                        <div class="doc-meta">
-                            <span class="badge badge-pdf">PDF</span>
-                            <span class="doc-name" id="docNameDisplay">tai-lieu.pdf</span>
-                            <span class="meta-pill" id="docPagesDisplay">1 trang</span>
-                            <span class="meta-pill" id="docSizeDisplay">1.2 MB</span>
-                            <span class="meta-pill digital" id="docTypeDisplay">PDF Số</span>
+                <!-- Right Column: Dropzone Box -->
+                <div class="hero-dropzone-wrap">
+                    <div class="dropzone-card" id="dropzoneCard">
+                        <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" hidden>
+
+                        <!-- Prompt View -->
+                        <div id="dropzonePrompt" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                            <div class="dropzone-art">
+                                <svg class="dropzone-art-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <!-- Soft pastel ambient aura behind the artwork -->
+                                        <radialGradient id="artGlow" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" stop-color="#818CF8" stop-opacity="0.18"/>
+                                            <stop offset="60%" stop-color="#C7D2FE" stop-opacity="0.08"/>
+                                            <stop offset="100%" stop-color="#4F46E5" stop-opacity="0"/>
+                                        </radialGradient>
+
+                                        <!-- Harmonious 3D Ring Gradient - Left Sky Blue (#93C5FD) to Right Periwinkle/Indigo (#6366F1) -->
+                                        <linearGradient id="ringBackGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" stop-color="#6366F1"/>
+                                            <stop offset="45%" stop-color="#4F46E5"/>
+                                            <stop offset="80%" stop-color="#60A5FA"/>
+                                            <stop offset="100%" stop-color="#93C5FD"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="ringFrontGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#93C5FD"/>
+                                            <stop offset="35%" stop-color="#60A5FA"/>
+                                            <stop offset="70%" stop-color="#818CF8"/>
+                                            <stop offset="100%" stop-color="#6366F1"/>
+                                        </linearGradient>
+
+                                        <!-- Front ring specular highlight for 3D gloss reflection -->
+                                        <linearGradient id="ringHighlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+                                            <stop offset="40%" stop-color="#E0F2FE" stop-opacity="0.6"/>
+                                            <stop offset="85%" stop-color="#C7D2FE" stop-opacity="0.3"/>
+                                            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="pdfBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#F87171"/>
+                                            <stop offset="40%" stop-color="#EF4444"/>
+                                            <stop offset="100%" stop-color="#DC2626"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="linguaBrandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#1D4ED8"/>
+                                            <stop offset="100%" stop-color="#2563EB"/>
+                                        </linearGradient>
+
+                                        <linearGradient id="glyphGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4F46E5"/>
+                                            <stop offset="100%" stop-color="#7C3AED"/>
+                                        </linearGradient>
+
+                                        <filter id="docShadow" x="-15%" y="-15%" width="130%" height="130%">
+                                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+                                        </filter>
+
+                                        <filter id="frontRingShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#4F46E5" flood-opacity="0.2"/>
+                                        </filter>
+
+                                        <filter id="bubbleShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.12"/>
+                                        </filter>
+                                    </defs>
+
+                                    <!-- Ambient Glow -->
+                                    <ellipse cx="60" cy="62" rx="54" ry="40" fill="url(#artGlow)"/>
+
+                                    <!-- Ring Back Arc (behind document) -->
+                                    <g transform="rotate(-18 60 64)">
+                                        <path d="M 106 64 A 46 17 0 0 0 14 64" fill="none" stroke="url(#ringBackGrad)" stroke-width="6" stroke-linecap="round"/>
+                                    </g>
+
+                                    <!-- Document Sheet -->
+                                    <g filter="url(#docShadow)">
+                                        <path d="M 42 20 H 68 L 84 36 V 84 A 6 6 0 0 1 78 90 H 42 A 6 6 0 0 1 36 84 V 26 A 6 6 0 0 1 42 20 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+                                        <path d="M 68 20 V 33 A 3 3 0 0 0 71 36 H 84 Z" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.2"/>
+                                    </g>
+
+                                    <!-- Elements on Document -->
+                                    <rect x="28" y="24" width="34" height="19" rx="5.5" fill="url(#pdfBadgeGrad)" filter="drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3))"/>
+                                    <text x="45" y="37.5" fill="#FFFFFF" font-size="9.5" font-weight="900" font-family="'Plus Jakarta Sans', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.5">PDF</text>
+                                    <text x="40" y="54" fill="url(#linguaBrandGrad)" font-size="11.5" font-weight="800" font-family="'Plus Jakarta Sans', system-ui, sans-serif" text-anchor="start">Lingua</text>
+                                    <rect x="40" y="60" width="32" height="3" rx="1.5" fill="#BFDBFE"/>
+                                    <rect x="40" y="66" width="22" height="3" rx="1.5" fill="#BFDBFE"/>
+                                    <rect x="40" y="72" width="14" height="3" rx="1.5" fill="#DBEAFE"/>
+
+                                    <!-- Ring Front Arc with Soft Shadow & 3D Specular Highlight -->
+                                    <g transform="rotate(-18 60 64)" filter="url(#frontRingShadow)">
+                                        <!-- Main 3D Tube Body -->
+                                        <path d="M 14 64 A 46 17 0 0 0 106 64" fill="none" stroke="url(#ringFrontGrad)" stroke-width="6" stroke-linecap="round"/>
+                                        <!-- Specular Highlight along the crest of the tube -->
+                                        <path d="M 17 63 A 44 15.5 0 0 0 103 63" fill="none" stroke="url(#ringHighlightGrad)" stroke-width="1.5" stroke-linecap="round"/>
+                                    </g>
+
+                                    <!-- Speech Bubble positioned at bottom-right corner -->
+                                    <g filter="url(#bubbleShadow)" transform="translate(62, 67)">
+                                        <rect x="0" y="0" width="38" height="28" rx="9" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+                                        <path d="M 8 27 L 3 33 L 14 27 Z" fill="#FFFFFF"/>
+                                        <path d="M 8 28 L 3 33 L 14 28" stroke="#E2E8F0" stroke-width="1.5" stroke-linejoin="round"/>
+                                        <text x="19" y="18" fill="url(#glyphGrad)" font-size="12" font-weight="800" font-family="'Plus Jakarta Sans', system-ui, sans-serif" text-anchor="middle">文/A</text>
+                                    </g>
+                                </svg>
+                            </div>
+
+                            <p class="dropzone-title">Kéo thả tệp PDF vào đây</p>
+                            <div class="dropzone-divider">hoặc</div>
+
+                            <button type="button" class="btn btn-gradient btn-lg dropzone-btn" id="btnSelectPdf">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span>Chọn tệp PDF</span>
+                            </button>
+
+                            <p class="dropzone-limit" id="dropzoneLimitText">Tệp miễn phí tối đa 20 MB & 100 trang (Nâng cấp Pro để hỗ trợ 100 MB & 500 trang)</p>
                         </div>
 
-                        <div class="toolbar-actions">
-                            <div class="lang-select-wrap">
-                                <span class="lang-select-label">Dịch sang:</span>
-                                <select class="lang-select" id="targetLangSelect">
-                                    <option value="vi" selected>Tiếng Việt (vi)</option>
-                                    <option value="en">English (en)</option>
-                                    <option value="ja">日本語 (ja)</option>
-                                    <option value="ko">한국어 (ko)</option>
-                                    <option value="zh-CN">中文 (zh)</option>
-                                    <option value="fr">Français (fr)</option>
-                                    <option value="de">Deutsch (de)</option>
-                                    <option value="es">Español (es)</option>
-                                    <option value="ru">Русский (ru)</option>
-                                </select>
-                            </div>
-
-                            <button type="button" class="btn btn-secondary" id="btnRetranslate"
-                                title="Dịch lại theo ngôn ngữ đã chọn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="1 4 1 10 7 10"></polyline>
-                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                                </svg>
-                                <span>Dịch lại</span>
-                            </button>
-
-                            <div class="download-wrap">
-                                <button type="button" class="btn btn-gradient" id="btnDownloadMenu">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    <span>Tải bản dịch</span>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2.5">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
+                        <!-- Selected File Preview -->
+                        <div class="dropzone-selected" id="dropzoneSelected">
+                            <div class="file-preview-box">
+                                <span class="badge badge-pdf">PDF</span>
+                                <div class="file-preview-info">
+                                    <div class="file-preview-name" id="previewFileName">tai-lieu.pdf</div>
+                                    <div class="file-preview-size" id="previewFileSize">2.4 MB</div>
+                                </div>
+                                <button type="button" class="btn-file-remove" id="btnRemoveFile" title="Hủy chọn tệp">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
                                 </button>
-                                <div class="dropdown-menu" id="downloadDropdown">
-                                    <button type="button" class="dropdown-item" id="btnDownloadTxt">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                        </svg>
-                                        <span>Tải file TXT (.txt)</span>
-                                    </button>
-                                    <button type="button" class="dropdown-item" id="btnDownloadPdf">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                        </svg>
-                                        <span>Tải file PDF (.pdf)</span>
-                                    </button>
-                                </div>
                             </div>
-
-                            <!-- Open Document List Button (PDFL-92.2) -->
-                            <button type="button" class="btn btn-secondary" id="btnOpenDocList"
-                                title="Xem danh sách tài liệu">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                <span>Tài liệu</span>
-                            </button>
-
-                            <button type="button" class="btn btn-secondary" id="btnNewFile"
-                                title="Tải lên tệp PDF khác">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <button type="button" class="btn btn-gradient btn-lg" id="btnProcessPdf">
+                                <span>Bắt đầu xử lý & Dịch thuật</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
                                 </svg>
-                                <span>Tệp khác</span>
                             </button>
-                        </div>
-                    </div>
-
-                    <!-- Dual-Pane Split View -->
-                    <div class="dual-pane-grid">
-                        <!-- Left: Original Text Pane -->
-                        <div class="pane-card">
-                            <div class="pane-header">
-                                <div class="pane-title-group">
-                                    <span class="pane-title">Văn bản gốc</span>
-                                    <span class="pane-tag">Gốc</span>
-                                </div>
-                                <div class="pane-actions">
-                                    <span class="char-counter" id="countOriginal">0 từ</span>
-                                    <button type="button" class="btn-icon-copy" id="btnCopyOriginal"
-                                        title="Sao chép văn bản gốc">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                        </svg>
-                                        <span>Sao chép</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="pane-body" id="paneOriginal" tabindex="0" contenteditable="plaintext-only"
-                                spellcheck="false"></div>
-                        </div>
-
-                        <!-- Right: Translated Text Pane -->
-                        <div class="pane-card">
-                            <div class="pane-header">
-                                <div class="pane-title-group">
-                                    <span class="pane-title">Bản dịch</span>
-                                    <span class="pane-tag"
-                                        style="background-color:rgba(16,185,129,0.1);color:#059669;">Bản Dịch</span>
-                                </div>
-                                <div class="pane-actions">
-                                    <span class="char-counter" id="countTranslated">0 từ</span>
-                                    <button type="button" class="btn-icon-copy" id="btnCopyTranslated"
-                                        title="Sao chép bản dịch">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                        </svg>
-                                        <span>Sao chép</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="pane-body" id="paneTranslated" tabindex="0" contenteditable="plaintext-only"
-                                spellcheck="false"></div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Admin Dashboard Section (Initially Hidden) -->
-            <section class="admin-section" id="adminSection" style="display: none;">
-                <div class="container admin-container">
-                    <!-- Admin Header Bar -->
-                    <div class="admin-header-card">
-                        <div class="admin-title-wrap">
-                            <div class="admin-badge-row">
-                                <span class="admin-live-badge">
-                                    <span class="admin-live-dot"></span>
-                                    HỆ THỐNG QUẢN TRỊ
-                                </span>
-                                <span class="admin-tag-pill font-mono">Console v1.0</span>
-                            </div>
-                            <h2 class="admin-title">Bảng Điều Khiển Quản Trị Hệ Thống</h2>
-                            <p class="admin-subtitle">Giám sát tổng quan số liệu tài nguyên, lưu trữ và điều phối quyền
-                                hạn tài khoản theo thời gian thực</p>
-                        </div>
-                        <div class="admin-header-actions">
-                            <button type="button" class="btn btn-admin-secondary" id="btnRefreshAdminData"
-                                title="Làm mới dữ liệu">
-                                <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="23 4 23 10 17 10"></polyline>
-                                    <polyline points="1 20 1 14 7 14"></polyline>
-                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
-                                    </path>
-                                </svg>
-                                <span>Làm mới</span>
-                            </button>
-                            <button type="button" class="btn btn-admin-secondary btn-admin-close" id="btnCloseAdminView"
-                                title="Đóng bảng quản trị">
-                                <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                <span>Đóng Quản trị</span>
-                            </button>
-                        </div>
+        <!-- Bilingual Workspace Section (Initially Hidden) -->
+        <section class="workspace-section" id="workspaceSection" style="display: none;">
+            <div class="container">
+                <!-- Workspace Toolbar -->
+                <div class="workspace-toolbar">
+                    <div class="doc-meta">
+                        <span class="badge badge-pdf">PDF</span>
+                        <span class="doc-name" id="docNameDisplay">tai-lieu.pdf</span>
+                        <span class="meta-pill" id="docPagesDisplay">1 trang</span>
+                        <span class="meta-pill" id="docSizeDisplay">1.2 MB</span>
+                        <span class="meta-pill digital" id="docTypeDisplay">PDF Số</span>
                     </div>
 
-                    <!-- Admin Metrics Overview Bento Grid (PDFL-188) -->
-                    <div class="admin-bento-grid">
-                        <!-- Cell 1: Hero Metric (Spans 2 columns on desktop) -->
-                        <div class="admin-bento-cell cell-hero-users">
-                            <div class="bento-cell-header">
-                                <div class="bento-icon-pill icon-vermilion">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="9" cy="7" r="4"></circle>
-                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                    </svg>
-                                </div>
-                                <span class="bento-cell-label">Cộng đồng Người dùng</span>
-                            </div>
-                            <div class="bento-hero-metric">
-                                <span class="stat-value font-mono" id="statTotalUsers">--</span>
-                                <span class="stat-unit">tài khoản</span>
-                            </div>
-                            <!-- Proportional Distribution Bar -->
-                            <div class="bento-dist-bar" id="statUsersDistBar">
-                                <div class="dist-seg dist-free" id="distSegFree" style="width: 70%;"
-                                    title="Free accounts"></div>
-                                <div class="dist-seg dist-pro" id="distSegPro" style="width: 20%;" title="Pro accounts">
-                                </div>
-                                <div class="dist-seg dist-admin" id="distSegAdmin" style="width: 10%;"
-                                    title="Admin accounts"></div>
-                            </div>
-                            <div class="bento-pills-row">
-                                <span class="badge-sub free" id="statFreeUsers">Free: --</span>
-                                <span class="badge-sub pro" id="statProUsers">Pro: --</span>
-                                <span class="badge-sub admin" id="statAdminUsers">Admin: --</span>
-                            </div>
+                    <div class="toolbar-actions">
+                        <div class="lang-select-wrap">
+                            <span class="lang-select-label">Dịch sang:</span>
+                            <select class="lang-select" id="targetLangSelect">
+                                <option value="vi" selected>Tiếng Việt (vi)</option>
+                                <option value="en">English (en)</option>
+                                <option value="ja">日本語 (ja)</option>
+                                <option value="ko">한국어 (ko)</option>
+                                <option value="zh-CN">中文 (zh)</option>
+                                <option value="fr">Français (fr)</option>
+                                <option value="de">Deutsch (de)</option>
+                                <option value="es">Español (es)</option>
+                                <option value="ru">Русский (ru)</option>
+                            </select>
                         </div>
 
-                        <!-- Cell 2: Security & Status Ratio -->
-                        <div class="admin-bento-cell cell-security">
-                            <div class="bento-cell-header">
-                                <div class="bento-icon-pill icon-emerald">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                        <polyline points="9 12 11 14 15 10"></polyline>
-                                    </svg>
-                                </div>
-                                <span class="bento-cell-label">Tỷ lệ Hoạt động</span>
-                            </div>
-                            <div class="stat-value font-mono" id="statActiveRatio">--</div>
-                            <div class="stat-breakdown">
-                                <span class="badge-sub active" id="statActiveUsers">Hoạt động: --</span>
-                                <span class="badge-sub locked" id="statLockedUsers">Đã khóa: --</span>
-                            </div>
-                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnRetranslate" title="Dịch lại theo ngôn ngữ đã chọn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            <span>Dịch lại</span>
+                        </button>
 
-                        <!-- Cell 3: Processed Documents -->
-                        <div class="admin-bento-cell cell-docs">
-                            <div class="bento-cell-header">
-                                <div class="bento-icon-pill icon-cyan">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <div class="download-wrap">
+                            <button type="button" class="btn btn-gradient" id="btnDownloadMenu">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Tải bản dịch</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu" id="downloadDropdown">
+                                <button type="button" class="dropdown-item" id="btnDownloadTxt">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span>Tải file TXT (.txt)</span>
+                                </button>
+                                <button type="button" class="dropdown-item" id="btnDownloadPdf">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                         <polyline points="14 2 14 8 20 8"></polyline>
                                         <line x1="16" y1="13" x2="8" y2="13"></line>
                                         <line x1="16" y1="17" x2="8" y2="17"></line>
                                     </svg>
-                                </div>
-                                <span class="bento-cell-label">Tài liệu đã lưu</span>
-                            </div>
-                            <div class="bento-hero-metric">
-                                <span class="stat-value font-mono" id="statTotalDocs">--</span>
-                                <span class="stat-unit">hồ sơ</span>
-                            </div>
-                            <div class="stat-breakdown">
-                                <span class="stat-sub-text">Lưu trữ tài liệu xử lý trong cơ sở dữ liệu</span>
-                            </div>
-                        </div>
-
-                        <!-- Cell 4: Storage Footprint -->
-                        <div class="admin-bento-cell cell-storage">
-                            <div class="bento-cell-header">
-                                <div class="bento-icon-pill icon-amber">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-                                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-                                    </svg>
-                                </div>
-                                <span class="bento-cell-label">Dung lượng máy chủ</span>
-                            </div>
-                            <div class="stat-value font-mono" id="statTotalStorage">--</div>
-                            <div class="stat-breakdown">
-                                <span class="stat-sub-text font-mono text-xs" id="statStorageRaw">0 Bytes dữ liệu</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- User Management Section (PDFL-189) -->
-                    <div class="admin-table-card">
-                        <div class="admin-table-header">
-                            <div class="table-title-group">
-                                <div class="table-icon-pill">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="8.5" cy="7" r="4"></circle>
-                                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="table-title">Danh bạ Tài khoản Người dùng</h3>
-                                    <p class="table-subtitle">Tra cứu, phân quyền hạn và kiểm soát trạng thái hoạt động
-                                        tài khoản</p>
-                                </div>
-                                <span class="table-count-badge font-mono" id="adminUsersCountBadge">0 tài khoản</span>
-                            </div>
-
-                            <!-- Filter & Search Toolbar -->
-                            <div class="admin-toolbar">
-                                <div class="admin-search-wrap">
-                                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                    </svg>
-                                    <input type="text" id="adminSearchInput" class="admin-search-input"
-                                        placeholder="Tìm theo email hoặc họ tên...">
-                                </div>
-
-                                <div class="admin-filter-wrap">
-                                    <select id="adminRoleFilter" class="admin-filter-select">
-                                        <option value="all">Tất cả vai trò</option>
-                                        <option value="free">Người dùng Free</option>
-                                        <option value="pro">Tài khoản Pro VIP</option>
-                                        <option value="admin">Quản trị viên (Admin)</option>
-                                    </select>
-                                </div>
-
-                                <div class="admin-filter-wrap">
-                                    <select id="adminStatusFilter" class="admin-filter-select">
-                                        <option value="all">Tất cả trạng thái</option>
-                                        <option value="true">Đang hoạt động</option>
-                                        <option value="false">Đã bị khóa</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Responsive User Table -->
-                        <div class="admin-table-wrapper">
-                            <table class="admin-users-table" id="adminUsersTable">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Người dùng</th>
-                                        <th>Vai trò</th>
-                                        <th>Trạng thái</th>
-                                        <th>Tài liệu</th>
-                                        <th>Ngày tham gia</th>
-                                        <th class="text-right">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminUsersTableBody">
-                                    <!-- Dynamic user rows inserted via admin.js -->
-                                </tbody>
-                            </table>
-                            <div class="admin-table-empty" id="adminTableEmptyState" style="display: none;">
-                                <div class="empty-icon-wrap">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                        <line x1="8" y1="11" x2="14" y2="11"></line>
-                                    </svg>
-                                </div>
-                                <h4 class="empty-title">Không tìm thấy tài khoản</h4>
-                                <p class="empty-text">Không có tài khoản người dùng nào khớp với bộ lọc hoặc từ khóa tìm
-                                    kiếm hiện tại.</p>
-                            </div>
-                        </div>
-
-                        <!-- Pagination Footer -->
-                        <div class="admin-pagination-footer" id="adminPagination">
-                            <div class="pagination-info font-mono" id="adminPaginationInfo">Trang 1 / 1</div>
-                            <div class="pagination-controls">
-                                <button type="button" class="btn btn-admin-pager" id="btnAdminPrevPage" disabled>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="15 18 9 12 15 6"></polyline>
-                                    </svg>
-                                    <span>Trước</span>
-                                </button>
-                                <span class="pagination-current-page font-mono" id="adminCurrentPageBadge">1</span>
-                                <button type="button" class="btn btn-admin-pager" id="btnAdminNextPage" disabled>
-                                    <span>Sau</span>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="9 18 15 12 9 6"></polyline>
-                                    </svg>
+                                    <span>Tải file PDF (.pdf)</span>
                                 </button>
                             </div>
                         </div>
+
+                        <button type="button" class="btn btn-secondary" id="btnNewFile" title="Tải lên tệp PDF khác">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Tệp khác</span>
+                        </button>
                     </div>
                 </div>
-            </section>
 
-        </main>
+                <!-- Dual-Pane Split View -->
+                <div class="dual-pane-grid">
+                    <!-- Left: Original Text Pane -->
+                    <div class="pane-card">
+                        <div class="pane-header">
+                            <div class="pane-title-group">
+                                <span class="pane-title">Văn bản gốc</span>
+                                <span class="pane-tag">Gốc</span>
+                            </div>
+                            <div class="pane-actions">
+                                <span class="char-counter" id="countOriginal">0 từ</span>
+                                <button type="button" class="btn-icon-copy" id="btnCopyOriginal" title="Sao chép văn bản gốc">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Sao chép</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pane-body" id="paneOriginal" tabindex="0" contenteditable="plaintext-only" spellcheck="false"></div>
+                    </div>
 
-        <!-- Progress Processing Modal -->
-        <div class="modal-overlay" id="processingModal" style="display: none;">
-            <div class="progress-card">
-                <div class="progress-spinner"></div>
-                <h3 class="progress-title">Đang xử lý tài liệu</h3>
-                <p class="progress-desc" id="progressDesc">Đang chuẩn bị...</p>
-                <div class="progress-bar-wrap">
-                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                    <!-- Right: Translated Text Pane -->
+                    <div class="pane-card">
+                        <div class="pane-header">
+                            <div class="pane-title-group">
+                                <span class="pane-title">Bản dịch</span>
+                                <span class="pane-tag" style="background-color:rgba(16,185,129,0.1);color:#059669;">Bản Dịch</span>
+                            </div>
+                            <div class="pane-actions">
+                                <span class="char-counter" id="countTranslated">0 từ</span>
+                                <button type="button" class="btn-icon-copy" id="btnCopyTranslated" title="Sao chép bản dịch">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>Sao chép</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pane-body" id="paneTranslated" tabindex="0" contenteditable="plaintext-only" spellcheck="false"></div>
+                    </div>
                 </div>
-                <div class="steps-list">
-                    <div class="step-item active" id="stepItem1">
-                        <span class="step-circle">1</span>
-                        <span>Tải tệp PDF lên máy chủ</span>
+            </div>
+        </section>
+
+        <!-- Document Management Page Section (PDFL-92.1 & PDFL-92.2, Initially Hidden) -->
+        <section class="documents-section admin-section" id="documentsSection" style="display: none;">
+            <div class="container admin-container">
+                <!-- Documents Header Card -->
+                <div class="admin-header-card">
+                    <div class="admin-title-wrap">
+                        <div class="admin-badge-row">
+                            <span class="badge badge-pdf">PDF</span>
+                            <span class="admin-tag-pill">Kho lưu trữ cá nhân</span>
+                        </div>
+                        <h2 class="admin-title">Tài Liệu Của Tôi</h2>
+                        <p class="admin-subtitle">Quản lý danh sách tài liệu PDF đã tải lên, tra cứu thông tin xử lý và tải xuống tệp tin.</p>
                     </div>
-                    <div class="step-item" id="stepItem2">
-                        <span class="step-circle">2</span>
-                        <span>Phân tích văn bản PDF (Kiểm tra OCR)</span>
+                    <div class="admin-header-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnCloseDocumentsView" title="Quay lại không gian dịch thuật">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            <span>Quay lại Dịch PDF</span>
+                        </button>
+                        <button type="button" class="btn btn-gradient btn-sm" id="btnDocsUploadNew" title="Tải lên tệp PDF mới">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span>Tải PDF lên</span>
+                        </button>
                     </div>
-                    <div class="step-item" id="stepItem3">
-                        <span class="step-circle">3</span>
-                        <span>Dịch thuật văn bản đa ngôn ngữ</span>
+                </div>
+
+                <!-- Documents List Card -->
+                <div class="admin-table-card" id="documentsListCard">
+                    <div class="admin-table-header">
+                        <div class="table-title-group">
+                            <div class="table-icon-pill">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="table-title">Danh sách tài liệu</h3>
+                                <p class="table-subtitle">Các tài liệu PDF đã được lưu trữ trong tài khoản của bạn</p>
+                            </div>
+                            <span class="table-count-badge font-mono" id="documentsCountBadge">0 tài liệu</span>
+                        </div>
+
+                        <div class="admin-toolbar">
+                            <div class="admin-search-wrap">
+                                <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="documentsSearchInput" class="admin-search-input" placeholder="Tìm kiếm theo tên tài liệu...">
+                            </div>
+                        </div>
                     </div>
-                    <div class="step-item" id="stepItem4">
-                        <span class="step-circle">4</span>
-                        <span>Hoàn tất & Chuẩn bị Workspace</span>
+
+                    <div class="admin-table-wrapper" id="documentsTableWrapper">
+                        <table class="admin-users-table" id="documentsTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Tên tài liệu</th>
+                                    <th>Dung lượng</th>
+                                    <th>Số trang</th>
+                                    <th>Ngôn ngữ đích</th>
+                                    <th>Phương thức</th>
+                                    <th>Ngày tải lên</th>
+                                    <th class="text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTableBody">
+                                <!-- Document rows rendered dynamically -->
+                            </tbody>
+                        </table>
+
+                        <div class="admin-table-empty" id="documentsEmptyState">
+                            <div class="empty-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title">Bạn chưa có tài liệu nào</h4>
+                            <p class="empty-text">Hãy tải lên tệp PDF đầu tiên để bắt đầu trích xuất văn bản và dịch thuật song ngữ.</p>
+                        </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Dashboard Section (Initially Hidden) -->
+        <section class="admin-section" id="adminSection" style="display: none;">
+            <div class="container admin-container">
+                <!-- Admin Header Bar -->
+                <div class="admin-header-card">
+                    <div class="admin-title-wrap">
+                        <div class="admin-badge-row">
+                            <span class="admin-live-badge">
+                                <span class="admin-live-dot"></span>
+                                HỆ THỐNG QUẢN TRỊ
+                            </span>
+                            <span class="admin-tag-pill font-mono">Console v1.0</span>
+                        </div>
+                        <h2 class="admin-title">Bảng Điều Khiển Quản Trị Hệ Thống</h2>
+                        <p class="admin-subtitle">Giám sát tổng quan số liệu tài nguyên, lưu trữ và điều phối quyền hạn tài khoản theo thời gian thực</p>
+                    </div>
+                    <div class="admin-header-actions">
+                        <button type="button" class="btn btn-admin-secondary" id="btnRefreshAdminData" title="Làm mới dữ liệu">
+                            <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Làm mới</span>
+                        </button>
+                        <button type="button" class="btn btn-admin-secondary btn-admin-close" id="btnCloseAdminView" title="Đóng bảng quản trị">
+                            <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Đóng Quản trị</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Metrics Overview Bento Grid (PDFL-188) -->
+                <div class="admin-bento-grid">
+                    <!-- Cell 1: Hero Metric (Spans 2 columns on desktop) -->
+                    <div class="admin-bento-cell cell-hero-users">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-vermilion">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Cộng đồng Người dùng</span>
+                        </div>
+                        <div class="bento-hero-metric">
+                            <span class="stat-value font-mono" id="statTotalUsers">--</span>
+                            <span class="stat-unit">tài khoản</span>
+                        </div>
+                        <!-- Proportional Distribution Bar -->
+                        <div class="bento-dist-bar" id="statUsersDistBar">
+                            <div class="dist-seg dist-free" id="distSegFree" style="width: 70%;" title="Free accounts"></div>
+                            <div class="dist-seg dist-pro" id="distSegPro" style="width: 20%;" title="Pro accounts"></div>
+                            <div class="dist-seg dist-admin" id="distSegAdmin" style="width: 10%;" title="Admin accounts"></div>
+                        </div>
+                        <div class="bento-pills-row">
+                            <span class="badge-sub free" id="statFreeUsers">Free: --</span>
+                            <span class="badge-sub pro" id="statProUsers">Pro: --</span>
+                            <span class="badge-sub admin" id="statAdminUsers">Admin: --</span>
+                        </div>
+                    </div>
+
+                    <!-- Cell 2: Security & Status Ratio -->
+                    <div class="admin-bento-cell cell-security">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-emerald">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    <polyline points="9 12 11 14 15 10"></polyline>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Tỷ lệ Hoạt động</span>
+                        </div>
+                        <div class="stat-value font-mono" id="statActiveRatio">--</div>
+                        <div class="stat-breakdown">
+                            <span class="badge-sub active" id="statActiveUsers">Hoạt động: --</span>
+                            <span class="badge-sub locked" id="statLockedUsers">Đã khóa: --</span>
+                        </div>
+                    </div>
+
+                    <!-- Cell 3: Processed Documents -->
+                    <div class="admin-bento-cell cell-docs">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-cyan">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Tài liệu đã lưu</span>
+                        </div>
+                        <div class="bento-hero-metric">
+                            <span class="stat-value font-mono" id="statTotalDocs">--</span>
+                            <span class="stat-unit">hồ sơ</span>
+                        </div>
+                        <div class="stat-breakdown">
+                            <span class="stat-sub-text">Lưu trữ tài liệu xử lý trong cơ sở dữ liệu</span>
+                        </div>
+                    </div>
+
+                    <!-- Cell 4: Storage Footprint -->
+                    <div class="admin-bento-cell cell-storage">
+                        <div class="bento-cell-header">
+                            <div class="bento-icon-pill icon-amber">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                                </svg>
+                            </div>
+                            <span class="bento-cell-label">Dung lượng máy chủ</span>
+                        </div>
+                        <div class="stat-value font-mono" id="statTotalStorage">--</div>
+                        <div class="stat-breakdown">
+                            <span class="stat-sub-text font-mono text-xs" id="statStorageRaw">0 Bytes dữ liệu</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Section (PDFL-189) -->
+                <div class="admin-table-card">
+                    <div class="admin-table-header">
+                        <div class="table-title-group">
+                            <div class="table-icon-pill">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="table-title">Danh bạ Tài khoản Người dùng</h3>
+                                <p class="table-subtitle">Tra cứu, phân quyền hạn và kiểm soát trạng thái hoạt động tài khoản</p>
+                            </div>
+                            <span class="table-count-badge font-mono" id="adminUsersCountBadge">0 tài khoản</span>
+                        </div>
+
+                        <!-- Filter & Search Toolbar -->
+                        <div class="admin-toolbar">
+                            <div class="admin-search-wrap">
+                                <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="adminSearchInput" class="admin-search-input" placeholder="Tìm theo email hoặc họ tên...">
+                            </div>
+
+                            <div class="admin-filter-wrap">
+                                <select id="adminRoleFilter" class="admin-filter-select">
+                                    <option value="all">Tất cả vai trò</option>
+                                    <option value="free">Người dùng Free</option>
+                                    <option value="pro">Tài khoản Pro VIP</option>
+                                    <option value="admin">Quản trị viên (Admin)</option>
+                                </select>
+                            </div>
+
+                            <div class="admin-filter-wrap">
+                                <select id="adminStatusFilter" class="admin-filter-select">
+                                    <option value="all">Tất cả trạng thái</option>
+                                    <option value="true">Đang hoạt động</option>
+                                    <option value="false">Đã bị khóa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Responsive User Table -->
+                    <div class="admin-table-wrapper">
+                        <table class="admin-users-table" id="adminUsersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Người dùng</th>
+                                    <th>Vai trò</th>
+                                    <th>Trạng thái</th>
+                                    <th>Tài liệu</th>
+                                    <th>Ngày tham gia</th>
+                                    <th class="text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody">
+                                <!-- Dynamic user rows inserted via admin.js -->
+                            </tbody>
+                        </table>
+                        <div class="admin-table-empty" id="adminTableEmptyState" style="display: none;">
+                            <div class="empty-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title">Không tìm thấy tài khoản</h4>
+                            <p class="empty-text">Không có tài khoản người dùng nào khớp với bộ lọc hoặc từ khóa tìm kiếm hiện tại.</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div class="admin-pagination-footer" id="adminPagination">
+                        <div class="pagination-info font-mono" id="adminPaginationInfo">Trang 1 / 1</div>
+                        <div class="pagination-controls">
+                            <button type="button" class="btn btn-admin-pager" id="btnAdminPrevPage" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                                <span>Trước</span>
+                            </button>
+                            <span class="pagination-current-page font-mono" id="adminCurrentPageBadge">1</span>
+                            <button type="button" class="btn btn-admin-pager" id="btnAdminNextPage" disabled>
+                                <span>Sau</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Progress Processing Modal -->
+    <div class="modal-overlay" id="processingModal" style="display: none;">
+        <div class="progress-card">
+            <div class="progress-spinner"></div>
+            <h3 class="progress-title">Đang xử lý tài liệu</h3>
+            <p class="progress-desc" id="progressDesc">Đang chuẩn bị...</p>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <div class="steps-list">
+                <div class="step-item active" id="stepItem1">
+                    <span class="step-circle">1</span>
+                    <span>Tải tệp PDF lên máy chủ</span>
+                </div>
+                <div class="step-item" id="stepItem2">
+                    <span class="step-circle">2</span>
+                    <span>Phân tích văn bản PDF (Kiểm tra OCR)</span>
+                </div>
+                <div class="step-item" id="stepItem3">
+                    <span class="step-circle">3</span>
+                    <span>Dịch thuật văn bản đa ngôn ngữ</span>
+                </div>
+                <div class="step-item" id="stepItem4">
+                    <span class="step-circle">4</span>
+                    <span>Hoàn tất & Chuẩn bị Workspace</span>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- High-Impact Action Confirmation Modal (PDFL-197) -->
-        <div class="modal-overlay" id="adminConfirmModal" style="display: none;">
-            <div class="admin-confirm-card">
-                <div class="confirm-icon-wrap" id="confirmModalIconWrap">
-                    <svg class="confirm-warning-svg" id="confirmModalIconSvg" width="28" height="28" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path
-                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                        </path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
+    <!-- High-Impact Action Confirmation Modal (PDFL-197) -->
+    <div class="modal-overlay" id="adminConfirmModal" style="display: none;">
+        <div class="admin-confirm-card">
+            <div class="confirm-icon-wrap" id="confirmModalIconWrap">
+                <svg class="confirm-warning-svg" id="confirmModalIconSvg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div class="confirm-content">
+                <h3 class="confirm-title" id="confirmModalTitle">Xác nhận thao tác trọng yếu</h3>
+                <p class="confirm-desc" id="confirmModalDesc">Thao tác này sẽ làm thay đổi quyền hạn hoặc quyền truy cập của tài khoản.</p>
+                <div class="confirm-target-box" id="confirmModalTargetBox">
+                    <span class="target-label">Tài khoản mục tiêu:</span>
+                    <strong class="target-email font-mono" id="confirmModalTargetEmail">user@example.com</strong>
                 </div>
-                <div class="confirm-content">
-                    <h3 class="confirm-title" id="confirmModalTitle">Xác nhận thao tác trọng yếu</h3>
-                    <p class="confirm-desc" id="confirmModalDesc">Thao tác này sẽ làm thay đổi quyền hạn hoặc quyền truy
-                        cập của tài khoản.</p>
-                    <div class="confirm-target-box" id="confirmModalTargetBox">
-                        <span class="target-label">Tài khoản mục tiêu:</span>
-                        <strong class="target-email font-mono" id="confirmModalTargetEmail">user@example.com</strong>
-                    </div>
-                </div>
-                <div class="confirm-actions">
-                    <button type="button" class="btn btn-secondary" id="btnCancelAdminConfirm">Hủy bỏ</button>
-                    <button type="button" class="btn btn-danger" id="btnProceedAdminConfirm">Xác nhận thực hiện</button>
-                </div>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" id="btnCancelAdminConfirm">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger" id="btnProceedAdminConfirm">Xác nhận thực hiện</button>
             </div>
         </div>
+    </div>
 
-        <!-- Toast Notification Container -->
-        <div class="toast-container" id="toastContainer"></div>
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
-        <footer class="site-footer">
-            <div class="container footer-content">
-                <p>&copy; 2026 PDF-Lingua Project</p>
-                <ul class="footer-links">
-                    <li><a href="#" id="linkTerms">Điều khoản</a></li>
-                    <li><a href="#" id="linkPrivacy">Bảo mật</a></li>
-                    <li><a href="#" id="linkContact">Liên hệ</a></li>
-                </ul>
-            </div>
-        </footer>
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <p>&copy; 2026 PDF-Lingua Project</p>
+            <ul class="footer-links">
+                <li><a href="#" id="linkTerms">Điều khoản</a></li>
+                <li><a href="#" id="linkPrivacy">Bảo mật</a></li>
+                <li><a href="#" id="linkContact">Liên hệ</a></li>
+            </ul>
+        </div>
+    </footer>
     </div><!-- #appMainViewport -->
     </div><!-- #appShell -->
 
     <!-- Registration Modal (PDFL-73.4) -->
-    <div class="modal-backdrop" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle"
-        hidden>
+    <div class="modal-backdrop" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle" hidden>
         <div class="modal-dialog">
             <div class="modal-header">
                 <div>
@@ -999,8 +957,7 @@
                     <p class="modal-subtitle">Trải nghiệm không gian làm việc dịch thuật và trợ lý AI thông minh</p>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseRegisterModal" aria-label="Đóng cửa sổ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -1017,13 +974,11 @@
                         Họ và tên <span class="label-hint">(Không bắt buộc)</span>
                     </label>
                     <div class="input-wrap">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        <input type="text" id="regFullName" name="full_name" class="form-input"
-                            placeholder="Nguyễn Văn A" autocomplete="name" maxlength="150">
+                        <input type="text" id="regFullName" name="full_name" class="form-input" placeholder="Nguyễn Văn A" autocomplete="name" maxlength="150">
                     </div>
                     <p class="field-error" id="regFullNameError" role="alert" aria-live="polite"></p>
                 </div>
@@ -1034,14 +989,11 @@
                         Địa chỉ Email <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
-                            </path>
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
-                        <input type="email" id="regEmail" name="email" class="form-input" placeholder="ban@example.com"
-                            required autocomplete="email">
+                        <input type="email" id="regEmail" name="email" class="form-input" placeholder="ban@example.com" required autocomplete="email">
                     </div>
                     <p class="field-error" id="regEmailError" role="alert" aria-live="polite"></p>
                 </div>
@@ -1052,26 +1004,18 @@
                         Mật khẩu <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        <input type="password" id="regPassword" name="password" class="form-input"
-                            placeholder="Tối thiểu 8 ký tự (chữ & số)" required autocomplete="new-password"
-                            maxlength="128">
+                        <input type="password" id="regPassword" name="password" class="form-input" placeholder="Tối thiểu 8 ký tự (chữ & số)" required autocomplete="new-password" maxlength="128">
                         <button type="button" class="btn-toggle-eye" id="toggleRegPassword" aria-label="Hiện mật khẩu">
-                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
-                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                style="display: none;">
-                                <path
-                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                </path>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                             </svg>
                         </button>
@@ -1085,26 +1029,18 @@
                         Xác nhận mật khẩu <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        <input type="password" id="regConfirmPassword" name="confirm_password" class="form-input"
-                            placeholder="Nhập lại mật khẩu" required autocomplete="new-password" maxlength="128">
-                        <button type="button" class="btn-toggle-eye" id="toggleRegConfirmPassword"
-                            aria-label="Hiện mật khẩu xác nhận">
-                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <input type="password" id="regConfirmPassword" name="confirm_password" class="form-input" placeholder="Nhập lại mật khẩu" required autocomplete="new-password" maxlength="128">
+                        <button type="button" class="btn-toggle-eye" id="toggleRegConfirmPassword" aria-label="Hiện mật khẩu xác nhận">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
-                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                style="display: none;">
-                                <path
-                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                </path>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                             </svg>
                         </button>
@@ -1127,8 +1063,7 @@
     </div>
 
     <!-- Login Modal (PDFL-76.4) -->
-    <div class="modal-backdrop" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle"
-        hidden>
+    <div class="modal-backdrop" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" hidden>
         <div class="modal-dialog">
             <div class="modal-header">
                 <div>
@@ -1136,8 +1071,7 @@
                     <p class="modal-subtitle">Truy cập không gian làm việc PDF-Lingua của bạn</p>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseLoginModal" aria-label="Đóng cửa sổ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -1154,14 +1088,11 @@
                         Địa chỉ Email <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
-                            </path>
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
-                        <input type="email" id="loginEmail" name="email" class="form-input"
-                            placeholder="ban@example.com" required autocomplete="email">
+                        <input type="email" id="loginEmail" name="email" class="form-input" placeholder="ban@example.com" required autocomplete="email">
                     </div>
                     <p class="field-error" id="loginEmailError" role="alert" aria-live="polite"></p>
                 </div>
@@ -1172,26 +1103,18 @@
                         Mật khẩu <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
-                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        <input type="password" id="loginPassword" name="password" class="form-input"
-                            placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128">
-                        <button type="button" class="btn-toggle-eye" id="toggleLoginPassword"
-                            aria-label="Hiện mật khẩu">
-                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128">
+                        <button type="button" class="btn-toggle-eye" id="toggleLoginPassword" aria-label="Hiện mật khẩu">
+                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
-                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                style="display: none;">
-                                <path
-                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                </path>
+                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                             </svg>
                         </button>
@@ -1214,8 +1137,7 @@
     </div>
 
     <!-- Account Details Modal (PDFL-79.2) -->
-    <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle"
-        hidden>
+    <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" hidden>
         <div class="modal-dialog account-modal-dialog">
             <div class="modal-header">
                 <div>
@@ -1223,8 +1145,7 @@
                     <p class="modal-subtitle">Chi tiết hồ sơ và gói dịch vụ PDF-Lingua của bạn</p>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseAccountModal" aria-label="Đóng cửa sổ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -1255,10 +1176,8 @@
                         <div class="account-detail-item account-detail-editable">
                             <div class="account-detail-header">
                                 <span class="account-detail-label">Họ và tên</span>
-                                <button type="button" class="btn-edit-toggle" id="btnToggleEditFullName"
-                                    title="Chỉnh sửa họ tên">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <button type="button" class="btn-edit-toggle" id="btnToggleEditFullName" title="Chỉnh sửa họ tên">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
@@ -1274,16 +1193,13 @@
                             <!-- Edit mode form -->
                             <form id="accountEditForm" class="account-edit-form" style="display: none;" novalidate>
                                 <div class="input-wrap">
-                                    <input type="text" id="editFullNameInput" name="full_name" class="form-input"
-                                        placeholder="Nhập họ và tên mới" maxlength="150" autocomplete="name">
+                                    <input type="text" id="editFullNameInput" name="full_name" class="form-input" placeholder="Nhập họ và tên mới" maxlength="150" autocomplete="name">
                                 </div>
                                 <p class="field-error" id="editFullNameInputError" role="alert" aria-live="polite"></p>
                                 <div class="account-edit-actions">
-                                    <button type="button" class="btn btn-secondary btn-sm"
-                                        id="btnCancelEditFullName">Hủy</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditFullName">Hủy</button>
                                     <button type="submit" class="btn btn-gradient btn-sm" id="btnSaveFullName">
-                                        <span class="btn-spinner" id="editFullNameSpinner" aria-hidden="true"
-                                            style="display: none;"></span>
+                                        <span class="btn-spinner" id="editFullNameSpinner" aria-hidden="true" style="display: none;"></span>
                                         <span id="editFullNameBtnText">Lưu</span>
                                     </button>
                                 </div>
@@ -1314,10 +1230,8 @@
                                 <h4 class="security-title">Bảo mật tài khoản</h4>
                                 <p class="security-subtitle">Thay đổi mật khẩu đăng nhập của bạn</p>
                             </div>
-                            <button type="button" class="btn btn-secondary btn-sm" id="btnToggleChangePassword"
-                                aria-expanded="false" aria-controls="changePasswordForm">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnToggleChangePassword" aria-expanded="false" aria-controls="changePasswordForm">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
@@ -1335,34 +1249,23 @@
                                     Mật khẩu hiện tại <span class="label-required">*</span>
                                 </label>
                                 <div class="input-wrap">
-                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
-                                    <input type="password" id="currentPasswordInput" name="current_password"
-                                        class="form-input" placeholder="Nhập mật khẩu hiện tại" required
-                                        autocomplete="current-password" maxlength="128">
-                                    <button type="button" class="btn-toggle-eye" id="toggleCurrentPassword"
-                                        aria-label="Hiện mật khẩu">
-                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
+                                    <input type="password" id="currentPasswordInput" name="current_password" class="form-input" placeholder="Nhập mật khẩu hiện tại" required autocomplete="current-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleCurrentPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
-                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" style="display: none;">
-                                            <path
-                                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                            </path>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                             <line x1="1" y1="1" x2="23" y2="23"></line>
                                         </svg>
                                     </button>
                                 </div>
-                                <p class="field-error" id="currentPasswordInputError" role="alert" aria-live="polite">
-                                </p>
+                                <p class="field-error" id="currentPasswordInputError" role="alert" aria-live="polite"></p>
                             </div>
 
                             <!-- New Password -->
@@ -1371,28 +1274,18 @@
                                     Mật khẩu mới <span class="label-required">*</span>
                                 </label>
                                 <div class="input-wrap">
-                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
-                                    <input type="password" id="newPasswordInput" name="new_password" class="form-input"
-                                        placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required
-                                        autocomplete="new-password" maxlength="128">
-                                    <button type="button" class="btn-toggle-eye" id="toggleNewPassword"
-                                        aria-label="Hiện mật khẩu">
-                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
+                                    <input type="password" id="newPasswordInput" name="new_password" class="form-input" placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required autocomplete="new-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleNewPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
-                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" style="display: none;">
-                                            <path
-                                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                            </path>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                             <line x1="1" y1="1" x2="23" y2="23"></line>
                                         </svg>
                                     </button>
@@ -1406,43 +1299,30 @@
                                     Xác nhận mật khẩu mới <span class="label-required">*</span>
                                 </label>
                                 <div class="input-wrap">
-                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
-                                    <input type="password" id="confirmNewPasswordInput" name="confirm_new_password"
-                                        class="form-input" placeholder="Nhập lại mật khẩu mới" required
-                                        autocomplete="new-password" maxlength="128">
-                                    <button type="button" class="btn-toggle-eye" id="toggleConfirmNewPassword"
-                                        aria-label="Hiện mật khẩu">
-                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
+                                    <input type="password" id="confirmNewPasswordInput" name="confirm_new_password" class="form-input" placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password" maxlength="128">
+                                    <button type="button" class="btn-toggle-eye" id="toggleConfirmNewPassword" aria-label="Hiện mật khẩu">
+                                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                                             <circle cx="12" cy="12" r="3"></circle>
                                         </svg>
-                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" style="display: none;">
-                                            <path
-                                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                            </path>
+                                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                             <line x1="1" y1="1" x2="23" y2="23"></line>
                                         </svg>
                                     </button>
                                 </div>
-                                <p class="field-error" id="confirmNewPasswordInputError" role="alert"
-                                    aria-live="polite"></p>
+                                <p class="field-error" id="confirmNewPasswordInputError" role="alert" aria-live="polite"></p>
                             </div>
 
                             <!-- Actions -->
                             <div class="account-edit-actions">
-                                <button type="button" class="btn btn-secondary btn-sm"
-                                    id="btnCancelChangePassword">Hủy</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnCancelChangePassword">Hủy</button>
                                 <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitChangePassword">
-                                    <span class="btn-spinner" id="changePasswordSpinner" aria-hidden="true"
-                                        style="display: none;"></span>
+                                    <span class="btn-spinner" id="changePasswordSpinner" aria-hidden="true" style="display: none;"></span>
                                     <span id="changePasswordBtnText">Cập nhật mật khẩu</span>
                                 </button>
                             </div>
@@ -1453,362 +1333,6 @@
 
             <div class="account-modal-footer">
                 <button type="button" class="btn btn-secondary btn-block" id="btnCloseAccountModalBtn">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Document List Modal (PDFL-92.2) -->
-    <div class="modal-backdrop" id="docListModal" role="dialog" aria-modal="true" aria-labelledby="docListModalTitle"
-        hidden>
-        <div class="modal-dialog doc-list-modal-dialog">
-            <div class="modal-header">
-                <div class="doc-list-modal-title-group">
-                    <div class="doc-list-icon-badge" aria-hidden="true">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="modal-title" id="docListModalTitle">Danh sách tài liệu</h2>
-                        <p class="modal-subtitle">Quản lý và tra cứu các tệp tài liệu PDF đã xử lý</p>
-                    </div>
-                </div>
-                <button type="button" class="modal-close" id="btnCloseDocListModal" aria-label="Đóng cửa sổ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Demo State Switcher for Quick Verification (Content, Loading, Empty, Error) -->
-            <div class="doc-list-state-switchers" aria-label="Bộ chọn trạng thái giao diện">
-                <span class="state-switch-label">Xem nhanh trạng thái:</span>
-                <div class="state-switch-buttons">
-                    <button type="button" class="btn-state-chip active" id="btnStateSample" data-state="content">
-                        <span>Danh sách mẫu</span>
-                    </button>
-                    <button type="button" class="btn-state-chip" id="btnStateLoading" data-state="loading">
-                        <span>Đang tải</span>
-                    </button>
-                    <button type="button" class="btn-state-chip" id="btnStateEmpty" data-state="empty">
-                        <span>Danh sách trống</span>
-                    </button>
-                    <button type="button" class="btn-state-chip" id="btnStateError" data-state="error">
-                        <span>Thông báo lỗi</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="doc-list-modal-body">
-                <!-- 1. Loading State -->
-                <div class="doc-list-state doc-list-loading" id="docListLoading" style="display: none;">
-                    <div class="doc-list-spinner" aria-hidden="true"></div>
-                    <p class="doc-list-state-title">Đang tải danh sách tài liệu...</p>
-                    <p class="doc-list-state-desc">Vui lòng chờ trong giây lát trong khi chúng tôi đồng bộ tệp của bạn
-                    </p>
-                    <div class="doc-list-skeletons" aria-hidden="true">
-                        <div class="skeleton-row"></div>
-                        <div class="skeleton-row"></div>
-                        <div class="skeleton-row"></div>
-                    </div>
-                </div>
-
-                <!-- 2. Empty State -->
-                <div class="doc-list-state doc-list-empty" id="docListEmpty" style="display: none;">
-                    <div class="doc-list-state-icon empty-icon" aria-hidden="true">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
-                            </path>
-                            <line x1="9" y1="14" x2="15" y2="14"></line>
-                        </svg>
-                    </div>
-                    <h3 class="doc-list-state-title">Chưa có tài liệu nào</h3>
-                    <p class="doc-list-state-desc">Bạn chưa có tài liệu nào được lưu trong hệ thống. Hãy bắt đầu bằng
-                        cách tải lên tệp PDF mới để trích xuất và dịch thuật.</p>
-                    <button type="button" class="btn btn-gradient btn-sm" id="btnDocListUploadNew">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        <span>Tải lên tài liệu mới</span>
-                    </button>
-                </div>
-
-                <!-- 3. Error State -->
-                <div class="doc-list-state doc-list-error" id="docListError" style="display: none;">
-                    <div class="doc-list-state-icon error-icon" aria-hidden="true">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    </div>
-                    <h3 class="doc-list-state-title" id="docListErrorTitle">Không thể tải danh sách tài liệu</h3>
-                    <p class="doc-list-state-desc" id="docListErrorDesc">Đã có lỗi xảy ra khi kết nối tới máy chủ. Vui
-                        lòng kiểm tra lại kết nối mạng hoặc thử lại sau.</p>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btnDocListRetry">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="1 4 1 10 7 10"></polyline>
-                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                        </svg>
-                        <span>Thử lại</span>
-                    </button>
-                </div>
-
-                <!-- 4. Content State (Data Table) -->
-                <div class="doc-list-content" id="docListContent">
-                    <div class="doc-list-meta-bar">
-                        <span class="doc-list-count" id="docListCountDisplay">Hiển thị 0 tài liệu</span>
-                        <span class="doc-list-hint" id="docListHint">Danh sách tài liệu đã lưu trên hệ thống</span>
-                    </div>
-
-                    <div class="doc-list-table-responsive">
-                        <table class="doc-list-table" aria-label="Bảng danh sách tài liệu">
-                            <thead>
-                                <tr>
-                                    <th scope="col" class="col-filename">Tên file</th>
-                                    <th scope="col" class="col-date">Ngày tải lên</th>
-                                    <th scope="col" class="col-size">Dung lượng</th>
-                                    <th scope="col" class="col-status">Trạng thái</th>
-                                </tr>
-                            </thead>
-                            <tbody id="docListTableBody">
-                                <!-- Rendered dynamically by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer doc-list-modal-footer">
-                <button type="button" class="btn btn-secondary" id="btnCloseDocListModalBtn">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Document Detail Modal (PDFL-93.2) -->
-    <div class="modal-backdrop" id="docDetailModal" role="dialog" aria-modal="true"
-        aria-labelledby="docDetailModalTitle" hidden>
-        <div class="modal-dialog doc-detail-modal-dialog">
-            <div class="modal-header">
-                <div class="doc-detail-modal-title-group">
-                    <button type="button" class="btn-back-modal" id="btnBackToDocList"
-                        title="Quay lại danh sách tài liệu" aria-label="Quay lại danh sách">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                    </button>
-                    <div class="doc-detail-icon-badge" aria-hidden="true">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <circle cx="12" cy="14" r="2"></circle>
-                        </svg>
-                    </div>
-                    <div class="doc-detail-title-wrap">
-                        <h2 class="modal-title" id="docDetailModalTitle">Chi tiết tài liệu</h2>
-                        <p class="modal-subtitle">Thông tin chi tiết và tùy chọn tải xuống</p>
-                    </div>
-                </div>
-                <button type="button" class="modal-close" id="btnCloseDocDetailModal" aria-label="Đóng cửa sổ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="doc-detail-modal-body">
-                <!-- 1. Detail Loading State (PDFL-93.3) -->
-                <div class="doc-list-state doc-list-loading doc-detail-loading" id="docDetailLoading"
-                    style="display: none;">
-                    <div class="doc-list-spinner" aria-hidden="true"></div>
-                    <p class="doc-list-state-title">Đang tải thông tin chi tiết...</p>
-                    <p class="doc-list-state-desc">Đang truy vấn metadata tài liệu từ máy chủ...</p>
-                    <div class="doc-list-skeletons" aria-hidden="true">
-                        <div class="skeleton-row"></div>
-                        <div class="skeleton-row"></div>
-                    </div>
-                </div>
-
-                <!-- 2. Detail Error State (PDFL-93.3) -->
-                <div class="doc-list-state doc-list-error doc-detail-error" id="docDetailError" style="display: none;">
-                    <div class="doc-list-state-icon error-icon" aria-hidden="true">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    </div>
-                    <h3 class="doc-list-state-title" id="docDetailErrorTitle">Không thể tải chi tiết tài liệu</h3>
-                    <p class="doc-list-state-desc" id="docDetailErrorDesc">Đã có lỗi xảy ra khi tải dữ liệu từ máy chủ.
-                    </p>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btnDocDetailRetry">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="1 4 1 10 7 10"></polyline>
-                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                        </svg>
-                        <span>Thử lại</span>
-                    </button>
-                </div>
-
-                <!-- 3. Detail Content (PDFL-93.3) -->
-                <div class="doc-detail-content" id="docDetailContent">
-                    <!-- Header Card: Filename and quick badges -->
-                    <div class="doc-detail-hero-card">
-                        <div class="doc-detail-file-icon" aria-hidden="true">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                            </svg>
-                        </div>
-                        <div class="doc-detail-hero-meta">
-                            <h3 class="doc-detail-filename" id="docDetailHeroFilename">---</h3>
-                            <div class="doc-detail-hero-tags">
-                                <span class="meta-pill" id="docDetailHeroPages">--- trang</span>
-                                <span class="meta-pill" id="docDetailHeroSize">---</span>
-                                <span class="doc-status-badge completed" id="docDetailHeroStatus">Hoàn thành</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Metadata Grid -->
-                    <div class="doc-detail-grid">
-                        <div class="doc-detail-item full-width">
-                            <span class="detail-label">Tên file gốc</span>
-                            <span class="detail-value doc-detail-break-word" id="detailOriginalName">---</span>
-                        </div>
-                        <div class="doc-detail-item">
-                            <span class="detail-label">Dung lượng tệp</span>
-                            <span class="detail-value monospace" id="detailFileSize">---</span>
-                        </div>
-                        <div class="doc-detail-item">
-                            <span class="detail-label">Số trang</span>
-                            <span class="detail-value" id="detailPageCount">---</span>
-                        </div>
-                        <div class="doc-detail-item">
-                            <span class="detail-label">Ngôn ngữ đích</span>
-                            <span class="detail-value" id="detailTargetLang">---</span>
-                        </div>
-                        <div class="doc-detail-item">
-                            <span class="detail-label">Nhận dạng OCR</span>
-                            <span class="detail-value" id="detailOcrStatus">---</span>
-                        </div>
-                        <div class="doc-detail-item">
-                            <span class="detail-label">Ngày tải lên</span>
-                            <span class="detail-value" id="detailCreatedAt">---</span>
-                        </div>
-                        <div class="doc-detail-item">
-                            <span class="detail-label">Ngày cập nhật</span>
-                            <span class="detail-value" id="detailUpdatedAt">---</span>
-                        </div>
-                    </div>
-
-                    <!-- Download Area Section -->
-                    <div class="doc-detail-action-card">
-                        <div class="action-card-text">
-                            <h4 class="action-title">Tải xuống tài liệu</h4>
-                            <p class="action-desc">Tải tệp tin PDF này về thiết bị của bạn</p>
-                        </div>
-                        <button type="button" class="btn btn-gradient btn-sm" id="btnDownloadDocFile"
-                            title="Tải xuống tệp PDF">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            <span>Tải tệp PDF</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer doc-detail-modal-footer">
-                <button type="button" class="btn btn-secondary" id="btnCloseDocDetailModalBtn">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Document Delete Confirmation Modal (PDFL-94.2) -->
-    <div class="modal-backdrop doc-delete-modal-backdrop" id="docDeleteConfirmModal" role="dialog" aria-modal="true"
-        aria-labelledby="docDeleteModalTitle" hidden>
-        <div class="modal-dialog doc-delete-modal-dialog">
-            <div class="modal-header doc-delete-modal-header">
-                <div class="doc-delete-title-group">
-                    <div class="doc-delete-icon-badge" aria-hidden="true">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                            </path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="modal-title" id="docDeleteModalTitle">Xác nhận xóa tài liệu</h2>
-                        <p class="modal-subtitle">Hành động này không thể hoàn tác</p>
-                    </div>
-                </div>
-                <button type="button" class="modal-close" id="btnCloseDeleteModal" aria-label="Đóng cửa sổ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="doc-delete-modal-body">
-                <p class="doc-delete-warning-text">
-                    Bạn có chắc chắn muốn xóa tài liệu này vĩnh viễn khỏi danh sách không?
-                </p>
-                <div class="doc-delete-target-box">
-                    <div class="doc-delete-target-icon" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                        </svg>
-                    </div>
-                    <span class="doc-delete-target-name" id="deleteConfirmDocName">---</span>
-                </div>
-                <p class="doc-delete-note">
-                    Tệp tin và toàn bộ dữ liệu liên quan sẽ bị xóa khỏi hệ thống lưu trữ.
-                </p>
-            </div>
-
-            <div class="modal-footer doc-delete-modal-footer">
-                <button type="button" class="btn btn-secondary" id="btnCancelDeleteDoc">Hủy bỏ</button>
-                <button type="button" class="btn btn-danger" id="btnConfirmDeleteDoc">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    <span>Xác nhận xóa</span>
-                </button>
             </div>
         </div>
     </div>
@@ -1825,32 +1349,27 @@
                     <p class="legal-modal-subtitle">Quy định sử dụng, cam kết bảo mật & thông tin hỗ trợ PDF-Lingua</p>
                 </div>
                 <div class="legal-header-actions">
-                    <button type="button" class="legal-action-btn" id="btnToggleFullscreenLegal"
-                        title="Phóng to / Thu nhỏ modal">
+                    <button type="button" class="legal-action-btn" id="btnToggleFullscreenLegal" title="Phóng to / Thu nhỏ modal">
                         <span class="btn-icon" id="fullscreenIcon">⛶</span> <span id="fullscreenText">Phóng to</span>
                     </button>
                     <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
                         <span class="btn-icon">🖨️</span> In
                     </button>
-                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng"
-                        title="Đóng">&times;</button>
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng" title="Đóng">&times;</button>
                 </div>
             </div>
 
             <!-- Tab Navigation Bar -->
             <div class="legal-tabs-bar" role="tablist">
-                <button type="button" class="legal-tab-btn active" id="tabBtnTerms" role="tab" aria-selected="true"
-                    data-tab="tabTerms">
+                <button type="button" class="legal-tab-btn active" id="tabBtnTerms" role="tab" aria-selected="true" data-tab="tabTerms">
                     <span class="tab-icon">📜</span>
                     <span class="tab-label">Điều khoản</span>
                 </button>
-                <button type="button" class="legal-tab-btn" id="tabBtnPrivacy" role="tab" aria-selected="false"
-                    data-tab="tabPrivacy">
+                <button type="button" class="legal-tab-btn" id="tabBtnPrivacy" role="tab" aria-selected="false" data-tab="tabPrivacy">
                     <span class="tab-icon">🔒</span>
                     <span class="tab-label">Bảo mật</span>
                 </button>
-                <button type="button" class="legal-tab-btn" id="tabBtnContact" role="tab" aria-selected="false"
-                    data-tab="tabContact">
+                <button type="button" class="legal-tab-btn" id="tabBtnContact" role="tab" aria-selected="false" data-tab="tabContact">
                     <span class="tab-icon">✉️</span>
                     <span class="tab-label">Liên hệ</span>
                 </button>
@@ -1864,8 +1383,7 @@
                         <div class="legal-callout-box info">
                             <span class="callout-icon">💡</span>
                             <div class="callout-body">
-                                <strong>Tóm tắt quyền lợi:</strong> Bạn giữ toàn bộ quyền sở hữu đối với tài liệu PDF
-                                tải lên. Bản dịch máy móc mang tính chất tham khảo học thuật.
+                                <strong>Tóm tắt quyền lợi:</strong> Bạn giữ toàn bộ quyền sở hữu đối với tài liệu PDF tải lên. Bản dịch máy móc mang tính chất tham khảo học thuật.
                             </div>
                         </div>
 
@@ -1879,30 +1397,19 @@
                         </div>
 
                         <h4 id="terms-section-1">1. Quyền sở hữu trí tuệ & Bản quyền</h4>
-                        <p>Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng
-                            như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân
-                            phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu
-                            cầu.</p>
+                        <p>Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu cầu.</p>
 
                         <h4 id="terms-section-2">2. Quy định sử dụng dịch vụ</h4>
-                        <p>Người dùng cam kết không sử dụng hệ thống để xử lý, phát tán các tài liệu chứa mã độc, nội
-                            dung vi phạm pháp luật, xâm phạm quyền riêng tư của cá nhân hoặc tổ chức khác. Không thực
-                            hiện các hành vi can thiệp trái phép, đảo ngược mã nguồn hoặc tấn công làm quá tải máy chủ.
-                        </p>
+                        <p>Người dùng cam kết không sử dụng hệ thống để xử lý, phát tán các tài liệu chứa mã độc, nội dung vi phạm pháp luật, xâm phạm quyền riêng tư của cá nhân hoặc tổ chức khác. Không thực hiện các hành vi can thiệp trái phép, đảo ngược mã nguồn hoặc tấn công làm quá tải máy chủ.</p>
 
                         <h4 id="terms-section-3">3. Giới hạn gói dịch vụ (Tiers)</h4>
                         <ul>
-                            <li><strong>Gói Free (Khách & Người dùng cơ bản):</strong> Hạn mức xử lý tối đa 20 MB/tệp và
-                                tối đa 100 trang/tài liệu. Hỗ trợ trích xuất văn bản số và OCR cơ bản.</li>
-                            <li><strong>Gói Pro:</strong> Hạn mức xử lý mở rộng lên đến 100 MB/tệp cùng các tính năng AI
-                                nâng cao (Tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu).</li>
+                            <li><strong>Gói Free (Khách & Người dùng cơ bản):</strong> Hạn mức xử lý tối đa 20 MB/tệp và tối đa 100 trang/tài liệu. Hỗ trợ trích xuất văn bản số và OCR cơ bản.</li>
+                            <li><strong>Gói Pro:</strong> Hạn mức xử lý mở rộng lên đến 100 MB/tệp cùng các tính năng AI nâng cao (Tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu).</li>
                         </ul>
 
                         <h4 id="terms-section-4">4. Miễn trừ trách nhiệm (Disclaimer)</h4>
-                        <p>Các tính năng trích xuất văn bản, nhận dạng OCR và dịch thuật tự động được thực hiện dựa trên
-                            các mô hình máy học và dịch máy. Hệ thống nỗ lực mang lại kết quả chuẩn xác nhất nhưng không
-                            đảm bảo tính hoàn hảo 100% về mặt ngữ nghĩa và không thể thay thế cho bản dịch công chứng có
-                            tính pháp lý.</p>
+                        <p>Các tính năng trích xuất văn bản, nhận dạng OCR và dịch thuật tự động được thực hiện dựa trên các mô hình máy học và dịch máy. Hệ thống nỗ lực mang lại kết quả chuẩn xác nhất nhưng không đảm bảo tính hoàn hảo 100% về mặt ngữ nghĩa và không thể thay thế cho bản dịch công chứng có tính pháp lý.</p>
                     </div>
                 </div>
 
@@ -1912,8 +1419,7 @@
                         <div class="legal-callout-box success">
                             <span class="callout-icon">🛡️</span>
                             <div class="callout-body">
-                                <strong>Cam kết bảo mật:</strong> Tệp PDF được xử lý trong phiên cô lập và tự động xóa
-                                sạch. Mật khẩu được mã hóa an toàn bằng Bcrypt.
+                                <strong>Cam kết bảo mật:</strong> Tệp PDF được xử lý trong phiên cô lập và tự động xóa sạch. Mật khẩu được mã hóa an toàn bằng Bcrypt.
                             </div>
                         </div>
 
@@ -1927,34 +1433,25 @@
                         </div>
 
                         <h4 id="privacy-section-1">1. Thu thập dữ liệu & Phạm vi sử dụng</h4>
-                        <p>PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch
-                            thuật tài liệu:</p>
+                        <p>PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch thuật tài liệu:</p>
                         <ul>
                             <li>Tệp PDF tải lên tạm thời trong phiên làm việc.</li>
-                            <li>Thông tin tài khoản đăng ký (Địa chỉ email, Tên hiển thị). Mật khẩu được mã hóa một
-                                chiều tuyệt đối không lưu plaintext.</li>
-                            <li>Dữ liệu kỹ thuật ẩn danh (IP, thời gian gửi yêu cầu) phục vụ cho cơ chế bảo vệ chống tấn
-                                công quá tải (Rate Limiting).</li>
+                            <li>Thông tin tài khoản đăng ký (Địa chỉ email, Tên hiển thị). Mật khẩu được mã hóa một chiều tuyệt đối không lưu plaintext.</li>
+                            <li>Dữ liệu kỹ thuật ẩn danh (IP, thời gian gửi yêu cầu) phục vụ cho cơ chế bảo vệ chống tấn công quá tải (Rate Limiting).</li>
                         </ul>
 
                         <h4 id="privacy-section-2">2. Chính sách lưu trữ & Tự động xóa (Auto-Cleanup)</h4>
-                        <p>Mọi tệp tài liệu PDF và file tạm thời phát sinh trong quá trình xử lý đều được lưu trữ trong
-                            thư mục tạm có bảo vệ và được tự động dọn dẹp, xóa sạch sau khi hoàn tất phiên làm việc.
-                            Người dùng có toàn quyền xóa lịch sử xử lý tài liệu bất cứ khi nào.</p>
+                        <p>Mọi tệp tài liệu PDF và file tạm thời phát sinh trong quá trình xử lý đều được lưu trữ trong thư mục tạm có bảo vệ và được tự động dọn dẹp, xóa sạch sau khi hoàn tất phiên làm việc. Người dùng có toàn quyền xóa lịch sử xử lý tài liệu bất cứ khi nào.</p>
 
                         <h4 id="privacy-section-3">3. Tiêu chuẩn mã hóa & An toàn hệ thống</h4>
                         <ul>
-                            <li><strong>Mật khẩu:</strong> Sử dụng thuật toán băm chuẩn công nghiệp <code>bcrypt</code>
-                                với 12 rounds muối ngẫu nhiên.</li>
-                            <li><strong>Phiên làm việc:</strong> Bảo mật thông qua mã xác thực JSON Web Token (JWT) có
-                                thời hạn.</li>
-                            <li><strong>Tính cô lập (Data Isolation):</strong> Tài liệu và dữ liệu của người dùng được
-                                phân tách biệt lập, ngăn chặn hoàn toàn việc người khác truy cập trái phép.</li>
+                            <li><strong>Mật khẩu:</strong> Sử dụng thuật toán băm chuẩn công nghiệp <code>bcrypt</code> với 12 rounds muối ngẫu nhiên.</li>
+                            <li><strong>Phiên làm việc:</strong> Bảo mật thông qua mã xác thực JSON Web Token (JWT) có thời hạn.</li>
+                            <li><strong>Tính cô lập (Data Isolation):</strong> Tài liệu và dữ liệu của người dùng được phân tách biệt lập, ngăn chặn hoàn toàn việc người khác truy cập trái phép.</li>
                         </ul>
 
                         <h4 id="privacy-section-4">4. Cam kết bảo vệ dữ liệu</h4>
-                        <p>Chúng tôi tuyệt đối không bán, cho thuê, trao đổi hoặc tiết lộ thông tin cá nhân và dữ liệu
-                            tài liệu của người dùng cho bất kỳ bên thứ ba nào.</p>
+                        <p>Chúng tôi tuyệt đối không bán, cho thuê, trao đổi hoặc tiết lộ thông tin cá nhân và dữ liệu tài liệu của người dùng cho bất kỳ bên thứ ba nào.</p>
                     </div>
                 </div>
 
@@ -1962,38 +1459,31 @@
                 <div class="legal-tab-panel" id="tabContact" role="tabpanel">
                     <div class="legal-content">
                         <h4>Thông tin đồ án</h4>
-                        <p><strong>Dự án:</strong> PDF-Lingua - Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa
-                            ngôn ngữ và tích hợp AI.</p>
+                        <p><strong>Dự án:</strong> PDF-Lingua - Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI.</p>
 
                         <h4>Thành viên nhóm</h4>
                         <div class="team-cards-grid">
                             <div class="team-member-card">
-                                <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener"
-                                    class="member-avatar" title="GitHub: @Sleepy2608">
-                                    <img src="https://github.com/Sleepy2608.png?size=96" alt="Nguyễn Lê Huy Tâm"
-                                        class="member-avatar-img" loading="lazy" onerror="this.style.display='none';">
+                                <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener" class="member-avatar" title="GitHub: @Sleepy2608">
+                                    <img src="https://github.com/Sleepy2608.png?size=96" alt="Nguyễn Lê Huy Tâm" class="member-avatar-img" loading="lazy" onerror="this.style.display='none';">
                                     <span class="member-avatar-fallback">HT</span>
                                 </a>
                                 <div class="member-info">
                                     <div class="member-name-row">
                                         <strong>Nguyễn Lê Huy Tâm</strong>
-                                        <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener"
-                                            class="member-github-badge">@Sleepy2608</a>
+                                        <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener" class="member-github-badge">@Sleepy2608</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="team-member-card">
-                                <a href="https://github.com/Chan-2006" target="_blank" rel="noopener"
-                                    class="member-avatar" title="GitHub: @Chan-2006">
-                                    <img src="https://github.com/Chan-2006.png?size=96" alt="Huỳnh Đình Chấn"
-                                        class="member-avatar-img" loading="lazy" onerror="this.style.display='none';">
+                                <a href="https://github.com/Chan-2006" target="_blank" rel="noopener" class="member-avatar" title="GitHub: @Chan-2006">
+                                    <img src="https://github.com/Chan-2006.png?size=96" alt="Huỳnh Đình Chấn" class="member-avatar-img" loading="lazy" onerror="this.style.display='none';">
                                     <span class="member-avatar-fallback">ĐC</span>
                                 </a>
                                 <div class="member-info">
                                     <div class="member-name-row">
                                         <strong>Huỳnh Đình Chấn</strong>
-                                        <a href="https://github.com/Chan-2006" target="_blank" rel="noopener"
-                                            class="member-github-badge">@Chan-2006</a>
+                                        <a href="https://github.com/Chan-2006" target="_blank" rel="noopener" class="member-github-badge">@Chan-2006</a>
                                     </div>
                                 </div>
                             </div>
@@ -2007,8 +1497,7 @@
                                     <strong>Email hỗ trợ:</strong>
                                     <span id="supportEmailText">huytamnguyenle2608@gmail.com</span>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-secondary" id="btnCopySupportEmail"
-                                    title="Sao chép email">
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnCopySupportEmail" title="Sao chép email">
                                     Sao chép
                                 </button>
                             </div>
@@ -2018,8 +1507,7 @@
                                     <strong>Mã nguồn</strong>
                                     <span>github.com/Sleepy2608/PDF-Lingua</span>
                                 </div>
-                                <a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener"
-                                    class="btn btn-sm btn-secondary">
+                                <a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener" class="btn btn-sm btn-secondary">
                                     Đi tới repo
                                 </a>
                             </div>
@@ -2030,13 +1518,11 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="feedbackName">Họ và tên <span class="text-danger">*</span></label>
-                                    <input type="text" id="feedbackName" class="form-control" placeholder="Họ và tên"
-                                        required>
+                                    <input type="text" id="feedbackName" class="form-control" placeholder="Họ và tên" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="feedbackEmail">Email liên hệ <span class="text-danger">*</span></label>
-                                    <input type="email" id="feedbackEmail" class="form-control" placeholder="Email"
-                                        required>
+                                    <input type="email" id="feedbackEmail" class="form-control" placeholder="Email" required>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -2049,10 +1535,8 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="feedbackMessage">Nội dung phản hồi <span
-                                        class="text-danger">*</span></label>
-                                <textarea id="feedbackMessage" class="form-control" rows="3"
-                                    placeholder="Mô tả chi tiết ý kiến hoặc lỗi bạn gặp phải..." required></textarea>
+                                <label for="feedbackMessage">Nội dung phản hồi <span class="text-danger">*</span></label>
+                                <textarea id="feedbackMessage" class="form-control" rows="3" placeholder="Mô tả chi tiết ý kiến hoặc lỗi bạn gặp phải..." required></textarea>
                             </div>
                             <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitFeedback">
                                 <span>Gửi phản hồi</span>
@@ -2064,13 +1548,11 @@
 
             <div class="legal-modal-footer">
                 <div class="legal-footer-left">
-                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang">⬆
-                        Lên đầu trang</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang">⬆ Lên đầu trang</button>
                     <span class="legal-footer-meta">Phiên bản: v1.0.0 • Hiệu lực từ: 28/10/2026</span>
                 </div>
                 <div class="legal-footer-right">
-                    <button type="button" class="btn btn-gradient btn-sm" id="btnAcceptLegal">✓ Tôi đã hiểu & Đồng
-                        ý</button>
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnAcceptLegal">✓ Tôi đã hiểu & Đồng ý</button>
                 </div>
             </div>
         </div>
@@ -2083,5 +1565,4 @@
     <script src="js/admin.js"></script>
     <script src="js/sidebar.js"></script>
 </body>
-
 </html>

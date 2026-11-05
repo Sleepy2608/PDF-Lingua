@@ -14,6 +14,8 @@
 
   let isCollapsed = false;
   let isMobileOpen = false;
+  let cachedDocuments = [];
+  let cachedToken = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
@@ -187,6 +189,8 @@
     if (adminSection) adminSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'block';
 
+    fetchRecentDocuments();
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.innerWidth < 768) {
       closeMobileSidebar();
@@ -310,6 +314,13 @@
     const sideNavAdmin = document.getElementById('sideNavAdmin');
     const btnCloseDocumentsView = document.getElementById('btnCloseDocumentsView');
     const btnDocsUploadNew = document.getElementById('btnDocsUploadNew');
+    const documentsSearchInput = document.getElementById('documentsSearchInput');
+
+    if (documentsSearchInput) {
+      documentsSearchInput.addEventListener('input', () => {
+        renderDocumentsPageList(cachedDocuments, cachedToken);
+      });
+    }
 
     if (sideNavHome) {
       sideNavHome.addEventListener('click', (e) => {
@@ -509,32 +520,52 @@
   }
 
   /**
-   * Fetch and Render Recent Documents from Backend
-   * Displays dynamic documents or clean empty state matching Image 2.
+   * Retrieve stored JWT token using existing auth mechanism
+   */
+  function getStoredAuthToken() {
+    if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
+      const authToken = window.pdfLinguaAuth.getStoredToken();
+      if (authToken && authToken !== 'null' && authToken !== 'undefined') {
+        return authToken;
+      }
+    }
+    try {
+      const token = localStorage.getItem('pdfl_token') || sessionStorage.getItem('pdfl_token');
+      if (token && token !== 'null' && token !== 'undefined') {
+        return token;
+      }
+    } catch (_err) {}
+    return null;
+  }
+
+  /**
+   * Fetch and Render User Documents from Backend (PDFL-92.2)
+   * Updates both Sidebar recent list and Main #documentsSection table.
    */
   async function fetchRecentDocuments() {
     const emptyStateEl = document.getElementById('sidebarEmptyDocsState');
     let docListEl = document.getElementById('sidebarDocList');
     const container = document.getElementById('sidebarRecentDocs');
 
-    if (!container) return;
-
-    if (!docListEl) {
+    if (container && !docListEl) {
       docListEl = document.createElement('ul');
       docListEl.className = 'sidebar-doc-list';
       docListEl.id = 'sidebarDocList';
       container.appendChild(docListEl);
     }
 
-    const token = localStorage.getItem('pdfl_token') || sessionStorage.getItem('pdfl_token');
+    const token = getStoredAuthToken();
 
     if (!token) {
-      // Unauthenticated: Show clean empty state
+      // Unauthenticated: Show clean empty state in Sidebar and Main Documents Section
+      cachedDocuments = [];
+      cachedToken = null;
       if (emptyStateEl) emptyStateEl.style.display = 'block';
       if (docListEl) {
         docListEl.style.display = 'none';
         docListEl.innerHTML = '';
       }
+      renderDocumentsPageList([], null);
       return;
     }
 
@@ -552,6 +583,9 @@
       const result = await response.json();
       const docs = result && Array.isArray(result.data) ? result.data : [];
 
+      cachedDocuments = docs;
+      cachedToken = token;
+
       if (docs.length === 0) {
         if (emptyStateEl) emptyStateEl.style.display = 'block';
         if (docListEl) {
@@ -564,7 +598,7 @@
           docListEl.style.display = 'flex';
           docListEl.innerHTML = '';
 
-          // Display up to 8 recent documents
+          // Display up to 8 recent documents in Sidebar
           const recentDocs = docs.slice(0, 8);
           recentDocs.forEach((doc) => {
             const item = createDocumentItem(doc, token);
@@ -572,10 +606,127 @@
           });
         }
       }
+
+      renderDocumentsPageList(docs, token);
     } catch (_err) {
+      cachedDocuments = [];
+      cachedToken = null;
       if (emptyStateEl) emptyStateEl.style.display = 'block';
       if (docListEl) docListEl.style.display = 'none';
+      renderDocumentsPageList([], null);
     }
+  }
+
+  /**
+   * Render user documents into #documentsSection table (#documentsTableBody & #documentsCountBadge)
+   */
+  function renderDocumentsPageList(docs, token) {
+    const countBadge = document.getElementById('documentsCountBadge');
+    const tableEl = document.getElementById('documentsTable');
+    const tbodyEl = document.getElementById('documentsTableBody');
+    const emptyStateEl = document.getElementById('documentsEmptyState');
+    const searchInput = document.getElementById('documentsSearchInput');
+
+    const allDocs = Array.isArray(docs) ? docs : [];
+    if (countBadge) {
+      countBadge.textContent = `${allDocs.length} tài liệu`;
+    }
+
+    if (!tableEl || !tbodyEl) return;
+
+    const query = searchInput && typeof searchInput.value === 'string'
+      ? searchInput.value.trim().toLowerCase()
+      : '';
+
+    const filteredDocs = query
+      ? allDocs.filter((d) => String(d.original_filename || '').toLowerCase().includes(query))
+      : allDocs;
+
+    if (filteredDocs.length === 0) {
+      tableEl.style.display = 'none';
+      tbodyEl.innerHTML = '';
+      if (emptyStateEl) emptyStateEl.style.display = 'block';
+      return;
+    }
+
+    if (emptyStateEl) emptyStateEl.style.display = 'none';
+    tableEl.style.display = 'table';
+    tbodyEl.innerHTML = '';
+
+    filteredDocs.forEach((doc) => {
+      const row = createDocumentTableRow(doc, token);
+      tbodyEl.appendChild(row);
+    });
+  }
+
+  function createDocumentTableRow(doc, token) {
+    const tr = document.createElement('tr');
+    tr.className = 'documents-table-row';
+    tr.dataset.docId = String(doc.id);
+
+    const filename = doc.original_filename || 'document.pdf';
+    const formattedSize = formatFileSize(doc.file_size_bytes) || '0 B';
+    const pageCount = doc.page_count !== undefined && doc.page_count !== null ? doc.page_count : 1;
+    const formattedLang = formatTargetLang(doc.target_lang);
+    const isOcr = Boolean(doc.is_ocr_used);
+    const ocrBadgeHtml = isOcr
+      ? '<span class="meta-pill ocr">Quét OCR</span>'
+      : '<span class="meta-pill digital">PDF Số</span>';
+    const formattedDate = formatDate(doc.created_at) || '--';
+
+    tr.innerHTML = `
+      <td>
+        <div class="user-cell-meta">
+          <span class="badge badge-pdf">PDF</span>
+          <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+        </div>
+      </td>
+      <td class="font-mono doc-cell-size">${escapeHtml(formattedSize)}</td>
+      <td class="doc-cell-pages"><span class="doc-count-mono">${escapeHtml(String(pageCount))}</span><span class="doc-unit"> trang</span></td>
+      <td class="doc-cell-lang">${escapeHtml(formattedLang)}</td>
+      <td class="doc-cell-ocr">${ocrBadgeHtml}</td>
+      <td class="date-mono doc-cell-date">${escapeHtml(formattedDate)}</td>
+      <td class="text-right">
+        <div class="user-actions-group">
+          <button type="button" class="btn btn-secondary btn-sm doc-table-download-btn" title="Tải xuống PDF" aria-label="Tải xuống ${escapeHtml(filename)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Tải xuống</span>
+          </button>
+        </div>
+      </td>
+    `;
+
+    const downloadBtn = tr.querySelector('.doc-table-download-btn');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        downloadDocumentFile(doc.id, filename, token);
+      });
+    }
+
+    return tr;
+  }
+
+  function formatTargetLang(code) {
+    if (!code) return 'Tiếng Việt (vi)';
+    const names = {
+      vi: 'Tiếng Việt',
+      en: 'Tiếng Anh',
+      fr: 'Tiếng Pháp',
+      zh: 'Tiếng Trung',
+      'zh-CN': 'Tiếng Trung',
+      ja: 'Tiếng Nhật',
+      ko: 'Tiếng Hàn',
+      de: 'Tiếng Đức',
+      es: 'Tiếng Tây Ban Nha',
+      ru: 'Tiếng Nga',
+    };
+    const label = names[code];
+    return label ? `${label} (${code})` : String(code);
   }
 
   function createDocumentItem(doc, token) {

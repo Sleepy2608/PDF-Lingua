@@ -130,6 +130,11 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     adminSection: new MockElement('adminSection', 'section'),
     btnCloseDocumentsView: new MockElement('btnCloseDocumentsView', 'button'),
     btnDocsUploadNew: new MockElement('btnDocsUploadNew', 'button'),
+    documentsCountBadge: new MockElement('documentsCountBadge', 'span'),
+    documentsTable: new MockElement('documentsTable', 'table'),
+    documentsTableBody: new MockElement('documentsTableBody', 'tbody'),
+    documentsEmptyState: new MockElement('documentsEmptyState', 'div'),
+    documentsSearchInput: new MockElement('documentsSearchInput', 'input'),
     btnOpenAdmin: new MockElement('btnOpenAdmin', 'button'),
   };
 
@@ -190,8 +195,8 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     },
   };
 
-  const defaultFetch = async (url) => {
-    if (mockFetchHandler) return mockFetchHandler(url);
+  const defaultFetch = async (url, options = {}) => {
+    if (mockFetchHandler) return mockFetchHandler(url, options);
     return {
       ok: true,
       json: async () => ({ success: true, data: [] }),
@@ -519,6 +524,101 @@ async function main() {
     assert.strictEqual(env.elements.sidebarDocList.children.length, 2);
     assert.ok(env.elements.sidebarDocList.children[0].innerHTML.includes('Artificial_Intelligence_Report.pdf'));
     assert.ok(env.elements.sidebarDocList.children[1].innerHTML.includes('Financial_Statement_Q3.pdf'));
+  });
+
+  await runTest('PDFL-92.2: Unauthenticated or empty document list updates #documentsSection to empty state and 0 count', async () => {
+    const env = createTestEnvironment();
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '0 tài liệu');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'none');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'block');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 0);
+  });
+
+  await runTest('PDFL-92.2: Authenticated user populates #documentsTableBody with full metadata and updates #documentsCountBadge', async () => {
+    const mockDocs = [
+      {
+        id: 201,
+        original_filename: 'IEEE_Paper_2026.pdf',
+        file_size_bytes: 2097152, // 2 MB
+        page_count: 14,
+        target_lang: 'vi',
+        is_ocr_used: false,
+        created_at: '2026-11-05T08:30:00Z',
+      },
+      {
+        id: 202,
+        original_filename: 'Scanned_Contract.pdf',
+        file_size_bytes: 512000, // 500 KB
+        page_count: 5,
+        target_lang: 'en',
+        is_ocr_used: true,
+        created_at: '2026-11-04T14:15:00Z',
+      },
+    ];
+
+    let capturedAuthHeader = null;
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-test-token-92-2',
+        pdfl_user: JSON.stringify({ id: 1, email: 'user@test.com' }),
+      },
+      async (url, options = {}) => {
+        if (url.includes('/api/documents')) {
+          capturedAuthHeader = options.headers ? options.headers['Authorization'] : null;
+          return {
+            ok: true,
+            json: async () => ({ success: true, data: mockDocs }),
+          };
+        }
+        return { ok: true, json: async () => ({}) };
+      }
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    assert.strictEqual(capturedAuthHeader, 'Bearer jwt-test-token-92-2', 'Must send Bearer token');
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '2 tài liệu');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'none');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'table');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 2);
+
+    const row1Html = env.elements.documentsTableBody.children[0].innerHTML;
+    assert.ok(row1Html.includes('IEEE_Paper_2026.pdf'), 'Row 1 must include original_filename');
+    assert.ok(row1Html.includes('2 MB'), 'Row 1 must include formatted size in MB');
+    assert.ok(row1Html.includes('14'), 'Row 1 must include page_count');
+    assert.ok(row1Html.includes('Tiếng Việt (vi)'), 'Row 1 must include target_lang');
+    assert.ok(row1Html.includes('PDF Số'), 'Row 1 must indicate digital PDF (is_ocr_used: false)');
+    assert.ok(row1Html.includes('05/11/2026'), 'Row 1 must include formatted created_at');
+
+    const row2Html = env.elements.documentsTableBody.children[1].innerHTML;
+    assert.ok(row2Html.includes('Scanned_Contract.pdf'), 'Row 2 must include original_filename');
+    assert.ok(row2Html.includes('500 KB'), 'Row 2 must include formatted size in KB');
+    assert.ok(row2Html.includes('5'), 'Row 2 must include page_count');
+    assert.ok(row2Html.includes('Tiếng Anh (en)'), 'Row 2 must include target_lang');
+    assert.ok(row2Html.includes('Quét OCR'), 'Row 2 must indicate OCR status (is_ocr_used: true)');
+    assert.ok(row2Html.includes('04/11/2026'), 'Row 2 must include formatted created_at');
+  });
+
+  await runTest('PDFL-92.2: API error gracefully falls back to empty state in #documentsSection', async () => {
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-test-token-err',
+      },
+      async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({ detail: 'Server Error' }),
+      })
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '0 tài liệu');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'none');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'block');
+    assert.strictEqual(env.elements.documentsTableBody.children.length, 0);
   });
 
   // 6. Default & Toggle Behavior
