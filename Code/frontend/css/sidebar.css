@@ -1,0 +1,685 @@
+/* ==========================================================================
+   PDF-Lingua: Collapsible Sidebar Navigation
+   Color Theme: Seamless Light & Slate with Brand Accents
+   ========================================================================== */
+
+:root {
+  --sidebar-width: 260px;
+  --sidebar-width-tablet: 240px;
+  --sidebar-width-collapsed: 64px;
+  --sidebar-header-height: 72px;
+
+  /* Theme Surfaces & Colors */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-bg-secondary: #F8FAFC;
+  --sidebar-hover: #F1F5F9;
+  --sidebar-active-bg: #EEF2FF;
+  --sidebar-active-text: #4F46E5;
+  --sidebar-active-border: #C7D2FE;
+  --sidebar-border: #E2E8F0;
+
+  /* Typography */
+  --sidebar-text-primary: #0F172A;
+  --sidebar-text-secondary: #475569;
+  --sidebar-text-muted: #94A3B8;
+
+  /* Motion & Elevation */
+  --sidebar-transition-duration: 0.25s;
+  --sidebar-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
+}
+
+/* ==========================================================================
+   App Shell & Viewport Layout
+   ========================================================================== */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  background-color: var(--bg-page);
+}
+
+/* Main Content Viewport adjusts margin based on sidebar state */
+.app-main-viewport {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-width);
+  transition: margin-left var(--sidebar-transition-duration) var(--sidebar-transition-timing);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+.app-shell.sidebar-collapsed .app-main-viewport {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+/* ==========================================================================
+   Guest Mode (Unauthenticated users): Completely hide sidebar
+   ========================================================================== */
+
+.app-shell.guest-mode .app-sidebar {
+  display: none !important;
+}
+
+.app-shell.guest-mode .app-main-viewport {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+.app-shell.guest-mode .btn-mobile-sidebar-toggle {
+  display: none !important;
+}
+
+.app-shell.guest-mode .sidebar-backdrop {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Sidebar Base Layout (Fixed, Full Viewport Height, Vertical Flex)
+   ========================================================================== */
+
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text-primary);
+  display: flex;
+  flex-direction: column;
+  z-index: 400;
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: var(--sidebar-shadow);
+  transition: width var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+              transform var(--sidebar-transition-duration) var(--sidebar-transition-timing);
+  user-select: none;
+  overflow: hidden;
+}
+
+.app-sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* ==========================================================================
+   1. Sidebar Header (Brand + Toggle Button)
+   ========================================================================== */
+
+.sidebar-header {
+  height: var(--sidebar-header-height);
+  padding: 0 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+  gap: 0.5rem;
+  background-color: #FFFFFF;
+}
+
+.sidebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: var(--sidebar-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-brand:hover {
+  opacity: 0.9;
+}
+
+.sidebar-brand-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+.sidebar-brand-name {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-brand-badge {
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  background-color: var(--color-pdf-coral, #EF4444);
+  color: #FFFFFF;
+  border-radius: 6px;
+  line-height: 1.1;
+}
+
+.sidebar-brand-text {
+  color: var(--color-primary-indigo, #4F46E5);
+}
+
+/* Toggle Collapse/Expand Button */
+.sidebar-toggle-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--sidebar-bg-secondary);
+  border: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--sidebar-text-primary);
+  border-color: #CBD5E1;
+}
+
+.sidebar-toggle-btn:active {
+  transform: scale(0.94);
+}
+
+.sidebar-toggle-btn:focus-visible {
+  outline: 2px solid var(--color-primary-indigo, #4F46E5);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   2. Action Button (New Chat / Create)
+   ========================================================================== */
+
+.sidebar-action-wrap {
+  padding: 1rem 0.875rem 0.625rem;
+  flex-shrink: 0;
+}
+
+.btn-sidebar-new {
+  width: 100%;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4F46E5 0%, #2563EB 100%);
+  border: 1px solid transparent;
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.875rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.btn-sidebar-new:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+}
+
+.btn-sidebar-new:active {
+  transform: translateY(0);
+}
+
+.btn-sidebar-new svg {
+  flex-shrink: 0;
+  color: #FFFFFF;
+}
+
+.btn-new-chat-text {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-new-chat-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   3. Scrollable Sidebar Body
+   ========================================================================== */
+
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+.sidebar-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-body::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 4px;
+}
+
+.sidebar-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Section Header */
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-section-header {
+  padding: 0.35rem 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-section-header .section-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sidebar-text-muted);
+}
+
+/* Navigation Lists */
+.sidebar-nav-list,
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sidebar-nav-item,
+.sidebar-list-item {
+  width: 100%;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.75rem;
+  color: var(--sidebar-text-secondary);
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: left;
+}
+
+.sidebar-nav-item:hover,
+.sidebar-list-item:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--sidebar-text-primary);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  border-color: var(--sidebar-active-border);
+  font-weight: 600;
+}
+
+.sidebar-nav-item#sideNavAdmin.active {
+  background-color: #FFF1F0;
+  color: #C9201C;
+  border-color: #FFCDD2;
+}
+
+.nav-item-icon,
+.list-item-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--sidebar-text-secondary);
+  transition: color 0.15s ease;
+}
+
+.sidebar-nav-item:hover .nav-item-icon {
+  color: var(--color-primary-indigo, #4F46E5);
+}
+
+.sidebar-nav-item.active .nav-item-icon {
+  color: var(--sidebar-active-text);
+}
+
+.nav-icon-admin svg {
+  color: #E5322D;
+}
+
+.nav-item-text,
+.list-item-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   4. Sidebar Fixed Footer (User Profile Card)
+   ========================================================================== */
+
+.sidebar-footer {
+  padding: 0.75rem;
+  border-top: 1px solid var(--sidebar-border);
+  background-color: var(--sidebar-bg-secondary);
+  flex-shrink: 0;
+}
+
+.sidebar-profile-card {
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+  padding: 0 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #FFFFFF;
+  border: 1px solid var(--sidebar-border);
+  cursor: pointer;
+  color: var(--sidebar-text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+
+.sidebar-profile-card:hover {
+  background-color: var(--sidebar-hover);
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-profile-card:focus-visible {
+  outline: 2px solid var(--color-primary-indigo, #4F46E5);
+  outline-offset: 2px;
+}
+
+.sidebar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid #CBD5E1;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  line-height: 1.25;
+}
+
+.sidebar-user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sidebar-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-sub {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--sidebar-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-profile-more {
+  color: var(--sidebar-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   5. Collapsed State Rules
+   ========================================================================== */
+
+.app-sidebar.collapsed .sidebar-header {
+  padding: 0 0.5rem;
+  justify-content: center;
+}
+
+.app-sidebar.collapsed .sidebar-brand-name,
+.app-sidebar.collapsed .btn-new-chat-text,
+.app-sidebar.collapsed .btn-new-chat-badge,
+.app-sidebar.collapsed .nav-item-text,
+.app-sidebar.collapsed .sidebar-section-header,
+.app-sidebar.collapsed .list-item-text,
+.app-sidebar.collapsed .sidebar-user-info,
+.app-sidebar.collapsed .sidebar-profile-more {
+  display: none !important;
+}
+
+.app-sidebar.collapsed .sidebar-brand {
+  display: none !important;
+}
+
+.app-sidebar.collapsed .sidebar-toggle-btn {
+  margin: 0 auto;
+}
+
+.app-sidebar.collapsed .sidebar-action-wrap {
+  padding: 0.75rem 0.5rem 0.35rem;
+}
+
+.app-sidebar.collapsed .btn-sidebar-new {
+  padding: 0;
+  justify-content: center;
+}
+
+.app-sidebar.collapsed .sidebar-body {
+  padding: 0.35rem 0.4rem 0.75rem;
+}
+
+.app-sidebar.collapsed .sidebar-nav-item,
+.app-sidebar.collapsed .sidebar-list-item {
+  padding: 0;
+  justify-content: center;
+}
+
+.app-sidebar.collapsed .sidebar-footer {
+  padding: 0.5rem 0.35rem;
+}
+
+.app-sidebar.collapsed .sidebar-profile-card {
+  padding: 0;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   6. Tooltips on Hover (Active during Collapsed State)
+   ========================================================================== */
+
+.app-sidebar.collapsed [data-tooltip] {
+  position: relative;
+}
+
+.app-sidebar.collapsed [data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #0F172A;
+  color: #FFFFFF;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 6px;
+  border: 1px solid #1E293B;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 1;
+  animation: sidebarTooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes sidebarTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* ==========================================================================
+   7. Mobile & Tablet Responsiveness
+   ========================================================================== */
+
+/* Mobile Sidebar Toggle Button inside site-header */
+.btn-mobile-sidebar-toggle {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-title);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.btn-mobile-sidebar-toggle:hover {
+  background-color: var(--border-subtle);
+}
+
+/* Off-canvas Backdrop */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 390;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sidebar-transition-duration) ease;
+}
+
+.sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tablet Breakpoint (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --sidebar-width: var(--sidebar-width-tablet);
+  }
+}
+
+/* Mobile Breakpoint (< 768px) */
+@media (max-width: 767px) {
+  .btn-mobile-sidebar-toggle {
+    display: inline-flex;
+    margin-right: 0.5rem;
+  }
+
+  .app-sidebar {
+    width: 270px !important;
+    transform: translateX(-100%);
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.18);
+    z-index: 999;
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-main-viewport {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  /* Keep full labels on mobile drawer even if desktop was collapsed */
+  .app-sidebar.collapsed .sidebar-brand,
+  .app-sidebar.collapsed .sidebar-brand-name,
+  .app-sidebar.collapsed .btn-new-chat-text,
+  .app-sidebar.collapsed .btn-new-chat-badge,
+  .app-sidebar.collapsed .nav-item-text,
+  .app-sidebar.collapsed .sidebar-section-header,
+  .app-sidebar.collapsed .list-item-text,
+  .app-sidebar.collapsed .sidebar-user-info,
+  .app-sidebar.collapsed .sidebar-profile-more {
+    display: flex !important;
+  }
+
+  .app-sidebar.collapsed .sidebar-nav-item,
+  .app-sidebar.collapsed .sidebar-list-item,
+  .app-sidebar.collapsed .sidebar-profile-card {
+    justify-content: flex-start !important;
+    padding: 0 0.75rem !important;
+  }
+
+  .app-sidebar.collapsed .btn-sidebar-new {
+    padding: 0 0.875rem !important;
+    justify-content: flex-start !important;
+  }
+}
