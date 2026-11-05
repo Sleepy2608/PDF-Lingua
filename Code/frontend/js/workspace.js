@@ -1,6 +1,38 @@
 const API_BASE_URL = 'http://localhost:8000/api/process';
+const WORKSPACE_DOC_STORAGE_KEY = 'pdfl_workspace_doc_data';
+const ACTIVE_JOB_STORAGE_KEY = 'pdfl_active_job_id';
+const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
+const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
 
 let currentDocData = null;
+
+function getWorkspaceSessionStorage() {
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage) return sessionStorage;
+    if (typeof window !== 'undefined' && window.sessionStorage) return window.sessionStorage;
+  } catch (_e) {}
+  return null;
+}
+
+function saveWorkspaceDocToStorage(docData) {
+  const store = getWorkspaceSessionStorage();
+  if (!store) return;
+  try {
+    if (docData) {
+      store.setItem(WORKSPACE_DOC_STORAGE_KEY, JSON.stringify(docData));
+    } else {
+      store.removeItem(WORKSPACE_DOC_STORAGE_KEY);
+    }
+  } catch (_e) {}
+}
+
+function clearActiveJobFromStorage() {
+  const store = getWorkspaceSessionStorage();
+  if (!store) return;
+  try {
+    store.removeItem(ACTIVE_JOB_STORAGE_KEY);
+  } catch (_e) {}
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   initWorkspace();
@@ -107,6 +139,7 @@ function initWorkspace() {
     paneOriginal.addEventListener('input', () => {
       if (currentDocData) {
         currentDocData.original_text = paneOriginal.innerText;
+        saveWorkspaceDocToStorage(currentDocData);
       }
       updateCounters();
     });
@@ -114,9 +147,41 @@ function initWorkspace() {
     paneTranslated.addEventListener('input', () => {
       if (currentDocData) {
         currentDocData.translated_text = paneTranslated.innerText;
+        saveWorkspaceDocToStorage(currentDocData);
       }
       updateCounters();
     });
+  }
+
+  // Restore workspace state or in-flight job if page reloaded (e.g., Live Server reload on storage write)
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      const savedDocRaw = store.getItem(WORKSPACE_DOC_STORAGE_KEY);
+      if (savedDocRaw && !currentDocData) {
+        currentDocData = JSON.parse(savedDocRaw);
+      }
+    } catch (_e) {}
+
+    try {
+      const savedJobId = store.getItem(ACTIVE_JOB_STORAGE_KEY);
+      const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
+      if (savedJobId) {
+        showProgressModal(true);
+        updateProgress(85, 'Đang hoàn tất xử lý và dịch thuật...', 3);
+        listenToJobProgress(savedJobId, btnProcessPdf);
+      } else if (currentDocData && activeView === 'workspace') {
+        renderWorkspace(currentDocData);
+        const pendingToastRaw = store.getItem(PENDING_TOAST_STORAGE_KEY);
+        if (pendingToastRaw) {
+          store.removeItem(PENDING_TOAST_STORAGE_KEY);
+          const pendingToast = JSON.parse(pendingToastRaw);
+          if (pendingToast && pendingToast.msg && Date.now() - (pendingToast.ts || 0) < 5000) {
+            showToast(pendingToast.msg, pendingToast.type || 'success');
+          }
+        }
+      }
+    } catch (_e) {}
   }
 }
 
@@ -201,9 +266,26 @@ function listenToJobProgress(jobId, btnProcessPdf) {
 
   const handleJobSuccess = (jobData) => {
     cleanupProgressTracking();
+    clearActiveJobFromStorage();
     currentDocData = jobData.result;
+    saveWorkspaceDocToStorage(currentDocData);
+    const store = getWorkspaceSessionStorage();
+    if (store) {
+      try {
+        store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+        store.setItem(
+          PENDING_TOAST_STORAGE_KEY,
+          JSON.stringify({ msg: 'Tài liệu đã được dịch thuật thành công!', type: 'success', ts: Date.now() })
+        );
+      } catch (_e) {}
+    }
     updateProgress(100, jobData.message || 'Xử lý và dịch thuật hoàn tất!', 4);
     setTimeout(() => {
+      if (store) {
+        try {
+          store.removeItem(PENDING_TOAST_STORAGE_KEY);
+        } catch (_e) {}
+      }
       showProgressModal(false);
       renderWorkspace(jobData.result);
       showToast('Tài liệu đã được dịch thuật thành công!', 'success');
@@ -221,6 +303,7 @@ function listenToJobProgress(jobId, btnProcessPdf) {
 
   const handleJobFailure = (errorMsg) => {
     cleanupProgressTracking();
+    clearActiveJobFromStorage();
     showProgressModal(false);
     const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
     if (btn) btn.disabled = false;
@@ -237,6 +320,12 @@ function listenToJobProgress(jobId, btnProcessPdf) {
           method: 'GET',
           headers: authHeaders,
         });
+        if (res.status === 404) {
+          clearActiveJobFromStorage();
+          cleanupProgressTracking();
+          showProgressModal(false);
+          return;
+        }
         if (!res.ok) return;
         const body = await res.json();
         if (body && body.data) {
@@ -359,7 +448,15 @@ async function handleProcessPdf() {
     // Nếu endpoint trả về ngay kết quả trực tiếp (direct sync data hoặc test mock)
     if (result.data && result.data.translated_text && !result.data.job_id) {
       updateProgress(100, 'Xử lý và dịch thuật hoàn tất!', 4);
+      clearActiveJobFromStorage();
       currentDocData = result.data;
+      saveWorkspaceDocToStorage(currentDocData);
+      const store = getWorkspaceSessionStorage();
+      if (store) {
+        try {
+          store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+        } catch (_e) {}
+      }
       setTimeout(() => {
         showProgressModal(false);
         renderWorkspace(result.data);
@@ -380,6 +477,14 @@ async function handleProcessPdf() {
     const jobId = result.data ? result.data.job_id : null;
     if (!jobId) {
       throw new Error('Máy chủ không trả về mã tác vụ (Job ID).');
+    }
+
+    const store = getWorkspaceSessionStorage();
+    if (store) {
+      try {
+        store.setItem(ACTIVE_JOB_STORAGE_KEY, String(jobId));
+        store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+      } catch (_e) {}
     }
 
     // Theo dõi tiến độ thời gian thực qua Server-Sent Events (SSE)
@@ -445,6 +550,7 @@ async function handleRetranslate() {
     const newTranslatedText = result.data.translated_text;
     currentDocData.translated_text = newTranslatedText;
     currentDocData.target_lang = newTargetLang;
+    saveWorkspaceDocToStorage(currentDocData);
 
     const paneTranslated = document.getElementById('paneTranslated');
     if (paneTranslated) {
@@ -584,7 +690,15 @@ function renderWorkspace(data) {
 
 function resetToUpload() {
   cleanupProgressTracking();
+  clearActiveJobFromStorage();
   currentDocData = null;
+  saveWorkspaceDocToStorage(null);
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.removeItem(ACTIVE_VIEW_STORAGE_KEY);
+    } catch (_e) {}
+  }
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
   const documentsSection = document.getElementById('documentsSection');
@@ -717,7 +831,10 @@ if (typeof window !== 'undefined') {
     cleanupProgressTracking,
     listenToJobProgress,
     getCurrentDocData: () => currentDocData,
-    setCurrentDocData: (d) => { currentDocData = d; },
+    setCurrentDocData: (d) => {
+      currentDocData = d;
+      saveWorkspaceDocToStorage(d);
+    },
   });
   window.showToast = showToast;
 }

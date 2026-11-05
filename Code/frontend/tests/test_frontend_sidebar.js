@@ -1907,6 +1907,68 @@ async function main() {
     assert.strictEqual(env.elements.sidebarBackdrop.classList.contains('active'), false);
   });
 
+  await runTest('PDFL-94.2: Deleting a document keeps user on Documents page (#documentsSection) instead of returning to Translate or Home, including across page reloads', async () => {
+    const docs = [
+      { id: 101, original_filename: 'keep_view_after_delete.pdf', file_size_bytes: 2048, page_count: 2, target_lang: 'vi', is_ocr_used: false, created_at: '2026-11-05T10:00:00Z' },
+    ];
+    const env = createTestEnvironment(
+      {
+        pdfl_user: JSON.stringify({ full_name: 'User', email: 'user@pdflingua.io', role: 'user' }),
+        pdfl_token: 'valid-jwt-token',
+      },
+      async (url, options = {}) => {
+        if (options.method === 'DELETE' && url.endsWith('/api/documents/101')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              message: 'Đã xóa tài liệu thành công.',
+              data: { id: 101, deleted: true },
+            }),
+          };
+        }
+        if (url.endsWith('/api/documents/101')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: docs[0] }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true, data: docs }),
+        };
+      }
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal(docs[0]);
+    env.elements.btnDocDetailDelete.click();
+    const deleteResult = await env.sandbox.window.PDFLinguaSidebar.confirmDocumentDelete();
+
+    assert.strictEqual(deleteResult, true);
+    assert.strictEqual(env.elements.documentsSection.style.display, 'block', 'Documents section must stay visible after delete');
+    assert.strictEqual(env.elements.heroSection.style.display, 'none', 'Hero section must stay hidden after delete');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none', 'Workspace section must stay hidden after delete');
+    assert.strictEqual(env.elements.sideNavDocuments.classList.contains('active'), true, 'Documents nav item must be active');
+    assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), false, 'Translate nav item must NOT be active');
+    assert.strictEqual(env.elements.sideNavHome.classList.contains('active'), false, 'Home nav item must NOT be active');
+    assert.strictEqual(env.store['pdfl_active_view'], 'documents', 'Active view must be saved as documents in sessionStorage');
+
+    // Simulate Live Server reload with preserved sessionStorage
+    const reloadedEnv = createTestEnvironment({
+      pdfl_user: JSON.stringify({ full_name: 'User', email: 'user@pdflingua.io', role: 'user' }),
+      pdfl_token: 'valid-jwt-token',
+      pdfl_active_view: env.store['pdfl_active_view'],
+    });
+    assert.strictEqual(reloadedEnv.elements.documentsSection.style.display, 'block', 'Documents section must restore after reload');
+    assert.strictEqual(reloadedEnv.elements.heroSection.style.display, 'none', 'Hero section must stay hidden after reload');
+    assert.strictEqual(reloadedEnv.elements.workspaceSection.style.display, 'none', 'Workspace section must stay hidden after reload');
+    assert.strictEqual(reloadedEnv.elements.sideNavDocuments.classList.contains('active'), true, 'Documents nav item must restore active state');
+    assert.strictEqual(reloadedEnv.elements.sideNavTranslate.classList.contains('active'), false, 'Translate nav item must not be active after reload');
+  });
+
   console.log('\n================================================================');
   console.log(`SUMMARY: ${passedTests}/${totalTests} tests passed (${totalTests - passedTests} failed).`);
   console.log('================================================================');

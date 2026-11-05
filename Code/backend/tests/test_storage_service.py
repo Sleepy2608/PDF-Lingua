@@ -153,6 +153,7 @@ def isolated_db_and_storage(tmp_path: Path, monkeypatch):
 
     Base.metadata.create_all(bind=engine)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr("app.api.process.SessionLocal", TestingSessionLocal)
 
     def override_get_db():
         session = TestingSessionLocal()
@@ -240,3 +241,60 @@ def test_pdfl_90_and_91_guest_upload_does_not_persist(isolated_db_and_storage):
 
     # Database must have NO document records
     assert db_session.query(Document).count() == 0
+
+
+def test_background_job_authenticated_upload_persists_file_and_db(isolated_db_and_storage):
+    """
+    Verifies that uploading via POST /api/process/jobs (used by the Frontend Workspace)
+    for an authenticated user also persists the physical PDF file and creates a Document
+    record in the database so it immediately appears in GET /api/documents.
+    """
+    import time
+
+    db_session, user, storage_svc = isolated_db_and_storage
+    app.dependency_overrides[get_optional_current_user] = lambda: user
+
+    pdf_bytes = create_sample_pdf_bytes("Hello from background job upload!")
+    files = {"file": ("complex_tables_and_symbols.pdf", pdf_bytes, "application/pdf")}
+    data = {"target_lang": "zh"}
+
+    res = client.post("/api/process/jobs", files=files, data=data)
+    assert res.status_code == 202
+
+    job_id = res.json()["data"]["job_id"]
+    assert job_id is not None
+
+    # Wait for background worker thread to finish processing
+    completed_job = None
+    for _ in range(50):
+        status_res = client.get(f"/api/process/jobs/{job_id}")
+        assert status_res.status_code == 200
+        job_data = status_res.json()["data"]
+        if job_data["status"] in ("COMPLETED", "FAILED"):
+            completed_job = job_data
+            break
+        time.sleep(0.1)
+
+    assert completed_job is not None
+    assert completed_job["status"] == "COMPLETED"
+    result_payload = completed_job["result"]
+    assert result_payload is not None
+
+    doc_id = result_payload.get("document_id")
+    assert doc_id is not None
+
+    # Verify DB record was created for the authenticated user
+    db_session.expire_all()
+    db_doc = db_session.query(Document).filter(Document.id == doc_id).first()
+    assert db_doc is not None
+    assert db_doc.user_id == user.id
+    assert db_doc.original_filename == "complex_tables_and_symbols.pdf"
+    assert db_doc.file_size_bytes == len(pdf_bytes)
+    assert db_doc.target_lang == "zh"
+
+    # Verify physical file exists in storage
+    saved_path = storage_svc.get_document_path(user.id, db_doc.stored_filename)
+    assert saved_path is not None
+    assert saved_path.is_file()
+    assert saved_path.read_bytes() == pdf_bytes
+

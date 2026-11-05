@@ -10,6 +10,8 @@
   'use strict';
 
   const STORAGE_KEY = 'pdf_lingua_sidebar_collapsed';
+  const ACTIVE_VIEW_KEY = 'pdfl_active_view';
+  const PENDING_TOAST_KEY = 'pdfl_pending_toast';
   const API_BASE_URL = 'http://localhost:8000';
 
   let isCollapsed = false;
@@ -148,6 +150,31 @@
     // Main navigation items
     initNavItems();
 
+    // Restore active Documents view if page reloaded (e.g., Live Server reload after file delete)
+    try {
+      if (sessionStorage.getItem(ACTIVE_VIEW_KEY) === 'documents') {
+        const sideNavDocuments = document.getElementById('sideNavDocuments');
+        const heroSection = document.getElementById('heroSection');
+        const workspaceSection = document.getElementById('workspaceSection');
+        const adminSection = document.getElementById('adminSection');
+        const documentsSection = document.getElementById('documentsSection');
+        if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
+        if (heroSection) heroSection.style.display = 'none';
+        if (workspaceSection) workspaceSection.style.display = 'none';
+        if (adminSection) adminSection.style.display = 'none';
+        if (documentsSection) documentsSection.style.display = 'block';
+
+        const pendingToastRaw = sessionStorage.getItem(PENDING_TOAST_KEY);
+        if (pendingToastRaw) {
+          sessionStorage.removeItem(PENDING_TOAST_KEY);
+          const pendingToast = JSON.parse(pendingToastRaw);
+          if (pendingToast && pendingToast.msg && Date.now() - (pendingToast.ts || 0) < 5000 && typeof showToast === 'function') {
+            showToast(pendingToast.msg, pendingToast.type || 'success');
+          }
+        }
+      }
+    } catch (_err) {}
+
     // Listen to custom auth events from auth.js
     window.addEventListener('pdfl:auth-change', (e) => {
       const user = e.detail ? e.detail.user : null;
@@ -181,6 +208,10 @@
       if (workspaceSection) workspaceSection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
     }
+
+    try {
+      sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+    } catch (_err) {}
 
     if (sideNavTranslate) {
       setActiveNavItem(sideNavTranslate);
@@ -219,6 +250,10 @@
     if (adminSection) adminSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'block';
 
+    try {
+      sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
+    } catch (_err) {}
+
     fetchRecentDocuments();
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -241,6 +276,14 @@
     const hasActiveDoc = window.pdfLinguaWorkspace
       && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function'
       && Boolean(window.pdfLinguaWorkspace.getCurrentDocData());
+
+    try {
+      if (hasActiveDoc) {
+        sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
+      } else {
+        sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+      }
+    } catch (_err) {}
 
     if (hasActiveDoc && workspaceSection) {
       if (heroSection) heroSection.style.display = 'none';
@@ -374,6 +417,9 @@
     if (sideNavHome) {
       sideNavHome.addEventListener('click', (e) => {
         e.preventDefault();
+        try {
+          sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+        } catch (_err) {}
         setActiveNavItem(sideNavHome);
         const adminSection = document.getElementById('adminSection');
         const documentsSection = document.getElementById('documentsSection');
@@ -452,6 +498,9 @@
     if (sideNavAdmin) {
       sideNavAdmin.addEventListener('click', (e) => {
         e.preventDefault();
+        try {
+          sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+        } catch (_err) {}
         setActiveNavItem(sideNavAdmin);
         const documentsSection = document.getElementById('documentsSection');
         if (documentsSection) documentsSection.style.display = 'none';
@@ -474,6 +523,23 @@
     const allItems = document.querySelectorAll('.sidebar-nav-item');
     allItems.forEach((item) => item.classList.remove('active'));
     if (targetItem) targetItem.classList.add('active');
+
+    if (typeof document.querySelectorAll === 'function') {
+      const headerLinks = document.querySelectorAll('.nav-menu .nav-link');
+      if (headerLinks && typeof headerLinks.forEach === 'function') {
+        const targetHref = targetItem && typeof targetItem.getAttribute === 'function'
+          ? targetItem.getAttribute('href')
+          : null;
+        headerLinks.forEach((link) => {
+          const linkHref = typeof link.getAttribute === 'function' ? link.getAttribute('href') : null;
+          if (targetHref && linkHref === targetHref) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+    }
   }
 
   /**
@@ -1197,6 +1263,15 @@
       alertEl.textContent = '';
     }
 
+    // Persist active Documents view before DELETE request so any Live Server file-watcher reload stays on Documents page
+    try {
+      sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
+      sessionStorage.setItem(
+        PENDING_TOAST_KEY,
+        JSON.stringify({ msg: `Đã xóa tài liệu "${targetFilename}" thành công.`, type: 'success', ts: Date.now() })
+      );
+    } catch (_err) {}
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(targetId)}`, {
         method: 'DELETE',
@@ -1206,6 +1281,7 @@
       });
 
       if (response.status === 401) {
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
         const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
@@ -1219,6 +1295,7 @@
       }
 
       if (response.status === 404) {
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
         let msg = 'Tài liệu không tồn tại hoặc bạn không có quyền xóa (404).';
         try {
           const errData = await response.json();
@@ -1238,6 +1315,7 @@
       }
 
       if (!response.ok) {
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
         let msg = 'Lỗi máy chủ khi xóa tài liệu. Vui lòng thử lại.';
         try {
           const errData = await response.json();
@@ -1272,13 +1350,29 @@
       // 2. Remove deleted document from current list & update count badge
       removeDocumentFromLocalLists(targetId);
 
-      // 3. Display success toast notification
+      // 3. Keep user on the Documents page (#documentsSection) after deletion (not Translate or Home)
+      try {
+        sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
+      } catch (_err) {}
+      const sideNavDocuments = document.getElementById('sideNavDocuments');
+      const heroSection = document.getElementById('heroSection');
+      const workspaceSection = document.getElementById('workspaceSection');
+      const adminSection = document.getElementById('adminSection');
+      const documentsSection = document.getElementById('documentsSection');
+      if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
+      if (heroSection) heroSection.style.display = 'none';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (documentsSection) documentsSection.style.display = 'block';
+
+      // 4. Display success toast notification
       if (typeof showToast === 'function') {
         showToast(successMessage, 'success');
       }
 
       return true;
     } catch (err) {
+      try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
       setDocumentDeleteLoadingState(false);
       const msg = (err && err.message && err.message !== 'Failed to fetch')
         ? err.message
