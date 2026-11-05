@@ -256,6 +256,9 @@ async function handleProcessPdf() {
       showProgressModal(false);
       renderWorkspace(result.data);
       showToast('Tài liệu đã được dịch thuật thành công!', 'success');
+      if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
+        window.PDFLinguaSidebar.fetchRecentDocuments();
+      }
     }, 400);
 
   } catch (error) {
@@ -353,7 +356,7 @@ async function triggerDownload(format) {
   if (dropdown) dropdown.classList.remove('show');
 
   const baseName = (currentDocData.filename || 'tai_lieu').replace(/\.[^/.]+$/, '');
-  const title = `PDF-Lingua — ${currentDocData.filename || 'Tài Liệu Dịch'}`;
+  const title = `PDF-Lingua - ${currentDocData.filename || 'Tài Liệu Dịch'}`;
 
   showToast(`Đang chuẩn bị tệp .${format.toUpperCase()}...`, 'info');
 
