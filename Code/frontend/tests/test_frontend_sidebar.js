@@ -273,6 +273,15 @@ async function main() {
     assert.ok(!siteHeaderMatch[1].includes('class="brand-link"'), 'site-header must NOT contain duplicate brand-link');
   });
 
+  await runTest('Layout: Sidebar footer and site footer share synchronized height and border alignment', () => {
+    const sidebarCss = fs.readFileSync(path.resolve(__dirname, '../css/sidebar.css'), 'utf8');
+    const layoutCss = fs.readFileSync(path.resolve(__dirname, '../css/layout.css'), 'utf8');
+
+    assert.ok(sidebarCss.includes('--footer-height: 68px'), 'sidebar.css must define synchronized --footer-height');
+    assert.ok(sidebarCss.includes('height: var(--footer-height, 68px)'), '.sidebar-footer must use --footer-height');
+    assert.ok(layoutCss.includes('height: var(--footer-height, 68px)'), '.site-footer must use --footer-height');
+  });
+
   await runTest('HTML: Clean empty state for recent docs and zero mock items', () => {
     assert.ok(htmlSource.includes('TÀI LIỆU GẦN ĐÂY'), 'TÀI LIỆU GẦN ĐÂY section must exist');
     assert.ok(htmlSource.includes('Bạn chưa có tài liệu nào.'), 'Empty state main text must exist');

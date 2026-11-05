@@ -8,6 +8,7 @@
   --sidebar-width-tablet: 240px;
   --sidebar-width-collapsed: 64px;
   --sidebar-header-height: 72px;
+  --footer-height: 68px;
 
   /* Theme Surfaces & Colors (Pure White & Slate) */
   --sidebar-bg: #FFFFFF;
@@ -533,10 +534,15 @@
    ========================================================================== */
 
 .sidebar-footer {
-  padding: 0.75rem;
+  height: var(--footer-height, 68px);
+  min-height: var(--footer-height, 68px);
+  box-sizing: border-box;
+  padding: 0 0.75rem;
   border-top: 1px solid var(--sidebar-border);
   background-color: var(--sidebar-bg-secondary);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar-profile-card {
@@ -673,7 +679,13 @@
 }
 
 .app-sidebar.collapsed .sidebar-footer {
-  padding: 0.5rem 0.35rem;
+  height: var(--footer-height, 68px);
+  min-height: var(--footer-height, 68px);
+  box-sizing: border-box;
+  padding: 0 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .app-sidebar.collapsed .sidebar-profile-card {
