@@ -382,3 +382,45 @@ def test_pdfl_94_1_delete_db_commit_failure_rolls_back_and_restores_file(access_
     assert b"User A confidential document content" in restored_path.read_bytes()
 
 
+def test_pdfl_94_3_repeated_delete_and_post_delete_access_consistency(access_control_env):
+    """
+    PDFL-94.3 End-to-End Backend Consistency:
+    - First DELETE succeeds (200 OK) and removes DB + Storage file.
+    - Subsequent repeated DELETE on the same ID safely returns 404 Not Found.
+    - Subsequent GET /api/documents/{id} and GET /api/documents/{id}/download return 404.
+    - GET /api/documents list immediately reflects removal for the owner while preserving other users' docs.
+    """
+    env = access_control_env
+    doc_a_id = env["doc_a"].id
+    doc_b_id = env["doc_b"].id
+
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+
+    # 1. First DELETE -> 200 OK
+    res_del_1 = client.delete(f"/api/documents/{doc_a_id}")
+    assert res_del_1.status_code == 200
+    assert res_del_1.json()["success"] is True
+
+    # 2. Repeated DELETE on already deleted document -> 404 Not Found
+    res_del_2 = client.delete(f"/api/documents/{doc_a_id}")
+    assert res_del_2.status_code == 404
+
+    # 3. Detail and Download endpoints for deleted document -> 404 Not Found
+    assert client.get(f"/api/documents/{doc_a_id}").status_code == 404
+    assert client.get(f"/api/documents/{doc_a_id}/download").status_code == 404
+
+    # 4. User A's document list is now empty (0 documents)
+    res_list_a = client.get("/api/documents")
+    assert res_list_a.status_code == 200
+    assert res_list_a.json()["data"] == []
+
+    # 5. User B's document (#doc_b) is completely unaffected
+    app.dependency_overrides[get_current_user] = lambda: env["user_b"]
+    res_list_b = client.get("/api/documents")
+    assert res_list_b.status_code == 200
+    docs_b = res_list_b.json()["data"]
+    assert len(docs_b) == 1
+    assert docs_b[0]["id"] == doc_b_id
+
+
+

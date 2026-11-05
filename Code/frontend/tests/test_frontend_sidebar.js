@@ -1726,6 +1726,103 @@ async function main() {
     assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu', 'Document not removed on network error');
   });
 
+  await runTest('PDFL-94.3: End-to-end integration when deleting the last remaining document transitions UI to Empty State while preserving Escape key hierarchy & search', async () => {
+    const serverDocs = [
+      {
+        id: 9430,
+        original_filename: 'Sole_Remaining_Document.pdf',
+        file_size_bytes: 768000,
+        page_count: 9,
+        target_lang: 'vi',
+        is_ocr_used: true,
+        created_at: '2026-11-05T16:00:00Z',
+      },
+    ];
+
+    const env = createTestEnvironment(
+      {
+        pdfl_token: 'jwt-e2e-94-3-token',
+      },
+      async (url, options = {}) => {
+        if (options.method === 'DELETE' && url.endsWith('/api/documents/9430')) {
+          const idx = serverDocs.findIndex((d) => d.id === 9430);
+          if (idx === -1) {
+            return {
+              ok: false,
+              status: 404,
+              json: async () => ({
+                success: false,
+                error_code: 'HTTP_404',
+                message: 'Tài liệu không tồn tại hoặc bạn không có quyền truy cập.',
+              }),
+            };
+          }
+          serverDocs.splice(idx, 1);
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              message: 'Xóa tài liệu thành công.',
+              data: { id: 9430, original_filename: 'Sole_Remaining_Document.pdf' },
+            }),
+          };
+        }
+        if (url.endsWith('/api/documents/9430')) {
+          const doc = serverDocs.find((d) => d.id === 9430);
+          if (!doc) {
+            return {
+              ok: false,
+              status: 404,
+              json: async () => ({ detail: 'Tài liệu không tồn tại.' }),
+            };
+          }
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: doc }),
+          };
+        }
+        if (url.endsWith('/api/documents')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true, data: [...serverDocs] }),
+          };
+        }
+        return { ok: true, status: 200, json: async () => ({}) };
+      }
+    );
+
+    await env.sandbox.window.PDFLinguaSidebar.fetchRecentDocuments();
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '1 tài liệu');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'table');
+    assert.strictEqual(env.elements.sidebarDocList.style.display, 'flex');
+    assert.strictEqual(env.elements.sidebarEmptyDocsState.style.display, 'none');
+
+    // 1. Open Detail Modal -> click Delete -> press Escape -> closes ONLY Confirmation Modal, Detail Modal stays open
+    await env.sandbox.window.PDFLinguaSidebar.openDocumentDetailModal({ id: 9430 });
+    env.elements.btnDocDetailDelete.click();
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'flex');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex');
+
+    env.triggerDocKeydown({ key: 'Escape' });
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'none', 'Escape closes Confirm Modal first');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'flex', 'Detail Modal remains open');
+
+    // 2. Click Delete again and confirm -> deletes last document -> transitions both Sidebar and Documents Page to Empty State
+    env.elements.btnDocDetailDelete.click();
+    await env.sandbox.window.PDFLinguaSidebar.confirmDocumentDelete();
+
+    assert.strictEqual(env.elements.documentDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(env.elements.documentDetailModal.style.display, 'none');
+    assert.strictEqual(env.elements.documentsCountBadge.textContent, '0 tài liệu');
+    assert.strictEqual(env.elements.documentsTable.style.display, 'none');
+    assert.strictEqual(env.elements.documentsEmptyState.style.display, 'block', 'Documents page transitions to Empty State');
+    assert.strictEqual(env.elements.sidebarDocList.style.display, 'none', 'Sidebar doc list hides when empty');
+    assert.strictEqual(env.elements.sidebarEmptyDocsState.style.display, 'block', 'Sidebar empty state displays when 0 docs remain');
+  });
+
   // 6. Default & Toggle Behavior
   await runTest('Behavior: Default state is expanded', () => {
     const env = createTestEnvironment();
