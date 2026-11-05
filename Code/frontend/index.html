@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="css/sidebar.css">
 </head>
 <body>
-    <div class="app-shell guest-mode" id="appShell">
-        <!-- Collapsible Sidebar Navigation -->
+    <div class="app-shell" id="appShell">
+        <!-- Collapsible Sidebar Navigation (PDF Document Management) -->
         <aside class="app-sidebar" id="appSidebar" aria-label="Thanh điều hướng chính">
             <!-- Sidebar Header: Brand + Toggle Button -->
             <div class="sidebar-header">
@@ -35,15 +35,15 @@
                 </button>
             </div>
 
-            <!-- New Chat / Create Action Button -->
+            <!-- Primary Action Button: Upload PDF -->
             <div class="sidebar-action-wrap">
-                <button type="button" class="btn-sidebar-new" id="btnSidebarNewChat" data-tooltip="Đoạn chat mới">
+                <button type="button" class="btn-sidebar-upload" id="btnSidebarUpload" data-tooltip="Tải PDF lên" aria-label="Tải PDF lên">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <span class="btn-new-chat-text">Đoạn chat mới</span>
-                    <span class="btn-new-chat-badge">Mới</span>
+                    <span class="btn-upload-text">Tải PDF lên</span>
                 </button>
             </div>
 
@@ -53,13 +53,26 @@
                 <div class="sidebar-section">
                     <ul class="sidebar-nav-list">
                         <li>
+                            <a href="#home" class="sidebar-nav-item" id="sideNavHome" data-tooltip="Trang chủ">
+                                <span class="nav-item-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                    </svg>
+                                </span>
+                                <span class="nav-item-text">Trang chủ</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="#translate" class="sidebar-nav-item active" id="sideNavTranslate" data-tooltip="Dịch PDF">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <path d="M5 8l6 6"></path>
+                                        <path d="M4 14l6-6 2-3"></path>
+                                        <path d="M2 5h12"></path>
+                                        <path d="M7 2h1"></path>
+                                        <path d="M22 22l-5-10-5 10"></path>
+                                        <path d="M14 18h6"></path>
                                     </svg>
                                 </span>
                                 <span class="nav-item-text">Dịch PDF</span>
@@ -75,6 +88,37 @@
                                 <span class="nav-item-text">Hỏi đáp AI</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="#ai-summarize" class="sidebar-nav-item" id="sideNavAiSummarize" data-tooltip="Tóm tắt văn bản">
+                                <span class="nav-item-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 3c0 4.97-4.03 9-9 9 4.97 0 9 4.03 9 9 0-4.97 4.03-9 9-9-4.97 0-9-4.03-9-9z"></path>
+                                    </svg>
+                                </span>
+                                <span class="nav-item-text">Tóm tắt văn bản</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#documents" class="sidebar-nav-item" id="sideNavDocuments" data-tooltip="Quản lý tài liệu">
+                                <span class="nav-item-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </span>
+                                <span class="nav-item-text">Quản lý tài liệu</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá gói">
+                                <span class="nav-item-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                                    </svg>
+                                </span>
+                                <span class="nav-item-text">Bảng giá gói</span>
+                            </a>
+                        </li>
                         <li id="sideNavAdminItem" style="display: none;">
                             <a href="#admin" class="sidebar-nav-item" id="sideNavAdmin" data-tooltip="Quản trị hệ thống">
                                 <span class="nav-item-icon nav-icon-admin">
@@ -85,103 +129,47 @@
                                 <span class="nav-item-text">Quản trị hệ thống</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá">
-                                <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                                    </svg>
-                                </span>
-                                <span class="nav-item-text">Bảng giá gói</span>
-                            </a>
-                        </li>
                     </ul>
                 </div>
 
-                <!-- Pinned Items -->
-                <div class="sidebar-section">
+                <!-- Recent Documents Section (Real Data, Zero Mock Papers) -->
+                <div class="sidebar-section" id="sidebarRecentSection">
                     <div class="sidebar-section-header">
-                        <span class="section-title">Đã ghim</span>
+                        <span class="section-title">TÀI LIỆU GẦN ĐÂY</span>
                     </div>
-                    <ul class="sidebar-list">
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Tài liệu mẫu Song ngữ">
-                                <span class="list-item-icon">📌</span>
-                                <span class="list-item-text">Tài liệu mẫu Song ngữ</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Sổ tay thuật ngữ">
-                                <span class="list-item-icon">📘</span>
-                                <span class="list-item-text">Sổ tay thuật ngữ</span>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Projects Section -->
-                <div class="sidebar-section">
-                    <div class="sidebar-section-header">
-                        <span class="section-title">Dự án</span>
+                    <div class="sidebar-recent-docs" id="sidebarRecentDocs">
+                        <!-- Clean Empty State Matching UI Specification -->
+                        <div class="sidebar-empty-state" id="sidebarEmptyDocsState">
+                            <div class="empty-state-row">
+                                <span class="empty-pdf-badge">PDF</span>
+                                <div class="empty-state-meta">
+                                    <div class="empty-state-title">Bạn chưa có tài liệu nào.</div>
+                                    <div class="empty-state-desc">Hãy tải tài liệu đầu tiên của bạn!</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <ul class="sidebar-list">
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Dự án Nghiên cứu AI">
-                                <span class="list-item-icon">📁</span>
-                                <span class="list-item-text">Dự án Nghiên cứu AI</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Luận văn Tốt nghiệp">
-                                <span class="list-item-icon">📁</span>
-                                <span class="list-item-text">Luận văn Tốt nghiệp</span>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Recent Conversations -->
-                <div class="sidebar-section">
-                    <div class="sidebar-section-header">
-                        <span class="section-title">Gần đây</span>
-                    </div>
-                    <ul class="sidebar-list">
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Attention Is All You Need">
-                                <span class="list-item-icon">📄</span>
-                                <span class="list-item-text">Attention Is All You Need</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Deep Learning Benchmark">
-                                <span class="list-item-icon">📄</span>
-                                <span class="list-item-text">Deep Learning Benchmark</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button" class="sidebar-list-item" data-tooltip="Báo cáo tài chính song ngữ">
-                                <span class="list-item-icon">📄</span>
-                                <span class="list-item-text">Báo cáo tài chính song ngữ</span>
-                            </button>
-                        </li>
-                    </ul>
                 </div>
             </div>
 
             <!-- Fixed Footer: User Profile -->
             <div class="sidebar-footer">
                 <div class="sidebar-profile-card" id="sidebarUserProfile" tabindex="0" role="button" aria-label="Xem thông tin tài khoản" data-tooltip="Tài khoản cá nhân">
-                    <div class="sidebar-avatar" id="sidebarUserAvatar">K</div>
-                    <div class="sidebar-user-info">
-                        <div class="sidebar-user-name" id="sidebarUserName">Khách vãng lai</div>
-                        <div class="sidebar-user-sub" id="sidebarUserRole">Gói Miễn phí</div>
+                    <div class="sidebar-avatar" id="sidebarUserAvatar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
                     </div>
-                    <div class="sidebar-profile-more">
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-name" id="sidebarUserName">Người dùng</div>
+                        <div class="sidebar-user-sub" id="sidebarUserRole">Free / Pro</div>
+                    </div>
+                    <div class="sidebar-profile-more" id="btnSidebarMore" title="Tùy chọn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="1"></circle>
-                            <circle cx="19" cy="12" r="1"></circle>
-                            <circle cx="5" cy="12" r="1"></circle>
+                            <circle cx="12" cy="12" r="1.5"></circle>
+                            <circle cx="19" cy="12" r="1.5"></circle>
+                            <circle cx="5" cy="12" r="1.5"></circle>
                         </svg>
                     </div>
                 </div>
@@ -195,20 +183,15 @@
         <div class="app-main-viewport" id="appMainViewport">
             <header class="site-header">
                 <div class="container header-container">
-                    <button type="button" class="btn-mobile-sidebar-toggle" id="btnMobileSidebarToggle" aria-label="Mở menu điều hướng" title="Mở menu điều hướng">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="3" y1="12" x2="21" y2="12"></line>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <line x1="3" y1="18" x2="21" y2="18"></line>
-                        </svg>
-                    </button>
-                    <a href="#" class="brand-link" title="PDF-Lingua">
-                        <img src="assets/images/logo-app-transparent.png" alt="PDF-Lingua" class="brand-logo-img">
-                        <div class="brand-title">
-                            <span class="brand-badge-pdf">PDF</span>
-                            <span>Lingua</span>
-                        </div>
-                    </a>
+                    <div class="header-left">
+                        <button type="button" class="btn-mobile-sidebar-toggle" id="btnMobileSidebarToggle" aria-label="Mở menu điều hướng" title="Mở menu điều hướng">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="3" y1="12" x2="21" y2="12"></line>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <line x1="3" y1="18" x2="21" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
 
             <nav>
                 <ul class="nav-menu">
