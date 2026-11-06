@@ -545,7 +545,7 @@
   /**
    * Synchronize User Profile in Sidebar
    * Matches target specifications:
-   * - Guest: "Người dùng", "Free / Pro", SVG user avatar.
+   * - Guest: "Khách", SVG user avatar.
    * - Pro: User name, "Gói Pro VIP" (amber/gold), initial letter avatar.
    * - Admin: Admin name, "Quản trị viên" (son red), initial letter avatar, reveal admin nav item.
    */
@@ -563,9 +563,14 @@
     const nameEl = document.getElementById('sidebarUserName');
     const roleEl = document.getElementById('sidebarUserRole');
     const sideNavAdminItem = document.getElementById('sideNavAdminItem');
+    const profileCard = document.getElementById('sidebarUserProfile');
 
     if (appShell) {
       appShell.classList.remove('guest-mode');
+    }
+
+    if (profileCard) {
+      profileCard.setAttribute('data-tooltip', currentUser && (currentUser.email || currentUser.id) ? 'Tài khoản cá nhân' : 'Khách');
     }
 
     if (currentUser && (currentUser.email || currentUser.id)) {
@@ -593,6 +598,7 @@
       if (nameEl) nameEl.textContent = displayName;
 
       if (roleEl) {
+        roleEl.style.display = '';
         if (role === 'admin') {
           roleEl.textContent = 'Quản trị viên';
           roleEl.style.color = '#C9201C';
@@ -622,10 +628,10 @@
         avatarEl.style.borderColor = '#CBD5E1';
       }
 
-      if (nameEl) nameEl.textContent = 'Người dùng';
+      if (nameEl) nameEl.textContent = 'Khách';
       if (roleEl) {
-        roleEl.textContent = 'Free / Pro';
-        roleEl.style.color = '#64748B';
+        roleEl.textContent = '';
+        roleEl.style.display = 'none';
       }
 
       if (sideNavAdminItem) {

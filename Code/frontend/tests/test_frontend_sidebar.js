@@ -393,10 +393,11 @@ async function main() {
   });
 
   // 3. User Profile Sync & Roles
-  await runTest('User Sync: Guest user renders default profile matching Image 2', () => {
+  await runTest('User Sync: Guest user renders default profile as Khách', () => {
     const env = createTestEnvironment();
-    assert.strictEqual(env.elements.sidebarUserName.textContent, 'Người dùng');
-    assert.strictEqual(env.elements.sidebarUserRole.textContent, 'Free / Pro');
+    assert.strictEqual(env.elements.sidebarUserName.textContent, 'Khách');
+    assert.strictEqual(env.elements.sidebarUserRole.textContent, '');
+    assert.strictEqual(env.elements.sidebarUserRole.style.display, 'none');
     assert.strictEqual(env.elements.sideNavAdminItem.style.display, 'none');
     assert.strictEqual(env.elements.appShell.classList.contains('guest-mode'), false);
   });
