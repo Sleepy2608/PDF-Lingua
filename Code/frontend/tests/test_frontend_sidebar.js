@@ -123,6 +123,8 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     sidebarUserAvatar: new MockElement('sidebarUserAvatar'),
     sidebarUserName: new MockElement('sidebarUserName'),
     sidebarUserRole: new MockElement('sidebarUserRole'),
+    sidebarBrandLink: new MockElement('sidebarBrandLink', 'a'),
+    headerCollapsedBrand: new MockElement('headerCollapsedBrand', 'a'),
     btnSidebarMore: new MockElement('btnSidebarMore', 'div'),
     sideNavHome: new MockElement('sideNavHome', 'a'),
     sideNavTranslate: new MockElement('sideNavTranslate', 'a'),
@@ -331,6 +333,12 @@ async function main() {
     const siteHeaderMatch = htmlSource.match(/<header class="site-header">([\s\S]*?)<\/header>/);
     assert.ok(siteHeaderMatch, 'site-header must be present');
     assert.ok(!siteHeaderMatch[1].includes('class="brand-link"'), 'site-header must NOT contain duplicate brand-link');
+  });
+
+  await runTest('HTML & CSS: Header brand appears when sidebar is collapsed', () => {
+    assert.ok(htmlSource.includes('class="header-collapsed-brand"'), 'header-collapsed-brand must exist in site-header');
+    const sidebarCss = fs.readFileSync(path.resolve(__dirname, '../css/sidebar.css'), 'utf8');
+    assert.ok(sidebarCss.includes('.app-shell.sidebar-collapsed .header-collapsed-brand'), 'sidebar.css must show header-collapsed-brand when collapsed');
   });
 
   await runTest('Layout: Sidebar footer and site footer share synchronized height and border alignment', () => {

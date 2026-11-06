@@ -117,6 +117,23 @@
     initDocumentDetailModal();
     initDocumentDeleteConfirmModal();
 
+    // Brand click: returns to home/translate view
+    const sidebarBrandLink = document.getElementById('sidebarBrandLink');
+    if (sidebarBrandLink) {
+      sidebarBrandLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeDocumentsView();
+      });
+    }
+
+    const headerCollapsedBrand = document.getElementById('headerCollapsedBrand');
+    if (headerCollapsedBrand) {
+      headerCollapsedBrand.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeDocumentsView();
+      });
+    }
+
     // Upload PDF Primary Action button handler
     if (btnSidebarUpload) {
       btnSidebarUpload.addEventListener('click', (e) => {
