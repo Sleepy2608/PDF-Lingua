@@ -183,9 +183,9 @@
     const adminCount = stats.admin_users || 0;
 
     if (elTotalUsers) elTotalUsers.textContent = total.toLocaleString('vi-VN');
-    if (elFreeUsers) elFreeUsers.textContent = `Free: ${freeCount}`;
+    if (elFreeUsers) elFreeUsers.textContent = `Miễn phí: ${freeCount}`;
     if (elProUsers) elProUsers.textContent = `Pro: ${proCount}`;
-    if (elAdminUsers) elAdminUsers.textContent = `Admin: ${adminCount}`;
+    if (elAdminUsers) elAdminUsers.textContent = `Quản trị: ${adminCount}`;
 
     // Bento Distribution Bar segments
     const segFree = document.getElementById('distSegFree');
@@ -224,7 +224,7 @@
 
     const bytes = stats.total_storage_bytes || 0;
     if (elTotalStorage) elTotalStorage.textContent = formatBytes(bytes);
-    if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} Bytes dữ liệu`;
+    if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} byte dữ liệu`;
   }
 
   function renderSkeletonRows(count = 5) {
@@ -341,15 +341,15 @@
       // Role badge with sleek inline SVG
       let roleBadgeClass = 'role-badge free';
       let roleAvatarClass = 'role-avatar-free';
-      let roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Free';
+      let roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Miễn phí';
       if (u.role === 'pro') {
         roleBadgeClass = 'role-badge pro';
         roleAvatarClass = 'role-avatar-pro';
-        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Pro VIP';
+        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Pro';
       } else if (u.role === 'admin') {
         roleBadgeClass = 'role-badge admin';
         roleAvatarClass = 'role-avatar-admin';
-        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Admin';
+        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Quản trị';
       }
 
       // Status pill with pulsing dot or locked icon
@@ -368,7 +368,7 @@
           : `<button type="button" class="btn-action btn-action-unlock" data-action="unlock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg> Mở khóa</button>`;
 
         const nextRole = u.role === 'pro' ? 'free' : 'pro';
-        const roleBtnLabel = u.role === 'pro' ? 'Hạ Free' : 'Cấp Pro';
+        const roleBtnLabel = u.role === 'pro' ? 'Hạ Miễn phí' : 'Cấp Pro';
         const roleBtnClass = u.role === 'pro' ? 'btn-action-role action-to-free' : 'btn-action-role action-to-pro';
         const changeRoleBtn = `<button type="button" class="btn-action ${roleBtnClass}" data-action="change-role" data-user-id="${u.id}" data-user-email="${email}" data-target-role="${nextRole}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> ${roleBtnLabel}</button>`;
 
@@ -646,7 +646,7 @@
           });
         } else if (action === 'change-role') {
           const targetRole = btn.getAttribute('data-target-role') || 'pro';
-          const roleDisplayName = targetRole === 'pro' ? 'Pro VIP' : 'Miễn phí (Free)';
+          const roleDisplayName = targetRole === 'pro' ? 'Gói Pro' : 'Gói Miễn phí';
           openConfirmModal({
             title: 'Thay đổi cấp bậc tài khoản',
             desc: `Bạn có chắc chắn muốn chuyển vai trò của tài khoản này sang "${roleDisplayName}"?`,

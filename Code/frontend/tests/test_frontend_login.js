@@ -388,7 +388,7 @@ async function test(name, fn) {
     assert.strictEqual(e.accountFullNameDisplay.textContent, 'Trần Văn Profile');
     assert.strictEqual(e.accountDetailFullName.textContent, 'Trần Văn Profile');
     assert.strictEqual(e.accountDetailEmail.textContent, 'profile@example.com');
-    assert.strictEqual(e.accountDetailRole.textContent, 'PRO');
+    assert.strictEqual(e.accountDetailRole.textContent, 'Pro');
     assert.strictEqual(e.accountDetailRole.className, 'badge-role role-pro');
     assert.strictEqual(e.accountAvatarLarge.textContent, 'T');
     assert.strictEqual(e.accountDetailStatus.textContent, 'Hoạt động');
