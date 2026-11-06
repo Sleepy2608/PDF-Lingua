@@ -1,0 +1,331 @@
+"""
+Processing History Service Layer
+--------------------------------
+Encapsulates business operations for tracking, querying, and managing
+document processing histories (PDFL-159.3):
+- Persistence and state transitions (PENDING -> SUCCESS | FAILED).
+- Execution timing and sanitized error logging.
+- Strict multi-tenant data ownership verification (Anti-IDOR).
+- Transaction safety with automatic rollback on database errors.
+"""
+
+from datetime import datetime, timezone
+from typing import Optional
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from app.core.exceptions import ForbiddenException, NotFoundException
+from app.core.logger import logger
+from app.models.document import Document
+from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
+from app.schemas.processing_history import (
+    ProcessingHistoryCreate,
+    ProcessingHistoryUpdate,
+    sanitize_error_message,
+)
+
+
+class HistoryService:
+    """Service handling ProcessingHistory persistence, lifecycle, and access control."""
+
+    @staticmethod
+    def verify_document_ownership(
+        db: Session,
+        document_id: int,
+        user_id: int,
+    ) -> Document:
+        """
+        Verify that `document_id` exists and is owned by `user_id`.
+
+        Raises
+        ------
+        NotFoundException : If document with `document_id` does not exist.
+        ForbiddenException: If document is owned by a different user.
+        """
+        doc = db.query(Document).filter(Document.id == document_id).first()
+        if doc is None:
+            raise NotFoundException(
+                message=f"Tài liệu id={document_id} không tồn tại.",
+                details={"document_id": document_id},
+            )
+        if doc.user_id != user_id:
+            raise ForbiddenException(
+                message=f"Người dùng id={user_id} không có quyền truy cập tài liệu id={document_id}.",
+                details={"document_id": document_id, "user_id": user_id},
+            )
+        return doc
+
+    @classmethod
+    def create_history(
+        cls,
+        db: Session,
+        data: ProcessingHistoryCreate,
+        current_user_id: Optional[int] = None,
+        *,
+        reuse_pending: bool = True,
+    ) -> ProcessingHistory:
+        """
+        Create a new ProcessingHistory record with strict ownership validation.
+
+        Parameters
+        ----------
+        db              : Active database session.
+        data            : Validated creation payload.
+        current_user_id : ID of the authenticated user performing this action.
+        reuse_pending   : If True, reuses an existing in-flight PENDING record
+                          for the same (user_id, document_id, action_type).
+        """
+        if current_user_id is not None and current_user_id != data.user_id:
+            raise ForbiddenException(
+                message="Bạn không có quyền tạo bản ghi lịch sử cho người dùng khác.",
+                details={"requested_user_id": data.user_id, "current_user_id": current_user_id},
+            )
+
+        # Enforce that the target document belongs to the requesting user
+        cls.verify_document_ownership(db, document_id=data.document_id, user_id=data.user_id)
+
+        try:
+            if reuse_pending and data.status == ProcessingStatus.PENDING:
+                existing_pending = (
+                    db.query(ProcessingHistory)
+                    .filter(
+                        ProcessingHistory.user_id == data.user_id,
+                        ProcessingHistory.document_id == data.document_id,
+                        ProcessingHistory.action_type == data.action_type,
+                        ProcessingHistory.status == ProcessingStatus.PENDING,
+                    )
+                    .order_by(ProcessingHistory.id.desc())
+                    .first()
+                )
+                if existing_pending is not None:
+                    return existing_pending
+
+            record = ProcessingHistory(
+                user_id=data.user_id,
+                document_id=data.document_id,
+                action_type=data.action_type,
+                status=data.status,
+                execution_time_ms=data.execution_time_ms,
+                error_message=data.error_message,
+            )
+            db.add(record)
+            db.commit()
+            db.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error creating history record: {exc}")
+            raise
+
+    @classmethod
+    def update_status(
+        cls,
+        db: Session,
+        history_id: int,
+        status: ProcessingStatus | str,
+        execution_time_ms: Optional[int] = None,
+        error_message: Optional[str] = None,
+        current_user_id: Optional[int] = None,
+    ) -> ProcessingHistory:
+        """
+        Update the status, execution duration, and error message of a history entry.
+
+        Validates status transitions and ownership before persisting.
+        """
+        record = (
+            db.query(ProcessingHistory)
+            .filter(ProcessingHistory.id == history_id)
+            .first()
+        )
+        if record is None:
+            raise NotFoundException(
+                message=f"Bản ghi lịch sử xử lý id={history_id} không tồn tại.",
+                details={"history_id": history_id},
+            )
+
+        if current_user_id is not None and record.user_id != current_user_id:
+            raise ForbiddenException(
+                message="Bạn không có quyền cập nhật bản ghi lịch sử của người dùng khác.",
+                details={"history_id": history_id, "owner_id": record.user_id},
+            )
+
+        update_payload = ProcessingHistoryUpdate(
+            status=status,
+            execution_time_ms=execution_time_ms,
+            error_message=error_message,
+        )
+
+        try:
+            record.status = update_payload.status
+            if update_payload.execution_time_ms is not None:
+                record.execution_time_ms = update_payload.execution_time_ms
+            record.error_message = update_payload.error_message
+            record.updated_at = datetime.now(timezone.utc)
+
+            db.commit()
+            db.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error updating history_id={history_id}: {exc}")
+            raise
+
+    @classmethod
+    def mark_success(
+        cls,
+        db: Session,
+        history_id: int,
+        execution_time_ms: Optional[int] = None,
+        current_user_id: Optional[int] = None,
+    ) -> ProcessingHistory:
+        """Transition a history record to SUCCESS and clear any prior error message."""
+        return cls.update_status(
+            db=db,
+            history_id=history_id,
+            status=ProcessingStatus.SUCCESS,
+            execution_time_ms=execution_time_ms,
+            error_message=None,
+            current_user_id=current_user_id,
+        )
+
+    @classmethod
+    def mark_failed(
+        cls,
+        db: Session,
+        history_id: int,
+        error_message: str,
+        execution_time_ms: Optional[int] = None,
+        current_user_id: Optional[int] = None,
+    ) -> ProcessingHistory:
+        """Transition a history record to FAILED with a sanitized error message."""
+        cleaned = sanitize_error_message(error_message) or "Thao tác xử lý tài liệu thất bại."
+        return cls.update_status(
+            db=db,
+            history_id=history_id,
+            status=ProcessingStatus.FAILED,
+            execution_time_ms=execution_time_ms,
+            error_message=cleaned,
+            current_user_id=current_user_id,
+        )
+
+    @staticmethod
+    def get_history_by_id(
+        db: Session,
+        history_id: int,
+        current_user_id: Optional[int] = None,
+    ) -> Optional[ProcessingHistory]:
+        """
+        Query a single history record by ID.
+        Raises ForbiddenException if requested by an unauthorized user.
+        """
+        record = (
+            db.query(ProcessingHistory)
+            .filter(ProcessingHistory.id == history_id)
+            .first()
+        )
+        if record is None:
+            return None
+        if current_user_id is not None and record.user_id != current_user_id:
+            raise ForbiddenException(
+                message="Bạn không có quyền truy cập bản ghi lịch sử này.",
+                details={"history_id": history_id},
+            )
+        return record
+
+    @staticmethod
+    def get_histories_by_user(
+        db: Session,
+        user_id: int,
+        current_user_id: Optional[int] = None,
+        skip: int = 0,
+        limit: int = 50,
+        action_type: Optional[ActionType | str] = None,
+        status: Optional[ProcessingStatus | str] = None,
+    ) -> list[ProcessingHistory]:
+        """
+        Query paginated processing history for a specific user.
+        Enforces tenant isolation by checking `current_user_id == user_id`.
+        """
+        if current_user_id is not None and current_user_id != user_id:
+            raise ForbiddenException(
+                message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
+                details={"target_user_id": user_id, "current_user_id": current_user_id},
+            )
+
+        query = db.query(ProcessingHistory).filter(ProcessingHistory.user_id == user_id)
+
+        if action_type is not None:
+            norm_action = ActionType(action_type) if isinstance(action_type, str) else action_type
+            query = query.filter(ProcessingHistory.action_type == norm_action)
+
+        if status is not None:
+            norm_status = ProcessingStatus(status) if isinstance(status, str) else status
+            query = query.filter(ProcessingHistory.status == norm_status)
+
+        safe_skip = max(0, skip)
+        safe_limit = max(1, min(limit, 100))
+
+        return (
+            query.order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
+            .offset(safe_skip)
+            .limit(safe_limit)
+            .all()
+        )
+
+    @classmethod
+    def get_histories_by_document(
+        cls,
+        db: Session,
+        document_id: int,
+        current_user_id: Optional[int] = None,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> list[ProcessingHistory]:
+        """
+        Query paginated processing history for a specific document.
+        First verifies document ownership if `current_user_id` is supplied.
+        """
+        if current_user_id is not None:
+            cls.verify_document_ownership(db, document_id=document_id, user_id=current_user_id)
+        else:
+            doc = db.query(Document).filter(Document.id == document_id).first()
+            if doc is None:
+                raise NotFoundException(
+                    message=f"Tài liệu id={document_id} không tồn tại.",
+                    details={"document_id": document_id},
+                )
+
+        safe_skip = max(0, skip)
+        safe_limit = max(1, min(limit, 100))
+
+        return (
+            db.query(ProcessingHistory)
+            .filter(ProcessingHistory.document_id == document_id)
+            .order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
+            .offset(safe_skip)
+            .limit(safe_limit)
+            .all()
+        )
+
+    @staticmethod
+    def count_histories_by_user(
+        db: Session,
+        user_id: int,
+        current_user_id: Optional[int] = None,
+    ) -> int:
+        """Count total processing histories for a given user."""
+        if current_user_id is not None and current_user_id != user_id:
+            raise ForbiddenException(
+                message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
+                details={"target_user_id": user_id, "current_user_id": current_user_id},
+            )
+        return (
+            db.query(ProcessingHistory)
+            .filter(ProcessingHistory.user_id == user_id)
+            .count()
+        )
+
+
+history_service = HistoryService()
+
