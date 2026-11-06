@@ -316,7 +316,7 @@
         e.preventDefault();
         setActiveNavItem(sideNavPricing);
         if (typeof showToast === 'function') {
-          showToast('Bảng giá gói: Gói Free (20MB / 100 trang), Gói Pro VIP (100MB / 500 trang).', 'info');
+          showToast('Bảng giá gói: Gói Miễn phí (20MB / 100 trang), Gói Pro (100MB / 500 trang).', 'info');
         }
         if (window.innerWidth < 768) closeMobileSidebar();
       });
@@ -400,7 +400,7 @@
           roleEl.textContent = 'Quản trị viên';
           roleEl.style.color = '#C9201C';
         } else if (role === 'pro') {
-          roleEl.textContent = 'Gói Pro VIP';
+          roleEl.textContent = 'Gói Pro';
           roleEl.style.color = '#F59E0B';
         } else {
           roleEl.textContent = 'Gói Miễn phí';
@@ -427,7 +427,7 @@
 
       if (nameEl) nameEl.textContent = 'Người dùng';
       if (roleEl) {
-        roleEl.textContent = 'Free / Pro';
+        roleEl.textContent = 'Miễn phí / Pro';
         roleEl.style.color = '#64748B';
       }
 

@@ -1803,7 +1803,13 @@
 
     if (detailRole) {
       const roleStr = (user.role || 'free').toLowerCase();
-      detailRole.textContent = roleStr.toUpperCase();
+      let roleDisplay = 'Miễn phí';
+      if (roleStr === 'pro') {
+        roleDisplay = 'Pro';
+      } else if (roleStr === 'admin') {
+        roleDisplay = 'Quản trị viên';
+      }
+      detailRole.textContent = roleDisplay;
       detailRole.className = `badge-role role-${roleStr}`;
     }
 
