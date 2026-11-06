@@ -117,12 +117,12 @@
     initDocumentDetailModal();
     initDocumentDeleteConfirmModal();
 
-    // Brand click: returns to home/translate view
+    // Brand click: returns to Trang chủ (home/upload view)
     const sidebarBrandLink = document.getElementById('sidebarBrandLink');
     if (sidebarBrandLink) {
       sidebarBrandLink.addEventListener('click', (e) => {
         e.preventDefault();
-        closeDocumentsView();
+        navigateToHome();
       });
     }
 
@@ -130,7 +130,7 @@
     if (headerCollapsedBrand) {
       headerCollapsedBrand.addEventListener('click', (e) => {
         e.preventDefault();
-        closeDocumentsView();
+        navigateToHome();
       });
     }
 
@@ -167,9 +167,10 @@
     // Main navigation items
     initNavItems();
 
-    // Restore active Documents view if page reloaded (e.g., Live Server reload after file delete)
+    // Restore active view if page reloaded
     try {
-      if (sessionStorage.getItem(ACTIVE_VIEW_KEY) === 'documents') {
+      const activeView = sessionStorage.getItem(ACTIVE_VIEW_KEY);
+      if (activeView === 'documents') {
         const sideNavDocuments = document.getElementById('sideNavDocuments');
         const heroSection = document.getElementById('heroSection');
         const workspaceSection = document.getElementById('workspaceSection');
@@ -189,6 +190,12 @@
             showToast(pendingToast.msg, pendingToast.type || 'success');
           }
         }
+      } else if (activeView === 'workspace') {
+        const sideNavTranslate = document.getElementById('sideNavTranslate');
+        if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
+      } else {
+        const sideNavHome = document.getElementById('sideNavHome');
+        if (sideNavHome) setActiveNavItem(sideNavHome);
       }
     } catch (_err) {}
 
@@ -210,7 +217,7 @@
     const documentsSection = document.getElementById('documentsSection');
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
-    const sideNavTranslate = document.getElementById('sideNavTranslate');
+    const sideNavHome = document.getElementById('sideNavHome');
     const btnNewFile = document.getElementById('btnNewFile');
     const pdfFileInput = document.getElementById('pdfFileInput');
 
@@ -230,8 +237,8 @@
       sessionStorage.removeItem(ACTIVE_VIEW_KEY);
     } catch (_err) {}
 
-    if (sideNavTranslate) {
-      setActiveNavItem(sideNavTranslate);
+    if (sideNavHome) {
+      setActiveNavItem(sideNavHome);
     }
 
     // If workspace is active with previous file, trigger reset
@@ -279,14 +286,32 @@
     }
   }
 
+  function navigateToHome() {
+    try {
+      sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+    } catch (_err) {}
+    const sideNavHome = document.getElementById('sideNavHome');
+    if (sideNavHome) setActiveNavItem(sideNavHome);
+    const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const heroSection = document.getElementById('heroSection');
+    if (adminSection) adminSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (workspaceSection) workspaceSection.style.display = 'none';
+    if (heroSection) heroSection.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) closeMobileSidebar();
+  }
+
   function closeDocumentsView() {
+    const sideNavHome = document.getElementById('sideNavHome');
     const sideNavTranslate = document.getElementById('sideNavTranslate');
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
     const documentsSection = document.getElementById('documentsSection');
 
-    if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
     if (documentsSection) documentsSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
 
@@ -305,9 +330,11 @@
     if (hasActiveDoc && workspaceSection) {
       if (heroSection) heroSection.style.display = 'none';
       workspaceSection.style.display = 'block';
+      if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
     } else {
       if (workspaceSection) workspaceSection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
+      if (sideNavHome) setActiveNavItem(sideNavHome);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -434,27 +461,39 @@
     if (sideNavHome) {
       sideNavHome.addEventListener('click', (e) => {
         e.preventDefault();
-        try {
-          sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-        } catch (_err) {}
-        setActiveNavItem(sideNavHome);
-        const adminSection = document.getElementById('adminSection');
-        const documentsSection = document.getElementById('documentsSection');
-        const workspaceSection = document.getElementById('workspaceSection');
-        const heroSection = document.getElementById('heroSection');
-        if (adminSection) adminSection.style.display = 'none';
-        if (documentsSection) documentsSection.style.display = 'none';
-        if (workspaceSection) workspaceSection.style.display = 'none';
-        if (heroSection) heroSection.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (window.innerWidth < 768) closeMobileSidebar();
+        navigateToHome();
       });
     }
 
     if (sideNavTranslate) {
       sideNavTranslate.addEventListener('click', (e) => {
         e.preventDefault();
-        closeDocumentsView();
+        const hasActiveDoc = window.pdfLinguaWorkspace
+          && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function'
+          && Boolean(window.pdfLinguaWorkspace.getCurrentDocData());
+
+        if (hasActiveDoc) {
+          const adminSection = document.getElementById('adminSection');
+          const documentsSection = document.getElementById('documentsSection');
+          const heroSection = document.getElementById('heroSection');
+          const workspaceSection = document.getElementById('workspaceSection');
+          if (adminSection) adminSection.style.display = 'none';
+          if (documentsSection) documentsSection.style.display = 'none';
+          if (heroSection) heroSection.style.display = 'none';
+          if (workspaceSection) workspaceSection.style.display = 'block';
+          setActiveNavItem(sideNavTranslate);
+          try {
+            sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
+          } catch (_err) {}
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // If no document has been translated yet, prompt user and stay on Trang chủ
+          if (typeof showToast === 'function') {
+            showToast('Chưa có tài liệu dịch thuật nào. Vui lòng tải lên tệp PDF tại Trang chủ để bắt đầu dịch!', 'info');
+          }
+          navigateToHome();
+        }
+        if (window.innerWidth < 768) closeMobileSidebar();
       });
     }
 
@@ -533,6 +572,31 @@
         }
         if (window.innerWidth < 768) closeMobileSidebar();
       });
+    }
+
+    // Top header navigation links delegation
+    if (typeof document.querySelectorAll === 'function') {
+      const headerNavLinks = document.querySelectorAll('.nav-menu .nav-link');
+      if (headerNavLinks && typeof headerNavLinks.forEach === 'function') {
+        headerNavLinks.forEach((link) => {
+          link.addEventListener('click', (e) => {
+            const href = typeof link.getAttribute === 'function' ? link.getAttribute('href') : null;
+            if (href === '#home') {
+              e.preventDefault();
+              navigateToHome();
+            } else if (href === '#translate') {
+              e.preventDefault();
+              if (sideNavTranslate) sideNavTranslate.click();
+            } else if (href === '#ai-copilot') {
+              e.preventDefault();
+              if (sideNavAiCopilot) sideNavAiCopilot.click();
+            } else if (href === '#pricing') {
+              e.preventDefault();
+              if (sideNavPricing) sideNavPricing.click();
+            }
+          });
+        });
+      }
     }
   }
 
@@ -1785,6 +1849,22 @@
       .replace(/'/g, '&#39;');
   }
 
+  function setActiveNav(navKey) {
+    if (navKey === 'home') {
+      const el = document.getElementById('sideNavHome');
+      if (el) setActiveNavItem(el);
+    } else if (navKey === 'translate') {
+      const el = document.getElementById('sideNavTranslate');
+      if (el) setActiveNavItem(el);
+    } else if (navKey === 'documents') {
+      const el = document.getElementById('sideNavDocuments');
+      if (el) setActiveNavItem(el);
+    } else if (navKey === 'admin') {
+      const el = document.getElementById('sideNavAdmin');
+      if (el) setActiveNavItem(el);
+    }
+  }
+
   // Export globally for testing and integration
   window.PDFLinguaSidebar = {
     toggle: toggleSidebar,
@@ -1796,6 +1876,9 @@
     triggerUpload: triggerPdfUpload,
     openDocumentsView: openDocumentsView,
     closeDocumentsView: closeDocumentsView,
+    navigateToHome: navigateToHome,
+    setActiveNav: setActiveNav,
+    setActiveNavItem: setActiveNavItem,
     openDocumentDetailModal: openDocumentDetailModal,
     closeDocumentDetailModal: closeDocumentDetailModal,
     openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,

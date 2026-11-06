@@ -461,7 +461,15 @@ async function main() {
     assert.strictEqual(env.elements.sideNavHome.classList.contains('active'), true);
     assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), false);
 
-    // Click sideNavTranslate
+    // Click sideNavTranslate without active doc -> prompts user and keeps sideNavHome active
+    env.elements.sideNavTranslate.click();
+    assert.strictEqual(env.elements.sideNavHome.classList.contains('active'), true);
+    assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), false);
+
+    // Click sideNavTranslate with active doc -> activates sideNavTranslate and opens workspace
+    env.sandbox.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => ({ filename: 'sample.pdf', translated_text: 'sample translation' }),
+    };
     env.elements.sideNavTranslate.click();
     assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), true);
     assert.strictEqual(env.elements.sideNavHome.classList.contains('active'), false);
@@ -506,9 +514,10 @@ async function main() {
     assert.strictEqual(env.elements.workspaceSection.style.display, 'none');
     assert.strictEqual(env.elements.adminSection.style.display, 'none');
 
-    // Click "Quay lại Dịch PDF" (#btnCloseDocumentsView) when no active translation -> shows heroSection
+    // Click "Quay lại Dịch PDF" (#btnCloseDocumentsView) when no active translation -> shows heroSection & activates sideNavHome
     env.elements.btnCloseDocumentsView.click();
-    assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), true);
+    assert.strictEqual(env.elements.sideNavHome.classList.contains('active'), true);
+    assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), false);
     assert.strictEqual(env.elements.documentsSection.style.display, 'none');
     assert.strictEqual(env.elements.heroSection.style.display, 'block');
 

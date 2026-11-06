@@ -655,6 +655,18 @@ function renderWorkspace(data) {
   if (adminSection) adminSection.style.display = 'none';
   if (workspaceSection) workspaceSection.style.display = 'block';
 
+  // Highlight Dịch PDF in sidebar when document is translated
+  if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+    window.PDFLinguaSidebar.setActiveNav('translate');
+  } else {
+    const sideNavTranslate = document.getElementById('sideNavTranslate');
+    const allItems = document.querySelectorAll ? document.querySelectorAll('.sidebar-nav-item') : [];
+    if (allItems && typeof allItems.forEach === 'function') {
+      allItems.forEach((item) => item.classList.remove('active'));
+    }
+    if (sideNavTranslate) sideNavTranslate.classList.add('active');
+  }
+
   const docName = document.getElementById('docNameDisplay');
   const docPages = document.getElementById('docPagesDisplay');
   const docSize = document.getElementById('docSizeDisplay');
@@ -706,6 +718,18 @@ function resetToUpload() {
   if (workspaceSection) workspaceSection.style.display = 'none';
   if (documentsSection) documentsSection.style.display = 'none';
   if (heroSection) heroSection.style.display = 'block';
+
+  // Highlight Trang chủ in sidebar when returning to upload screen
+  if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+    window.PDFLinguaSidebar.setActiveNav('home');
+  } else {
+    const sideNavHome = document.getElementById('sideNavHome');
+    const allItems = document.querySelectorAll ? document.querySelectorAll('.sidebar-nav-item') : [];
+    if (allItems && typeof allItems.forEach === 'function') {
+      allItems.forEach((item) => item.classList.remove('active'));
+    }
+    if (sideNavHome) sideNavHome.classList.add('active');
+  }
 
   const btnRemoveFile = document.getElementById('btnRemoveFile');
   if (btnRemoveFile) btnRemoveFile.click();
