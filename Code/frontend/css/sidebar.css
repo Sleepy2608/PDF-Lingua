@@ -68,6 +68,58 @@
 .header-left {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+}
+
+/* Header brand logo shown when sidebar is collapsed */
+.header-collapsed-brand {
+  display: none;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  user-select: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.header-brand-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.header-collapsed-brand:hover .header-brand-img {
+  transform: scale(1.05);
+}
+
+.header-brand-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.header-brand-badge {
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  background-color: var(--color-pdf-coral, #EF4444);
+  color: #FFFFFF;
+  border-radius: 6px;
+  line-height: 1.1;
+}
+
+.header-brand-text {
+  color: var(--color-primary-indigo, #4F46E5);
+}
+
+/* Reveal header brand when sidebar is collapsed */
+.app-shell.sidebar-collapsed .header-collapsed-brand {
+  display: inline-flex;
 }
 
 /* ==========================================================================
@@ -787,6 +839,10 @@
   .btn-mobile-sidebar-toggle {
     display: inline-flex;
     margin-right: 0.5rem;
+  }
+
+  .header-collapsed-brand {
+    display: inline-flex;
   }
 
   .app-sidebar {

@@ -106,10 +106,12 @@
 
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
+    const documentsSection = document.getElementById('documentsSection');
     const adminSection = document.getElementById('adminSection');
 
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
     if (adminSection) {
       adminSection.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
