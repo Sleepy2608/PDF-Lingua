@@ -9,8 +9,9 @@ document processing histories (PDFL-159.3):
 - Transaction safety with automatic rollback on database errors.
 """
 
+import time
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Callable, Optional, TypeVar
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -24,6 +25,8 @@ from app.schemas.processing_history import (
     ProcessingHistoryUpdate,
     sanitize_error_message,
 )
+
+T = TypeVar("T")
 
 
 class HistoryService:
@@ -325,6 +328,155 @@ class HistoryService:
             .filter(ProcessingHistory.user_id == user_id)
             .count()
         )
+
+    # ── Workflow Automation & Fault Isolation (PDFL-160.1) ───────────────────
+
+    @classmethod
+    def safe_start_action(
+        cls,
+        db: Optional[Session],
+        user_id: Optional[int],
+        document_id: Optional[int],
+        action_type: ActionType | str,
+    ) -> Optional[ProcessingHistory]:
+        """
+        Safely create (or reuse) a PENDING history record for a workflow step.
+        Returns None without raising if user is unauthenticated (guest) or if any DB error occurs.
+        """
+        if db is None or user_id is None or document_id is None:
+            return None
+        try:
+            create_payload = ProcessingHistoryCreate(
+                user_id=user_id,
+                document_id=document_id,
+                action_type=action_type,
+                status=ProcessingStatus.PENDING,
+            )
+            return cls.create_history(db, create_payload, reuse_pending=True)
+        except Exception as exc:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            logger.error(
+                f"[HistoryService] Failed to start history for user_id={user_id}, "
+                f"document_id={document_id}, action={action_type}: {exc}"
+            )
+            return None
+
+    @classmethod
+    def safe_complete_action(
+        cls,
+        db: Optional[Session],
+        history_id: Optional[int],
+        execution_time_ms: Optional[int] = None,
+        *,
+        user_id: Optional[int] = None,
+    ) -> Optional[ProcessingHistory]:
+        """
+        Safely mark a history record as SUCCESS without interrupting document processing
+        if a database error occurs.
+        """
+        if db is None or history_id is None:
+            return None
+        try:
+            safe_ms = max(0, int(execution_time_ms)) if execution_time_ms is not None else 0
+            return cls.mark_success(db, history_id, execution_time_ms=safe_ms, current_user_id=user_id)
+        except Exception as exc:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            logger.error(
+                f"[HistoryService] Failed to mark history_id={history_id} as SUCCESS: {exc}"
+            )
+            return None
+
+    @classmethod
+    def safe_fail_action(
+        cls,
+        db: Optional[Session],
+        history_id: Optional[int],
+        error_message: str,
+        execution_time_ms: Optional[int] = None,
+        *,
+        user_id: Optional[int] = None,
+    ) -> Optional[ProcessingHistory]:
+        """
+        Safely mark a history record as FAILED without masking or altering the
+        caller's original processing error.
+        """
+        if db is None or history_id is None:
+            return None
+        try:
+            safe_ms = max(0, int(execution_time_ms)) if execution_time_ms is not None else 0
+            return cls.mark_failed(
+                db,
+                history_id,
+                error_message=error_message,
+                execution_time_ms=safe_ms,
+                current_user_id=user_id,
+            )
+        except Exception as exc:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            logger.error(
+                f"[HistoryService] Failed to mark history_id={history_id} as FAILED: {exc}"
+            )
+            return None
+
+    @classmethod
+    def execute_tracked_action(
+        cls,
+        db: Optional[Session],
+        user_id: Optional[int],
+        document_id: Optional[int],
+        action_type: ActionType | str,
+        operation: Callable[[], T],
+    ) -> T:
+        """
+        Execute a document processing step (`EXTRACT`, `TRANSLATE`, or `SUMMARIZE`)
+        while automatically managing its ProcessingHistory lifecycle:
+        - Records `PENDING` before execution (if authenticated and `document_id` is valid).
+        - Measures `execution_time_ms` using monotonic performance counter.
+        - Updates status to `SUCCESS` on normal completion.
+        - Updates status to `FAILED` with sanitized `error_message` if `operation` raises,
+          then re-raises the original exception untouched.
+        - Any internal history logging error is isolated and never alters `operation` output.
+        """
+        history_record = cls.safe_start_action(
+            db=db,
+            user_id=user_id,
+            document_id=document_id,
+            action_type=action_type,
+        )
+        history_id = history_record.id if history_record is not None else None
+        start_perf = time.perf_counter()
+
+        try:
+            result = operation()
+        except Exception as exc:
+            elapsed_ms = max(0, int((time.perf_counter() - start_perf) * 1000))
+            err_detail = getattr(exc, "detail", None) or str(exc) or exc.__class__.__name__
+            cls.safe_fail_action(
+                db=db,
+                history_id=history_id,
+                error_message=str(err_detail),
+                execution_time_ms=elapsed_ms,
+                user_id=user_id,
+            )
+            raise
+
+        elapsed_ms = max(0, int((time.perf_counter() - start_perf) * 1000))
+        cls.safe_complete_action(
+            db=db,
+            history_id=history_id,
+            execution_time_ms=elapsed_ms,
+            user_id=user_id,
+        )
+        return result
 
 
 history_service = HistoryService()

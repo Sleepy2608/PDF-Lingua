@@ -5,7 +5,7 @@ import re
 import tempfile
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
@@ -13,9 +13,11 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.core.dependencies import get_db, get_optional_current_user
 from app.core.logger import logger
 from app.models.document import Document
+from app.models.processing_history import ActionType
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import (
@@ -24,8 +26,10 @@ from app.schemas.process import (
     JobProgressData,
     ProcessResponseData,
     RetranslateRequest,
+    SummarizeRequest,
 )
 from app.services.export_service import ExportService
+from app.services.history_service import history_service
 from app.services.job_service import JobStatus, job_manager
 from app.services.ocr_service import OCRService
 from app.services.pdf_service import PDFService
@@ -59,6 +63,120 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     return settings.MAX_UPLOAD_SIZE_FREE_MB, settings.MAX_PAGES_FREE
 
 
+def _persist_user_document(
+    db: Optional[Session],
+    *,
+    user_id: Optional[int],
+    filename: str,
+    content: bytes,
+    page_count: int,
+    target_lang: str,
+    is_ocr_used: bool = False,
+) -> tuple[Optional[Document], Optional[int]]:
+    """
+    Persist document file to disk storage and register Document in DB.
+    Returns (doc_record, document_id) or (None, None) if unauthenticated or on DB error.
+    """
+    if db is None or user_id is None:
+        return None, None
+
+    try:
+        stored_filename, rel_path, _ = storage_service.save_document_file(
+            user_id=user_id,
+            original_filename=filename,
+            content=content,
+        )
+        doc_record = Document(
+            user_id=user_id,
+            original_filename=filename,
+            stored_filename=stored_filename,
+            stored_path=rel_path,
+            file_size_bytes=len(content),
+            page_count=page_count,
+            target_lang=target_lang,
+            is_ocr_used=is_ocr_used,
+        )
+        db.add(doc_record)
+        db.commit()
+        db.refresh(doc_record)
+        logger.info(f"[Process] Saved document id={doc_record.id} for user_id={user_id}")
+        return doc_record, doc_record.id
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        logger.error(f"[Process] Failed to persist initial document record for user_id={user_id}: {exc}")
+        return None, None
+
+
+def _update_document_ocr_flag(
+    db: Optional[Session],
+    doc_record: Optional[Document],
+    is_ocr_used: bool,
+) -> None:
+    """Update is_ocr_used flag on an existing document record if needed."""
+    if db is None or doc_record is None:
+        return
+    try:
+        if doc_record.is_ocr_used != is_ocr_used:
+            doc_record.is_ocr_used = is_ocr_used
+            db.commit()
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        logger.warning(f"[Process] Failed to update is_ocr_used for document_id={doc_record.id}: {exc}")
+
+
+def execute_summarize_workflow(
+    text: str,
+    *,
+    db: Optional[Session] = None,
+    user_id: Optional[int] = None,
+    document_id: Optional[int] = None,
+    max_sentences: int = 5,
+    summarizer_fn: Optional[Callable[[str], str]] = None,
+) -> dict[str, Any]:
+    """
+    Execute document summarization workflow with ProcessingHistory tracking
+    (`ActionType.SUMMARIZE`: PENDING -> SUCCESS | FAILED).
+    """
+    cleaned = text.strip() if text else ""
+    if not cleaned:
+        raise ValueError("Văn bản cần tóm tắt không được để trống.")
+
+    def _run_summarize() -> dict[str, Any]:
+        if summarizer_fn is not None:
+            summary_text = summarizer_fn(cleaned)
+        else:
+            sentences = [
+                s.strip()
+                for s in re.split(r"(?<=[.!?])\s+|\n+", cleaned)
+                if s.strip()
+            ]
+            limit = max(1, max_sentences)
+            summary_text = " ".join(sentences[:limit])
+
+        if not summary_text or not summary_text.strip():
+            raise RuntimeError("Không thể tạo bản tóm tắt từ văn bản đầu vào.")
+
+        return {
+            "summary_text": summary_text.strip(),
+            "original_length": len(cleaned),
+            "summary_length": len(summary_text.strip()),
+        }
+
+    return history_service.execute_tracked_action(
+        db=db,
+        user_id=user_id,
+        document_id=document_id,
+        action_type=ActionType.SUMMARIZE,
+        operation=_run_summarize,
+    )
+
+
 def _execute_pdf_background_job(
     job_id: str,
     tmp_path: Path,
@@ -66,12 +184,15 @@ def _execute_pdf_background_job(
     target_lang: str,
     max_allowed_pages: int,
     file_size_mb: float,
+    user_id: Optional[int] = None,
 ) -> None:
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
     Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
+    Ghi nhận ProcessingHistory (EXTRACT, TRANSLATE) nếu có user_id hợp lệ (PDFL-160.1).
     """
+    db_session: Optional[Session] = None
     try:
         acquired = _job_semaphore.acquire(blocking=False)
         if not acquired:
@@ -104,6 +225,24 @@ def _execute_pdf_background_job(
                 )
                 return
 
+            doc_record: Optional[Document] = None
+            document_id: Optional[int] = None
+            if user_id is not None:
+                try:
+                    db_session = SessionLocal()
+                    raw_bytes = tmp_path.read_bytes()
+                    doc_record, document_id = _persist_user_document(
+                        db_session,
+                        user_id=user_id,
+                        filename=filename,
+                        content=raw_bytes,
+                        page_count=page_count,
+                        target_lang=target_lang,
+                        is_ocr_used=False,
+                    )
+                except Exception as db_init_err:
+                    logger.error(f"[Job {job_id}] Không thể khởi tạo phiên DB cho lịch sử: {db_init_err}")
+
             job_manager.set_processing(
                 job_id,
                 total_pages=page_count,
@@ -113,24 +252,42 @@ def _execute_pdf_background_job(
             def on_progress(processed: int, total: int, msg: str) -> None:
                 job_manager.update_progress(job_id, processed_pages=processed, total_pages=total, message=msg)
 
-            # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng
-            extract_res = pdf_service.extract_hybrid_fast_path(
-                tmp_path,
-                ocr_service=ocr_service,
-                max_pages=max_allowed_pages,
-                progress_callback=on_progress,
+            def _do_background_extract() -> dict[str, Any]:
+                return pdf_service.extract_hybrid_fast_path(
+                    tmp_path,
+                    ocr_service=ocr_service,
+                    max_pages=max_allowed_pages,
+                    progress_callback=on_progress,
+                )
+
+            # Ghi nhận EXTRACT history nếu có phiên DB và document_id
+            extract_res = history_service.execute_tracked_action(
+                db=db_session,
+                user_id=user_id,
+                document_id=document_id,
+                action_type=ActionType.EXTRACT,
+                operation=_do_background_extract,
             )
 
             original_text = extract_res.get("text", "")
+            is_ocr_used = extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
+            _update_document_ocr_flag(db_session, doc_record, is_ocr_used)
+
             if not original_text.strip():
                 job_manager.set_failed(job_id, "Không thể trích xuất văn bản từ tài liệu này.")
                 return
 
             job_manager.set_translating(job_id, message="Đang dịch thuật văn bản sang ngôn ngữ đích...")
-            trans_res = translation_service.translate_text(
-                original_text,
-                target_lang=target_lang,
-                source_lang="auto",
+            trans_res = history_service.execute_tracked_action(
+                db=db_session,
+                user_id=user_id,
+                document_id=document_id,
+                action_type=ActionType.TRANSLATE,
+                operation=lambda: translation_service.translate_text(
+                    original_text,
+                    target_lang=target_lang,
+                    source_lang="auto",
+                ),
             )
 
             result_data = {
@@ -138,10 +295,11 @@ def _execute_pdf_background_job(
                 "page_count": page_count,
                 "file_size_mb": file_size_mb,
                 "target_lang": target_lang,
-                "is_ocr_used": extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False,
+                "is_ocr_used": is_ocr_used,
                 "original_text": original_text,
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
+                "document_id": document_id,
             }
             job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
 
@@ -150,6 +308,11 @@ def _execute_pdf_background_job(
             job_manager.set_failed(job_id, str(e))
         finally:
             _job_semaphore.release()
+            if db_session is not None:
+                try:
+                    db_session.close()
+                except Exception:
+                    pass
 
     except Exception as outer_e:
         logger.error(f"[Job {job_id}] Lỗi chuẩn bị hoặc xếp hàng tác vụ: {outer_e}")
@@ -202,9 +365,10 @@ async def create_processing_job(
     file_size_mb = round(len(content) / (1024 * 1024), 2)
 
     # Khởi chạy Worker trong luồng nền độc lập
+    user_id: Optional[int] = current_user.id if current_user is not None else None
     thread = threading.Thread(
         target=_execute_pdf_background_job,
-        args=(job.job_id, tmp_path, file.filename, target_lang, max_ocr_pages, file_size_mb),
+        args=(job.job_id, tmp_path, file.filename, target_lang, max_ocr_pages, file_size_mb, user_id),
         daemon=True,
     )
     thread.start()
@@ -323,79 +487,77 @@ async def upload_and_translate(
                     detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
                 )
 
-        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
-        is_ocr_used = False
-        original_text = ""
+        user_id: Optional[int] = current_user.id if current_user is not None else None
+        doc_record, document_id = _persist_user_document(
+            db,
+            user_id=user_id,
+            filename=file.filename,
+            content=content,
+            page_count=page_count,
+            target_lang=target_lang,
+            is_ocr_used=False,
+        )
 
-        if not is_scanned:
-            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
+        def _perform_extraction() -> tuple[str, bool]:
+            scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
+            used_ocr = False
+            extracted = ""
 
-        if not original_text.strip():
-            is_ocr_used = True
-            if page_count > max_ocr_pages:
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
+            if not scanned:
+                extracted = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
+
+            if not extracted.strip():
+                used_ocr = True
+                if page_count > max_ocr_pages:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
+                    )
+                logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_ocr_pages})...")
+                ocr_res = ocr_service.extract_text_from_scanned_pdf(
+                    tmp_path,
+                    max_pages=max_ocr_pages,
                 )
-            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_ocr_pages})...")
-            ocr_res = ocr_service.extract_text_from_scanned_pdf(
-                tmp_path,
-                max_pages=max_ocr_pages,
-            )
-            original_text = ocr_res.get("text", "")
+                extracted = ocr_res.get("text", "")
 
-        if not original_text.strip():
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Không thể trích xuất văn bản từ tài liệu này (tài liệu rỗng hoặc máy chủ chưa bật OCR).",
-            )
+            if not extracted.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Không thể trích xuất văn bản từ tài liệu này (tài liệu rỗng hoặc máy chủ chưa bật OCR).",
+                )
+            return extracted, used_ocr
+
+        original_text, is_ocr_used = history_service.execute_tracked_action(
+            db=db,
+            user_id=user_id,
+            document_id=document_id,
+            action_type=ActionType.EXTRACT,
+            operation=_perform_extraction,
+        )
+
+        _update_document_ocr_flag(db, doc_record, is_ocr_used)
 
         logger.info(
             f"[Upload-and-Translate Request] file={file.filename!r}, target_lang={target_lang!r}, "
             f"text_len={len(original_text)}, text_preview={original_text[:80]!r}"
         )
 
-        translation_result = translation_service.translate_text(
-            original_text,
-            target_lang=target_lang,
-            source_lang="auto",
+        translation_result = history_service.execute_tracked_action(
+            db=db,
+            user_id=user_id,
+            document_id=document_id,
+            action_type=ActionType.TRANSLATE,
+            operation=lambda: translation_service.translate_text(
+                original_text,
+                target_lang=target_lang,
+                source_lang="auto",
+            ),
         )
 
         logger.info(
             f"[Upload-and-Translate Response] engine={translation_result.get('engine_used')!r}, "
             f"result_preview={translation_result.get('translated_text', '')[:80]!r}"
         )
-
-        document_id: Optional[int] = None
-        if current_user is not None:
-            try:
-                stored_filename, rel_path, _ = storage_service.save_document_file(
-                    user_id=current_user.id,
-                    original_filename=file.filename,
-                    content=content,
-                )
-                doc_record = Document(
-                    user_id=current_user.id,
-                    original_filename=file.filename,
-                    stored_filename=stored_filename,
-                    stored_path=rel_path,
-                    file_size_bytes=len(content),
-                    page_count=page_count,
-                    target_lang=target_lang,
-                    is_ocr_used=is_ocr_used,
-                )
-                db.add(doc_record)
-                db.commit()
-                db.refresh(doc_record)
-                document_id = doc_record.id
-                logger.info(
-                    f"[Process] Saved document id={document_id} for user_id={current_user.id}"
-                )
-            except Exception as e:
-                db.rollback()
-                logger.error(
-                    f"[Process] Failed to persist document record for user_id={current_user.id}: {e}"
-                )
 
         response_data = ProcessResponseData(
             document_id=document_id,
@@ -423,6 +585,8 @@ async def upload_and_translate(
 async def retranslate(
     request: RetranslateRequest,
     current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+    translator_service: TranslationService = Depends(lambda: translation_service),
 ):
     if not request.text.strip():
         raise HTTPException(
@@ -435,10 +599,17 @@ async def retranslate(
         f"text_len={len(request.text)}, text_preview={request.text[:80]!r}"
     )
 
-    result = translation_service.translate_text(
-        text=request.text,
-        target_lang=request.target_lang,
-        source_lang=request.source_lang,
+    user_id = current_user.id if current_user is not None else None
+    result = history_service.execute_tracked_action(
+        db=db,
+        user_id=user_id,
+        document_id=request.document_id,
+        action_type=ActionType.TRANSLATE,
+        operation=lambda: translator_service.translate_text(
+            text=request.text,
+            target_lang=request.target_lang,
+            source_lang=request.source_lang,
+        ),
     )
 
     logger.info(
@@ -450,6 +621,33 @@ async def retranslate(
         data=result,
         message=f"Dịch lại sang ngôn ngữ '{request.target_lang}' thành công.",
     )
+
+
+@router.post("/summarize", response_model=ApiResponse[dict])
+async def summarize_text(
+    request: SummarizeRequest,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Tóm tắt văn bản và ghi nhận ProcessingHistory (ActionType.SUMMARIZE: PENDING -> SUCCESS | FAILED).
+    """
+    user_id = current_user.id if current_user is not None else None
+    try:
+        res = execute_summarize_workflow(
+            text=request.text,
+            db=db,
+            user_id=user_id,
+            document_id=request.document_id,
+            max_sentences=request.max_sentences,
+        )
+        return ApiResponse(data=res, message="Tóm tắt văn bản thành công.")
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
 @router.post("/download")

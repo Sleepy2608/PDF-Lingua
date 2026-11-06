@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class JobProgressData(BaseModel):
@@ -35,6 +35,20 @@ class RetranslateRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Văn bản cần dịch lại")
     target_lang: str = Field(default="vi", description="Mã ngôn ngữ đích")
     source_lang: str = Field(default="auto", description="Mã ngôn ngữ nguồn")
+    document_id: Optional[int] = Field(default=None, description="ID tài liệu liên kết (nếu có)")
+
+
+class SummarizeRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="Văn bản cần tóm tắt")
+    max_sentences: int = Field(default=5, ge=1, le=50, description="Số câu tóm tắt tối đa")
+    document_id: Optional[int] = Field(default=None, description="ID tài liệu liên kết (nếu có)")
+
+    @field_validator("text")
+    @classmethod
+    def validate_non_empty_text(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Văn bản cần tóm tắt không được để trống.")
+        return v.strip()
 
 
 class DownloadRequest(BaseModel):
