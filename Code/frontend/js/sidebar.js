@@ -857,15 +857,24 @@
     const formattedLang = formatTargetLang(doc.target_lang);
     const isOcr = Boolean(doc.is_ocr_used);
     const ocrBadgeHtml = isOcr
-      ? '<span class="meta-pill ocr">Quét OCR</span>'
-      : '<span class="meta-pill digital">PDF Số</span>';
+      ? '<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>Quét OCR</span>'
+      : '<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>PDF Số</span>';
     const formattedDate = formatDate(doc.created_at) || '--';
 
     tr.innerHTML = `
       <td>
-        <div class="user-cell-meta">
-          <span class="badge badge-pdf">PDF</span>
-          <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+        <div class="doc-file-cell user-cell-meta">
+          <div class="doc-icon-badge" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="doc-file-info">
+            <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+          </div>
         </div>
       </td>
       <td class="font-mono doc-cell-size">${escapeHtml(formattedSize)}</td>
@@ -874,16 +883,16 @@
       <td class="doc-cell-ocr">${ocrBadgeHtml}</td>
       <td class="date-mono doc-cell-date">${escapeHtml(formattedDate)}</td>
       <td class="text-right">
-        <div class="user-actions-group">
-          <button type="button" class="btn btn-secondary btn-sm doc-table-detail-btn" title="Xem chi tiết tài liệu" aria-label="Chi tiết ${escapeHtml(filename)}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="doc-row-actions user-actions-group">
+          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-detail-btn" title="Xem chi tiết tài liệu" aria-label="Chi tiết ${escapeHtml(filename)}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
             <span>Chi tiết</span>
           </button>
-          <button type="button" class="btn btn-secondary btn-sm doc-table-download-btn" title="Tải xuống PDF" aria-label="Tải xuống ${escapeHtml(filename)}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-download-btn" title="Tải xuống PDF" aria-label="Tải xuống ${escapeHtml(filename)}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
