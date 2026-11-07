@@ -354,12 +354,13 @@ def test_get_history_by_id_and_ownership(in_memory_db):
     assert retrieved is not None
     assert retrieved.id == rec.id
 
-    # Non-owner is blocked with ForbiddenException
-    with pytest.raises(ForbiddenException, match="không có quyền truy cập"):
+    # Non-owner is blocked with NotFoundException (anti-IDOR: does not leak existence)
+    with pytest.raises(NotFoundException):
         HistoryService.get_history_by_id(in_memory_db, rec.id, current_user_id=user_b.id)
 
-    # Non-existent ID returns None
-    assert HistoryService.get_history_by_id(in_memory_db, 999999, current_user_id=user_a.id) is None
+    # Non-existent ID raises NotFoundException
+    with pytest.raises(NotFoundException):
+        HistoryService.get_history_by_id(in_memory_db, 999999, current_user_id=user_a.id)
 
 
 def test_get_histories_by_user_filters_and_pagination(in_memory_db):

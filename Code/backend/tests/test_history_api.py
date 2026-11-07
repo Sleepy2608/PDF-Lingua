@@ -1,4 +1,4 @@
-﻿"""
+"""
 Comprehensive Validation & Audit Tests for Processing History API (PDFL-160.2 & PDFL-160.3)
 -------------------------------------------------------------------------------------------
 Covers:
@@ -662,7 +662,7 @@ def test_get_history_detail_not_found(in_memory_db):
 
 
 def test_get_history_detail_forbidden_for_other_user(in_memory_db):
-    """Verify User B cannot view User A's history record (403 ForbiddenException)."""
+    """Verify User B cannot view User A's history record (404 NotFoundException for anti-IDOR)."""
     user_a = _create_user(in_memory_db, email="owner_a@test.com")
     user_b = _create_user(in_memory_db, email="intruder_b@test.com")
     doc_a = _create_document(in_memory_db, user_id=user_a.id)
@@ -678,7 +678,7 @@ def test_get_history_detail_forbidden_for_other_user(in_memory_db):
         reuse_pending=False,
     )
 
-    with pytest.raises(ForbiddenException) as exc_info:
+    with pytest.raises(NotFoundException) as exc_info:
         _run_async(
             get_history_detail(
                 history_id=record_a.id,
@@ -686,8 +686,8 @@ def test_get_history_detail_forbidden_for_other_user(in_memory_db):
                 db=in_memory_db,
             )
         )
-    assert exc_info.value.status_code == 403
-    assert exc_info.value.error_code == "FORBIDDEN"
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.error_code == "NOT_FOUND"
 
 
 # ── 5. Security Sanitization & Database Error Handling ───────────────────────

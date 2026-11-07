@@ -220,7 +220,8 @@ class HistoryService:
     ) -> Optional[ProcessingHistory]:
         """
         Query a single history record by ID.
-        Raises ForbiddenException if requested by an unauthorized user.
+        Raises NotFoundException if the record does not exist or if requested by an unauthorized user
+        (enforcing Anti-IDOR by not leaking resource existence).
         """
         try:
             record = (
@@ -234,11 +235,9 @@ class HistoryService:
             logger.error(f"[HistoryService] DB error querying history_id={history_id}: {exc}")
             raise
 
-        if record is None:
-            return None
-        if current_user_id is not None and record.user_id != current_user_id:
-            raise ForbiddenException(
-                message="Bạn không có quyền truy cập bản ghi lịch sử này.",
+        if record is None or (current_user_id is not None and record.user_id != current_user_id):
+            raise NotFoundException(
+                message=f"Bản ghi lịch sử với ID {history_id} không tồn tại.",
                 details={"history_id": history_id},
             )
         return record
