@@ -2042,6 +2042,32 @@ async function main() {
     assert.strictEqual(accountOpenCount, 2, 'Pressing Space on #sidebarUserProfile should open Account modal for logged-in user');
   });
 
+  await runTest('Requirement 2: Accurate document upload date-time formatting and UTC/UTC+7 timezone handling', async () => {
+    const env = createTestEnvironment({
+      pdfl_token: 'jwt-timezone-token',
+    });
+
+    const sidebar = env.sandbox.window.PDFLinguaSidebar;
+    assert.strictEqual(typeof sidebar.formatDate, 'function', 'formatDate must be exported on sidebar');
+
+    // 1. Explicit UTC ISO string with Z
+    const formattedWithTime = sidebar.formatDate('2026-11-07T18:53:04Z', true);
+    assert.ok(formattedWithTime.length >= 19, 'Formatted string must include date and time (HH:mm:ss)');
+    assert.ok(formattedWithTime.includes(':53:04'), 'Time seconds must match 53:04');
+
+    // 2. Naive ISO string without Z should be treated as UTC, not naive local time
+    const formattedNaive = sidebar.formatDate('2026-11-07 18:53:04', true);
+    assert.strictEqual(formattedNaive, formattedWithTime, 'Naive timestamp must parse identically to explicit UTC timestamp');
+
+    // 3. Date only formatting (includeTime=false)
+    const formattedDateOnly = sidebar.formatDate('2026-11-07T18:53:04Z', false);
+    assert.ok(!formattedDateOnly.includes(':'), 'Date-only formatting must not include time colons');
+
+    // 4. Invalid or null timestamp safety
+    assert.strictEqual(sidebar.formatDate(null), '', 'Null date must return empty string');
+    assert.strictEqual(sidebar.formatDate('invalid-date'), '', 'Invalid date must return empty string');
+  });
+
   console.log('\n================================================================');
   console.log(`SUMMARY: ${passedTests}/${totalTests} tests passed (${totalTests - passedTests} failed).`);
   console.log('================================================================');

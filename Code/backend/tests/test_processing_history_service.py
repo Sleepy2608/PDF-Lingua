@@ -482,3 +482,90 @@ def test_composite_index_user_created_id_defined(in_memory_db):
     assert indexes["ix_processing_histories_user_created_id"] == ["user_id", "created_at", "id"]
 
 
+def test_document_filename_property_and_joinedload(in_memory_db):
+    """Verify document_filename property on ProcessingHistory and eager joinedload in HistoryService."""
+    user = User(email="filename_test@example.com", hashed_password="pw", full_name="Filename User")
+    in_memory_db.add(user)
+    in_memory_db.commit()
+
+    doc = Document(
+        user_id=user.id,
+        original_filename="scanned_medium_skewed.pdf",
+        stored_filename="uuid_scanned.pdf",
+        stored_path="docs/uuid_scanned.pdf",
+        file_size_bytes=2048,
+        page_count=2,
+    )
+    in_memory_db.add(doc)
+    in_memory_db.commit()
+
+    history = HistoryService.create_history(
+        in_memory_db,
+        ProcessingHistoryCreate(user_id=user.id, document_id=doc.id, action_type=ActionType.TRANSLATE),
+        current_user_id=user.id,
+    )
+    assert history.document_filename == "scanned_medium_skewed.pdf"
+
+    # Query with get_history_by_id
+    fetched = HistoryService.get_history_by_id(in_memory_db, history_id=history.id, current_user_id=user.id)
+    assert fetched is not None
+    assert fetched.document_filename == "scanned_medium_skewed.pdf"
+
+    # Validate response schema serialization
+    resp = ProcessingHistoryResponse.model_validate(fetched)
+    assert resp.document_filename == "scanned_medium_skewed.pdf"
+
+    # Query with get_histories_by_user
+    user_histories = HistoryService.get_histories_by_user(in_memory_db, user_id=user.id, current_user_id=user.id)
+    assert len(user_histories) == 1
+    assert user_histories[0].document_filename == "scanned_medium_skewed.pdf"
+
+    # When document is None / detached
+    orphan_history = ProcessingHistory(
+        user_id=user.id,
+        document_id=9999,
+        action_type=ActionType.EXTRACT,
+        status=ProcessingStatus.FAILED,
+    )
+    assert orphan_history.document_filename is None
+
+
+def test_document_and_history_datetime_serializer_utc():
+    """Verify naive datetimes from DB are serialized with explicit UTC timezone."""
+    from app.schemas.document import DocumentResponse
+
+    naive_dt = datetime(2026, 11, 7, 18, 53, 4)  # naive UTC
+
+    class FakeDoc:
+        id = 1
+        user_id = 10
+        original_filename = "test.pdf"
+        file_size_bytes = 1024
+        page_count = 1
+        target_lang = "vi"
+        is_ocr_used = False
+        created_at = naive_dt
+        updated_at = naive_dt
+
+    doc_resp = DocumentResponse.model_validate(FakeDoc())
+    doc_json = doc_resp.model_dump_json()
+    assert "+00:00" in doc_json or "Z" in doc_json
+
+    class FakeHistory:
+        id = 1
+        user_id = 10
+        document_id = 1
+        document_filename = "test.pdf"
+        action_type = ActionType.EXTRACT
+        status = ProcessingStatus.SUCCESS
+        execution_time_ms = 100
+        error_message = None
+        created_at = naive_dt
+        updated_at = naive_dt
+
+    history_resp = ProcessingHistoryResponse.model_validate(FakeHistory())
+    history_json = history_resp.model_dump_json()
+    assert "+00:00" in history_json or "Z" in history_json
+
+
+

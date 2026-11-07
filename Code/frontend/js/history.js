@@ -97,11 +97,23 @@
       .replace(/'/g, '&#039;');
   }
 
+  function parseUtcDate(dateStr) {
+    if (!dateStr) return null;
+    if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
+    let str = String(dateStr).trim();
+    if (!str) return null;
+    if (!str.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(str)) {
+      str = str.replace(' ', 'T') + 'Z';
+    }
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   function formatHistoryDate(isoString) {
     if (!isoString) return '--';
     try {
-      const d = new Date(isoString);
-      if (isNaN(d.getTime())) return String(isoString);
+      const d = parseUtcDate(isoString);
+      if (!d) return String(isoString);
       const day = String(d.getDate()).padStart(2, '0');
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
@@ -172,11 +184,11 @@
 
     if (state === 'not-found' && notFoundMsgEl) {
       notFoundMsgEl.textContent =
-        options.message || 'Bản ghi lịch sử này không tồn tại hoặc đã bị xóa.';
+      options.message || 'Bản ghi thực thi này không tồn tại hoặc đã bị xóa.';
     }
     if (state === 'error' && errorMsgEl) {
       errorMsgEl.textContent =
-        options.message || 'Đã xảy ra lỗi khi tải thông tin chi tiết bản ghi lịch sử.';
+      options.message || 'Đã xảy ra lỗi khi tải thông tin chi tiết bản ghi thực thi.';
     }
   }
 
@@ -323,15 +335,32 @@
         const durationHtml = formatExecutionTime(item.execution_time_ms);
         const createdText = escapeHtml(formatHistoryDate(item.created_at));
 
+        let filename =
+          item.document_filename ||
+          (item.document && item.document.original_filename) ||
+          '';
+
+        if (!filename && item.document_id && typeof window !== 'undefined' && Array.isArray(window.__pdflDocumentsCache)) {
+          const cached = window.__pdflDocumentsCache.find((d) => String(d.id) === String(item.document_id));
+          if (cached && cached.original_filename) {
+            filename = cached.original_filename;
+          }
+        }
+
+        const docTitle = filename ? `${filename} (DOC #${docId})` : `DOC #${docId}`;
+        const docBadgeContent = filename
+          ? `<span class="doc-badge-filename">${escapeHtml(filename)}</span>`
+          : `<span>DOC #${docId}</span>`;
+
         return `
-          <tr class="history-row" data-history-id="${id}" data-action-type="${escapeHtml(actionType)}" data-status="${escapeHtml(status)}" data-document-id="${docId}" tabindex="0" role="button" aria-label="Xem chi tiết bản ghi lịch sử #${id}">
+          <tr class="history-row" data-history-id="${id}" data-action-type="${escapeHtml(actionType)}" data-status="${escapeHtml(status)}" data-document-id="${docId}" tabindex="0" role="button" aria-label="Xem chi tiết bản ghi thực thi #${id}">
             <td>
               <span class="user-id-mono history-id-mono">#${id}</span>
             </td>
             <td>
-              <span class="history-doc-badge font-mono">
+              <span class="history-doc-badge font-mono" title="${escapeHtml(docTitle)}">
                 <span class="doc-badge-pdf">PDF</span>
-                <span>DOC #${docId}</span>
+                ${docBadgeContent}
               </span>
             </td>
             <td>
@@ -396,10 +425,40 @@
     const safeDocId = record.document_id !== null && record.document_id !== undefined ? String(record.document_id) : '--';
     const actionType = String(record.action_type || 'EXTRACT').trim().toUpperCase();
     const status = String(record.status || 'SUCCESS').trim().toUpperCase();
+    const docBadgeEl = document.getElementById('historyDetailDocBadge');
+
+    let filename =
+      (record && record.document_filename) ||
+      (record && record.document && record.document.original_filename) ||
+      '';
+
+    if (!filename && safeDocId && safeDocId !== '--' && typeof window !== 'undefined' && Array.isArray(window.__pdflDocumentsCache)) {
+      const match = window.__pdflDocumentsCache.find((d) => String(d.id) === String(safeDocId));
+      if (match && match.original_filename) {
+        filename = match.original_filename;
+      }
+    }
 
     if (headerBadgeEl) headerBadgeEl.textContent = `#${safeId}`;
     if (idEl) idEl.textContent = `#${safeId}`;
-    if (docIdEl) docIdEl.textContent = `DOC #${safeDocId}`;
+    if (docIdEl) {
+      if (filename) {
+        docIdEl.textContent = filename;
+        if (docBadgeEl) {
+          docBadgeEl.title = `${filename} (ID: #${safeDocId})`;
+        }
+      } else if (safeDocId && safeDocId !== '--') {
+        docIdEl.textContent = `DOC #${safeDocId}`;
+        if (docBadgeEl) {
+          docBadgeEl.title = `Tài liệu ID: #${safeDocId}`;
+        }
+      } else {
+        docIdEl.textContent = 'DOC #--';
+        if (docBadgeEl) {
+          docBadgeEl.title = 'Tài liệu không xác định';
+        }
+      }
+    }
     if (actionTypeEl) actionTypeEl.innerHTML = renderActionBadge(actionType);
     if (statusEl) statusEl.innerHTML = renderStatusBadge(status, null);
     if (execTimeEl) execTimeEl.innerHTML = formatExecutionTime(record.execution_time_ms);
@@ -428,7 +487,7 @@
     if (!Number.isInteger(parsedId) || parsedId <= 0) {
       isFetchingDetail = false;
       currentDetailItem = null;
-      setHistoryDetailState('error', { message: 'Mã bản ghi lịch sử không hợp lệ.' });
+      setHistoryDetailState('error', { message: 'Mã bản ghi thực thi không hợp lệ.' });
       return null;
     }
 
@@ -438,7 +497,7 @@
     if (!token) {
       isFetchingDetail = false;
       currentDetailItem = null;
-      const unauthMsg = 'Vui lòng đăng nhập để xem chi tiết bản ghi lịch sử xử lý.';
+      const unauthMsg = 'Vui lòng đăng nhập để xem chi tiết bản ghi thực thi.';
       setHistoryDetailState('error', { message: unauthMsg });
       notifyUser(unauthMsg, 'error');
       return null;
@@ -475,7 +534,7 @@
         if (!record) {
           currentDetailItem = null;
           setHistoryDetailState('not-found', {
-            message: `Bản ghi lịch sử với ID ${parsedId} không tồn tại.`,
+            message: `Bản ghi thực thi với ID ${parsedId} không tồn tại.`,
           });
           return null;
         }
@@ -489,7 +548,7 @@
       if (response.status === 404) {
         const notFoundMsg =
           (responseData && responseData.message) ||
-          `Bản ghi lịch sử với ID ${parsedId} không tồn tại.`;
+        `Bản ghi thực thi với ID ${parsedId} không tồn tại.`;
         setHistoryDetailState('not-found', { message: notFoundMsg });
         return null;
       }
@@ -510,7 +569,7 @@
         }
         const forbiddenMsg =
           (responseData && responseData.message) ||
-          'Bạn không có quyền truy cập bản ghi lịch sử xử lý này.';
+        'Bạn không có quyền truy cập bản ghi thực thi này.';
         setHistoryDetailState('error', { message: forbiddenMsg });
         notifyUser(forbiddenMsg, 'error');
         return null;

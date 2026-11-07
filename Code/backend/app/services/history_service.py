@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Callable, Optional, TypeVar
 
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from app.core.logger import logger
@@ -225,6 +225,7 @@ class HistoryService:
         try:
             record = (
                 db.query(ProcessingHistory)
+                .options(joinedload(ProcessingHistory.document))
                 .filter(ProcessingHistory.id == history_id)
                 .first()
             )
@@ -309,7 +310,11 @@ class HistoryService:
             if document_id is not None:
                 cls.verify_document_ownership(db, document_id=document_id, user_id=user_id)
 
-            query = db.query(ProcessingHistory).filter(ProcessingHistory.user_id == user_id)
+            query = (
+                db.query(ProcessingHistory)
+                .options(joinedload(ProcessingHistory.document))
+                .filter(ProcessingHistory.user_id == user_id)
+            )
 
             if document_id is not None:
                 query = query.filter(ProcessingHistory.document_id == document_id)
@@ -360,6 +365,7 @@ class HistoryService:
 
             return (
                 db.query(ProcessingHistory)
+                .options(joinedload(ProcessingHistory.document))
                 .filter(ProcessingHistory.document_id == document_id)
                 .order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
                 .offset(safe_skip)

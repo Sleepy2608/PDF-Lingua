@@ -56,7 +56,7 @@ runTest('1. Navigation & Section Container: #sideNavHistory and #historySection 
 });
 
 runTest('2. Required Information Columns & Badges: EXTRACT, TRANSLATE, SUMMARIZE, PENDING, SUCCESS, FAILED, Document ID, Timestamps', () => {
-  assert.ok(htmlSource.includes('<th>Mã lịch sử</th>'), 'History ID column header must exist');
+  assert.ok(htmlSource.includes('<th>Mã thực thi</th>') || htmlSource.includes('<th>Mã lịch sử</th>'), 'Execution ID column header must exist');
   assert.ok(htmlSource.includes('<th>Document ID</th>'), 'Document ID column header must exist');
   assert.ok(htmlSource.includes('<th>Loại xử lý</th>'), 'Action type column header must exist');
   assert.ok(htmlSource.includes('<th>Trạng thái</th>'), 'Status column header must exist');
@@ -139,6 +139,51 @@ runTest('6. Design System CSS: All history classes styled consistently in compon
 
   for (const selector of requiredSelectors) {
     assert.ok(componentsCss.includes(selector), `CSS selector ${selector} must be defined in components.css`);
+  }
+});
+
+runTest('7. Execution ID & Detail Modal renaming (Requirement 3 & 4)', () => {
+  assert.ok(htmlSource.includes('Chi Tiết Bản Ghi Thực Thi'), 'Modal title "Chi Tiết Bản Ghi Thực Thi" must exist');
+  assert.ok(htmlSource.includes('Mã thực thi (Execution ID)'), 'Modal field "Mã thực thi (Execution ID)" must exist');
+  assert.ok(componentsCss.includes('.doc-badge-filename'), 'CSS class .doc-badge-filename must exist in components.css');
+});
+
+runTest('8. No Duplicate Labels or Elements in History Detail Modal', () => {
+  // Count helper
+  function countMatches(str, pattern) {
+    const matches = str.match(new RegExp(pattern, 'g'));
+    return matches ? matches.length : 0;
+  }
+
+  // 1. Modal Title
+  assert.strictEqual(countMatches(htmlSource, 'Chi Tiết Bản Ghi Thực Thi'), 1, 'Modal title "Chi Tiết Bản Ghi Thực Thi" must appear exactly once');
+  assert.strictEqual(countMatches(htmlSource, 'Chi Tiết Bản Ghi Lịch Sử'), 0, 'Old modal title "Chi Tiết Bản Ghi Lịch Sử" must be completely removed');
+
+  // 2. Execution ID label
+  assert.strictEqual(countMatches(htmlSource, 'Mã thực thi \\(Execution ID\\)'), 1, 'Label "Mã thực thi (Execution ID)" must appear exactly once');
+  assert.strictEqual(countMatches(htmlSource, 'Mã lịch sử \\(History ID\\)'), 0, 'Old label "Mã lịch sử (History ID)" must be completely removed');
+
+  // 3. Back Button
+  const backBtnMatch = htmlSource.match(/id="btnBackToHistoryList"[^>]*>([\s\S]*?)<\/button>/);
+  assert.ok(backBtnMatch, '#btnBackToHistoryList must exist');
+  const backBtnInner = backBtnMatch[1];
+  const spanMatches = backBtnInner.match(/<span>[\s\S]*?<\/span>/g);
+  assert.strictEqual(spanMatches.length, 1, '#btnBackToHistoryList must contain exactly one span');
+  assert.ok(spanMatches[0].includes('Quay lại danh sách lịch sử'), 'Span text must be "Quay lại danh sách lịch sử"');
+
+  // 4. No duplicate element IDs in modal
+  const uniqueModalIds = [
+    'historyDetailModalTitle',
+    'btnCloseHistoryDetailModal',
+    'historyDetailNotFoundMessage',
+    'historyDetailErrorMessage',
+    'historyDetailId',
+    'historyDetailDocId',
+    'historyDetailDocBadge',
+    'btnBackToHistoryList',
+  ];
+  for (const id of uniqueModalIds) {
+    assert.strictEqual(countMatches(htmlSource, `id="${id}"`), 1, `Element ID #${id} must be unique`);
   }
 });
 

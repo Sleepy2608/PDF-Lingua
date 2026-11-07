@@ -1037,6 +1037,9 @@
     const searchInput = document.getElementById('documentsSearchInput');
 
     const allDocs = Array.isArray(docs) ? docs : [];
+    if (typeof window !== 'undefined') {
+      window.__pdflDocumentsCache = allDocs;
+    }
     if (countBadge) {
       countBadge.textContent = `${allDocs.length} tài liệu`;
     }
@@ -1079,7 +1082,7 @@
     const ocrBadgeHtml = isOcr
       ? '<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>Quét OCR</span>'
       : '<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>PDF Số</span>';
-    const formattedDate = formatDate(doc.created_at) || '--';
+    const formattedDate = formatDate(doc.created_at, true) || '--';
 
     tr.innerHTML = `
       <td>
@@ -1958,69 +1961,89 @@
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '';
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch (_e) {
-      return '';
+    function parseUtcDate(dateStr) {
+      if (!dateStr) return null;
+      if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
+      let str = String(dateStr).trim();
+      if (!str) return null;
+      if (!str.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(str)) {
+        str = str.replace(' ', 'T') + 'Z';
+      }
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
     }
-  }
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function setActiveNav(navKey) {
-    if (navKey === 'home') {
-      const el = document.getElementById('sideNavHome');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'translate') {
-      const el = document.getElementById('sideNavTranslate');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'documents') {
-      const el = document.getElementById('sideNavDocuments');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'history') {
-      const el = document.getElementById('sideNavHistory');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'admin') {
-      const el = document.getElementById('sideNavAdmin');
-      if (el) setActiveNavItem(el);
+    function formatDate(dateStr, includeTime = false) {
+      if (!dateStr) return '';
+      try {
+        const d = parseUtcDate(dateStr);
+        if (!d) return '';
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        if (!includeTime) {
+          return `${day}/${month}/${year}`;
+        }
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        const secs = String(d.getSeconds()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${mins}:${secs}`;
+      } catch (_e) {
+        return '';
+      }
     }
-  }
 
-  // Export globally for testing and integration
-  window.PDFLinguaSidebar = {
-    toggle: toggleSidebar,
-    setCollapsed: setCollapsed,
-    openMobile: openMobileSidebar,
-    closeMobile: closeMobileSidebar,
-    syncUser: syncUserProfile,
-    fetchRecentDocuments: fetchRecentDocuments,
-    triggerUpload: triggerPdfUpload,
-    openDocumentsView: openDocumentsView,
-    closeDocumentsView: closeDocumentsView,
-    openHistoryView: openHistoryView,
-    closeHistoryView: closeHistoryView,
-    navigateToHome: navigateToHome,
-    setActiveNav: setActiveNav,
-    setActiveNavItem: setActiveNavItem,
-    openDocumentDetailModal: openDocumentDetailModal,
-    closeDocumentDetailModal: closeDocumentDetailModal,
-    openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
-    closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
-    confirmDocumentDelete: confirmDocumentDelete,
-  };
-})();
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function setActiveNav(navKey) {
+      if (navKey === 'home') {
+        const el = document.getElementById('sideNavHome');
+        if (el) setActiveNavItem(el);
+      } else if (navKey === 'translate') {
+        const el = document.getElementById('sideNavTranslate');
+        if (el) setActiveNavItem(el);
+      } else if (navKey === 'documents') {
+        const el = document.getElementById('sideNavDocuments');
+        if (el) setActiveNavItem(el);
+      } else if (navKey === 'history') {
+        const el = document.getElementById('sideNavHistory');
+        if (el) setActiveNavItem(el);
+      } else if (navKey === 'admin') {
+        const el = document.getElementById('sideNavAdmin');
+        if (el) setActiveNavItem(el);
+      }
+    }
+
+    // Export globally for testing and integration
+    window.PDFLinguaSidebar = {
+      toggle: toggleSidebar,
+      setCollapsed: setCollapsed,
+      openMobile: openMobileSidebar,
+      closeMobile: closeMobileSidebar,
+      syncUser: syncUserProfile,
+      fetchRecentDocuments: fetchRecentDocuments,
+      triggerUpload: triggerPdfUpload,
+      openDocumentsView: openDocumentsView,
+      closeDocumentsView: closeDocumentsView,
+      openHistoryView: openHistoryView,
+      closeHistoryView: closeHistoryView,
+      navigateToHome: navigateToHome,
+      setActiveNav: setActiveNav,
+      setActiveNavItem: setActiveNavItem,
+      openDocumentDetailModal: openDocumentDetailModal,
+      closeDocumentDetailModal: closeDocumentDetailModal,
+      openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
+      closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
+      confirmDocumentDelete: confirmDocumentDelete,
+      formatDate: formatDate,
+      parseUtcDate: parseUtcDate,
+    };
+  }) ();

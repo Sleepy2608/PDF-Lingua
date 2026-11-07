@@ -13,10 +13,10 @@ ProcessingHistoryResponse  — read-safe response schema mapped from ORM attribu
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from app.models.processing_history import ActionType, ProcessingStatus
 
@@ -182,8 +182,18 @@ class ProcessingHistoryResponse(ProcessingHistoryBase):
     id: int = Field(..., gt=0, description="ID định danh bản ghi lịch sử.")
     user_id: int = Field(..., gt=0, description="ID chủ sở hữu thao tác.")
     document_id: int = Field(..., gt=0, description="ID tài liệu được xử lý.")
+    document_filename: Optional[str] = Field(
+        default=None,
+        description="Tên file gốc của tài liệu (original_filename).",
+    )
     created_at: datetime = Field(..., description="Thời điểm khởi tạo bản ghi (UTC).")
     updated_at: datetime = Field(..., description="Thời điểm cập nhật gần nhất (UTC).")
+
+    @field_serializer("created_at", "updated_at")
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
 
     @model_validator(mode="after")
     def validate_timestamps(self) -> "ProcessingHistoryResponse":

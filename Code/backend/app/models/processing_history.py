@@ -125,6 +125,13 @@ class ProcessingHistory(Base):
     user = relationship("User", back_populates="processing_histories")
     document = relationship("Document", back_populates="processing_histories")
 
+    @property
+    def document_filename(self) -> str | None:
+        """Returns the original filename of the associated document if loaded."""
+        if self.document:
+            return getattr(self.document, "original_filename", None)
+        return None
+
     def __repr__(self) -> str:
         return (
             f"<ProcessingHistory id={self.id} user_id={self.user_id} "

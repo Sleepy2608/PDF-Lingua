@@ -2557,6 +2557,16 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: #1E293B;
+  max-width: 100%;
+}
+
+.doc-badge-filename {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .doc-badge-pdf {

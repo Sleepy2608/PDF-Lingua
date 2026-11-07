@@ -145,6 +145,7 @@ function createDetailTestEnv({ initialStorage = {}, fetchImpl = null } = {}) {
     btnBackFromHistoryError: new MockElement('btnBackFromHistoryError', 'button'),
     historyDetailContent: new MockElement('historyDetailContent', 'div'),
     historyDetailId: new MockElement('historyDetailId', 'span'),
+    historyDetailDocBadge: new MockElement('historyDetailDocBadge', 'span'),
     historyDetailDocId: new MockElement('historyDetailDocId', 'span'),
     historyDetailActionType: new MockElement('historyDetailActionType', 'div'),
     historyDetailStatus: new MockElement('historyDetailStatus', 'div'),
@@ -602,6 +603,87 @@ async function runTests() {
     for (const selector of requiredCssSelectors) {
       assert.ok(componentsCss.includes(selector), `components.css must define ${selector}`);
     }
+  });
+
+  // Test 6: Document Filename Resolution & Fallback (Requirement 1)
+  await test('6. Document Filename Display & Fallbacks in History Detail', async () => {
+    const mockRecords = {
+      201: {
+        id: 201,
+        document_id: 17,
+        document_filename: 'scanned_medium_skewed.pdf',
+        action_type: 'TRANSLATE',
+        status: 'SUCCESS',
+        execution_time_ms: 1077,
+        created_at: '2026-11-07T18:53:04Z',
+        updated_at: '2026-11-07T18:53:05Z',
+        error_message: null,
+      },
+      202: {
+        id: 202,
+        document_id: 18,
+        document: { original_filename: 'financial_report_q3.pdf' },
+        action_type: 'EXTRACT',
+        status: 'SUCCESS',
+        execution_time_ms: 500,
+        created_at: '2026-11-07T18:50:00Z',
+        updated_at: '2026-11-07T18:50:00Z',
+      },
+      203: {
+        id: 203,
+        document_id: 19,
+        document_filename: null,
+        action_type: 'EXTRACT',
+        status: 'SUCCESS',
+        execution_time_ms: 300,
+        created_at: '2026-11-07T18:40:00Z',
+        updated_at: '2026-11-07T18:40:00Z',
+      },
+      204: {
+        id: 204,
+        document_id: null,
+        document_filename: null,
+        action_type: 'EXTRACT',
+        status: 'FAILED',
+        execution_time_ms: null,
+        created_at: '2026-11-07T18:30:00Z',
+        updated_at: '2026-11-07T18:30:00Z',
+      },
+    };
+
+    const env = createDetailTestEnv({
+      initialStorage: { pdfl_token: 'valid-jwt-token' },
+      fetchImpl: async (url) => {
+        const id = parseInt(url.split('/').pop(), 10);
+        return {
+          status: 200,
+          ok: true,
+          json: async () => ({
+            status: 'success',
+            message: 'Lấy thông tin chi tiết lịch sử xử lý thành công.',
+            data: mockRecords[id] || null,
+          }),
+        };
+      },
+    });
+
+    // 6a. Record with explicit document_filename
+    await env.controller.openHistoryDetail(201);
+    assert.strictEqual(env.elements.historyDetailDocId.textContent, 'scanned_medium_skewed.pdf', 'Must display original filename');
+    assert.ok(env.elements.historyDetailDocBadge.title.includes('scanned_medium_skewed.pdf'), 'Badge title must include filename');
+    assert.ok(env.elements.historyDetailDocBadge.title.includes('17'), 'Badge title must include document ID');
+
+    // 6b. Record with nested document object
+    await env.controller.openHistoryDetail(202);
+    assert.strictEqual(env.elements.historyDetailDocId.textContent, 'financial_report_q3.pdf', 'Must display nested document filename');
+
+    // 6c. Record without filename (fallback to DOC #19)
+    await env.controller.openHistoryDetail(203);
+    assert.strictEqual(env.elements.historyDetailDocId.textContent, 'DOC #19', 'Fallback to DOC #19 when filename is missing');
+
+    // 6d. Record with missing/null document_id (fallback to DOC #--)
+    await env.controller.openHistoryDetail(204);
+    assert.strictEqual(env.elements.historyDetailDocId.textContent, 'DOC #--', 'Fallback to DOC #-- when document_id is null');
   });
 
   console.log('\n================================================================');
