@@ -348,12 +348,24 @@
     if (btnCloseHistoryView) {
       btnCloseHistoryView.addEventListener('click', (e) => {
         e.preventDefault();
-        const historySection = document.getElementById('historySection');
-        const heroSection = document.getElementById('heroSection');
-        if (historySection) historySection.style.display = 'none';
-        if (heroSection) heroSection.style.display = 'block';
+        if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.closeHistoryView === 'function') {
+          window.pdfLinguaHistory.closeHistoryView();
+        } else {
+          const historySection = document.getElementById('historySection');
+          const workspaceSection = document.getElementById('workspaceSection');
+          const heroSection = document.getElementById('heroSection');
+          const docNameDisplay = document.getElementById('docNameDisplay');
+          if (historySection) historySection.style.display = 'none';
+          if (workspaceSection && docNameDisplay && docNameDisplay.textContent && docNameDisplay.textContent.trim() !== '') {
+            workspaceSection.style.display = 'block';
+            if (heroSection) heroSection.style.display = 'none';
+          } else if (heroSection) {
+            heroSection.style.display = 'block';
+            if (workspaceSection) workspaceSection.style.display = 'none';
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         setActiveNavItem(sideNavTranslate || sideNavHome);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 

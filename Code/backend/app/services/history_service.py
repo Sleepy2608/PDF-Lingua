@@ -85,10 +85,10 @@ class HistoryService:
                 details={"requested_user_id": data.user_id, "current_user_id": current_user_id},
             )
 
-        # Enforce that the target document belongs to the requesting user
-        cls.verify_document_ownership(db, document_id=data.document_id, user_id=data.user_id)
-
         try:
+            # Enforce that the target document belongs to the requesting user
+            cls.verify_document_ownership(db, document_id=data.document_id, user_id=data.user_id)
+
             if reuse_pending and data.status == ProcessingStatus.PENDING:
                 existing_pending = (
                     db.query(ProcessingHistory)
@@ -136,30 +136,30 @@ class HistoryService:
 
         Validates status transitions and ownership before persisting.
         """
-        record = (
-            db.query(ProcessingHistory)
-            .filter(ProcessingHistory.id == history_id)
-            .first()
-        )
-        if record is None:
-            raise NotFoundException(
-                message=f"Bản ghi lịch sử xử lý id={history_id} không tồn tại.",
-                details={"history_id": history_id},
-            )
-
-        if current_user_id is not None and record.user_id != current_user_id:
-            raise ForbiddenException(
-                message="Bạn không có quyền cập nhật bản ghi lịch sử của người dùng khác.",
-                details={"history_id": history_id, "owner_id": record.user_id},
-            )
-
-        update_payload = ProcessingHistoryUpdate(
-            status=status,
-            execution_time_ms=execution_time_ms,
-            error_message=error_message,
-        )
-
         try:
+            record = (
+                db.query(ProcessingHistory)
+                .filter(ProcessingHistory.id == history_id)
+                .first()
+            )
+            if record is None:
+                raise NotFoundException(
+                    message=f"Bản ghi lịch sử xử lý id={history_id} không tồn tại.",
+                    details={"history_id": history_id},
+                )
+
+            if current_user_id is not None and record.user_id != current_user_id:
+                raise ForbiddenException(
+                    message="Bạn không có quyền cập nhật bản ghi lịch sử của người dùng khác.",
+                    details={"history_id": history_id, "owner_id": record.user_id},
+                )
+
+            update_payload = ProcessingHistoryUpdate(
+                status=status,
+                execution_time_ms=execution_time_ms,
+                error_message=error_message,
+            )
+
             record.status = update_payload.status
             if update_payload.execution_time_ms is not None:
                 record.execution_time_ms = update_payload.execution_time_ms
@@ -344,20 +344,20 @@ class HistoryService:
         Query paginated processing history for a specific document.
         First verifies document ownership if `current_user_id` is supplied.
         """
-        if current_user_id is not None:
-            cls.verify_document_ownership(db, document_id=document_id, user_id=current_user_id)
-        else:
-            doc = db.query(Document).filter(Document.id == document_id).first()
-            if doc is None:
-                raise NotFoundException(
-                    message=f"Tài liệu id={document_id} không tồn tại.",
-                    details={"document_id": document_id},
-                )
-
         safe_skip = max(0, skip)
         safe_limit = max(1, min(limit, 100))
 
         try:
+            if current_user_id is not None:
+                cls.verify_document_ownership(db, document_id=document_id, user_id=current_user_id)
+            else:
+                doc = db.query(Document).filter(Document.id == document_id).first()
+                if doc is None:
+                    raise NotFoundException(
+                        message=f"Tài liệu id={document_id} không tồn tại.",
+                        details={"document_id": document_id},
+                    )
+
             return (
                 db.query(ProcessingHistory)
                 .filter(ProcessingHistory.document_id == document_id)
@@ -383,11 +383,16 @@ class HistoryService:
                 message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
                 details={"target_user_id": user_id, "current_user_id": current_user_id},
             )
-        return (
-            db.query(ProcessingHistory)
-            .filter(ProcessingHistory.user_id == user_id)
-            .count()
-        )
+        try:
+            return (
+                db.query(ProcessingHistory)
+                .filter(ProcessingHistory.user_id == user_id)
+                .count()
+            )
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error counting histories for user_id={user_id}: {exc}")
+            raise
 
     # ── Workflow Automation & Fault Isolation (PDFL-160.1) ───────────────────
 

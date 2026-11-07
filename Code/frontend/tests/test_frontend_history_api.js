@@ -16,6 +16,7 @@ const assert = require('assert');
 const vm = require('vm');
 
 const historySource = fs.readFileSync(path.resolve(__dirname, '../js/history.js'), 'utf8');
+const workspaceSource = fs.readFileSync(path.resolve(__dirname, '../js/workspace.js'), 'utf8');
 const htmlSource = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 
 class ClassList {
@@ -240,6 +241,7 @@ async function runTests() {
     } catch (err) {
       console.error(`[FAIL] ${name}`);
       console.error('       Reason:', err.message);
+      console.error(err.stack);
       failed += 1;
     }
   }
@@ -300,7 +302,7 @@ async function runTests() {
     const data = await env.controller.fetchHistoryList(1);
     assert.strictEqual(data.length, 3, 'Should return 3 history items');
     assert.strictEqual(env.requests.length, 1, 'Should make 1 API request');
-    assert.strictEqual(env.requests[0].url, '/api/history?skip=0&limit=10');
+    assert.strictEqual(env.requests[0].url, '/api/history?skip=0&limit=11');
     assert.strictEqual(env.requests[0].options.headers['Authorization'], 'Bearer valid-jwt-token');
 
     // Check UI state is 'list'
@@ -336,14 +338,14 @@ async function runTests() {
     // Filter by Action Type = EXTRACT
     env.elements.historyActionFilter.value = 'EXTRACT';
     await Promise.all(env.elements.historyActionFilter.dispatchEvent('change'));
-    assert.strictEqual(env.requests[env.requests.length - 1].url, '/api/history?skip=0&limit=10&action_type=EXTRACT');
+    assert.strictEqual(env.requests[env.requests.length - 1].url, '/api/history?skip=0&limit=11&action_type=EXTRACT');
 
     // Filter by Status = SUCCESS (combined with Action Type = EXTRACT)
     env.elements.historyStatusFilter.value = 'SUCCESS';
     await Promise.all(env.elements.historyStatusFilter.dispatchEvent('change'));
     assert.strictEqual(
       env.requests[env.requests.length - 1].url,
-      '/api/history?skip=0&limit=10&action_type=EXTRACT&status=SUCCESS'
+      '/api/history?skip=0&limit=11&action_type=EXTRACT&status=SUCCESS'
     );
 
     // Filter by Document ID = 55 (combined with Action Type + Status)
@@ -351,7 +353,7 @@ async function runTests() {
     await Promise.all(env.elements.historyDocumentIdFilter.dispatchEvent('change'));
     assert.strictEqual(
       env.requests[env.requests.length - 1].url,
-      '/api/history?skip=0&limit=10&action_type=EXTRACT&status=SUCCESS&document_id=55'
+      '/api/history?skip=0&limit=11&action_type=EXTRACT&status=SUCCESS&document_id=55'
     );
 
     // Invalid Document ID (<= 0) triggers client-side error state without calling API
@@ -366,16 +368,16 @@ async function runTests() {
     assert.strictEqual(env.elements.historyDocumentIdFilter.value, '');
     assert.strictEqual(env.elements.historyActionFilter.value, '');
     assert.strictEqual(env.elements.historyStatusFilter.value, '');
-    assert.strictEqual(env.requests[env.requests.length - 1].url, '/api/history?skip=0&limit=10');
+    assert.strictEqual(env.requests[env.requests.length - 1].url, '/api/history?skip=0&limit=11');
     assert.strictEqual(env.elements.historyTableContainer.style.display, 'block');
   });
 
-  // Test 3: Pagination (skip, limit), Next/Prev navigation, and Empty Page handling
-  await test('3. Pagination with skip/limit, page navigation, and empty page recovery', async () => {
-    const page1Items = [sampleRecords[0], sampleRecords[1]];
+  // Test 3: Lookahead pagination (AUDIT-04): has-next-page, exact-multiple last page, and empty page
+  await test('3. Pagination with limit+1 lookahead (AUDIT-04): has-next-page, exact last page, and empty page', async () => {
     let mockPageResponses = {
-      0: page1Items, // skip=0, limit=2 (full page -> hasNextPage = true)
-      2: [],         // skip=2, limit=2 (empty page 2)
+      0: [sampleRecords[0], sampleRecords[1], sampleRecords[2]], // skip=0, limit=3 -> 3 returned (> pageLimit 2) => hasNextPage = true
+      2: [sampleRecords[1], sampleRecords[2]],                   // skip=2, limit=3 -> 2 returned (== pageLimit 2) => exact last page, hasNextPage = false
+      4: [],                                                     // skip=4, limit=3 -> 0 returned => empty page
     };
 
     const env = createHistoryTestEnv({
@@ -395,26 +397,38 @@ async function runTests() {
 
     env.controller.setPageLimit(2);
 
-    // Load Page 1 (skip=0, limit=2) -> returns 2 items (full page)
-    await env.controller.fetchHistoryList(1);
-    assert.strictEqual(env.requests[0].url, '/api/history?skip=0&limit=2');
+    // Case A: Load Page 1 (skip=0, lookahead limit=3) -> returns 3 items, renders only 2, Next enabled
+    const page1Rendered = await env.controller.fetchHistoryList(1);
+    assert.strictEqual(env.requests[0].url, '/api/history?skip=0&limit=3');
+    assert.strictEqual(page1Rendered.length, 2, 'Should slice lookahead result and render only pageLimit (2) items');
+    assert.ok(env.elements.historyTableBody.innerHTML.includes('#201') && env.elements.historyTableBody.innerHTML.includes('#202'));
+    assert.ok(!env.elements.historyTableBody.innerHTML.includes('#203'), '3rd lookahead item must not be rendered on page 1');
     assert.strictEqual(env.elements.historyCurrentPageBadge.textContent, '1');
     assert.strictEqual(env.elements.btnHistoryPrevPage.disabled, true, 'Prev disabled on page 1');
-    assert.strictEqual(env.elements.btnHistoryNextPage.disabled, false, 'Next enabled when page is full');
+    assert.strictEqual(env.elements.btnHistoryNextPage.disabled, false, 'Next enabled when lookahead item exists');
 
-    // Navigate to Page 2 (skip=2, limit=2) -> returns [] (empty page)
+    // Case B: Navigate to Page 2 (skip=2, lookahead limit=3) -> returns exactly 2 items (exact last page) -> Next disabled immediately!
     await Promise.all(env.elements.btnHistoryNextPage.click());
-    assert.strictEqual(env.requests[1].url, '/api/history?skip=2&limit=2');
+    assert.strictEqual(env.requests[1].url, '/api/history?skip=2&limit=3');
     assert.strictEqual(env.elements.historyCurrentPageBadge.textContent, '2');
+    assert.strictEqual(env.elements.historyTableContainer.style.display, 'block');
+    assert.strictEqual(env.elements.btnHistoryNextPage.disabled, true, 'Next disabled on exact-multiple last page');
+    assert.strictEqual(env.elements.btnHistoryPrevPage.disabled, false, 'Prev enabled on page 2');
+    assert.strictEqual(env.elements.historyPaginationInfo.textContent, 'Trang 2 • Hiển thị 2 bản ghi');
+
+    // Case C: Direct fetch of an empty page (Page 3, skip=4) -> displays empty state and allows Prev recovery
+    await env.controller.fetchHistoryList(3);
+    assert.strictEqual(env.requests[2].url, '/api/history?skip=4&limit=3');
+    assert.strictEqual(env.elements.historyCurrentPageBadge.textContent, '3');
     assert.strictEqual(env.elements.historyEmptyState.style.display, 'block', 'Empty page displays empty state');
     assert.strictEqual(env.elements.btnHistoryNextPage.disabled, true, 'Next disabled on empty page');
     assert.strictEqual(env.elements.btnHistoryPrevPage.disabled, false, 'Prev remains enabled on empty page > 1');
-    assert.strictEqual(env.elements.historyPaginationInfo.textContent, 'Trang 2 • Hiển thị 0 bản ghi');
+    assert.strictEqual(env.elements.historyPaginationInfo.textContent, 'Trang 3 • Hiển thị 0 bản ghi');
 
-    // Click Prev to return to Page 1 -> restores list state
+    // Click Prev to return to Page 2 -> restores list state
     await Promise.all(env.elements.btnHistoryPrevPage.click());
-    assert.strictEqual(env.requests[2].url, '/api/history?skip=0&limit=2');
-    assert.strictEqual(env.elements.historyCurrentPageBadge.textContent, '1');
+    assert.strictEqual(env.requests[3].url, '/api/history?skip=2&limit=3');
+    assert.strictEqual(env.elements.historyCurrentPageBadge.textContent, '2');
     assert.strictEqual(env.elements.historyTableContainer.style.display, 'block');
     assert.strictEqual(env.elements.historyEmptyState.style.display, 'none');
   });
@@ -557,6 +571,246 @@ async function runTests() {
     // Clicking Refresh (#btnRefreshHistory) reloads current view
     await Promise.all(env.elements.btnRefreshHistory.click());
     assert.strictEqual(env.requests.length, 3, 'Refresh button reloads history data');
+  });
+
+  // Test 7: History Navigation (AUDIT-03) - Close History returns to Workspace if doc open, else Hero Section
+  await test('7. Close History View (AUDIT-03) restores Workspace when document is open, else Hero Section', async () => {
+    const env = createHistoryTestEnv({
+      initialStorage: { pdfl_token: 'valid-jwt-token' },
+      fetchImpl: async () => ({
+        status: 200,
+        ok: true,
+        json: async () => ({ status: 'success', data: sampleRecords }),
+      }),
+    });
+
+    // Scenario A: Document is currently open in Workspace
+    env.elements.docNameDisplay.textContent = 'annual-report-2026.pdf';
+    await env.controller.openHistoryView();
+    assert.strictEqual(env.elements.historySection.style.display, 'block');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none');
+
+    env.controller.closeHistoryView();
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'block', 'Should return to Workspace when document is open');
+    assert.strictEqual(env.elements.heroSection.style.display, 'none', 'Hero section should remain hidden when Workspace is active');
+
+    // Scenario B: No document is open -> returns to Hero Section
+    env.elements.docNameDisplay.textContent = '   ';
+    await env.controller.openHistoryView();
+    assert.strictEqual(env.elements.historySection.style.display, 'block');
+
+    env.controller.closeHistoryView();
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.heroSection.style.display, 'block', 'Should return to Hero Section when no document is open');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none', 'Workspace should stay hidden when no document is open');
+  });
+
+  // Test 8: Retranslate (AUDIT-01) - Validates document_id, rejects missing/invalid ID for auth, allows guest without ID
+  await test('8. Workspace handleRetranslate (AUDIT-01) validates document_id ownership and avoids silent omission', async () => {
+    const wsRequests = [];
+    const wsToasts = [];
+    const wsElements = {
+      targetLangSelect: new MockElement('targetLangSelect', 'select'),
+      btnRetranslate: new MockElement('btnRetranslate', 'button'),
+      paneTranslated: new MockElement('paneTranslated', 'div'),
+    };
+    wsElements.targetLangSelect.value = 'en';
+
+    let currentToken = 'valid-jwt-token';
+    const wsStorage = {
+      getItem: (k) => (k === 'pdfl_token' ? currentToken : null),
+      removeItem: (k) => {
+        if (k === 'pdfl_token') currentToken = null;
+      },
+    };
+
+    const wsFetch = async (url, options = {}) => {
+      wsRequests.push({
+        url,
+        method: options.method,
+        headers: options.headers,
+        body: options.body ? JSON.parse(options.body) : null,
+      });
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: { translated_text: 'Translated content in English' },
+        }),
+      };
+    };
+
+    const wsToastFn = (msg, type) => {
+      wsToasts.push({ msg, type });
+    };
+
+    const wsSandbox = {
+      window: {
+        localStorage: wsStorage,
+        sessionStorage: wsStorage,
+        pdfLinguaAuth: {
+          getStoredToken: () => wsStorage.getItem('pdfl_token'),
+        },
+        showToast: wsToastFn,
+      },
+      document: {
+        getElementById: (id) => wsElements[id] || null,
+        addEventListener: () => {},
+      },
+      localStorage: wsStorage,
+      sessionStorage: wsStorage,
+      fetch: wsFetch,
+      showToast: wsToastFn,
+      console,
+    };
+
+    vm.createContext(wsSandbox);
+    vm.runInContext(workspaceSource, wsSandbox);
+
+    // Case A: Authenticated user + valid positive integer document_id (77) -> sends request with document_id
+    currentToken = 'valid-jwt-token';
+    await vm.runInContext(
+      `currentDocData = { document_id: 77, original_text: 'Xin chào thế giới', translated_text: 'Hello', target_lang: 'vi' }; handleRetranslate();`,
+      wsSandbox
+    );
+    assert.strictEqual(wsRequests.length, 1);
+    assert.ok(wsRequests[0].url.endsWith('/api/process/retranslate'));
+    assert.strictEqual(wsRequests[0].body.document_id, 77, 'Should include valid positive integer document_id');
+    assert.strictEqual(wsRequests[0].body.text, 'Xin chào thế giới');
+    assert.strictEqual(wsRequests[0].body.target_lang, 'en');
+    assert.strictEqual(wsToasts.length, 1);
+    assert.strictEqual(wsToasts[0].type, 'success');
+
+    // Case B: Authenticated user + missing document_id (null) -> refuses to silently omit, shows error, does NOT call API
+    await vm.runInContext(
+      `currentDocData = { document_id: null, original_text: 'Văn bản không có ID', translated_text: 'Old', target_lang: 'vi' }; handleRetranslate();`,
+      wsSandbox
+    );
+    assert.strictEqual(wsRequests.length, 1, 'Must NOT send request when authenticated document lacks valid ID');
+    assert.strictEqual(wsToasts.length, 2);
+    assert.strictEqual(wsToasts[1].type, 'error');
+    assert.ok(wsToasts[1].msg.includes('Không tìm thấy mã tài liệu hợp lệ'));
+
+    // Case C: Authenticated user + invalid document_id (0) -> refuses to silently omit, shows error, does NOT call API
+    await vm.runInContext(
+      `currentDocData = { document_id: 0, original_text: 'Văn bản ID 0', translated_text: 'Old', target_lang: 'vi' }; handleRetranslate();`,
+      wsSandbox
+    );
+    assert.strictEqual(wsRequests.length, 1, 'Must NOT send request when document_id is invalid (<= 0)');
+    assert.strictEqual(wsToasts.length, 3);
+    assert.strictEqual(wsToasts[2].type, 'error');
+    assert.ok(wsToasts[2].msg.includes('Mã tài liệu (Document ID) không hợp lệ'));
+
+    // Case D: Guest user (unauthenticated) + null document_id -> permitted to retranslate without document_id
+    currentToken = null; // Unauthenticated guest
+    await vm.runInContext(
+      `currentDocData = { document_id: null, original_text: 'Văn bản khách', translated_text: 'Old', target_lang: 'vi' }; handleRetranslate();`,
+      wsSandbox
+    );
+    assert.strictEqual(wsRequests.length, 2, 'Guest without document_id is permitted to retranslate');
+    assert.strictEqual(
+      Object.prototype.hasOwnProperty.call(wsRequests[1].body, 'document_id'),
+      false,
+      'Guest request must omit document_id'
+    );
+    assert.strictEqual(wsRequests[1].body.text, 'Văn bản khách');
+    assert.strictEqual(wsToasts.length, 4);
+    assert.strictEqual(wsToasts[3].type, 'success');
+
+    // Case E: Guest user + invalid provided document_id (-1) -> must still show error and NOT call API
+    await vm.runInContext(
+      `currentDocData = { document_id: -1, original_text: 'Văn bản âm', translated_text: 'Old', target_lang: 'vi' }; handleRetranslate();`,
+      wsSandbox
+    );
+    assert.strictEqual(wsRequests.length, 2, 'Guest with invalid document_id must NOT send request');
+    assert.strictEqual(wsToasts.length, 5);
+    assert.strictEqual(wsToasts[4].type, 'error');
+    assert.ok(wsToasts[4].msg.includes('Mã tài liệu (Document ID) không hợp lệ'));
+  });
+
+  // Test 9: Limit 100 Pagination & Probe Request (AUDIT-04)
+  await test('9. Pagination with limit=100 (AUDIT-04): probes next page correctly when exact 100 items returned', async () => {
+    const dummy100 = Array.from({ length: 100 }, (_, i) => ({
+      id: 1000 + i,
+      user_id: 7,
+      document_id: 10,
+      action_type: 'EXTRACT',
+      status: 'SUCCESS',
+      execution_time_ms: 100,
+      error_message: null,
+      created_at: '2026-11-07T08:00:00Z',
+      updated_at: '2026-11-07T08:00:01Z',
+    }));
+
+    let probeRecords = [];
+    const env = createHistoryTestEnv({
+      initialStorage: { pdfl_token: 'valid-jwt-token' },
+      fetchImpl: async (url) => {
+        const query = url.split('?')[1] || '';
+        const params = new URLSearchParams(query);
+        const skip = parseInt(params.get('skip'), 10);
+        const limit = parseInt(params.get('limit'), 10);
+
+        if (limit === 1) {
+          // Probe request
+          return {
+            status: 200,
+            ok: true,
+            json: async () => ({ status: 'success', data: probeRecords }),
+          };
+        }
+
+        if (skip === 0 && limit === 100) {
+          return {
+            status: 200,
+            ok: true,
+            json: async () => ({ status: 'success', data: dummy100 }),
+          };
+        }
+
+        return {
+          status: 200,
+          ok: true,
+          json: async () => ({ status: 'success', data: [] }),
+        };
+      },
+    });
+
+    env.controller.setPageLimit(100);
+
+    // Scenario A: Exactly 100 items returned and probe returns 1 item -> hasNextPage = true, Next enabled
+    probeRecords = [sampleRecords[0]];
+    const resA = await env.controller.fetchHistoryList(1);
+    assert.strictEqual(resA.length, 100);
+    assert.strictEqual(env.requests.length, 2, 'Should send initial 100 + 1 probe request');
+    assert.strictEqual(env.requests[0].url, '/api/history?skip=0&limit=100');
+    assert.strictEqual(env.requests[1].url, '/api/history?skip=100&limit=1', 'Probe request checks offset 100');
+    assert.strictEqual(env.elements.btnHistoryNextPage.disabled, false, 'Next should be enabled when probe returns an item');
+
+    // Scenario B: Exactly 100 items returned and probe returns 0 items (exact last page) -> hasNextPage = false, Next disabled
+    probeRecords = [];
+    const resB = await env.controller.fetchHistoryList(1);
+    assert.strictEqual(resB.length, 100);
+    assert.strictEqual(env.requests.length, 4, 'Should send initial 100 + 1 probe request');
+    assert.strictEqual(env.requests[3].url, '/api/history?skip=100&limit=1');
+    assert.strictEqual(env.elements.btnHistoryNextPage.disabled, true, 'Next must be disabled on exact 100-item last page');
+
+    // Scenario C: Less than 100 items returned (e.g. 50 items) -> no probe request sent, Next disabled
+    const envC = createHistoryTestEnv({
+      initialStorage: { pdfl_token: 'valid-jwt-token' },
+      fetchImpl: async (url) => ({
+        status: 200,
+        ok: true,
+        json: async () => ({ status: 'success', data: dummy100.slice(0, 50) }),
+      }),
+    });
+    envC.controller.setPageLimit(100);
+    const resC = await envC.controller.fetchHistoryList(1);
+    assert.strictEqual(resC.length, 50);
+    assert.strictEqual(envC.requests.length, 1, 'Should NOT send probe request when returned items < 100');
+    assert.strictEqual(envC.elements.btnHistoryNextPage.disabled, true, 'Next must be disabled when items < 100');
   });
 
   console.log('\n================================================================');

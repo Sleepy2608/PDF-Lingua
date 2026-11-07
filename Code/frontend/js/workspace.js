@@ -1,5 +1,7 @@
 const API_BASE_URL = 'http://localhost:8000/api/process';
 
+const hostShowToast = typeof window !== 'undefined' && typeof window.showToast === 'function' ? window.showToast : null;
+
 let currentDocData = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -132,7 +134,9 @@ function getAuthHeaders() {
   try {
     if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
       token = window.pdfLinguaAuth.getStoredToken();
-    } else if (typeof localStorage !== 'undefined' && localStorage) {
+    } else if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.getItem === 'function') {
+      token = window.localStorage.getItem('pdfl_token');
+    } else if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.getItem === 'function') {
       token = localStorage.getItem('pdfl_token');
     }
   } catch (e) {
@@ -391,6 +395,27 @@ async function handleRetranslate() {
     return;
   }
 
+  const authHeaders = getAuthHeaders();
+  const isAuthenticated = Boolean(authHeaders['Authorization']);
+  const rawDocId = currentDocData.document_id;
+  const hasProvidedDocId = rawDocId !== null && rawDocId !== undefined;
+  const isNonEmptyScalar =
+    hasProvidedDocId &&
+    (typeof rawDocId === 'number' || (typeof rawDocId === 'string' && rawDocId.trim() !== ''));
+  const parsedDocId = isNonEmptyScalar ? Number(rawDocId) : NaN;
+  const isValidDocId = Number.isInteger(parsedDocId) && parsedDocId > 0;
+
+  // AUDIT-01: Không âm thầm lược bỏ document_id khi tài liệu cần liên kết với Processing History
+  // hoặc khi document_id được truyền nhưng không hợp lệ.
+  if (hasProvidedDocId && !isValidDocId) {
+    showToast('Mã tài liệu (Document ID) không hợp lệ để ghi nhận lịch sử xử lý!', 'error');
+    return;
+  }
+  if (isAuthenticated && !isValidDocId) {
+    showToast('Không tìm thấy mã tài liệu hợp lệ để liên kết lịch sử xử lý. Vui lòng tải lại tài liệu!', 'error');
+    return;
+  }
+
   const newTargetLang = document.getElementById('targetLangSelect')?.value || 'vi';
   const btnRetranslate = document.getElementById('btnRetranslate');
 
@@ -405,17 +430,21 @@ async function handleRetranslate() {
   }
 
   try {
-    const authHeaders = getAuthHeaders();
     const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+
+    const retranslatePayload = {
+      text: currentDocData.original_text,
+      target_lang: newTargetLang,
+      source_lang: 'auto',
+    };
+    if (isValidDocId) {
+      retranslatePayload.document_id = parsedDocId;
+    }
 
     const response = await fetch(`${API_BASE_URL}/retranslate`, {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify({
-        text: currentDocData.original_text,
-        target_lang: newTargetLang,
-        source_lang: 'auto',
-      }),
+      body: JSON.stringify(retranslatePayload),
     });
 
     let result = null;
@@ -656,6 +685,12 @@ function updateProgress(percentage, text, currentStep) {
 }
 
 function showToast(message, type = 'info') {
+  if (typeof hostShowToast === 'function') {
+    try {
+      hostShowToast(message, type);
+    } catch (e) {}
+  }
+
   const container = document.getElementById('toastContainer');
   if (!container) return;
 

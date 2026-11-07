@@ -201,10 +201,12 @@
     const safePage = Math.max(1, parseInt(page, 10) || 1);
     const safeLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || DEFAULT_PAGE_LIMIT));
     const skip = (safePage - 1) * safeLimit;
+    // Lookahead limit + 1 (capped at Backend max 100) to detect if a next page exists (AUDIT-04)
+    const fetchLimit = safeLimit < 100 ? safeLimit + 1 : 100;
 
     const params = new URLSearchParams();
     params.set('skip', String(skip));
-    params.set('limit', String(safeLimit));
+    params.set('limit', String(fetchLimit));
 
     const normalizedAction = String(currentActionType || '').trim().toUpperCase();
     if (normalizedAction && VALID_ACTION_TYPES.includes(normalizedAction)) {
@@ -221,7 +223,7 @@
       params.set('document_id', String(docValidation.value));
     }
 
-    return { params, skip, limit: safeLimit, page: safePage, docValidation };
+    return { params, skip, limit: safeLimit, fetchLimit, page: safePage, docValidation };
   }
 
   // ── Table Row & Badge Rendering ─────────────────────────────────────────────
@@ -586,7 +588,10 @@
     const tbody = document.getElementById('historyTableBody');
 
     // Validate Document ID filter client-side first
-    const { params, docValidation } = buildHistoryQueryParams(currentPage, currentLimit);
+    const { params, skip, limit: pageLimit, fetchLimit, docValidation } = buildHistoryQueryParams(
+      currentPage,
+      currentLimit
+    );
     if (!docValidation.valid) {
       isFetching = false;
       currentItems = [];
@@ -640,11 +645,47 @@
       }
 
       if (response.status === 200) {
-        const records = responseData && Array.isArray(responseData.data) ? responseData.data : [];
-        currentItems = records;
-        hasNextPage = records.length >= currentLimit;
-        renderHistoryTable(records);
-        return records;
+        const rawRecords = responseData && Array.isArray(responseData.data) ? responseData.data : [];
+        if (fetchLimit > pageLimit) {
+          hasNextPage = rawRecords.length > pageLimit;
+        } else if (rawRecords.length < pageLimit) {
+          hasNextPage = false;
+        } else {
+          // AUDIT-04: Khi pageLimit === 100 (chạm trần tối đa 100 của Backend) và trang hiện tại đủ 100 bản ghi,
+          // thực hiện truy vấn thăm dò 1 bản ghi ở vị trí kế tiếp (skip + pageLimit, limit = 1)
+          // để xác định chính xác trang tiếp theo có tồn tại hay không mà không cần đổi Backend API contract.
+          const probeParams = new URLSearchParams(params.toString());
+          probeParams.set('skip', String(skip + pageLimit));
+          probeParams.set('limit', '1');
+
+          let nextExists = false;
+          try {
+            const probeResponse = await requestWithAuth(`${API_BASE_URL}/api/history?${probeParams.toString()}`, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+              },
+            });
+            if (requestId !== activeRequestId) {
+              return null;
+            }
+            if (probeResponse && probeResponse.status === 200) {
+              const probeData = await probeResponse.json();
+              if (requestId !== activeRequestId) {
+                return null;
+              }
+              const probeRecords = probeData && Array.isArray(probeData.data) ? probeData.data : [];
+              nextExists = probeRecords.length > 0;
+            }
+          } catch (_probeErr) {
+            nextExists = false;
+          }
+          hasNextPage = nextExists;
+        }
+        const pageRecords = rawRecords.slice(0, pageLimit);
+        currentItems = pageRecords;
+        renderHistoryTable(pageRecords);
+        return pageRecords;
       }
 
       // Reset items on error
@@ -774,11 +815,20 @@
     const workspaceSection = document.getElementById('workspaceSection');
     const heroSection = document.getElementById('heroSection');
     const docNameDisplay = document.getElementById('docNameDisplay');
+    const hasOpenDocument = Boolean(
+      workspaceSection && docNameDisplay && docNameDisplay.textContent && docNameDisplay.textContent.trim() !== ''
+    );
 
-    if (workspaceSection && docNameDisplay && docNameDisplay.textContent.trim() !== '') {
+    if (hasOpenDocument) {
       workspaceSection.style.display = 'block';
+      if (heroSection) heroSection.style.display = 'none';
     } else if (heroSection) {
       heroSection.style.display = 'block';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+    }
+
+    if (typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 

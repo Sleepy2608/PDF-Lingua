@@ -253,12 +253,18 @@ def _execute_pdf_background_job(
                 job_manager.update_progress(job_id, processed_pages=processed, total_pages=total, message=msg)
 
             def _do_background_extract() -> dict[str, Any]:
-                return pdf_service.extract_hybrid_fast_path(
+                res = pdf_service.extract_hybrid_fast_path(
                     tmp_path,
                     ocr_service=ocr_service,
                     max_pages=max_allowed_pages,
                     progress_callback=on_progress,
                 )
+                extracted_text = (res or {}).get("text", "")
+                used_ocr = (res or {}).get("ocr_pages_count", 0) > 0 or (res or {}).get("fast_path_used") is False
+                _update_document_ocr_flag(db_session, doc_record, used_ocr)
+                if not extracted_text or not str(extracted_text).strip():
+                    raise ValueError("Không thể trích xuất văn bản từ tài liệu này.")
+                return res
 
             # Ghi nhận EXTRACT history nếu có phiên DB và document_id
             extract_res = history_service.execute_tracked_action(
@@ -271,11 +277,6 @@ def _execute_pdf_background_job(
 
             original_text = extract_res.get("text", "")
             is_ocr_used = extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
-            _update_document_ocr_flag(db_session, doc_record, is_ocr_used)
-
-            if not original_text.strip():
-                job_manager.set_failed(job_id, "Không thể trích xuất văn bản từ tài liệu này.")
-                return
 
             job_manager.set_translating(job_id, message="Đang dịch thuật văn bản sang ngôn ngữ đích...")
             trans_res = history_service.execute_tracked_action(

@@ -452,3 +452,33 @@ def test_db_rollback_on_commit_error():
         )
     assert mock_db.rollback.called
 
+
+def test_update_status_and_count_rollback_on_query_error():
+    """Verify `update_status` and `count_histories_by_user` call `db.rollback()` when `db.query` fails (AUDIT-05)."""
+    mock_db = MagicMock()
+    mock_db.query.side_effect = SQLAlchemyError("Database connection lost during query")
+
+    with pytest.raises(SQLAlchemyError):
+        HistoryService.update_status(
+            mock_db,
+            history_id=1,
+            status=ProcessingStatus.SUCCESS,
+            execution_time_ms=100,
+        )
+    assert mock_db.rollback.call_count == 1
+
+    with pytest.raises(SQLAlchemyError):
+        HistoryService.count_histories_by_user(mock_db, user_id=1, current_user_id=1)
+    assert mock_db.rollback.call_count == 2
+
+
+def test_composite_index_user_created_id_defined(in_memory_db):
+    """Verify composite index `ix_processing_histories_user_created_id` on (user_id, created_at, id) exists (AUDIT-06)."""
+    from sqlalchemy import inspect as sa_inspect
+
+    inspector = sa_inspect(in_memory_db.get_bind())
+    indexes = {idx["name"]: idx["column_names"] for idx in inspector.get_indexes("processing_histories")}
+    assert "ix_processing_histories_user_created_id" in indexes
+    assert indexes["ix_processing_histories_user_created_id"] == ["user_id", "created_at", "id"]
+
+

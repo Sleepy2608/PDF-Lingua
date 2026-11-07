@@ -569,3 +569,110 @@ def test_persist_user_document_and_ocr_flag_helpers(in_memory_db):
     # 3. Update OCR flag
     _update_document_ocr_flag(in_memory_db, doc, is_ocr_used=True)
     assert doc.is_ocr_used is True
+
+
+def test_background_job_empty_and_successful_extraction_consistency(in_memory_db, tmp_path):
+    """
+    Verify `_execute_pdf_background_job` marks both the Job and EXTRACT ProcessingHistory
+    as FAILED when extraction returns empty/whitespace text, and marks both EXTRACT and
+    TRANSLATE as SUCCESS when extraction succeeds (AUDIT-02).
+    """
+    from unittest.mock import patch
+    from app.api.process import _execute_pdf_background_job, job_manager, pdf_service, translation_service
+    from app.services.job_service import JobStatus
+
+    user = User(email="bg_job_audit02@example.com", hashed_password="pw", role=UserRole.FREE)
+    in_memory_db.add(user)
+    in_memory_db.commit()
+    in_memory_db.refresh(user)
+
+    # Create non-closing wrapper around in_memory_db so SessionLocal() uses the test session
+    class _NonClosingSessionProxy:
+        def __init__(self, real_session):
+            self._s = real_session
+
+        def __getattr__(self, name):
+            if name == "close":
+                return lambda: None
+            return getattr(self._s, name)
+
+    # 1. Empty extraction -> Job FAILED and EXTRACT ProcessingHistory FAILED
+    pdf_file_empty = tmp_path / "empty_doc.pdf"
+    pdf_file_empty.write_bytes(b"%PDF-1.4 empty content")
+    job_empty = job_manager.create_job(filename="empty_doc.pdf", target_lang="vi")
+
+    with patch("app.api.process.SessionLocal", return_value=_NonClosingSessionProxy(in_memory_db)), patch.object(
+        pdf_service, "validate_pdf", return_value={"is_valid": True, "page_count": 1, "error": None}
+    ), patch.object(
+        pdf_service,
+        "extract_hybrid_fast_path",
+        return_value={"text": "   \n  ", "ocr_pages_count": 1, "fast_path_used": False},
+    ):
+        _execute_pdf_background_job(
+            job_id=job_empty.job_id,
+            tmp_path=pdf_file_empty,
+            filename="empty_doc.pdf",
+            target_lang="vi",
+            max_allowed_pages=100,
+            file_size_mb=0.01,
+            user_id=user.id,
+        )
+
+    updated_job_empty = job_manager.get_job(job_empty.job_id)
+    assert updated_job_empty is not None
+    assert updated_job_empty.status == JobStatus.FAILED
+    assert "Không thể trích xuất văn bản" in (updated_job_empty.error or "")
+
+    empty_histories = (
+        in_memory_db.query(ProcessingHistory)
+        .filter(ProcessingHistory.user_id == user.id)
+        .order_by(ProcessingHistory.id.asc())
+        .all()
+    )
+    assert len(empty_histories) == 1
+    assert empty_histories[0].action_type == ActionType.EXTRACT
+    assert empty_histories[0].status == ProcessingStatus.FAILED
+    assert "Không thể trích xuất văn bản" in (empty_histories[0].error_message or "")
+
+    # 2. Valid extraction -> Job COMPLETED and both EXTRACT + TRANSLATE ProcessingHistory SUCCESS
+    pdf_file_ok = tmp_path / "valid_doc.pdf"
+    pdf_file_ok.write_bytes(b"%PDF-1.4 valid content")
+    job_ok = job_manager.create_job(filename="valid_doc.pdf", target_lang="vi")
+
+    with patch("app.api.process.SessionLocal", return_value=_NonClosingSessionProxy(in_memory_db)), patch.object(
+        pdf_service, "validate_pdf", return_value={"is_valid": True, "page_count": 2, "error": None}
+    ), patch.object(
+        pdf_service,
+        "extract_hybrid_fast_path",
+        return_value={"text": "Valid extracted PDF text.", "ocr_pages_count": 0, "fast_path_used": True},
+    ), patch.object(
+        translation_service,
+        "translate_text",
+        return_value={"translated_text": "Văn bản PDF hợp lệ đã trích xuất.", "engine_used": "mock_engine"},
+    ):
+        _execute_pdf_background_job(
+            job_id=job_ok.job_id,
+            tmp_path=pdf_file_ok,
+            filename="valid_doc.pdf",
+            target_lang="vi",
+            max_allowed_pages=100,
+            file_size_mb=0.02,
+            user_id=user.id,
+        )
+
+    updated_job_ok = job_manager.get_job(job_ok.job_id)
+    assert updated_job_ok is not None
+    assert updated_job_ok.status == JobStatus.COMPLETED
+
+    all_histories = (
+        in_memory_db.query(ProcessingHistory)
+        .filter(ProcessingHistory.user_id == user.id)
+        .order_by(ProcessingHistory.id.asc())
+        .all()
+    )
+    assert len(all_histories) == 3
+    assert all_histories[1].action_type == ActionType.EXTRACT
+    assert all_histories[1].status == ProcessingStatus.SUCCESS
+    assert all_histories[2].action_type == ActionType.TRANSLATE
+    assert all_histories[2].status == ProcessingStatus.SUCCESS
+

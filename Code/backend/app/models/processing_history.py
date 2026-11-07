@@ -21,7 +21,7 @@ updated_at        : UTC timestamp when the record was last modified.
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, Text
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -47,6 +47,14 @@ class ProcessingHistory(Base):
     """SQLAlchemy ORM model for the `processing_histories` table."""
 
     __tablename__ = "processing_histories"
+    __table_args__ = (
+        Index(
+            "ix_processing_histories_user_created_id",
+            "user_id",
+            "created_at",
+            "id",
+        ),
+    )
 
     # ── Primary Key ─────────────────────────────────────────────────────────
     id: int = Column(Integer, primary_key=True, index=True, autoincrement=True)
