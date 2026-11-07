@@ -11,6 +11,7 @@ __all__ = [
     "TranslationService",
     "ExportService",
     "StorageService",
+    "SubscriptionService",
     "JobManager",
     "job_manager",
 ]
@@ -34,6 +35,9 @@ def __getattr__(name: str):
     elif name == "StorageService":
         from app.services.storage_service import StorageService
         return StorageService
+    elif name == "SubscriptionService":
+        from app.services.subscription_service import SubscriptionService
+        return SubscriptionService
     elif name == "JobManager":
         from app.services.job_service import JobManager
         return JobManager

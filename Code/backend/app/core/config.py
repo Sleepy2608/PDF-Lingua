@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -71,6 +72,16 @@ class Settings:
 
     # CORS
     FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:5500")
+
+    # Payment & VietQR Configuration
+    PAYMENT_WEBHOOK_SECRET: str = os.getenv(
+        "PAYMENT_WEBHOOK_SECRET", "dev-webhook-secret-pdf-lingua"
+    )
+    VIETQR_BANK_ID: str = os.getenv("VIETQR_BANK_ID", "MB")
+    VIETQR_BANK_NAME: str = os.getenv("VIETQR_BANK_NAME", "MB Bank (Ngân hàng Quân Đội)")
+    VIETQR_ACCOUNT_NUMBER: str = os.getenv("VIETQR_ACCOUNT_NUMBER", "0345678999")
+    VIETQR_ACCOUNT_NAME: str = os.getenv("VIETQR_ACCOUNT_NAME", "PDF LINGUA PROJECT")
+    TRANSACTION_EXPIRE_SECONDS: int = int(os.getenv("TRANSACTION_EXPIRE_SECONDS", "900"))
 
 
 settings = Settings()
