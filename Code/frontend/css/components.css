@@ -389,6 +389,19 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+#regFullName,
+#regEmail,
+#loginEmail,
+.input-wrap:not(:has(.btn-toggle-eye)) .form-input {
+  padding-right: 1rem;
+}
+
+#editFullNameInput,
+#accountModal .account-edit-form .form-input {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 .form-input::placeholder {
   color: var(--text-light);
 }
@@ -596,8 +609,8 @@
   max-width: 500px;
 }
 
-.account-modal-body {
-  padding: 1.5rem 2rem;
+#accountModal .account-modal-body {
+  padding: 0;
 }
 
 .account-loading-wrap {
@@ -712,7 +725,7 @@
 
 .btn-edit-toggle:hover {
   background-color: #EEF2FF;
-  color: var(--color-primary-dark);
+  color: var(--color-primary-indigo-dark);
 }
 
 .account-edit-form {
@@ -727,11 +740,6 @@
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.25rem;
-}
-
-.btn-sm {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8125rem;
 }
 
 .account-detail-label {
@@ -753,11 +761,16 @@
   border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   background-color: #F1F5F9;
   color: #475569;
   border: 1px solid #E2E8F0;
+}
+
+.badge-role.role-free {
+  background-color: #F1F5F9;
+  color: #475569;
+  border-color: #E2E8F0;
 }
 
 .badge-role.role-pro {
@@ -794,8 +807,20 @@
   background-color: #10B981;
 }
 
-.account-modal-footer {
-  padding: 1rem 2rem 1.5rem;
+.badge-status.status-inactive,
+.badge-status.is-inactive {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
+.badge-status.status-inactive::before,
+.badge-status.is-inactive::before {
+  background-color: #DC2626;
+}
+
+#accountModal .account-modal-footer {
+  padding: 1.5rem 0 0;
 }
 
 /* ── Change Password Section (PDFL-80.4) ─────────────────────────────────── */

@@ -1987,6 +1987,61 @@ async function main() {
     assert.strictEqual(reloadedEnv.elements.sideNavTranslate.classList.contains('active'), false, 'Translate nav item must not be active after reload');
   });
 
+  await runTest('PDFL-59 (#6): Keyboard accessibility (Enter & Space) on #sidebarUserProfile triggers profile action and prevents Space scroll', () => {
+    // 1. Guest user: Enter and Space open Login modal, Space prevents default scroll
+    const guestEnv = createTestEnvironment();
+    let loginOpenCount = 0;
+    guestEnv.elements.btnLogin.click = () => { loginOpenCount++; };
+
+    const keydownListeners = guestEnv.elements.sidebarUserProfile.listeners['keydown'] || [];
+    assert(keydownListeners.length > 0, 'Expected keydown listener on #sidebarUserProfile');
+
+    let enterPrevented = false;
+    keydownListeners.forEach((fn) => fn({
+      key: 'Enter',
+      preventDefault: () => { enterPrevented = true; },
+    }));
+    assert.strictEqual(loginOpenCount, 1, 'Pressing Enter on #sidebarUserProfile should open Login modal for guest');
+    assert.strictEqual(enterPrevented, true, 'Enter should call preventDefault');
+
+    let spacePrevented = false;
+    keydownListeners.forEach((fn) => fn({
+      key: ' ',
+      preventDefault: () => { spacePrevented = true; },
+    }));
+    assert.strictEqual(loginOpenCount, 2, 'Pressing Space on #sidebarUserProfile should open Login modal for guest');
+    assert.strictEqual(spacePrevented, true, 'Space should call preventDefault to prevent page scrolling');
+
+    // Unrelated key (e.g., Tab) should not trigger action
+    let tabPrevented = false;
+    keydownListeners.forEach((fn) => fn({
+      key: 'Tab',
+      preventDefault: () => { tabPrevented = true; },
+    }));
+    assert.strictEqual(loginOpenCount, 2, 'Pressing Tab should not open modal');
+    assert.strictEqual(tabPrevented, false, 'Pressing Tab should not call preventDefault');
+
+    // 2. Authenticated user: Enter and Space open Account modal
+    const authEnv = createTestEnvironment({
+      pdfl_user: JSON.stringify({ id: 10, email: 'auth@example.com', role: 'pro' }),
+    });
+    let accountOpenCount = 0;
+    authEnv.elements.btnOpenAccountModal.click = () => { accountOpenCount++; };
+
+    const authKeydownListeners = authEnv.elements.sidebarUserProfile.listeners['keydown'] || [];
+    authKeydownListeners.forEach((fn) => fn({
+      key: 'Enter',
+      preventDefault: () => {},
+    }));
+    assert.strictEqual(accountOpenCount, 1, 'Pressing Enter on #sidebarUserProfile should open Account modal for logged-in user');
+
+    authKeydownListeners.forEach((fn) => fn({
+      key: ' ',
+      preventDefault: () => {},
+    }));
+    assert.strictEqual(accountOpenCount, 2, 'Pressing Space on #sidebarUserProfile should open Account modal for logged-in user');
+  });
+
   console.log('\n================================================================');
   console.log(`SUMMARY: ${passedTests}/${totalTests} tests passed (${totalTests - passedTests} failed).`);
   console.log('================================================================');
