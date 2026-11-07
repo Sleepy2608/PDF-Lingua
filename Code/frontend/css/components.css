@@ -389,6 +389,19 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+#regFullName,
+#regEmail,
+#loginEmail,
+.input-wrap:not(:has(.btn-toggle-eye)) .form-input {
+  padding-right: 1rem;
+}
+
+#editFullNameInput,
+#accountModal .account-edit-form .form-input {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 .form-input::placeholder {
   color: var(--text-light);
 }
@@ -596,8 +609,8 @@
   max-width: 500px;
 }
 
-.account-modal-body {
-  padding: 1.5rem 2rem;
+#accountModal .account-modal-body {
+  padding: 0;
 }
 
 .account-loading-wrap {
@@ -712,7 +725,7 @@
 
 .btn-edit-toggle:hover {
   background-color: #EEF2FF;
-  color: var(--color-primary-dark);
+  color: var(--color-primary-indigo-dark);
 }
 
 .account-edit-form {
@@ -727,11 +740,6 @@
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.25rem;
-}
-
-.btn-sm {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8125rem;
 }
 
 .account-detail-label {
@@ -753,11 +761,16 @@
   border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   background-color: #F1F5F9;
   color: #475569;
   border: 1px solid #E2E8F0;
+}
+
+.badge-role.role-free {
+  background-color: #F1F5F9;
+  color: #475569;
+  border-color: #E2E8F0;
 }
 
 .badge-role.role-pro {
@@ -794,8 +807,20 @@
   background-color: #10B981;
 }
 
-.account-modal-footer {
-  padding: 1rem 2rem 1.5rem;
+.badge-status.status-inactive,
+.badge-status.is-inactive {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+
+.badge-status.status-inactive::before,
+.badge-status.is-inactive::before {
+  background-color: #DC2626;
+}
+
+#accountModal .account-modal-footer {
+  padding: 1.5rem 0 0;
 }
 
 /* ── Change Password Section (PDFL-80.4) ─────────────────────────────────── */
@@ -2906,3 +2931,427 @@
 }
 
 
+/* ==========================================================================
+   Document Management Workspace (PDF-Lingua Modern Redesign)
+   Anti-slop, Linear/Craft-inspired refined document library
+   ========================================================================== */
+.documents-section {
+  padding: 2.25rem 0 4rem;
+  background-color: var(--bg-subtle, #F8FAFC);
+  min-height: calc(100vh - 72px);
+}
+
+.documents-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Open, unboxed page header */
+.documents-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding: 0 0.25rem;
+}
+
+.documents-header-text {
+  flex: 1;
+  min-width: 260px;
+}
+
+.documents-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-title, #0F172A);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.documents-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted, #64748B);
+  margin-top: 0.35rem;
+  line-height: 1.45;
+}
+
+.documents-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.doc-header-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.doc-header-back-btn:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.doc-header-back-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.doc-header-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: var(--color-gradient-cta, linear-gradient(135deg, #4F46E5 0%, #2563EB 100%));
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.doc-header-upload-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.38);
+}
+
+.doc-header-upload-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* Sleek unified document card */
+.documents-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle, #E2E8F0);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Integrated card toolbar */
+.documents-card-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle, #E2E8F0);
+  background: #FFFFFF;
+}
+
+.documents-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.documents-count-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.01em;
+}
+
+.documents-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.documents-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.documents-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: #94A3B8;
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.documents-search-input {
+  width: 270px;
+  padding: 0.475rem 0.85rem 0.475rem 2.25rem;
+  font-size: 0.8125rem;
+  color: #0F172A;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.documents-search-input::placeholder {
+  color: #94A3B8;
+}
+
+.documents-search-input:focus {
+  background: #FFFFFF;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.documents-search-box:focus-within .documents-search-icon {
+  color: #6366F1;
+}
+
+/* Document table styling */
+.documents-table-wrapper {
+  overflow-x: auto;
+  min-height: 220px;
+}
+
+.documents-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.documents-table thead {
+  background: #FAFAFA;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.documents-table th {
+  padding: 0.8rem 1.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.documents-table tbody tr {
+  border-bottom: 1px solid #F1F5F9;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.documents-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.documents-table tbody tr:hover {
+  background-color: #F8FAFC;
+}
+
+.documents-table td {
+  padding: 0.95rem 1.25rem;
+  font-size: 0.8125rem;
+  color: #334155;
+  vertical-align: middle;
+}
+
+/* Document file name cell */
+.doc-file-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.doc-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #FEF2F2;
+  border: 1px solid #FEE2E2;
+  color: #DC2626;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.documents-table tbody tr:hover .doc-icon-badge {
+  transform: scale(1.05);
+}
+
+.doc-file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.doc-cell-filename {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+/* Method badge */
+.doc-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.doc-method-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.doc-method-digital {
+  background: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #DBEAFE;
+}
+
+.doc-method-digital .doc-method-dot {
+  background: #3B82F6;
+}
+
+.doc-method-ocr {
+  background: #FEF3C7;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+
+.doc-method-ocr .doc-method-dot {
+  background: #F59E0B;
+}
+
+/* Action buttons in row */
+.doc-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.doc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.doc-action-btn:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #0F172A;
+  transform: translateY(-1px);
+}
+
+.doc-action-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.doc-table-download-btn:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4F46E5;
+}
+
+/* Empty, loading, and error states inside card */
+.documents-card-state {
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+.documents-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+}
+
+.documents-state-icon.error {
+  background: #FFF1F2;
+  border-color: #FFE4E6;
+  color: #E11D48;
+}
+
+.documents-state-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 0.35rem;
+}
+
+.documents-state-text {
+  font-size: 0.875rem;
+  color: #64748B;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .documents-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .documents-header-actions {
+    justify-content: flex-start;
+  }
+  .documents-card-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .documents-search-input {
+    width: 100%;
+  }
+  .documents-search-box {
+    width: 100%;
+  }
+}

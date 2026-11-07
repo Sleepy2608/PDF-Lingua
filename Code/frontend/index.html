@@ -53,7 +53,7 @@
                 <div class="sidebar-section">
                     <ul class="sidebar-nav-list">
                         <li>
-                            <a href="#home" class="sidebar-nav-item" id="sideNavHome" data-tooltip="Trang chủ">
+                            <a href="#home" class="sidebar-nav-item active" id="sideNavHome" data-tooltip="Trang chủ">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -64,7 +64,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#translate" class="sidebar-nav-item active" id="sideNavTranslate" data-tooltip="Dịch PDF">
+                            <a href="#translate" class="sidebar-nav-item" id="sideNavTranslate" data-tooltip="Dịch PDF">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M5 8l6 6"></path>
@@ -99,13 +99,13 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#documents" class="sidebar-nav-item" id="sideNavDocuments" data-tooltip="Quản lý tài liệu">
+                            <a href="#documents" class="sidebar-nav-item" id="sideNavDocuments" data-tooltip="Tài liệu">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                     </svg>
                                 </span>
-                                <span class="nav-item-text">Quản lý tài liệu</span>
+                                <span class="nav-item-text">Tài liệu</span>
                             </a>
                         </li>
                         <li>
@@ -165,7 +165,7 @@
 
             <!-- Fixed Footer: User Profile -->
             <div class="sidebar-footer">
-                <div class="sidebar-profile-card" id="sidebarUserProfile" tabindex="0" role="button" aria-label="Xem thông tin tài khoản" data-tooltip="Tài khoản cá nhân">
+                <div class="sidebar-profile-card" id="sidebarUserProfile" tabindex="0" role="button" aria-label="Xem thông tin tài khoản" data-tooltip="Khách">
                     <div class="sidebar-avatar" id="sidebarUserAvatar">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -173,8 +173,8 @@
                         </svg>
                     </div>
                     <div class="sidebar-user-info">
-                        <div class="sidebar-user-name" id="sidebarUserName">Người dùng</div>
-                        <div class="sidebar-user-sub" id="sidebarUserRole">Free / Pro</div>
+                        <div class="sidebar-user-name" id="sidebarUserName">Khách</div>
+                        <div class="sidebar-user-sub" id="sidebarUserRole" style="display: none;"></div>
                     </div>
                     <div class="sidebar-profile-more" id="btnSidebarMore" title="Tùy chọn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -202,11 +202,18 @@
                                 <line x1="3" y1="18" x2="21" y2="18"></line>
                             </svg>
                         </button>
+                        <a href="#" class="header-collapsed-brand" id="headerCollapsedBrand" title="PDF-Lingua">
+                            <img src="assets/images/logo-app-transparent.png" alt="PDF-Lingua" class="header-brand-img">
+                            <span class="header-brand-name">
+                                <span class="header-brand-badge">PDF</span>
+                                <span class="header-brand-text">Lingua</span>
+                            </span>
+                        </a>
                     </div>
 
             <nav>
                 <ul class="nav-menu">
-                    <li><a href="#translate" class="nav-link active">Dịch PDF</a></li>
+                    <li><a href="#translate" class="nav-link">Dịch PDF</a></li>
                     <li><a href="#ai-copilot" class="nav-link">Hỏi đáp AI</a></li>
                     <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
                 </ul>
@@ -559,6 +566,121 @@
                             </div>
                         </div>
                         <div class="pane-body" id="paneTranslated" tabindex="0" contenteditable="plaintext-only" spellcheck="false"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Document Management Page Section (PDFL-92.1 & PDFL-92.2, Initially Hidden) -->
+        <section class="documents-section" id="documentsSection" style="display: none;">
+            <div class="documents-container">
+                <!-- Documents Page Header (Open, Refined Workspace Header) -->
+                <div class="documents-page-header">
+                    <div class="documents-header-text">
+                        <h2 class="documents-title">Tài liệu của tôi</h2>
+                        <p class="documents-subtitle">Quản lý danh sách tài liệu PDF đã tải lên, tra cứu thông tin xử lý và tải xuống tệp tin.</p>
+                    </div>
+                    <div class="documents-header-actions">
+                        <button type="button" class="btn btn-secondary btn-sm doc-header-back-btn" id="btnCloseDocumentsView" title="Quay lại không gian dịch thuật">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            <span>Quay lại Dịch PDF</span>
+                        </button>
+                        <button type="button" class="btn btn-gradient btn-sm doc-header-upload-btn" id="btnDocsUploadNew" title="Tải lên tệp PDF mới">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span>Tải PDF lên</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Documents List Card (Unified Minimalist Card) -->
+                <div class="documents-card" id="documentsListCard">
+                    <div class="documents-card-toolbar">
+                        <div class="documents-toolbar-left">
+                            <span class="documents-count-chip font-mono" id="documentsCountBadge">0 tài liệu</span>
+                        </div>
+                        <div class="documents-toolbar-right">
+                            <div class="documents-search-box">
+                                <svg class="documents-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="documentsSearchInput" class="documents-search-input" placeholder="Tìm kiếm theo tên tài liệu...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="documents-table-wrapper" id="documentsTableWrapper">
+                        <table class="documents-table admin-users-table" id="documentsTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Tên tài liệu</th>
+                                    <th>Dung lượng</th>
+                                    <th>Số trang</th>
+                                    <th>Ngôn ngữ đích</th>
+                                    <th>Phương thức</th>
+                                    <th>Ngày tải lên</th>
+                                    <th class="text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTableBody">
+                                <!-- Document rows rendered dynamically -->
+                            </tbody>
+                        </table>
+
+                        <div class="documents-card-state admin-table-empty" id="documentsLoadingState" style="display: none;">
+                            <div class="progress-spinner" style="width: 32px; height: 32px; margin: 0 auto 0.75rem;"></div>
+                            <h4 class="documents-state-title empty-title">Đang tải danh sách tài liệu...</h4>
+                            <p class="documents-state-text empty-text">Vui lòng chờ trong giây lát trong khi hệ thống đồng bộ dữ liệu của bạn.</p>
+                        </div>
+
+                        <div class="documents-card-state admin-table-empty" id="documentsEmptyState">
+                            <div class="documents-state-icon empty-icon-wrap">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                                </svg>
+                            </div>
+                            <h4 class="documents-state-title empty-title">Bạn chưa có tài liệu nào</h4>
+                            <p class="documents-state-text empty-text">Hãy tải lên tệp PDF đầu tiên để bắt đầu trích xuất văn bản và dịch thuật song ngữ.</p>
+                        </div>
+
+                        <div class="documents-card-state admin-table-empty" id="documentsErrorState" style="display: none;">
+                            <div class="documents-state-icon error empty-icon-wrap">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                            </div>
+                            <h4 class="documents-state-title empty-title" id="documentsErrorTitle">Không thể tải danh sách tài liệu</h4>
+                            <p class="documents-state-text empty-text" id="documentsErrorText">Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.</p>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnDocsRetry" style="margin-top: 0.85rem;">
+                                <span>Thử lại</span>
+                            </button>
+                        </div>
+
+                        <div class="documents-card-state admin-table-empty" id="documentsUnauthState" style="display: none;">
+                            <div class="documents-state-icon empty-icon-wrap">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </div>
+                            <h4 class="documents-state-title empty-title">Vui lòng đăng nhập để quản lý tài liệu</h4>
+                            <p class="documents-state-text empty-text">Đăng nhập tài khoản để lưu trữ, tra cứu và tải xuống danh sách các tài liệu PDF của bạn.</p>
+                            <button type="button" class="btn btn-gradient btn-sm" id="btnDocsLoginPrompt" style="margin-top: 0.85rem;">
+                                <span>Đăng nhập ngay</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1966,12 +2088,133 @@
         </div>
     </div>
 
+    <!-- Document Detail Modal (PDFL-93.1) -->
+    <div class="modal-backdrop" id="documentDetailModal" role="dialog" aria-modal="true" aria-labelledby="documentDetailModalTitle" hidden style="display: none;">
+        <div class="modal-dialog account-modal-dialog document-detail-modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="documentDetailModalTitle">Chi tiết tài liệu</h2>
+                    <p class="modal-subtitle">Thông tin kỹ thuật và trạng thái xử lý tệp PDF</p>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseDocumentDetailModal" aria-label="Đóng cửa sổ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="account-modal-body" id="documentDetailModalBody">
+                <!-- Alert notification (PDFL-93.2) -->
+                <div class="form-alert alert-error" id="documentDetailAlert" role="alert" style="display: none; margin-bottom: 1rem;"></div>
+
+                <!-- Loading State (PDFL-93.2) -->
+                <div class="account-loading-wrap" id="documentDetailLoading" style="display: none;">
+                    <span class="account-spinner" aria-hidden="true"></span>
+                    <p class="account-loading-text">Đang tải thông tin chi tiết tài liệu...</p>
+                </div>
+
+                <div class="account-info-card" id="documentDetailContent">
+                    <div class="account-header-hero">
+                        <div class="account-avatar-large" id="docDetailIconBadge" style="border-radius: 12px; font-size: 0.95rem; letter-spacing: 0.04em;">PDF</div>
+                        <div class="account-hero-meta" style="min-width: 0; flex: 1;">
+                            <h3 class="account-hero-name" id="docDetailHeroFilename" style="word-break: break-word;">---</h3>
+                            <p class="account-hero-email font-mono" id="docDetailHeroSub">Mã tài liệu: #---</p>
+                        </div>
+                    </div>
+
+                    <div class="account-details-grid">
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Tên tài liệu</span>
+                            <span class="account-detail-value" id="docDetailFilename" style="text-align: right; word-break: break-word; max-width: 65%;">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">ID tài liệu</span>
+                            <span class="account-detail-value font-mono" id="docDetailId">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Dung lượng</span>
+                            <span class="account-detail-value font-mono" id="docDetailSize">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Số trang</span>
+                            <span class="account-detail-value" id="docDetailPageCount">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Ngôn ngữ đích</span>
+                            <span class="account-detail-value" id="docDetailTargetLang">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Trạng thái OCR</span>
+                            <span class="account-detail-value" id="docDetailOcrStatus">---</span>
+                        </div>
+                        <div class="account-detail-item">
+                            <span class="account-detail-label">Ngày tải lên</span>
+                            <span class="account-detail-value font-mono" id="docDetailCreatedAt">---</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-modal-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-danger btn-sm" id="btnDocDetailDelete" title="Xóa tài liệu">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Xóa tài liệu</span>
+                </button>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnCloseDocumentDetailFooter">Đóng</button>
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnDocDetailDownload" title="Tải xuống PDF">
+                        <span class="btn-spinner" id="docDetailDownloadSpinner" aria-hidden="true" style="display: none;"></span>
+                        <svg id="docDetailDownloadIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span id="docDetailDownloadText">Tải xuống PDF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Delete Confirmation Modal (PDFL-94.2) -->
+    <div class="modal-overlay" id="documentDeleteConfirmModal" role="dialog" aria-modal="true" aria-labelledby="docDeleteConfirmTitle" hidden style="display: none;">
+        <div class="admin-confirm-card">
+            <div class="confirm-icon-wrap" id="docDeleteConfirmIconWrap">
+                <svg class="confirm-warning-svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div class="confirm-content">
+                <h3 class="confirm-title" id="docDeleteConfirmTitle">Xác nhận xóa tài liệu</h3>
+                <p class="confirm-desc" id="docDeleteConfirmDesc">Thao tác này không thể hoàn tác. Tài liệu và tệp PDF lưu trữ sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
+                <div class="confirm-target-box" id="docDeleteConfirmTargetBox">
+                    <span class="target-label">Tài liệu sẽ xóa:</span>
+                    <strong class="target-email font-mono" id="docDeleteConfirmFilename">---</strong>
+                </div>
+                <div class="form-alert alert-error" id="docDeleteConfirmAlert" role="alert" style="display: none; margin-top: 0.75rem; text-align: left;"></div>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" id="btnCancelDocDelete">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDocDelete">
+                    <span class="btn-spinner" id="docDeleteSpinner" aria-hidden="true" style="display: none;"></span>
+                    <span id="docDeleteBtnText">Xác nhận xóa</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
     <script src="js/auth.js?v=2.0.0"></script>
-    <script src="js/workspace.js"></script>
+    <script src="js/workspace.js?v=2.1.0"></script>
     <script src="js/admin.js"></script>
     <script src="js/history.js"></script>
-    <script src="js/sidebar.js"></script>
+    <script src="js/sidebar.js?v=2.1.0"></script>
 </body>
 </html>

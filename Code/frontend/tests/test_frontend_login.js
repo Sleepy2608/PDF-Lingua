@@ -68,8 +68,20 @@ function createEnv() {
     'toggleNewPassword', 'confirmNewPasswordInput', 'confirmNewPasswordInputError',
     'toggleConfirmNewPassword', 'btnCancelChangePassword', 'btnSubmitChangePassword',
     'changePasswordSpinner', 'changePasswordBtnText',
+    'toggleRegPassword', 'toggleRegConfirmPassword', 'toggleLoginPassword',
   ];
   const e = Object.fromEntries(ids.map((id) => [id, new Element(id)]));
+  ['toggleRegPassword', 'toggleRegConfirmPassword', 'toggleLoginPassword'].forEach((btnId) => {
+    const eyeOpen = new Element(`${btnId}_eyeOpen`);
+    const eyeClosed = new Element(`${btnId}_eyeClosed`);
+    e[btnId].eyeOpen = eyeOpen;
+    e[btnId].eyeClosed = eyeClosed;
+    e[btnId].querySelector = (sel) => {
+      if (sel === '.eye-open') return eyeOpen;
+      if (sel === '.eye-closed') return eyeClosed;
+      return null;
+    };
+  });
   const localStorage = new MockLocalStorage();
 
   const document = {
@@ -388,10 +400,11 @@ async function test(name, fn) {
     assert.strictEqual(e.accountFullNameDisplay.textContent, 'Trần Văn Profile');
     assert.strictEqual(e.accountDetailFullName.textContent, 'Trần Văn Profile');
     assert.strictEqual(e.accountDetailEmail.textContent, 'profile@example.com');
-    assert.strictEqual(e.accountDetailRole.textContent, 'PRO');
+    assert.strictEqual(e.accountDetailRole.textContent, 'Gói Pro VIP');
     assert.strictEqual(e.accountDetailRole.className, 'badge-role role-pro');
     assert.strictEqual(e.accountAvatarLarge.textContent, 'T');
     assert.strictEqual(e.accountDetailStatus.textContent, 'Hoạt động');
+    assert.strictEqual(e.accountDetailStatus.className, 'badge-status status-active');
   });
 
   // 14. Account Modal: Expired token / 401 clears session and prompts login
@@ -918,6 +931,175 @@ async function test(name, fn) {
     a.clearStoredSession();
     assert.strictEqual(a.getStoredToken(), null);
     assert.strictEqual(a.getStoredUser(), null);
+  });
+
+  // 35. PDFL-59 Group 1 (#4): Role label & status badge synchronization in Account Modal
+  await test('PDFL-59 (#4): Account Modal synchronizes role labels with Sidebar and status badge states', async () => {
+    const { e, a } = createEnv();
+
+    // Free & Active user
+    a.renderAccountDetails({
+      id: 21,
+      email: 'free@example.com',
+      full_name: 'Free User',
+      role: 'free',
+      is_active: true,
+    });
+    assert.strictEqual(e.accountDetailRole.textContent, 'Gói Miễn phí');
+    assert.strictEqual(e.accountDetailRole.className, 'badge-role role-free');
+    assert.strictEqual(e.accountDetailStatus.textContent, 'Hoạt động');
+    assert.strictEqual(e.accountDetailStatus.className, 'badge-status status-active');
+    assert.strictEqual(e.accountDetailStatus.classList.contains('status-active'), true);
+    assert.strictEqual(e.accountDetailStatus.classList.contains('status-inactive'), false);
+
+    // Admin & Inactive user
+    a.renderAccountDetails({
+      id: 22,
+      email: 'admin@example.com',
+      full_name: 'Admin User',
+      role: 'admin',
+      is_active: false,
+    });
+    assert.strictEqual(e.accountDetailRole.textContent, 'Quản trị viên');
+    assert.strictEqual(e.accountDetailRole.className, 'badge-role role-admin');
+    assert.strictEqual(e.accountDetailStatus.textContent, 'Bị vô hiệu');
+    assert.strictEqual(e.accountDetailStatus.className, 'badge-status status-inactive');
+    assert.strictEqual(e.accountDetailStatus.classList.contains('status-inactive'), true);
+    assert.strictEqual(e.accountDetailStatus.style.backgroundColor, '#FEE2E2');
+    assert.strictEqual(e.accountDetailStatus.style.color, '#DC2626');
+    assert.strictEqual(e.accountDetailStatus.style.borderColor, '#FCA5A5');
+  });
+
+  // 36. PDFL-59 Group 1 (#1, #2, #4, #5): CSS Design Consistency Verification
+  await test('PDFL-59 (#1, #2, #4, #5): CSS selectors fix double padding, input padding, status dot, and variables', () => {
+    const cssContent = fs.readFileSync(path.resolve(__dirname, '../css/components.css'), 'utf8');
+
+    // #1: Scoped #accountModal body/footer padding without changing base .modal-dialog padding
+    assert.match(cssContent, /\.modal-dialog\s*\{[^}]*padding:\s*2rem;/s);
+    assert.match(cssContent, /#accountModal\s+\.account-modal-body\s*\{\s*padding:\s*0;\s*\}/);
+    assert.match(cssContent, /#accountModal\s+\.account-modal-footer\s*\{\s*padding:\s*1\.5rem\s+0\s+0;\s*\}/);
+
+    // #2: Normalized padding for #editFullNameInput and inputs without toggle button
+    assert.match(cssContent, /#editFullNameInput[\s\S]*?padding-left:\s*1rem;\s*padding-right:\s*1rem;/);
+    assert.match(cssContent, /\.input-wrap:not\(:has\(\.btn-toggle-eye\)\)\s+\.form-input\s*\{\s*padding-right:\s*1rem;\s*\}/);
+
+    // #4: Inactive status badge border and dot color rules exist
+    assert.match(cssContent, /\.badge-status\.status-inactive[\s\S]*?border-color:\s*#FCA5A5;/);
+    assert.match(cssContent, /\.badge-status\.status-inactive::before[\s\S]*?background-color:\s*#DC2626;/);
+
+    // #5: Fixed CSS variable --color-primary-indigo-dark and single .btn-sm definition
+    assert.strictEqual(cssContent.includes('--color-primary-dark'), false, 'Should not contain undefined --color-primary-dark');
+    assert.match(cssContent, /\.btn-edit-toggle:hover\s*\{[^}]*color:\s*var\(--color-primary-indigo-dark\);/s);
+    const btnSmMatches = cssContent.match(/^\.btn-sm\s*\{/gm) || [];
+    assert.strictEqual(btnSmMatches.length, 1, `Expected exactly 1 .btn-sm definition, found ${btnSmMatches.length}`);
+  });
+
+  // 37. PDFL-59 Group 2 (#3): Closing Login and Register modals resets password visibility, errors, alerts, and inputs
+  await test('PDFL-59 (#3): Closing Login and Register modals resets password visibility, field errors, alerts, and inputs', () => {
+    const { e, a } = createEnv();
+
+    // Open Login modal and dirty its state
+    a.openLoginModal();
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), false);
+    e.loginEmail.value = 'dirty@example.com';
+    e.loginPassword.value = 'Secret123';
+    e.loginPassword.type = 'text';
+    e.toggleLoginPassword.eyeOpen.style.display = 'none';
+    e.toggleLoginPassword.eyeClosed.style.display = 'block';
+    e.toggleLoginPassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+    a.showFieldError(e.loginEmail, 'Lỗi email cũ');
+    a.showFieldError(e.loginPassword, 'Lỗi mật khẩu cũ');
+    a.showLoginAlert('Thông báo lỗi cũ', 'error');
+
+    // Close Login modal -> everything must be reset
+    a.closeLoginModal();
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.loginEmail.value, '');
+    assert.strictEqual(e.loginPassword.value, '');
+    assert.strictEqual(e.loginPassword.type, 'password');
+    assert.strictEqual(e.toggleLoginPassword.getAttribute('aria-label'), 'Hiện mật khẩu');
+    assert.strictEqual(e.toggleLoginPassword.eyeOpen.style.display, 'block');
+    assert.strictEqual(e.toggleLoginPassword.eyeClosed.style.display, 'none');
+    assert.strictEqual(e.loginEmailError.textContent, '');
+    assert.strictEqual(e.loginEmail.classList.contains('has-error'), false);
+    assert.strictEqual(e.loginPasswordError.textContent, '');
+    assert.strictEqual(e.loginAlert.textContent, '');
+    assert.strictEqual(e.loginAlert.style.display, 'none');
+
+    // Open Register modal and dirty its state
+    a.openRegisterModal();
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), false);
+    e.regFullName.value = 'Người Dùng Cũ';
+    e.regEmail.value = 'regdirty@example.com';
+    e.regPassword.value = 'Pass12345';
+    e.regConfirmPassword.value = 'Pass12345';
+    e.regPassword.type = 'text';
+    e.regConfirmPassword.type = 'text';
+    e.toggleRegPassword.eyeOpen.style.display = 'none';
+    e.toggleRegPassword.eyeClosed.style.display = 'block';
+    e.toggleRegPassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+    e.toggleRegConfirmPassword.eyeOpen.style.display = 'none';
+    e.toggleRegConfirmPassword.eyeClosed.style.display = 'block';
+    e.toggleRegConfirmPassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+    a.showFieldError(e.regEmail, 'Email đã tồn tại');
+    a.showFieldError(e.regPassword, 'Mật khẩu yếu');
+    a.showAlert('Đăng ký thất bại', 'error');
+
+    // Close Register modal -> everything must be reset
+    a.closeRegisterModal();
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.regFullName.value, '');
+    assert.strictEqual(e.regEmail.value, '');
+    assert.strictEqual(e.regPassword.value, '');
+    assert.strictEqual(e.regConfirmPassword.value, '');
+    assert.strictEqual(e.regPassword.type, 'password');
+    assert.strictEqual(e.regConfirmPassword.type, 'password');
+    assert.strictEqual(e.toggleRegPassword.getAttribute('aria-label'), 'Hiện mật khẩu');
+    assert.strictEqual(e.toggleRegConfirmPassword.getAttribute('aria-label'), 'Hiện mật khẩu xác nhận');
+    assert.strictEqual(e.toggleRegPassword.eyeOpen.style.display, 'block');
+    assert.strictEqual(e.toggleRegPassword.eyeClosed.style.display, 'none');
+    assert.strictEqual(e.toggleRegConfirmPassword.eyeOpen.style.display, 'block');
+    assert.strictEqual(e.toggleRegConfirmPassword.eyeClosed.style.display, 'none');
+    assert.strictEqual(e.regEmailError.textContent, '');
+    assert.strictEqual(e.regPasswordError.textContent, '');
+    assert.strictEqual(e.registerAlert.textContent, '');
+    assert.strictEqual(e.registerAlert.style.display, 'none');
+  });
+
+  // 38. PDFL-59 Group 2 (#3): Switching between Login and Register modals guarantees clean state
+  await test('PDFL-59 (#3): Switching between Login and Register cleans up errors, alerts, and password toggles', () => {
+    const { e, a } = createEnv();
+
+    // Start in Login modal with errors and visible password
+    a.openLoginModal();
+    e.loginEmail.value = 'switch@example.com';
+    e.loginPassword.value = '12345';
+    e.loginPassword.type = 'text';
+    a.showFieldError(e.loginEmail, 'Lỗi email');
+    a.showLoginAlert('Cảnh báo đăng nhập', 'error');
+
+    // Switch to Register modal
+    a.openRegisterModal();
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), false);
+    assert.strictEqual(e.loginEmail.value, '');
+    assert.strictEqual(e.loginPassword.type, 'password');
+    assert.strictEqual(e.loginEmailError.textContent, '');
+    assert.strictEqual(e.loginAlert.textContent, '');
+
+    // Dirty Register modal then switch back to Login modal
+    e.regEmail.value = 'switchreg@example.com';
+    e.regPassword.type = 'text';
+    a.showFieldError(e.regEmail, 'Lỗi đăng ký');
+    a.showAlert('Cảnh báo đăng ký', 'error');
+
+    a.openLoginModal();
+    assert.strictEqual(e.registerModal.hasAttribute('hidden'), true);
+    assert.strictEqual(e.loginModal.hasAttribute('hidden'), false);
+    assert.strictEqual(e.regEmail.value, '');
+    assert.strictEqual(e.regPassword.type, 'password');
+    assert.strictEqual(e.regEmailError.textContent, '');
+    assert.strictEqual(e.registerAlert.textContent, '');
   });
 
   console.log(`\n================================================================`);

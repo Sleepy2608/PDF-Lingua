@@ -72,6 +72,7 @@ def _persist_user_document(
     page_count: int,
     target_lang: str,
     is_ocr_used: bool = False,
+    file_size_bytes: Optional[int] = None,
 ) -> tuple[Optional[Document], Optional[int]]:
     """
     Persist document file to disk storage and register Document in DB.
@@ -86,12 +87,13 @@ def _persist_user_document(
             original_filename=filename,
             content=content,
         )
+        actual_size_bytes = file_size_bytes if file_size_bytes is not None else len(content)
         doc_record = Document(
             user_id=user_id,
             original_filename=filename,
             stored_filename=stored_filename,
             stored_path=rel_path,
-            file_size_bytes=len(content),
+            file_size_bytes=actual_size_bytes,
             page_count=page_count,
             target_lang=target_lang,
             is_ocr_used=is_ocr_used,
@@ -185,12 +187,15 @@ def _execute_pdf_background_job(
     max_allowed_pages: int,
     file_size_mb: float,
     user_id: Optional[int] = None,
+    file_size_bytes: Optional[int] = None,
 ) -> None:
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
     Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
-    Ghi nhận ProcessingHistory (EXTRACT, TRANSLATE) nếu có user_id hợp lệ (PDFL-160.1).
+    Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
+    và bản ghi Document vào cơ sở dữ liệu (PDFL-90, PDFL-91), đồng thời ghi nhận
+    ProcessingHistory (EXTRACT, TRANSLATE) theo tiến trình xử lý (PDFL-160.1).
     """
     db_session: Optional[Session] = None
     try:
@@ -239,6 +244,7 @@ def _execute_pdf_background_job(
                         page_count=page_count,
                         target_lang=target_lang,
                         is_ocr_used=False,
+                        file_size_bytes=file_size_bytes,
                     )
                 except Exception as db_init_err:
                     logger.error(f"[Job {job_id}] Không thể khởi tạo phiên DB cho lịch sử: {db_init_err}")
@@ -292,6 +298,7 @@ def _execute_pdf_background_job(
             )
 
             result_data = {
+                "document_id": document_id,
                 "filename": filename,
                 "page_count": page_count,
                 "file_size_mb": file_size_mb,
@@ -300,7 +307,6 @@ def _execute_pdf_background_job(
                 "original_text": original_text,
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
-                "document_id": document_id,
             }
             job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
 
@@ -363,13 +369,24 @@ async def create_processing_job(
         tmp_path = Path(tmp.name)
 
     job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
-    file_size_mb = round(len(content) / (1024 * 1024), 2)
+    file_size_bytes = len(content)
+    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
+    authenticated_user_id = current_user.id if current_user is not None else None
 
     # Khởi chạy Worker trong luồng nền độc lập
     user_id: Optional[int] = current_user.id if current_user is not None else None
     thread = threading.Thread(
         target=_execute_pdf_background_job,
-        args=(job.job_id, tmp_path, file.filename, target_lang, max_ocr_pages, file_size_mb, user_id),
+        args=(
+            job.job_id,
+            tmp_path,
+            file.filename,
+            target_lang,
+            max_ocr_pages,
+            file_size_mb,
+            user_id,
+            file_size_bytes,
+        ),
         daemon=True,
     )
     thread.start()

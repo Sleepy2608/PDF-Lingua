@@ -479,7 +479,7 @@ async function test(name, fn) {
   await test('Retranslate API: Attaches Bearer token and JSON headers when authenticated', async () => {
     const env = createTestEnvironment();
     env.storage.setItem('pdfl_token', 'user.token.xyz');
-    env.context.window.pdfLinguaWorkspace.setCurrentDocData({ original_text: 'Hello' });
+    env.context.window.pdfLinguaWorkspace.setCurrentDocData({ document_id: 1, original_text: 'Hello' });
 
     let capturedHeaders = null;
     env.context.fetch = async (url, options) => {
