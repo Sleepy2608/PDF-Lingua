@@ -1,9 +1,9 @@
-# PDF-Lingua — Jira Product Backlog
+# PDF-Lingua - Jira Product Backlog
 
-- **Tên phần mềm**: **PDF Lingua** – Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI hỗ trợ người dùng, tóm tắt văn bản.
+- **Tên phần mềm**: **PDF Lingua** - Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI hỗ trợ người dùng, tóm tắt văn bản.
 - **Thành viên thực hiện**:
-  1. Nguyễn Lê Huy Tâm – `056206011188`
-  2. Huỳnh Đình Chấn – `077206002307`
+  1. Nguyễn Lê Huy Tâm - `056206011188`
+  2. Huỳnh Đình Chấn - `077206002307`
 - **Jira Project Key**: `PDFL`
 - **Jira Board & Summary**: [https://pdflingua.atlassian.net/jira/software/projects/PDFL/summary](https://pdflingua.atlassian.net/jira/software/projects/PDFL/summary)
 - **Bảng phân công nhiệm vụ**: [Assignment.md](./Assignment.md)
@@ -43,7 +43,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 
 # 2. Danh sách task chi tiết
 
-## EPIC 01 — Phân tích yêu cầu và thiết kế hệ thống
+## EPIC 01 - Phân tích yêu cầu và thiết kế hệ thống
 
 - PDFL-1: Xác định các đối tượng sử dụng hệ thống: khách chưa đăng nhập, tài khoản Free, tài khoản Pro và Admin.
 - PDFL-2: Chốt danh sách chức năng chính và chức năng mở rộng.
@@ -56,7 +56,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-25: Thống nhất cấu trúc API giữa Frontend và Backend.
 - PDFL-26: Xác định các yêu cầu phi chức năng: hiệu năng, bảo mật, khả năng mở rộng và trải nghiệm người dùng.
 
-## EPIC 02 — Khởi tạo dự án và môi trường phát triển
+## EPIC 02 - Khởi tạo dự án và môi trường phát triển
 
 - PDFL-27: Tạo repository GitHub `pdf-lingua`.
 - PDFL-28: Xây dựng cấu trúc thư mục Frontend và Backend.
@@ -71,7 +71,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-37: Cấu hình môi trường phát triển để Frontend giao tiếp với Backend.
 - PDFL-38: Kiểm tra khởi chạy toàn bộ dự án trên máy phát triển.
 
-## EPIC 03 — Thiết kế giao diện Frontend
+## EPIC 03 - Thiết kế giao diện Frontend
 
 - PDFL-39: Xác định phong cách thiết kế, màu sắc, font chữ và bộ quy chuẩn giao diện.
 - PDFL-40: Thiết kế thanh điều hướng và bố cục chung của ứng dụng.
@@ -96,7 +96,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-59: Kiểm tra tính nhất quán về thiết kế và khả năng sử dụng.
 - PDFL-267: Xây dựng nội dung và giao diện Điều khoản và bảo mật cho người dùng.
 
-## EPIC 04 — Backend API và kiến trúc xử lý
+## EPIC 04 - Backend API và kiến trúc xử lý
 
 - PDFL-60: Thiết kế cấu trúc module Backend theo từng nhóm chức năng.
 - PDFL-61: Xây dựng các lớp xử lý nghiệp vụ, truy cập dữ liệu và giao tiếp API.
@@ -111,7 +111,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-70: Thiết lập logging để theo dõi lỗi và hoạt động xử lý.
 - PDFL-71: Xử lý các tác vụ mất nhiều thời gian mà không khóa toàn bộ ứng dụng.
 
-## EPIC 05 — Tài khoản, xác thực và phân quyền
+## EPIC 05 - Tài khoản, xác thực và phân quyền
 
 - PDFL-72: Thiết kế bảng dữ liệu tài khoản người dùng.
 - PDFL-73: Xây dựng chức năng đăng ký tài khoản.
@@ -127,7 +127,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-83: Xử lý trường hợp token hết hạn, tài khoản không tồn tại hoặc thông tin đăng nhập sai.
 - PDFL-84: Kiểm tra khả năng truy cập và chỉnh sửa dữ liệu của người dùng khác.
 
-## EPIC 06 — Tải lên và quản lý tài liệu PDF
+## EPIC 06 - Tải lên và quản lý tài liệu PDF
 
 - PDFL-85: Xây dựng API tải tài liệu PDF lên Backend.
 - PDFL-86: Kiểm tra loại file và nội dung file để hạn chế file giả mạo định dạng PDF.
@@ -144,7 +144,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-97: Xóa các file tạm khi hoàn tất xử lý hoặc khi xảy ra lỗi.
 - PDFL-98: Đảm bảo tài liệu riêng tư không bị người dùng khác truy cập.
 
-## EPIC 07 — Trích xuất văn bản và OCR
+## EPIC 07 - Trích xuất văn bản và OCR
 
 - PDFL-99: Tích hợp thư viện PyMuPDF để đọc và trích xuất văn bản.
 - PDFL-100: Trích xuất văn bản theo từng trang.
@@ -161,7 +161,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-111: Tối ưu thời gian xử lý đối với tài liệu nhiều trang.
 - PDFL-112: Trả thông báo rõ ràng khi không trích xuất được nội dung.
 
-## EPIC 08 — Dịch thuật đa ngôn ngữ
+## EPIC 08 - Dịch thuật đa ngôn ngữ
 
 - PDFL-113: Lựa chọn thư viện hoặc dịch vụ dịch thuật.
 - PDFL-114: Xác định danh sách ngôn ngữ nguồn và ngôn ngữ đích được hỗ trợ.
@@ -177,7 +177,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-124: Đánh giá khả năng giữ nguyên đoạn văn, danh sách và nội dung quan trọng khi dịch.
 - PDFL-125: Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài.
 
-## EPIC 09 — AI tóm tắt văn bản
+## EPIC 09 - AI tóm tắt văn bản
 
 - PDFL-126: Lựa chọn mô hình AI hoặc dịch vụ API phù hợp.
 - PDFL-127: Quản lý API key thông qua biến môi trường.
@@ -192,7 +192,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-136: Xử lý lỗi khi dịch vụ AI không phản hồi hoặc vượt giới hạn.
 - PDFL-137: Kiểm thử chất lượng tóm tắt trên các loại tài liệu khác nhau.
 
-## EPIC 10 — Trợ lý AI hỏi đáp tài liệu
+## EPIC 10 - Trợ lý AI hỏi đáp tài liệu
 
 - PDFL-138: Xác định phạm vi câu hỏi mà trợ lý AI có thể xử lý.
 - PDFL-139: Xây dựng API gửi câu hỏi về tài liệu.
@@ -207,7 +207,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-148: Kiểm soát quyền truy cập để người dùng không hỏi hoặc truy xuất tài liệu của người khác.
 - PDFL-149: Kiểm thử khả năng trả lời đúng nội dung, hạn chế bịa đặt và xử lý câu hỏi ngoài phạm vi.
 
-## EPIC 11 — Xuất và tải kết quả
+## EPIC 11 - Xuất và tải kết quả
 
 - PDFL-150: Xác định các loại kết quả có thể xuất: văn bản gốc, bản dịch và bản tóm tắt.
 - PDFL-151: Xây dựng chức năng xuất văn bản thành file TXT.
@@ -219,7 +219,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-157: Kiểm tra quyền tải xuống và quyền truy cập kết quả.
 - PDFL-158: Kiểm thử file xuất trên các trình đọc file thông dụng.
 
-## EPIC 12 — Lịch sử xử lý tài liệu
+## EPIC 12 - Lịch sử xử lý tài liệu
 
 - PDFL-159: Thiết kế bảng dữ liệu lưu lịch sử xử lý.
 - PDFL-160: Lưu thông tin tài liệu và loại thao tác đã thực hiện.
@@ -234,7 +234,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-169: Xác định thời gian lưu trữ và cách xóa dữ liệu khi cần.
 - PDFL-170: Kiểm thử khả năng lưu, truy vấn, mở lại và xóa lịch sử.
 
-## EPIC 13 — Gói Free/Pro và hạn mức sử dụng
+## EPIC 13 - Gói Free/Pro và hạn mức sử dụng
 
 - PDFL-171: Thiết kế dữ liệu gói dịch vụ và trạng thái đăng ký của người dùng.
 - PDFL-172: Xác định quyền lợi cụ thể của gói Free.
@@ -254,7 +254,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 
 Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản trị. Người dùng Pro không được tự động có quyền Admin.
 
-## EPIC 14 — Quản trị hệ thống Admin
+## EPIC 14 - Quản trị hệ thống Admin
 
 - PDFL-186: Xác định vai trò và quyền hạn của Admin.
 - PDFL-187: Thiết lập cách khởi tạo tài khoản Admin an toàn.
@@ -270,7 +270,7 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-197: Xử lý thông báo xác nhận trước những thao tác có ảnh hưởng lớn.
 - PDFL-198: Kiểm thử quyền Admin và đảm bảo tài khoản thường không thể truy cập chức năng quản trị.
 
-## EPIC 15 — Kiểm thử, bảo mật và tối ưu
+## EPIC 15 - Kiểm thử, bảo mật và tối ưu
 
 ### Kiểm thử chức năng
 
@@ -310,7 +310,7 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-226: Tối ưu quy trình đọc, xử lý và lưu file lớn.
 - PDFL-227: Thiết lập thông báo lỗi, logging và cách khôi phục khi xử lý thất bại.
 
-## EPIC 16 — Triển khai, tài liệu và bàn giao
+## EPIC 16 - Triển khai, tài liệu và bàn giao
 
 ### Triển khai ứng dụng
 
@@ -342,7 +342,7 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-250: Chuẩn bị kịch bản demo các chức năng chính.
 - PDFL-251: Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao.
 
-# 3. Các chức năng mở rộng — chưa cần làm ngay
+# 3. Các chức năng mở rộng - chưa cần làm ngay
 
 Những task sau chỉ nên đưa vào Backlog nếu nhóm còn thời gian sau khi các chức năng chính đã ổn định.
 
