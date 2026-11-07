@@ -1,6 +1,6 @@
 /**
- * PDF-Lingua Processing History Controller (PDFL-161.2)
- * -----------------------------------------------------
+ * PDF-Lingua Processing History Controller (PDFL-161.2 & PDFL-161.3)
+ * ------------------------------------------------------------------
  * Integrates Frontend Processing History UI with Backend History API:
  * - GET /api/history with pagination (`skip`, `limit`)
  * - Filtering by `document_id`, `action_type` (EXTRACT, TRANSLATE, SUMMARIZE),
@@ -9,7 +9,9 @@
  * - State management across Loading, Empty, Error, and History List states
  * - Refresh, Retry, and Reset Filters actions
  * - Automatic data reload when switching to the History view
- * - Token retrieval and authentication error handling via existing auth client
+ * - Processing History Detail Modal via `GET /api/history/{history_id}` (PDFL-161.3)
+ *   with Loading, Not Found (404), Error (401/403/500), and Content states,
+ *   null-safe `execution_time_ms` / `error_message` rendering, and XSS protection.
  */
 
 (function () {
@@ -34,6 +36,12 @@
   let isFetching = false;
   let activeRequestId = 0;
   let docFilterDebounceTimer = null;
+
+  // Detail Modal State (PDFL-161.3)
+  let currentDetailHistoryId = null;
+  let currentDetailItem = null;
+  let isFetchingDetail = false;
+  let activeDetailRequestId = 0;
 
   // ── Helper Utilities ────────────────────────────────────────────────────────
   function getStoredToken() {
@@ -143,6 +151,32 @@
       errorMsgEl.textContent =
         options.message ||
         'Đã xảy ra sự cố khi tải danh sách lịch sử xử lý tài liệu. Vui lòng kiểm tra kết nối và thử lại.';
+    }
+  }
+
+  /**
+   * Switch between the 4 History Detail Modal states: 'loading', 'not-found', 'error', 'content'.
+   */
+  function setHistoryDetailState(state, options = {}) {
+    const loadingEl = document.getElementById('historyDetailLoadingState');
+    const notFoundEl = document.getElementById('historyDetailNotFoundState');
+    const notFoundMsgEl = document.getElementById('historyDetailNotFoundMessage');
+    const errorEl = document.getElementById('historyDetailErrorState');
+    const errorMsgEl = document.getElementById('historyDetailErrorMessage');
+    const contentEl = document.getElementById('historyDetailContent');
+
+    if (loadingEl) loadingEl.style.display = state === 'loading' ? 'block' : 'none';
+    if (notFoundEl) notFoundEl.style.display = state === 'not-found' ? 'block' : 'none';
+    if (errorEl) errorEl.style.display = state === 'error' ? 'block' : 'none';
+    if (contentEl) contentEl.style.display = state === 'content' ? 'block' : 'none';
+
+    if (state === 'not-found' && notFoundMsgEl) {
+      notFoundMsgEl.textContent =
+        options.message || 'Bản ghi lịch sử này không tồn tại hoặc đã bị xóa.';
+    }
+    if (state === 'error' && errorMsgEl) {
+      errorMsgEl.textContent =
+        options.message || 'Đã xảy ra lỗi khi tải thông tin chi tiết bản ghi lịch sử.';
     }
   }
 
@@ -288,7 +322,7 @@
         const createdText = escapeHtml(formatHistoryDate(item.created_at));
 
         return `
-          <tr class="history-row" data-history-id="${id}" data-action-type="${escapeHtml(actionType)}" data-status="${escapeHtml(status)}" data-document-id="${docId}">
+          <tr class="history-row" data-history-id="${id}" data-action-type="${escapeHtml(actionType)}" data-status="${escapeHtml(status)}" data-document-id="${docId}" tabindex="0" role="button" aria-label="Xem chi tiết bản ghi lịch sử #${id}">
             <td>
               <span class="user-id-mono history-id-mono">#${id}</span>
             </td>
@@ -339,6 +373,207 @@
       const count = Array.isArray(currentItems) ? currentItems.length : 0;
       pageInfo.textContent = `Trang ${currentPage} • Hiển thị ${count} bản ghi`;
     }
+  }
+
+  // ── Detail View Rendering & API Fetch (PDFL-161.3) ──────────────────────────
+  function renderHistoryDetail(record) {
+    if (!record || typeof record !== 'object') return;
+
+    const headerBadgeEl = document.getElementById('historyDetailHeaderBadge');
+    const idEl = document.getElementById('historyDetailId');
+    const docIdEl = document.getElementById('historyDetailDocId');
+    const actionTypeEl = document.getElementById('historyDetailActionType');
+    const statusEl = document.getElementById('historyDetailStatus');
+    const execTimeEl = document.getElementById('historyDetailExecutionTime');
+    const createdAtEl = document.getElementById('historyDetailCreatedAt');
+    const updatedAtEl = document.getElementById('historyDetailUpdatedAt');
+    const errorBoxEl = document.getElementById('historyDetailErrorBox');
+    const errorTextEl = document.getElementById('historyDetailErrorText');
+
+    const safeId = record.id !== null && record.id !== undefined ? String(record.id) : '--';
+    const safeDocId = record.document_id !== null && record.document_id !== undefined ? String(record.document_id) : '--';
+    const actionType = String(record.action_type || 'EXTRACT').trim().toUpperCase();
+    const status = String(record.status || 'SUCCESS').trim().toUpperCase();
+
+    if (headerBadgeEl) headerBadgeEl.textContent = `#${safeId}`;
+    if (idEl) idEl.textContent = `#${safeId}`;
+    if (docIdEl) docIdEl.textContent = `DOC #${safeDocId}`;
+    if (actionTypeEl) actionTypeEl.innerHTML = renderActionBadge(actionType);
+    if (statusEl) statusEl.innerHTML = renderStatusBadge(status, null);
+    if (execTimeEl) execTimeEl.innerHTML = formatExecutionTime(record.execution_time_ms);
+    if (createdAtEl) createdAtEl.textContent = formatHistoryDate(record.created_at);
+    if (updatedAtEl) updatedAtEl.textContent = formatHistoryDate(record.updated_at);
+
+    const hasErrorMessage =
+      record.error_message !== null &&
+      record.error_message !== undefined &&
+      String(record.error_message).trim() !== '';
+
+    if (errorBoxEl) {
+      errorBoxEl.style.display = hasErrorMessage ? 'block' : 'none';
+    }
+    if (errorTextEl) {
+      errorTextEl.textContent = hasErrorMessage ? String(record.error_message).trim() : '';
+    }
+
+    setHistoryDetailState('content');
+  }
+
+  async function fetchHistoryDetail(historyId) {
+    const requestId = ++activeDetailRequestId;
+    const parsedId = Number(historyId);
+
+    if (!Number.isInteger(parsedId) || parsedId <= 0) {
+      isFetchingDetail = false;
+      currentDetailItem = null;
+      setHistoryDetailState('error', { message: 'Mã bản ghi lịch sử không hợp lệ.' });
+      return null;
+    }
+
+    currentDetailHistoryId = parsedId;
+
+    const token = getStoredToken();
+    if (!token) {
+      isFetchingDetail = false;
+      currentDetailItem = null;
+      const unauthMsg = 'Vui lòng đăng nhập để xem chi tiết bản ghi lịch sử xử lý.';
+      setHistoryDetailState('error', { message: unauthMsg });
+      notifyUser(unauthMsg, 'error');
+      return null;
+    }
+
+    isFetchingDetail = true;
+    setHistoryDetailState('loading');
+
+    try {
+      const response = await requestWithAuth(`${API_BASE_URL}/api/history/${parsedId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (requestId !== activeDetailRequestId) {
+        return null;
+      }
+
+      let responseData = null;
+      try {
+        responseData = await response.json();
+      } catch (_parseErr) {
+        responseData = null;
+      }
+
+      if (requestId !== activeDetailRequestId) {
+        return null;
+      }
+
+      if (response.status === 200) {
+        const record = responseData && responseData.data ? responseData.data : null;
+        if (!record) {
+          currentDetailItem = null;
+          setHistoryDetailState('not-found', {
+            message: `Bản ghi lịch sử với ID ${parsedId} không tồn tại.`,
+          });
+          return null;
+        }
+        currentDetailItem = record;
+        renderHistoryDetail(record);
+        return record;
+      }
+
+      currentDetailItem = null;
+
+      if (response.status === 404) {
+        const notFoundMsg =
+          (responseData && responseData.message) ||
+          `Bản ghi lịch sử với ID ${parsedId} không tồn tại.`;
+        setHistoryDetailState('not-found', { message: notFoundMsg });
+        return null;
+      }
+
+      if (response.status === 401) {
+        clearExpiredAuthSession();
+        const authErrMsg =
+          (responseData && responseData.message) ||
+          'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.';
+        setHistoryDetailState('error', { message: authErrMsg });
+        notifyUser(authErrMsg, 'error');
+        return null;
+      }
+
+      if (response.status === 403) {
+        if (responseData && responseData.error_code === 'ACCOUNT_INACTIVE') {
+          clearExpiredAuthSession();
+        }
+        const forbiddenMsg =
+          (responseData && responseData.message) ||
+          'Bạn không có quyền truy cập bản ghi lịch sử xử lý này.';
+        setHistoryDetailState('error', { message: forbiddenMsg });
+        notifyUser(forbiddenMsg, 'error');
+        return null;
+      }
+
+      if (response.status === 400 || response.status === 422) {
+        const validationMsg =
+          (responseData && responseData.message) ||
+          'Mã bản ghi lịch sử không hợp lệ.';
+        setHistoryDetailState('error', { message: validationMsg });
+        return null;
+      }
+
+      const serverMsg =
+        (responseData && responseData.message) ||
+        'Đã xảy ra lỗi từ máy chủ khi tải chi tiết lịch sử xử lý. Vui lòng thử lại sau.';
+      setHistoryDetailState('error', { message: serverMsg });
+      notifyUser(serverMsg, 'error');
+      return null;
+    } catch (_networkErr) {
+      if (requestId !== activeDetailRequestId) {
+        return null;
+      }
+      currentDetailItem = null;
+      const netMsg = 'Không thể kết nối đến máy chủ để tải chi tiết lịch sử. Vui lòng kiểm tra kết nối và thử lại.';
+      setHistoryDetailState('error', { message: netMsg });
+      notifyUser(netMsg, 'error');
+      return null;
+    } finally {
+      if (requestId === activeDetailRequestId) {
+        isFetchingDetail = false;
+      }
+    }
+  }
+
+  function openHistoryDetail(historyId) {
+    const modal = document.getElementById('historyDetailModal');
+    const headerBadgeEl = document.getElementById('historyDetailHeaderBadge');
+
+    if (headerBadgeEl) {
+      headerBadgeEl.textContent = historyId ? `#${historyId}` : '#--';
+    }
+    if (modal) {
+      modal.style.display = 'flex';
+    }
+
+    return fetchHistoryDetail(historyId);
+  }
+
+  function closeHistoryDetailModal() {
+    const modal = document.getElementById('historyDetailModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+    activeDetailRequestId += 1;
+    isFetchingDetail = false;
+    currentDetailHistoryId = null;
+    currentDetailItem = null;
+  }
+
+  function retryHistoryDetail() {
+    if (currentDetailHistoryId !== null && currentDetailHistoryId !== undefined) {
+      return fetchHistoryDetail(currentDetailHistoryId);
+    }
+    return null;
   }
 
   // ── Core API Fetch: GET /api/history ────────────────────────────────────────
@@ -532,6 +767,7 @@
   }
 
   function closeHistoryView() {
+    closeHistoryDetailModal();
     const historySection = document.getElementById('historySection');
     if (historySection) historySection.style.display = 'none';
 
@@ -563,7 +799,30 @@
       currentItems: currentItems.slice(),
       hasNextPage,
       isFetching,
+      currentDetailHistoryId,
+      currentDetailItem,
+      isFetchingDetail,
     };
+  }
+
+  function extractRowHistoryId(eventTarget) {
+    if (!eventTarget) return null;
+    if (typeof eventTarget.closest === 'function') {
+      const row = eventTarget.closest('.history-row');
+      if (row) {
+        const attrId =
+          (typeof row.getAttribute === 'function' && row.getAttribute('data-history-id')) ||
+          (row.dataset && row.dataset.historyId);
+        if (attrId) return attrId;
+      }
+    }
+    if (typeof eventTarget.getAttribute === 'function' && eventTarget.getAttribute('data-history-id')) {
+      return eventTarget.getAttribute('data-history-id');
+    }
+    if (eventTarget.dataset && eventTarget.dataset.historyId) {
+      return eventTarget.dataset.historyId;
+    }
+    return null;
   }
 
   // ── Event Listeners Initialization ──────────────────────────────────────────
@@ -578,6 +837,15 @@
     const statusFilterSelect = document.getElementById('historyStatusFilter');
     const btnPrevPage = document.getElementById('btnHistoryPrevPage');
     const btnNextPage = document.getElementById('btnHistoryNextPage');
+    const historyTableBody = document.getElementById('historyTableBody');
+
+    // Detail Modal controls (PDFL-161.3)
+    const historyDetailModal = document.getElementById('historyDetailModal');
+    const btnCloseHistoryDetailModal = document.getElementById('btnCloseHistoryDetailModal');
+    const btnBackToHistoryList = document.getElementById('btnBackToHistoryList');
+    const btnBackFromHistoryNotFound = document.getElementById('btnBackFromHistoryNotFound');
+    const btnBackFromHistoryError = document.getElementById('btnBackFromHistoryError');
+    const btnRetryHistoryDetail = document.getElementById('btnRetryHistoryDetail');
 
     // 1. Sidebar navigation fallback when sidebar.js does not invoke openHistoryView directly
     if (sideNavHistory) {
@@ -680,10 +948,72 @@
       });
     }
 
-    // 5. Auth Change Listener: reload if History View is currently active
+    // 5. Row Click & Keyboard Delegation in #historyTableBody -> Open Detail Modal (PDFL-161.3)
+    if (historyTableBody) {
+      historyTableBody.addEventListener('click', (e) => {
+        const historyId = extractRowHistoryId(e.target);
+        if (historyId) {
+          return openHistoryDetail(historyId);
+        }
+        return undefined;
+      });
+
+      historyTableBody.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          const historyId = extractRowHistoryId(e.target);
+          if (historyId) {
+            e.preventDefault();
+            return openHistoryDetail(historyId);
+          }
+        }
+        return undefined;
+      });
+    }
+
+    // 6. Detail Modal Close, Back & Retry Controls (PDFL-161.3)
+    const closeHandlers = [
+      btnCloseHistoryDetailModal,
+      btnBackToHistoryList,
+      btnBackFromHistoryNotFound,
+      btnBackFromHistoryError,
+    ];
+    closeHandlers.forEach((btn) => {
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeHistoryDetailModal();
+        });
+      }
+    });
+
+    if (btnRetryHistoryDetail) {
+      btnRetryHistoryDetail.addEventListener('click', (e) => {
+        e.preventDefault();
+        return retryHistoryDetail();
+      });
+    }
+
+    if (historyDetailModal) {
+      historyDetailModal.addEventListener('click', (e) => {
+        if (e.target === historyDetailModal) {
+          closeHistoryDetailModal();
+        }
+      });
+    }
+
+    if (typeof document.addEventListener === 'function') {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && historyDetailModal && historyDetailModal.style.display !== 'none') {
+          closeHistoryDetailModal();
+        }
+      });
+    }
+
+    // 7. Auth Change Listener: reload if History View is currently active
     window.addEventListener('pdfl:auth-change', () => {
       const historySection = document.getElementById('historySection');
       if (historySection && historySection.style.display !== 'none') {
+        closeHistoryDetailModal();
         currentPage = 1;
         fetchHistoryList(1);
       }
@@ -709,5 +1039,12 @@
     buildHistoryQueryParams,
     setPageLimit,
     getState,
+    // Detail API & Modal (PDFL-161.3)
+    openHistoryDetail,
+    closeHistoryDetailModal,
+    fetchHistoryDetail,
+    renderHistoryDetail,
+    retryHistoryDetail,
+    setHistoryDetailState,
   };
 })();

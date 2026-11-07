@@ -741,7 +741,7 @@
                             </thead>
                             <tbody id="historyTableBody">
                                 <!-- Static UI Showcase Rows for PDFL-161.1 (EXTRACT, TRANSLATE, SUMMARIZE / SUCCESS, PENDING, FAILED) -->
-                                <tr class="history-row" data-action-type="EXTRACT" data-status="SUCCESS" data-document-id="101">
+                                <tr class="history-row" data-history-id="103" data-action-type="EXTRACT" data-status="SUCCESS" data-document-id="101" tabindex="0" role="button" aria-label="Xem chi tiết bản ghi lịch sử #103">
                                     <td>
                                         <span class="user-id-mono history-id-mono">#103</span>
                                     </td>
@@ -776,7 +776,7 @@
                                     </td>
                                 </tr>
 
-                                <tr class="history-row" data-action-type="TRANSLATE" data-status="PENDING" data-document-id="101">
+                                <tr class="history-row" data-history-id="102" data-action-type="TRANSLATE" data-status="PENDING" data-document-id="101" tabindex="0" role="button" aria-label="Xem chi tiết bản ghi lịch sử #102">
                                     <td>
                                         <span class="user-id-mono history-id-mono">#102</span>
                                     </td>
@@ -813,7 +813,7 @@
                                     </td>
                                 </tr>
 
-                                <tr class="history-row" data-action-type="SUMMARIZE" data-status="FAILED" data-document-id="102">
+                                <tr class="history-row" data-history-id="101" data-action-type="SUMMARIZE" data-status="FAILED" data-document-id="102" tabindex="0" role="button" aria-label="Xem chi tiết bản ghi lịch sử #101">
                                     <td>
                                         <span class="user-id-mono history-id-mono">#101</span>
                                     </td>
@@ -869,6 +869,187 @@
                                 </svg>
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing History Detail Modal (PDFL-161.3) -->
+            <div class="modal-overlay history-detail-modal-overlay" id="historyDetailModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="historyDetailModalTitle">
+                <div class="history-detail-card">
+                    <!-- Modal Header -->
+                    <div class="history-detail-header">
+                        <div class="history-detail-title-group">
+                            <div class="table-icon-pill history-icon-pill">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="history-detail-title-row">
+                                    <h3 class="history-detail-title" id="historyDetailModalTitle">Chi Tiết Bản Ghi Lịch Sử</h3>
+                                    <span class="admin-tag-pill font-mono" id="historyDetailHeaderBadge">#--</span>
+                                </div>
+                                <p class="history-detail-subtitle">Thông tin định danh, trạng thái thực thi, thời gian phản hồi và chẩn đoán lỗi</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-icon-close history-detail-close-btn" id="btnCloseHistoryDetailModal" title="Đóng chi tiết lịch sử" aria-label="Đóng chi tiết lịch sử">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="history-detail-body">
+                        <!-- Detail State 1: Loading -->
+                        <div class="history-detail-state history-detail-loading" id="historyDetailLoadingState" style="display: none;" role="status" aria-live="polite">
+                            <div class="history-detail-skeleton-grid">
+                                <div class="history-detail-skeleton-item">
+                                    <div class="skeleton-pill" style="width: 90px; height: 14px;"></div>
+                                    <div class="skeleton-pill" style="width: 120px; height: 22px;"></div>
+                                </div>
+                                <div class="history-detail-skeleton-item">
+                                    <div class="skeleton-pill" style="width: 90px; height: 14px;"></div>
+                                    <div class="skeleton-pill" style="width: 120px; height: 22px;"></div>
+                                </div>
+                                <div class="history-detail-skeleton-item">
+                                    <div class="skeleton-pill" style="width: 90px; height: 14px;"></div>
+                                    <div class="skeleton-pill" style="width: 130px; height: 22px;"></div>
+                                </div>
+                                <div class="history-detail-skeleton-item">
+                                    <div class="skeleton-pill" style="width: 90px; height: 14px;"></div>
+                                    <div class="skeleton-pill" style="width: 130px; height: 22px;"></div>
+                                </div>
+                            </div>
+                            <p class="history-loading-caption">Đang tải chi tiết bản ghi lịch sử...</p>
+                        </div>
+
+                        <!-- Detail State 2: Not Found (404) -->
+                        <div class="admin-table-empty history-detail-state history-detail-not-found" id="historyDetailNotFoundState" style="display: none;" role="alert">
+                            <div class="empty-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title">Không tìm thấy bản ghi lịch sử</h4>
+                            <p class="empty-text" id="historyDetailNotFoundMessage">Bản ghi lịch sử này không tồn tại hoặc đã bị xóa.</p>
+                            <button type="button" class="btn btn-admin-secondary history-retry-btn" id="btnBackFromHistoryNotFound">
+                                <span>Quay lại danh sách</span>
+                            </button>
+                        </div>
+
+                        <!-- Detail State 3: Error (401/403/500/Network) -->
+                        <div class="admin-table-empty history-detail-state history-detail-error" id="historyDetailErrorState" style="display: none;" role="alert">
+                            <div class="empty-icon-wrap error-icon-wrap">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                            </div>
+                            <h4 class="empty-title error-state-title">Không thể tải chi tiết lịch sử</h4>
+                            <p class="empty-text" id="historyDetailErrorMessage">Đã xảy ra lỗi khi tải thông tin chi tiết bản ghi lịch sử.</p>
+                            <div class="history-detail-error-actions">
+                                <button type="button" class="btn btn-admin-secondary history-retry-btn" id="btnRetryHistoryDetail">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                    </svg>
+                                    <span>Thử lại</span>
+                                </button>
+                                <button type="button" class="btn btn-admin-secondary history-retry-btn" id="btnBackFromHistoryError">
+                                    <span>Quay lại danh sách</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Detail State 4: Content -->
+                        <div class="history-detail-content" id="historyDetailContent">
+                            <div class="history-detail-grid">
+                                <div class="history-detail-field">
+                                    <span class="history-detail-label">Mã lịch sử (History ID)</span>
+                                    <div class="history-detail-value">
+                                        <span class="user-id-mono history-id-mono" id="historyDetailId">#--</span>
+                                    </div>
+                                </div>
+
+                                <div class="history-detail-field">
+                                    <span class="history-detail-label">Mã tài liệu (Document ID)</span>
+                                    <div class="history-detail-value">
+                                        <span class="history-doc-badge font-mono" id="historyDetailDocBadge">
+                                            <span class="doc-badge-pdf">PDF</span>
+                                            <span id="historyDetailDocId">DOC #--</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="history-detail-field">
+                                    <span class="history-detail-label">Loại xử lý (Action Type)</span>
+                                    <div class="history-detail-value" id="historyDetailActionType">
+                                        <span class="action-badge action-extract">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="history-detail-field">
+                                    <span class="history-detail-label">Trạng thái (Status)</span>
+                                    <div class="history-detail-value" id="historyDetailStatus">
+                                        <span class="status-pill history-status-pill status-success">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="history-detail-field">
+                                    <span class="history-detail-label">Thời gian thực thi (Execution Time)</span>
+                                    <div class="history-detail-value" id="historyDetailExecutionTime">
+                                        <span class="history-duration-mono font-mono">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="history-detail-field">
+                                    <span class="history-detail-label">Thời gian tạo (Created At)</span>
+                                    <div class="history-detail-value">
+                                        <span class="date-mono history-created-mono" id="historyDetailCreatedAt">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="history-detail-field history-detail-field-wide">
+                                    <span class="history-detail-label">Cập nhật lần cuối (Updated At)</span>
+                                    <div class="history-detail-value">
+                                        <span class="date-mono history-updated-mono" id="historyDetailUpdatedAt">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error Message Diagnostic Box (Shown only when error_message is present) -->
+                            <div class="history-detail-error-box" id="historyDetailErrorBox" style="display: none;">
+                                <div class="history-detail-error-header">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <span>Chi tiết thông báo lỗi (Error Message)</span>
+                                </div>
+                                <p class="history-detail-error-text font-mono" id="historyDetailErrorText"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="history-detail-footer">
+                        <button type="button" class="btn btn-admin-secondary" id="btnBackToHistoryList">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            <span>Quay lại danh sách lịch sử</span>
+                        </button>
                     </div>
                 </div>
             </div>
