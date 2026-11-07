@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.admin import router as admin_router
 from app.api.auth import router as auth_router
 from app.api.documents import router as documents_router
+from app.api.pricing import router as pricing_router
 from app.api.process import router as process_router
 from app.core.config import settings
 from app.core.database import check_db_connection, init_db
@@ -68,6 +69,7 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(process_router)
 app.include_router(documents_router)
 app.include_router(admin_router)
+app.include_router(pricing_router)
 
 
 @app.get("/")
