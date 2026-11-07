@@ -12,7 +12,7 @@ function getWorkspaceSessionStorage() {
   try {
     if (typeof sessionStorage !== 'undefined' && sessionStorage) return sessionStorage;
     if (typeof window !== 'undefined' && window.sessionStorage) return window.sessionStorage;
-  } catch (_e) {}
+  } catch (_e) { }
   return null;
 }
 
@@ -25,7 +25,7 @@ function saveWorkspaceDocToStorage(docData) {
     } else {
       store.removeItem(WORKSPACE_DOC_STORAGE_KEY);
     }
-  } catch (_e) {}
+  } catch (_e) { }
 }
 
 function clearActiveJobFromStorage() {
@@ -33,7 +33,7 @@ function clearActiveJobFromStorage() {
   if (!store) return;
   try {
     store.removeItem(ACTIVE_JOB_STORAGE_KEY);
-  } catch (_e) {}
+  } catch (_e) { }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -163,7 +163,7 @@ function initWorkspace() {
       if (savedDocRaw && !currentDocData) {
         currentDocData = JSON.parse(savedDocRaw);
       }
-    } catch (_e) {}
+    } catch (_e) { }
 
     try {
       const savedJobId = store.getItem(ACTIVE_JOB_STORAGE_KEY);
@@ -183,7 +183,7 @@ function initWorkspace() {
           }
         }
       }
-    } catch (_e) {}
+    } catch (_e) { }
   }
 }
 
@@ -225,7 +225,7 @@ function cleanupProgressTracking() {
   if (activeEventSource) {
     try {
       activeEventSource.close();
-    } catch (e) {}
+    } catch (e) { }
     activeEventSource = null;
   }
   if (activePollTimer) {
@@ -253,7 +253,7 @@ function handleAuthError(result) {
     if (typeof updateUploadLimitsUI === 'function') {
       updateUploadLimitsUI(null);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   const msg = (result && (result.message || result.detail))
     ? (result.message || result.detail)
@@ -281,14 +281,14 @@ function listenToJobProgress(jobId, btnProcessPdf) {
           PENDING_TOAST_STORAGE_KEY,
           JSON.stringify({ msg: 'Tài liệu đã được dịch thuật thành công!', type: 'success', ts: Date.now() })
         );
-      } catch (_e) {}
+      } catch (_e) { }
     }
     updateProgress(100, jobData.message || 'Xử lý và dịch thuật hoàn tất!', 4);
     setTimeout(() => {
       if (store) {
         try {
           store.removeItem(PENDING_TOAST_STORAGE_KEY);
-        } catch (_e) {}
+        } catch (_e) { }
       }
       showProgressModal(false);
       renderWorkspace(jobData.result);
@@ -299,7 +299,7 @@ function listenToJobProgress(jobId, btnProcessPdf) {
       if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
         try {
           window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: jobData.result } }));
-        } catch (e) {}
+        } catch (e) { }
       }
       if (btnProcessPdf) btnProcessPdf.disabled = false;
     }, 400);
@@ -341,7 +341,7 @@ function listenToJobProgress(jobId, btnProcessPdf) {
             handleJobFailure(jd.error || jd.message);
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }, 1200);
   };
 
@@ -366,12 +366,12 @@ function listenToJobProgress(jobId, btnProcessPdf) {
           } else if (data.status === 'FAILED') {
             handleJobFailure(data.error || data.message);
           }
-        } catch (e) {}
+        } catch (e) { }
       };
 
       activeEventSource.onerror = () => {
         if (activeEventSource) {
-          try { activeEventSource.close(); } catch (e) {}
+          try { activeEventSource.close(); } catch (e) { }
           activeEventSource = null;
         }
         startPollingFallback();
@@ -426,7 +426,7 @@ async function handleProcessPdf() {
     let result = null;
     try {
       result = await response.json();
-    } catch (e) {}
+    } catch (e) { }
 
     if (response.status === 401) {
       handleAuthError(result);
@@ -459,7 +459,7 @@ async function handleProcessPdf() {
       if (store) {
         try {
           store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
-        } catch (_e) {}
+        } catch (_e) { }
       }
       setTimeout(() => {
         showProgressModal(false);
@@ -471,7 +471,7 @@ async function handleProcessPdf() {
         if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
           try {
             window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: result.data } }));
-          } catch (e) {}
+          } catch (e) { }
         }
         if (btnProcessPdf) btnProcessPdf.disabled = false;
       }, 400);
@@ -488,7 +488,7 @@ async function handleProcessPdf() {
       try {
         store.setItem(ACTIVE_JOB_STORAGE_KEY, String(jobId));
         store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
-      } catch (_e) {}
+      } catch (_e) { }
     }
 
     // Theo dõi tiến độ thời gian thực qua Server-Sent Events (SSE)
@@ -565,7 +565,7 @@ async function handleRetranslate() {
     let result = null;
     try {
       result = await response.json();
-    } catch (e) {}
+    } catch (e) { }
 
     if (response.status === 401) {
       handleAuthError(result);
@@ -641,7 +641,7 @@ async function triggerDownload(format) {
       let result = null;
       try {
         result = await response.json();
-      } catch (e) {}
+      } catch (e) { }
       handleAuthError(result);
       return;
     }
@@ -653,7 +653,7 @@ async function triggerDownload(format) {
         if (errorJson && (errorJson.message || errorJson.detail)) {
           errorMsg = errorJson.message || errorJson.detail;
         }
-      } catch (e) {}
+      } catch (e) { }
       throw new Error(errorMsg);
     }
 
@@ -740,7 +740,7 @@ function resetToUpload() {
   if (store) {
     try {
       store.removeItem(ACTIVE_VIEW_STORAGE_KEY);
-    } catch (_e) {}
+    } catch (_e) { }
   }
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
@@ -842,28 +842,113 @@ function updateProgress(percentage, text, currentStep) {
   }
 }
 
+let currentToastElement = null;
+let currentToastTimeout = null;
+let currentToastRemovalTimeout = null;
+
+function dismissActiveToast(immediate = false) {
+  if (currentToastTimeout) {
+    clearTimeout(currentToastTimeout);
+    currentToastTimeout = null;
+  }
+  if (currentToastRemovalTimeout) {
+    clearTimeout(currentToastRemovalTimeout);
+    currentToastRemovalTimeout = null;
+  }
+
+  const toast = currentToastElement;
+  currentToastElement = null;
+
+  if (!toast) return;
+
+  if (immediate || !toast.parentNode) {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+    return;
+  }
+
+  toast.style.opacity = '0';
+  toast.style.transform = 'translateY(10px)';
+  toast.style.transition = 'all 0.25s ease';
+  currentToastRemovalTimeout = setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+    currentToastRemovalTimeout = null;
+  }, 250);
+}
+
 function showToast(message, type = 'info') {
   if (typeof hostShowToast === 'function') {
     try {
       hostShowToast(message, type);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const container = document.getElementById('toastContainer');
   if (!container) return;
 
+  const sanitizedMsg = typeof message === 'string' ? message.trim() : String(message || '');
+  if (!sanitizedMsg) return;
+
+  // 1. Nếu thông báo giống hệt đang hiển thị -> chỉ làm mới thời gian tự đóng (3s), không tạo thêm toast chồng lên
+  const existingMsg = currentToastElement && currentToastElement.dataset ? currentToastElement.dataset.toastMessage : null;
+  const existingType = currentToastElement && currentToastElement.dataset ? currentToastElement.dataset.toastType : null;
+
+  if (currentToastElement && currentToastElement.parentNode && existingMsg === sanitizedMsg && existingType === type) {
+    if (currentToastTimeout) clearTimeout(currentToastTimeout);
+    if (currentToastRemovalTimeout) clearTimeout(currentToastRemovalTimeout);
+    currentToastElement.style.opacity = '1';
+    currentToastElement.style.transform = 'translateY(0)';
+    currentToastTimeout = setTimeout(() => dismissActiveToast(false), 3000);
+    return;
+  }
+
+  // 2. Nếu đang có thông báo cũ khác -> đóng ngay thông báo cũ để chỉ hiển thị duy nhất 1 thông báo
+  if (currentToastElement) {
+    dismissActiveToast(true);
+  }
+
+  // Dọn dẹp sạch mọi thẻ toast tồn dư trong container (nếu có)
+  while (container.firstChild) {
+    try {
+      container.removeChild(container.firstChild);
+    } catch (_err) {
+      break;
+    }
+  }
+
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${message}</span>`;
+  if (toast.dataset) {
+    toast.dataset.toastMessage = sanitizedMsg;
+    toast.dataset.toastType = type;
+  }
+
+  const msgSpan = document.createElement('span');
+  msgSpan.textContent = sanitizedMsg;
+  msgSpan.style.flex = '1';
+  toast.appendChild(msgSpan);
+
+  const btnClose = document.createElement('button');
+  btnClose.type = 'button';
+  btnClose.className = 'toast-close-btn';
+  btnClose.setAttribute('aria-label', 'Đóng thông báo');
+  btnClose.innerHTML = '&times;';
+  btnClose.onclick = (e) => {
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    dismissActiveToast(false);
+  };
+  toast.appendChild(btnClose);
 
   container.appendChild(toast);
+  currentToastElement = toast;
 
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-    toast.style.transition = 'all 0.25s ease';
-    setTimeout(() => toast.remove(), 250);
-  }, 3200);
+  // 3. Tự động đóng thông báo sau đúng 3 giây (BUG-01)
+  currentToastTimeout = setTimeout(() => {
+    dismissActiveToast(false);
+  }, 3000);
 }
 
 function getLangName(code) {

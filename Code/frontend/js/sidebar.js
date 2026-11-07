@@ -48,7 +48,7 @@
     try {
       const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
       if (raw) initialUser = JSON.parse(raw);
-    } catch (_err) {}
+    } catch (_err) { }
 
     syncUserProfile(initialUser);
 
@@ -184,10 +184,12 @@
         const workspaceSection = document.getElementById('workspaceSection');
         const adminSection = document.getElementById('adminSection');
         const documentsSection = document.getElementById('documentsSection');
+        const historySection = document.getElementById('historySection');
         if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
         if (heroSection) heroSection.style.display = 'none';
         if (workspaceSection) workspaceSection.style.display = 'none';
         if (adminSection) adminSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'none';
         if (documentsSection) documentsSection.style.display = 'block';
 
         const pendingToastRaw = sessionStorage.getItem(PENDING_TOAST_KEY);
@@ -198,6 +200,22 @@
             showToast(pendingToast.msg, pendingToast.type || 'success');
           }
         }
+      } else if (activeView === 'history') {
+        const sideNavHistory = document.getElementById('sideNavHistory');
+        const heroSection = document.getElementById('heroSection');
+        const workspaceSection = document.getElementById('workspaceSection');
+        const adminSection = document.getElementById('adminSection');
+        const documentsSection = document.getElementById('documentsSection');
+        const historySection = document.getElementById('historySection');
+        if (sideNavHistory) setActiveNavItem(sideNavHistory);
+        if (heroSection) heroSection.style.display = 'none';
+        if (workspaceSection) workspaceSection.style.display = 'none';
+        if (adminSection) adminSection.style.display = 'none';
+        if (documentsSection) documentsSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'block';
+        if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.openHistoryView === 'function') {
+          window.pdfLinguaHistory.openHistoryView();
+        }
       } else if (activeView === 'workspace') {
         const sideNavTranslate = document.getElementById('sideNavTranslate');
         if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
@@ -205,7 +223,7 @@
         const sideNavHome = document.getElementById('sideNavHome');
         if (sideNavHome) setActiveNavItem(sideNavHome);
       }
-    } catch (_err) {}
+    } catch (_err) { }
 
     // Listen to custom auth events from auth.js
     window.addEventListener('pdfl:auth-change', (e) => {
@@ -248,7 +266,7 @@
 
     try {
       sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-    } catch (_err) {}
+    } catch (_err) { }
 
     if (sideNavHome) {
       setActiveNavItem(sideNavHome);
@@ -291,7 +309,7 @@
 
     try {
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
-    } catch (_err) {}
+    } catch (_err) { }
 
     fetchRecentDocuments();
 
@@ -304,7 +322,7 @@
   function navigateToHome() {
     try {
       sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-    } catch (_err) {}
+    } catch (_err) { }
     const sideNavHome = document.getElementById('sideNavHome');
     if (sideNavHome) setActiveNavItem(sideNavHome);
     const adminSection = document.getElementById('adminSection');
@@ -328,9 +346,11 @@
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
     const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
 
     if (documentsSection) documentsSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
 
     const hasActiveDoc = window.pdfLinguaWorkspace
       && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function'
@@ -342,7 +362,7 @@
       } else {
         sessionStorage.removeItem(ACTIVE_VIEW_KEY);
       }
-    } catch (_err) {}
+    } catch (_err) { }
 
     if (hasActiveDoc && workspaceSection) {
       if (heroSection) heroSection.style.display = 'none';
@@ -360,6 +380,74 @@
     }
   }
 
+  function openHistoryView() {
+    const sideNavHistory = document.getElementById('sideNavHistory');
+    const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
+
+    if (sideNavHistory) setActiveNavItem(sideNavHistory);
+    if (heroSection) heroSection.style.display = 'none';
+    if (workspaceSection) workspaceSection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'block';
+
+    try {
+      sessionStorage.setItem(ACTIVE_VIEW_KEY, 'history');
+    } catch (_err) { }
+
+    if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.openHistoryView === 'function') {
+      window.pdfLinguaHistory.openHistoryView();
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) {
+      closeMobileSidebar();
+    }
+  }
+
+  function closeHistoryView() {
+    if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.closeHistoryView === 'function') {
+      window.pdfLinguaHistory.closeHistoryView();
+      return;
+    }
+
+    const historySection = document.getElementById('historySection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const heroSection = document.getElementById('heroSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const adminSection = document.getElementById('adminSection');
+    const docNameDisplay = document.getElementById('docNameDisplay');
+
+    if (historySection) historySection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+
+    const hasOpenDocument = Boolean(
+      workspaceSection && docNameDisplay && docNameDisplay.textContent && docNameDisplay.textContent.trim() !== ''
+    );
+
+    if (hasOpenDocument) {
+      if (workspaceSection) workspaceSection.style.display = 'block';
+      if (heroSection) heroSection.style.display = 'none';
+      try { sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace'); } catch (_err) { }
+      setActiveNav('translate');
+    } else {
+      if (heroSection) heroSection.style.display = 'block';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      try { sessionStorage.removeItem(ACTIVE_VIEW_KEY); } catch (_err) { }
+      setActiveNav('home');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) {
+      closeMobileSidebar();
+    }
+  }
+
   function handleProfileClick() {
     const btnOpenAccountModal = document.getElementById('btnOpenAccountModal');
     const btnLogin = document.getElementById('btnLogin');
@@ -368,7 +456,7 @@
     try {
       const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
       if (raw) currentUser = JSON.parse(raw);
-    } catch (_err) {}
+    } catch (_err) { }
 
     if (currentUser && btnOpenAccountModal) {
       btnOpenAccountModal.click();
@@ -414,7 +502,7 @@
     if (save) {
       try {
         localStorage.setItem(STORAGE_KEY, String(isCollapsed));
-      } catch (_err) {}
+      } catch (_err) { }
     }
   }
 
@@ -506,7 +594,7 @@
           setActiveNavItem(sideNavTranslate);
           try {
             sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
-          } catch (_err) {}
+          } catch (_err) { }
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           // If no document has been translated yet, prompt user and stay on Trang chủ
@@ -565,46 +653,14 @@
     if (sideNavHistory) {
       sideNavHistory.addEventListener('click', (e) => {
         e.preventDefault();
-        setActiveNavItem(sideNavHistory);
-        const heroSection = document.getElementById('heroSection');
-        const workspaceSection = document.getElementById('workspaceSection');
-        const adminSection = document.getElementById('adminSection');
-        const historySection = document.getElementById('historySection');
-        if (heroSection) heroSection.style.display = 'none';
-        if (workspaceSection) workspaceSection.style.display = 'none';
-        if (adminSection) adminSection.style.display = 'none';
-        if (historySection) {
-          historySection.style.display = 'block';
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.openHistoryView === 'function') {
-          window.pdfLinguaHistory.openHistoryView();
-        }
-        if (window.innerWidth < 768) closeMobileSidebar();
+        openHistoryView();
       });
     }
 
     if (btnCloseHistoryView) {
       btnCloseHistoryView.addEventListener('click', (e) => {
         e.preventDefault();
-        if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.closeHistoryView === 'function') {
-          window.pdfLinguaHistory.closeHistoryView();
-        } else {
-          const historySection = document.getElementById('historySection');
-          const workspaceSection = document.getElementById('workspaceSection');
-          const heroSection = document.getElementById('heroSection');
-          const docNameDisplay = document.getElementById('docNameDisplay');
-          if (historySection) historySection.style.display = 'none';
-          if (workspaceSection && docNameDisplay && docNameDisplay.textContent && docNameDisplay.textContent.trim() !== '') {
-            workspaceSection.style.display = 'block';
-            if (heroSection) heroSection.style.display = 'none';
-          } else if (heroSection) {
-            heroSection.style.display = 'block';
-            if (workspaceSection) workspaceSection.style.display = 'none';
-          }
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        setActiveNavItem(sideNavTranslate || sideNavHome);
+        closeHistoryView();
       });
     }
 
@@ -631,7 +687,7 @@
         e.preventDefault();
         try {
           sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-        } catch (_err) {}
+        } catch (_err) { }
         setActiveNavItem(sideNavAdmin);
         const historySection = document.getElementById('historySection');
         const documentsSection = document.getElementById('documentsSection');
@@ -713,7 +769,7 @@
       try {
         const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
         if (raw) currentUser = JSON.parse(raw);
-      } catch (_err) {}
+      } catch (_err) { }
     }
 
     const appShell = document.getElementById('appShell');
@@ -813,7 +869,7 @@
       if (token && token !== 'null' && token !== 'undefined') {
         return token;
       }
-    } catch (_err) {}
+    } catch (_err) { }
     return null;
   }
 
@@ -919,7 +975,7 @@
           try {
             const errData = await response.json();
             if (errData && errData.detail) errMsg = errData.detail;
-          } catch (_e) {}
+          } catch (_e) { }
           throw new Error(errMsg);
         }
 
@@ -1443,7 +1499,7 @@
         PENDING_TOAST_KEY,
         JSON.stringify({ msg: `Đã xóa tài liệu "${targetFilename}" thành công.`, type: 'success', ts: Date.now() })
       );
-    } catch (_err) {}
+    } catch (_err) { }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(targetId)}`, {
@@ -1454,7 +1510,7 @@
       });
 
       if (response.status === 401) {
-        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
         const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
@@ -1468,14 +1524,14 @@
       }
 
       if (response.status === 404) {
-        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
         let msg = 'Tài liệu không tồn tại hoặc bạn không có quyền xóa (404).';
         try {
           const errData = await response.json();
           if (errData && (errData.detail || errData.message)) {
             msg = errData.detail || errData.message;
           }
-        } catch (_e) {}
+        } catch (_e) { }
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
           alertEl.style.display = 'flex';
@@ -1488,14 +1544,14 @@
       }
 
       if (!response.ok) {
-        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
         let msg = 'Lỗi máy chủ khi xóa tài liệu. Vui lòng thử lại.';
         try {
           const errData = await response.json();
           if (errData && (errData.detail || errData.message)) {
             msg = errData.detail || errData.message;
           }
-        } catch (_e) {}
+        } catch (_e) { }
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
           alertEl.style.display = 'flex';
@@ -1513,7 +1569,7 @@
         if (result && result.message) {
           successMessage = result.message;
         }
-      } catch (_e) {}
+      } catch (_e) { }
 
       // Only on successful DELETE:
       // 1. Close Delete Confirmation Modal and Detail Modal
@@ -1526,7 +1582,7 @@
       // 3. Keep user on the Documents page (#documentsSection) after deletion (not Translate or Home)
       try {
         sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
-      } catch (_err) {}
+      } catch (_err) { }
       const sideNavDocuments = document.getElementById('sideNavDocuments');
       const heroSection = document.getElementById('heroSection');
       const workspaceSection = document.getElementById('workspaceSection');
@@ -1545,7 +1601,7 @@
 
       return true;
     } catch (err) {
-      try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+      try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
       setDocumentDeleteLoadingState(false);
       const msg = (err && err.message && err.message !== 'Failed to fetch')
         ? err.message
@@ -1741,7 +1797,7 @@
         try {
           const errData = await response.json();
           if (errData && errData.detail) errMsg = errData.detail;
-        } catch (_e) {}
+        } catch (_e) { }
         resetDocumentDetailMetadata();
         setDocumentDetailModalState('error', errMsg);
         return null;
@@ -1936,6 +1992,9 @@
     } else if (navKey === 'documents') {
       const el = document.getElementById('sideNavDocuments');
       if (el) setActiveNavItem(el);
+    } else if (navKey === 'history') {
+      const el = document.getElementById('sideNavHistory');
+      if (el) setActiveNavItem(el);
     } else if (navKey === 'admin') {
       const el = document.getElementById('sideNavAdmin');
       if (el) setActiveNavItem(el);
@@ -1953,6 +2012,8 @@
     triggerUpload: triggerPdfUpload,
     openDocumentsView: openDocumentsView,
     closeDocumentsView: closeDocumentsView,
+    openHistoryView: openHistoryView,
+    closeHistoryView: closeHistoryView,
     navigateToHome: navigateToHome,
     setActiveNav: setActiveNav,
     setActiveNavItem: setActiveNavItem,

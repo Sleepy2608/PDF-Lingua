@@ -441,6 +441,27 @@
   background: #059669;
 }
 
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 0 0 0 0.5rem;
+  margin-left: auto;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-close-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
 @keyframes slideInToast {
   from {
     transform: translateY(20px);

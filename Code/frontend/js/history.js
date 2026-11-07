@@ -64,7 +64,7 @@
         localStorage.removeItem('pdfl_user');
         sessionStorage.removeItem('pdfl_token');
         sessionStorage.removeItem('pdfl_user');
-      } catch (_err) {}
+      } catch (_err) { }
     }
 
     if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.updateHeaderAuthState === 'function') {
@@ -127,7 +127,7 @@
       try {
         window.showToast(message, type);
         return;
-      } catch (_err) {}
+      } catch (_err) { }
     }
   }
 
@@ -792,16 +792,35 @@
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
     const historySection = document.getElementById('historySection');
+    const sideNavHistory = document.getElementById('sideNavHistory');
 
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
     if (historySection) {
       historySection.style.display = 'block';
       if (typeof window.scrollTo === 'function') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+    }
+
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage) {
+        sessionStorage.setItem('pdfl_active_view', 'history');
+      }
+    } catch (_err) { }
+
+    if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+      window.PDFLinguaSidebar.setActiveNav('history');
+    } else if (sideNavHistory) {
+      const allItems = document.querySelectorAll ? document.querySelectorAll('.sidebar-nav-item') : [];
+      if (allItems && typeof allItems.forEach === 'function') {
+        allItems.forEach((item) => item.classList.remove('active'));
+      }
+      sideNavHistory.classList.add('active');
     }
 
     return fetchHistoryList(currentPage);
@@ -814,17 +833,39 @@
 
     const workspaceSection = document.getElementById('workspaceSection');
     const heroSection = document.getElementById('heroSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const adminSection = document.getElementById('adminSection');
+
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+
     const docNameDisplay = document.getElementById('docNameDisplay');
     const hasOpenDocument = Boolean(
       workspaceSection && docNameDisplay && docNameDisplay.textContent && docNameDisplay.textContent.trim() !== ''
     );
 
     if (hasOpenDocument) {
-      workspaceSection.style.display = 'block';
+      if (workspaceSection) workspaceSection.style.display = 'block';
       if (heroSection) heroSection.style.display = 'none';
-    } else if (heroSection) {
-      heroSection.style.display = 'block';
+      try {
+        if (typeof sessionStorage !== 'undefined' && sessionStorage) {
+          sessionStorage.setItem('pdfl_active_view', 'workspace');
+        }
+      } catch (_err) { }
+      if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+        window.PDFLinguaSidebar.setActiveNav('translate');
+      }
+    } else {
+      if (heroSection) heroSection.style.display = 'block';
       if (workspaceSection) workspaceSection.style.display = 'none';
+      try {
+        if (typeof sessionStorage !== 'undefined' && sessionStorage) {
+          sessionStorage.removeItem('pdfl_active_view');
+        }
+      } catch (_err) { }
+      if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+        window.PDFLinguaSidebar.setActiveNav('home');
+      }
     }
 
     if (typeof window.scrollTo === 'function') {
