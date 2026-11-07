@@ -338,6 +338,9 @@
           historySection.style.display = 'block';
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        if (window.pdfLinguaHistory && typeof window.pdfLinguaHistory.openHistoryView === 'function') {
+          window.pdfLinguaHistory.openHistoryView();
+        }
         if (window.innerWidth < 768) closeMobileSidebar();
       });
     }
