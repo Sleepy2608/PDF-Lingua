@@ -131,13 +131,18 @@
 
   function triggerPdfUpload() {
     const adminSection = document.getElementById('adminSection');
+    const pricingSection = document.getElementById('pricingSection');
     const heroSection = document.getElementById('heroSection');
     const btnNewFile = document.getElementById('btnNewFile');
     const pdfFileInput = document.getElementById('pdfFileInput');
 
-    // If currently in admin view, return to user workspace
+    // If currently in admin or pricing view, return to user workspace
     if (adminSection && adminSection.style.display !== 'none') {
       adminSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'block';
+    }
+    if (pricingSection && pricingSection.style.display !== 'none') {
+      pricingSection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
     }
 
@@ -253,8 +258,10 @@
         e.preventDefault();
         setActiveNavItem(sideNavHome);
         const adminSection = document.getElementById('adminSection');
+        const pricingSection = document.getElementById('pricingSection');
         const heroSection = document.getElementById('heroSection');
         if (adminSection) adminSection.style.display = 'none';
+        if (pricingSection) pricingSection.style.display = 'none';
         if (heroSection) heroSection.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (window.innerWidth < 768) closeMobileSidebar();
@@ -266,8 +273,10 @@
         e.preventDefault();
         setActiveNavItem(sideNavTranslate);
         const adminSection = document.getElementById('adminSection');
+        const pricingSection = document.getElementById('pricingSection');
         const heroSection = document.getElementById('heroSection');
         if (adminSection) adminSection.style.display = 'none';
+        if (pricingSection) pricingSection.style.display = 'none';
         if (heroSection) heroSection.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (window.innerWidth < 768) closeMobileSidebar();
@@ -315,8 +324,20 @@
       sideNavPricing.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavPricing);
-        if (typeof showToast === 'function') {
-          showToast('Bảng giá gói: Gói Miễn phí (20MB / 100 trang), Gói Pro (100MB / 500 trang).', 'info');
+        if (window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
+          window.PDFLinguaPricing.openPricingView();
+        } else {
+          const adminSection = document.getElementById('adminSection');
+          const heroSection = document.getElementById('heroSection');
+          const workspaceSection = document.getElementById('workspaceSection');
+          const pricingSection = document.getElementById('pricingSection');
+          if (adminSection) adminSection.style.display = 'none';
+          if (heroSection) heroSection.style.display = 'none';
+          if (workspaceSection) workspaceSection.style.display = 'none';
+          if (pricingSection) pricingSection.style.display = 'block';
+          if (typeof showToast === 'function') {
+            showToast('Bảng giá gói: Gói Miễn phí (20MB / 100 trang), Gói Pro (49k/tháng hoặc 399k/năm).', 'info');
+          }
         }
         if (window.innerWidth < 768) closeMobileSidebar();
       });
@@ -326,6 +347,8 @@
       sideNavAdmin.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavAdmin);
+        const pricingSection = document.getElementById('pricingSection');
+        if (pricingSection) pricingSection.style.display = 'none';
         if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
           window.pdfLinguaAdmin.openAdminView();
         } else {

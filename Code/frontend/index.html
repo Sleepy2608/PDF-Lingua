@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/workspace.css">
     <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/pricing.css">
 </head>
 <body>
     <div class="app-shell" id="appShell">
@@ -195,9 +196,9 @@
 
             <nav>
                 <ul class="nav-menu">
-                    <li><a href="#translate" class="nav-link active">Dịch PDF</a></li>
-                    <li><a href="#ai-copilot" class="nav-link">Hỏi đáp AI</a></li>
-                    <li><a href="#pricing" class="nav-link">Bảng giá</a></li>
+                    <li><a href="#translate" class="nav-link active" id="topNavTranslate">Dịch PDF</a></li>
+                    <li><a href="#ai-copilot" class="nav-link" id="topNavAiCopilot">Hỏi đáp AI</a></li>
+                    <li><a href="#pricing" class="nav-link" id="topNavPricing">Bảng giá</a></li>
                 </ul>
             </nav>
 
@@ -548,6 +549,372 @@
                             </div>
                         </div>
                         <div class="pane-body" id="paneTranslated" tabindex="0" contenteditable="plaintext-only" spellcheck="false"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Plans Section (Initially Hidden) -->
+        <section class="pricing-section" id="pricingSection" style="display: none;">
+            <div class="container pricing-container">
+                <!-- 1. Section Header & Segmented Billing Switch -->
+                <div class="pricing-header">
+                    <div class="pricing-eyebrow">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                            <line x1="2" y1="10" x2="22" y2="10"></line>
+                        </svg>
+                        <span>GÓI DỊCH VỤ & HẠN MỨC XỬ LÝ</span>
+                    </div>
+                    <h2 class="pricing-title">Bảng Giá Gói Dịch Vụ Minh Bạch & Linh Hoạt</h2>
+                    <p class="pricing-subtitle">Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.</p>
+
+                    <!-- Segmented Billing Cycle Switch -->
+                    <div class="billing-toggle-wrap" role="tablist" aria-label="Chọn chu kỳ thanh toán">
+                        <button type="button" class="billing-toggle-btn active" id="btnBillingMonthly" data-cycle="monthly" role="tab" aria-selected="true">
+                            <span>Theo tháng (49k/tháng)</span>
+                        </button>
+                        <button type="button" class="billing-toggle-btn" id="btnBillingYearly" data-cycle="yearly" role="tab" aria-selected="false">
+                            <span>Theo năm (399k/năm)</span>
+                            <span class="billing-save-pill" id="billingSavePill">TIẾT KIỆM 32%</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Subscription Status Banner (Visible when user holds Pro/Admin) -->
+                <div class="pricing-active-banner" id="pricingActiveBanner" style="display: none;">
+                    <div class="pricing-active-banner-info">
+                        <div class="pricing-active-banner-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="pricing-active-banner-title" id="pricingActiveBannerTitle">Tài khoản của bạn đang kích hoạt đặc quyền Gói Pro</div>
+                            <div class="pricing-active-banner-sub" id="pricingActiveBannerSub">Hạn mức: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelAutoRenew" style="display: none;">Hủy gia hạn tự động</button>
+                </div>
+
+                <!-- 2. Asymmetric 2-Card Bento Grid (Free vs Pro) -->
+                <div class="pricing-bento-grid">
+                    <!-- Card 1: Free Tier -->
+                    <article class="pricing-card pricing-card-free" id="pricingCardFree">
+                        <div class="pricing-card-top">
+                            <div class="pricing-plan-header">
+                                <div>
+                                    <h3 class="pricing-plan-name" id="freePlanName">Gói Miễn Phí</h3>
+                                    <p class="pricing-plan-tagline">Dành cho nhu cầu đọc hiểu và dịch thuật PDF cơ bản hàng ngày</p>
+                                </div>
+                                <span class="pricing-tier-pill">Tiêu chuẩn</span>
+                            </div>
+
+                            <div class="pricing-price-block">
+                                <div class="pricing-price-row">
+                                    <span class="pricing-price-amount" id="freePlanPriceDisplay">0đ</span>
+                                    <span class="pricing-price-period" id="freePlanPeriodDisplay">/ vĩnh viễn</span>
+                                </div>
+                                <div class="pricing-price-note-row">
+                                    <span class="pricing-price-subnote">Không yêu cầu thẻ thanh toán</span>
+                                </div>
+                            </div>
+
+                            <div class="pricing-quota-strip">
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label">Dung lượng tệp</span>
+                                    <span class="pricing-quota-value" id="freeMaxFileSize">20 MB / tệp</span>
+                                </div>
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label">Số trang OCR</span>
+                                    <span class="pricing-quota-value" id="freeMaxOcrPages">100 trang</span>
+                                </div>
+                            </div>
+
+                            <ul class="pricing-feature-list" id="freeFeatureList">
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Tải lên tệp PDF tối đa 20 MB</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Nhận diện OCR tối đa 100 trang</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Dịch thuật song ngữ thông minh tiêu chuẩn</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Lưu trữ 5 tài liệu gần đây</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Hỗ trợ xuất tệp TXT và PDF Song ngữ</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="pricing-card-footer">
+                            <button type="button" class="btn btn-secondary btn-pricing-cta" id="btnSelectFreePlan">
+                                Bắt đầu miễn phí
+                            </button>
+                            <p class="pricing-cta-Caption" id="freePlanCtaHint">Sẵn sàng sử dụng ngay khi tải tệp PDF</p>
+                        </div>
+                    </article>
+
+                    <!-- Card 2: Pro VIP Tier (Featured) -->
+                    <article class="pricing-card pricing-card-pro" id="pricingCardPro">
+                        <div class="pricing-card-top">
+                            <div class="pricing-plan-header">
+                                <div>
+                                    <h3 class="pricing-plan-name" id="proPlanName">Gói Pro Hàng Tháng</h3>
+                                    <p class="pricing-plan-tagline">Mở khóa toàn bộ hạn mức 100 MB, 500 trang OCR và Trợ lý AI</p>
+                                </div>
+                                <span class="pricing-popular-ribbon" id="proPopularRibbon">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    <span>ĐƯỢC ƯA CHUỘNG NHẤT</span>
+                                </span>
+                            </div>
+
+                            <div class="pricing-price-block">
+                                <div class="pricing-price-row">
+                                    <span class="pricing-price-amount" id="proPlanPriceDisplay">49.000đ</span>
+                                    <span class="pricing-price-period" id="proPlanPeriodDisplay">/ tháng</span>
+                                    <span class="pricing-price-original" id="proPlanOriginalPrice" style="display: none;">588.000đ</span>
+                                </div>
+                                <div class="pricing-price-note-row">
+                                    <span class="pricing-price-subnote" id="proPlanSubnote">Thanh toán linh hoạt từng tháng (30 ngày)</span>
+                                    <span class="pricing-discount-badge" id="proPlanDiscountBadge" style="display: none;">TIẾT KIỆM 32%</span>
+                                </div>
+                            </div>
+
+                            <div class="pricing-quota-strip">
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label">Dung lượng tệp</span>
+                                    <span class="pricing-quota-value" id="proMaxFileSize">100 MB / tệp</span>
+                                </div>
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label">Số trang OCR</span>
+                                    <span class="pricing-quota-value" id="proMaxOcrPages">500 trang</span>
+                                </div>
+                            </div>
+
+                            <ul class="pricing-feature-list" id="proFeatureList">
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Tải lên tệp PDF siêu lớn đến 100 MB</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Nhận dạng OCR chuyên sâu đến 500 trang</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Trợ lý AI Hỏi đáp (AI Copilot) không giới hạn</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Tóm tắt thông minh AI Summary & bảng thuật ngữ</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Hàng đợi ưu tiên tốc độ cao (Fast-track Worker)</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Kho lưu trữ tài liệu cá nhân không giới hạn</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Huy hiệu Pro VIP ánh kim trên hồ sơ và giao diện</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="pricing-card-footer">
+                            <button type="button" class="btn btn-gradient btn-pricing-cta" id="btnUpgradeProPlan" data-plan-code="pro_monthly">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                </svg>
+                                <span id="btnUpgradeProText">Nâng cấp lên Pro ngay</span>
+                            </button>
+                            <p class="pricing-cta-Caption" id="proPlanCtaHint">Kích hoạt tức thì qua mã VietQR ngân hàng 24/7</p>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- 3. Grouped Capability Clusters (Feature Comparison Matrix) -->
+                <div class="pricing-comparison-wrap" id="pricingComparisonMatrix">
+                    <div class="pricing-comparison-header">
+                        <h3 class="pricing-comparison-title">So Sánh Chi Tiết Quyền Lợi Theo Nhóm Tính Năng</h3>
+                        <p class="pricing-comparison-subtitle">Đối chiếu trực quan năng lực xử lý tài liệu, trí tuệ nhân tạo và lưu trữ giữa hai gói dịch vụ</p>
+                    </div>
+
+                    <div class="pricing-clusters-grid">
+                        <!-- Cluster 1: Document & OCR Capacity -->
+                        <div class="pricing-cluster-card">
+                            <div class="pricing-cluster-head">
+                                <span class="pricing-cluster-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </span>
+                                <h4 class="pricing-cluster-title">Năng lực Xử lý & OCR</h4>
+                            </div>
+                            <div class="pricing-cluster-rows">
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Dung lượng tệp PDF tối đa</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">Free: 20 MB</span>
+                                        <span class="pricing-spec-Badge spec-pro">Pro: 100 MB</span>
+                                    </div>
+                                </div>
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Giới hạn trang nhận diện OCR</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">Free: 100 trang</span>
+                                        <span class="pricing-spec-Badge spec-pro">Pro: 500 trang</span>
+                                    </div>
+                                </div>
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Tốc độ hàng đợi xử lý</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">Tiêu chuẩn</span>
+                                        <span class="pricing-spec-Badge spec-pro">Ưu tiên Fast-track</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cluster 2: AI Copilot & Summarization -->
+                        <div class="pricing-cluster-card">
+                            <div class="pricing-cluster-head">
+                                <span class="pricing-cluster-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </span>
+                                <h4 class="pricing-cluster-title">Trợ lý AI & Dịch thuật</h4>
+                            </div>
+                            <div class="pricing-cluster-rows">
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Trợ lý hỏi đáp AI Copilot</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">5 câu / ngày</span>
+                                        <span class="pricing-spec-Badge spec-pro">Không giới hạn</span>
+                                    </div>
+                                </div>
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Tóm tắt AI Summary & Thuật ngữ</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">Cơ bản</span>
+                                        <span class="pricing-spec-Badge spec-pro">Chuyên sâu</span>
+                                    </div>
+                                </div>
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Định dạng tải xuống bản dịch</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">PDF, TXT</span>
+                                        <span class="pricing-spec-Badge spec-pro">PDF, Word, TXT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cluster 3: Cloud Storage & VIP Identity -->
+                        <div class="pricing-cluster-card">
+                            <div class="pricing-cluster-head">
+                                <span class="pricing-cluster-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </span>
+                                <h4 class="pricing-cluster-title">Lưu trữ & Đặc quyền Hồ sơ</h4>
+                            </div>
+                            <div class="pricing-cluster-rows">
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Kho tài liệu cá nhân</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">5 tệp gần đây</span>
+                                        <span class="pricing-spec-Badge spec-pro">Không giới hạn</span>
+                                    </div>
+                                </div>
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Huy hiệu nhận diện tài khoản</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">Nhãn Miễn phí</span>
+                                        <span class="pricing-spec-Badge spec-pro">Pro VIP Vàng kim</span>
+                                    </div>
+                                </div>
+                                <div class="pricing-spec-row">
+                                    <span class="pricing-spec-name">Gia hạn & Quản lý gói</span>
+                                    <div class="pricing-spec-values">
+                                        <span class="pricing-spec-Badge spec-free">Mặc định</span>
+                                        <span class="pricing-spec-Badge spec-pro">Hủy bất cứ lúc nào</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1469,6 +1836,7 @@
     <script src="js/auth.js?v=2.0.0"></script>
     <script src="js/workspace.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/pricing.js"></script>
     <script src="js/sidebar.js"></script>
 </body>
 </html>
