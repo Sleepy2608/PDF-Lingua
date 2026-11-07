@@ -222,11 +222,17 @@ class HistoryService:
         Query a single history record by ID.
         Raises ForbiddenException if requested by an unauthorized user.
         """
-        record = (
-            db.query(ProcessingHistory)
-            .filter(ProcessingHistory.id == history_id)
-            .first()
-        )
+        try:
+            record = (
+                db.query(ProcessingHistory)
+                .filter(ProcessingHistory.id == history_id)
+                .first()
+            )
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error querying history_id={history_id}: {exc}")
+            raise
+
         if record is None:
             return None
         if current_user_id is not None and record.user_id != current_user_id:
@@ -236,8 +242,9 @@ class HistoryService:
             )
         return record
 
-    @staticmethod
+    @classmethod
     def get_histories_by_user(
+        cls,
         db: Session,
         user_id: int,
         current_user_id: Optional[int] = None,
@@ -249,7 +256,8 @@ class HistoryService:
     ) -> list[ProcessingHistory]:
         """
         Query paginated processing history for a specific user.
-        Enforces tenant isolation by checking `current_user_id == user_id`.
+        Enforces tenant isolation by checking `current_user_id == user_id`
+        and verifying `document_id` ownership when filtered by document.
         """
         if current_user_id is not None and current_user_id != user_id:
             raise ForbiddenException(
@@ -257,11 +265,14 @@ class HistoryService:
                 details={"target_user_id": user_id, "current_user_id": current_user_id},
             )
 
-        query = db.query(ProcessingHistory).filter(ProcessingHistory.user_id == user_id)
+        if document_id is not None and document_id <= 0:
+            raise BadRequestException(
+                message="document_id phải là số nguyên dương (> 0).",
+                error_code="INVALID_DOCUMENT_ID",
+                details={"document_id": document_id},
+            )
 
-        if document_id is not None:
-            query = query.filter(ProcessingHistory.document_id == document_id)
-
+        norm_action: Optional[ActionType] = None
         if action_type is not None:
             if isinstance(action_type, str):
                 try:
@@ -275,8 +286,8 @@ class HistoryService:
                     ) from exc
             else:
                 norm_action = action_type
-            query = query.filter(ProcessingHistory.action_type == norm_action)
 
+        norm_status: Optional[ProcessingStatus] = None
         if status is not None:
             if isinstance(status, str):
                 try:
@@ -290,17 +301,35 @@ class HistoryService:
                     ) from exc
             else:
                 norm_status = status
-            query = query.filter(ProcessingHistory.status == norm_status)
 
         safe_skip = max(0, skip)
         safe_limit = max(1, min(limit, 100))
 
-        return (
-            query.order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
-            .offset(safe_skip)
-            .limit(safe_limit)
-            .all()
-        )
+        try:
+            if document_id is not None:
+                cls.verify_document_ownership(db, document_id=document_id, user_id=user_id)
+
+            query = db.query(ProcessingHistory).filter(ProcessingHistory.user_id == user_id)
+
+            if document_id is not None:
+                query = query.filter(ProcessingHistory.document_id == document_id)
+
+            if norm_action is not None:
+                query = query.filter(ProcessingHistory.action_type == norm_action)
+
+            if norm_status is not None:
+                query = query.filter(ProcessingHistory.status == norm_status)
+
+            return (
+                query.order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
+                .offset(safe_skip)
+                .limit(safe_limit)
+                .all()
+            )
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error querying histories for user_id={user_id}: {exc}")
+            raise
 
     @classmethod
     def get_histories_by_document(
@@ -328,14 +357,19 @@ class HistoryService:
         safe_skip = max(0, skip)
         safe_limit = max(1, min(limit, 100))
 
-        return (
-            db.query(ProcessingHistory)
-            .filter(ProcessingHistory.document_id == document_id)
-            .order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
-            .offset(safe_skip)
-            .limit(safe_limit)
-            .all()
-        )
+        try:
+            return (
+                db.query(ProcessingHistory)
+                .filter(ProcessingHistory.document_id == document_id)
+                .order_by(ProcessingHistory.created_at.desc(), ProcessingHistory.id.desc())
+                .offset(safe_skip)
+                .limit(safe_limit)
+                .all()
+            )
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error querying histories for document_id={document_id}: {exc}")
+            raise
 
     @staticmethod
     def count_histories_by_user(
