@@ -80,8 +80,16 @@
   let catalogData = JSON.parse(JSON.stringify(DEFAULT_CATALOG));
   let mySubscriptionData = null;
 
+  // Checkout Modal & Real-time Polling State
+  let currentTransaction = null;
+  let checkoutPollingTimer = null;
+  let checkoutCountdownInterval = null;
+  let remainingSeconds = 900;
+  let isSimulatingPayment = false;
+
   document.addEventListener('DOMContentLoaded', () => {
     initPricingModule();
+    initCheckoutModal();
   });
 
   function getStoredToken() {
@@ -598,18 +606,12 @@
       return;
     }
 
-    // If Checkout controller is attached, open the VietQR checkout modal
+    // Dispatch custom event for checkout listeners
     if (
       typeof window !== 'undefined' &&
-      window.PDFLinguaCheckout &&
-      typeof window.PDFLinguaCheckout.openCheckout === 'function'
+      typeof window.dispatchEvent === 'function' &&
+      typeof CustomEvent === 'function'
     ) {
-      window.PDFLinguaCheckout.openCheckout(planCode);
-      return;
-    }
-
-    // Dispatch custom event for checkout integration
-    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
       window.dispatchEvent(
         new CustomEvent('pdfl:open-checkout', {
           detail: { planCode, billingCycle: currentCycle },
@@ -617,11 +619,729 @@
       );
     }
 
-    const label =
-      planCode === 'pro_yearly'
-        ? 'Gói Pro Hàng Năm (399.000đ/năm)'
-        : 'Gói Pro Hàng Tháng (49.000đ/tháng)';
-    notifyUser(`Đã chọn ${label}. Đang khởi tạo cổng thanh toán VietQR...`, 'info');
+    openCheckoutModal(planCode);
+  }
+
+  // ---------------------------------------------------------------------------
+  // VietQR Checkout Modal, Polling, Countdown & Confetti Celebration Controller
+  // ---------------------------------------------------------------------------
+
+  function initCheckoutModal() {
+    const modal = document.getElementById('pricingCheckoutModal');
+    const btnClose = document.getElementById('btnCloseCheckoutModal');
+    const btnCycleMonthly = document.getElementById('btnCheckoutCycleMonthly');
+    const btnCycleYearly = document.getElementById('btnCheckoutCycleYearly');
+    const btnCheckNow = document.getElementById('btnCheckTransactionNow');
+    const btnSimulate = document.getElementById('btnSimulatePaymentSuccess');
+    const btnDone = document.getElementById('btnCheckoutDone');
+    const btnRetry = document.getElementById('btnRetryCheckout');
+    const qrImg = document.getElementById('checkoutQrImage');
+
+    if (btnClose) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeCheckoutModal();
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeCheckoutModal();
+        }
+      });
+    }
+
+    if (btnCycleMonthly) {
+      btnCycleMonthly.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchCheckoutPlan('pro_monthly');
+      });
+    }
+
+    if (btnCycleYearly) {
+      btnCycleYearly.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchCheckoutPlan('pro_yearly');
+      });
+    }
+
+    if (btnCheckNow) {
+      btnCheckNow.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleManualStatusCheck();
+      });
+    }
+
+    if (btnSimulate) {
+      btnSimulate.addEventListener('click', (e) => {
+        e.preventDefault();
+        simulatePaymentSuccess();
+      });
+    }
+
+    if (btnDone) {
+      btnDone.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeCheckoutModal();
+        closePricingView();
+      });
+    }
+
+    if (btnRetry) {
+      btnRetry.addEventListener('click', (e) => {
+        e.preventDefault();
+        const code = currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+        openCheckoutModal(code);
+      });
+    }
+
+    if (qrImg) {
+      qrImg.addEventListener('error', () => {
+        qrImg.style.display = 'none';
+        const fallback = document.getElementById('checkoutQrFallback');
+        if (fallback) fallback.style.display = 'flex';
+      });
+      qrImg.addEventListener('load', () => {
+        qrImg.style.display = 'block';
+        const fallback = document.getElementById('checkoutQrFallback');
+        if (fallback) fallback.style.display = 'none';
+      });
+    }
+
+    // 1-Click Copy buttons for bank details
+    const copyButtons = [
+      document.getElementById('btnCopyCheckoutAccount'),
+      document.getElementById('btnCopyCheckoutAmount'),
+      document.getElementById('btnCopyCheckoutNote'),
+    ];
+    copyButtons.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = btn.getAttribute('data-copy-target');
+        const targetEl = targetId ? document.getElementById(targetId) : null;
+        const rawVal = targetEl ? (targetEl.textContent || '').trim() : '';
+        copyBankDetailValue(rawVal, btn);
+      });
+    });
+  }
+
+  function copyBankDetailValue(text, btnEl) {
+    if (!text) return;
+    const cleanText = text.replace(/\s*đ$/i, '').replace(/\./g, (m) => {
+      // If copying amount like "49.000đ", strip dots for bank paste convenience if numeric
+      return /^\d+(\.\d{3})+$/.test(text.replace(/\s*đ$/i, '')) ? '' : m;
+    });
+
+    try {
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.clipboard &&
+        typeof navigator.clipboard.writeText === 'function'
+      ) {
+        navigator.clipboard.writeText(cleanText).catch(() => {});
+      }
+    } catch (_e) {}
+
+    if (btnEl) {
+      const prevText = btnEl.textContent || 'Sao chép';
+      btnEl.textContent = 'Đã chép';
+      btnEl.classList.add('copied');
+      setTimeout(() => {
+        btnEl.textContent = prevText === 'Đã chép' ? 'Sao chép' : prevText;
+        btnEl.classList.remove('copied');
+      }, 1600);
+    }
+
+    notifyUser(`Đã sao chép: ${cleanText}`, 'success');
+  }
+
+  function computeEstimatedExpiryDate(durationDays) {
+    const days = Number(durationDays) || 30;
+    let baseTime = Date.now();
+    if (
+      mySubscriptionData &&
+      mySubscriptionData.active_subscription &&
+      mySubscriptionData.active_subscription.expires_at
+    ) {
+      const existingExp = new Date(
+        mySubscriptionData.active_subscription.expires_at
+      ).getTime();
+      if (!isNaN(existingExp) && existingExp > baseTime) {
+        baseTime = existingExp;
+      }
+    }
+    const targetDate = new Date(baseTime + days * 24 * 60 * 60 * 1000);
+    return formatShortDate(targetDate.toISOString());
+  }
+
+  function setCheckoutViewState(state) {
+    const pendingView = document.getElementById('checkoutPendingView');
+    const successView = document.getElementById('checkoutSuccessView');
+    const expiredView = document.getElementById('checkoutExpiredView');
+
+    if (pendingView) {
+      pendingView.style.display = state === 'pending' ? 'flex' : 'none';
+    }
+    if (successView) {
+      successView.style.display = state === 'success' ? 'flex' : 'none';
+    }
+    if (expiredView) {
+      expiredView.style.display = state === 'expired' ? 'flex' : 'none';
+    }
+  }
+
+  function renderCheckoutOrderSummary(planCode) {
+    const isYearly = planCode === 'pro_yearly';
+    const proTier =
+      (catalogData && catalogData.pro_tier) || DEFAULT_CATALOG.pro_tier;
+    const planObj = isYearly ? proTier.yearly : proTier.monthly;
+
+    const btnCycleMonthly = document.getElementById('btnCheckoutCycleMonthly');
+    const btnCycleYearly = document.getElementById('btnCheckoutCycleYearly');
+    const planNameEl = document.getElementById('checkoutPlanName');
+    const durationEl = document.getElementById('checkoutDurationDays');
+    const expiryPreviewEl = document.getElementById('checkoutExpiryPreview');
+    const savingsRowEl = document.getElementById('checkoutSavingsRow');
+    const savingsAmountEl = document.getElementById('checkoutSavingsAmount');
+    const totalAmountEl = document.getElementById('checkoutTotalAmount');
+
+    if (btnCycleMonthly) {
+      btnCycleMonthly.classList.toggle('active', !isYearly);
+    }
+    if (btnCycleYearly) {
+      btnCycleYearly.classList.toggle('active', isYearly);
+    }
+
+    const durationDays = planObj.duration_days || (isYearly ? 365 : 30);
+    const amountVnd = planObj.price_vnd || (isYearly ? 399000 : 49000);
+
+    if (planNameEl) {
+      planNameEl.textContent =
+        planObj.name || (isYearly ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng');
+    }
+    if (durationEl) {
+      durationEl.textContent = `${durationDays} ngày`;
+    }
+    if (expiryPreviewEl) {
+      expiryPreviewEl.textContent = computeEstimatedExpiryDate(durationDays);
+    }
+    if (savingsRowEl) {
+      if (isYearly) {
+        const savedVnd =
+          (planObj.original_price_vnd || 588000) - amountVnd;
+        const pct = planObj.discount_percent || 32;
+        if (savingsAmountEl) {
+          savingsAmountEl.textContent = `-${formatVnd(savedVnd)} (Tiết kiệm ${pct}%)`;
+        }
+        savingsRowEl.style.display = 'flex';
+      } else {
+        savingsRowEl.style.display = 'none';
+      }
+    }
+    if (totalAmountEl) {
+      totalAmountEl.textContent = `${amountVnd.toLocaleString('vi-VN').replace(/,/g, '.')} VNĐ`;
+    }
+  }
+
+  function buildFallbackCheckoutData(planCode) {
+    const isYearly = planCode === 'pro_yearly';
+    const amountVnd = isYearly ? 399000 : 49000;
+    const durationDays = isYearly ? 365 : 30;
+    const txCode = `PDL-SUB-${String(Date.now()).slice(-6)}`;
+    const transferNote = txCode.replace(/-/g, ' ');
+    const qrUrl = `https://img.vietqr.io/image/MB-0345678999-compact2.png?amount=${amountVnd}&addInfo=${encodeURIComponent(
+      transferNote
+    )}&accountName=${encodeURIComponent('PDF LINGUA PROJECT')}`;
+
+    return {
+      transaction_code: txCode,
+      plan_code: isYearly ? 'pro_yearly' : 'pro_monthly',
+      plan_name: isYearly ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng',
+      duration_days: durationDays,
+      amount_vnd: amountVnd,
+      amount_display: `${amountVnd.toLocaleString('vi-VN').replace(/,/g, '.')} VNĐ`,
+      payment_method: 'vietqr',
+      payment_status: 'pending',
+      qr_code_url: qrUrl,
+      bank_info: {
+        bank_name: 'MB Bank (Ngân hàng Quân Đội)',
+        account_number: '0345678999',
+        account_name: 'PDF LINGUA PROJECT',
+        transfer_note: transferNote,
+      },
+      expires_in_seconds: 900,
+    };
+  }
+
+  function renderTransactionDetails(txData) {
+    if (!txData) return;
+    currentTransaction = txData;
+
+    const qrImg = document.getElementById('checkoutQrImage');
+    const qrFallback = document.getElementById('checkoutQrFallback');
+    const bankNameEl = document.getElementById('checkoutBankName');
+    const accountNameEl = document.getElementById('checkoutAccountName');
+    const accountNumEl = document.getElementById('checkoutAccountNumber');
+    const transferAmountEl = document.getElementById('checkoutTransferAmount');
+    const transferNoteEl = document.getElementById('checkoutTransferNote');
+    const txCodeEl = document.getElementById('checkoutTransactionCode');
+    const pollingTextEl = document.getElementById('checkoutPollingStatusText');
+
+    const bank = txData.bank_info || {};
+    if (bankNameEl) {
+      bankNameEl.textContent = bank.bank_name || 'MB Bank (Ngân hàng Quân Đội)';
+    }
+    if (accountNameEl) {
+      accountNameEl.textContent = bank.account_name || 'PDF LINGUA PROJECT';
+    }
+    if (accountNumEl) {
+      accountNumEl.textContent = bank.account_number || '0345678999';
+    }
+    if (transferAmountEl) {
+      transferAmountEl.textContent = formatVnd(txData.amount_vnd || 49000);
+    }
+    if (transferNoteEl) {
+      transferNoteEl.textContent =
+        bank.transfer_note || txData.transaction_code || 'PDL SUB';
+    }
+    if (txCodeEl) {
+      txCodeEl.textContent = txData.transaction_code || '---';
+    }
+    if (pollingTextEl) {
+      pollingTextEl.textContent = 'Đang chờ thanh toán từ ngân hàng...';
+    }
+
+    if (qrImg) {
+      if (txData.qr_code_url) {
+        qrImg.src = txData.qr_code_url;
+        qrImg.style.display = 'block';
+        if (qrFallback) qrFallback.style.display = 'none';
+      } else {
+        qrImg.style.display = 'none';
+        if (qrFallback) qrFallback.style.display = 'flex';
+      }
+    }
+  }
+
+  function formatCountdownSeconds(secs) {
+    const safeSecs = Math.max(0, Math.floor(Number(secs) || 0));
+    const mins = String(Math.floor(safeSecs / 60)).padStart(2, '0');
+    const rem = String(safeSecs % 60).padStart(2, '0');
+    return `${mins}:${rem}`;
+  }
+
+  function stopCheckoutTimers() {
+    if (checkoutPollingTimer) {
+      clearInterval(checkoutPollingTimer);
+      checkoutPollingTimer = null;
+    }
+    if (checkoutCountdownInterval) {
+      clearInterval(checkoutCountdownInterval);
+      checkoutCountdownInterval = null;
+    }
+  }
+
+  function startCountdownTimer(initialSeconds = 900) {
+    if (checkoutCountdownInterval) {
+      clearInterval(checkoutCountdownInterval);
+      checkoutCountdownInterval = null;
+    }
+
+    remainingSeconds = Number(initialSeconds) > 0 ? Number(initialSeconds) : 900;
+    const timerEl = document.getElementById('checkoutCountdownTimer');
+    if (timerEl) {
+      timerEl.textContent = formatCountdownSeconds(remainingSeconds);
+    }
+
+    if (typeof setInterval === 'function') {
+      checkoutCountdownInterval = setInterval(() => {
+        remainingSeconds = Math.max(0, remainingSeconds - 1);
+        if (timerEl) {
+          timerEl.textContent = formatCountdownSeconds(remainingSeconds);
+        }
+        if (remainingSeconds <= 0) {
+          handlePaymentExpired();
+        }
+      }, 1000);
+    }
+  }
+
+  function startTransactionPolling(transactionCode) {
+    if (checkoutPollingTimer) {
+      clearInterval(checkoutPollingTimer);
+      checkoutPollingTimer = null;
+    }
+    if (!transactionCode || typeof setInterval !== 'function') return;
+
+    checkoutPollingTimer = setInterval(() => {
+      pollTransactionStatus(transactionCode, false);
+    }, 3500);
+  }
+
+  async function openCheckoutModal(planCodeInput) {
+    const normalizedCode =
+      planCodeInput === 'pro_yearly' ||
+      (!planCodeInput && currentCycle === 'yearly')
+        ? 'pro_yearly'
+        : 'pro_monthly';
+
+    setBillingCycle(normalizedCode === 'pro_yearly' ? 'yearly' : 'monthly');
+
+    const modal = document.getElementById('pricingCheckoutModal');
+    if (modal) {
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.style.display = 'flex';
+    }
+    if (document && document.body && document.body.style) {
+      document.body.style.overflow = 'hidden';
+    }
+
+    stopCheckoutTimers();
+    setCheckoutViewState('pending');
+    renderCheckoutOrderSummary(normalizedCode);
+
+    // Render immediate preview while requesting backend VietQR payload
+    const fallbackData = buildFallbackCheckoutData(normalizedCode);
+    renderTransactionDetails(fallbackData);
+    startCountdownTimer(fallbackData.expires_in_seconds);
+
+    await initiateSubscriptionTransaction(normalizedCode);
+  }
+
+  function closeCheckoutModal() {
+    stopCheckoutTimers();
+    const modal = document.getElementById('pricingCheckoutModal');
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.style.display = 'none';
+    }
+    if (document && document.body && document.body.style) {
+      document.body.style.overflow = '';
+    }
+  }
+
+  async function switchCheckoutPlan(newPlanCode) {
+    const targetCode =
+      newPlanCode === 'pro_yearly' ? 'pro_yearly' : 'pro_monthly';
+    setBillingCycle(targetCode === 'pro_yearly' ? 'yearly' : 'monthly');
+    stopCheckoutTimers();
+    setCheckoutViewState('pending');
+    renderCheckoutOrderSummary(targetCode);
+
+    const fallbackData = buildFallbackCheckoutData(targetCode);
+    renderTransactionDetails(fallbackData);
+    startCountdownTimer(fallbackData.expires_in_seconds);
+
+    await initiateSubscriptionTransaction(targetCode);
+  }
+
+  async function initiateSubscriptionTransaction(planCode) {
+    const token = getStoredToken();
+    if (!token || typeof fetch !== 'function') {
+      return currentTransaction;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/pricing/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          plan_code: planCode,
+          payment_method: 'vietqr',
+        }),
+      });
+
+      if (res && res.ok) {
+        const body = await res.json();
+        if (body && body.success && body.data) {
+          renderTransactionDetails(body.data);
+          startCountdownTimer(body.data.expires_in_seconds || 900);
+          startTransactionPolling(body.data.transaction_code);
+          return body.data;
+        }
+      }
+    } catch (_err) {
+      // Offline / local preview fallback already rendered
+    }
+    return currentTransaction;
+  }
+
+  async function pollTransactionStatus(transactionCode, isManualCheck = false) {
+    const code =
+      transactionCode ||
+      (currentTransaction && currentTransaction.transaction_code);
+    const token = getStoredToken();
+    if (!code || !token || typeof fetch !== 'function') return null;
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/pricing/transactions/${encodeURIComponent(
+          code
+        )}/status`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (!res || !res.ok) return null;
+      const body = await res.json();
+      if (body && body.success && body.data) {
+        const tx = body.data;
+        if (tx.payment_status === 'completed') {
+          handlePaymentCompleted(tx);
+        } else if (tx.payment_status === 'expired') {
+          handlePaymentExpired();
+        } else if (isManualCheck) {
+          notifyUser(
+            'Giao dịch đang chờ ngân hàng xác nhận. Bạn có thể bấm "Giả lập thanh toán thành công" để kiểm thử ngay.',
+            'info'
+          );
+        }
+        return tx;
+      }
+    } catch (_err) {
+      if (isManualCheck) {
+        notifyUser(
+          'Không thể kiểm tra trạng thái từ máy chủ lúc này.',
+          'error'
+        );
+      }
+    }
+    return null;
+  }
+
+  async function handleManualStatusCheck() {
+    if (!currentTransaction) return;
+    await pollTransactionStatus(currentTransaction.transaction_code, true);
+  }
+
+  async function simulatePaymentSuccess() {
+    if (isSimulatingPayment || !currentTransaction) return;
+    isSimulatingPayment = true;
+
+    const btnSimulate = document.getElementById('btnSimulatePaymentSuccess');
+    const btnSimulateText = document.getElementById('btnSimulatePaymentText');
+    if (btnSimulate) btnSimulate.disabled = true;
+    if (btnSimulateText) btnSimulateText.textContent = 'Đang xác nhận...';
+
+    const code = currentTransaction.transaction_code;
+    const token = getStoredToken();
+
+    try {
+      if (token && typeof fetch === 'function') {
+        const res = await fetch(
+          `${API_BASE_URL}/api/pricing/transactions/${encodeURIComponent(
+            code
+          )}/simulate`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json',
+            },
+          }
+        );
+
+        if (res && res.ok) {
+          const body = await res.json();
+          if (body && body.success && body.data) {
+            handlePaymentCompleted(body.data);
+            return body.data;
+          }
+        }
+      }
+
+      // Fallback simulation when running standalone / offline test
+      const isYearly = currentTransaction.plan_code === 'pro_yearly';
+      const durationDays = isYearly ? 365 : 30;
+      const nowIso = new Date().toISOString();
+      const expIso = new Date(
+        Date.now() + durationDays * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const simulatedPayload = {
+        transaction_code: code,
+        plan_code: currentTransaction.plan_code,
+        plan_name: currentTransaction.plan_name,
+        amount_vnd: currentTransaction.amount_vnd,
+        payment_method: 'test_simulator',
+        payment_status: 'completed',
+        paid_at: nowIso,
+        user_role: 'pro',
+        subscription: {
+          id: 1,
+          user_id: (getStoredUser() && getStoredUser().id) || 1,
+          plan_code: currentTransaction.plan_code,
+          plan_name: currentTransaction.plan_name,
+          billing_cycle: isYearly ? 'yearly' : 'monthly',
+          status: 'active',
+          started_at: nowIso,
+          expires_at: expIso,
+          days_remaining: durationDays,
+          auto_renew: true,
+        },
+      };
+
+      handlePaymentCompleted(simulatedPayload);
+      return simulatedPayload;
+    } finally {
+      isSimulatingPayment = false;
+      if (btnSimulate) btnSimulate.disabled = false;
+      if (btnSimulateText) {
+        btnSimulateText.textContent = 'Giả lập thanh toán thành công';
+      }
+    }
+  }
+
+  function handlePaymentExpired() {
+    stopCheckoutTimers();
+    if (currentTransaction) {
+      currentTransaction.payment_status = 'expired';
+    }
+    setCheckoutViewState('expired');
+  }
+
+  function handlePaymentCompleted(txData) {
+    stopCheckoutTimers();
+    if (currentTransaction) {
+      currentTransaction.payment_status = 'completed';
+    }
+
+    const updatedRole = (txData && txData.user_role) || 'pro';
+    const subInfo = txData ? txData.subscription : null;
+
+    // 1. Update stored user session & broadcast role upgrade across Header, Sidebar, Account & Upload
+    const currentUser = getStoredUser() || {};
+    const token = getStoredToken();
+    const upgradedUser = Object.assign({}, currentUser, {
+      role: currentUser.role === 'admin' ? 'admin' : updatedRole,
+    });
+
+    if (
+      typeof window !== 'undefined' &&
+      window.pdfLinguaAuth &&
+      typeof window.pdfLinguaAuth.setStoredSession === 'function' &&
+      token
+    ) {
+      window.pdfLinguaAuth.setStoredSession(token, upgradedUser);
+    } else {
+      try {
+        localStorage.setItem('pdfl_user', JSON.stringify(upgradedUser));
+      } catch (_e) {}
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      window.pdfLinguaAuth &&
+      typeof window.pdfLinguaAuth.updateHeaderAuthState === 'function'
+    ) {
+      window.pdfLinguaAuth.updateHeaderAuthState(upgradedUser);
+    } else if (
+      typeof window !== 'undefined' &&
+      typeof window.dispatchEvent === 'function' &&
+      typeof CustomEvent === 'function'
+    ) {
+      window.dispatchEvent(
+        new CustomEvent('pdfl:auth-change', { detail: { user: upgradedUser } })
+      );
+    }
+
+    if (
+      typeof window !== 'undefined' &&
+      window.pdfLinguaAuth &&
+      typeof window.pdfLinguaAuth.renderAccountDetails === 'function'
+    ) {
+      window.pdfLinguaAuth.renderAccountDetails(upgradedUser);
+    }
+
+    // 2. Update subscription banner & CTA states on Pricing page
+    mySubscriptionData = {
+      current_role: upgradedUser.role,
+      is_pro: true,
+      max_file_size_mb: 100,
+      max_ocr_pages: 500,
+      active_subscription: subInfo || null,
+    };
+    renderUserSubscriptionState(upgradedUser, mySubscriptionData);
+
+    // 3. Populate celebration receipt view
+    const receiptCodeEl = document.getElementById('checkoutSuccessTxCode');
+    const receiptPlanEl = document.getElementById('checkoutSuccessPlanName');
+    const receiptAmountEl = document.getElementById('checkoutSuccessAmount');
+    const receiptExpEl = document.getElementById('checkoutSuccessExpiresAt');
+
+    const amountVnd =
+      (txData && txData.amount_vnd) ||
+      (currentTransaction && currentTransaction.amount_vnd) ||
+      49000;
+
+    if (receiptCodeEl) {
+      receiptCodeEl.textContent =
+        (txData && txData.transaction_code) ||
+        (currentTransaction && currentTransaction.transaction_code) ||
+        '---';
+    }
+    if (receiptPlanEl) {
+      receiptPlanEl.textContent =
+        (txData && txData.plan_name) ||
+        (subInfo && subInfo.plan_name) ||
+        (currentTransaction && currentTransaction.plan_name) ||
+        'Gói Pro VIP';
+    }
+    if (receiptAmountEl) {
+      receiptAmountEl.textContent = `${Number(amountVnd)
+        .toLocaleString('vi-VN')
+        .replace(/,/g, '.')} VNĐ`;
+    }
+    if (receiptExpEl) {
+      const expStr =
+        subInfo && subInfo.expires_at
+          ? formatShortDate(subInfo.expires_at)
+          : computeEstimatedExpiryDate(
+              txData && txData.plan_code === 'pro_yearly' ? 365 : 30
+            );
+      receiptExpEl.textContent = expStr;
+    }
+
+    setCheckoutViewState('success');
+    triggerCheckoutConfetti();
+    notifyUser(
+      'Chúc mừng! Tài khoản của bạn đã nâng cấp lên Gói Pro VIP thành công.',
+      'success'
+    );
+  }
+
+  function triggerCheckoutConfetti() {
+    const stage = document.getElementById('checkoutConfettiStage');
+    if (!stage || typeof document.createElement !== 'function') return;
+
+    stage.innerHTML = '';
+    const palette = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#3B82F6'];
+    const pieceCount = 24;
+
+    for (let i = 0; i < pieceCount; i++) {
+      const piece = document.createElement('span');
+      piece.className = 'checkout-confetti-piece';
+      const leftPct = Math.round(((i * 37) % 92) + 4);
+      const delayMs = (i % 6) * 65;
+      const color = palette[i % palette.length];
+      piece.style.left = `${leftPct}%`;
+      piece.style.backgroundColor = color;
+      piece.style.animationDelay = `${delayMs}ms`;
+      stage.appendChild(piece);
+    }
   }
 
   async function handleCancelSubscription() {
@@ -752,6 +1472,19 @@
   }
 
   if (typeof window !== 'undefined') {
+    window.PDFLinguaCheckout = {
+      openCheckout: openCheckoutModal,
+      closeCheckout: closeCheckoutModal,
+      switchCheckoutPlan,
+      pollTransactionStatus,
+      simulatePaymentSuccess,
+      handlePaymentCompleted,
+      handlePaymentExpired,
+      triggerCheckoutConfetti,
+      getCurrentTransaction: () => currentTransaction,
+      getRemainingSeconds: () => remainingSeconds,
+    };
+
     window.PDFLinguaPricing = {
       openPricingView,
       closePricingView,
@@ -762,6 +1495,10 @@
       fetchMySubscription,
       handleUpgradeProAction,
       handleCancelSubscription,
+      openCheckoutModal,
+      closeCheckoutModal,
+      simulatePaymentSuccess,
+      pollTransactionStatus,
     };
   }
 })();

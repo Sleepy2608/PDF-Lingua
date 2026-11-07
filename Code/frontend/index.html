@@ -1610,6 +1610,251 @@
         </div>
     </div>
 
+    <!-- VietQR Checkout & Instant Pro Upgrade Modal -->
+    <div class="modal-overlay checkout-modal-overlay" id="pricingCheckoutModal" hidden aria-hidden="true">
+        <div class="checkout-modal-card" role="dialog" aria-modal="true" aria-labelledby="checkoutModalTitle">
+            <button type="button" class="modal-close checkout-modal-close" id="btnCloseCheckoutModal" aria-label="Đóng cổng thanh toán" title="Đóng">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="checkout-split-grid">
+                <!-- Left Column: Order Summary & Plan Switcher -->
+                <div class="checkout-summary-col">
+                    <div class="checkout-summary-top">
+                        <div class="checkout-eyebrow">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                <line x1="2" y1="10" x2="22" y2="10"></line>
+                            </svg>
+                            <span>CỔNG THANH TOÁN NAPAS247</span>
+                        </div>
+                        <h3 class="checkout-modal-title" id="checkoutModalTitle">Nâng Cấp Tài Khoản Pro VIP</h3>
+                        <p class="checkout-modal-subtitle">Mở khóa tức thì hạn mức 100 MB mỗi tệp, 500 trang OCR chuyên sâu và Trợ lý AI không giới hạn.</p>
+
+                        <!-- Quick Billing Cycle Switcher inside Checkout -->
+                        <div class="checkout-cycle-switch" role="group" aria-label="Đổi chu kỳ gói Pro">
+                            <button type="button" class="checkout-cycle-btn active" id="btnCheckoutCycleMonthly" data-plan-code="pro_monthly">
+                                <span class="checkout-cycle-label">Theo Tháng</span>
+                                <span class="checkout-cycle-price">49.000đ</span>
+                            </button>
+                            <button type="button" class="checkout-cycle-btn" id="btnCheckoutCycleYearly" data-plan-code="pro_yearly">
+                                <div class="checkout-cycle-top-row">
+                                    <span class="checkout-cycle-label">Theo Năm</span>
+                                    <span class="checkout-cycle-badge">-32%</span>
+                                </div>
+                                <span class="checkout-cycle-price">399.000đ</span>
+                            </button>
+                        </div>
+
+                        <!-- Order Breakdown Box -->
+                        <div class="checkout-summary-card" id="checkoutSummaryCard">
+                            <div class="checkout-summary-row">
+                                <span class="checkout-summary-label">Gói đăng ký</span>
+                                <strong class="checkout-summary-val" id="checkoutPlanName">Gói Pro Hàng Tháng</strong>
+                            </div>
+                            <div class="checkout-summary-row">
+                                <span class="checkout-summary-label">Chu kỳ hiệu lực</span>
+                                <span class="checkout-summary-val checkout-mono" id="checkoutDurationDays">30 ngày</span>
+                            </div>
+                            <div class="checkout-summary-row">
+                                <span class="checkout-summary-label">Hạn mức mở khóa</span>
+                                <span class="checkout-summary-val checkout-mono">100 MB / 500 trang</span>
+                            </div>
+                            <div class="checkout-summary-row">
+                                <span class="checkout-summary-label">Hiệu lực dự kiến đến</span>
+                                <span class="checkout-summary-val checkout-mono" id="checkoutExpiryPreview">--/--/----</span>
+                            </div>
+                            <div class="checkout-summary-row checkout-savings-row" id="checkoutSavingsRow" style="display: none;">
+                                <span class="checkout-summary-label">Ưu đãi chu kỳ năm</span>
+                                <strong class="checkout-savings-val" id="checkoutSavingsAmount">-189.000đ (Tiết kiệm 32%)</strong>
+                            </div>
+                            <div class="checkout-summary-divider"></div>
+                            <div class="checkout-summary-total-row">
+                                <span class="checkout-total-label">Tổng thanh toán</span>
+                                <strong class="checkout-total-amount" id="checkoutTotalAmount">49.000 VNĐ</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkout-trust-strip">
+                        <div class="checkout-trust-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            <span>Đối soát tự động 24/7 qua chuẩn VietQR Napas247</span>
+                        </div>
+                        <div class="checkout-trust-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            <span>Cộng dồn ngày sử dụng nếu gia hạn sớm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Dynamic VietQR, Countdown, Polling & Celebration -->
+                <div class="checkout-payment-col">
+                    <!-- State 1: Pending Payment & QR Scanner -->
+                    <div class="checkout-state-view" id="checkoutPendingView">
+                        <div class="checkout-status-bar">
+                            <div class="checkout-radar-pill" id="checkoutPollingStatus">
+                                <span class="checkout-radar-dot"></span>
+                                <span id="checkoutPollingStatusText">Đang chờ thanh toán từ ngân hàng...</span>
+                            </div>
+                            <div class="checkout-countdown-pill" id="checkoutCountdownBadge" title="Thời gian giữ mã giao dịch">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span id="checkoutCountdownTimer">15:00</span>
+                            </div>
+                        </div>
+
+                        <!-- VietQR Code Frame -->
+                        <div class="checkout-qr-card" id="checkoutQrFrame">
+                            <div class="checkout-qr-box">
+                                <div class="checkout-qr-laser" aria-hidden="true"></div>
+                                <img id="checkoutQrImage" class="checkout-qr-img" src="" alt="Mã VietQR thanh toán gói Pro" />
+                                <div class="checkout-qr-fallback" id="checkoutQrFallback" style="display: none;">
+                                    <svg width="132" height="132" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="6" y="6" width="108" height="108" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+                                        <rect x="16" y="16" width="28" height="28" rx="4" stroke="#0F172A" stroke-width="5"/>
+                                        <rect x="24" y="24" width="12" height="12" rx="2" fill="#4F46E5"/>
+                                        <rect x="76" y="16" width="28" height="28" rx="4" stroke="#0F172A" stroke-width="5"/>
+                                        <rect x="84" y="24" width="12" height="12" rx="2" fill="#4F46E5"/>
+                                        <rect x="16" y="76" width="28" height="28" rx="4" stroke="#0F172A" stroke-width="5"/>
+                                        <rect x="24" y="84" width="12" height="12" rx="2" fill="#4F46E5"/>
+                                        <rect x="52" y="20" width="8" height="8" fill="#0F172A"/>
+                                        <rect x="52" y="36" width="8" height="16" fill="#0F172A"/>
+                                        <rect x="20" y="54" width="16" height="8" fill="#0F172A"/>
+                                        <rect x="46" y="54" width="26" height="8" fill="#4F46E5"/>
+                                        <rect x="80" y="54" width="20" height="8" fill="#0F172A"/>
+                                        <rect x="52" y="70" width="12" height="12" fill="#0F172A"/>
+                                        <rect x="72" y="74" width="10" height="26" fill="#0F172A"/>
+                                        <rect x="90" y="74" width="12" height="12" fill="#4F46E5"/>
+                                        <rect x="90" y="92" width="12" height="10" fill="#0F172A"/>
+                                    </svg>
+                                    <span class="checkout-qr-fallback-label">Mã VietQR Napas247</span>
+                                </div>
+                            </div>
+                            <p class="checkout-qr-caption">Mở ứng dụng Ngân hàng hoặc Ví điện tử bất kỳ để quét mã VietQR</p>
+                        </div>
+
+                        <!-- Bank Transfer Details with 1-Click Copy -->
+                        <div class="checkout-bank-card" id="checkoutBankBox">
+                            <div class="checkout-bank-row">
+                                <span class="checkout-bank-label">Ngân hàng</span>
+                                <strong class="checkout-bank-val" id="checkoutBankName">MB Bank (Ngân hàng Quân Đội)</strong>
+                            </div>
+                            <div class="checkout-bank-row">
+                                <span class="checkout-bank-label">Chủ tài khoản</span>
+                                <strong class="checkout-bank-val" id="checkoutAccountName">PDF LINGUA PROJECT</strong>
+                            </div>
+                            <div class="checkout-bank-row">
+                                <span class="checkout-bank-label">Số tài khoản</span>
+                                <div class="checkout-bank-copy-group">
+                                    <code class="checkout-bank-code" id="checkoutAccountNumber">0345678999</code>
+                                    <button type="button" class="btn-checkout-copy" id="btnCopyCheckoutAccount" data-copy-target="checkoutAccountNumber">Sao chép</button>
+                                </div>
+                            </div>
+                            <div class="checkout-bank-row">
+                                <span class="checkout-bank-label">Số tiền</span>
+                                <div class="checkout-bank-copy-group">
+                                    <code class="checkout-bank-code" id="checkoutTransferAmount">49.000đ</code>
+                                    <button type="button" class="btn-checkout-copy" id="btnCopyCheckoutAmount" data-copy-target="checkoutTransferAmount">Sao chép</button>
+                                </div>
+                            </div>
+                            <div class="checkout-bank-row checkout-bank-row-memo">
+                                <span class="checkout-bank-label">Nội dung CK</span>
+                                <div class="checkout-bank-copy-group">
+                                    <code class="checkout-bank-code checkout-memo-highlight" id="checkoutTransferNote">PDL SUB 0000</code>
+                                    <button type="button" class="btn-checkout-copy" id="btnCopyCheckoutNote" data-copy-target="checkoutTransferNote">Sao chép</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action & Dev Simulation Controls -->
+                        <div class="checkout-action-footer" id="checkoutActionFooter">
+                            <div class="checkout-action-buttons">
+                                <button type="button" class="btn btn-secondary btn-sm checkout-btn-verify" id="btnCheckTransactionNow">
+                                    <span>Tôi đã chuyển khoản</span>
+                                </button>
+                                <button type="button" class="btn btn-gradient btn-sm checkout-btn-simulate" id="btnSimulatePaymentSuccess">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    <span id="btnSimulatePaymentText">Giả lập thanh toán thành công</span>
+                                </button>
+                            </div>
+                            <div class="checkout-tx-meta">
+                                <span>Mã giao dịch: <code id="checkoutTransactionCode">---</code></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State 2: Payment Completed & Celebration -->
+                    <div class="checkout-state-view checkout-success-view" id="checkoutSuccessView" style="display: none;">
+                        <div class="checkout-confetti-stage" id="checkoutConfettiStage" aria-hidden="true"></div>
+                        <div class="checkout-success-icon-wrap">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <span class="checkout-success-pill">KÍCH HOẠT THÀNH CÔNG</span>
+                        <h4 class="checkout-success-title">Chúc mừng! Bạn đã nâng cấp lên Gói Pro VIP</h4>
+                        <p class="checkout-success-desc" id="checkoutSuccessMessage">Tài khoản của bạn đã mở khóa toàn bộ đặc quyền xử lý PDF 100 MB, 500 trang OCR và Trợ lý AI không giới hạn.</p>
+
+                        <div class="checkout-receipt-box">
+                            <div class="checkout-receipt-row">
+                                <span>Mã giao dịch</span>
+                                <code id="checkoutSuccessTxCode">---</code>
+                            </div>
+                            <div class="checkout-receipt-row">
+                                <span>Gói kích hoạt</span>
+                                <strong id="checkoutSuccessPlanName">Gói Pro Hàng Tháng</strong>
+                            </div>
+                            <div class="checkout-receipt-row">
+                                <span>Số tiền đã thanh toán</span>
+                                <strong class="checkout-mono" id="checkoutSuccessAmount">49.000 VNĐ</strong>
+                            </div>
+                            <div class="checkout-receipt-row">
+                                <span>Hiệu lực đến ngày</span>
+                                <strong class="checkout-mono" id="checkoutSuccessExpiresAt">--/--/----</strong>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-gradient btn-lg checkout-success-cta" id="btnCheckoutDone">
+                            <span>Bắt đầu sử dụng đặc quyền Pro ngay</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- State 3: Transaction Expired -->
+                    <div class="checkout-state-view checkout-expired-view" id="checkoutExpiredView" style="display: none;">
+                        <div class="checkout-expired-icon-wrap">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <h4 class="checkout-expired-title">Mã Thanh Toán VietQR Đã Hết Hạn</h4>
+                        <p class="checkout-expired-desc">Phiên giao dịch 15 phút đã kết thúc để đảm bảo an toàn đối soát. Hãy tạo mã mới để tiếp tục nâng cấp gói Pro.</p>
+                        <button type="button" class="btn btn-gradient" id="btnRetryCheckout">
+                            <span>Tạo mã VietQR mới</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Legal & Contact Modal (Terms, Privacy, Contact) -->
     <div class="legal-modal-overlay" id="legalModalOverlay" aria-hidden="true" style="display: none;">
         <div class="legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">
