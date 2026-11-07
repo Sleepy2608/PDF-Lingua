@@ -195,6 +195,14 @@ function initDropzone() {
       } else {
         alert(msg);
       }
+      if (
+        typeof window !== 'undefined' &&
+        window.PDFLinguaPricing &&
+        typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function' &&
+        limits.maxFileSizeMb < 100
+      ) {
+        window.PDFLinguaPricing.openQuotaExceededModal(msg);
+      }
       return;
     }
 

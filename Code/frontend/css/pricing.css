@@ -1260,7 +1260,219 @@
   max-width: 40ch;
 }
 
-/* 5. Responsive Collapse & Reduced Motion */
+/* ==========================================================================
+   5. Multi-Touchpoint Triggers & Quota Exceeded Upsell Modal
+   ========================================================================== */
+
+/* Account Modal Upgrade Button */
+.account-role-upgrade-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-account-upgrade-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+  border: 1px solid #A5B4FC;
+  color: var(--color-primary-indigo);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-account-upgrade-pro:hover {
+  background: var(--color-primary-indigo);
+  border-color: var(--color-primary-indigo);
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.22);
+}
+
+/* Dropzone Limit Banner Interactive Shortcut */
+#dropzoneLimitText.dropzone-upgrade-clickable {
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+#dropzoneLimitText.dropzone-upgrade-clickable:hover {
+  color: var(--color-primary-indigo);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Quota Exceeded Upsell Modal */
+.quota-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1260;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.quota-modal-overlay[hidden] {
+  display: none !important;
+}
+
+.quota-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.75rem 1.65rem;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  animation: checkoutModalAppear 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.quota-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background-color: #FFFFFF;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.quota-modal-close:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-title);
+}
+
+.quota-modal-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.quota-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #B45309;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quota-modal-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #B45309;
+}
+
+.quota-modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-title);
+  margin-bottom: 0;
+}
+
+.quota-modal-reason {
+  font-size: 0.875rem;
+  color: var(--text-body);
+  line-height: 1.5;
+  margin-bottom: 0;
+  padding: 0.65rem 0.85rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-sm);
+  color: #991B1B;
+  width: 100%;
+}
+
+.quota-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.quota-compare-box {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.quota-box-free {
+  background-color: var(--bg-subtle);
+}
+
+.quota-box-pro {
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.05) 0%, #FFFFFF 100%);
+  border: 1.5px solid var(--color-primary-indigo);
+}
+
+.quota-box-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.quota-tag-pro {
+  color: var(--color-primary-indigo);
+}
+
+.quota-box-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-title);
+  margin-bottom: 0.15rem;
+}
+
+.quota-box-spec {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-body);
+}
+
+.quota-box-pro .quota-box-spec {
+  color: var(--color-primary-indigo);
+  font-weight: 600;
+}
+
+.quota-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* 6. Responsive Collapse & Reduced Motion */
 
 @media (max-width: 1024px) {
   .pricing-bento-grid {
@@ -1318,7 +1530,10 @@
     align-items: flex-start;
   }
 
-  .checkout-action-buttons {
+  .checkout-action-buttons,
+  .quota-compare-grid,
+  .quota-modal-footer {
+    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
   }
@@ -1329,6 +1544,7 @@
   .billing-toggle-btn,
   .pricing-price-amount,
   .checkout-modal-card,
+  .quota-modal-card,
   .checkout-qr-laser,
   .checkout-radar-dot,
   .checkout-confetti-piece {
@@ -1337,5 +1553,6 @@
     animation: none !important;
   }
 }
+
 
 

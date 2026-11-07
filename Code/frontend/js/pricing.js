@@ -90,6 +90,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     initPricingModule();
     initCheckoutModal();
+    initMultiTouchpointsAndQuotaModal();
   });
 
   function getStoredToken() {
@@ -377,6 +378,8 @@
     const activeBannerTitle = document.getElementById('pricingActiveBannerTitle');
     const activeBannerSub = document.getElementById('pricingActiveBannerSub');
     const btnCancelAutoRenew = document.getElementById('btnCancelAutoRenew');
+    const btnAccountUpgradePro = document.getElementById('btnAccountUpgradePro');
+    const dropzoneLimitText = document.getElementById('dropzoneLimitText');
 
     const effectiveRole =
       (subData && subData.current_role) ||
@@ -386,6 +389,10 @@
     if (!user && !effectiveRole) {
       // Guest state
       if (activeBanner) activeBanner.style.display = 'none';
+      if (btnAccountUpgradePro) btnAccountUpgradePro.style.display = 'none';
+      if (dropzoneLimitText && dropzoneLimitText.classList) {
+        dropzoneLimitText.classList.add('dropzone-upgrade-clickable');
+      }
       if (btnSelectFree) {
         btnSelectFree.disabled = false;
         btnSelectFree.textContent = 'Bắt đầu miễn phí';
@@ -410,6 +417,10 @@
     }
 
     if (effectiveRole === 'pro' || effectiveRole === 'admin') {
+      if (btnAccountUpgradePro) btnAccountUpgradePro.style.display = 'none';
+      if (dropzoneLimitText && dropzoneLimitText.classList) {
+        dropzoneLimitText.classList.remove('dropzone-upgrade-clickable');
+      }
       if (activeBanner) {
         activeBanner.style.display = 'flex';
       }
@@ -487,6 +498,12 @@
     } else {
       // Authenticated Free user
       if (activeBanner) activeBanner.style.display = 'none';
+      if (btnAccountUpgradePro) {
+        btnAccountUpgradePro.style.display = 'inline-flex';
+      }
+      if (dropzoneLimitText && dropzoneLimitText.classList) {
+        dropzoneLimitText.classList.add('dropzone-upgrade-clickable');
+      }
       if (btnSelectFree) {
         btnSelectFree.disabled = true;
         btnSelectFree.textContent = 'Gói hiện tại của bạn';
@@ -1471,6 +1488,128 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Multi-Touchpoint Triggers & Quota Exceeded Upsell Modal
+  // ---------------------------------------------------------------------------
+
+  function initMultiTouchpointsAndQuotaModal() {
+    const dropzoneLimitText = document.getElementById('dropzoneLimitText');
+    const btnAccountUpgradePro = document.getElementById('btnAccountUpgradePro');
+    const quotaModal = document.getElementById('quotaExceededModal');
+    const btnCloseQuota = document.getElementById('btnCloseQuotaModal');
+    const btnQuotaDismiss = document.getElementById('btnQuotaModalDismiss');
+    const btnQuotaViewPricing = document.getElementById('btnQuotaModalViewPricing');
+    const btnQuotaUpgradeNow = document.getElementById('btnQuotaModalUpgradeNow');
+
+    // Touchpoint 3: Dropzone banner click opens Pricing view for Guest/Free users
+    if (dropzoneLimitText) {
+      dropzoneLimitText.addEventListener('click', (e) => {
+        const user = getStoredUser();
+        const role =
+          (mySubscriptionData && mySubscriptionData.current_role) ||
+          (user && user.role ? String(user.role).toLowerCase() : 'guest');
+        if (role === 'pro' || role === 'admin') return;
+        if (e && typeof e.stopPropagation === 'function') {
+          e.stopPropagation();
+        }
+        if (e && typeof e.preventDefault === 'function') {
+          e.preventDefault();
+        }
+        openPricingView();
+      });
+    }
+
+    // Touchpoint 4: Account modal upgrade button next to role badge
+    if (btnAccountUpgradePro) {
+      btnAccountUpgradePro.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (
+          typeof window !== 'undefined' &&
+          window.pdfLinguaAuth &&
+          typeof window.pdfLinguaAuth.closeAccountModal === 'function'
+        ) {
+          window.pdfLinguaAuth.closeAccountModal();
+        } else {
+          const accountModal = document.getElementById('accountModal');
+          if (accountModal) accountModal.setAttribute('hidden', '');
+        }
+        openPricingView();
+      });
+    }
+
+    // Touchpoint 5: Quota Exceeded Upsell Modal controls
+    if (btnCloseQuota) {
+      btnCloseQuota.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeQuotaExceededModal();
+      });
+    }
+
+    if (btnQuotaDismiss) {
+      btnQuotaDismiss.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeQuotaExceededModal();
+      });
+    }
+
+    if (quotaModal) {
+      quotaModal.addEventListener('click', (e) => {
+        if (e.target === quotaModal) {
+          closeQuotaExceededModal();
+        }
+      });
+    }
+
+    if (btnQuotaViewPricing) {
+      btnQuotaViewPricing.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeQuotaExceededModal();
+        openPricingView('monthly');
+      });
+    }
+
+    if (btnQuotaUpgradeNow) {
+      btnQuotaUpgradeNow.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeQuotaExceededModal();
+        openPricingView('monthly');
+        handleUpgradeProAction();
+      });
+    }
+  }
+
+  function openQuotaExceededModal(reasonMessage) {
+    const user = getStoredUser();
+    const role =
+      (mySubscriptionData && mySubscriptionData.current_role) ||
+      (user && user.role ? String(user.role).toLowerCase() : 'guest');
+
+    // Only show upsell modal for Guest / Free tier users
+    if (role === 'pro' || role === 'admin') return;
+
+    const modal = document.getElementById('quotaExceededModal');
+    const reasonEl = document.getElementById('quotaExceededReason');
+
+    if (reasonEl && reasonMessage) {
+      reasonEl.textContent = String(reasonMessage);
+    }
+
+    if (modal) {
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.style.display = 'flex';
+    }
+  }
+
+  function closeQuotaExceededModal() {
+    const modal = document.getElementById('quotaExceededModal');
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.style.display = 'none';
+    }
+  }
+
   if (typeof window !== 'undefined') {
     window.PDFLinguaCheckout = {
       openCheckout: openCheckoutModal,
@@ -1497,6 +1636,8 @@
       handleCancelSubscription,
       openCheckoutModal,
       closeCheckoutModal,
+      openQuotaExceededModal,
+      closeQuotaExceededModal,
       simulatePaymentSuccess,
       pollTransactionStatus,
     };
