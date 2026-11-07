@@ -16,7 +16,7 @@ from typing import Callable, Optional, TypeVar
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import ForbiddenException, NotFoundException
+from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
@@ -245,6 +245,7 @@ class HistoryService:
         limit: int = 50,
         action_type: Optional[ActionType | str] = None,
         status: Optional[ProcessingStatus | str] = None,
+        document_id: Optional[int] = None,
     ) -> list[ProcessingHistory]:
         """
         Query paginated processing history for a specific user.
@@ -258,12 +259,37 @@ class HistoryService:
 
         query = db.query(ProcessingHistory).filter(ProcessingHistory.user_id == user_id)
 
+        if document_id is not None:
+            query = query.filter(ProcessingHistory.document_id == document_id)
+
         if action_type is not None:
-            norm_action = ActionType(action_type) if isinstance(action_type, str) else action_type
+            if isinstance(action_type, str):
+                try:
+                    norm_action = ActionType(action_type.strip().upper())
+                except ValueError as exc:
+                    allowed = ", ".join(item.value for item in ActionType)
+                    raise BadRequestException(
+                        message=f"action_type không hợp lệ '{action_type}'. Giá trị hợp lệ: {allowed}.",
+                        error_code="INVALID_ACTION_TYPE",
+                        details={"allowed": [item.value for item in ActionType], "provided": action_type},
+                    ) from exc
+            else:
+                norm_action = action_type
             query = query.filter(ProcessingHistory.action_type == norm_action)
 
         if status is not None:
-            norm_status = ProcessingStatus(status) if isinstance(status, str) else status
+            if isinstance(status, str):
+                try:
+                    norm_status = ProcessingStatus(status.strip().upper())
+                except ValueError as exc:
+                    allowed = ", ".join(item.value for item in ProcessingStatus)
+                    raise BadRequestException(
+                        message=f"status không hợp lệ '{status}'. Giá trị hợp lệ: {allowed}.",
+                        error_code="INVALID_PROCESSING_STATUS",
+                        details={"allowed": [item.value for item in ProcessingStatus], "provided": status},
+                    ) from exc
+            else:
+                norm_status = status
             query = query.filter(ProcessingHistory.status == norm_status)
 
         safe_skip = max(0, skip)
