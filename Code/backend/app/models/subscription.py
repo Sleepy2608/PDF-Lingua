@@ -14,9 +14,10 @@ payment_transactions : Payment transaction records and VietQR metadata.
 import enum
 import json
 from datetime import datetime, timezone
+from typing import Any
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -66,7 +67,7 @@ PRO_SHARED_FEATURES: list[str] = [
     "Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)",
 ]
 
-DEFAULT_PRICING_PLANS: list[dict] = [
+DEFAULT_PRICING_PLANS: list[dict[str, Any]] = [
     {
         "code": "pro_monthly",
         "name": "Gói Pro Hàng Tháng",
@@ -101,89 +102,90 @@ class PricingPlan(Base):
 
     __tablename__ = "pricing_plans"
 
-    id: int = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    code: str = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(
         String(50),
         unique=True,
         nullable=False,
         index=True,
         comment="Unique plan identifier: pro_monthly | pro_yearly.",
     )
-    name: str = Column(
+    name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
         comment="Human-readable display name of the plan.",
     )
-    billing_cycle: str = Column(
+    billing_cycle: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
         comment="Billing cycle: monthly | yearly.",
     )
-    price_vnd: int = Column(
+    price_vnd: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         comment="Actual price in VND (e.g. 49000 or 399000).",
     )
-    original_price_vnd: int | None = Column(
+    original_price_vnd: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
         comment="Original undiscounted price in VND (e.g. 588000 for yearly).",
     )
-    discount_percent: int = Column(
+    discount_percent: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=0,
         server_default="0",
         comment="Discount percentage compared to monthly rate.",
     )
-    duration_days: int = Column(
+    duration_days: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         comment="Validity duration in days (30 for monthly, 365 for yearly).",
     )
-    max_file_size_mb: int = Column(
+    max_file_size_mb: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=100,
         server_default="100",
         comment="Maximum upload file size in MB granted by this plan.",
     )
-    max_ocr_pages: int = Column(
+    max_ocr_pages: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=500,
         server_default="500",
         comment="Maximum OCR pages per document granted by this plan.",
     )
-    features_json: str | None = Column(
+    features_json: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
         comment="JSON-encoded list of plan feature descriptions.",
     )
-    is_active: bool = Column(
+    is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         default=True,
         server_default="1",
         comment="True if the plan is currently available for purchase.",
     )
-    created_at: datetime = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         comment="UTC timestamp when the plan was created.",
     )
 
-    subscriptions = relationship("Subscription", back_populates="plan")
-    transactions = relationship("PaymentTransaction", back_populates="plan")
+    subscriptions: Mapped[list["Subscription"]] = relationship("Subscription", back_populates="plan")
+    transactions: Mapped[list["PaymentTransaction"]] = relationship("PaymentTransaction", back_populates="plan")
 
     @property
     def features(self) -> list[str]:
         """Parse `features_json` into a Python list of strings."""
-        if not self.features_json:
+        raw_json = self.features_json
+        if not raw_json:
             return []
         try:
-            parsed = json.loads(self.features_json)
+            parsed = json.loads(raw_json)
             return [str(item) for item in parsed] if isinstance(parsed, list) else []
         except (ValueError, TypeError):
             return []
@@ -203,60 +205,60 @@ class Subscription(Base):
         Index("idx_subscriptions_user_status", "user_id", "status"),
     )
 
-    id: int = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id: int = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         comment="Owner user ID.",
     )
-    plan_id: int = Column(
+    plan_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("pricing_plans.id"),
         nullable=False,
         index=True,
         comment="Subscribed pricing plan ID.",
     )
-    status: str = Column(
+    status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
         default=SubscriptionStatus.ACTIVE.value,
         server_default=SubscriptionStatus.ACTIVE.value,
         comment="Subscription status: active | expired | cancelled | grace_period.",
     )
-    started_at: datetime = Column(
+    started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         comment="UTC timestamp when the subscription started.",
     )
-    expires_at: datetime = Column(
+    expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         index=True,
         comment="UTC timestamp when the subscription expires.",
     )
-    auto_renew: bool = Column(
+    auto_renew: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         default=False,
         server_default="0",
         comment="Whether automatic renewal is enabled.",
     )
-    cancelled_at: datetime | None = Column(
+    cancelled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
         default=None,
         comment="UTC timestamp when the user requested cancellation.",
     )
-    created_at: datetime = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         comment="UTC timestamp when the subscription record was created.",
     )
-    updated_at: datetime = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
@@ -265,8 +267,8 @@ class Subscription(Base):
     )
 
     user = relationship("User", back_populates="subscriptions")
-    plan = relationship("PricingPlan", back_populates="subscriptions")
-    transactions = relationship("PaymentTransaction", back_populates="subscription")
+    plan: Mapped["PricingPlan"] = relationship("PricingPlan", back_populates="subscriptions")
+    transactions: Mapped[list["PaymentTransaction"]] = relationship("PaymentTransaction", back_populates="subscription")
 
     def __repr__(self) -> str:
         return (
@@ -280,72 +282,72 @@ class PaymentTransaction(Base):
 
     __tablename__ = "payment_transactions"
 
-    id: int = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    transaction_code: str = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    transaction_code: Mapped[str] = mapped_column(
         String(64),
         unique=True,
         nullable=False,
         index=True,
         comment="Unique transaction reference code.",
     )
-    user_id: int = Column(
+    user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         comment="User who initiated the transaction.",
     )
-    plan_id: int = Column(
+    plan_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("pricing_plans.id"),
         nullable=False,
         comment="Target pricing plan for this transaction.",
     )
-    subscription_id: int | None = Column(
+    subscription_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("subscriptions.id", ondelete="SET NULL"),
         nullable=True,
         default=None,
         comment="Resulting subscription ID once payment completes.",
     )
-    amount_vnd: int = Column(
+    amount_vnd: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         comment="Transaction amount in VND (e.g. 49000 or 399000).",
     )
-    payment_method: str = Column(
+    payment_method: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
         default=PaymentMethod.VIETQR.value,
         server_default=PaymentMethod.VIETQR.value,
         comment="Payment method: vietqr | bank_transfer | momo | test_simulator.",
     )
-    payment_status: str = Column(
+    payment_status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
         default=PaymentStatus.PENDING.value,
         server_default=PaymentStatus.PENDING.value,
         comment="Transaction status: pending | completed | failed | expired.",
     )
-    qr_code_url: str | None = Column(
+    qr_code_url: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
         default=None,
         comment="Generated Napas247 VietQR image URL.",
     )
-    payment_note: str | None = Column(
+    payment_note: Mapped[str | None] = mapped_column(
         String(100),
         nullable=True,
         default=None,
         comment="Bank transfer memo / description for reconciliation.",
     )
-    paid_at: datetime | None = Column(
+    paid_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
         default=None,
         comment="UTC timestamp when payment was confirmed.",
     )
-    created_at: datetime = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
@@ -353,8 +355,8 @@ class PaymentTransaction(Base):
     )
 
     user = relationship("User", back_populates="payment_transactions")
-    plan = relationship("PricingPlan", back_populates="transactions")
-    subscription = relationship("Subscription", back_populates="transactions")
+    plan: Mapped["PricingPlan"] = relationship("PricingPlan", back_populates="transactions")
+    subscription: Mapped["Subscription | None"] = relationship("Subscription", back_populates="transactions")
 
     def __repr__(self) -> str:
         return (
@@ -372,7 +374,7 @@ def seed_pricing_plans(db: Session) -> list[PricingPlan]:
     for plan_data in DEFAULT_PRICING_PLANS:
         existing = (
             db.query(PricingPlan)
-            .filter(PricingPlan.code == plan_data["code"])
+            .filter(PricingPlan.code == str(plan_data["code"]))
             .first()
         )
         if existing is None:
@@ -380,20 +382,27 @@ def seed_pricing_plans(db: Session) -> list[PricingPlan]:
             db.add(plan)
             seeded_plans.append(plan)
         else:
-            existing.name = plan_data["name"]
-            existing.billing_cycle = plan_data["billing_cycle"]
-            existing.price_vnd = plan_data["price_vnd"]
-            existing.original_price_vnd = plan_data["original_price_vnd"]
-            existing.discount_percent = plan_data["discount_percent"]
-            existing.duration_days = plan_data["duration_days"]
-            existing.max_file_size_mb = plan_data["max_file_size_mb"]
-            existing.max_ocr_pages = plan_data["max_ocr_pages"]
-            existing.features_json = plan_data["features_json"]
-            existing.is_active = plan_data["is_active"]
+            existing.name = str(plan_data["name"])
+            existing.billing_cycle = str(plan_data["billing_cycle"])
+            existing.price_vnd = int(plan_data["price_vnd"])
+            existing.original_price_vnd = (
+                int(plan_data["original_price_vnd"])
+                if plan_data.get("original_price_vnd") is not None
+                else None
+            )
+            existing.discount_percent = int(plan_data["discount_percent"])
+            existing.duration_days = int(plan_data["duration_days"])
+            existing.max_file_size_mb = int(plan_data["max_file_size_mb"])
+            existing.max_ocr_pages = int(plan_data["max_ocr_pages"])
+            existing.features_json = (
+                str(plan_data["features_json"])
+                if plan_data.get("features_json") is not None
+                else None
+            )
+            existing.is_active = bool(plan_data["is_active"])
             seeded_plans.append(existing)
 
     db.commit()
     for plan in seeded_plans:
         db.refresh(plan)
     return seeded_plans
-

@@ -17,9 +17,10 @@ updated_at      : Timestamp updated automatically on every UPDATE.
 
 import enum
 from datetime import datetime, timezone
+from typing import Any
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.core.database import Base
 
@@ -38,22 +39,22 @@ class User(Base):
     __tablename__ = "users"
 
     # ── Primary Key ─────────────────────────────────────────────────────────
-    id: int = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
 
     # ── Identity ─────────────────────────────────────────────────────────────
-    email: str = Column(
+    email: Mapped[str] = mapped_column(
         String(255),
         unique=True,
         nullable=False,
         index=True,
         comment="Login identifier — stored lower-cased.",
     )
-    hashed_password: str = Column(
+    hashed_password: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         comment="bcrypt hash of the user's password. Never plaintext.",
     )
-    full_name: str | None = Column(
+    full_name: Mapped[str | None] = mapped_column(
         String(150),
         nullable=True,
         default=None,
@@ -61,7 +62,7 @@ class User(Base):
     )
 
     # ── Authorisation ─────────────────────────────────────────────────────────
-    role: UserRole = Column(
+    role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, name="user_role"),
         nullable=False,
         default=UserRole.FREE,
@@ -70,7 +71,7 @@ class User(Base):
     )
 
     # ── Account Status ────────────────────────────────────────────────────────
-    is_active: bool = Column(
+    is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         default=True,
@@ -79,13 +80,13 @@ class User(Base):
     )
 
     # ── Audit Timestamps ──────────────────────────────────────────────────────
-    created_at: datetime = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         comment="UTC timestamp when the account was created.",
     )
-    updated_at: datetime = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
@@ -100,17 +101,17 @@ class User(Base):
         return email.strip().lower()
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    documents = relationship(
+    documents: Mapped[list[Any]] = relationship(
         "Document",
         back_populates="owner",
         cascade="all, delete-orphan",
     )
-    subscriptions = relationship(
+    subscriptions: Mapped[list[Any]] = relationship(
         "Subscription",
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    payment_transactions = relationship(
+    payment_transactions: Mapped[list[Any]] = relationship(
         "PaymentTransaction",
         back_populates="user",
         cascade="all, delete-orphan",

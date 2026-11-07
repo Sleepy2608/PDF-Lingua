@@ -201,6 +201,7 @@ def test_user_subscription_and_payment_transaction_relationships(in_memory_db):
     assert user.payment_transactions[0].transaction_code == "SUB-20261107-0001"
     assert tx.user.id == user.id
     assert tx.plan.id == yearly_plan.id
+    assert tx.subscription is not None
     assert tx.subscription.id == sub.id
 
 
