@@ -51,4 +51,9 @@ def init_db() -> None:
     """
     import app.models  # noqa: F401 — registers User (and future models) with Base.metadata
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        app.models.seed_pricing_plans(db)
+    finally:
+        db.close()
     logger.info("[DB] Tables verified / created successfully.")

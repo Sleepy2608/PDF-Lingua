@@ -105,6 +105,16 @@ class User(Base):
         back_populates="owner",
         cascade="all, delete-orphan",
     )
+    subscriptions = relationship(
+        "Subscription",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    payment_transactions = relationship(
+        "PaymentTransaction",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     @property
