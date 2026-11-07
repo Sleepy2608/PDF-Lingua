@@ -183,6 +183,17 @@ function createPricingTestEnv(initialStorage = {}, customFetch = null) {
     checkoutSuccessExpiresAt: new MockElement('checkoutSuccessExpiresAt', 'strong'),
     btnCheckoutDone: new MockElement('btnCheckoutDone', 'button'),
     btnRetryCheckout: new MockElement('btnRetryCheckout', 'button'),
+
+    // Multi-Touchpoint & Quota Exceeded Modal Elements
+    dropzoneLimitText: new MockElement('dropzoneLimitText', 'p'),
+    accountModal: new MockElement('accountModal', 'div'),
+    btnAccountUpgradePro: new MockElement('btnAccountUpgradePro', 'button'),
+    quotaExceededModal: new MockElement('quotaExceededModal', 'div', ['modal-overlay', 'quota-modal-overlay'], { hidden: '', 'aria-hidden': 'true' }),
+    btnCloseQuotaModal: new MockElement('btnCloseQuotaModal', 'button'),
+    quotaExceededReason: new MockElement('quotaExceededReason', 'p'),
+    btnQuotaModalDismiss: new MockElement('btnQuotaModalDismiss', 'button'),
+    btnQuotaModalViewPricing: new MockElement('btnQuotaModalViewPricing', 'button'),
+    btnQuotaModalUpgradeNow: new MockElement('btnQuotaModalUpgradeNow', 'button'),
   };
 
   elements.pricingSection.style.display = 'none';
@@ -611,6 +622,48 @@ async function main() {
     env.elements.btnRetryCheckout.click();
     assert.strictEqual(env.elements.checkoutPendingView.style.display, 'flex');
     assert.strictEqual(env.elements.checkoutExpiredView.style.display, 'none');
+  });
+
+  await runTest('Multi-Touchpoint: Clicking Dropzone limit text opens Pricing view for Guest/Free users', () => {
+    const env = createPricingTestEnv({
+      pdfl_token: 'mock-jwt-free',
+      pdfl_user: JSON.stringify({ id: 5, email: 'free@test.com', role: 'free' }),
+    });
+
+    assert.strictEqual(env.elements.dropzoneLimitText.classList.contains('dropzone-upgrade-clickable'), true);
+    env.elements.dropzoneLimitText.click();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block');
+    assert.strictEqual(env.elements.sideNavPricing.classList.contains('active'), true);
+  });
+
+  await runTest('Multi-Touchpoint: Account Modal upgrade button is visible for Free users and opens Pricing view', () => {
+    const env = createPricingTestEnv({
+      pdfl_token: 'mock-jwt-free',
+      pdfl_user: JSON.stringify({ id: 5, email: 'free@test.com', role: 'free' }),
+    });
+
+    assert.strictEqual(env.elements.btnAccountUpgradePro.style.display, 'inline-flex');
+    env.elements.btnAccountUpgradePro.click();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block');
+  });
+
+  await runTest('Quota Exceeded Upsell Modal: Opens for Free/Guest users with custom message and links to Pricing/Checkout', () => {
+    const env = createPricingTestEnv({
+      pdfl_token: 'mock-jwt-free',
+      pdfl_user: JSON.stringify({ id: 5, email: 'free@test.com', role: 'free' }),
+    });
+
+    const errMsg = 'Dung lượng tệp (28 MB) vượt quá giới hạn 20MB của tài khoản!';
+    env.sandbox.window.PDFLinguaPricing.openQuotaExceededModal(errMsg);
+
+    assert.strictEqual(env.elements.quotaExceededModal.hasAttribute('hidden'), false);
+    assert.strictEqual(env.elements.quotaExceededModal.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaExceededReason.textContent, errMsg);
+
+    // Clicking "Xem gói Pro 49k/tháng" closes modal and opens Pricing view
+    env.elements.btnQuotaModalViewPricing.click();
+    assert.strictEqual(env.elements.quotaExceededModal.hasAttribute('hidden'), true);
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block');
   });
 
   console.log('\n================================================================');
