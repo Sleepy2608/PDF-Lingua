@@ -131,13 +131,18 @@
 
   function triggerPdfUpload() {
     const adminSection = document.getElementById('adminSection');
+    const historySection = document.getElementById('historySection');
     const heroSection = document.getElementById('heroSection');
     const btnNewFile = document.getElementById('btnNewFile');
     const pdfFileInput = document.getElementById('pdfFileInput');
 
-    // If currently in admin view, return to user workspace
+    // If currently in admin or history view, return to user workspace
     if (adminSection && adminSection.style.display !== 'none') {
       adminSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'block';
+    }
+    if (historySection && historySection.style.display !== 'none') {
+      historySection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
     }
 
@@ -245,16 +250,21 @@
     const sideNavAiCopilot = document.getElementById('sideNavAiCopilot');
     const sideNavAiSummarize = document.getElementById('sideNavAiSummarize');
     const sideNavDocuments = document.getElementById('sideNavDocuments');
+    const sideNavHistory = document.getElementById('sideNavHistory');
     const sideNavPricing = document.getElementById('sideNavPricing');
     const sideNavAdmin = document.getElementById('sideNavAdmin');
+    const btnCloseHistoryView = document.getElementById('btnCloseHistoryView');
+    const btnHistoryEmptyUpload = document.getElementById('btnHistoryEmptyUpload');
 
     if (sideNavHome) {
       sideNavHome.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavHome);
         const adminSection = document.getElementById('adminSection');
+        const historySection = document.getElementById('historySection');
         const heroSection = document.getElementById('heroSection');
         if (adminSection) adminSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'none';
         if (heroSection) heroSection.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (window.innerWidth < 768) closeMobileSidebar();
@@ -266,8 +276,10 @@
         e.preventDefault();
         setActiveNavItem(sideNavTranslate);
         const adminSection = document.getElementById('adminSection');
+        const historySection = document.getElementById('historySection');
         const heroSection = document.getElementById('heroSection');
         if (adminSection) adminSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'none';
         if (heroSection) heroSection.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (window.innerWidth < 768) closeMobileSidebar();
@@ -311,6 +323,44 @@
       });
     }
 
+    if (sideNavHistory) {
+      sideNavHistory.addEventListener('click', (e) => {
+        e.preventDefault();
+        setActiveNavItem(sideNavHistory);
+        const heroSection = document.getElementById('heroSection');
+        const workspaceSection = document.getElementById('workspaceSection');
+        const adminSection = document.getElementById('adminSection');
+        const historySection = document.getElementById('historySection');
+        if (heroSection) heroSection.style.display = 'none';
+        if (workspaceSection) workspaceSection.style.display = 'none';
+        if (adminSection) adminSection.style.display = 'none';
+        if (historySection) {
+          historySection.style.display = 'block';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        if (window.innerWidth < 768) closeMobileSidebar();
+      });
+    }
+
+    if (btnCloseHistoryView) {
+      btnCloseHistoryView.addEventListener('click', (e) => {
+        e.preventDefault();
+        const historySection = document.getElementById('historySection');
+        const heroSection = document.getElementById('heroSection');
+        if (historySection) historySection.style.display = 'none';
+        if (heroSection) heroSection.style.display = 'block';
+        setActiveNavItem(sideNavTranslate || sideNavHome);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    if (btnHistoryEmptyUpload) {
+      btnHistoryEmptyUpload.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerPdfUpload();
+      });
+    }
+
     if (sideNavPricing) {
       sideNavPricing.addEventListener('click', (e) => {
         e.preventDefault();
@@ -326,6 +376,8 @@
       sideNavAdmin.addEventListener('click', (e) => {
         e.preventDefault();
         setActiveNavItem(sideNavAdmin);
+        const historySection = document.getElementById('historySection');
+        if (historySection) historySection.style.display = 'none';
         if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
           window.pdfLinguaAdmin.openAdminView();
         } else {

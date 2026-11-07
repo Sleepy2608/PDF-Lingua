@@ -109,6 +109,17 @@
                             </a>
                         </li>
                         <li>
+                            <a href="#history" class="sidebar-nav-item" id="sideNavHistory" data-tooltip="Lịch sử xử lý">
+                                <span class="nav-item-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                </span>
+                                <span class="nav-item-text">Lịch sử xử lý</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá gói">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -548,6 +559,316 @@
                             </div>
                         </div>
                         <div class="pane-body" id="paneTranslated" tabindex="0" contenteditable="plaintext-only" spellcheck="false"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Processing History Section (PDFL-161.1 — Initially Hidden) -->
+        <section class="history-section" id="historySection" style="display: none;">
+            <div class="container history-container">
+                <!-- History Header Bar -->
+                <div class="admin-header-card history-header-card">
+                    <div class="admin-title-wrap">
+                        <div class="admin-badge-row">
+                            <span class="history-live-badge">
+                                <span class="admin-live-dot"></span>
+                                NHẬT KÝ XỬ LÝ TÀI LIỆU
+                            </span>
+                            <span class="admin-tag-pill font-mono">History v1.0</span>
+                        </div>
+                        <h2 class="admin-title">Lịch Sử Xử Lý Tài Liệu PDF</h2>
+                        <p class="admin-subtitle">Theo dõi chi tiết các thao tác trích xuất (EXTRACT), dịch thuật (TRANSLATE) và tóm tắt (SUMMARIZE), trạng thái thực thi và thời gian phản hồi</p>
+                    </div>
+                    <div class="admin-header-actions">
+                        <button type="button" class="btn btn-admin-secondary" id="btnRefreshHistory" title="Làm mới lịch sử xử lý">
+                            <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Làm mới</span>
+                        </button>
+                        <button type="button" class="btn btn-admin-secondary btn-admin-close" id="btnCloseHistoryView" title="Quay lại không gian làm việc">
+                            <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Đóng Lịch sử</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Processing History Table & Filter Card -->
+                <div class="admin-table-card history-table-card">
+                    <div class="admin-table-header history-table-header">
+                        <div class="table-title-group">
+                            <div class="table-icon-pill history-icon-pill">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="table-title">Danh sách Lịch sử Thực thi</h3>
+                                <p class="table-subtitle">Lọc theo loại xử lý, trạng thái hoạt động hoặc mã tài liệu (Document ID)</p>
+                            </div>
+                            <span class="table-count-badge font-mono" id="historyCountBadge">3 bản ghi</span>
+                        </div>
+
+                        <!-- Filter Toolbar -->
+                        <div class="admin-toolbar history-toolbar">
+                            <div class="admin-search-wrap history-doc-filter-wrap">
+                                <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <input type="number" id="historyDocumentIdFilter" class="admin-search-input history-doc-input" min="1" placeholder="Lọc theo Document ID...">
+                            </div>
+
+                            <div class="admin-filter-wrap">
+                                <select id="historyActionFilter" class="admin-filter-select history-filter-select" aria-label="Lọc theo loại xử lý">
+                                    <option value="">Tất cả loại xử lý</option>
+                                    <option value="EXTRACT">Trích xuất (EXTRACT)</option>
+                                    <option value="TRANSLATE">Dịch thuật (TRANSLATE)</option>
+                                    <option value="SUMMARIZE">Tóm tắt (SUMMARIZE)</option>
+                                </select>
+                            </div>
+
+                            <div class="admin-filter-wrap">
+                                <select id="historyStatusFilter" class="admin-filter-select history-filter-select" aria-label="Lọc theo trạng thái">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="PENDING">Đang xử lý (PENDING)</option>
+                                    <option value="SUCCESS">Thành công (SUCCESS)</option>
+                                    <option value="FAILED">Thất bại (FAILED)</option>
+                                </select>
+                            </div>
+
+                            <button type="button" class="btn btn-admin-secondary btn-reset-filters" id="btnResetHistoryFilters" title="Xóa bộ lọc">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Đặt lại</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- State 1: Loading State -->
+                    <div class="history-state-panel history-loading-state" id="historyLoadingState" style="display: none;" role="status" aria-live="polite">
+                        <div class="history-skeleton-list">
+                            <div class="history-skeleton-row">
+                                <div class="skeleton-pill" style="width: 48px; height: 20px;"></div>
+                                <div class="skeleton-pill" style="width: 96px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 110px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 95px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 80px; height: 20px;"></div>
+                                <div class="skeleton-pill" style="width: 140px; height: 20px;"></div>
+                            </div>
+                            <div class="history-skeleton-row">
+                                <div class="skeleton-pill" style="width: 48px; height: 20px;"></div>
+                                <div class="skeleton-pill" style="width: 96px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 110px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 95px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 80px; height: 20px;"></div>
+                                <div class="skeleton-pill" style="width: 140px; height: 20px;"></div>
+                            </div>
+                            <div class="history-skeleton-row">
+                                <div class="skeleton-pill" style="width: 48px; height: 20px;"></div>
+                                <div class="skeleton-pill" style="width: 96px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 110px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 95px; height: 24px;"></div>
+                                <div class="skeleton-pill" style="width: 80px; height: 20px;"></div>
+                                <div class="skeleton-pill" style="width: 140px; height: 20px;"></div>
+                            </div>
+                        </div>
+                        <p class="history-loading-caption">Đang tải dữ liệu lịch sử xử lý tài liệu...</p>
+                    </div>
+
+                    <!-- State 2: Empty State -->
+                    <div class="admin-table-empty history-empty-state" id="historyEmptyState" style="display: none;">
+                        <div class="empty-icon-wrap">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <h4 class="empty-title">Chưa có lịch sử xử lý nào</h4>
+                        <p class="empty-text">Các thao tác trích xuất (EXTRACT), dịch thuật (TRANSLATE) và tóm tắt (SUMMARIZE) tài liệu PDF của bạn sẽ được hiển thị tại đây.</p>
+                        <button type="button" class="btn btn-gradient btn-sm history-empty-cta" id="btnHistoryEmptyUpload">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span>Tải PDF lên ngay</span>
+                        </button>
+                    </div>
+
+                    <!-- State 3: Error State -->
+                    <div class="admin-table-empty history-error-state" id="historyErrorState" style="display: none;" role="alert">
+                        <div class="empty-icon-wrap error-icon-wrap">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        <h4 class="empty-title error-state-title">Không thể tải lịch sử xử lý</h4>
+                        <p class="empty-text" id="historyErrorMessage">Đã xảy ra sự cố khi tải danh sách lịch sử xử lý tài liệu. Vui lòng kiểm tra kết nối và thử lại.</p>
+                        <button type="button" class="btn btn-admin-secondary history-retry-btn" id="btnRetryHistory">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Thử lại</span>
+                        </button>
+                    </div>
+
+                    <!-- State 4: History List Table -->
+                    <div class="admin-table-wrapper history-table-wrapper" id="historyTableContainer">
+                        <table class="admin-users-table history-list-table" id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>Mã lịch sử</th>
+                                    <th>Document ID</th>
+                                    <th>Loại xử lý</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thời gian thực thi</th>
+                                    <th>Thời gian tạo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- Static UI Showcase Rows for PDFL-161.1 (EXTRACT, TRANSLATE, SUMMARIZE / SUCCESS, PENDING, FAILED) -->
+                                <tr class="history-row" data-action-type="EXTRACT" data-status="SUCCESS" data-document-id="101">
+                                    <td>
+                                        <span class="user-id-mono history-id-mono">#103</span>
+                                    </td>
+                                    <td>
+                                        <span class="history-doc-badge font-mono">
+                                            <span class="doc-badge-pdf">PDF</span>
+                                            <span>DOC #101</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="action-badge action-extract">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            </svg>
+                                            <span>EXTRACT</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-pill history-status-pill status-success">
+                                            <span class="status-dot"></span>
+                                            <span>SUCCESS</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="history-duration-mono font-mono">420 ms</span>
+                                    </td>
+                                    <td>
+                                        <span class="date-mono history-created-mono">07/11/2026 14:25:10</span>
+                                    </td>
+                                </tr>
+
+                                <tr class="history-row" data-action-type="TRANSLATE" data-status="PENDING" data-document-id="101">
+                                    <td>
+                                        <span class="user-id-mono history-id-mono">#102</span>
+                                    </td>
+                                    <td>
+                                        <span class="history-doc-badge font-mono">
+                                            <span class="doc-badge-pdf">PDF</span>
+                                            <span>DOC #101</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="action-badge action-translate">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M5 8l6 6"></path>
+                                                <path d="M4 14l6-6 2-3"></path>
+                                                <path d="M2 5h12"></path>
+                                                <path d="M7 2h1"></path>
+                                                <path d="M22 22l-5-10-5 10"></path>
+                                                <path d="M14 18h6"></path>
+                                            </svg>
+                                            <span>TRANSLATE</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-pill history-status-pill status-pending">
+                                            <span class="status-dot status-dot-pending"></span>
+                                            <span>PENDING</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="history-duration-mono font-mono text-muted">--</span>
+                                    </td>
+                                    <td>
+                                        <span class="date-mono history-created-mono">07/11/2026 14:26:05</span>
+                                    </td>
+                                </tr>
+
+                                <tr class="history-row" data-action-type="SUMMARIZE" data-status="FAILED" data-document-id="102">
+                                    <td>
+                                        <span class="user-id-mono history-id-mono">#101</span>
+                                    </td>
+                                    <td>
+                                        <span class="history-doc-badge font-mono">
+                                            <span class="doc-badge-pdf">PDF</span>
+                                            <span>DOC #102</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="action-badge action-summarize">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 3c0 4.97-4.03 9-9 9 4.97 0 9 4.03 9 9 0-4.97 4.03-9 9-9-4.97 0-9-4.03-9-9z"></path>
+                                            </svg>
+                                            <span>SUMMARIZE</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="history-status-cell">
+                                            <span class="status-pill history-status-pill status-failed">
+                                                <span class="status-dot status-dot-failed"></span>
+                                                <span>FAILED</span>
+                                            </span>
+                                            <span class="history-error-note" title="Không thể tóm tắt tài liệu rỗng.">Không thể tóm tắt tài liệu rỗng.</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="history-duration-mono font-mono">85 ms</span>
+                                    </td>
+                                    <td>
+                                        <span class="date-mono history-created-mono">07/11/2026 14:20:42</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div class="admin-pagination-footer history-pagination-footer" id="historyPagination">
+                        <div class="pagination-info font-mono" id="historyPaginationInfo">Trang 1 • Hiển thị 3 bản ghi</div>
+                        <div class="pagination-controls">
+                            <button type="button" class="btn btn-admin-pager" id="btnHistoryPrevPage" disabled>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                                <span>Trước</span>
+                            </button>
+                            <span class="pagination-current-page history-current-page font-mono" id="historyCurrentPageBadge">1</span>
+                            <button type="button" class="btn btn-admin-pager" id="btnHistoryNextPage" disabled>
+                                <span>Sau</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
