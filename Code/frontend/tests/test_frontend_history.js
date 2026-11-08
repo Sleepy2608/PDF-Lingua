@@ -22,6 +22,7 @@ const assert = require('assert');
 const vm = require('vm');
 
 const sidebarSource = fs.readFileSync(path.resolve(__dirname, '../js/sidebar.js'), 'utf8');
+const workspaceSource = fs.readFileSync(path.resolve(__dirname, '../js/workspace.js'), 'utf8');
 const htmlSource = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 
 class ClassList {
@@ -43,6 +44,7 @@ class MockElement {
     this.id = id;
     this.tagName = tagName.toUpperCase();
     this.textContent = '';
+    this._innerText = '';
     this._innerHTML = '';
     this.classList = new ClassList();
     this.style = {};
@@ -55,6 +57,9 @@ class MockElement {
     this.value = '';
     this.disabled = false;
   }
+
+  get innerText() { return this._innerText !== undefined ? this._innerText : this.textContent; }
+  set innerText(val) { this._innerText = String(val); this.textContent = String(val); }
 
   get innerHTML() { return this._innerHTML; }
   set innerHTML(val) {
@@ -186,6 +191,19 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     historyErrorTimestamp: new MockElement('historyErrorTimestamp', 'span'),
     historyErrorMessage: new MockElement('historyErrorMessage', 'div'),
     btnCloseHistoryErrorFooter: new MockElement('btnCloseHistoryErrorFooter', 'button'),
+
+    // Workspace elements (PDFL-165.2)
+    paneOriginal: new MockElement('paneOriginal'),
+    paneTranslated: new MockElement('paneTranslated'),
+    docNameDisplay: new MockElement('docNameDisplay'),
+    docPagesDisplay: new MockElement('docPagesDisplay'),
+    docSizeDisplay: new MockElement('docSizeDisplay'),
+    docTypeDisplay: new MockElement('docTypeDisplay'),
+    targetLangSelect: new MockElement('targetLangSelect', 'select'),
+    charCountOriginal: new MockElement('charCountOriginal'),
+    wordCountOriginal: new MockElement('wordCountOriginal'),
+    charCountTranslated: new MockElement('charCountTranslated'),
+    wordCountTranslated: new MockElement('wordCountTranslated'),
   };
 
   const docListeners = {};
@@ -252,12 +270,23 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     localStorage: mockStorage,
     sessionStorage: mockStorage,
     fetch: defaultFetch,
-    showToast: () => {},
+    toasts: [],
+    showToast: (msg, type) => {
+      context.toasts.push({ msg, type });
+    },
     console: { log: () => {}, error: () => {}, warn: () => {} },
   };
 
   vm.createContext(context);
   vm.runInContext(sidebarSource, context);
+  vm.runInContext(workspaceSource, context);
+
+  // Re-hook showToast so tests can inspect emitted toasts
+  const toastCapture = (msg, type) => {
+    context.toasts.push({ msg, type });
+  };
+  context.showToast = toastCapture;
+  context.window.showToast = toastCapture;
 
   // Trigger DOMContentLoaded
   if (docListeners['DOMContentLoaded']) {
@@ -747,8 +776,201 @@ async function main() {
     assert.strictEqual(env.elements.btnHistoryRefresh.classList.contains('loading'), false);
   });
 
+  // Test 15: Successful Reopen Result populates workspace and switches view (PDFL-165.2)
+  await runTest('PDFL-165.2: Clicking "Xem kết quả" fetches result, populates workspace, and switches view', async () => {
+    const mockRecord = {
+      id: 55,
+      document_id: 12,
+      document_filename: 'ai_overview.pdf',
+      action_type: 'TRANSLATE',
+      status: 'SUCCESS',
+      execution_time_ms: 1800,
+      created_at: '2026-11-08T09:00:00Z',
+    };
+
+    const mockResult = {
+      history_id: 55,
+      document_id: 12,
+      document_filename: 'ai_overview.pdf',
+      action_type: 'TRANSLATE',
+      target_lang: 'vi',
+      original_text: 'Artificial Intelligence and Deep Learning.',
+      translated_text: 'Trí tuệ nhân tạo và Học sâu.',
+      engine_used: 'deep-translator',
+      page_count: 8,
+      file_size_mb: 2.4,
+      is_ocr_used: false,
+    };
+
+    let resultEndpointCalled = false;
+    let authHeaderReceived = null;
+
+    const mockFetch = async (url, options = {}) => {
+      if (url.includes('/api/history/55/result')) {
+        resultEndpointCalled = true;
+        authHeaderReceived = options.headers ? options.headers['Authorization'] : null;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true, data: mockResult }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ success: true, data: [mockRecord] }),
+      };
+    };
+
+    const env = createTestEnvironment({ pdfl_token: 'token-reopen-valid' }, mockFetch);
+    await env.context.window.PDFLinguaSidebar.fetchProcessingHistories();
+
+    // Verify row rendered reopen button
+    const row = env.elements.historyTableBody.children[0];
+    const btnReopen = row.querySelector('.history-btn-reopen');
+    assert.ok(btnReopen, 'history-btn-reopen must exist on SUCCESS row');
+
+    // Click reopen button
+    btnReopen.click();
+    await new Promise((r) => setImmediate(r));
+
+    assert.strictEqual(resultEndpointCalled, true);
+    assert.strictEqual(authHeaderReceived, 'Bearer token-reopen-valid');
+
+    // Section view switch verification
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'block');
+    assert.strictEqual(env.elements.sideNavTranslate.classList.contains('active'), true);
+
+    // Workspace text and metadata verification
+    assert.strictEqual(env.elements.docNameDisplay.textContent, 'ai_overview.pdf');
+    assert.strictEqual(env.elements.docPagesDisplay.textContent, '8 trang');
+    assert.strictEqual(env.elements.docSizeDisplay.textContent, '2.4 MB');
+    assert.strictEqual(env.elements.paneOriginal.innerText, 'Artificial Intelligence and Deep Learning.');
+    assert.strictEqual(env.elements.paneTranslated.innerText, 'Trí tuệ nhân tạo và Học sâu.');
+    assert.strictEqual(env.elements.targetLangSelect.value, 'vi');
+
+    // Session storage persistence verification
+    const savedDoc = JSON.parse(env.store['pdfl_workspace_doc_data']);
+    assert.strictEqual(savedDoc.history_id, 55);
+    assert.strictEqual(savedDoc.document_id, 12);
+    assert.strictEqual(savedDoc.translated_text, 'Trí tuệ nhân tạo và Học sâu.');
+
+    // Toast notification verification
+    const toast = env.context.toasts.find((t) => t.type === 'success');
+    assert.ok(toast, 'Success toast should be shown');
+    assert.ok(toast.msg.includes('dịch thuật'));
+  });
+
+  // Test 16: Reopen Result handles SUMMARIZE and EXTRACT types correctly (PDFL-165.2)
+  await runTest('PDFL-165.2: Reopening SUMMARIZE displays summary_text in translated pane', async () => {
+    const mockResult = {
+      history_id: 88,
+      document_id: 20,
+      document_filename: 'executive_brief.pdf',
+      action_type: 'SUMMARIZE',
+      target_lang: 'vi',
+      original_text: 'Long meeting transcription...',
+      summary_text: 'Tóm tắt các điểm then chốt của cuộc họp.',
+      page_count: 2,
+    };
+
+    const mockFetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, data: mockResult }),
+    });
+
+    const env = createTestEnvironment({ pdfl_token: 'token-sum' }, mockFetch);
+    const mockButton = new MockElement('mockReopenBtn', 'button');
+
+    await env.context.window.PDFLinguaSidebar.reopenHistoryResult(88, mockButton);
+
+    assert.strictEqual(env.elements.paneOriginal.innerText, 'Long meeting transcription...');
+    assert.strictEqual(env.elements.paneTranslated.innerText, 'Tóm tắt các điểm then chốt của cuộc họp.');
+    const toast = env.context.toasts.find((t) => t.type === 'success');
+    assert.ok(toast.msg.includes('tóm tắt'));
+  });
+
+  // Test 17: Reopen Result error handling (401, 404, 400, Network) (PDFL-165.2)
+  await runTest('PDFL-165.2: Error handling on missing, unauth, or failed result gracefully notifies user', async () => {
+    // 1. Missing token -> Warning & unauth state
+    const envUnauth = createTestEnvironment();
+    const btn1 = new MockElement('btn1', 'button');
+    await envUnauth.context.window.PDFLinguaSidebar.reopenHistoryResult(10, btn1);
+    assert.strictEqual(envUnauth.elements.historyUnauthState.style.display, 'block');
+    assert.strictEqual(envUnauth.context.toasts.some((t) => t.type === 'warning'), true);
+
+    // 2. HTTP 404 (file missing or anti-IDOR) -> Error toast and button restored
+    const mockFetch404 = async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({ message: 'Dữ liệu kết quả không tồn tại trên hệ thống lưu trữ.' }),
+    });
+    const env404 = createTestEnvironment({ pdfl_token: 'token-404' }, mockFetch404);
+    const btn2 = new MockElement('btn2', 'button');
+    btn2.innerHTML = 'Xem kết quả';
+    await env404.context.window.PDFLinguaSidebar.reopenHistoryResult(20, btn2);
+    assert.strictEqual(btn2.disabled, false);
+    assert.strictEqual(btn2.innerHTML, 'Xem kết quả');
+    assert.notStrictEqual(env404.elements.workspaceSection.style.display, 'block');
+    assert.ok(env404.context.toasts.some((t) => t.type === 'error' && t.msg.includes('không tồn tại')));
+
+    // 3. Network failure
+    const mockFetchNetErr = async () => { throw new Error('Network failure'); };
+    const envNet = createTestEnvironment({ pdfl_token: 'token-net' }, mockFetchNetErr);
+    const btn3 = new MockElement('btn3', 'button');
+    btn3.innerHTML = 'Xem kết quả';
+    await envNet.context.window.PDFLinguaSidebar.reopenHistoryResult(30, btn3);
+    assert.strictEqual(btn3.disabled, false);
+    assert.strictEqual(btn3.innerHTML, 'Xem kết quả');
+    assert.ok(envNet.context.toasts.some((t) => t.type === 'error' && t.msg.includes('lỗi kết nối')));
+  });
+
+  // Test 18: Loading state & double-click protection (PDFL-165.2)
+  await runTest('PDFL-165.2: Button is disabled during fetch and prevents concurrent double-clicks', async () => {
+    let fetchCount = 0;
+    let resolveReq;
+    const mockFetch = () => {
+      fetchCount++;
+      return new Promise((resolve) => {
+        resolveReq = () => resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: { history_id: 1, original_text: 'Hi', translated_text: 'Chào' },
+          }),
+        });
+      });
+    };
+
+    const env = createTestEnvironment({ pdfl_token: 'token-dbl' }, mockFetch);
+    const button = new MockElement('btnDbl', 'button');
+    button.innerHTML = 'Xem kết quả';
+
+    // First click
+    const p1 = env.context.window.PDFLinguaSidebar.reopenHistoryResult(1, button);
+
+    assert.strictEqual(button.disabled, true);
+    assert.strictEqual(button.classList.contains('loading'), true);
+    assert.strictEqual(fetchCount, 1);
+
+    // Second click while in-flight -> must be ignored
+    const p2 = env.context.window.PDFLinguaSidebar.reopenHistoryResult(1, button);
+    assert.strictEqual(fetchCount, 1);
+
+    resolveReq();
+    await p1;
+    await p2;
+
+    assert.strictEqual(button.disabled, false);
+    assert.strictEqual(button.classList.contains('loading'), false);
+    assert.strictEqual(button.innerHTML, 'Xem kết quả');
+  });
+
   console.log('\n================================================================');
-  console.log('SUMMARY: All 14 History UI & Integration tests passed (0 failed).');
+  console.log('SUMMARY: All 18 History UI & Integration tests passed (0 failed).');
   console.log('================================================================');
 }
 

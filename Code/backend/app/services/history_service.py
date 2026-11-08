@@ -1,4 +1,4 @@
-﻿"""
+"""
 Processing History Service Layer
 --------------------------------
 Encapsulates business operations for tracking, querying, and managing

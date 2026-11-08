@@ -2302,6 +2302,15 @@
       });
     }
 
+    // Click handler for Reopening Result (PDFL-165.2)
+    const btnReopen = tr.querySelector('.history-btn-reopen');
+    if (btnReopen) {
+      btnReopen.addEventListener('click', (e) => {
+        e.stopPropagation();
+        reopenHistoryResult(record.id, btnReopen);
+      });
+    }
+
     return tr;
   }
 
@@ -2346,6 +2355,147 @@
         }
       } catch (_err) {
         // Fallback to record error_message
+      }
+    }
+  }
+
+  /**
+   * Reopen stored processing result and display in Workspace (PDFL-165.2)
+   */
+  async function reopenHistoryResult(historyId, buttonEl) {
+    if (!historyId) return;
+
+    if (buttonEl && buttonEl.disabled) return;
+
+    const token = getStoredAuthToken();
+    if (!token) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để mở lại kết quả.', 'warning');
+      }
+      setHistorySectionState('unauthenticated');
+      return;
+    }
+
+    const originalHtml = buttonEl ? buttonEl.innerHTML : '';
+    if (buttonEl) {
+      buttonEl.disabled = true;
+      buttonEl.classList.add('loading');
+      buttonEl.innerHTML = `
+        <span class="status-dot" style="background: currentColor; animation: pulse-dot 1s infinite; width: 8px; height: 8px; display: inline-block; border-radius: 50%; margin-right: 4px;"></span>
+        <span>Đang mở...</span>
+      `;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(historyId)}/result`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        if (typeof showToast === 'function') {
+          showToast('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        }
+        setHistorySectionState('unauthenticated');
+        return;
+      }
+
+      if (!response.ok) {
+        let errorDetail = 'Không thể tải kết quả xử lý từ máy chủ.';
+        try {
+          const errData = await response.json();
+          if (errData && (errData.message || errData.detail)) {
+            errorDetail = errData.message || errData.detail;
+          }
+        } catch (_e) {}
+
+        if (response.status === 404) {
+          if (typeof showToast === 'function') {
+            showToast(errorDetail || 'Không tìm thấy dữ liệu kết quả cho bản ghi này.', 'error');
+          }
+        } else if (response.status === 400) {
+          if (typeof showToast === 'function') {
+            showToast(errorDetail, 'info');
+          }
+        } else {
+          if (typeof showToast === 'function') {
+            showToast(errorDetail, 'error');
+          }
+        }
+        return;
+      }
+
+      const resJson = await response.json();
+      const resultData = resJson && resJson.data ? resJson.data : null;
+
+      if (!resultData) {
+        if (typeof showToast === 'function') {
+          showToast('Dữ liệu kết quả trống hoặc không hợp lệ.', 'error');
+        }
+        return;
+      }
+
+      // Hide History section & switch view to Workspace
+      const historySection = document.getElementById('historySection');
+      const heroSection = document.getElementById('heroSection');
+      const documentsSection = document.getElementById('documentsSection');
+      const adminSection = document.getElementById('adminSection');
+      const workspaceSection = document.getElementById('workspaceSection');
+      const sideNavTranslate = document.getElementById('sideNavTranslate');
+
+      if (historySection) historySection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'none';
+      if (documentsSection) documentsSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (workspaceSection) workspaceSection.style.display = 'block';
+
+      if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
+
+      try {
+        sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
+      } catch (_err) {}
+
+      // Delegate rendering to workspace.js
+      if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.renderWorkspace === 'function') {
+        window.pdfLinguaWorkspace.renderWorkspace(resultData);
+      } else {
+        // Fallback pane population if workspace module is not yet attached
+        const paneOriginal = document.getElementById('paneOriginal');
+        const paneTranslated = document.getElementById('paneTranslated');
+        const docName = document.getElementById('docNameDisplay');
+
+        if (docName) docName.textContent = resultData.document_filename || resultData.filename || 'Tài liệu không tên';
+        if (paneOriginal) paneOriginal.innerText = resultData.original_text || '';
+        if (paneTranslated) {
+          paneTranslated.innerText = (resultData.action_type === 'SUMMARIZE' && resultData.summary_text)
+            ? resultData.summary_text
+            : (resultData.translated_text || '');
+        }
+      }
+
+      const docTitle = resultData.document_filename || resultData.filename || (`Tài liệu #${resultData.document_id}`);
+      const actionName = resultData.action_type === 'TRANSLATE'
+        ? 'dịch thuật'
+        : (resultData.action_type === 'SUMMARIZE' ? 'tóm tắt' : 'trích xuất');
+
+      if (typeof showToast === 'function') {
+        showToast(`Đã mở lại kết quả ${actionName} của "${docTitle}".`, 'success');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.innerWidth < 768) {
+        closeMobileSidebar();
+      }
+    } catch (err) {
+      if (typeof showToast === 'function') {
+        showToast('Đã xảy ra lỗi kết nối khi mở lại kết quả. Vui lòng thử lại.', 'error');
+      }
+    } finally {
+      if (buttonEl) {
+        buttonEl.disabled = false;
+        buttonEl.classList.remove('loading');
+        buttonEl.innerHTML = originalHtml;
       }
     }
   }
@@ -2487,6 +2637,7 @@
     fetchProcessingHistories: fetchProcessingHistories,
     renderHistoryPageList: renderHistoryPageList,
     openHistoryErrorModal: openHistoryErrorModal,
+    reopenHistoryResult: reopenHistoryResult,
     setHistorySectionState: setHistorySectionState,
     getHistoryCurrentPage: () => historyCurrentPage,
     setHistoryCurrentPage: (p) => { historyCurrentPage = p; },

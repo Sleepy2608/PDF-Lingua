@@ -648,10 +648,12 @@ function renderWorkspace(data) {
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
   const documentsSection = document.getElementById('documentsSection');
+  const historySection = document.getElementById('historySection');
   const adminSection = document.getElementById('adminSection');
 
   if (heroSection) heroSection.style.display = 'none';
   if (documentsSection) documentsSection.style.display = 'none';
+  if (historySection) historySection.style.display = 'none';
   if (adminSection) adminSection.style.display = 'none';
   if (workspaceSection) workspaceSection.style.display = 'block';
 
@@ -674,9 +676,10 @@ function renderWorkspace(data) {
   const paneOriginal = document.getElementById('paneOriginal');
   const paneTranslated = document.getElementById('paneTranslated');
 
-  if (docName) docName.textContent = data.filename;
-  if (docPages) docPages.textContent = `${data.page_count} trang`;
-  if (docSize) docSize.textContent = `${data.file_size_mb} MB`;
+  const filename = data.filename || data.document_filename || 'Tài liệu không tên';
+  if (docName) docName.textContent = filename;
+  if (docPages) docPages.textContent = `${data.page_count || 1} trang`;
+  if (docSize) docSize.textContent = data.file_size_mb ? `${data.file_size_mb} MB` : '--';
 
   if (docType) {
     if (data.is_ocr_used) {
@@ -688,12 +691,39 @@ function renderWorkspace(data) {
     }
   }
 
+  const translatedContent = (data.action_type === 'SUMMARIZE' && data.summary_text)
+    ? data.summary_text
+    : (data.translated_text || '');
+
   if (paneOriginal) paneOriginal.innerText = data.original_text || '';
-  if (paneTranslated) paneTranslated.innerText = data.translated_text || '';
+  if (paneTranslated) paneTranslated.innerText = translatedContent;
 
   const targetLangSelect = document.getElementById('targetLangSelect');
   if (targetLangSelect && data.target_lang) {
     targetLangSelect.value = data.target_lang;
+  }
+
+  // Update currentDocData & persist to session storage so refresh preserves it (PDFL-165.2)
+  currentDocData = {
+    document_id: data.document_id,
+    history_id: data.history_id,
+    filename: filename,
+    page_count: data.page_count || 1,
+    file_size_mb: data.file_size_mb,
+    target_lang: data.target_lang || 'vi',
+    is_ocr_used: Boolean(data.is_ocr_used),
+    original_text: data.original_text || '',
+    translated_text: translatedContent,
+    action_type: data.action_type || 'TRANSLATE',
+    engine_used: data.engine_used,
+  };
+  saveWorkspaceDocToStorage(currentDocData);
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+    } catch (_e) {}
   }
 
   updateCounters();
@@ -854,6 +884,7 @@ if (typeof window !== 'undefined') {
     showToast,
     cleanupProgressTracking,
     listenToJobProgress,
+    renderWorkspace,
     getCurrentDocData: () => currentDocData,
     setCurrentDocData: (d) => {
       currentDocData = d;
