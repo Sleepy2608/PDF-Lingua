@@ -716,10 +716,17 @@
 
                 <!-- History List Card -->
                 <div class="documents-card history-card" id="historyListCard">
-                    <!-- Filter & Search Toolbar -->
-                    <div class="documents-card-toolbar">
-                        <div class="documents-toolbar-left">
+                    <!-- Filter & Search Toolbar (PDFL-166.2) -->
+                    <div class="documents-card-toolbar" id="historyCardToolbar">
+                        <div class="documents-toolbar-left" style="display: flex; align-items: center; gap: 0.65rem;">
                             <span class="documents-count-chip font-mono" id="historyCountBadge">0 bản ghi</span>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnHistoryCleanup" title="Dọn dẹp lịch sử cũ hơn chính sách lưu trữ">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                <span>Dọn dẹp lịch sử</span>
+                            </button>
                         </div>
                         <div class="documents-toolbar-right" style="flex-wrap: wrap; gap: 0.65rem;">
                             <!-- Action Type Filter -->
@@ -1924,6 +1931,35 @@
 
             <div class="account-modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                 <button type="button" class="btn btn-secondary btn-sm" id="btnCloseHistoryErrorFooter">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Delete Confirmation Modal (PDFL-166.2) -->
+    <div class="modal-overlay" id="historyDeleteConfirmModal" role="dialog" aria-modal="true" aria-labelledby="historyDeleteConfirmTitle" hidden style="display: none;">
+        <div class="admin-confirm-card">
+            <div class="confirm-icon-wrap" id="historyDeleteConfirmIconWrap">
+                <svg class="confirm-warning-svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div class="confirm-content">
+                <h3 class="confirm-title" id="historyDeleteConfirmTitle">Xác nhận xóa lịch sử</h3>
+                <p class="confirm-desc" id="historyDeleteConfirmDesc">Thao tác này không thể hoàn tác. Bản ghi lịch sử và kết quả xử lý đã lưu sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
+                <div class="confirm-target-box" id="historyDeleteConfirmTargetBox">
+                    <span class="target-label" id="historyDeleteTargetLabel">Bản ghi sẽ xóa:</span>
+                    <strong class="target-email font-mono" id="historyDeleteConfirmTarget">---</strong>
+                </div>
+                <div class="form-alert alert-error" id="historyDeleteConfirmAlert" role="alert" style="display: none; margin-top: 0.75rem; text-align: left;"></div>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" id="btnCancelHistoryDelete">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmHistoryDelete">
+                    <span class="btn-spinner" id="historyDeleteSpinner" aria-hidden="true" style="display: none;"></span>
+                    <span id="historyDeleteBtnText">Xác nhận xóa</span>
+                </button>
             </div>
         </div>
     </div>

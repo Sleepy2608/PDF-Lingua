@@ -21,6 +21,9 @@
   let isDocDeleteConfirmOpen = false;
   let isDocDeleting = false;
   let pendingDeleteDoc = null;
+  let isHistoryDeleteConfirmOpen = false;
+  let isHistoryDeleting = false;
+  let pendingHistoryDelete = null;
   let currentDetailDoc = null;
   let detailRequestSequence = 0;
   let cachedDocuments = [];
@@ -93,6 +96,12 @@
     // Keyboard navigation (Escape to close delete confirm modal, detail modal, error modal, or mobile drawer, Ctrl+B to toggle sidebar)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (isHistoryDeleteConfirmOpen) {
+          if (!isHistoryDeleting) {
+            closeHistoryDeleteConfirmModal();
+          }
+          return;
+        }
         if (isDocDeleteConfirmOpen) {
           if (!isDocDeleting) {
             closeDocumentDeleteConfirmModal();
@@ -119,10 +128,11 @@
       }
     });
 
-    // Document Detail, Delete Confirmation & History Error Modal controls (PDFL-93.1, PDFL-94.2 & PDFL-164.1)
+    // Document Detail, Delete Confirmation & History Error Modal controls (PDFL-93.1, PDFL-94.2, PDFL-164.1 & PDFL-166.2)
     initDocumentDetailModal();
     initDocumentDeleteConfirmModal();
     initHistoryErrorModal();
+    initHistoryDeleteConfirmModal();
     initHistoryEventListeners();
 
     // Brand click: returns to Trang chủ (home/upload view)
@@ -2257,6 +2267,28 @@
       actionBtnHtml = '<span class="font-mono" style="font-size: 0.75rem; color: #94A3B8;">Đang chạy...</span>';
     }
 
+    // Delete Button (PDFL-166.2)
+    let deleteBtnHtml = '';
+    if (status === 'PENDING') {
+      deleteBtnHtml = `
+        <button type="button" class="doc-action-btn history-btn-delete" disabled title="Không thể xóa khi đang xử lý" style="opacity: 0.5; cursor: not-allowed;" aria-label="Không thể xóa khi đang xử lý">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      `;
+    } else {
+      deleteBtnHtml = `
+        <button type="button" class="doc-action-btn history-btn-delete" data-history-id="${record.id}" title="Xóa bản ghi lịch sử" aria-label="Xóa bản ghi lịch sử">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      `;
+    }
+
     tr.innerHTML = `
       <td>
         <div class="doc-file-cell user-cell-meta">
@@ -2281,6 +2313,7 @@
       <td class="text-right">
         <div class="doc-actions-group" style="justify-content: flex-end; display: flex; gap: 0.4rem;">
           ${actionBtnHtml}
+          ${deleteBtnHtml}
         </div>
       </td>
     `;
@@ -2308,6 +2341,19 @@
       btnReopen.addEventListener('click', (e) => {
         e.stopPropagation();
         reopenHistoryResult(record.id, btnReopen);
+      });
+    }
+
+    // Click handler for Deleting History (PDFL-166.2)
+    const btnDelete = tr.querySelector('.history-btn-delete');
+    if (btnDelete && status !== 'PENDING') {
+      btnDelete.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openHistoryDeleteConfirmModal({
+          type: 'single',
+          id: record.id,
+          document_filename: filename,
+        });
       });
     }
 
@@ -2594,6 +2640,359 @@
     }
   }
 
+  /**
+   * Initialize History Delete Confirmation Modal events (PDFL-166.2)
+   */
+  function initHistoryDeleteConfirmModal() {
+    const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
+    const btnCancel = document.getElementById('btnCancelHistoryDelete');
+    const btnConfirm = document.getElementById('btnConfirmHistoryDelete');
+    const btnCleanup = document.getElementById('btnHistoryCleanup');
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('pdfl:history-delete-intent', (e) => {
+        const target = e && e.detail ? e.detail : null;
+        if (target) {
+          openHistoryDeleteConfirmModal(target);
+        }
+      });
+    }
+
+    if (btnCleanup) {
+      btnCleanup.addEventListener('click', (e) => {
+        e.preventDefault();
+        openHistoryDeleteConfirmModal({ type: 'cleanup' });
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!isHistoryDeleting) {
+          closeHistoryDeleteConfirmModal();
+        }
+      });
+    }
+
+    if (btnConfirm) {
+      btnConfirm.addEventListener('click', (e) => {
+        e.preventDefault();
+        confirmHistoryDelete();
+      });
+    }
+
+    if (confirmModalEl) {
+      confirmModalEl.addEventListener('click', (e) => {
+        if (e.target === confirmModalEl && !isHistoryDeleting) {
+          closeHistoryDeleteConfirmModal();
+        }
+      });
+    }
+  }
+
+  /**
+   * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks (PDFL-166.2)
+   */
+  function setHistoryDeleteLoadingState(loading) {
+    isHistoryDeleting = Boolean(loading);
+    const btnConfirm = document.getElementById('btnConfirmHistoryDelete');
+    const btnCancel = document.getElementById('btnCancelHistoryDelete');
+    const spinnerEl = document.getElementById('historyDeleteSpinner');
+    const btnTextEl = document.getElementById('historyDeleteBtnText');
+
+    if (btnConfirm) btnConfirm.disabled = isHistoryDeleting;
+    if (btnCancel) btnCancel.disabled = isHistoryDeleting;
+    if (spinnerEl) spinnerEl.style.display = isHistoryDeleting ? 'inline-block' : 'none';
+
+    if (btnTextEl) {
+      const isCleanup = pendingHistoryDelete && pendingHistoryDelete.type === 'cleanup';
+      if (isHistoryDeleting) {
+        btnTextEl.textContent = isCleanup ? 'Đang dọn dẹp...' : 'Đang xóa...';
+      } else {
+        btnTextEl.textContent = isCleanup ? 'Xác nhận dọn dẹp' : 'Xác nhận xóa';
+      }
+    }
+  }
+
+  /**
+   * Open #historyDeleteConfirmModal for single record or expired histories cleanup (PDFL-166.2)
+   */
+  function openHistoryDeleteConfirmModal(payload) {
+    const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
+    if (!confirmModalEl || !payload) return;
+
+    const titleEl = document.getElementById('historyDeleteConfirmTitle');
+    const descEl = document.getElementById('historyDeleteConfirmDesc');
+    const targetLabelEl = document.getElementById('historyDeleteTargetLabel');
+    const targetValEl = document.getElementById('historyDeleteConfirmTarget');
+    const alertEl = document.getElementById('historyDeleteConfirmAlert');
+    const btnTextEl = document.getElementById('historyDeleteBtnText');
+
+    if (payload.type === 'cleanup') {
+      pendingHistoryDelete = { type: 'cleanup' };
+      if (titleEl) titleEl.textContent = 'Dọn dẹp lịch sử hết hạn';
+      if (descEl) descEl.textContent = 'Hệ thống sẽ dọn dẹp các bản ghi lịch sử cũ hơn chính sách lưu trữ (30 ngày) và các kết quả đã lưu kèm theo. Tài liệu gốc PDF trong hệ thống sẽ không bị ảnh hưởng.';
+      if (targetLabelEl) targetLabelEl.textContent = 'Phạm vi dọn dẹp:';
+      if (targetValEl) targetValEl.textContent = 'Lịch sử xử lý cũ hơn 30 ngày (mặc định hệ thống)';
+      if (btnTextEl) btnTextEl.textContent = 'Xác nhận dọn dẹp';
+    } else {
+      const targetId = payload.id !== undefined ? payload.id : (payload.history_id || null);
+      if (targetId === null) return;
+      const targetName = payload.document_filename || payload.filename || `Bản ghi #${targetId}`;
+
+      pendingHistoryDelete = {
+        type: 'single',
+        id: targetId,
+        filename: targetName,
+      };
+
+      if (titleEl) titleEl.textContent = 'Xác nhận xóa lịch sử';
+      if (descEl) descEl.textContent = 'Thao tác này không thể hoàn tác. Bản ghi lịch sử và kết quả xử lý đã lưu sẽ bị xóa vĩnh viễn khỏi hệ thống (tài liệu gốc PDF sẽ không bị ảnh hưởng).';
+      if (targetLabelEl) targetLabelEl.textContent = 'Bản ghi sẽ xóa:';
+      if (targetValEl) targetValEl.textContent = targetName;
+      if (btnTextEl) btnTextEl.textContent = 'Xác nhận xóa';
+    }
+
+    isHistoryDeleteConfirmOpen = true;
+    setHistoryDeleteLoadingState(false);
+
+    if (alertEl) {
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
+    }
+
+    confirmModalEl.removeAttribute('hidden');
+    confirmModalEl.style.display = 'flex';
+  }
+
+  /**
+   * Close History Delete Confirmation Modal (PDFL-166.2)
+   */
+  function closeHistoryDeleteConfirmModal() {
+    const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
+    isHistoryDeleteConfirmOpen = false;
+    pendingHistoryDelete = null;
+    setHistoryDeleteLoadingState(false);
+
+    const alertEl = document.getElementById('historyDeleteConfirmAlert');
+    if (alertEl) {
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
+    }
+
+    if (confirmModalEl) {
+      confirmModalEl.setAttribute('hidden', '');
+      confirmModalEl.style.display = 'none';
+    }
+  }
+
+  /**
+   * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation (PDFL-166.2)
+   */
+  async function confirmHistoryDelete() {
+    if (!isHistoryDeleteConfirmOpen || isHistoryDeleting || !pendingHistoryDelete) {
+      return false;
+    }
+
+    const alertEl = document.getElementById('historyDeleteConfirmAlert');
+    const token = getStoredAuthToken();
+
+    if (!token) {
+      const msg = 'Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập (401). Vui lòng đăng nhập lại.';
+      if (alertEl) {
+        alertEl.style.display = 'flex';
+        alertEl.textContent = msg;
+      }
+      if (typeof showToast === 'function') {
+        showToast(msg, 'error');
+      }
+      return false;
+    }
+
+    setHistoryDeleteLoadingState(true);
+    if (alertEl) {
+      alertEl.style.display = 'none';
+      alertEl.textContent = '';
+    }
+
+    try {
+      if (pendingHistoryDelete.type === 'cleanup') {
+        const response = await fetch(`${API_BASE_URL}/api/history/cleanup`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
+          setHistoryDeleteLoadingState(false);
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
+        }
+
+        if (!response.ok) {
+          let msg = 'Lỗi máy chủ khi dọn dẹp lịch sử. Vui lòng thử lại.';
+          try {
+            const errData = await response.json();
+            if (errData && (errData.detail || errData.message)) {
+              msg = errData.detail || errData.message;
+            }
+          } catch (_e) {}
+          setHistoryDeleteLoadingState(false);
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
+        }
+
+        let cleanupMsg = 'Đã dọn dẹp các bản ghi lịch sử hết hạn thành công.';
+        try {
+          const result = await response.json();
+          if (result && typeof result.deleted_count === 'number') {
+            cleanupMsg = `Đã dọn dẹp thành công ${result.deleted_count} bản ghi lịch sử hết hạn.`;
+          } else if (result && result.message) {
+            cleanupMsg = result.message;
+          }
+        } catch (_e) {}
+
+        closeHistoryDeleteConfirmModal();
+        if (typeof showToast === 'function') {
+          showToast(cleanupMsg, 'success');
+        }
+
+        historyCurrentPage = 1;
+        fetchProcessingHistories();
+        return true;
+      } else {
+        const targetId = pendingHistoryDelete.id;
+        const targetFilename = pendingHistoryDelete.filename || `Bản ghi #${targetId}`;
+
+        const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(targetId)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
+          setHistoryDeleteLoadingState(false);
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
+        }
+
+        if (response.status === 404) {
+          let msg = 'Bản ghi lịch sử không tồn tại hoặc bạn không có quyền xóa (404).';
+          try {
+            const errData = await response.json();
+            if (errData && (errData.detail || errData.message)) {
+              msg = errData.detail || errData.message;
+            }
+          } catch (_e) {}
+          setHistoryDeleteLoadingState(false);
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
+        }
+
+        if (response.status === 400) {
+          let msg = 'Không thể xóa bản ghi lịch sử này.';
+          try {
+            const errData = await response.json();
+            if (errData && (errData.detail || errData.message)) {
+              msg = errData.detail || errData.message;
+            }
+          } catch (_e) {}
+          setHistoryDeleteLoadingState(false);
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
+        }
+
+        if (!response.ok) {
+          let msg = 'Lỗi máy chủ khi xóa bản ghi lịch sử. Vui lòng thử lại.';
+          try {
+            const errData = await response.json();
+            if (errData && (errData.detail || errData.message)) {
+              msg = errData.detail || errData.message;
+            }
+          } catch (_e) {}
+          setHistoryDeleteLoadingState(false);
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
+        }
+
+        let successMsg = `Đã xóa bản ghi lịch sử của "${targetFilename}" thành công.`;
+        try {
+          const result = await response.json();
+          if (result && result.message) {
+            successMsg = result.message;
+          }
+        } catch (_e) {}
+
+        // Remove from cached histories
+        cachedHistories = cachedHistories.filter((h) => String(h.id) !== String(targetId));
+
+        // If deleting the last item on current page (> 1), go back to previous page
+        if (cachedHistories.length === 0 && historyCurrentPage > 1) {
+          historyCurrentPage--;
+        }
+
+        closeHistoryDeleteConfirmModal();
+        if (typeof showToast === 'function') {
+          showToast(successMsg, 'success');
+        }
+
+        fetchProcessingHistories();
+        return true;
+      }
+    } catch (_err) {
+      setHistoryDeleteLoadingState(false);
+      const connMsg = 'Đã xảy ra lỗi kết nối khi xử lý yêu cầu. Vui lòng kiểm tra lại.';
+      if (alertEl) {
+        alertEl.style.display = 'flex';
+        alertEl.textContent = connMsg;
+      }
+      if (typeof showToast === 'function') {
+        showToast(connMsg, 'error');
+      }
+      return false;
+    }
+  }
+
   function setActiveNav(navKey) {
     if (navKey === 'home') {
       const el = document.getElementById('sideNavHome');
@@ -2634,6 +3033,9 @@
     openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
     closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
     confirmDocumentDelete: confirmDocumentDelete,
+    openHistoryDeleteConfirmModal: openHistoryDeleteConfirmModal,
+    closeHistoryDeleteConfirmModal: closeHistoryDeleteConfirmModal,
+    confirmHistoryDelete: confirmHistoryDelete,
     fetchProcessingHistories: fetchProcessingHistories,
     renderHistoryPageList: renderHistoryPageList,
     openHistoryErrorModal: openHistoryErrorModal,

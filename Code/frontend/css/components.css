@@ -2863,6 +2863,12 @@
   color: #4F46E5;
 }
 
+.history-btn-delete:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
 /* Empty, loading, and error states inside card */
 .documents-card-state {
   padding: 4rem 1.5rem;

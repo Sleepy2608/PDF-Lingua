@@ -158,6 +158,8 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     // History elements
     btnCloseHistoryView: new MockElement('btnCloseHistoryView', 'button'),
     btnHistoryRefresh: new MockElement('btnHistoryRefresh', 'button'),
+    historyCardToolbar: new MockElement('historyCardToolbar', 'div'),
+    btnHistoryCleanup: new MockElement('btnHistoryCleanup', 'button'),
     historyCountBadge: new MockElement('historyCountBadge', 'span'),
     historyActionFilter: new MockElement('historyActionFilter', 'select'),
     historyStatusFilter: new MockElement('historyStatusFilter', 'select'),
@@ -191,6 +193,20 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     historyErrorTimestamp: new MockElement('historyErrorTimestamp', 'span'),
     historyErrorMessage: new MockElement('historyErrorMessage', 'div'),
     btnCloseHistoryErrorFooter: new MockElement('btnCloseHistoryErrorFooter', 'button'),
+
+    // History Delete Confirmation Modal (PDFL-166.2)
+    historyDeleteConfirmModal: new MockElement('historyDeleteConfirmModal', 'div'),
+    historyDeleteConfirmIconWrap: new MockElement('historyDeleteConfirmIconWrap', 'div'),
+    historyDeleteConfirmTitle: new MockElement('historyDeleteConfirmTitle', 'h3'),
+    historyDeleteConfirmDesc: new MockElement('historyDeleteConfirmDesc', 'p'),
+    historyDeleteConfirmTargetBox: new MockElement('historyDeleteConfirmTargetBox', 'div'),
+    historyDeleteTargetLabel: new MockElement('historyDeleteTargetLabel', 'span'),
+    historyDeleteConfirmTarget: new MockElement('historyDeleteConfirmTarget', 'strong'),
+    historyDeleteConfirmAlert: new MockElement('historyDeleteConfirmAlert', 'div'),
+    btnCancelHistoryDelete: new MockElement('btnCancelHistoryDelete', 'button'),
+    btnConfirmHistoryDelete: new MockElement('btnConfirmHistoryDelete', 'button'),
+    historyDeleteSpinner: new MockElement('historyDeleteSpinner', 'span'),
+    historyDeleteBtnText: new MockElement('historyDeleteBtnText', 'span'),
 
     // Workspace elements (PDFL-165.2)
     paneOriginal: new MockElement('paneOriginal'),
@@ -1012,8 +1028,269 @@ async function main() {
     assert.strictEqual(button.innerHTML, 'Xem kết quả');
   });
 
+  // Test 19: Single record delete flow (PDFL-166.2)
+  await runTest('PDFL-166.2: Single record delete flow calls DELETE /api/history/{id}, updates UI, and closes modal', async () => {
+    let deleteCalled = false;
+    let deleteUrl = null;
+    let deleteMethod = null;
+    let deleteAuth = null;
+    let fetchHistoriesCalled = false;
+
+    const mockFetch = async (url, options = {}) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/history/42') && options.method === 'DELETE') {
+        deleteCalled = true;
+        deleteUrl = urlStr;
+        deleteMethod = options.method;
+        deleteAuth = options.headers ? options.headers['Authorization'] : null;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true, message: 'Đã xóa bản ghi lịch sử thành công' }),
+        };
+      }
+      if (urlStr.includes('/api/history')) {
+        fetchHistoriesCalled = true;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true, data: [] }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+    };
+
+    const env = createTestEnvironment({ pdfl_token: 'token-del-42' }, mockFetch);
+
+    // Open delete modal for record #42
+    env.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({
+      type: 'single',
+      id: 42,
+      filename: 'document_sample.pdf',
+    });
+
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'flex');
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.hasAttribute('hidden'), false);
+    assert.strictEqual(env.elements.historyDeleteConfirmTitle.textContent, 'Xác nhận xóa lịch sử');
+    assert.strictEqual(env.elements.historyDeleteConfirmTarget.textContent, 'document_sample.pdf');
+    assert.strictEqual(env.elements.historyDeleteBtnText.textContent, 'Xác nhận xóa');
+
+    // Confirm deletion
+    const deletePromise = env.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+
+    // Verify loading state during deletion
+    assert.strictEqual(env.elements.btnConfirmHistoryDelete.disabled, true);
+    assert.strictEqual(env.elements.btnCancelHistoryDelete.disabled, true);
+    assert.strictEqual(env.elements.historyDeleteSpinner.style.display, 'inline-block');
+    assert.strictEqual(env.elements.historyDeleteBtnText.textContent, 'Đang xóa...');
+
+    const result = await deletePromise;
+    assert.strictEqual(result, true);
+    assert.strictEqual(deleteCalled, true);
+    assert.ok(deleteUrl.includes('/api/history/42'));
+    assert.strictEqual(deleteMethod, 'DELETE');
+    assert.strictEqual(deleteAuth, 'Bearer token-del-42');
+
+    // Modal is closed after success
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.hasAttribute('hidden'), true);
+    assert.ok(env.context.toasts.some((t) => t.type === 'success' && t.msg.includes('thành công')));
+    assert.strictEqual(fetchHistoriesCalled, true);
+  });
+
+  // Test 20: Expired histories cleanup flow (PDFL-166.2)
+  await runTest('PDFL-166.2: Expired histories cleanup flow calls POST /api/history/cleanup, resets to page 1, and shows success toast', async () => {
+    let cleanupCalled = false;
+    let cleanupMethod = null;
+    let cleanupAuth = null;
+
+    const mockFetch = async (url, options = {}) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/history/cleanup') && options.method === 'POST') {
+        cleanupCalled = true;
+        cleanupMethod = options.method;
+        cleanupAuth = options.headers ? options.headers['Authorization'] : null;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true, deleted_count: 7, retention_days: 30, message: 'Đã dọn dẹp thành công 7 bản ghi lịch sử hết hạn.' }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+    };
+
+    const env = createTestEnvironment({ pdfl_token: 'token-cleanup' }, mockFetch);
+
+    // Set page to 3 before cleanup
+    env.context.window.PDFLinguaSidebar.setHistoryCurrentPage(3);
+    assert.strictEqual(env.context.window.PDFLinguaSidebar.getHistoryCurrentPage(), 3);
+
+    // Click #btnHistoryCleanup
+    env.elements.btnHistoryCleanup.click();
+
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'flex');
+    assert.strictEqual(env.elements.historyDeleteConfirmTitle.textContent, 'Dọn dẹp lịch sử hết hạn');
+    assert.strictEqual(env.elements.historyDeleteTargetLabel.textContent, 'Phạm vi dọn dẹp:');
+    assert.strictEqual(env.elements.historyDeleteBtnText.textContent, 'Xác nhận dọn dẹp');
+
+    // Confirm cleanup
+    const cleanupPromise = env.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+
+    // Verify loading state
+    assert.strictEqual(env.elements.historyDeleteBtnText.textContent, 'Đang dọn dẹp...');
+    assert.strictEqual(env.elements.historyDeleteSpinner.style.display, 'inline-block');
+
+    const result = await cleanupPromise;
+    assert.strictEqual(result, true);
+    assert.strictEqual(cleanupCalled, true);
+    assert.strictEqual(cleanupMethod, 'POST');
+    assert.strictEqual(cleanupAuth, 'Bearer token-cleanup');
+
+    // Modal closed, toast shown, page reset to 1
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.hasAttribute('hidden'), true);
+    assert.strictEqual(env.context.window.PDFLinguaSidebar.getHistoryCurrentPage(), 1);
+    assert.ok(env.context.toasts.some((t) => t.type === 'success' && t.msg.includes('7 bản ghi')));
+  });
+
+  // Test 21: Error handling on delete / cleanup (PDFL-166.2)
+  await runTest('PDFL-166.2: Error handling on delete (401, 404, 400, 500, network error) displays alert in modal and keeps modal open', async () => {
+    // 1. Unauthenticated (no token)
+    const envUnauth = createTestEnvironment();
+    envUnauth.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'single', id: 99 });
+    const unauthRes = await envUnauth.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+    assert.strictEqual(unauthRes, false);
+    assert.strictEqual(envUnauth.elements.historyDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(envUnauth.elements.historyDeleteConfirmAlert.textContent.includes('401'));
+
+    // 2. HTTP 404 (not found or Anti-IDOR)
+    const mockFetch404 = async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({ message: 'Bản ghi lịch sử không tồn tại hoặc không thuộc quyền sở hữu.' }),
+    });
+    const env404 = createTestEnvironment({ pdfl_token: 'token-404' }, mockFetch404);
+    env404.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'single', id: 101 });
+    const res404 = await env404.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+    assert.strictEqual(res404, false);
+    assert.strictEqual(env404.elements.historyDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(env404.elements.historyDeleteConfirmAlert.textContent.includes('không tồn tại'));
+    assert.strictEqual(env404.elements.historyDeleteConfirmModal.style.display, 'flex');
+    assert.strictEqual(env404.elements.btnConfirmHistoryDelete.disabled, false);
+
+    // 3. HTTP 400 (Cannot delete PENDING)
+    const mockFetch400 = async () => ({
+      ok: false,
+      status: 400,
+      json: async () => ({ message: 'Không thể xóa bản ghi đang trong tiến trình xử lý.' }),
+    });
+    const env400 = createTestEnvironment({ pdfl_token: 'token-400' }, mockFetch400);
+    env400.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'single', id: 102 });
+    const res400 = await env400.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+    assert.strictEqual(res400, false);
+    assert.strictEqual(env400.elements.historyDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(env400.elements.historyDeleteConfirmAlert.textContent.includes('tiến trình xử lý'));
+
+    // 4. HTTP 500 server error
+    const mockFetch500 = async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: 'Lỗi cơ sở dữ liệu máy chủ.' }),
+    });
+    const env500 = createTestEnvironment({ pdfl_token: 'token-500' }, mockFetch500);
+    env500.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'single', id: 103 });
+    const res500 = await env500.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+    assert.strictEqual(res500, false);
+    assert.strictEqual(env500.elements.historyDeleteConfirmAlert.style.display, 'flex');
+    assert.strictEqual(env500.elements.btnConfirmHistoryDelete.disabled, false);
+
+    // 5. Network failure
+    const mockFetchNet = async () => { throw new Error('Network connection dropped'); };
+    const envNet = createTestEnvironment({ pdfl_token: 'token-net' }, mockFetchNet);
+    envNet.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'cleanup' });
+    const resNet = await envNet.context.window.PDFLinguaSidebar.confirmHistoryDelete();
+    assert.strictEqual(resNet, false);
+    assert.strictEqual(envNet.elements.historyDeleteConfirmAlert.style.display, 'flex');
+    assert.ok(envNet.elements.historyDeleteConfirmAlert.textContent.includes('kết nối'));
+  });
+
+  // Test 22: Modal dismiss via Cancel button, backdrop click, and Escape key (PDFL-166.2)
+  await runTest('PDFL-166.2: Modal dismiss via Cancel button, backdrop click, and Escape key closes modal without sending delete request', async () => {
+    let deleteSent = false;
+    const mockFetch = async (url, options = {}) => {
+      if (options && (options.method === 'DELETE' || (options.method === 'POST' && String(url).includes('/api/history/cleanup')))) {
+        deleteSent = true;
+      }
+      return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+    };
+
+    const env = createTestEnvironment({ pdfl_token: 'token-esc' }, mockFetch);
+
+    // 1. Dismiss via Cancel button
+    env.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'single', id: 1 });
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'flex');
+    env.elements.btnCancelHistoryDelete.click();
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.hasAttribute('hidden'), true);
+    assert.strictEqual(deleteSent, false);
+
+    // 2. Dismiss via backdrop click
+    env.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'cleanup' });
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'flex');
+    env.elements.historyDeleteConfirmModal.click();
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(deleteSent, false);
+
+    // 3. Dismiss via Escape key
+    env.context.window.PDFLinguaSidebar.openHistoryDeleteConfirmModal({ type: 'single', id: 2 });
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'flex');
+    if (env.docListeners['keydown']) {
+      env.docListeners['keydown'].forEach((fn) => fn({
+        key: 'Escape',
+        ctrlKey: false,
+        metaKey: false,
+        preventDefault: () => {},
+      }));
+    }
+    assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'none');
+    assert.strictEqual(deleteSent, false);
+  });
+
+  // Test 23: Table row includes delete button and disables delete for PENDING records (PDFL-166.2)
+  await runTest('PDFL-166.2: Table row includes delete button and disables delete for PENDING records', async () => {
+    const env = createTestEnvironment({ pdfl_token: 'token-rows' });
+
+    const mockRecords = [
+      { id: 10, document_id: 1, action_type: 'EXTRACT', status: 'SUCCESS', created_at: '2026-11-08T00:00:00Z', document_filename: 'done.pdf' },
+      { id: 11, document_id: 2, action_type: 'TRANSLATE', status: 'FAILED', created_at: '2026-11-08T00:00:00Z', document_filename: 'failed.pdf', error_message: 'Lỗi OCR' },
+      { id: 12, document_id: 3, action_type: 'SUMMARIZE', status: 'PENDING', created_at: '2026-11-08T00:00:00Z', document_filename: 'pending.pdf' },
+    ];
+
+    env.context.window.PDFLinguaSidebar.renderHistoryPageList(mockRecords, 'token-rows');
+
+    const rows = env.elements.historyTableBody.children;
+    assert.strictEqual(rows.length, 3);
+
+    // Row 1 (SUCCESS): has .history-btn-reopen AND .history-btn-delete (enabled)
+    const row1Html = rows[0].innerHTML;
+    assert.ok(row1Html.includes('history-btn-reopen'));
+    assert.ok(row1Html.includes('history-btn-delete'));
+    assert.ok(!row1Html.includes('disabled title="Không thể xóa khi đang xử lý"'));
+
+    // Row 2 (FAILED): has .history-btn-error AND .history-btn-delete (enabled)
+    const row2Html = rows[1].innerHTML;
+    assert.ok(row2Html.includes('history-btn-error'));
+    assert.ok(row2Html.includes('history-btn-delete'));
+    assert.ok(!row2Html.includes('disabled title="Không thể xóa khi đang xử lý"'));
+
+    // Row 3 (PENDING): has .history-btn-delete disabled
+    const row3Html = rows[2].innerHTML;
+    assert.ok(row3Html.includes('history-btn-delete'));
+    assert.ok(row3Html.includes('disabled title="Không thể xóa khi đang xử lý"'));
+  });
+
   console.log('\n================================================================');
-  console.log('SUMMARY: All 18 History UI & Integration tests passed (0 failed).');
+  console.log('SUMMARY: All 23 History UI & Integration tests passed (0 failed).');
   console.log('================================================================');
 }
 
