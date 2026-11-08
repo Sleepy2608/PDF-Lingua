@@ -90,7 +90,7 @@
       });
     }
 
-    // Keyboard navigation (Escape to close delete confirm modal, detail modal, or mobile drawer, Ctrl+B to toggle sidebar)
+    // Keyboard navigation (Escape to close delete confirm modal, detail modal, error modal, or mobile drawer, Ctrl+B to toggle sidebar)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (isDocDeleteConfirmOpen) {
@@ -103,6 +103,12 @@
           closeDocumentDetailModal();
           return;
         }
+        const historyErrorModal = document.getElementById('historyErrorModal');
+        if (historyErrorModal && historyErrorModal.style.display !== 'none' && !historyErrorModal.hasAttribute('hidden')) {
+          historyErrorModal.style.display = 'none';
+          historyErrorModal.setAttribute('hidden', '');
+          return;
+        }
         if (isMobileOpen) {
           closeMobileSidebar();
         }
@@ -113,9 +119,10 @@
       }
     });
 
-    // Document Detail & Delete Confirmation Modal controls (PDFL-93.1 & PDFL-94.2)
+    // Document Detail, Delete Confirmation & History Error Modal controls (PDFL-93.1, PDFL-94.2 & PDFL-164.1)
     initDocumentDetailModal();
     initDocumentDeleteConfirmModal();
+    initHistoryErrorModal();
 
     // Brand click: returns to Trang chủ (home/upload view)
     const sidebarBrandLink = document.getElementById('sidebarBrandLink');
@@ -184,10 +191,12 @@
         const workspaceSection = document.getElementById('workspaceSection');
         const adminSection = document.getElementById('adminSection');
         const documentsSection = document.getElementById('documentsSection');
+        const historySection = document.getElementById('historySection');
         if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
         if (heroSection) heroSection.style.display = 'none';
         if (workspaceSection) workspaceSection.style.display = 'none';
         if (adminSection) adminSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'none';
         if (documentsSection) documentsSection.style.display = 'block';
 
         const pendingToastRaw = sessionStorage.getItem(PENDING_TOAST_KEY);
@@ -198,6 +207,19 @@
             showToast(pendingToast.msg, pendingToast.type || 'success');
           }
         }
+      } else if (activeView === 'history') {
+        const sideNavHistory = document.getElementById('sideNavHistory');
+        const heroSection = document.getElementById('heroSection');
+        const workspaceSection = document.getElementById('workspaceSection');
+        const adminSection = document.getElementById('adminSection');
+        const documentsSection = document.getElementById('documentsSection');
+        const historySection = document.getElementById('historySection');
+        if (sideNavHistory) setActiveNavItem(sideNavHistory);
+        if (heroSection) heroSection.style.display = 'none';
+        if (workspaceSection) workspaceSection.style.display = 'none';
+        if (adminSection) adminSection.style.display = 'none';
+        if (documentsSection) documentsSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'block';
       } else if (activeView === 'workspace') {
         const sideNavTranslate = document.getElementById('sideNavTranslate');
         if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
@@ -223,13 +245,14 @@
   function triggerPdfUpload() {
     const adminSection = document.getElementById('adminSection');
     const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
     const sideNavHome = document.getElementById('sideNavHome');
     const btnNewFile = document.getElementById('btnNewFile');
     const pdfFileInput = document.getElementById('pdfFileInput');
 
-    // If currently in admin or documents view, return to user workspace
+    // If currently in admin, documents, or history view, return to user workspace
     if (adminSection && adminSection.style.display !== 'none') {
       adminSection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
@@ -237,6 +260,12 @@
 
     if (documentsSection && documentsSection.style.display !== 'none') {
       documentsSection.style.display = 'none';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'block';
+    }
+
+    if (historySection && historySection.style.display !== 'none') {
+      historySection.style.display = 'none';
       if (workspaceSection) workspaceSection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'block';
     }
@@ -275,11 +304,13 @@
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
     const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
 
     if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'block';
 
     try {
@@ -287,6 +318,31 @@
     } catch (_err) {}
 
     fetchRecentDocuments();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) {
+      closeMobileSidebar();
+    }
+  }
+
+  function openHistoryView() {
+    const sideNavHistory = document.getElementById('sideNavHistory');
+    const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
+
+    if (sideNavHistory) setActiveNavItem(sideNavHistory);
+    if (heroSection) heroSection.style.display = 'none';
+    if (workspaceSection) workspaceSection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'block';
+
+    try {
+      sessionStorage.setItem(ACTIVE_VIEW_KEY, 'history');
+    } catch (_err) {}
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.innerWidth < 768) {
@@ -302,10 +358,12 @@
     if (sideNavHome) setActiveNavItem(sideNavHome);
     const adminSection = document.getElementById('adminSection');
     const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
     const workspaceSection = document.getElementById('workspaceSection');
     const heroSection = document.getElementById('heroSection');
     if (adminSection) adminSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (heroSection) heroSection.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -319,8 +377,10 @@
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
     const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
 
     if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
 
     const hasActiveDoc = window.pdfLinguaWorkspace
@@ -349,6 +409,12 @@
     if (window.innerWidth < 768) {
       closeMobileSidebar();
     }
+  }
+
+  function closeHistoryView() {
+    const historySection = document.getElementById('historySection');
+    if (historySection) historySection.style.display = 'none';
+    closeDocumentsView();
   }
 
   function handleProfileClick() {
@@ -435,10 +501,14 @@
     const sideNavAiCopilot = document.getElementById('sideNavAiCopilot');
     const sideNavAiSummarize = document.getElementById('sideNavAiSummarize');
     const sideNavDocuments = document.getElementById('sideNavDocuments');
+    const sideNavHistory = document.getElementById('sideNavHistory');
     const sideNavPricing = document.getElementById('sideNavPricing');
     const sideNavAdmin = document.getElementById('sideNavAdmin');
     const btnCloseDocumentsView = document.getElementById('btnCloseDocumentsView');
+    const btnCloseHistoryView = document.getElementById('btnCloseHistoryView');
     const btnDocsUploadNew = document.getElementById('btnDocsUploadNew');
+    const btnHistoryUploadPrompt = document.getElementById('btnHistoryUploadPrompt');
+    const btnHistoryLoginPrompt = document.getElementById('btnHistoryLoginPrompt');
     const documentsSearchInput = document.getElementById('documentsSearchInput');
     const btnDocsRetry = document.getElementById('btnDocsRetry');
     const btnDocsLoginPrompt = document.getElementById('btnDocsLoginPrompt');
@@ -534,6 +604,13 @@
       });
     }
 
+    if (sideNavHistory) {
+      sideNavHistory.addEventListener('click', (e) => {
+        e.preventDefault();
+        openHistoryView();
+      });
+    }
+
     if (btnCloseDocumentsView) {
       btnCloseDocumentsView.addEventListener('click', (e) => {
         e.preventDefault();
@@ -541,10 +618,31 @@
       });
     }
 
+    if (btnCloseHistoryView) {
+      btnCloseHistoryView.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeHistoryView();
+      });
+    }
+
     if (btnDocsUploadNew) {
       btnDocsUploadNew.addEventListener('click', (e) => {
         e.preventDefault();
         triggerPdfUpload();
+      });
+    }
+
+    if (btnHistoryUploadPrompt) {
+      btnHistoryUploadPrompt.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerPdfUpload();
+      });
+    }
+
+    if (btnHistoryLoginPrompt) {
+      btnHistoryLoginPrompt.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleProfileClick();
       });
     }
 
@@ -567,7 +665,9 @@
         } catch (_err) {}
         setActiveNavItem(sideNavAdmin);
         const documentsSection = document.getElementById('documentsSection');
+        const historySection = document.getElementById('historySection');
         if (documentsSection) documentsSection.style.display = 'none';
+        if (historySection) historySection.style.display = 'none';
         if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
           window.pdfLinguaAdmin.openAdminView();
         } else {
@@ -1857,6 +1957,33 @@
       .replace(/'/g, '&#39;');
   }
 
+  function initHistoryErrorModal() {
+    const historyErrorModal = document.getElementById('historyErrorModal');
+    const btnCloseHistoryErrorModal = document.getElementById('btnCloseHistoryErrorModal');
+    const btnCloseHistoryErrorFooter = document.getElementById('btnCloseHistoryErrorFooter');
+
+    function closeErrorModal() {
+      if (historyErrorModal) {
+        historyErrorModal.style.display = 'none';
+        historyErrorModal.setAttribute('hidden', '');
+      }
+    }
+
+    if (btnCloseHistoryErrorModal) {
+      btnCloseHistoryErrorModal.addEventListener('click', closeErrorModal);
+    }
+    if (btnCloseHistoryErrorFooter) {
+      btnCloseHistoryErrorFooter.addEventListener('click', closeErrorModal);
+    }
+    if (historyErrorModal) {
+      historyErrorModal.addEventListener('click', (e) => {
+        if (e.target === historyErrorModal) {
+          closeErrorModal();
+        }
+      });
+    }
+  }
+
   function setActiveNav(navKey) {
     if (navKey === 'home') {
       const el = document.getElementById('sideNavHome');
@@ -1866,6 +1993,9 @@
       if (el) setActiveNavItem(el);
     } else if (navKey === 'documents') {
       const el = document.getElementById('sideNavDocuments');
+      if (el) setActiveNavItem(el);
+    } else if (navKey === 'history') {
+      const el = document.getElementById('sideNavHistory');
       if (el) setActiveNavItem(el);
     } else if (navKey === 'admin') {
       const el = document.getElementById('sideNavAdmin');
@@ -1884,6 +2014,8 @@
     triggerUpload: triggerPdfUpload,
     openDocumentsView: openDocumentsView,
     closeDocumentsView: closeDocumentsView,
+    openHistoryView: openHistoryView,
+    closeHistoryView: closeHistoryView,
     navigateToHome: navigateToHome,
     setActiveNav: setActiveNav,
     setActiveNavItem: setActiveNavItem,
