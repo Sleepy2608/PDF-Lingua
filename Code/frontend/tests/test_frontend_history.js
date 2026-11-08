@@ -890,9 +890,31 @@ async function main() {
     assert.strictEqual(env.elements.paneTranslated.innerText, 'Tóm tắt các điểm then chốt của cuộc họp.');
     const toast = env.context.toasts.find((t) => t.type === 'success');
     assert.ok(toast.msg.includes('tóm tắt'));
+
+    // Test EXTRACT type
+    const mockExtractResult = {
+      history_id: 89,
+      document_id: 21,
+      document_filename: 'pure_text.pdf',
+      action_type: 'EXTRACT',
+      original_text: 'Raw extracted text without translation.',
+      page_count: 1,
+    };
+    const mockFetchExtract = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, data: mockExtractResult }),
+    });
+    const envExtract = createTestEnvironment({ pdfl_token: 'token-ext' }, mockFetchExtract);
+    const btnExt = new MockElement('btnExt', 'button');
+    await envExtract.context.window.PDFLinguaSidebar.reopenHistoryResult(89, btnExt);
+    assert.strictEqual(envExtract.elements.paneOriginal.innerText, 'Raw extracted text without translation.');
+    assert.strictEqual(envExtract.elements.paneTranslated.innerText, '');
+    const toastExt = envExtract.context.toasts.find((t) => t.type === 'success');
+    assert.ok(toastExt.msg.includes('trích xuất'));
   });
 
-  // Test 17: Reopen Result error handling (401, 404, 400, Network) (PDFL-165.2)
+  // Test 17: Reopen Result error handling (401, 404, 400, 500, Network) (PDFL-165.2 & PDFL-165.3)
   await runTest('PDFL-165.2: Error handling on missing, unauth, or failed result gracefully notifies user', async () => {
     // 1. Missing token -> Warning & unauth state
     const envUnauth = createTestEnvironment();
@@ -916,7 +938,21 @@ async function main() {
     assert.notStrictEqual(env404.elements.workspaceSection.style.display, 'block');
     assert.ok(env404.context.toasts.some((t) => t.type === 'error' && t.msg.includes('không tồn tại')));
 
-    // 3. Network failure
+    // 3. HTTP 500 (corrupt JSON file on server) -> Error toast and button restored
+    const mockFetch500 = async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: 'Tệp dữ liệu kết quả bị lỗi định dạng hoặc không thể đọc được.' }),
+    });
+    const env500 = createTestEnvironment({ pdfl_token: 'token-500' }, mockFetch500);
+    const btn500 = new MockElement('btn500', 'button');
+    btn500.innerHTML = 'Xem kết quả';
+    await env500.context.window.PDFLinguaSidebar.reopenHistoryResult(25, btn500);
+    assert.strictEqual(btn500.disabled, false);
+    assert.strictEqual(btn500.innerHTML, 'Xem kết quả');
+    assert.ok(env500.context.toasts.some((t) => t.type === 'error' && t.msg.includes('lỗi định dạng')));
+
+    // 4. Network failure
     const mockFetchNetErr = async () => { throw new Error('Network failure'); };
     const envNet = createTestEnvironment({ pdfl_token: 'token-net' }, mockFetchNetErr);
     const btn3 = new MockElement('btn3', 'button');
@@ -931,17 +967,24 @@ async function main() {
   await runTest('PDFL-165.2: Button is disabled during fetch and prevents concurrent double-clicks', async () => {
     let fetchCount = 0;
     let resolveReq;
-    const mockFetch = () => {
-      fetchCount++;
-      return new Promise((resolve) => {
-        resolveReq = () => resolve({
-          ok: true,
-          status: 200,
-          json: async () => ({
-            success: true,
-            data: { history_id: 1, original_text: 'Hi', translated_text: 'Chào' },
-          }),
+    const mockFetch = (url) => {
+      if (url && String(url).includes('/api/history/1/result')) {
+        fetchCount++;
+        return new Promise((resolve) => {
+          resolveReq = () => resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: { history_id: 1, original_text: 'Hi', translated_text: 'Chào' },
+            }),
+          });
         });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({ success: true, data: [] }),
       });
     };
 

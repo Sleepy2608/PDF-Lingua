@@ -20,16 +20,23 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Coroutine, TypeVar
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import create_engine, event
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.api.history import get_history_result, router as history_router
 from app.core.database import Base
-from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from app.core.exceptions import (
+    AppException,
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
+)
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
 from app.models.user import User, UserRole
@@ -453,3 +460,199 @@ def test_api_get_history_result_invalid_id_raises_bad_request(in_memory_db, setu
                 db=in_memory_db,
             )
         )
+
+
+# ── 4. Comprehensive Audit & Robustness Tests (PDFL-165.3) ───────────────────
+
+def test_history_service_save_and_get_result_for_extract_and_summarize(
+    in_memory_db, setup_users_and_doc, temp_storage
+):
+    """Verify result persistence and retrieval for EXTRACT and SUMMARIZE action types."""
+    user_a, _, doc_a = setup_users_and_doc
+    storage, _ = temp_storage
+    orig_storage = HistoryService.storage_service
+    HistoryService.storage_service = storage
+
+    try:
+        # 1. EXTRACT action type
+        hist_extract = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.EXTRACT,
+                status=ProcessingStatus.PENDING,
+            ),
+            reuse_pending=False,
+        )
+
+        extract_payload = {
+            "original_text": "Extracted text content without translation.",
+            "page_count": 2,
+            "is_ocr_used": False,
+        }
+
+        HistoryService.save_history_result(
+            in_memory_db,
+            history_id=hist_extract.id,
+            user_id=user_a.id,
+            result_data=extract_payload,
+        )
+
+        res_extract = HistoryService.get_history_result(
+            in_memory_db,
+            history_id=hist_extract.id,
+            current_user_id=user_a.id,
+        )
+        assert res_extract["action_type"] == "EXTRACT"
+        assert res_extract["original_text"] == "Extracted text content without translation."
+        assert res_extract.get("translated_text") is None
+
+        # 2. SUMMARIZE action type
+        hist_summarize = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.SUMMARIZE,
+                status=ProcessingStatus.PENDING,
+            ),
+            reuse_pending=False,
+        )
+
+        summarize_payload = {
+            "original_text": "Full document with lengthy discussions and technical specs.",
+            "summary_text": "Key findings: Performance increased by 40% using cache.",
+            "page_count": 10,
+            "is_ocr_used": True,
+        }
+
+        HistoryService.save_history_result(
+            in_memory_db,
+            history_id=hist_summarize.id,
+            user_id=user_a.id,
+            result_data=summarize_payload,
+        )
+
+        res_summarize = HistoryService.get_history_result(
+            in_memory_db,
+            history_id=hist_summarize.id,
+            current_user_id=user_a.id,
+        )
+        assert res_summarize["action_type"] == "SUMMARIZE"
+        assert res_summarize["original_text"] == "Full document with lengthy discussions and technical specs."
+        assert res_summarize["summary_text"] == "Key findings: Performance increased by 40% using cache."
+        assert res_summarize["is_ocr_used"] is True
+
+    finally:
+        HistoryService.storage_service = orig_storage
+
+
+def test_history_service_save_result_db_rollback_cleans_up_file(
+    in_memory_db, setup_users_and_doc, temp_storage
+):
+    """Verify that when database commit fails during save_history_result, orphan file is cleaned up."""
+    user_a, _, doc_a = setup_users_and_doc
+    storage, _ = temp_storage
+    orig_storage = HistoryService.storage_service
+    HistoryService.storage_service = storage
+
+    try:
+        hist_rec = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.TRANSLATE,
+                status=ProcessingStatus.PENDING,
+            ),
+            reuse_pending=False,
+        )
+
+        # Force db.commit to raise SQLAlchemyError
+        with patch.object(in_memory_db, "commit", side_effect=SQLAlchemyError("Simulated DB connection drop")):
+            with pytest.raises(SQLAlchemyError):
+                HistoryService.save_history_result(
+                    in_memory_db,
+                    history_id=hist_rec.id,
+                    user_id=user_a.id,
+                    result_data={"translated_text": "text doomed to fail"},
+                )
+
+        # Verify that the physical file was deleted and not left orphaned on disk
+        expected_rel_path = f"{user_a.id}/results/{hist_rec.id}_result.json"
+        assert storage.get_result_path(user_a.id, expected_rel_path) is None
+
+        # Verify DB record remained untouched / in PENDING state
+        in_memory_db.rollback()
+        reloaded = in_memory_db.query(ProcessingHistory).filter(ProcessingHistory.id == hist_rec.id).first()
+        assert reloaded.status == ProcessingStatus.PENDING
+        assert reloaded.result_path is None
+
+    finally:
+        HistoryService.storage_service = orig_storage
+
+
+def test_history_service_get_result_corrupt_json_raises_app_exception(
+    in_memory_db, setup_users_and_doc, temp_storage
+):
+    """Verify that corrupted JSON file on disk raises AppException (500) with RESULT_FILE_CORRUPT."""
+    user_a, _, doc_a = setup_users_and_doc
+    storage, _ = temp_storage
+    orig_storage = HistoryService.storage_service
+    HistoryService.storage_service = storage
+
+    try:
+        hist_rec = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.TRANSLATE,
+                status=ProcessingStatus.PENDING,
+            ),
+            reuse_pending=False,
+        )
+
+        HistoryService.save_history_result(
+            in_memory_db,
+            history_id=hist_rec.id,
+            user_id=user_a.id,
+            result_data={"translated_text": "valid initially"},
+        )
+
+        # Corrupt the physical file with invalid JSON syntax
+        target_path = storage.get_result_path(user_a.id, hist_rec.result_path)
+        assert target_path is not None and target_path.is_file()
+        target_path.write_text("{corrupt: json content broken !!!", encoding="utf-8")
+
+        # Must raise AppException with status 500 and RESULT_FILE_CORRUPT
+        with pytest.raises(AppException) as exc_info:
+            HistoryService.get_history_result(
+                in_memory_db,
+                history_id=hist_rec.id,
+                current_user_id=user_a.id,
+            )
+        assert exc_info.value.status_code == 500
+        assert exc_info.value.error_code == "RESULT_FILE_CORRUPT"
+
+    finally:
+        HistoryService.storage_service = orig_storage
+
+
+def test_storage_service_path_traversal_guards(temp_storage):
+    """Verify get_result_path strictly isolates user folders against traversal payloads."""
+    storage, base_path = temp_storage
+    user_id = 99
+
+    # Valid save
+    rel_path, abs_path = storage.save_result_file(user_id, 1, {"data": "test"})
+    assert storage.get_result_path(user_id, rel_path) == abs_path
+
+    # Traversal attacks
+    assert storage.get_result_path(user_id, "../1_result.json") is None
+    assert storage.get_result_path(user_id, "../../other_user/results/1_result.json") is None
+    assert storage.get_result_path(user_id, "..\\results\\1_result.json") is None
+    assert storage.get_result_path(user_id, "") is None
+    assert storage.get_result_path(user_id, None) is None
+

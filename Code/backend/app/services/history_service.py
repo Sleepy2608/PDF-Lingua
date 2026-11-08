@@ -16,7 +16,12 @@ from typing import Callable, Optional, TypeVar
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from app.core.exceptions import (
+    AppException,
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
+)
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
@@ -229,7 +234,9 @@ class HistoryService:
         """
         Persist result data as a JSON file and link it to the ProcessingHistory record (PDFL-165.1).
         Transitions status to SUCCESS and updates execution_time_ms if provided.
+        Ensures consistency by cleaning up the written file if the DB transaction fails.
         """
+        rel_path: Optional[str] = None
         try:
             record = (
                 db.query(ProcessingHistory)
@@ -274,6 +281,12 @@ class HistoryService:
             return record
         except SQLAlchemyError as exc:
             db.rollback()
+            if rel_path is not None:
+                try:
+                    cls.storage_service.delete_result_file(user_id=user_id, result_path_or_filename=rel_path)
+                    logger.info(f"[HistoryService] Cleaned up orphan result file {rel_path} after DB rollback.")
+                except Exception as del_err:
+                    logger.warning(f"[HistoryService] Failed to clean up orphan result file {rel_path}: {del_err}")
             logger.error(f"[HistoryService] DB error saving result for history_id={history_id}: {exc}")
             raise
 
@@ -287,7 +300,7 @@ class HistoryService:
         """
         Retrieve persisted result data for a specific ProcessingHistory record (PDFL-165.1).
         Enforces strict multi-tenant ownership verification (Anti-IDOR).
-        Validates status and file existence.
+        Validates status, file existence, and JSON format integrity.
         """
         try:
             record = (
@@ -331,15 +344,28 @@ class HistoryService:
                 details={"history_id": history_id, "error_code": "RESULT_NOT_FOUND"},
             )
 
+        target_path = cls.storage_service.get_result_path(
+            user_id=record.user_id,
+            result_path_or_filename=record.result_path,
+        )
+
+        if target_path is None or not target_path.is_file():
+            raise NotFoundException(
+                message="Dữ liệu kết quả không tồn tại trên hệ thống lưu trữ hoặc đã bị xóa.",
+                details={"history_id": history_id, "result_path": record.result_path, "error_code": "RESULT_FILE_MISSING"},
+            )
+
         result_data = cls.storage_service.read_result_file(
             user_id=record.user_id,
             result_path_or_filename=record.result_path,
         )
 
         if result_data is None:
-            raise NotFoundException(
-                message="Dữ liệu kết quả không tồn tại trên hệ thống lưu trữ hoặc đã bị xóa.",
-                details={"history_id": history_id, "result_path": record.result_path, "error_code": "RESULT_FILE_MISSING"},
+            raise AppException(
+                message="Tệp dữ liệu kết quả bị lỗi định dạng hoặc không thể đọc được.",
+                status_code=500,
+                error_code="RESULT_FILE_CORRUPT",
+                details={"history_id": history_id, "result_path": record.result_path},
             )
 
         result_data.setdefault("history_id", record.id)
