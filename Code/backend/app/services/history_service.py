@@ -409,6 +409,13 @@ class HistoryService:
                 details={"history_id": history_id},
             )
 
+        if record.status == ProcessingStatus.PENDING:
+            raise BadRequestException(
+                message="Không thể xóa bản ghi đang trong tiến trình xử lý.",
+                error_code="CANNOT_DELETE_PENDING",
+                details={"history_id": history_id, "status": record.status.value},
+            )
+
         result_path = record.result_path
         user_id = record.user_id
 

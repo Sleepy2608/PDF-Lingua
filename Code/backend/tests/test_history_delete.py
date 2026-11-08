@@ -300,6 +300,28 @@ def test_delete_history_anti_idor(in_memory_db, setup_users_and_doc, temp_storag
         HistoryService.storage_service = orig_storage
 
 
+def test_delete_history_pending_raises_bad_request(in_memory_db, setup_users_and_doc):
+    """Verify that attempting to delete a PENDING history raises BadRequestException."""
+    user_a, _, doc_a, _ = setup_users_and_doc
+    pending_hist = HistoryService.create_history(
+        in_memory_db,
+        ProcessingHistoryCreate(
+            user_id=user_a.id,
+            document_id=doc_a.id,
+            action_type=ActionType.TRANSLATE,
+            status=ProcessingStatus.PENDING,
+        ),
+    )
+
+    with pytest.raises(BadRequestException) as exc_info:
+        HistoryService.delete_history(
+            in_memory_db,
+            history_id=pending_hist.id,
+            current_user_id=user_a.id,
+        )
+    assert "Không thể xóa bản ghi đang trong tiến trình xử lý" in exc_info.value.message
+
+
 def test_delete_history_db_commit_error_restores_file(in_memory_db, setup_users_and_doc, temp_storage):
     """Verify that if DB commit fails during deletion, the deleted file is restored on rollback."""
     user_a, _, doc_a, _ = setup_users_and_doc
@@ -558,6 +580,26 @@ def test_api_delete_history_endpoint(in_memory_db, setup_users_and_doc, temp_sto
                 )
             )
 
+        # Deleting a PENDING history via API raises BadRequestException
+        pending_rec = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.TRANSLATE,
+                status=ProcessingStatus.PENDING,
+            ),
+        )
+        with pytest.raises(BadRequestException) as bad_req_exc:
+            _run_async(
+                delete_history_record(
+                    history_id=pending_rec.id,
+                    current_user=user_a,
+                    db=in_memory_db,
+                )
+            )
+        assert "tiến trình xử lý" in bad_req_exc.value.message
+
     finally:
         HistoryService.storage_service = orig_storage
 
@@ -579,3 +621,84 @@ def test_api_cleanup_endpoint(in_memory_db, setup_users_and_doc):
     assert response.data.deleted_count == 0
     assert response.data.cutoff_date is not None
 
+
+def test_history_full_lifecycle_and_document_safety(in_memory_db, setup_users_and_doc, temp_storage):
+    """
+    End-to-end integration test (PDFL-166.3):
+    1. Create history record
+    2. Save and open/verify result
+    3. Delete history record
+    4. Confirm result is no longer accessible (404)
+    5. Confirm original Document and physical PDF still exist completely intact.
+    """
+    user_a, _, doc_a, pdf_path = setup_users_and_doc
+    storage, _ = temp_storage
+    orig_storage = HistoryService.storage_service
+    HistoryService.storage_service = storage
+
+    try:
+        # Step 1: Create history record
+        hist_rec = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.TRANSLATE,
+                status=ProcessingStatus.SUCCESS,
+                execution_time_ms=1250,
+            ),
+        )
+        assert hist_rec.id is not None
+
+        # Step 2: Save processing result
+        result_payload = {
+            "action_type": "TRANSLATE",
+            "document_filename": doc_a.original_filename,
+            "original_text": "Hello world from PDF",
+            "translated_text": "Xin chào thế giới từ PDF",
+        }
+        saved_hist = HistoryService.save_history_result(
+            in_memory_db,
+            history_id=hist_rec.id,
+            user_id=user_a.id,
+            result_data=result_payload,
+        )
+        assert saved_hist.result_path is not None
+
+        # Retrieve and verify result is readable
+        retrieved_result = HistoryService.get_history_result(
+            in_memory_db,
+            history_id=hist_rec.id,
+            current_user_id=user_a.id,
+        )
+        assert retrieved_result["original_text"] == "Hello world from PDF"
+        assert retrieved_result["translated_text"] == "Xin chào thế giới từ PDF"
+
+        # Step 3: Delete history record via API
+        del_response = _run_async(
+            delete_history_record(
+                history_id=hist_rec.id,
+                current_user=user_a,
+                db=in_memory_db,
+            )
+        )
+        assert del_response.success is True
+        assert del_response.data.deleted is True
+
+        # Step 4: Confirm result is no longer accessible (raises NotFoundException)
+        with pytest.raises(NotFoundException):
+            HistoryService.get_history_result(
+                in_memory_db,
+                history_id=hist_rec.id,
+                current_user_id=user_a.id,
+            )
+
+        # Step 5: Confirm Document and PDF file on disk are 100% preserved
+        db_doc = in_memory_db.query(Document).filter(Document.id == doc_a.id).first()
+        assert db_doc is not None
+        assert db_doc.original_filename == "thesis_chapter1.pdf"
+        assert pdf_path.is_file()
+        assert pdf_path.read_bytes() == b"%PDF-1.4 Mock PDF content for testing safety."
+
+    finally:
+        HistoryService.storage_service = orig_storage
