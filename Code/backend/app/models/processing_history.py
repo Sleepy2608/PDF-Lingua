@@ -21,7 +21,7 @@ updated_at        : UTC timestamp when the record was last modified.
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, Integer, Text
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -103,6 +103,12 @@ class ProcessingHistory(Base):
         nullable=True,
         default=None,
         comment="Failure reason or error trace if processing failed.",
+    )
+    result_path: str | None = Column(
+        String(500),
+        nullable=True,
+        default=None,
+        comment="Relative path from storage root to the persistent result JSON file.",
     )
 
     # ── Audit Timestamps ────────────────────────────────────────────────────

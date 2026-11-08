@@ -25,12 +25,15 @@ from app.schemas.processing_history import (
     ProcessingHistoryUpdate,
     sanitize_error_message,
 )
+from app.services.storage_service import StorageService
 
 T = TypeVar("T")
 
 
 class HistoryService:
     """Service handling ProcessingHistory persistence, lifecycle, and access control."""
+
+    storage_service = StorageService()
 
     @staticmethod
     def verify_document_ownership(
@@ -211,6 +214,141 @@ class HistoryService:
             error_message=cleaned,
             current_user_id=current_user_id,
         )
+
+    # ── Result Persistence & Retrieval (PDFL-165.1) ──────────────────────────
+
+    @classmethod
+    def save_history_result(
+        cls,
+        db: Session,
+        history_id: int,
+        user_id: int,
+        result_data: dict,
+        execution_time_ms: Optional[int] = None,
+    ) -> ProcessingHistory:
+        """
+        Persist result data as a JSON file and link it to the ProcessingHistory record (PDFL-165.1).
+        Transitions status to SUCCESS and updates execution_time_ms if provided.
+        """
+        try:
+            record = (
+                db.query(ProcessingHistory)
+                .options(joinedload(ProcessingHistory.document))
+                .filter(ProcessingHistory.id == history_id)
+                .first()
+            )
+            if record is None:
+                raise NotFoundException(
+                    message=f"Bản ghi lịch sử xử lý id={history_id} không tồn tại.",
+                    details={"history_id": history_id},
+                )
+            if record.user_id != user_id:
+                raise ForbiddenException(
+                    message="Bạn không có quyền lưu kết quả cho bản ghi lịch sử của người dùng khác.",
+                    details={"history_id": history_id, "user_id": user_id, "owner_id": record.user_id},
+                )
+
+            enriched_result = {
+                "history_id": history_id,
+                "document_id": record.document_id,
+                "document_filename": record.document_filename or (record.document.original_filename if record.document else None),
+                "action_type": record.action_type.value if hasattr(record.action_type, "value") else str(record.action_type),
+                **result_data,
+            }
+
+            rel_path, _ = cls.storage_service.save_result_file(
+                user_id=user_id,
+                history_id=history_id,
+                result_data=enriched_result,
+            )
+
+            record.result_path = rel_path
+            record.status = ProcessingStatus.SUCCESS
+            record.error_message = None
+            if execution_time_ms is not None and execution_time_ms >= 0:
+                record.execution_time_ms = execution_time_ms
+            record.updated_at = datetime.now(timezone.utc)
+
+            db.commit()
+            db.refresh(record)
+            return record
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error saving result for history_id={history_id}: {exc}")
+            raise
+
+    @classmethod
+    def get_history_result(
+        cls,
+        db: Session,
+        history_id: int,
+        current_user_id: int,
+    ) -> dict:
+        """
+        Retrieve persisted result data for a specific ProcessingHistory record (PDFL-165.1).
+        Enforces strict multi-tenant ownership verification (Anti-IDOR).
+        Validates status and file existence.
+        """
+        try:
+            record = (
+                db.query(ProcessingHistory)
+                .options(joinedload(ProcessingHistory.document))
+                .filter(ProcessingHistory.id == history_id)
+                .first()
+            )
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error querying history_id={history_id}: {exc}")
+            raise
+
+        if record is None or record.user_id != current_user_id:
+            raise NotFoundException(
+                message=f"Bản ghi lịch sử với ID {history_id} không tồn tại.",
+                details={"history_id": history_id},
+            )
+
+        if record.status == ProcessingStatus.PENDING:
+            raise BadRequestException(
+                message="Bản ghi lịch sử đang trong quá trình xử lý, chưa có kết quả.",
+                error_code="RESULT_PENDING",
+                details={"history_id": history_id, "status": record.status.value},
+            )
+
+        if record.status == ProcessingStatus.FAILED:
+            raise BadRequestException(
+                message="Bản ghi lịch sử xử lý thất bại, không có kết quả hợp lệ.",
+                error_code="RESULT_FAILED",
+                details={
+                    "history_id": history_id,
+                    "status": record.status.value,
+                    "error_message": record.error_message,
+                },
+            )
+
+        if not record.result_path:
+            raise NotFoundException(
+                message="Bản ghi lịch sử chưa có dữ liệu kết quả được lưu trữ.",
+                details={"history_id": history_id, "error_code": "RESULT_NOT_FOUND"},
+            )
+
+        result_data = cls.storage_service.read_result_file(
+            user_id=record.user_id,
+            result_path_or_filename=record.result_path,
+        )
+
+        if result_data is None:
+            raise NotFoundException(
+                message="Dữ liệu kết quả không tồn tại trên hệ thống lưu trữ hoặc đã bị xóa.",
+                details={"history_id": history_id, "result_path": record.result_path, "error_code": "RESULT_FILE_MISSING"},
+            )
+
+        result_data.setdefault("history_id", record.id)
+        result_data.setdefault("document_id", record.document_id)
+        result_data.setdefault("document_filename", record.document_filename or (record.document.original_filename if record.document else None))
+        result_data.setdefault("action_type", record.action_type.value if hasattr(record.action_type, "value") else str(record.action_type))
+        result_data.setdefault("created_at", record.created_at)
+
+        return result_data
 
     @staticmethod
     def get_history_by_id(

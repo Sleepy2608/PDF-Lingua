@@ -205,3 +205,29 @@ class ProcessingHistoryResponse(ProcessingHistoryBase):
                 pass
         return self
 
+
+class ProcessingResultResponse(BaseModel):
+    """Schema for retrieved document processing result (PDFL-165.1)."""
+
+    history_id: int = Field(..., gt=0, description="ID bản ghi lịch sử xử lý.")
+    document_id: int = Field(..., gt=0, description="ID tài liệu gốc.")
+    document_filename: Optional[str] = Field(default=None, description="Tên tệp tài liệu gốc.")
+    action_type: ActionType = Field(..., description="Loại thao tác: EXTRACT | TRANSLATE | SUMMARIZE.")
+    target_lang: Optional[str] = Field(default="vi", description="Mã ngôn ngữ đích.")
+    original_text: str = Field(default="", description="Văn bản gốc được trích xuất từ PDF.")
+    translated_text: Optional[str] = Field(default=None, description="Văn bản đã dịch sang ngôn ngữ đích.")
+    summary_text: Optional[str] = Field(default=None, description="Văn bản tóm tắt.")
+    engine_used: Optional[str] = Field(default=None, description="Công cụ dịch thuật hoặc AI provider.")
+    page_count: Optional[int] = Field(default=1, ge=1, description="Tổng số trang tài liệu.")
+    file_size_mb: Optional[float] = Field(default=None, ge=0, description="Kích thước tệp tài liệu (MB).")
+    is_ocr_used: Optional[bool] = Field(default=False, description="Xác định có sử dụng OCR nhận dạng quang học.")
+    created_at: Optional[datetime] = Field(default=None, description="Thời điểm hoàn tất xử lý (UTC).")
+
+    @field_serializer("created_at")
+    def serialize_created_at(self, dt: Optional[datetime], _info) -> Optional[str]:
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+

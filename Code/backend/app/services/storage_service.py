@@ -5,6 +5,7 @@ Handles physical file persistence, folder structure isolation by user,
 safe filename sanitization, and path-traversal prevention (PDFL-90, PDFL-95, PDFL-98).
 """
 
+import json
 import os
 import re
 import uuid
@@ -123,6 +124,101 @@ class StorageService:
                 return True
             except Exception as e:
                 logger.error(f"[StorageService] Failed to delete file {target_path}: {e}")
+                return False
+
+    def save_result_file(
+        self,
+        user_id: int,
+        history_id: int,
+        result_data: dict,
+    ) -> tuple[str, Path]:
+        """
+        Saves a processing history result dictionary as a JSON file in user's isolated results folder.
+
+        Returns:
+            tuple of (relative_path, absolute_path)
+        """
+        user_dir = (self.base_dir / str(user_id)).resolve()
+        results_dir = (user_dir / "results").resolve()
+        results_dir.mkdir(parents=True, exist_ok=True)
+
+        result_filename = f"{history_id}_result.json"
+        target_path = (results_dir / result_filename).resolve()
+
+        content = json.dumps(result_data, ensure_ascii=False, indent=2).encode("utf-8")
+        target_path.write_bytes(content)
+
+        relative_path = f"{user_id}/results/{result_filename}"
+
+        logger.info(
+            f"[StorageService] Saved result for user_id={user_id}, history_id={history_id}: "
+            f"path={relative_path}, size={len(content)} bytes"
+        )
+        return relative_path, target_path
+
+    def get_result_path(self, user_id: int, result_path_or_filename: str) -> Optional[Path]:
+        """
+        Resolves physical path of a result JSON file with strict containment check against user_dir.
+        Accepts either full relative path ('1/results/123_result.json') or filename ('123_result.json').
+        Returns None if missing or if traversal attempt detected.
+        """
+        if not result_path_or_filename:
+            return None
+
+        user_dir = (self.base_dir / str(user_id)).resolve()
+        results_dir = (user_dir / "results").resolve()
+
+        clean_path = result_path_or_filename.strip().replace("\\", "/")
+
+        if "/" in clean_path:
+            # Check relative to base_dir
+            candidate = (self.base_dir / clean_path).resolve()
+        else:
+            # Check relative to user's results directory
+            candidate = (results_dir / clean_path).resolve()
+
+        try:
+            candidate.relative_to(user_dir)
+        except ValueError:
+            logger.warning(
+                f"[StorageService] Path traversal attempt on result file: "
+                f"user_id={user_id}, path={result_path_or_filename}"
+            )
+            return None
+
+        if not candidate.is_file():
+            return None
+
+        return candidate
+
+    def read_result_file(self, user_id: int, result_path_or_filename: str) -> Optional[dict]:
+        """
+        Reads and parses stored result JSON file.
+        Returns parsed dict or None if file does not exist or JSON is invalid.
+        """
+        target_path = self.get_result_path(user_id, result_path_or_filename)
+        if not target_path:
+            return None
+
+        try:
+            raw_text = target_path.read_text(encoding="utf-8")
+            return json.loads(raw_text)
+        except Exception as e:
+            logger.error(
+                f"[StorageService] Failed to read result file {target_path} for user_id={user_id}: {e}"
+            )
+            return None
+
+    def delete_result_file(self, user_id: int, result_path_or_filename: str) -> bool:
+        """Deletes a stored result JSON file from disk."""
+        target_path = self.get_result_path(user_id, result_path_or_filename)
+        if target_path and target_path.exists():
+            try:
+                target_path.unlink()
+                logger.info(f"[StorageService] Deleted result file: {target_path}")
+                return True
+            except Exception as e:
+                logger.error(f"[StorageService] Failed to delete result file {target_path}: {e}")
                 return False
         return False
 
