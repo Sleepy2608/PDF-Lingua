@@ -566,10 +566,12 @@
         if (hasActiveDoc) {
           const adminSection = document.getElementById('adminSection');
           const documentsSection = document.getElementById('documentsSection');
+          const historySection = document.getElementById('historySection');
           const heroSection = document.getElementById('heroSection');
           const workspaceSection = document.getElementById('workspaceSection');
           if (adminSection) adminSection.style.display = 'none';
           if (documentsSection) documentsSection.style.display = 'none';
+          if (historySection) historySection.style.display = 'none';
           if (heroSection) heroSection.style.display = 'none';
           if (workspaceSection) workspaceSection.style.display = 'block';
           setActiveNavItem(sideNavTranslate);

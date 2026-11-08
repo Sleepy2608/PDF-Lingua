@@ -2925,7 +2925,7 @@
   }
 }
 
-/* History Section Responsive & Component Enhancements (PDFL-164.1) */
+/* History Section Responsive & Component Enhancements (PDFL-164.1 & PDFL-164.3) */
 .history-error-box {
   background: #FFF1F2;
   border: 1px solid #FFE4E6;
@@ -2938,6 +2938,10 @@
   white-space: pre-wrap;
   max-height: 220px;
   overflow-y: auto;
+}
+
+#btnHistoryRefresh.loading svg {
+  animation: spin 0.8s linear infinite;
 }
 
 @media (max-width: 768px) {

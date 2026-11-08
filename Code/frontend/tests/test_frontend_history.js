@@ -651,8 +651,104 @@ async function main() {
     assert.strictEqual(historyFetchCount, 1);
   });
 
+  // Test 11: Navigation flow between History, Workspace, Documents, and Home (PDFL-164.3)
+  await runTest('PDFL-164.3: Navigation flow smoothly transitions between History and other sections without overlap', async () => {
+    const env = createTestEnvironment({ pdfl_token: 'token-nav' });
+
+    // 1. Open history
+    env.elements.sideNavHistory.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'block');
+    assert.strictEqual(env.elements.documentsSection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none');
+    assert.strictEqual(env.elements.heroSection.style.display, 'none');
+
+    // 2. Return to workspace when active doc exists
+    env.context.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => ({ id: 99, filename: 'active.pdf' }),
+    };
+    env.elements.sideNavTranslate.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'block');
+
+    // 3. Open history again, then close via #btnCloseHistoryView
+    env.elements.sideNavHistory.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'block');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none');
+
+    env.elements.btnCloseHistoryView.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'block');
+
+    // 4. Brand click returns to home
+    env.elements.sideNavHistory.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'block');
+    env.elements.sidebarBrandLink.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.heroSection.style.display, 'block');
+  });
+
+  // Test 12: Escape key hierarchy closes #historyErrorModal (PDFL-164.3)
+  await runTest('PDFL-164.3: Pressing Escape key closes #historyErrorModal', async () => {
+    const env = createTestEnvironment({ pdfl_token: 'token-esc' });
+    env.elements.historyErrorModal.style.display = 'flex';
+    env.elements.historyErrorModal.removeAttribute('hidden');
+
+    // Dispatch Escape keydown
+    if (env.docListeners['keydown']) {
+      env.docListeners['keydown'].forEach((fn) => fn({
+        key: 'Escape',
+        ctrlKey: false,
+        metaKey: false,
+        preventDefault: () => {},
+      }));
+    }
+
+    assert.strictEqual(env.elements.historyErrorModal.style.display, 'none');
+    assert.strictEqual(env.elements.historyErrorModal.hasAttribute('hidden'), true);
+  });
+
+  // Test 13: Prompt action buttons in Empty & Unauth states (PDFL-164.3)
+  await runTest('PDFL-164.3: Action prompt buttons in Empty and Unauth states trigger correct navigation', async () => {
+    let loginTriggered = false;
+    const env = createTestEnvironment(); // unauthenticated
+    env.elements.btnLogin.click = () => { loginTriggered = true; };
+
+    // 1. Click login prompt in unauth state
+    env.elements.btnHistoryLoginPrompt.click();
+    assert.strictEqual(loginTriggered, true);
+
+    // 2. Click upload prompt in empty state
+    env.elements.sideNavHistory.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'block');
+    env.elements.btnHistoryUploadPrompt.click();
+    assert.strictEqual(env.elements.historySection.style.display, 'none');
+    assert.strictEqual(env.elements.heroSection.style.display, 'block');
+  });
+
+  // Test 14: Refresh spinner class .loading during in-flight request (PDFL-164.3)
+  await runTest('PDFL-164.3: Refresh button toggles .loading class during in-flight fetch', async () => {
+    let resolveReq;
+    const mockFetch = () => new Promise((resolve) => {
+      resolveReq = () => resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({ success: true, data: [] }),
+      });
+    });
+
+    const env = createTestEnvironment({ pdfl_token: 'token-spin' }, mockFetch);
+    const fetchPromise = env.context.window.PDFLinguaSidebar.fetchProcessingHistories();
+
+    assert.strictEqual(env.elements.btnHistoryRefresh.classList.contains('loading'), true);
+
+    resolveReq();
+    await fetchPromise;
+
+    assert.strictEqual(env.elements.btnHistoryRefresh.classList.contains('loading'), false);
+  });
+
   console.log('\n================================================================');
-  console.log('SUMMARY: All 10 History API Integration tests passed (0 failed).');
+  console.log('SUMMARY: All 14 History UI & Integration tests passed (0 failed).');
   console.log('================================================================');
 }
 
