@@ -123,6 +123,7 @@
     initDocumentDetailModal();
     initDocumentDeleteConfirmModal();
     initHistoryErrorModal();
+    initHistoryEventListeners();
 
     // Brand click: returns to Trang chủ (home/upload view)
     const sidebarBrandLink = document.getElementById('sidebarBrandLink');
@@ -220,6 +221,7 @@
         if (adminSection) adminSection.style.display = 'none';
         if (documentsSection) documentsSection.style.display = 'none';
         if (historySection) historySection.style.display = 'block';
+        fetchProcessingHistories();
       } else if (activeView === 'workspace') {
         const sideNavTranslate = document.getElementById('sideNavTranslate');
         if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
@@ -234,11 +236,20 @@
       const user = e.detail ? e.detail.user : null;
       syncUserProfile(user);
       fetchRecentDocuments();
+      const historySection = document.getElementById('historySection');
+      if (historySection && historySection.style.display !== 'none') {
+        historyCurrentPage = 1;
+        fetchProcessingHistories();
+      }
     });
 
-    // Listen to document processed events from workspace.js for auto-refresh (PDFL-92.3)
+    // Listen to document processed events from workspace.js for auto-refresh (PDFL-92.3 & PDFL-164.2)
     window.addEventListener('pdfl:document-processed', () => {
       fetchRecentDocuments();
+      const historySection = document.getElementById('historySection');
+      if (historySection && historySection.style.display !== 'none') {
+        fetchProcessingHistories();
+      }
     });
   }
 
@@ -343,6 +354,8 @@
     try {
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'history');
     } catch (_err) {}
+
+    fetchProcessingHistories();
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.innerWidth < 768) {
@@ -1957,6 +1970,384 @@
       .replace(/'/g, '&#39;');
   }
 
+  // ── Processing History Controller (PDFL-164.2) ──────────────────────────
+  let cachedHistories = [];
+  let cachedHistoryToken = null;
+  let historyCurrentPage = 1;
+  const HISTORY_PAGE_SIZE = 10;
+  let hasNextHistoryPage = false;
+  let historyRequestSequence = 0;
+  let isHistoryListenersInitialized = false;
+
+  /**
+   * Helper to switch UI states in #historySection (PDFL-164.2)
+   * Supported states: 'loading' | 'empty' | 'error' | 'unauthenticated' | 'content'
+   */
+  function setHistorySectionState(state, errorMessage) {
+    const tableEl = document.getElementById('historyTable');
+    const loadingStateEl = document.getElementById('historyLoadingState');
+    const emptyStateEl = document.getElementById('historyEmptyState');
+    const errorStateEl = document.getElementById('historyErrorState');
+    const errorTextEl = document.getElementById('historyErrorText');
+    const unauthStateEl = document.getElementById('historyUnauthState');
+    const paginationFooterEl = document.getElementById('historyPaginationFooter');
+
+    if (loadingStateEl) loadingStateEl.style.display = state === 'loading' ? 'block' : 'none';
+    if (emptyStateEl) emptyStateEl.style.display = state === 'empty' ? 'block' : 'none';
+    if (errorStateEl) errorStateEl.style.display = state === 'error' ? 'block' : 'none';
+    if (unauthStateEl) unauthStateEl.style.display = state === 'unauthenticated' ? 'block' : 'none';
+
+    if (state === 'error' && errorTextEl && errorMessage) {
+      errorTextEl.textContent = errorMessage;
+    }
+
+    if (state !== 'content') {
+      if (tableEl) tableEl.style.display = 'none';
+      if (paginationFooterEl) paginationFooterEl.style.display = 'none';
+    }
+  }
+
+  function formatDateTime(dateStr) {
+    if (!dateStr) return '--';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '--';
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes} - ${day}/${month}/${year}`;
+    } catch (_e) {
+      return '--';
+    }
+  }
+
+  function formatExecutionTime(ms) {
+    if (ms === null || ms === undefined || isNaN(ms)) return '--';
+    const num = Number(ms);
+    if (num < 0) return '--';
+    if (num >= 1000) {
+      return (num / 1000).toFixed(2) + 's';
+    }
+    return num + ' ms';
+  }
+
+  /**
+   * Fetch paginated processing histories from GET /api/history (PDFL-164.2)
+   */
+  async function fetchProcessingHistories() {
+    const token = getStoredAuthToken();
+    const countBadge = document.getElementById('historyCountBadge');
+    const btnRefresh = document.getElementById('btnHistoryRefresh');
+    const actionFilterEl = document.getElementById('historyActionFilter');
+    const statusFilterEl = document.getElementById('historyStatusFilter');
+
+    if (!token) {
+      cachedHistories = [];
+      cachedHistoryToken = null;
+      if (countBadge) countBadge.textContent = '0 bản ghi';
+      setHistorySectionState('unauthenticated');
+      return Promise.resolve([]);
+    }
+
+    const actionType = actionFilterEl && actionFilterEl.value !== 'all' ? actionFilterEl.value : null;
+    const status = statusFilterEl && statusFilterEl.value !== 'all' ? statusFilterEl.value : null;
+
+    const skip = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE;
+    const fetchLimit = HISTORY_PAGE_SIZE + 1; // Fetch 1 extra to detect next page
+
+    let queryParts = [
+      `skip=${encodeURIComponent(skip)}`,
+      `limit=${encodeURIComponent(fetchLimit)}`,
+    ];
+    if (actionType) queryParts.push(`action_type=${encodeURIComponent(actionType)}`);
+    if (status) queryParts.push(`status=${encodeURIComponent(status)}`);
+    const queryString = queryParts.join('&');
+
+    const requestSeq = ++historyRequestSequence;
+    setHistorySectionState('loading');
+    if (btnRefresh && btnRefresh.classList) btnRefresh.classList.add('loading');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/history?${queryString}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (requestSeq !== historyRequestSequence) {
+        return []; // Ignore out-of-order response
+      }
+
+      if (response.status === 401) {
+        cachedHistories = [];
+        cachedHistoryToken = null;
+        if (countBadge) countBadge.textContent = '0 bản ghi';
+        setHistorySectionState('unauthenticated');
+        return [];
+      }
+
+      if (!response.ok) {
+        let errMsg = 'Không thể tải lịch sử xử lý từ máy chủ.';
+        try {
+          const errData = await response.json();
+          if (errData && (errData.detail || errData.message)) {
+            errMsg = errData.detail || errData.message;
+          }
+        } catch (_e) {}
+        throw new Error(errMsg);
+      }
+
+      const result = await response.json();
+      const rawList = result && Array.isArray(result.data) ? result.data : [];
+
+      hasNextHistoryPage = rawList.length > HISTORY_PAGE_SIZE;
+      const pageRecords = hasNextHistoryPage ? rawList.slice(0, HISTORY_PAGE_SIZE) : rawList;
+
+      cachedHistories = pageRecords;
+      cachedHistoryToken = token;
+
+      renderHistoryPageList(cachedHistories, token);
+      return cachedHistories;
+    } catch (err) {
+      if (requestSeq !== historyRequestSequence) {
+        return [];
+      }
+      cachedHistories = [];
+      cachedHistoryToken = null;
+      if (countBadge) countBadge.textContent = '0 bản ghi';
+      const errorMsg = (err && err.message && err.message !== 'Failed to fetch')
+        ? err.message
+        : 'Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.';
+      setHistorySectionState('error', errorMsg);
+      return [];
+    } finally {
+      if (btnRefresh && btnRefresh.classList) btnRefresh.classList.remove('loading');
+    }
+  }
+
+  /**
+   * Render history list into #historyTable (#historyTableBody & #historyCountBadge)
+   */
+  function renderHistoryPageList(records, token) {
+    const tableEl = document.getElementById('historyTable');
+    const tbodyEl = document.getElementById('historyTableBody');
+    const countBadge = document.getElementById('historyCountBadge');
+    const searchInput = document.getElementById('historySearchInput');
+    const emptyTitleEl = document.getElementById('historyEmptyTitle');
+    const emptyTextEl = document.getElementById('historyEmptyText');
+    const paginationFooterEl = document.getElementById('historyPaginationFooter');
+    const paginationInfoEl = document.getElementById('historyPaginationInfo');
+    const currentPageBadge = document.getElementById('historyCurrentPageBadge');
+    const btnPrevPage = document.getElementById('btnHistoryPrevPage');
+    const btnNextPage = document.getElementById('btnHistoryNextPage');
+
+    const rawList = Array.isArray(records) ? records : [];
+    const query = searchInput && typeof searchInput.value === 'string'
+      ? searchInput.value.trim().toLowerCase()
+      : '';
+
+    // Client-side search filtering by filename
+    const filtered = query
+      ? rawList.filter((item) => String(item.document_filename || '').toLowerCase().includes(query))
+      : rawList;
+
+    if (countBadge) {
+      countBadge.textContent = `${filtered.length} bản ghi`;
+    }
+
+    if (filtered.length === 0) {
+      if (emptyTitleEl && emptyTextEl) {
+        if (query) {
+          emptyTitleEl.textContent = 'Không tìm thấy bản ghi';
+          emptyTextEl.textContent = `Không có bản ghi lịch sử nào khớp với từ khóa "${query}".`;
+        } else {
+          emptyTitleEl.textContent = 'Bạn chưa có lịch sử xử lý nào';
+          emptyTextEl.textContent = 'Các thao tác trích xuất và dịch tài liệu PDF của bạn sẽ được tự động ghi nhận tại đây.';
+        }
+      }
+      setHistorySectionState('empty');
+      return;
+    }
+
+    setHistorySectionState('content');
+    if (tableEl) tableEl.style.display = 'table';
+    if (tbodyEl) tbodyEl.innerHTML = '';
+
+    filtered.forEach((rec) => {
+      const row = createHistoryTableRow(rec, token);
+      if (tbodyEl) tbodyEl.appendChild(row);
+    });
+
+    // Update pagination controls
+    if (paginationFooterEl) paginationFooterEl.style.display = 'flex';
+    if (currentPageBadge) currentPageBadge.textContent = String(historyCurrentPage);
+    if (btnPrevPage) btnPrevPage.disabled = historyCurrentPage <= 1;
+    if (btnNextPage) btnNextPage.disabled = !hasNextHistoryPage;
+
+    if (paginationInfoEl) {
+      const startItem = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + 1;
+      const endItem = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + filtered.length;
+      paginationInfoEl.textContent = `Hiển thị ${startItem} - ${endItem} bản ghi (Trang ${historyCurrentPage})`;
+    }
+  }
+
+  function createHistoryTableRow(record, token) {
+    const tr = document.createElement('tr');
+    tr.className = 'history-table-row';
+    tr.dataset.historyId = String(record.id);
+
+    const filename = record.document_filename || ('Tài liệu #' + record.document_id);
+    const actionType = String(record.action_type || 'EXTRACT').toUpperCase();
+    const status = String(record.status || 'PENDING').toUpperCase();
+    const executionTime = formatExecutionTime(record.execution_time_ms);
+    const formattedDate = formatDateTime(record.created_at);
+
+    // Action Badge
+    let actionBadgeHtml = '';
+    if (actionType === 'TRANSLATE') {
+      actionBadgeHtml = '<span class="badge-sub pro font-mono">Dịch thuật</span>';
+    } else if (actionType === 'SUMMARIZE') {
+      actionBadgeHtml = '<span class="badge-sub font-mono" style="background: #F0FDF4; color: #166534;">Tóm tắt</span>';
+    } else {
+      actionBadgeHtml = '<span class="badge-sub font-mono" style="background: #F1F5F9; color: #334155;">Trích xuất</span>';
+    }
+
+    // Status Badge & Action Buttons
+    let statusBadgeHtml = '';
+    let actionBtnHtml = '';
+
+    if (status === 'SUCCESS') {
+      statusBadgeHtml = '<span class="status-pill active" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
+      actionBtnHtml = `
+        <button type="button" class="doc-action-btn doc-table-download-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Mở lại kết quả">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span>Xem kết quả</span>
+        </button>
+      `;
+    } else if (status === 'FAILED') {
+      statusBadgeHtml = `
+        <span class="status-pill locked history-status-pill-failed" data-history-id="${record.id}" style="cursor: pointer;" title="Nhấn để xem chi tiết lỗi">
+          <svg class="status-lock-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          Thất bại
+        </span>
+      `;
+      actionBtnHtml = `
+        <button type="button" class="doc-action-btn history-btn-error" data-history-id="${record.id}" title="Xem chi tiết sự cố">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>Chi tiết lỗi</span>
+        </button>
+      `;
+    } else {
+      statusBadgeHtml = '<span class="status-pill pending" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;" title="Đang thực thi"><span class="status-dot" style="background: #F59E0B; animation: adminPulse 1.5s infinite;"></span>Đang xử lý</span>';
+      actionBtnHtml = '<span class="font-mono" style="font-size: 0.75rem; color: #94A3B8;">Đang chạy...</span>';
+    }
+
+    tr.innerHTML = `
+      <td>
+        <div class="doc-file-cell user-cell-meta">
+          <div class="doc-icon-badge" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="doc-file-info">
+            <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+            <span class="doc-cell-id font-mono" style="font-size: 0.72rem; color: #94A3B8;">Tài liệu #${record.document_id}</span>
+          </div>
+        </div>
+      </td>
+      <td class="history-cell-action">${actionBadgeHtml}</td>
+      <td class="history-cell-status">${statusBadgeHtml}</td>
+      <td class="font-mono text-muted history-cell-duration">${escapeHtml(executionTime)}</td>
+      <td class="date-mono history-cell-date">${escapeHtml(formattedDate)}</td>
+      <td class="text-right">
+        <div class="doc-actions-group" style="justify-content: flex-end; display: flex; gap: 0.4rem;">
+          ${actionBtnHtml}
+        </div>
+      </td>
+    `;
+
+    // Click handler for opening Error Modal
+    const btnError = tr.querySelector('.history-btn-error');
+    if (btnError) {
+      btnError.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openHistoryErrorModal(record.id);
+      });
+    }
+
+    const pillError = tr.querySelector('.history-status-pill-failed');
+    if (pillError) {
+      pillError.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openHistoryErrorModal(record.id);
+      });
+    }
+
+    return tr;
+  }
+
+  /**
+   * Open #historyErrorModal to display diagnostics for a failed processing history (PDFL-164.2)
+   */
+  async function openHistoryErrorModal(historyId) {
+    const historyErrorModal = document.getElementById('historyErrorModal');
+    const modalSub = document.getElementById('historyErrorModalSub');
+    const docNameEl = document.getElementById('historyErrorDocName');
+    const actionTypeEl = document.getElementById('historyErrorActionType');
+    const timestampEl = document.getElementById('historyErrorTimestamp');
+    const errorMsgEl = document.getElementById('historyErrorMessage');
+
+    if (!historyErrorModal) return;
+
+    const record = cachedHistories.find((h) => Number(h.id) === Number(historyId));
+
+    if (modalSub) modalSub.textContent = `Mã bản ghi lịch sử: #${historyId}`;
+    if (docNameEl) docNameEl.textContent = record ? (record.document_filename || `Tài liệu #${record.document_id}`) : `Bản ghi #${historyId}`;
+    if (actionTypeEl) actionTypeEl.textContent = record ? record.action_type : '---';
+    if (timestampEl) timestampEl.textContent = record ? formatDateTime(record.created_at) : '---';
+    if (errorMsgEl) errorMsgEl.textContent = (record && record.error_message) ? record.error_message : 'Đang tải thông tin lỗi chi tiết...';
+
+    historyErrorModal.style.display = 'flex';
+    historyErrorModal.removeAttribute('hidden');
+
+    // Optionally query detail endpoint for fresh or full error message
+    const token = getStoredAuthToken();
+    if (token) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(historyId)}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const resData = await response.json();
+          const detail = resData && resData.data ? resData.data : null;
+          if (detail && errorMsgEl) {
+            errorMsgEl.textContent = detail.error_message || 'Không có thông tin lỗi chi tiết.';
+            if (docNameEl && detail.document_filename) docNameEl.textContent = detail.document_filename;
+          }
+        }
+      } catch (_err) {
+        // Fallback to record error_message
+      }
+    }
+  }
+
   function initHistoryErrorModal() {
     const historyErrorModal = document.getElementById('historyErrorModal');
     const btnCloseHistoryErrorModal = document.getElementById('btnCloseHistoryErrorModal');
@@ -1979,6 +2370,73 @@
       historyErrorModal.addEventListener('click', (e) => {
         if (e.target === historyErrorModal) {
           closeErrorModal();
+        }
+      });
+    }
+  }
+
+  function initHistoryEventListeners() {
+    if (isHistoryListenersInitialized) return;
+    isHistoryListenersInitialized = true;
+
+    const btnRefresh = document.getElementById('btnHistoryRefresh');
+    const btnRetry = document.getElementById('btnHistoryRetry');
+    const actionFilter = document.getElementById('historyActionFilter');
+    const statusFilter = document.getElementById('historyStatusFilter');
+    const searchInput = document.getElementById('historySearchInput');
+    const btnPrevPage = document.getElementById('btnHistoryPrevPage');
+    const btnNextPage = document.getElementById('btnHistoryNextPage');
+
+    if (btnRefresh) {
+      btnRefresh.addEventListener('click', (e) => {
+        e.preventDefault();
+        fetchProcessingHistories();
+      });
+    }
+
+    if (btnRetry) {
+      btnRetry.addEventListener('click', (e) => {
+        e.preventDefault();
+        fetchProcessingHistories();
+      });
+    }
+
+    if (actionFilter) {
+      actionFilter.addEventListener('change', () => {
+        historyCurrentPage = 1;
+        fetchProcessingHistories();
+      });
+    }
+
+    if (statusFilter) {
+      statusFilter.addEventListener('change', () => {
+        historyCurrentPage = 1;
+        fetchProcessingHistories();
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        renderHistoryPageList(cachedHistories, getStoredAuthToken());
+      });
+    }
+
+    if (btnPrevPage) {
+      btnPrevPage.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (historyCurrentPage > 1) {
+          historyCurrentPage--;
+          fetchProcessingHistories();
+        }
+      });
+    }
+
+    if (btnNextPage) {
+      btnNextPage.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (hasNextHistoryPage) {
+          historyCurrentPage++;
+          fetchProcessingHistories();
         }
       });
     }
@@ -2024,5 +2482,12 @@
     openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
     closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
     confirmDocumentDelete: confirmDocumentDelete,
+    fetchProcessingHistories: fetchProcessingHistories,
+    renderHistoryPageList: renderHistoryPageList,
+    openHistoryErrorModal: openHistoryErrorModal,
+    setHistorySectionState: setHistorySectionState,
+    getHistoryCurrentPage: () => historyCurrentPage,
+    setHistoryCurrentPage: (p) => { historyCurrentPage = p; },
+    getCachedHistories: () => cachedHistories,
   };
 })();
