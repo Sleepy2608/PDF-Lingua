@@ -152,17 +152,14 @@ def test_history_routes_registered_in_app():
     ]
     assert history_router in included_routers
 
-    routes_by_path = {
-        route.path: route
-        for route in history_router.routes
-        if isinstance(route, APIRoute)
-    }
-
-    assert "/api/history" in routes_by_path
-    assert "/api/history/{history_id}" in routes_by_path
-
-    list_route = routes_by_path["/api/history"]
-    detail_route = routes_by_path["/api/history/{history_id}"]
+    list_route = next(
+        route for route in history_router.routes
+        if isinstance(route, APIRoute) and route.path == "/api/history" and "GET" in route.methods
+    )
+    detail_route = next(
+        route for route in history_router.routes
+        if isinstance(route, APIRoute) and route.path == "/api/history/{history_id}" and "GET" in route.methods
+    )
 
     assert "GET" in list_route.methods
     assert "GET" in detail_route.methods

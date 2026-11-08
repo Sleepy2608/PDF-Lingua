@@ -231,3 +231,19 @@ class ProcessingResultResponse(BaseModel):
             dt = dt.replace(tzinfo=timezone.utc)
         return dt.isoformat()
 
+
+class HistoryDeleteResponse(BaseModel):
+    """Schema for single history record deletion (PDFL-166.1)."""
+
+    id: int = Field(..., gt=0, description="ID bản ghi lịch sử đã xóa.")
+    deleted: bool = Field(default=True, description="Trạng thái xóa thành công.")
+
+
+class HistoryCleanupResponse(BaseModel):
+    """Schema for retention cleanup summary (PDFL-166.1)."""
+
+    deleted_count: int = Field(..., ge=0, description="Số lượng bản ghi lịch sử đã được dọn dẹp.")
+    older_than_days: int = Field(..., ge=1, description="Số ngày chính sách lưu trữ áp dụng.")
+    cutoff_date: str = Field(..., description="Mốc thời gian UTC dùng để lọc bản ghi hết hạn.")
+
+

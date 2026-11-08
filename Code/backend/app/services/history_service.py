@@ -10,11 +10,13 @@ document processing histories (PDFL-159.3):
 """
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Optional, TypeVar
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
+
+from app.core.config import settings
 
 from app.core.exceptions import (
     AppException,
@@ -375,6 +377,153 @@ class HistoryService:
         result_data.setdefault("created_at", record.created_at)
 
         return result_data
+
+    @classmethod
+    def delete_history(
+        cls,
+        db: Session,
+        history_id: int,
+        current_user_id: int,
+    ) -> bool:
+        """
+        Delete a single processing history record and its associated result JSON file (PDFL-166.1).
+        Enforces strict multi-tenant ownership check (Anti-IDOR).
+        Does NOT delete the original PDF document or modify other records.
+        Handles missing result file gracefully without raising.
+        Ensures transactional consistency between database and filesystem.
+        """
+        try:
+            record = (
+                db.query(ProcessingHistory)
+                .filter(ProcessingHistory.id == history_id)
+                .first()
+            )
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(f"[HistoryService] DB error querying history_id={history_id} for deletion: {exc}")
+            raise
+
+        if record is None or record.user_id != current_user_id:
+            raise NotFoundException(
+                message=f"Bản ghi lịch sử với ID {history_id} không tồn tại.",
+                details={"history_id": history_id},
+            )
+
+        result_path = record.result_path
+        user_id = record.user_id
+
+        # Back up file bytes in memory if file exists, in case DB delete fails
+        backup_bytes = None
+        target_path = None
+        if result_path:
+            try:
+                target_path = cls.storage_service.get_result_path(user_id, result_path)
+                if target_path and target_path.is_file():
+                    backup_bytes = target_path.read_bytes()
+                    cls.storage_service.delete_result_file(user_id=user_id, result_path_or_filename=result_path)
+            except Exception as f_err:
+                logger.warning(
+                    f"[HistoryService] Error during result file removal for history_id={history_id}: {f_err}"
+                )
+
+        try:
+            db.delete(record)
+            db.commit()
+            logger.info(
+                f"[HistoryService] Deleted processing history id={history_id} for user_id={user_id}"
+            )
+            return True
+        except SQLAlchemyError as exc:
+            db.rollback()
+            # Restore physical file if it was deleted prior to DB commit failure
+            if backup_bytes is not None and target_path is not None:
+                try:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    target_path.write_bytes(backup_bytes)
+                    logger.info(
+                        f"[HistoryService] Restored result file after DB rollback: {target_path}"
+                    )
+                except Exception as restore_err:
+                    logger.error(
+                        f"[HistoryService] Failed to restore result file {target_path}: {restore_err}"
+                    )
+            logger.error(
+                f"[HistoryService] DB error committing delete for history_id={history_id}: {exc}"
+            )
+            raise
+
+    @classmethod
+    def cleanup_expired_histories(
+        cls,
+        db: Session,
+        user_id: int,
+        older_than_days: Optional[int] = None,
+        current_user_id: Optional[int] = None,
+    ) -> dict:
+        """
+        Cleanup expired processing history records and associated result files for a user (PDFL-166.1).
+        Uses retention policy (defaulting to settings.HISTORY_RETENTION_DAYS).
+        Skips PENDING records currently in processing.
+        Does NOT delete original PDF documents.
+        """
+        if current_user_id is not None and current_user_id != user_id:
+            raise ForbiddenException(
+                message="Bạn không có quyền dọn dẹp lịch sử của người dùng khác.",
+                details={"target_user_id": user_id, "current_user_id": current_user_id},
+            )
+
+        days = (
+            older_than_days
+            if older_than_days is not None and older_than_days > 0
+            else settings.HISTORY_RETENTION_DAYS
+        )
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+
+        try:
+            expired_records = (
+                db.query(ProcessingHistory)
+                .filter(
+                    ProcessingHistory.user_id == user_id,
+                    ProcessingHistory.created_at <= cutoff_date,
+                    ProcessingHistory.status != ProcessingStatus.PENDING,
+                )
+                .all()
+            )
+
+            deleted_ids = []
+            files_deleted_count = 0
+
+            for record in expired_records:
+                if record.result_path:
+                    try:
+                        if cls.storage_service.delete_result_file(
+                            user_id=user_id, result_path_or_filename=record.result_path
+                        ):
+                            files_deleted_count += 1
+                    except Exception as f_err:
+                        logger.warning(
+                            f"[HistoryService] Could not delete result file for expired history id={record.id}: {f_err}"
+                        )
+                deleted_ids.append(record.id)
+                db.delete(record)
+
+            db.commit()
+            logger.info(
+                f"[HistoryService] Cleaned up {len(deleted_ids)} expired histories "
+                f"({files_deleted_count} result files) older than {days} days for user_id={user_id}"
+            )
+
+            return {
+                "deleted_count": len(deleted_ids),
+                "older_than_days": days,
+                "cutoff_date": cutoff_date.isoformat(),
+            }
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error(
+                f"[HistoryService] DB error during expired histories cleanup for user_id={user_id}: {exc}"
+            )
+            raise
 
     @staticmethod
     def get_history_by_id(
