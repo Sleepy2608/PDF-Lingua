@@ -122,6 +122,54 @@ def test_export_service_txt():
     assert content in decoded
 
 
+def test_export_service_txt_4_types():
+    service = ExportService()
+    orig = "Đoạn văn gốc trích xuất từ tài liệu."
+    trans = "Bản dịch tiếng Việt hoàn chỉnh."
+    summ = "- Ý chính 1\n- Ý chính 2"
+
+    # 1. Original
+    b_orig = service.export_to_txt(orig, title="Gốc", export_type="original")
+    d_orig = b_orig.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" not in d_orig
+    assert orig in d_orig
+
+    # 2. Translated
+    b_trans = service.export_to_txt(trans, title="Dịch", export_type="translated")
+    d_trans = b_trans.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" not in d_trans
+    assert trans in d_trans
+
+    # 3. Summary
+    b_summ = service.export_to_txt(summ, title="Tóm Tắt", export_type="summary")
+    d_summ = b_summ.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" not in d_summ
+    assert summ in d_summ
+
+    # 4. Bilingual: có đủ hai phần
+    b_bi = service.export_to_txt(trans, title="Song Ngữ", export_type="bilingual", original_content=orig)
+    d_bi = b_bi.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" in d_bi
+    assert orig in d_bi
+    assert "=== 2. BẢN DỊCH ===" in d_bi
+    assert trans in d_bi
+
+
+def test_export_service_txt_translated_with_original_not_bilingual():
+    """Đảm bảo translated không vô tình bị chuyển thành song ngữ dù có truyền original_content."""
+    service = ExportService()
+    b = service.export_to_txt(
+        "Bản dịch duy nhất.",
+        title="Bản Dịch",
+        export_type="translated",
+        original_content="Original not included",
+    )
+    d = b.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" not in d
+    assert "Original not included" not in d
+    assert "Bản dịch duy nhất." in d
+
+
 def test_export_service_pdf():
     service = ExportService()
     content = "Bản dịch tài liệu tiếng Việt hoàn chỉnh."
@@ -130,6 +178,54 @@ def test_export_service_pdf():
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_export_service_pdf_4_types():
+    service = ExportService()
+    orig = "Đoạn văn gốc tiếng Anh hoặc quét OCR."
+    trans = "Bản dịch tiếng Việt với đầy đủ thanh điệu và dấu câu: Ă, Â, Đ, Ê, Ô, Ơ, Ư."
+    summ = "- Ý chính số 1 tóm tắt tài liệu.\n- Ý chính số 2 nêu bật kết quả quan trọng.\n1. Điểm lưu ý A.\n2. Điểm lưu ý B."
+
+    # 1. Original PDF
+    pdf_orig = service.export_to_pdf(orig, title="Văn Bản Gốc", export_type="original")
+    assert isinstance(pdf_orig, bytes)
+    assert pdf_orig.startswith(b"%PDF")
+
+    # 2. Translated PDF (truyền cả original_content nhưng export_type là translated -> không được xuất song ngữ)
+    pdf_trans = service.export_to_pdf(
+        trans,
+        title="Bản Dịch",
+        original_content=orig,
+        export_type="translated",
+    )
+    assert isinstance(pdf_trans, bytes)
+    assert pdf_trans.startswith(b"%PDF")
+
+    # 3. Summary PDF
+    pdf_summ = service.export_to_pdf(summ, title="Tóm Tắt Nội Dung", export_type="summary")
+    assert isinstance(pdf_summ, bytes)
+    assert pdf_summ.startswith(b"%PDF")
+
+    # 4. Bilingual PDF
+    pdf_bi = service.export_to_pdf(
+        trans,
+        title="Tài Liệu Song Ngữ",
+        original_content=orig,
+        export_type="bilingual",
+    )
+    assert isinstance(pdf_bi, bytes)
+    assert pdf_bi.startswith(b"%PDF")
+
+
+def test_export_service_unicode_vietnamese_font():
+    service = ExportService()
+    # Kiểm tra font Unicode đã được cấu hình (không phải Helvetica mặc định nếu có font hệ thống)
+    assert service.font_name in ("Arial", "TimesNewRoman", "SegoeUI", "DejaVuSans", "Helvetica")
+    # Văn bản dài tiếng Việt phức tạp
+    long_vietnamese = "Tôi học tiếng Việt tại thành phố Hồ Chí Minh. " * 50
+    pdf_bytes = service.export_to_pdf(long_vietnamese, title="Tài Liệu Tiếng Việt", export_type="translated")
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
 
 
 def test_pdf_service_multi_column_reading_order(tmp_path: Path):

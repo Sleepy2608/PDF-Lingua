@@ -568,17 +568,11 @@ async def download_result(
     fmt = request.format.strip().lower()
 
     if fmt == "pdf":
-        # Bảo toàn hành vi logic PDF song ngữ cho request cũ (TRANSLATED có original_content)
-        # và truyền đúng dữ liệu cho BILINGUAL; với ORIGINAL hoặc SUMMARY chỉ xuất content
-        if export_type in (ExportTargetType.ORIGINAL, ExportTargetType.SUMMARY):
-            pdf_original_content = None
-        else:
-            pdf_original_content = request.original_content
-
         file_bytes = export_service.export_to_pdf(
             content=request.content,
             title=title,
-            original_content=pdf_original_content,
+            original_content=request.original_content if export_type == ExportTargetType.BILINGUAL else None,
+            export_type=export_type,
         )
         media_type = "application/pdf"
         download_name = f"{base_name}.pdf"
@@ -586,6 +580,8 @@ async def download_result(
         file_bytes = export_service.export_to_txt(
             content=request.content,
             title=title,
+            export_type=export_type,
+            original_content=request.original_content if export_type == ExportTargetType.BILINGUAL else None,
         )
         media_type = "text/plain; charset=utf-8"
         download_name = f"{base_name}.txt"

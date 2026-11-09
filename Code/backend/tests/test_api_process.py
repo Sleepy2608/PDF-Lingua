@@ -169,6 +169,40 @@ def test_download_default_export_type_and_custom_title():
     assert "Tiêu Đề Tùy Biến Của Tôi" in response.content.decode("utf-8-sig")
 
 
+def test_download_bilingual_txt_has_two_parts():
+    payload = {
+        "content": "Nội dung bản dịch tiếng Việt.",
+        "format": "txt",
+        "export_type": "bilingual",
+        "filename": "song_ngu_doc",
+        "original_content": "Original content in English.",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    decoded = response.content.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" in decoded
+    assert "Original content in English." in decoded
+    assert "=== 2. BẢN DỊCH ===" in decoded
+    assert "Nội dung bản dịch tiếng Việt." in decoded
+
+
+def test_download_translated_with_original_not_bilingual():
+    """Đảm bảo khi xuất translated mà client có gửi original_content thì không bị xuất nhầm thành song ngữ."""
+    payload = {
+        "content": "Chỉ xuất bản dịch này.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "ban_dich_doc",
+        "original_content": "Đoạn gốc không được xuất hiện trong file.",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    decoded = response.content.decode("utf-8-sig")
+    assert "=== 1. VĂN BẢN GỐC ===" not in decoded
+    assert "Đoạn gốc không được xuất hiện trong file." not in decoded
+    assert "Chỉ xuất bản dịch này." in decoded
+
+
 def test_upload_and_translate_success():
     pdf_bytes = create_test_pdf_bytes("Artificial intelligence and natural language processing.")
     files = {"file": ("document.pdf", pdf_bytes, "application/pdf")}
