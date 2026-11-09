@@ -293,3 +293,110 @@ def test_pdf_service_single_column_preservation(tmp_path: Path):
 
     assert p1_idx != -1 and p2_idx != -1 and p3_idx != -1
     assert p1_idx < p2_idx < p3_idx
+
+
+# ==============================================================================
+# PDFL-156.2 Tests: Export Service Empty Content Handling
+# ==============================================================================
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_txt_empty_content_original(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="văn bản gốc.*không được để trống"):
+        service.export_to_txt(empty_val, export_type="original")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_txt_empty_content_translated(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="bản dịch.*không được để trống"):
+        service.export_to_txt(empty_val, export_type="translated")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_txt_empty_content_summary(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="tóm tắt.*không được để trống"):
+        service.export_to_txt(empty_val, export_type="summary")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_txt_bilingual_empty_translated(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="bản dịch.*không được để trống khi xuất song ngữ"):
+        service.export_to_txt(empty_val, export_type="bilingual", original_content="Valid original text.")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_txt_bilingual_empty_original(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="văn bản gốc.*không được để trống khi xuất song ngữ"):
+        service.export_to_txt("Valid translated text.", export_type="bilingual", original_content=empty_val)
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_pdf_empty_content_original(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="văn bản gốc.*không được để trống"):
+        service.export_to_pdf(empty_val, export_type="original")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_pdf_empty_content_translated(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="bản dịch.*không được để trống"):
+        service.export_to_pdf(empty_val, export_type="translated")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_pdf_empty_content_summary(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="tóm tắt.*không được để trống"):
+        service.export_to_pdf(empty_val, export_type="summary")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_pdf_bilingual_empty_translated(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="bản dịch.*không được để trống khi xuất song ngữ"):
+        service.export_to_pdf(empty_val, export_type="bilingual", original_content="Valid original text.")
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_export_to_pdf_bilingual_empty_original(empty_val):
+    service = ExportService()
+    with pytest.raises(ValueError, match="văn bản gốc.*không được để trống khi xuất song ngữ"):
+        service.export_to_pdf("Valid translated text.", export_type="bilingual", original_content=empty_val)
+
+
+def test_export_service_valid_content_preservation_and_formats():
+    """Kiểm tra xuất hợp lệ cho cả 4 loại trên TXT và PDF, giữ nguyên định dạng và font Unicode."""
+    service = ExportService()
+    orig = "This is original content with special chars: <>&\"'."
+    trans = "Đây là bản dịch tiếng Việt có ký tự đặc biệt: <>&\"' và chữ có dấu: Ắ, Ậ, Ỡ."
+    summ = "- Ý chính 1\n- Ý chính 2"
+
+    # TXT 4 types
+    for exp_type, c, o in [
+        ("original", orig, None),
+        ("translated", trans, None),
+        ("summary", summ, None),
+        ("bilingual", trans, orig),
+    ]:
+        txt_b = service.export_to_txt(c, title="Tiêu đề", export_type=exp_type, original_content=o)
+        assert isinstance(txt_b, bytes)
+        decoded = txt_b.decode("utf-8-sig")
+        assert "Tiêu đề" in decoded
+
+    # PDF 4 types
+    for exp_type, c, o in [
+        ("original", orig, None),
+        ("translated", trans, None),
+        ("summary", summ, None),
+        ("bilingual", trans, orig),
+    ]:
+        pdf_b = service.export_to_pdf(c, title="Tiêu đề", export_type=exp_type, original_content=o)
+        assert isinstance(pdf_b, bytes)
+        assert pdf_b.startswith(b"%PDF")
+        assert len(pdf_b) > 500
+

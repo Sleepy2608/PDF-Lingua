@@ -46,6 +46,48 @@ class ExportService:
                     continue
         return "Helvetica"
 
+    @staticmethod
+    def _validate_export_inputs(
+        content: str | None,
+        original_content: str | None,
+        target_type: ExportTargetType,
+    ) -> tuple[str, str | None]:
+        """
+        PDFL-156.2: Kiểm tra nội dung đầu vào cho ExportService.
+        Từ chối None, chuỗi rỗng và chuỗi chỉ chứa whitespace.
+        Ném ValueError cho từng loại xuất khi nội dung không hợp lệ.
+        """
+        clean_content = (content or "").strip() if isinstance(content, str) else ""
+        clean_orig = (original_content or "").strip() if isinstance(original_content, str) else ""
+
+        if target_type == ExportTargetType.ORIGINAL:
+            actual_content = clean_content or clean_orig
+            if not actual_content:
+                raise ValueError("Nội dung văn bản gốc không được để trống.")
+            return actual_content, None
+
+        elif target_type == ExportTargetType.TRANSLATED:
+            if not clean_content:
+                raise ValueError("Nội dung bản dịch không được để trống.")
+            return clean_content, None
+
+        elif target_type == ExportTargetType.SUMMARY:
+            if not clean_content:
+                raise ValueError("Nội dung tóm tắt không được để trống.")
+            return clean_content, None
+
+        elif target_type == ExportTargetType.BILINGUAL:
+            if not clean_content:
+                raise ValueError("Nội dung bản dịch không được để trống khi xuất song ngữ.")
+            if not clean_orig:
+                raise ValueError("Nội dung văn bản gốc không được để trống khi xuất song ngữ.")
+            return clean_content, clean_orig
+
+        else:
+            if not clean_content:
+                raise ValueError("Nội dung tệp xuất không được để trống.")
+            return clean_content, None
+
     def export_to_txt(
         self,
         content: str,
@@ -58,8 +100,16 @@ class ExportService:
                 target_type = ExportTargetType(export_type.lower())
             except ValueError:
                 target_type = ExportTargetType.TRANSLATED
-        else:
+        elif isinstance(export_type, ExportTargetType):
             target_type = export_type
+        else:
+            target_type = ExportTargetType.TRANSLATED
+
+        clean_content, clean_orig = self._validate_export_inputs(
+            content=content,
+            original_content=original_content,
+            target_type=target_type,
+        )
 
         parts: list[str] = []
         if title and title.strip():
@@ -70,19 +120,16 @@ class ExportService:
 
         if target_type == ExportTargetType.BILINGUAL:
             parts.append("=== 1. VĂN BẢN GỐC ===")
-            if original_content and original_content.strip():
-                parts.append(original_content.strip())
-            else:
-                parts.append("")
+            parts.append(clean_orig or "")
             parts.append("")
             parts.append("=== 2. BẢN DỊCH ===")
-            parts.append(content.strip())
+            parts.append(clean_content)
         elif target_type == ExportTargetType.ORIGINAL:
-            parts.append(content.strip())
+            parts.append(clean_content)
         elif target_type == ExportTargetType.SUMMARY:
-            parts.append(content.strip())
+            parts.append(clean_content)
         else:  # TRANSLATED
-            parts.append(content.strip())
+            parts.append(clean_content)
 
         full_text = "\n".join(parts)
         return full_text.encode("utf-8-sig")
@@ -108,8 +155,16 @@ class ExportService:
                 target_type = ExportTargetType(export_type.lower())
             except ValueError:
                 target_type = ExportTargetType.TRANSLATED
-        else:
+        elif isinstance(export_type, ExportTargetType):
             target_type = export_type
+        else:
+            target_type = ExportTargetType.TRANSLATED
+
+        clean_content, clean_orig = self._validate_export_inputs(
+            content=content,
+            original_content=original_content,
+            target_type=target_type,
+        )
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -200,24 +255,20 @@ class ExportService:
 
         if target_type == ExportTargetType.ORIGINAL:
             story.append(Paragraph("<b>VĂN BẢN GỐC</b>", section_style))
-            add_paragraphs(content)
+            add_paragraphs(clean_content)
         elif target_type == ExportTargetType.SUMMARY:
             story.append(Paragraph("<b>BẢN TÓM TẮT NỘI DUNG</b>", summary_section_style))
-            add_paragraphs(content, is_summary=True)
+            add_paragraphs(clean_content, is_summary=True)
         elif target_type == ExportTargetType.BILINGUAL:
             story.append(Paragraph("<b>1. VĂN BẢN GỐC</b>", section_style))
-            if original_content and original_content.strip():
-                add_paragraphs(original_content)
-            else:
-                story.append(Paragraph("<i>(Không có nội dung văn bản gốc)</i>", body_style))
-
+            add_paragraphs(clean_orig or "")
             story.append(Spacer(1, 10))
             story.append(HRFlowable(width="100%", thickness=0.5, color=HexColor("#CBD5E1"), spaceAfter=10))
             story.append(Paragraph("<b>2. BẢN DỊCH</b>", section_style))
-            add_paragraphs(content)
+            add_paragraphs(clean_content)
         else:  # TRANSLATED
             story.append(Paragraph("<b>BẢN DỊCH THUẬT</b>", section_style))
-            add_paragraphs(content)
+            add_paragraphs(clean_content)
 
         doc.build(story)
         pdf_data = buffer.getvalue()
