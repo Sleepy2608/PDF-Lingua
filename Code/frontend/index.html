@@ -472,34 +472,96 @@
                         </button>
 
                         <div class="download-wrap">
-                            <button type="button" class="btn btn-gradient" id="btnDownloadMenu">
+                            <button type="button" class="btn btn-gradient" id="btnDownloadMenu" aria-haspopup="true" aria-expanded="false" title="Tải xuống tệp">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
-                                <span>Tải bản dịch</span>
+                                <span>Tải xuống</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
                             </button>
-                            <div class="dropdown-menu" id="downloadDropdown">
-                                <button type="button" class="dropdown-item" id="btnDownloadTxt">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                    </svg>
-                                    <span>Tải file TXT (.txt)</span>
-                                </button>
-                                <button type="button" class="dropdown-item" id="btnDownloadPdf">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    </svg>
-                                    <span>Tải file PDF (.pdf)</span>
-                                </button>
+                            <div class="dropdown-menu dropdown-menu-export" id="downloadDropdown" role="menu">
+                                <!-- Nhóm 1: Bản dịch -->
+                                <div class="dropdown-group-title">
+                                    <span class="group-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+                                        <span>Bản dịch</span>
+                                    </span>
+                                </div>
+                                <div class="dropdown-format-row">
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadTxt" data-export-type="translated" data-format="txt" title="Tải bản dịch định dạng TXT">
+                                        <span class="fmt-pill txt">TXT</span>
+                                        <span>File TXT</span>
+                                    </button>
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadPdf" data-export-type="translated" data-format="pdf" title="Tải bản dịch định dạng PDF">
+                                        <span class="fmt-pill pdf">PDF</span>
+                                        <span>File PDF</span>
+                                    </button>
+                                </div>
+
+                                <div class="dropdown-divider"></div>
+
+                                <!-- Nhóm 2: Văn bản gốc -->
+                                <div class="dropdown-group-title">
+                                    <span class="group-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                        <span>Văn bản gốc</span>
+                                    </span>
+                                </div>
+                                <div class="dropdown-format-row">
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadOriginalTxt" data-export-type="original" data-format="txt" title="Tải văn bản gốc định dạng TXT">
+                                        <span class="fmt-pill txt">TXT</span>
+                                        <span>File TXT</span>
+                                    </button>
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadOriginalPdf" data-export-type="original" data-format="pdf" title="Tải văn bản gốc định dạng PDF">
+                                        <span class="fmt-pill pdf">PDF</span>
+                                        <span>File PDF</span>
+                                    </button>
+                                </div>
+
+                                <div class="dropdown-divider"></div>
+
+                                <!-- Nhóm 3: Song ngữ -->
+                                <div class="dropdown-group-title">
+                                    <span class="group-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
+                                        <span>Bản dịch song ngữ</span>
+                                    </span>
+                                </div>
+                                <div class="dropdown-format-row">
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadBilingualTxt" data-export-type="bilingual" data-format="txt" title="Tải song ngữ định dạng TXT">
+                                        <span class="fmt-pill txt">TXT</span>
+                                        <span>File TXT</span>
+                                    </button>
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadBilingualPdf" data-export-type="bilingual" data-format="pdf" title="Tải song ngữ định dạng PDF">
+                                        <span class="fmt-pill pdf">PDF</span>
+                                        <span>File PDF</span>
+                                    </button>
+                                </div>
+
+                                <div class="dropdown-divider"></div>
+
+                                <!-- Nhóm 4: Bản tóm tắt -->
+                                <div class="dropdown-group-title">
+                                    <span class="group-label">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                                        <span>Bản tóm tắt</span>
+                                    </span>
+                                    <span class="summary-badge" id="summaryExportStatus">(chưa có)</span>
+                                </div>
+                                <div class="dropdown-format-row">
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryTxt" data-export-type="summary" data-format="txt" title="Chưa có bản tóm tắt" disabled>
+                                        <span class="fmt-pill txt">TXT</span>
+                                        <span>File TXT</span>
+                                    </button>
+                                    <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryPdf" data-export-type="summary" data-format="pdf" title="Chưa có bản tóm tắt" disabled>
+                                        <span class="fmt-pill pdf">PDF</span>
+                                        <span>File PDF</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
