@@ -6,6 +6,11 @@ can discover them during create_all() at application startup.
 """
 
 from app.models.document import Document  # noqa: F401
+from app.models.processing_history import (  # noqa: F401
+    ActionType,
+    ProcessingHistory,
+    ProcessingStatus,
+)
 from app.models.user import User  # noqa: F401
 
-__all__ = ["User", "Document"]
+__all__ = ["User", "Document", "ProcessingHistory", "ActionType", "ProcessingStatus"]

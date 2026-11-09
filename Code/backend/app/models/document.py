@@ -108,6 +108,11 @@ class Document(Base):
 
     # ── Relationships ─────────────────────────────────────────────────────────
     owner = relationship("User", back_populates="documents")
+    processing_histories = relationship(
+        "ProcessingHistory",
+        back_populates="document",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return (
