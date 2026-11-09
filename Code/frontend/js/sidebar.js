@@ -2179,22 +2179,6 @@
       countBadge.textContent = `${filtered.length} bản ghi`;
     }
 
-    // Update Bento Metrics Summary
-    const metricTotalEl = document.getElementById('historyMetricTotal');
-    const metricSuccessEl = document.getElementById('historyMetricSuccessRate');
-    if (metricTotalEl) {
-      metricTotalEl.textContent = String(filtered.length);
-    }
-    if (metricSuccessEl) {
-      if (filtered.length > 0) {
-        const successCount = filtered.filter((r) => String(r.status || '').toUpperCase() === 'SUCCESS').length;
-        const rate = Math.round((successCount / filtered.length) * 100);
-        metricSuccessEl.textContent = `${rate}%`;
-      } else {
-        metricSuccessEl.textContent = '100%';
-      }
-    }
-
     if (filtered.length === 0) {
       if (emptyTitleEl && emptyTextEl) {
         if (query) {
