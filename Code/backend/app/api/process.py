@@ -21,6 +21,7 @@ from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import (
     DownloadRequest,
+    ExportTargetType,
     FeedbackRequest,
     JobProgressData,
     ProcessResponseData,
@@ -514,27 +515,77 @@ async def download_result(
     request: DownloadRequest,
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    if not request.content.strip():
+    if not request.content or not request.content.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Nội dung tệp xuất không được để trống.",
         )
 
-    base_name = re.sub(r'[\\/*?:"<>|]', "", request.filename.strip()) or "translated_document"
+    export_type = request.export_type
+
+    # PDFL-150.2: Với bilingual, bắt buộc phải có original_content
+    if export_type == ExportTargetType.BILINGUAL:
+        if not request.original_content or not request.original_content.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung văn bản gốc (original_content) không được để trống khi xuất song ngữ.",
+            )
+
+    # Chuẩn hóa tiêu đề mặc định theo loại xuất
+    default_titles = {
+        ExportTargetType.ORIGINAL: "PDF-Lingua - Văn Bản Gốc",
+        ExportTargetType.TRANSLATED: "PDF-Lingua - Bản Dịch",
+        ExportTargetType.SUMMARY: "PDF-Lingua - Tóm Tắt Nội Dung",
+        ExportTargetType.BILINGUAL: "PDF-Lingua - Bản Dịch Song Ngữ",
+    }
+    if request.title and request.title.strip() and request.title.strip() != "PDF-Lingua Translation":
+        title = request.title.strip()
+    elif request.title and request.title.strip() == "PDF-Lingua Translation" and export_type == ExportTargetType.TRANSLATED:
+        title = request.title.strip()
+    else:
+        title = default_titles.get(export_type, "PDF-Lingua Translation")
+
+    # Chuẩn hóa tên file theo loại xuất: original -> _goc, translated -> _dich, summary -> _tomtat, bilingual -> _songngu
+    suffix_map = {
+        ExportTargetType.ORIGINAL: "_goc",
+        ExportTargetType.TRANSLATED: "_dich",
+        ExportTargetType.SUMMARY: "_tomtat",
+        ExportTargetType.BILINGUAL: "_songngu",
+    }
+    target_suffix = suffix_map.get(export_type, "_dich")
+
+    raw_filename = re.sub(r'[\\/*?:"<>|]', "", request.filename.strip()) or "document"
+    raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE)
+    for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
+        if raw_filename.endswith(sfx):
+            raw_filename = raw_filename[:-len(sfx)]
+            break
+
+    if raw_filename in ("translated_document", "document", ""):
+        raw_filename = "document"
+
+    base_name = f"{raw_filename}{target_suffix}"
     fmt = request.format.strip().lower()
 
     if fmt == "pdf":
+        # Bảo toàn hành vi logic PDF song ngữ cho request cũ (TRANSLATED có original_content)
+        # và truyền đúng dữ liệu cho BILINGUAL; với ORIGINAL hoặc SUMMARY chỉ xuất content
+        if export_type in (ExportTargetType.ORIGINAL, ExportTargetType.SUMMARY):
+            pdf_original_content = None
+        else:
+            pdf_original_content = request.original_content
+
         file_bytes = export_service.export_to_pdf(
             content=request.content,
-            title=request.title or "PDF-Lingua Translation",
-            original_content=request.original_content,
+            title=title,
+            original_content=pdf_original_content,
         )
         media_type = "application/pdf"
         download_name = f"{base_name}.pdf"
     else:
         file_bytes = export_service.export_to_txt(
             content=request.content,
-            title=request.title,
+            title=title,
         )
         media_type = "text/plain; charset=utf-8"
         download_name = f"{base_name}.txt"

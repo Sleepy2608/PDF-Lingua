@@ -79,6 +79,96 @@ def test_download_pdf_endpoint():
     assert response.content.startswith(b"%PDF")
 
 
+# PDFL-150.2 Tests: Export Target Types & Standardized Download API
+def test_download_export_type_original():
+    payload = {
+        "content": "Nội dung văn bản gốc trích xuất từ PDF.",
+        "format": "txt",
+        "export_type": "original",
+        "filename": "tai_lieu_mau",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    content_disp = response.headers.get("content-disposition", "")
+    assert "tai_lieu_mau_goc.txt" in content_disp
+    # Default title for original
+    assert "PDF-Lingua - Văn Bản Gốc" in response.content.decode("utf-8-sig")
+
+
+def test_download_export_type_translated():
+    payload = {
+        "content": "Nội dung đã được dịch thuật.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "tai_lieu_mau",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    content_disp = response.headers.get("content-disposition", "")
+    assert "tai_lieu_mau_dich.txt" in content_disp
+    assert "PDF-Lingua - Bản Dịch" in response.content.decode("utf-8-sig")
+
+
+def test_download_export_type_summary():
+    payload = {
+        "content": "1. Điểm chính A.\n2. Điểm chính B.",
+        "format": "txt",
+        "export_type": "summary",
+        "filename": "tai_lieu_mau",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    content_disp = response.headers.get("content-disposition", "")
+    assert "tai_lieu_mau_tomtat.txt" in content_disp
+    assert "PDF-Lingua - Tóm Tắt Nội Dung" in response.content.decode("utf-8-sig")
+
+
+def test_download_export_type_bilingual_success():
+    payload = {
+        "content": "Bản dịch tiếng Việt.",
+        "format": "pdf",
+        "export_type": "bilingual",
+        "filename": "tai_lieu_mau",
+        "original_content": "Original English content.",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    assert response.headers.get("content-type") == "application/pdf"
+    content_disp = response.headers.get("content-disposition", "")
+    assert "tai_lieu_mau_songngu.pdf" in content_disp
+    assert response.content.startswith(b"%PDF")
+
+
+def test_download_export_type_bilingual_missing_original_content():
+    payload = {
+        "content": "Bản dịch tiếng Việt.",
+        "format": "txt",
+        "export_type": "bilingual",
+        "filename": "tai_lieu_mau",
+        "original_content": "",  # Empty original content
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "original_content" in err_msg or "song ngữ" in err_msg
+
+
+def test_download_default_export_type_and_custom_title():
+    # When export_type is omitted, defaults to translated (_dich)
+    payload = {
+        "content": "Nội dung dịch.",
+        "format": "txt",
+        "filename": "tai_lieu",
+        "title": "Tiêu Đề Tùy Biến Của Tôi",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    content_disp = response.headers.get("content-disposition", "")
+    assert "tai_lieu_dich.txt" in content_disp
+    assert "Tiêu Đề Tùy Biến Của Tôi" in response.content.decode("utf-8-sig")
+
+
 def test_upload_and_translate_success():
     pdf_bytes = create_test_pdf_bytes("Artificial intelligence and natural language processing.")
     files = {"file": ("document.pdf", pdf_bytes, "application/pdf")}
