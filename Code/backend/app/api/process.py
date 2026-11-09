@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 import threading
+import unicodedata
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
@@ -591,8 +592,10 @@ async def download_result(
     }
     target_suffix = suffix_map.get(export_type, "_dich")
 
-    raw_filename = re.sub(r'[\\/*?:"<>|]', "", (request.filename or "").strip()) or "document"
-    raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE)
+    # Loại bỏ ký tự CR/LF để chống CRLF Injection trong HTTP Headers
+    raw_name_input = re.sub(r'[\r\n]+', '', request.filename or '').strip()
+    raw_filename = re.sub(r'[\\/*?:"<>|]', "", raw_name_input).strip() or "document"
+    raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE).strip()
     for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
         if raw_filename.endswith(sfx):
             raw_filename = raw_filename[:-len(sfx)]
@@ -603,9 +606,10 @@ async def download_result(
 
     base_name = f"{raw_filename}{target_suffix}"
     fmt = (request.format or "txt").strip().lower()
+    ext = "pdf" if fmt == "pdf" else "txt"
 
     try:
-        if fmt == "pdf":
+        if ext == "pdf":
             file_bytes = export_service.export_to_pdf(
                 content=export_content,
                 title=title,
@@ -613,7 +617,6 @@ async def download_result(
                 export_type=export_type,
             )
             media_type = "application/pdf"
-            download_name = f"{base_name}.pdf"
         else:
             file_bytes = export_service.export_to_txt(
                 content=export_content,
@@ -622,7 +625,6 @@ async def download_result(
                 original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
             )
             media_type = "text/plain; charset=utf-8"
-            download_name = f"{base_name}.txt"
     except Exception as e:
         logger.exception(f"[Download] Export failed unexpectedly: {e}")
         raise HTTPException(
@@ -630,10 +632,32 @@ async def download_result(
             detail="Đã xảy ra lỗi nội bộ khi tạo tệp xuất. Vui lòng thử lại sau.",
         ) from e
 
+    # Chuẩn hóa tên file theo RFC 6266:
+    # 1. UTF-8 filename (hỗ trợ đầy đủ tiếng Việt Unicode)
+    download_name = f"{base_name}.{ext}"
     encoded_name = quote(download_name)
+
+    # 2. ASCII fallback filename cho các trình duyệt hoặc client không hỗ trợ filename*
+    normalized = unicodedata.normalize('NFKD', base_name)
+    ascii_clean = normalized.encode('ascii', 'ignore').decode('ascii')
+    # Loại bỏ dấu ngoặc kép, gạch chéo ngược để an toàn trong filename="..."
+    ascii_clean = re.sub(r'["\\]', '', ascii_clean)
+    # Giữ lại các ký tự ASCII an toàn (chữ cái, chữ số, gạch dưới, gạch ngang, chấm, khoảng trắng)
+    ascii_clean = re.sub(r'[^a-zA-Z0-9_\-\. ]', '_', ascii_clean).strip()
+    if not ascii_clean:
+        ascii_clean = f"document{target_suffix}"
+    ascii_filename = f"{ascii_clean}.{ext}"
+
+    # Định dạng Content-Disposition có cả ASCII fallback và UTF-8 mở rộng
+    content_disposition = f'attachment; filename="{ascii_filename}"; filename*=UTF-8\'\'{encoded_name}'
+
     headers = {
-        "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_name}",
-        "Access-Control-Expose-Headers": "Content-Disposition",
+        "Content-Disposition": content_disposition,
+        "Cache-Control": "no-cache, no-store, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Expose-Headers": "Content-Disposition, Content-Length",
     }
 
     return Response(

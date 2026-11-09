@@ -601,5 +601,155 @@ def test_download_ignores_document_id_and_does_not_leak():
     assert "Văn bản client gửi lên." in res2.content.decode("utf-8-sig")
 
 
+# ── PDFL-158.2: HTTP Response Headers & Sanitization Tests ─────────────────────
+
+def test_download_headers_standard_txt():
+    """Kiểm tra đầy đủ các headers khi tải file TXT (MIME type, security headers, CORS, Content-Length)."""
+    payload = {
+        "content": "Nội dung kiểm tra headers văn bản TXT.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "kiem_tra_txt",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+
+    # 1. MIME Type
+    assert response.headers.get("content-type") == "text/plain; charset=utf-8"
+
+    # 2. Content-Disposition: có cả ASCII fallback và UTF-8
+    content_disp = response.headers.get("content-disposition", "")
+    assert content_disp.startswith("attachment;")
+    assert 'filename="kiem_tra_txt_dich.txt"' in content_disp
+    assert "filename*=UTF-8''kiem_tra_txt_dich.txt" in content_disp
+
+    # 3. Security Headers
+    assert response.headers.get("cache-control") == "no-cache, no-store, must-revalidate, private"
+    assert response.headers.get("pragma") == "no-cache"
+    assert response.headers.get("expires") == "0"
+    assert response.headers.get("x-content-type-options") == "nosniff"
+
+    # 4. CORS Expose Headers
+    expose_headers = response.headers.get("access-control-expose-headers", "")
+    assert "Content-Disposition" in expose_headers
+    assert "Content-Length" in expose_headers
+
+    # 5. Content-Length khớp chính xác số bytes
+    content_len = response.headers.get("content-length")
+    assert content_len is not None
+    assert int(content_len) == len(response.content)
+
+
+def test_download_headers_standard_pdf():
+    """Kiểm tra đầy đủ các headers khi tải file PDF (MIME type, security headers, CORS, Content-Length)."""
+    payload = {
+        "content": "Nội dung kiểm tra headers văn bản PDF.",
+        "format": "pdf",
+        "export_type": "translated",
+        "filename": "kiem_tra_pdf",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+
+    # 1. MIME Type
+    assert response.headers.get("content-type") == "application/pdf"
+
+    # 2. Content-Disposition: có cả ASCII fallback và UTF-8
+    content_disp = response.headers.get("content-disposition", "")
+    assert content_disp.startswith("attachment;")
+    assert 'filename="kiem_tra_pdf_dich.pdf"' in content_disp
+    assert "filename*=UTF-8''kiem_tra_pdf_dich.pdf" in content_disp
+
+    # 3. Security Headers
+    assert response.headers.get("cache-control") == "no-cache, no-store, must-revalidate, private"
+    assert response.headers.get("pragma") == "no-cache"
+    assert response.headers.get("expires") == "0"
+    assert response.headers.get("x-content-type-options") == "nosniff"
+
+    # 4. CORS Expose Headers
+    expose_headers = response.headers.get("access-control-expose-headers", "")
+    assert "Content-Disposition" in expose_headers
+    assert "Content-Length" in expose_headers
+
+    # 5. Content-Length khớp chính xác số bytes
+    content_len = response.headers.get("content-length")
+    assert content_len is not None
+    assert int(content_len) == len(response.content)
+    assert response.content.startswith(b"%PDF")
+
+
+def test_download_headers_vietnamese_unicode_and_spaces():
+    """Kiểm tra tên file tiếng Việt có dấu, khoảng trắng: ASCII fallback không dấu và UTF-8 mở rộng."""
+    payload = {
+        "content": "Nội dung báo cáo tài chính kiểm toán.",
+        "format": "pdf",
+        "export_type": "summary",
+        "filename": "Báo cáo tài chính quý 1",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+
+    content_disp = response.headers.get("content-disposition", "")
+    # ASCII fallback không dấu
+    assert 'filename="Bao cao tai chinh quy 1_tomtat.pdf"' in content_disp
+    # UTF-8 filename có quote encoding
+    from urllib.parse import quote
+    expected_utf8_part = quote("Báo cáo tài chính quý 1_tomtat.pdf")
+    assert f"filename*=UTF-8''{expected_utf8_part}" in content_disp
+
+
+def test_download_headers_special_characters_and_crlf_sanitization():
+    """Kiểm tra khử ký tự đặc biệt, dấu ngoặc kép và chống CRLF injection trong header."""
+    payload = {
+        "content": "Nội dung cần xuất kiểm tra ký tự đặc biệt.",
+        "format": "txt",
+        "export_type": "original",
+        "filename": 'Tài liệu "quan trọng" \r\n test: *? <special>',
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+
+    content_disp = response.headers.get("content-disposition", "")
+    # Tuyệt đối không chứa raw \r hoặc \n
+    assert "\r" not in content_disp
+    assert "\n" not in content_disp
+    # Đuôi file chính xác
+    assert ".txt" in content_disp
+    # ASCII fallback không bị gãy chuỗi dấu ngoặc kép
+    assert 'filename="' in content_disp
+    # UTF-8 encoded
+    assert "filename*=UTF-8''" in content_disp
+
+
+def test_download_all_4_export_types_header_suffixes():
+    """Kiểm tra cả 4 loại export_type đều tạo ra đúng hậu tố và extension trong Content-Disposition."""
+    cases = [
+        ("original", "txt", "_goc.txt"),
+        ("original", "pdf", "_goc.pdf"),
+        ("translated", "txt", "_dich.txt"),
+        ("translated", "pdf", "_dich.pdf"),
+        ("summary", "txt", "_tomtat.txt"),
+        ("summary", "pdf", "_tomtat.pdf"),
+        ("bilingual", "txt", "_songngu.txt"),
+        ("bilingual", "pdf", "_songngu.pdf"),
+    ]
+    for exp_type, fmt, expected_sfx in cases:
+        payload = {
+            "content": "Văn bản mẫu kiểm tra hậu tố.",
+            "format": fmt,
+            "export_type": exp_type,
+            "filename": "tai_lieu_chuan",
+        }
+        if exp_type == "bilingual":
+            payload["original_content"] = "Văn bản gốc song ngữ."
+
+        resp = client.post("/api/process/download", json=payload)
+        assert resp.status_code == 200, f"Thất bại với {exp_type} format {fmt}"
+        cd = resp.headers.get("content-disposition", "")
+        # Cả ASCII fallback và UTF-8 đều mang hậu tố tương ứng
+        assert f'tai_lieu_chuan{expected_sfx}"' in cd
+        assert f'tai_lieu_chuan{expected_sfx}' in cd
+
+
 
 
