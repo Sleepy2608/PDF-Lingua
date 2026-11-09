@@ -1,3 +1,4 @@
+import codecs
 import io
 
 import pypdf
@@ -214,3 +215,92 @@ def test_e2e_full_pipeline_multi_target_export_and_empty_validation():
         err_msg = err_res.json().get("message", "") or err_res.json().get("detail", "")
         assert "Catastrophic memory error" not in err_msg
         assert "lỗi nội bộ" in err_msg.lower() or "thử lại" in err_msg.lower()
+
+
+# ── PDFL-158.3: E2E Export Compatibility & Interoperability Tests ──────────────
+
+def test_e2e_pipeline_export_compatibility_txt_and_pdf():
+    """
+    Xác thực toàn trình E2E về tính tương thích file xuất:
+    1. Upload và dịch tài liệu mẫu.
+    2. Xuất TXT song ngữ: kiểm tra UTF-8 BOM, giải mã UTF-8/UTF-8-SIG, cấu trúc 2 phần.
+    3. Xuất PDF song ngữ: phân tích cấu trúc qua pypdf, trích xuất text tiếng Việt nguyên vẹn.
+    4. Xuất PDF tóm tắt: trích xuất bullet points và tiêu đề tóm tắt.
+    """
+    raw_doc_text = "Machine learning models require robust evaluation metrics and data integrity."
+    input_pdf = generate_pdf_buffer([raw_doc_text])
+    files = {"file": ("compat_test.pdf", input_pdf, "application/pdf")}
+    data = {"target_lang": "vi"}
+
+    res = client.post("/api/process/upload-and-translate", files=files, data=data)
+    assert res.status_code == 200
+    doc_data = res.json()["data"]
+    orig_text = doc_data["original_text"]
+    trans_text = doc_data["translated_text"]
+    assert len(orig_text) > 0
+    assert len(trans_text) > 0
+
+    # 1. Xuất TXT song ngữ (Bilingual)
+    payload_txt = {
+        "content": trans_text,
+        "original_content": orig_text,
+        "format": "txt",
+        "export_type": "bilingual",
+        "filename": "e2e_compat_bilingual",
+        "title": "Báo Cáo Song Ngữ E2E",
+    }
+    txt_res = client.post("/api/process/download", json=payload_txt)
+    assert txt_res.status_code == 200
+    assert txt_res.content.startswith(codecs.BOM_UTF8)
+    assert txt_res.content[:3] == b"\xef\xbb\xbf"
+
+    # Đọc lại bằng utf-8-sig
+    decoded_txt = txt_res.content.decode("utf-8-sig")
+    assert "Báo Cáo Song Ngữ E2E" in decoded_txt
+    assert "=== 1. VĂN BẢN GỐC ===" in decoded_txt
+    assert "=== 2. BẢN DỊCH ===" in decoded_txt
+    assert orig_text in decoded_txt
+    assert trans_text in decoded_txt
+
+    # Đọc lại bằng utf-8 tiêu chuẩn
+    utf8_raw = txt_res.content.decode("utf-8")
+    assert utf8_raw.startswith("\ufeff")
+    assert "\ufffd" not in utf8_raw
+
+    # 2. Xuất PDF song ngữ (Bilingual)
+    payload_pdf = {
+        "content": trans_text,
+        "original_content": orig_text,
+        "format": "pdf",
+        "export_type": "bilingual",
+        "filename": "e2e_compat_bilingual",
+        "title": "Báo Cáo Song Ngữ E2E",
+    }
+    pdf_res = client.post("/api/process/download", json=payload_pdf)
+    assert pdf_res.status_code == 200
+    assert pdf_res.content.startswith(b"%PDF-")
+
+    pdf_reader = pypdf.PdfReader(io.BytesIO(pdf_res.content))
+    assert not pdf_reader.is_encrypted
+    assert len(pdf_reader.pages) >= 1
+
+    extracted_pdf_text = "".join(p.extract_text() for p in pdf_reader.pages)
+    assert "1. VĂN BẢN GỐC" in extracted_pdf_text
+    assert "2. BẢN DỊCH" in extracted_pdf_text
+    assert "Machine learning models" in extracted_pdf_text
+
+    # 3. Xuất PDF tóm tắt (Summary)
+    payload_summary = {
+        "content": "- Điểm 1: Đánh giá độ tin cậy mô hình\n- Điểm 2: Tối ưu dữ liệu đầu vào",
+        "format": "pdf",
+        "export_type": "summary",
+        "filename": "e2e_compat_summary",
+        "title": "Tóm Tắt Báo Cáo E2E",
+    }
+    summary_res = client.post("/api/process/download", json=payload_summary)
+    assert summary_res.status_code == 200
+    summary_reader = pypdf.PdfReader(io.BytesIO(summary_res.content))
+    summary_text = "".join(p.extract_text() for p in summary_reader.pages)
+    assert "BẢN TÓM TẮT NỘI DUNG" in summary_text
+    assert "Đánh giá độ tin cậy mô hình" in summary_text
+

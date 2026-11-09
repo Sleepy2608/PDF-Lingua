@@ -1,6 +1,8 @@
+import codecs
 import io
 from datetime import timedelta
 from unittest.mock import patch
+import pypdf
 import pytest
 
 from app.core.dependencies import get_current_user
@@ -749,6 +751,113 @@ def test_download_all_4_export_types_header_suffixes():
         # Cả ASCII fallback và UTF-8 đều mang hậu tố tương ứng
         assert f'tai_lieu_chuan{expected_sfx}"' in cd
         assert f'tai_lieu_chuan{expected_sfx}' in cd
+
+
+# ── PDFL-158.3: Automated Export Compatibility & Tool Interoperability Tests ─
+
+def test_download_compatibility_txt_utf8_bom_and_roundtrip():
+    """Kiểm tra endpoint download trả file TXT có UTF-8 BOM, giải mã tương thích không lỗi font."""
+    content = (
+        "Cộng hòa Xã hội Chủ nghĩa Việt Nam\n"
+        "Độc lập - Tự do - Hạnh phúc\n\n"
+        "Nội dung kiểm tra tính tương thích bộ giải mã: ă, â, đ, ê, ô, ơ, ư, Á, À, Ả, Ã, Ạ.\n"
+        "Dòng 1: Chi tiết số liệu.\nDòng 2: Kết luận cuối cùng."
+    )
+    payload = {
+        "content": content,
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "kiem_tra_tuong_thich",
+        "title": "Báo Cáo Tương Thích TXT",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+
+    # 1. Byte UTF-8 BOM chính xác (\xef\xbb\xbf)
+    assert response.content.startswith(codecs.BOM_UTF8)
+    assert response.content[:3] == b"\xef\xbb\xbf"
+
+    # 2. Đọc bằng UTF-8 tiêu chuẩn: không phát sinh UnicodeDecodeError, chứa ký tự BOM mở đầu
+    text_utf8 = response.content.decode("utf-8")
+    assert text_utf8.startswith("\ufeff")
+    assert "\ufffd" not in text_utf8
+
+    # 3. Đọc bằng UTF-8-SIG: tự động tách bỏ BOM, bảo toàn nguyên vẹn toàn bộ ký tự tiếng Việt
+    text_sig = response.content.decode("utf-8-sig")
+    assert not text_sig.startswith("\ufeff")
+    assert "Báo Cáo Tương Thích TXT" in text_sig
+    assert content in text_sig
+
+
+def test_download_compatibility_pdf_pypdf_parsing():
+    """Kiểm tra endpoint download trả file PDF có thể phân tích cấu trúc và trích xuất bằng pypdf."""
+    orig_text = "Original English specifications with mathematical constraints: E = mc^2."
+    trans_text = "Quy chuẩn kỹ thuật bằng tiếng Việt: Ă, Â, Đ, Ê, Ô, Ơ, Ư. Năng lượng bằng khối lượng nhân bình phương tốc độ ánh sáng."
+    payload = {
+        "content": trans_text,
+        "original_content": orig_text,
+        "format": "pdf",
+        "export_type": "bilingual",
+        "filename": "tuong_thich_song_ngu",
+        "title": "Văn Bản Song Ngữ Kỹ Thuật",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    assert response.headers.get("content-type") == "application/pdf"
+    assert response.content.startswith(b"%PDF-")
+
+    # Phân tích cấu trúc qua pypdf
+    reader = pypdf.PdfReader(io.BytesIO(response.content))
+    assert not reader.is_encrypted
+    assert len(reader.pages) >= 1
+
+    extracted = "".join(p.extract_text() for p in reader.pages)
+    assert "1. VĂN BẢN GỐC" in extracted
+    assert "2. BẢN DỊCH" in extracted
+    assert "Original English specifications" in extracted
+    assert "Quy chuẩn kỹ thuật bằng tiếng Việt" in extracted
+
+
+def test_download_compatibility_multipage_and_special_chars():
+    """Kiểm tra endpoint download trả PDF phân trang chuẩn khi văn bản dài và có ký tự đặc biệt."""
+    special_lead = (
+        "Tài liệu phân tích chuyên sâu <Audit 2026>:\n"
+        "- Chỉ số tài chính: Lợi nhuận ròng +12.5%, Ngân sách 100.000$ (tương đương 2.500.000.000₫).\n"
+        "- Ký hiệu: \"Ngoặc kép\", 'ngoặc đơn', dấu & ampersand, bullet •, số 1., 2.\n"
+        "- Biểu thức: A < B & C > D."
+    )
+    long_sections = [
+        f"Mục lục số {i}: Đoạn giải trình số {i} với độ dài chi tiết nhằm kiểm tra quá trình tạo nhiều trang PDF qua API. "
+        f"Đảm bảo không bị vỡ bố cục khi có các ký tự tiếng Việt: Thử thách, vững chắc, thuận lợi."
+        for i in range(1, 45)
+    ]
+    full_body = special_lead + "\n\n" + "\n\n".join(long_sections)
+
+    payload = {
+        "content": full_body,
+        "format": "pdf",
+        "export_type": "summary",
+        "filename": "tai_lieu_nhieu_trang_api",
+        "title": "Báo Cáo Đa Trang API",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+
+    reader = pypdf.PdfReader(io.BytesIO(response.content))
+    # Văn bản dài 45 đoạn chắc chắn tạo ít nhất 2-3 trang
+    assert len(reader.pages) >= 2
+
+    # Toàn bộ các trang đều có văn bản trích xuất hợp lệ
+    for idx, page in enumerate(reader.pages):
+        txt = page.extract_text()
+        assert len(txt.strip()) > 50, f"Trang {idx+1} không có văn bản"
+
+    all_text = "".join(p.extract_text() for p in reader.pages)
+    assert "Chỉ số tài chính" in all_text
+    assert "100.000$" in all_text
+    assert "Mục lục số 1" in all_text
+    assert "Mục lục số 44" in all_text
+
 
 
 
