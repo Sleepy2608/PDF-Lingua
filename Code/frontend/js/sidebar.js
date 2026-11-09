@@ -2246,11 +2246,12 @@
     if (status === 'SUCCESS') {
       statusBadgeHtml = '<span class="status-pill active history-status-pill-success" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
       actionBtnHtml = `
-        <button type="button" class="doc-action-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Xem kết quả" aria-label="Xem kết quả">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button type="button" class="doc-action-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Xem chi tiết kết quả" aria-label="Chi tiết">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
+          <span>Chi tiết</span>
         </button>
       `;
     } else if (status === 'FAILED') {
@@ -2288,15 +2289,17 @@
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
+          <span>Xóa</span>
         </button>
       `;
     } else {
       deleteBtnHtml = `
-        <button type="button" class="doc-action-btn history-btn-delete" data-history-id="${record.id}" title="Xóa bản ghi lịch sử" aria-label="Xóa bản ghi lịch sử">
+        <button type="button" class="doc-action-btn history-btn-delete" data-history-id="${record.id}" title="Xóa bản ghi lịch sử" aria-label="Xóa">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
+          <span>Xóa</span>
         </button>
       `;
     }
@@ -2440,6 +2443,7 @@
           <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
           <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
         </svg>
+        <span>Đang mở...</span>
       `;
     }
 
