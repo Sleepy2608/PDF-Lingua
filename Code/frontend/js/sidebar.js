@@ -1060,13 +1060,13 @@
     tableEl.style.display = 'table';
     tbodyEl.innerHTML = '';
 
-    filteredDocs.forEach((doc) => {
-      const row = createDocumentTableRow(doc, token);
+    filteredDocs.forEach((doc, idx) => {
+      const row = createDocumentTableRow(doc, token, idx);
       tbodyEl.appendChild(row);
     });
   }
 
-  function createDocumentTableRow(doc, token) {
+  function createDocumentTableRow(doc, token, index) {
     const tr = document.createElement('tr');
     tr.className = 'documents-table-row';
     tr.dataset.docId = String(doc.id);
@@ -1080,21 +1080,13 @@
       ? '<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>Quét OCR</span>'
       : '<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>PDF Số</span>';
     const formattedDate = formatDate(doc.created_at) || '--';
+    const rowNumber = typeof index === 'number' ? index + 1 : 1;
 
     tr.innerHTML = `
+      <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
       <td>
-        <div class="doc-file-cell user-cell-meta">
-          <div class="doc-icon-badge" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-          </div>
-          <div class="doc-file-info">
-            <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
-          </div>
+        <div class="doc-file-info">
+          <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
         </div>
       </td>
       <td class="font-mono doc-cell-size">${escapeHtml(formattedSize)}</td>
@@ -2307,9 +2299,8 @@
     tr.innerHTML = `
       <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
       <td>
-        <div class="doc-file-info history-doc-info">
+        <div class="doc-file-info">
           <span class="user-cell-name doc-cell-filename history-doc-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
-          <span class="doc-cell-id font-mono history-doc-id">Tài liệu #${record.document_id}</span>
         </div>
       </td>
       <td class="history-cell-action">${actionBadgeHtml}</td>
@@ -2317,7 +2308,7 @@
       <td class="font-mono text-muted history-cell-duration">${escapeHtml(executionTime)}</td>
       <td class="date-mono font-mono history-cell-date">${escapeHtml(formattedDate)}</td>
       <td class="text-right">
-        <div class="doc-actions-group history-actions-group">
+        <div class="doc-row-actions history-actions-group">
           ${actionBtnHtml}
           ${deleteBtnHtml}
         </div>
