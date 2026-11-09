@@ -83,7 +83,7 @@ function initWorkspace() {
   if (btnDownloadMenu && downloadDropdown) {
     btnDownloadMenu.addEventListener('click', (e) => {
       e.stopPropagation();
-      updateSummaryExportState();
+      updateExportUIState();
       downloadDropdown.classList.toggle('show');
     });
 
@@ -94,7 +94,7 @@ function initWorkspace() {
     });
   }
 
-  // Multi-target Export Listeners (PDFL-150.4)
+  // Multi-target Export Listeners (PDFL-150.4 & PDFL-156.3)
   const exportBtnConfigs = [
     { id: 'btnDownloadTxt', format: 'txt', type: 'translated' },
     { id: 'btnDownloadPdf', format: 'pdf', type: 'translated' },
@@ -116,7 +116,7 @@ function initWorkspace() {
     }
   });
 
-  updateSummaryExportState();
+  updateExportUIState();
 
   if (btnNewFile) {
     btnNewFile.addEventListener('click', resetToUpload);
@@ -159,6 +159,7 @@ function initWorkspace() {
         saveWorkspaceDocToStorage(currentDocData);
       }
       updateCounters();
+      updateExportUIState();
     });
 
     paneTranslated.addEventListener('input', () => {
@@ -167,6 +168,7 @@ function initWorkspace() {
         saveWorkspaceDocToStorage(currentDocData);
       }
       updateCounters();
+      updateExportUIState();
     });
   }
 
@@ -574,6 +576,7 @@ async function handleRetranslate() {
       paneTranslated.innerText = newTranslatedText;
     }
     updateCounters();
+    updateExportUIState();
     showToast(`Đã dịch xong sang ${getLangName(newTargetLang)}!`, 'success');
 
   } catch (error) {
@@ -590,6 +593,36 @@ async function handleRetranslate() {
       `;
     }
   }
+}
+
+/**
+ * Lấy nội dung văn bản gốc từ DOM hoặc currentDocData (PDFL-156.3).
+ * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
+ */
+function getOriginalContent() {
+  const paneOriginal = document.getElementById('paneOriginal');
+  if (paneOriginal && (paneOriginal.innerText || '').trim()) {
+    return paneOriginal.innerText.trim();
+  }
+  if (currentDocData && typeof currentDocData.original_text === 'string' && currentDocData.original_text.trim()) {
+    return currentDocData.original_text.trim();
+  }
+  return '';
+}
+
+/**
+ * Lấy nội dung bản dịch từ DOM hoặc currentDocData (PDFL-156.3).
+ * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
+ */
+function getTranslatedContent() {
+  const paneTranslated = document.getElementById('paneTranslated');
+  if (paneTranslated && (paneTranslated.innerText || '').trim()) {
+    return paneTranslated.innerText.trim();
+  }
+  if (currentDocData && typeof currentDocData.translated_text === 'string' && currentDocData.translated_text.trim()) {
+    return currentDocData.translated_text.trim();
+  }
+  return '';
 }
 
 /**
@@ -613,15 +646,65 @@ function getSummaryContent() {
 }
 
 /**
- * Cập nhật trạng thái hiển thị và khả năng bấm của các nút xuất bản tóm tắt (PDFL-150.4).
+ * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả 8 nút tải xuống (PDFL-156.3).
  */
-function updateSummaryExportState() {
+function updateExportUIState() {
+  const originalText = getOriginalContent();
+  const translatedText = getTranslatedContent();
   const summaryText = getSummaryContent();
-  const hasSummary = Boolean(summaryText);
+
+  const hasDoc = Boolean(currentDocData);
+  const hasOriginal = hasDoc && Boolean(originalText);
+  const hasTranslated = hasDoc && Boolean(translatedText);
+  const hasBilingual = hasDoc && hasOriginal && hasTranslated;
+  const hasSummary = hasDoc && Boolean(summaryText);
+
+  // 1. Bản dịch (translated)
+  const btnTransTxt = document.getElementById('btnDownloadTxt');
+  const btnTransPdf = document.getElementById('btnDownloadPdf');
+  if (btnTransTxt) {
+    btnTransTxt.disabled = !hasTranslated;
+    btnTransTxt.title = hasTranslated ? 'Tải bản dịch định dạng TXT' : 'Chưa có nội dung bản dịch';
+  }
+  if (btnTransPdf) {
+    btnTransPdf.disabled = !hasTranslated;
+    btnTransPdf.title = hasTranslated ? 'Tải bản dịch định dạng PDF' : 'Chưa có nội dung bản dịch';
+  }
+
+  // 2. Văn bản gốc (original)
+  const btnOrigTxt = document.getElementById('btnDownloadOriginalTxt');
+  const btnOrigPdf = document.getElementById('btnDownloadOriginalPdf');
+  if (btnOrigTxt) {
+    btnOrigTxt.disabled = !hasOriginal;
+    btnOrigTxt.title = hasOriginal ? 'Tải văn bản gốc định dạng TXT' : 'Chưa có nội dung văn bản gốc';
+  }
+  if (btnOrigPdf) {
+    btnOrigPdf.disabled = !hasOriginal;
+    btnOrigPdf.title = hasOriginal ? 'Tải văn bản gốc định dạng PDF' : 'Chưa có nội dung văn bản gốc';
+  }
+
+  // 3. Song ngữ (bilingual)
+  const btnBiTxt = document.getElementById('btnDownloadBilingualTxt');
+  const btnBiPdf = document.getElementById('btnDownloadBilingualPdf');
+  const biTitle = hasBilingual
+    ? 'Tải song ngữ định dạng TXT'
+    : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
+  const biPdfTitle = hasBilingual
+    ? 'Tải song ngữ định dạng PDF'
+    : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
+  if (btnBiTxt) {
+    btnBiTxt.disabled = !hasBilingual;
+    btnBiTxt.title = biTitle;
+  }
+  if (btnBiPdf) {
+    btnBiPdf.disabled = !hasBilingual;
+    btnBiPdf.title = biPdfTitle;
+  }
+
+  // 4. Bản tóm tắt (summary)
   const btnSummTxt = document.getElementById('btnDownloadSummaryTxt');
   const btnSummPdf = document.getElementById('btnDownloadSummaryPdf');
   const statusBadge = document.getElementById('summaryExportStatus');
-
   if (btnSummTxt) {
     btnSummTxt.disabled = !hasSummary;
     btnSummTxt.title = hasSummary ? 'Tải bản tóm tắt định dạng TXT' : 'Chưa có bản tóm tắt';
@@ -636,6 +719,13 @@ function updateSummaryExportState() {
   }
 }
 
+/**
+ * Alias cho updateExportUIState để tương thích ngược.
+ */
+function updateSummaryExportState() {
+  updateExportUIState();
+}
+
 async function triggerDownload(format = 'txt', exportType = 'translated') {
   if (!currentDocData) {
     showToast('Chưa có tài liệu để tải về!', 'error');
@@ -645,59 +735,51 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   const dropdown = document.getElementById('downloadDropdown');
   if (dropdown) dropdown.classList.remove('show');
 
-  const paneOriginal = document.getElementById('paneOriginal');
-  const paneTranslated = document.getElementById('paneTranslated');
-
-  const currentOriginal = (paneOriginal && paneOriginal.innerText.trim())
-    ? paneOriginal.innerText.trim()
-    : ((currentDocData && currentDocData.original_text) || '').trim();
-
-  const currentTranslated = (paneTranslated && paneTranslated.innerText.trim())
-    ? paneTranslated.innerText.trim()
-    : ((currentDocData && currentDocData.translated_text) || '').trim();
+  const currentOriginal = getOriginalContent();
+  const currentTranslated = getTranslatedContent();
 
   let targetContent = '';
   let originalContent = '';
 
   switch (exportType) {
     case 'original':
-      if (!currentOriginal) {
+      if (!currentOriginal || !currentOriginal.trim()) {
         showToast('Chưa có nội dung văn bản gốc để tải về!', 'error');
         return;
       }
-      targetContent = currentOriginal;
+      targetContent = currentOriginal.trim();
       break;
 
     case 'summary': {
       const summaryText = getSummaryContent();
-      if (!summaryText) {
+      if (!summaryText || !summaryText.trim()) {
         showToast('Chưa có nội dung tóm tắt. Vui lòng tạo bản tóm tắt trước khi tải về!', 'error');
         return;
       }
-      targetContent = summaryText;
+      targetContent = summaryText.trim();
       break;
     }
 
     case 'bilingual':
-      if (!currentOriginal) {
+      if (!currentOriginal || !currentOriginal.trim()) {
         showToast('Thiếu nội dung văn bản gốc để xuất song ngữ!', 'error');
         return;
       }
-      if (!currentTranslated) {
+      if (!currentTranslated || !currentTranslated.trim()) {
         showToast('Thiếu nội dung bản dịch để xuất song ngữ!', 'error');
         return;
       }
-      targetContent = currentTranslated;
-      originalContent = currentOriginal;
+      targetContent = currentTranslated.trim();
+      originalContent = currentOriginal.trim();
       break;
 
     case 'translated':
     default:
-      if (!currentTranslated) {
+      if (!currentTranslated || !currentTranslated.trim()) {
         showToast('Chưa có nội dung bản dịch để tải về!', 'error');
         return;
       }
-      targetContent = currentTranslated;
+      targetContent = currentTranslated.trim();
       break;
   }
 
@@ -788,6 +870,11 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
 }
 
 function renderWorkspace(data) {
+  if (data) {
+    currentDocData = data;
+    saveWorkspaceDocToStorage(currentDocData);
+  }
+
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
   const documentsSection = document.getElementById('documentsSection');
@@ -840,7 +927,7 @@ function renderWorkspace(data) {
   }
 
   updateCounters();
-  updateSummaryExportState();
+  updateExportUIState();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -878,7 +965,13 @@ function resetToUpload() {
   const btnRemoveFile = document.getElementById('btnRemoveFile');
   if (btnRemoveFile) btnRemoveFile.click();
 
-  updateSummaryExportState();
+  const paneOriginal = document.getElementById('paneOriginal');
+  const paneTranslated = document.getElementById('paneTranslated');
+  if (paneOriginal) paneOriginal.innerText = '';
+  if (paneTranslated) paneTranslated.innerText = '';
+
+  updateCounters();
+  updateExportUIState();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -988,7 +1081,7 @@ function getLangName(code) {
   return names[code] || code;
 }
 
-// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4)
+// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4 & PDFL-156.3)
 if (typeof window !== 'undefined') {
   window.pdfLinguaWorkspace = Object.assign(window.pdfLinguaWorkspace || {}, {
     getAuthHeaders,
@@ -996,7 +1089,10 @@ if (typeof window !== 'undefined') {
     handleProcessPdf,
     handleRetranslate,
     triggerDownload,
+    getOriginalContent,
+    getTranslatedContent,
     getSummaryContent,
+    updateExportUIState,
     updateSummaryExportState,
     showToast,
     cleanupProgressTracking,
@@ -1005,7 +1101,7 @@ if (typeof window !== 'undefined') {
     setCurrentDocData: (d) => {
       currentDocData = d;
       saveWorkspaceDocToStorage(d);
-      updateSummaryExportState();
+      updateExportUIState();
     },
   });
   window.showToast = showToast;

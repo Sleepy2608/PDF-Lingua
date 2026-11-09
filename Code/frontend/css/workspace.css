@@ -248,6 +248,11 @@
   transform: none;
 }
 
+.dropdown-format-btn:disabled .fmt-pill {
+  opacity: 0.6;
+  filter: grayscale(40%);
+}
+
 .dropdown-divider {
   height: 1px;
   background-color: var(--border-subtle);

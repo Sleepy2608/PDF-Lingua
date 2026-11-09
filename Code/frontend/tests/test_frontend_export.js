@@ -602,6 +602,178 @@ runTest('8.2: triggerDownload() with no parameters defaults to format=txt and ex
   assert.strictEqual(fetchCalls[0].body.filename, 'legacy_dich');
 });
 
+// ==========================================
+// Test Suite 9: PDFL-156.3 Empty State & Download Validation
+// ==========================================
+console.log('\n[Suite 9] Empty State & Strict Download Validation (PDFL-156.3)');
+
+runTest('9.1: resetToUpload disables all 8 export buttons and clears panes', () => {
+  const { context, elements } = createEnvironment();
+  context.initWorkspace();
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'doc.pdf',
+    original_text: 'Hello',
+    translated_text: 'Xin chào',
+    summary_text: 'Tóm tắt',
+  });
+  elements.paneOriginal.innerText = 'Hello';
+  elements.paneTranslated.innerText = 'Xin chào';
+  context.pdfLinguaWorkspace.updateExportUIState();
+
+  assert.strictEqual(elements.btnDownloadTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadSummaryTxt.disabled, false);
+
+  // Now reset workspace
+  context.resetToUpload();
+
+  assert.strictEqual(elements.btnDownloadTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadPdf.disabled, true);
+  assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadOriginalPdf.disabled, true);
+  assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadBilingualPdf.disabled, true);
+  assert.strictEqual(elements.btnDownloadSummaryTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadSummaryPdf.disabled, true);
+  assert.strictEqual(elements.paneOriginal.innerText, '');
+  assert.strictEqual(elements.paneTranslated.innerText, '');
+});
+
+runTest('9.2: When original is null, empty string or whitespace, original & bilingual buttons are disabled', () => {
+  const emptyValues = [null, '', '   ', '\n\t  '];
+  emptyValues.forEach(emptyVal => {
+    const { context, elements } = createEnvironment();
+    context.initWorkspace();
+    context.pdfLinguaWorkspace.setCurrentDocData({
+      filename: 'doc.pdf',
+      original_text: emptyVal,
+      translated_text: 'Bản dịch hợp lệ',
+    });
+    elements.paneOriginal.innerText = emptyVal || '';
+    elements.paneTranslated.innerText = 'Bản dịch hợp lệ';
+    context.pdfLinguaWorkspace.updateExportUIState();
+
+    assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, true);
+    assert.strictEqual(elements.btnDownloadOriginalPdf.disabled, true);
+    assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, true);
+    assert.strictEqual(elements.btnDownloadBilingualPdf.disabled, true);
+    // Translated buttons should remain enabled
+    assert.strictEqual(elements.btnDownloadTxt.disabled, false);
+    assert.strictEqual(elements.btnDownloadPdf.disabled, false);
+  });
+});
+
+runTest('9.3: When translated is null, empty string or whitespace, translated & bilingual buttons are disabled', () => {
+  const emptyValues = [null, '', '   ', '\n\t  '];
+  emptyValues.forEach(emptyVal => {
+    const { context, elements } = createEnvironment();
+    context.initWorkspace();
+    context.pdfLinguaWorkspace.setCurrentDocData({
+      filename: 'doc.pdf',
+      original_text: 'Văn bản gốc hợp lệ',
+      translated_text: emptyVal,
+    });
+    elements.paneOriginal.innerText = 'Văn bản gốc hợp lệ';
+    elements.paneTranslated.innerText = emptyVal || '';
+    context.pdfLinguaWorkspace.updateExportUIState();
+
+    assert.strictEqual(elements.btnDownloadTxt.disabled, true);
+    assert.strictEqual(elements.btnDownloadPdf.disabled, true);
+    assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, true);
+    assert.strictEqual(elements.btnDownloadBilingualPdf.disabled, true);
+    // Original buttons should remain enabled
+    assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, false);
+    assert.strictEqual(elements.btnDownloadOriginalPdf.disabled, false);
+  });
+});
+
+runTest('9.4: Live pane input event synchronizes button disabled states immediately', () => {
+  const { context, elements } = createEnvironment();
+  context.initWorkspace();
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'doc.pdf',
+    original_text: '',
+    translated_text: 'Bản dịch có sẵn',
+  });
+  elements.paneOriginal.innerText = '';
+  elements.paneTranslated.innerText = 'Bản dịch có sẵn';
+  context.pdfLinguaWorkspace.updateExportUIState();
+
+  assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, true);
+
+  // User types text into paneOriginal
+  elements.paneOriginal.innerText = 'Người dùng vừa nhập văn bản!';
+  elements.paneOriginal.trigger('input');
+
+  assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, false);
+
+  // User clears paneOriginal with whitespace
+  elements.paneOriginal.innerText = '   ';
+  elements.paneOriginal.trigger('input');
+
+  assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, true);
+});
+
+runTest('9.5: triggerDownload rejects whitespace-only content across all 4 export types without calling fetch', async () => {
+  const testCases = [
+    { type: 'original', orig: '   ', trans: 'Hợp lệ', summ: 'Hợp lệ' },
+    { type: 'translated', orig: 'Hợp lệ', trans: ' \t\n ', summ: 'Hợp lệ' },
+    { type: 'summary', orig: 'Hợp lệ', trans: 'Hợp lệ', summ: '   ' },
+    { type: 'bilingual', orig: '   ', trans: 'Hợp lệ', summ: 'Hợp lệ' },
+    { type: 'bilingual', orig: 'Hợp lệ', trans: '   ', summ: 'Hợp lệ' },
+  ];
+
+  for (const tc of testCases) {
+    const { context, elements, fetchCalls } = createEnvironment();
+    context.pdfLinguaWorkspace.setCurrentDocData({
+      filename: 'test.pdf',
+      original_text: tc.orig,
+      translated_text: tc.trans,
+      summary_text: tc.summ,
+    });
+    elements.paneOriginal.innerText = tc.orig;
+    elements.paneTranslated.innerText = tc.trans;
+
+    let toastCalled = false;
+    context.showToast = (msg, type) => {
+      if (type === 'error') toastCalled = true;
+    };
+
+    await context.pdfLinguaWorkspace.triggerDownload('txt', tc.type);
+    assert.strictEqual(fetchCalls.length, 0, `Fetch should not be called for ${tc.type} with whitespace content`);
+    assert.strictEqual(toastCalled, true, `Error toast should be shown for ${tc.type} with whitespace content`);
+  }
+});
+
+runTest('9.6: renderWorkspace synchronizes UI state and enables buttons according to data', () => {
+  const { context, elements } = createEnvironment();
+  context.initWorkspace();
+
+  context.renderWorkspace({
+    filename: 'rendered.pdf',
+    page_count: 3,
+    file_size_mb: 1.5,
+    is_ocr_used: false,
+    original_text: 'Rendered original',
+    translated_text: 'Rendered translation',
+  });
+
+  assert.strictEqual(elements.btnDownloadTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadPdf.disabled, false);
+  assert.strictEqual(elements.btnDownloadOriginalTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadOriginalPdf.disabled, false);
+  assert.strictEqual(elements.btnDownloadBilingualTxt.disabled, false);
+  assert.strictEqual(elements.btnDownloadBilingualPdf.disabled, false);
+  // Summary should still be disabled since no summary exists
+  assert.strictEqual(elements.btnDownloadSummaryTxt.disabled, true);
+  assert.strictEqual(elements.btnDownloadSummaryPdf.disabled, true);
+  assert.strictEqual(elements.summaryExportStatus.textContent, '(chưa có)');
+});
+
 console.log(`\n======================================================`);
 console.log(`KẾT QUẢ KIỂM THỬ FRONTEND EXPORT: ${passedTests}/${totalTests} tests passed`);
 console.log(`======================================================\n`);
