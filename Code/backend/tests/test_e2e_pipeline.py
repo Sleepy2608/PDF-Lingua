@@ -1,7 +1,10 @@
 import io
 
 import pypdf
+import pytest
+from app.core.dependencies import get_current_user
 from app.main import app
+from app.models.user import User, UserRole
 from app.services.export_service import ExportService
 from app.services.translation_service import TranslationService
 from fastapi.testclient import TestClient
@@ -9,6 +12,22 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 client = TestClient(app)
+
+mock_auth_user = User(
+    id=1,
+    email="test_pipeline_user@example.com",
+    full_name="Test Pipeline User",
+    role=UserRole.FREE,
+    is_active=True,
+)
+
+
+@pytest.fixture(autouse=True)
+def setup_auth_for_export():
+    """Mặc định cung cấp authenticated user cho các bước export trong e2e pipeline."""
+    app.dependency_overrides[get_current_user] = lambda: mock_auth_user
+    yield mock_auth_user
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 def generate_pdf_buffer(paragraphs: list[str]) -> bytes:

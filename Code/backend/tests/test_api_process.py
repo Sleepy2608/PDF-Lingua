@@ -1,13 +1,33 @@
 import io
+from datetime import timedelta
 from unittest.mock import patch
 import pytest
 
+from app.core.dependencies import get_current_user
+from app.core.security import create_access_token
 from app.main import app
+from app.models.user import User, UserRole
 from fastapi.testclient import TestClient
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 client = TestClient(app)
+
+mock_auth_user = User(
+    id=1,
+    email="test_export_user@example.com",
+    full_name="Test Export User",
+    role=UserRole.FREE,
+    is_active=True,
+)
+
+
+@pytest.fixture(autouse=True)
+def setup_auth_for_export():
+    """Mặc định cung cấp authenticated user cho các test export/download."""
+    app.dependency_overrides[get_current_user] = lambda: mock_auth_user
+    yield mock_auth_user
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 def create_test_pdf_bytes(text: str = "Hello world from PDF-Lingua test.") -> bytes:
@@ -450,6 +470,71 @@ def test_download_empty_payload_dict():
     res_json = response.json()
     err_msg = res_json.get("message", "") or res_json.get("detail", "")
     assert "không được để trống" in err_msg
+
+
+# ── PDFL-157.2: Download Endpoint Authentication Tests ─────────────────────────
+
+def test_download_without_token_returns_401():
+    """Request gọi POST /api/process/download không có token phải bị từ chối với HTTP 401."""
+    app.dependency_overrides.pop(get_current_user, None)
+    payload = {
+        "content": "Nội dung cần xuất khi chưa đăng nhập.",
+        "format": "txt",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 401
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert res_json.get("error_code") == "NOT_AUTHENTICATED" or "xác thực" in err_msg.lower()
+
+
+def test_download_invalid_token_returns_401():
+    """Request có token không hợp lệ (sai chữ ký, malformed) phải bị từ chối với HTTP 401 INVALID_TOKEN."""
+    app.dependency_overrides.pop(get_current_user, None)
+    payload = {
+        "content": "Nội dung cần xuất với token không hợp lệ.",
+        "format": "txt",
+    }
+    response = client.post(
+        "/api/process/download",
+        headers={"Authorization": "Bearer bad.malformed.token"},
+        json=payload,
+    )
+    assert response.status_code == 401
+    res_json = response.json()
+    assert res_json.get("error_code") == "INVALID_TOKEN" or "token" in str(res_json).lower()
+
+
+def test_download_expired_token_returns_401():
+    """Request có token đã hết hạn phải bị từ chối với HTTP 401 TOKEN_EXPIRED."""
+    app.dependency_overrides.pop(get_current_user, None)
+    expired_token = create_access_token(subject=1, expires_delta=timedelta(seconds=-1))
+    payload = {
+        "content": "Nội dung cần xuất với token hết hạn.",
+        "format": "txt",
+    }
+    response = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {expired_token}"},
+        json=payload,
+    )
+    assert response.status_code == 401
+    res_json = response.json()
+    assert res_json.get("error_code") == "TOKEN_EXPIRED" or "hết hạn" in str(res_json).lower()
+
+
+def test_download_valid_user_success():
+    """User hợp lệ đã đăng nhập được phép gọi POST /api/process/download và xuất file thành công."""
+    payload = {
+        "content": "Nội dung bản dịch thành công cho authenticated user.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "authenticated_export",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    assert "authenticated_export_dich.txt" in response.headers.get("content-disposition", "")
+    assert "Nội dung bản dịch thành công cho authenticated user." in response.content.decode("utf-8-sig")
 
 
 

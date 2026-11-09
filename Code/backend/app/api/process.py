@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.dependencies import get_db, get_optional_current_user
+from app.core.dependencies import get_current_user, get_db, get_optional_current_user
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User, UserRole
@@ -513,7 +513,7 @@ async def retranslate(
 @router.post("/download")
 async def download_result(
     request: DownloadRequest,
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     export_type = request.export_type
 
