@@ -46,7 +46,7 @@ class RetranslateRequest(BaseModel):
 
 
 class DownloadRequest(BaseModel):
-    content: str = Field(..., min_length=1, description="Nội dung cần xuất file")
+    content: Optional[str] = Field(default=None, description="Nội dung cần xuất file")
     format: str = Field(default="txt", description="Định dạng tệp: txt hoặc pdf")
     export_type: ExportTargetType = Field(
         default=ExportTargetType.TRANSLATED,

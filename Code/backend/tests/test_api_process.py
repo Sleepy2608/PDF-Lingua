@@ -1,4 +1,6 @@
 import io
+from unittest.mock import patch
+import pytest
 
 from app.main import app
 from fastapi.testclient import TestClient
@@ -266,4 +268,179 @@ def test_submit_feedback_invalid_payload():
     }
     response = client.post("/api/process/feedback", json=payload)
     assert response.status_code in [400, 422]
+
+
+# ==============================================================================
+# PDFL-156.1 Tests: Backend Empty Content Validation
+# ==============================================================================
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_download_empty_content_original(empty_val):
+    payload = {
+        "content": empty_val,
+        "format": "txt",
+        "export_type": "original",
+        "filename": "doc_empty",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "văn bản gốc" in err_msg.lower() or "không được để trống" in err_msg
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_download_empty_content_translated(empty_val):
+    payload = {
+        "content": empty_val,
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "doc_empty",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "bản dịch" in err_msg.lower() or "không được để trống" in err_msg
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_download_empty_content_summary(empty_val):
+    payload = {
+        "content": empty_val,
+        "format": "pdf",
+        "export_type": "summary",
+        "filename": "doc_empty",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "tóm tắt" in err_msg.lower() or "không được để trống" in err_msg
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_download_bilingual_empty_translated_content(empty_val):
+    payload = {
+        "content": empty_val,
+        "format": "txt",
+        "export_type": "bilingual",
+        "original_content": "Valid original text.",
+        "filename": "doc_empty",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "bản dịch" in err_msg.lower() or "song ngữ" in err_msg.lower()
+
+
+@pytest.mark.parametrize("empty_val", [None, "", "   ", "\n\t  "])
+def test_download_bilingual_empty_original_content(empty_val):
+    payload = {
+        "content": "Valid translated text.",
+        "format": "pdf",
+        "export_type": "bilingual",
+        "original_content": empty_val,
+        "filename": "doc_empty",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "văn bản gốc" in err_msg.lower() or "original_content" in err_msg.lower()
+
+
+def test_download_bilingual_both_empty():
+    payload = {
+        "content": "   ",
+        "original_content": "   ",
+        "format": "txt",
+        "export_type": "bilingual",
+        "filename": "doc_empty",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "không được để trống" in err_msg
+
+
+def test_download_original_fallback_to_original_content():
+    """Nếu client gửi original export với content rỗng nhưng có original_content, hệ thống vẫn xuất thành công."""
+    payload = {
+        "content": "",
+        "original_content": "Nội dung văn bản gốc dự phòng.",
+        "format": "txt",
+        "export_type": "original",
+        "filename": "tai_lieu_goc",
+    }
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 200
+    decoded = response.content.decode("utf-8-sig")
+    assert "Nội dung văn bản gốc dự phòng." in decoded
+
+
+def test_download_valid_all_types():
+    """Kiểm tra trường hợp hợp lệ cho cả 4 loại export_type với cả TXT và PDF."""
+    types_config = [
+        ("original", "txt", "Nội dung gốc TXT", None, "_goc.txt"),
+        ("original", "pdf", "Nội dung gốc PDF", None, "_goc.pdf"),
+        ("translated", "txt", "Nội dung dịch TXT", None, "_dich.txt"),
+        ("translated", "pdf", "Nội dung dịch PDF", None, "_dich.pdf"),
+        ("summary", "txt", "Nội dung tóm tắt TXT", None, "_tomtat.txt"),
+        ("summary", "pdf", "Nội dung tóm tắt PDF", None, "_tomtat.pdf"),
+        ("bilingual", "txt", "Dịch song ngữ TXT", "Gốc song ngữ TXT", "_songngu.txt"),
+        ("bilingual", "pdf", "Dịch song ngữ PDF", "Gốc song ngữ PDF", "_songngu.pdf"),
+    ]
+    for exp_type, fmt, content, orig_content, expected_suffix in types_config:
+        payload = {
+            "content": content,
+            "format": fmt,
+            "export_type": exp_type,
+            "filename": "test_valid",
+        }
+        if orig_content:
+            payload["original_content"] = orig_content
+        resp = client.post("/api/process/download", json=payload)
+        assert resp.status_code == 200, f"Failed for {exp_type} with format {fmt}"
+        assert expected_suffix in resp.headers.get("content-disposition", "")
+
+
+def test_download_export_service_pdf_exception_returns_500():
+    """Khi ExportService.export_to_pdf phát sinh lỗi ngoài dự kiến, API phải trả về HTTP 500 với thông điệp chung."""
+    payload = {
+        "content": "Nội dung hợp lệ để xuất.",
+        "format": "pdf",
+        "export_type": "translated",
+        "filename": "tai_lieu_loi",
+    }
+    with patch("app.api.process.export_service.export_to_pdf", side_effect=RuntimeError("ReportLab internal segmentation error")):
+        response = client.post("/api/process/download", json=payload)
+        assert response.status_code == 500
+        res_json = response.json()
+        err_msg = res_json.get("message", "") or res_json.get("detail", "")
+        # Đảm bảo không tiết lộ chi tiết lỗi nội bộ ra ngoài client
+        assert "ReportLab internal segmentation error" not in err_msg
+        assert "lỗi nội bộ" in err_msg.lower() or "thử lại" in err_msg.lower()
+
+
+def test_download_export_service_txt_exception_returns_500():
+    """Khi ExportService.export_to_txt phát sinh lỗi ngoài dự kiến, API phải trả về HTTP 500 với thông điệp chung."""
+    payload = {
+        "content": "Nội dung hợp lệ để xuất.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "tai_lieu_loi",
+    }
+    with patch("app.api.process.export_service.export_to_txt", side_effect=IOError("Unexpected file buffer failure")):
+        response = client.post("/api/process/download", json=payload)
+        assert response.status_code == 500
+        res_json = response.json()
+        err_msg = res_json.get("message", "") or res_json.get("detail", "")
+        # Đảm bảo không tiết lộ chi tiết lỗi nội bộ ra ngoài client
+        assert "Unexpected file buffer failure" not in err_msg
+        assert "lỗi nội bộ" in err_msg.lower() or "thử lại" in err_msg.lower()
+
+
 

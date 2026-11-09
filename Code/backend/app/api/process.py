@@ -515,21 +515,58 @@ async def download_result(
     request: DownloadRequest,
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    if not request.content or not request.content.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nội dung tệp xuất không được để trống.",
-        )
-
     export_type = request.export_type
 
-    # PDFL-150.2: Với bilingual, bắt buộc phải có original_content
-    if export_type == ExportTargetType.BILINGUAL:
-        if not request.original_content or not request.original_content.strip():
+    content_str = (request.content or "").strip()
+    original_str = (request.original_content or "").strip()
+
+    # PDFL-156.1: Kiểm tra nội dung không rỗng theo export_type
+    # Xét đầy đủ các trường hợp: None, chuỗi rỗng và chuỗi chỉ chứa whitespace.
+    if export_type == ExportTargetType.ORIGINAL:
+        original_text = content_str or original_str
+        if not original_text:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung văn bản gốc không được để trống.",
+            )
+        export_content = original_text
+
+    elif export_type == ExportTargetType.TRANSLATED:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung bản dịch không được để trống.",
+            )
+        export_content = content_str
+
+    elif export_type == ExportTargetType.SUMMARY:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung tóm tắt không được để trống.",
+            )
+        export_content = content_str
+
+    elif export_type == ExportTargetType.BILINGUAL:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung bản dịch không được để trống khi xuất song ngữ.",
+            )
+        if not original_str:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Nội dung văn bản gốc (original_content) không được để trống khi xuất song ngữ.",
             )
+        export_content = content_str
+
+    else:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung tệp xuất không được để trống.",
+            )
+        export_content = content_str
 
     # Chuẩn hóa tiêu đề mặc định theo loại xuất
     default_titles = {
@@ -554,7 +591,7 @@ async def download_result(
     }
     target_suffix = suffix_map.get(export_type, "_dich")
 
-    raw_filename = re.sub(r'[\\/*?:"<>|]', "", request.filename.strip()) or "document"
+    raw_filename = re.sub(r'[\\/*?:"<>|]', "", (request.filename or "").strip()) or "document"
     raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE)
     for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
         if raw_filename.endswith(sfx):
@@ -565,26 +602,33 @@ async def download_result(
         raw_filename = "document"
 
     base_name = f"{raw_filename}{target_suffix}"
-    fmt = request.format.strip().lower()
+    fmt = (request.format or "txt").strip().lower()
 
-    if fmt == "pdf":
-        file_bytes = export_service.export_to_pdf(
-            content=request.content,
-            title=title,
-            original_content=request.original_content if export_type == ExportTargetType.BILINGUAL else None,
-            export_type=export_type,
-        )
-        media_type = "application/pdf"
-        download_name = f"{base_name}.pdf"
-    else:
-        file_bytes = export_service.export_to_txt(
-            content=request.content,
-            title=title,
-            export_type=export_type,
-            original_content=request.original_content if export_type == ExportTargetType.BILINGUAL else None,
-        )
-        media_type = "text/plain; charset=utf-8"
-        download_name = f"{base_name}.txt"
+    try:
+        if fmt == "pdf":
+            file_bytes = export_service.export_to_pdf(
+                content=export_content,
+                title=title,
+                original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
+                export_type=export_type,
+            )
+            media_type = "application/pdf"
+            download_name = f"{base_name}.pdf"
+        else:
+            file_bytes = export_service.export_to_txt(
+                content=export_content,
+                title=title,
+                export_type=export_type,
+                original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
+            )
+            media_type = "text/plain; charset=utf-8"
+            download_name = f"{base_name}.txt"
+    except Exception as e:
+        logger.exception(f"[Download] Export failed unexpectedly: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Đã xảy ra lỗi nội bộ khi tạo tệp xuất. Vui lòng thử lại sau.",
+        ) from e
 
     encoded_name = quote(download_name)
     headers = {
