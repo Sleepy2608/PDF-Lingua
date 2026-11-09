@@ -1,6 +1,38 @@
 const API_BASE_URL = 'http://localhost:8000/api/process';
+const WORKSPACE_DOC_STORAGE_KEY = 'pdfl_workspace_doc_data';
+const ACTIVE_JOB_STORAGE_KEY = 'pdfl_active_job_id';
+const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
+const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
 
 let currentDocData = null;
+
+function getWorkspaceSessionStorage() {
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage) return sessionStorage;
+    if (typeof window !== 'undefined' && window.sessionStorage) return window.sessionStorage;
+  } catch (_e) {}
+  return null;
+}
+
+function saveWorkspaceDocToStorage(docData) {
+  const store = getWorkspaceSessionStorage();
+  if (!store) return;
+  try {
+    if (docData) {
+      store.setItem(WORKSPACE_DOC_STORAGE_KEY, JSON.stringify(docData));
+    } else {
+      store.removeItem(WORKSPACE_DOC_STORAGE_KEY);
+    }
+  } catch (_e) {}
+}
+
+function clearActiveJobFromStorage() {
+  const store = getWorkspaceSessionStorage();
+  if (!store) return;
+  try {
+    store.removeItem(ACTIVE_JOB_STORAGE_KEY);
+  } catch (_e) {}
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   initWorkspace();
@@ -107,6 +139,7 @@ function initWorkspace() {
     paneOriginal.addEventListener('input', () => {
       if (currentDocData) {
         currentDocData.original_text = paneOriginal.innerText;
+        saveWorkspaceDocToStorage(currentDocData);
       }
       updateCounters();
     });
@@ -114,9 +147,41 @@ function initWorkspace() {
     paneTranslated.addEventListener('input', () => {
       if (currentDocData) {
         currentDocData.translated_text = paneTranslated.innerText;
+        saveWorkspaceDocToStorage(currentDocData);
       }
       updateCounters();
     });
+  }
+
+  // Restore workspace state or in-flight job if page reloaded (e.g., Live Server reload on storage write)
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      const savedDocRaw = store.getItem(WORKSPACE_DOC_STORAGE_KEY);
+      if (savedDocRaw && !currentDocData) {
+        currentDocData = JSON.parse(savedDocRaw);
+      }
+    } catch (_e) {}
+
+    try {
+      const savedJobId = store.getItem(ACTIVE_JOB_STORAGE_KEY);
+      const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
+      if (savedJobId) {
+        showProgressModal(true);
+        updateProgress(85, 'Đang hoàn tất xử lý và dịch thuật...', 3);
+        listenToJobProgress(savedJobId, btnProcessPdf);
+      } else if (currentDocData && activeView === 'workspace') {
+        renderWorkspace(currentDocData);
+        const pendingToastRaw = store.getItem(PENDING_TOAST_STORAGE_KEY);
+        if (pendingToastRaw) {
+          store.removeItem(PENDING_TOAST_STORAGE_KEY);
+          const pendingToast = JSON.parse(pendingToastRaw);
+          if (pendingToast && pendingToast.msg && Date.now() - (pendingToast.ts || 0) < 5000) {
+            showToast(pendingToast.msg, pendingToast.type || 'success');
+          }
+        }
+      }
+    } catch (_e) {}
   }
 }
 
@@ -201,14 +266,36 @@ function listenToJobProgress(jobId, btnProcessPdf) {
 
   const handleJobSuccess = (jobData) => {
     cleanupProgressTracking();
+    clearActiveJobFromStorage();
     currentDocData = jobData.result;
+    saveWorkspaceDocToStorage(currentDocData);
+    const store = getWorkspaceSessionStorage();
+    if (store) {
+      try {
+        store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+        store.setItem(
+          PENDING_TOAST_STORAGE_KEY,
+          JSON.stringify({ msg: 'Tài liệu đã được dịch thuật thành công!', type: 'success', ts: Date.now() })
+        );
+      } catch (_e) {}
+    }
     updateProgress(100, jobData.message || 'Xử lý và dịch thuật hoàn tất!', 4);
     setTimeout(() => {
+      if (store) {
+        try {
+          store.removeItem(PENDING_TOAST_STORAGE_KEY);
+        } catch (_e) {}
+      }
       showProgressModal(false);
       renderWorkspace(jobData.result);
       showToast('Tài liệu đã được dịch thuật thành công!', 'success');
       if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
         window.PDFLinguaSidebar.fetchRecentDocuments();
+      }
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        try {
+          window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: jobData.result } }));
+        } catch (e) {}
       }
       if (btnProcessPdf) btnProcessPdf.disabled = false;
     }, 400);
@@ -216,6 +303,7 @@ function listenToJobProgress(jobId, btnProcessPdf) {
 
   const handleJobFailure = (errorMsg) => {
     cleanupProgressTracking();
+    clearActiveJobFromStorage();
     showProgressModal(false);
     const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
     if (btn) btn.disabled = false;
@@ -232,6 +320,12 @@ function listenToJobProgress(jobId, btnProcessPdf) {
           method: 'GET',
           headers: authHeaders,
         });
+        if (res.status === 404) {
+          clearActiveJobFromStorage();
+          cleanupProgressTracking();
+          showProgressModal(false);
+          return;
+        }
         if (!res.ok) return;
         const body = await res.json();
         if (body && body.data) {
@@ -370,13 +464,26 @@ async function handleProcessPdf() {
     // Nếu endpoint trả về ngay kết quả trực tiếp (direct sync data hoặc test mock)
     if (result.data && result.data.translated_text && !result.data.job_id) {
       updateProgress(100, 'Xử lý và dịch thuật hoàn tất!', 4);
+      clearActiveJobFromStorage();
       currentDocData = result.data;
+      saveWorkspaceDocToStorage(currentDocData);
+      const store = getWorkspaceSessionStorage();
+      if (store) {
+        try {
+          store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+        } catch (_e) {}
+      }
       setTimeout(() => {
         showProgressModal(false);
         renderWorkspace(result.data);
         showToast('Tài liệu đã được dịch thuật thành công!', 'success');
         if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
           window.PDFLinguaSidebar.fetchRecentDocuments();
+        }
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+          try {
+            window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: result.data } }));
+          } catch (e) {}
         }
         if (btnProcessPdf) btnProcessPdf.disabled = false;
       }, 400);
@@ -386,6 +493,14 @@ async function handleProcessPdf() {
     const jobId = result.data ? result.data.job_id : null;
     if (!jobId) {
       throw new Error('Máy chủ không trả về mã tác vụ (Job ID).');
+    }
+
+    const store = getWorkspaceSessionStorage();
+    if (store) {
+      try {
+        store.setItem(ACTIVE_JOB_STORAGE_KEY, String(jobId));
+        store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+      } catch (_e) {}
     }
 
     // Theo dõi tiến độ thời gian thực qua Server-Sent Events (SSE)
@@ -451,6 +566,7 @@ async function handleRetranslate() {
     const newTranslatedText = result.data.translated_text;
     currentDocData.translated_text = newTranslatedText;
     currentDocData.target_lang = newTargetLang;
+    saveWorkspaceDocToStorage(currentDocData);
 
     const paneTranslated = document.getElementById('paneTranslated');
     if (paneTranslated) {
@@ -547,9 +663,27 @@ async function triggerDownload(format) {
 function renderWorkspace(data) {
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
+  const documentsSection = document.getElementById('documentsSection');
+  const historySection = document.getElementById('historySection');
+  const adminSection = document.getElementById('adminSection');
 
   if (heroSection) heroSection.style.display = 'none';
+  if (documentsSection) documentsSection.style.display = 'none';
+  if (historySection) historySection.style.display = 'none';
+  if (adminSection) adminSection.style.display = 'none';
   if (workspaceSection) workspaceSection.style.display = 'block';
+
+  // Highlight Dịch PDF in sidebar when document is translated
+  if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+    window.PDFLinguaSidebar.setActiveNav('translate');
+  } else {
+    const sideNavTranslate = document.getElementById('sideNavTranslate');
+    const allItems = document.querySelectorAll ? document.querySelectorAll('.sidebar-nav-item') : [];
+    if (allItems && typeof allItems.forEach === 'function') {
+      allItems.forEach((item) => item.classList.remove('active'));
+    }
+    if (sideNavTranslate) sideNavTranslate.classList.add('active');
+  }
 
   const docName = document.getElementById('docNameDisplay');
   const docPages = document.getElementById('docPagesDisplay');
@@ -558,9 +692,10 @@ function renderWorkspace(data) {
   const paneOriginal = document.getElementById('paneOriginal');
   const paneTranslated = document.getElementById('paneTranslated');
 
-  if (docName) docName.textContent = data.filename;
-  if (docPages) docPages.textContent = `${data.page_count} trang`;
-  if (docSize) docSize.textContent = `${data.file_size_mb} MB`;
+  const filename = data.filename || data.document_filename || 'Tài liệu không tên';
+  if (docName) docName.textContent = filename;
+  if (docPages) docPages.textContent = `${data.page_count || 1} trang`;
+  if (docSize) docSize.textContent = data.file_size_mb ? `${data.file_size_mb} MB` : '--';
 
   if (docType) {
     if (data.is_ocr_used) {
@@ -572,12 +707,39 @@ function renderWorkspace(data) {
     }
   }
 
+  const translatedContent = (data.action_type === 'SUMMARIZE' && data.summary_text)
+    ? data.summary_text
+    : (data.translated_text || '');
+
   if (paneOriginal) paneOriginal.innerText = data.original_text || '';
-  if (paneTranslated) paneTranslated.innerText = data.translated_text || '';
+  if (paneTranslated) paneTranslated.innerText = translatedContent;
 
   const targetLangSelect = document.getElementById('targetLangSelect');
   if (targetLangSelect && data.target_lang) {
     targetLangSelect.value = data.target_lang;
+  }
+
+  // Update currentDocData & persist to session storage so refresh preserves it (PDFL-165.2)
+  currentDocData = {
+    document_id: data.document_id,
+    history_id: data.history_id,
+    filename: filename,
+    page_count: data.page_count || 1,
+    file_size_mb: data.file_size_mb,
+    target_lang: data.target_lang || 'vi',
+    is_ocr_used: Boolean(data.is_ocr_used),
+    original_text: data.original_text || '',
+    translated_text: translatedContent,
+    action_type: data.action_type || 'TRANSLATE',
+    engine_used: data.engine_used,
+  };
+  saveWorkspaceDocToStorage(currentDocData);
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+    } catch (_e) {}
   }
 
   updateCounters();
@@ -586,12 +748,34 @@ function renderWorkspace(data) {
 
 function resetToUpload() {
   cleanupProgressTracking();
+  clearActiveJobFromStorage();
   currentDocData = null;
+  saveWorkspaceDocToStorage(null);
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.removeItem(ACTIVE_VIEW_STORAGE_KEY);
+    } catch (_e) {}
+  }
   const heroSection = document.getElementById('heroSection');
   const workspaceSection = document.getElementById('workspaceSection');
+  const documentsSection = document.getElementById('documentsSection');
 
   if (workspaceSection) workspaceSection.style.display = 'none';
+  if (documentsSection) documentsSection.style.display = 'none';
   if (heroSection) heroSection.style.display = 'block';
+
+  // Highlight Trang chủ in sidebar when returning to upload screen
+  if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveNav === 'function') {
+    window.PDFLinguaSidebar.setActiveNav('home');
+  } else {
+    const sideNavHome = document.getElementById('sideNavHome');
+    const allItems = document.querySelectorAll ? document.querySelectorAll('.sidebar-nav-item') : [];
+    if (allItems && typeof allItems.forEach === 'function') {
+      allItems.forEach((item) => item.classList.remove('active'));
+    }
+    if (sideNavHome) sideNavHome.classList.add('active');
+  }
 
   const btnRemoveFile = document.getElementById('btnRemoveFile');
   if (btnRemoveFile) btnRemoveFile.click();
@@ -716,8 +900,12 @@ if (typeof window !== 'undefined') {
     showToast,
     cleanupProgressTracking,
     listenToJobProgress,
+    renderWorkspace,
     getCurrentDocData: () => currentDocData,
-    setCurrentDocData: (d) => { currentDocData = d; },
+    setCurrentDocData: (d) => {
+      currentDocData = d;
+      saveWorkspaceDocToStorage(d);
+    },
   });
   window.showToast = showToast;
 }

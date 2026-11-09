@@ -106,11 +106,15 @@
 
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
     const pricingSection = document.getElementById('pricingSection');
     const adminSection = document.getElementById('adminSection');
 
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
     if (pricingSection) pricingSection.style.display = 'none';
     if (adminSection) {
       adminSection.style.display = 'block';

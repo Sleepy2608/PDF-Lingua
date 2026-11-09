@@ -6,10 +6,10 @@ Defines the `users` table schema for the PDF-Lingua database.
 Columns
 -------
 id              : Integer primary key (auto-increment).
-email           : Unique, case-folded email — used as login identifier.
-hashed_password : bcrypt/argon2 hash — never store plaintext.
+email           : Unique, case-folded email - used as login identifier.
+hashed_password : bcrypt/argon2 hash - never store plaintext.
 full_name       : Optional display name shown in the UI.
-role            : Enum(free | pro | admin) — drives feature access gates.
+role            : Enum(free | pro | admin) - drives feature access gates.
 is_active       : Soft-disable without deleting the account.
 created_at      : Timestamp set automatically on INSERT.
 updated_at      : Timestamp updated automatically on every UPDATE.
@@ -47,7 +47,7 @@ class User(Base):
         unique=True,
         nullable=False,
         index=True,
-        comment="Login identifier — stored lower-cased.",
+        comment="Login identifier: stored lower-cased.",
     )
     hashed_password: Mapped[str] = mapped_column(
         String(255),
@@ -113,6 +113,11 @@ class User(Base):
     )
     payment_transactions: Mapped[list[Any]] = relationship(
         "PaymentTransaction",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    processing_histories: Mapped[list[Any]] = relationship(
+        "ProcessingHistory",
         back_populates="user",
         cascade="all, delete-orphan",
     )

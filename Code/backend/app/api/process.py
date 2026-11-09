@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.core.dependencies import get_db, get_optional_current_user
 from app.core.logger import logger
 from app.models.document import Document
@@ -66,11 +67,15 @@ def _execute_pdf_background_job(
     target_lang: str,
     max_allowed_pages: int,
     file_size_mb: float,
+    user_id: Optional[int] = None,
+    file_size_bytes: Optional[int] = None,
 ) -> None:
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
     Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
+    Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
+    và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công (PDFL-90, PDFL-91).
     """
     try:
         acquired = _job_semaphore.acquire(blocking=False)
@@ -133,16 +138,99 @@ def _execute_pdf_background_job(
                 source_lang="auto",
             )
 
+            is_ocr_used = bool(
+                extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
+            )
+
+            document_id: Optional[int] = None
+            if user_id is not None:
+                db_session = SessionLocal()
+                try:
+                    raw_bytes = tmp_path.read_bytes()
+                    actual_size_bytes = file_size_bytes if file_size_bytes is not None else len(raw_bytes)
+                    stored_filename, rel_path, _ = storage_service.save_document_file(
+                        user_id=user_id,
+                        original_filename=filename,
+                        content=raw_bytes,
+                    )
+                    doc_record = Document(
+                        user_id=user_id,
+                        original_filename=filename,
+                        stored_filename=stored_filename,
+                        stored_path=rel_path,
+                        file_size_bytes=actual_size_bytes,
+                        page_count=page_count,
+                        target_lang=target_lang,
+                        is_ocr_used=is_ocr_used,
+                    )
+                    db_session.add(doc_record)
+                    db_session.commit()
+                    db_session.refresh(doc_record)
+                    document_id = doc_record.id
+                    logger.info(
+                        f"[Job {job_id}] Saved document id={document_id} for user_id={user_id}"
+                    )
+                except Exception as persist_err:
+                    db_session.rollback()
+                    logger.error(
+                        f"[Job {job_id}] Failed to persist document record for user_id={user_id}: {persist_err}"
+                    )
+                finally:
+                    db_session.close()
+
             result_data = {
+                "document_id": document_id,
                 "filename": filename,
                 "page_count": page_count,
                 "file_size_mb": file_size_mb,
                 "target_lang": target_lang,
-                "is_ocr_used": extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False,
+                "is_ocr_used": is_ocr_used,
                 "original_text": original_text,
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
             }
+
+            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1)
+            history_id: Optional[int] = None
+            if user_id is not None and document_id is not None:
+                hist_session = SessionLocal()
+                try:
+                    from app.models.processing_history import ActionType, ProcessingStatus
+                    from app.schemas.processing_history import ProcessingHistoryCreate
+                    from app.services.history_service import history_service
+
+                    hist_record = history_service.create_history(
+                        hist_session,
+                        ProcessingHistoryCreate(
+                            user_id=user_id,
+                            document_id=document_id,
+                            action_type=ActionType.TRANSLATE,
+                            status=ProcessingStatus.PENDING,
+                        ),
+                        reuse_pending=False,
+                    )
+                    history_id = hist_record.id
+                    history_service.save_history_result(
+                        hist_session,
+                        history_id=history_id,
+                        user_id=user_id,
+                        result_data=result_data,
+                    )
+                    result_data["history_id"] = history_id
+                    logger.info(
+                        f"[Job {job_id}] Persisted processing history id={history_id} and result file for user_id={user_id}"
+                    )
+                except Exception as hist_err:
+                    try:
+                        hist_session.rollback()
+                    except Exception:
+                        pass
+                    logger.error(
+                        f"[Job {job_id}] Failed to persist history record for user_id={user_id}: {hist_err}"
+                    )
+                finally:
+                    hist_session.close()
+
             job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
 
         except Exception as e:
@@ -199,12 +287,23 @@ async def create_processing_job(
         tmp_path = Path(tmp.name)
 
     job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
-    file_size_mb = round(len(content) / (1024 * 1024), 2)
+    file_size_bytes = len(content)
+    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
+    authenticated_user_id = current_user.id if current_user is not None else None
 
     # Khởi chạy Worker trong luồng nền độc lập
     thread = threading.Thread(
         target=_execute_pdf_background_job,
-        args=(job.job_id, tmp_path, file.filename, target_lang, max_ocr_pages, file_size_mb),
+        args=(
+            job.job_id,
+            tmp_path,
+            file.filename,
+            target_lang,
+            max_ocr_pages,
+            file_size_mb,
+            authenticated_user_id,
+            file_size_bytes,
+        ),
         daemon=True,
     )
     thread.start()
@@ -367,6 +466,7 @@ async def upload_and_translate(
         )
 
         document_id: Optional[int] = None
+        history_id: Optional[int] = None
         if current_user is not None:
             try:
                 stored_filename, rel_path, _ = storage_service.save_document_file(
@@ -391,6 +491,42 @@ async def upload_and_translate(
                 logger.info(
                     f"[Process] Saved document id={document_id} for user_id={current_user.id}"
                 )
+
+                # Persist processing history & result (PDFL-165.1)
+                try:
+                    from app.models.processing_history import ActionType, ProcessingStatus
+                    from app.schemas.processing_history import ProcessingHistoryCreate
+                    from app.services.history_service import history_service
+
+                    hist_rec = history_service.create_history(
+                        db,
+                        ProcessingHistoryCreate(
+                            user_id=current_user.id,
+                            document_id=document_id,
+                            action_type=ActionType.TRANSLATE,
+                            status=ProcessingStatus.PENDING,
+                        ),
+                        reuse_pending=False,
+                    )
+                    history_id = hist_rec.id
+                    history_service.save_history_result(
+                        db,
+                        history_id=history_id,
+                        user_id=current_user.id,
+                        result_data={
+                            "document_id": document_id,
+                            "filename": file.filename,
+                            "page_count": page_count,
+                            "file_size_mb": round(len(content) / (1024 * 1024), 2),
+                            "target_lang": target_lang,
+                            "is_ocr_used": is_ocr_used,
+                            "original_text": original_text,
+                            "translated_text": translation_result["translated_text"],
+                            "engine_used": translation_result["engine_used"],
+                        },
+                    )
+                except Exception as hist_err:
+                    logger.error(f"[Process] Failed to persist history for user_id={current_user.id}: {hist_err}")
             except Exception as e:
                 db.rollback()
                 logger.error(
@@ -399,6 +535,7 @@ async def upload_and_translate(
 
         response_data = ProcessResponseData(
             document_id=document_id,
+            history_id=history_id,
             filename=file.filename,
             page_count=page_count,
             file_size_mb=round(len(content) / (1024 * 1024), 2),

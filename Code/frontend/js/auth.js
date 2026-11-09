@@ -16,12 +16,51 @@
   let isSubmitting = false;
   let isRestoringSession = false;
 
-  let openRegisterModal = () => {};
-  let closeRegisterModal = () => {};
-  let openLoginModal = () => {};
-  let closeLoginModal = () => {};
   let openAccountModal = () => {};
   let closeAccountModal = () => {};
+
+  function openRegisterModal() {
+    closeLoginModal();
+    const registerModal = document.getElementById('registerModal');
+    resetRegisterModalState();
+    clearAllFieldErrors();
+    if (!registerModal) return;
+    registerModal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    const firstInput = document.getElementById('regFullName');
+    if (firstInput && typeof firstInput.focus === 'function') {
+      setTimeout(() => firstInput.focus(), 50);
+    }
+  }
+
+  function closeRegisterModal() {
+    const registerModal = document.getElementById('registerModal');
+    resetRegisterModalState();
+    if (!registerModal) return;
+    registerModal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
+
+  function openLoginModal() {
+    closeRegisterModal();
+    const loginModal = document.getElementById('loginModal');
+    resetLoginModalState();
+    if (!loginModal) return;
+    loginModal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    const emailInput = document.getElementById('loginEmail');
+    if (emailInput && typeof emailInput.focus === 'function') {
+      setTimeout(() => emailInput.focus(), 50);
+    }
+  }
+
+  function closeLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    resetLoginModalState();
+    if (!loginModal) return;
+    loginModal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
     initAuthModals();
@@ -46,50 +85,6 @@
     const btnCloseLogin = document.getElementById('btnCloseLoginModal');
     const linkSwitchLogin = document.getElementById('linkSwitchLogin');
     const linkSwitchRegister = document.getElementById('linkSwitchRegister');
-
-    // ── Register Modal ──
-
-    openRegisterModal = function () {
-      closeLoginModal();
-      if (!registerModal) return;
-      registerModal.removeAttribute('hidden');
-      document.body.style.overflow = 'hidden';
-      clearRegisterAlert();
-      clearAllFieldErrors();
-      const firstInput = document.getElementById('regFullName');
-      if (firstInput) {
-        setTimeout(() => firstInput.focus(), 50);
-      }
-    };
-
-    closeRegisterModal = function () {
-      if (!registerModal) return;
-      registerModal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-      clearRegisterAlert();
-    };
-
-    // ── Login Modal ──
-
-    openLoginModal = function () {
-      closeRegisterModal();
-      if (!loginModal) return;
-      loginModal.removeAttribute('hidden');
-      document.body.style.overflow = 'hidden';
-      clearLoginAlert();
-      clearLoginFieldErrors();
-      const emailInput = document.getElementById('loginEmail');
-      if (emailInput) {
-        setTimeout(() => emailInput.focus(), 50);
-      }
-    };
-
-    closeLoginModal = function () {
-      if (!loginModal) return;
-      loginModal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-      clearLoginAlert();
-    };
 
     // ── Button Wiring ──
 
@@ -888,11 +883,46 @@
     });
   }
 
+  function clearRegisterFieldErrors() {
+    ['regFullName', 'regEmail', 'regPassword', 'regConfirmPassword'].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) clearFieldError(input);
+    });
+  }
+
   function clearLoginFieldErrors() {
     ['loginEmail', 'loginPassword'].forEach((id) => {
       const input = document.getElementById(id);
       if (input) clearFieldError(input);
     });
+  }
+
+  function resetRegisterModalState() {
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm && typeof registerForm.reset === 'function') {
+      registerForm.reset();
+    }
+    ['regFullName', 'regEmail', 'regPassword', 'regConfirmPassword'].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) input.value = '';
+    });
+    clearRegisterAlert();
+    clearRegisterFieldErrors();
+    resetPasswordToggleView();
+  }
+
+  function resetLoginModalState() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm && typeof loginForm.reset === 'function') {
+      loginForm.reset();
+    }
+    ['loginEmail', 'loginPassword'].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) input.value = '';
+    });
+    clearLoginAlert();
+    clearLoginFieldErrors();
+    resetLoginPasswordToggle();
   }
 
   /**
@@ -943,18 +973,29 @@
   /**
    * Password toggle reset helpers
    */
+  function resetEyeToggleBtn(btn, defaultLabel = 'Hiện mật khẩu') {
+    if (!btn) return;
+    const open = typeof btn.querySelector === 'function' ? btn.querySelector('.eye-open') : null;
+    const closed = typeof btn.querySelector === 'function' ? btn.querySelector('.eye-closed') : null;
+    if (open) open.style.display = 'block';
+    if (closed) closed.style.display = 'none';
+    if (typeof btn.setAttribute === 'function') {
+      btn.setAttribute('aria-label', defaultLabel);
+    }
+  }
+
   function resetPasswordToggleView() {
     const pwdInput = document.getElementById('regPassword');
     const confirmInput = document.getElementById('regConfirmPassword');
     if (pwdInput) pwdInput.type = 'password';
     if (confirmInput) confirmInput.type = 'password';
 
+    resetEyeToggleBtn(document.getElementById('toggleRegPassword'), 'Hiện mật khẩu');
+    resetEyeToggleBtn(document.getElementById('toggleRegConfirmPassword'), 'Hiện mật khẩu xác nhận');
+
     document.querySelectorAll('#registerModal .btn-toggle-eye').forEach((btn) => {
-      const open = btn.querySelector('.eye-open');
-      const closed = btn.querySelector('.eye-closed');
-      if (open) open.style.display = 'block';
-      if (closed) closed.style.display = 'none';
-      btn.setAttribute('aria-label', 'Hiện mật khẩu');
+      const label = btn.id === 'toggleRegConfirmPassword' ? 'Hiện mật khẩu xác nhận' : 'Hiện mật khẩu';
+      resetEyeToggleBtn(btn, label);
     });
   }
 
@@ -962,12 +1003,10 @@
     const loginPwd = document.getElementById('loginPassword');
     if (loginPwd) loginPwd.type = 'password';
 
+    resetEyeToggleBtn(document.getElementById('toggleLoginPassword'), 'Hiện mật khẩu');
+
     document.querySelectorAll('#loginModal .btn-toggle-eye').forEach((btn) => {
-      const open = btn.querySelector('.eye-open');
-      const closed = btn.querySelector('.eye-closed');
-      if (open) open.style.display = 'block';
-      if (closed) closed.style.display = 'none';
-      btn.setAttribute('aria-label', 'Hiện mật khẩu');
+      resetEyeToggleBtn(btn, 'Hiện mật khẩu');
     });
   }
 
@@ -1803,13 +1842,12 @@
 
     if (detailRole) {
       const roleStr = (user.role || 'free').toLowerCase();
-      let roleDisplay = 'Miễn phí';
-      if (roleStr === 'pro') {
-        roleDisplay = 'Pro';
-      } else if (roleStr === 'admin') {
-        roleDisplay = 'Quản trị viên';
-      }
-      detailRole.textContent = roleDisplay;
+      const roleLabels = {
+        admin: 'Quản trị viên',
+        pro: 'Gói Pro VIP',
+        free: 'Gói Miễn phí',
+      };
+      detailRole.textContent = roleLabels[roleStr] || 'Gói Miễn phí';
       detailRole.className = `badge-role role-${roleStr}`;
 
       const btnAccountUpgradePro = document.getElementById('btnAccountUpgradePro');
@@ -1821,12 +1859,24 @@
     if (detailStatus) {
       if (user.is_active === false) {
         detailStatus.textContent = 'Bị vô hiệu';
+        detailStatus.className = 'badge-status status-inactive';
+        if (detailStatus.classList) {
+          detailStatus.classList.remove('status-active');
+          detailStatus.classList.add('status-inactive');
+        }
         detailStatus.style.backgroundColor = '#FEE2E2';
         detailStatus.style.color = '#DC2626';
+        detailStatus.style.borderColor = '#FCA5A5';
       } else {
         detailStatus.textContent = 'Hoạt động';
+        detailStatus.className = 'badge-status status-active';
+        if (detailStatus.classList) {
+          detailStatus.classList.remove('status-inactive');
+          detailStatus.classList.add('status-active');
+        }
         detailStatus.style.backgroundColor = '';
         detailStatus.style.color = '';
+        detailStatus.style.borderColor = '';
       }
     }
   }

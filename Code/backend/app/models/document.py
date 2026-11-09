@@ -8,7 +8,7 @@ Supports persistent file storage, user ownership, and document metadata tracking
 Columns
 -------
 id                : Integer primary key (auto-increment).
-user_id           : Foreign key to `users.id` — owner of this document.
+user_id           : Foreign key to `users.id` - owner of this document.
 original_filename : Name of the uploaded file as provided by the user.
 stored_filename   : Unique physical filename stored on disk ({uuid}_{safe_name}).
 stored_path       : Relative path to the file inside the storage root directory.
@@ -109,6 +109,11 @@ class Document(Base):
 
     # ── Relationships ─────────────────────────────────────────────────────────
     owner: Mapped[Any] = relationship("User", back_populates="documents")
+    processing_histories: Mapped[list[Any]] = relationship(
+        "ProcessingHistory",
+        back_populates="document",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return (

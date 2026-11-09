@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 class DocumentResponse(BaseModel):
@@ -17,4 +17,10 @@ class DocumentResponse(BaseModel):
     is_ocr_used: bool = Field(..., description="Có sử dụng Tesseract OCR hay không")
     created_at: datetime = Field(..., description="Thời gian tải lên (UTC)")
     updated_at: datetime = Field(..., description="Thời gian cập nhật gần nhất (UTC)")
+
+    @field_serializer("created_at", "updated_at")
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
 
