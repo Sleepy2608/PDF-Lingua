@@ -191,6 +191,48 @@ def _execute_pdf_background_job(
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
             }
+
+            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1)
+            history_id: Optional[int] = None
+            if user_id is not None and document_id is not None:
+                hist_session = SessionLocal()
+                try:
+                    from app.models.processing_history import ActionType, ProcessingStatus
+                    from app.schemas.processing_history import ProcessingHistoryCreate
+                    from app.services.history_service import history_service
+
+                    hist_record = history_service.create_history(
+                        hist_session,
+                        ProcessingHistoryCreate(
+                            user_id=user_id,
+                            document_id=document_id,
+                            action_type=ActionType.TRANSLATE,
+                            status=ProcessingStatus.PENDING,
+                        ),
+                        reuse_pending=False,
+                    )
+                    history_id = hist_record.id
+                    history_service.save_history_result(
+                        hist_session,
+                        history_id=history_id,
+                        user_id=user_id,
+                        result_data=result_data,
+                    )
+                    result_data["history_id"] = history_id
+                    logger.info(
+                        f"[Job {job_id}] Persisted processing history id={history_id} and result file for user_id={user_id}"
+                    )
+                except Exception as hist_err:
+                    try:
+                        hist_session.rollback()
+                    except Exception:
+                        pass
+                    logger.error(
+                        f"[Job {job_id}] Failed to persist history record for user_id={user_id}: {hist_err}"
+                    )
+                finally:
+                    hist_session.close()
+
             job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
 
         except Exception as e:
@@ -426,6 +468,7 @@ async def upload_and_translate(
         )
 
         document_id: Optional[int] = None
+        history_id: Optional[int] = None
         if current_user is not None:
             try:
                 stored_filename, rel_path, _ = storage_service.save_document_file(
@@ -450,6 +493,42 @@ async def upload_and_translate(
                 logger.info(
                     f"[Process] Saved document id={document_id} for user_id={current_user.id}"
                 )
+
+                # Persist processing history & result (PDFL-165.1)
+                try:
+                    from app.models.processing_history import ActionType, ProcessingStatus
+                    from app.schemas.processing_history import ProcessingHistoryCreate
+                    from app.services.history_service import history_service
+
+                    hist_rec = history_service.create_history(
+                        db,
+                        ProcessingHistoryCreate(
+                            user_id=current_user.id,
+                            document_id=document_id,
+                            action_type=ActionType.TRANSLATE,
+                            status=ProcessingStatus.PENDING,
+                        ),
+                        reuse_pending=False,
+                    )
+                    history_id = hist_rec.id
+                    history_service.save_history_result(
+                        db,
+                        history_id=history_id,
+                        user_id=current_user.id,
+                        result_data={
+                            "document_id": document_id,
+                            "filename": file.filename,
+                            "page_count": page_count,
+                            "file_size_mb": round(len(content) / (1024 * 1024), 2),
+                            "target_lang": target_lang,
+                            "is_ocr_used": is_ocr_used,
+                            "original_text": original_text,
+                            "translated_text": translation_result["translated_text"],
+                            "engine_used": translation_result["engine_used"],
+                        },
+                    )
+                except Exception as hist_err:
+                    logger.error(f"[Process] Failed to persist history for user_id={current_user.id}: {hist_err}")
             except Exception as e:
                 db.rollback()
                 logger.error(
@@ -458,6 +537,7 @@ async def upload_and_translate(
 
         response_data = ProcessResponseData(
             document_id=document_id,
+            history_id=history_id,
             filename=file.filename,
             page_count=page_count,
             file_size_mb=round(len(content) / (1024 * 1024), 2),
