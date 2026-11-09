@@ -2213,8 +2213,8 @@
     if (tableEl) tableEl.style.display = 'table';
     if (tbodyEl) tbodyEl.innerHTML = '';
 
-    filtered.forEach((rec) => {
-      const row = createHistoryTableRow(rec, token);
+    filtered.forEach((rec, idx) => {
+      const row = createHistoryTableRow(rec, token, idx);
       if (tbodyEl) tbodyEl.appendChild(row);
     });
 
@@ -2231,7 +2231,7 @@
     }
   }
 
-  function createHistoryTableRow(record, token) {
+  function createHistoryTableRow(record, token, index) {
     const tr = document.createElement('tr');
     tr.className = 'history-table-row';
     tr.dataset.historyId = String(record.id);
@@ -2241,16 +2241,19 @@
     const status = String(record.status || 'PENDING').toUpperCase();
     const executionTime = formatExecutionTime(record.execution_time_ms);
     const formattedDate = formatDateTime(record.created_at);
+    const rowNumber = typeof index === 'number' ? (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + index + 1 : 1;
 
-    // Action Badge
-    let actionBadgeHtml = '';
+    // Action text (clean typography, no box)
+    let actionText = 'Trích xuất';
+    let actionClass = 'history-action-extract';
     if (actionType === 'TRANSLATE') {
-      actionBadgeHtml = '<span class="badge-sub pro font-mono history-badge-translate">Dịch thuật</span>';
+      actionText = 'Dịch thuật';
+      actionClass = 'history-action-translate';
     } else if (actionType === 'SUMMARIZE') {
-      actionBadgeHtml = '<span class="badge-sub font-mono history-badge-summarize">Tóm tắt</span>';
-    } else {
-      actionBadgeHtml = '<span class="badge-sub font-mono history-badge-extract">Trích xuất</span>';
+      actionText = 'Tóm tắt';
+      actionClass = 'history-action-summarize';
     }
+    const actionBadgeHtml = `<span class="history-action-text ${actionClass}">${actionText}</span>`;
 
     // Status Badge & Action Buttons
     let statusBadgeHtml = '';
@@ -2259,12 +2262,11 @@
     if (status === 'SUCCESS') {
       statusBadgeHtml = '<span class="status-pill active history-status-pill-success" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
       actionBtnHtml = `
-        <button type="button" class="doc-action-btn doc-table-download-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Mở lại kết quả">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button type="button" class="doc-action-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Xem kết quả" aria-label="Xem kết quả">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
-          <span>Xem kết quả</span>
         </button>
       `;
     } else if (status === 'FAILED') {
@@ -2316,20 +2318,11 @@
     }
 
     tr.innerHTML = `
+      <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
       <td>
-        <div class="doc-file-cell user-cell-meta">
-          <div class="doc-icon-badge" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-          </div>
-          <div class="doc-file-info">
-            <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
-            <span class="doc-cell-id font-mono">Tài liệu #${record.document_id}</span>
-          </div>
+        <div class="doc-file-info history-doc-info">
+          <span class="user-cell-name doc-cell-filename history-doc-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+          <span class="doc-cell-id font-mono history-doc-id">Tài liệu #${record.document_id}</span>
         </div>
       </td>
       <td class="history-cell-action">${actionBadgeHtml}</td>
@@ -2453,8 +2446,16 @@
       buttonEl.disabled = true;
       buttonEl.classList.add('loading');
       buttonEl.innerHTML = `
-        <span class="status-dot" style="background: currentColor; animation: pulse-dot 1s infinite; width: 8px; height: 8px; display: inline-block; border-radius: 50%; margin-right: 4px;"></span>
-        <span>Đang mở...</span>
+        <svg class="history-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="6"></line>
+          <line x1="12" y1="18" x2="12" y2="22"></line>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+          <line x1="2" y1="12" x2="6" y2="12"></line>
+          <line x1="18" y1="12" x2="22" y2="12"></line>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+        </svg>
       `;
     }
 
