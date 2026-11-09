@@ -2003,6 +2003,8 @@
     const errorTextEl = document.getElementById('historyErrorText');
     const unauthStateEl = document.getElementById('historyUnauthState');
     const paginationFooterEl = document.getElementById('historyPaginationFooter');
+    const metricTotalEl = document.getElementById('historyMetricTotal');
+    const metricSuccessEl = document.getElementById('historyMetricSuccessRate');
 
     if (loadingStateEl) loadingStateEl.style.display = state === 'loading' ? 'block' : 'none';
     if (emptyStateEl) emptyStateEl.style.display = state === 'empty' ? 'block' : 'none';
@@ -2013,6 +2015,14 @@
       errorTextEl.textContent = errorMessage;
     }
 
+    if (state === 'unauthenticated' || state === 'error') {
+      if (metricTotalEl) metricTotalEl.textContent = '0';
+      if (metricSuccessEl) metricSuccessEl.textContent = '0%';
+    } else if (state === 'empty') {
+      if (metricTotalEl) metricTotalEl.textContent = '0';
+      if (metricSuccessEl) metricSuccessEl.textContent = '100%';
+    }
+
     if (state !== 'content') {
       if (tableEl) tableEl.style.display = 'none';
       if (paginationFooterEl) paginationFooterEl.style.display = 'none';
@@ -2020,10 +2030,10 @@
   }
 
   function formatDateTime(dateStr) {
-    if (!dateStr) return '--';
+    if (!dateStr) return '-';
     try {
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '--';
+      if (isNaN(d.getTime())) return '-';
       const day = String(d.getDate()).padStart(2, '0');
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
@@ -2031,14 +2041,14 @@
       const minutes = String(d.getMinutes()).padStart(2, '0');
       return `${hours}:${minutes} - ${day}/${month}/${year}`;
     } catch (_e) {
-      return '--';
+      return '-';
     }
   }
 
   function formatExecutionTime(ms) {
-    if (ms === null || ms === undefined || isNaN(ms)) return '--';
+    if (ms === null || ms === undefined || isNaN(ms)) return '-';
     const num = Number(ms);
-    if (num < 0) return '--';
+    if (num < 0) return '-';
     if (num >= 1000) {
       return (num / 1000).toFixed(2) + 's';
     }
@@ -2169,6 +2179,22 @@
       countBadge.textContent = `${filtered.length} bản ghi`;
     }
 
+    // Update Bento Metrics Summary
+    const metricTotalEl = document.getElementById('historyMetricTotal');
+    const metricSuccessEl = document.getElementById('historyMetricSuccessRate');
+    if (metricTotalEl) {
+      metricTotalEl.textContent = String(filtered.length);
+    }
+    if (metricSuccessEl) {
+      if (filtered.length > 0) {
+        const successCount = filtered.filter((r) => String(r.status || '').toUpperCase() === 'SUCCESS').length;
+        const rate = Math.round((successCount / filtered.length) * 100);
+        metricSuccessEl.textContent = `${rate}%`;
+      } else {
+        metricSuccessEl.textContent = '100%';
+      }
+    }
+
     if (filtered.length === 0) {
       if (emptyTitleEl && emptyTextEl) {
         if (query) {
@@ -2219,11 +2245,11 @@
     // Action Badge
     let actionBadgeHtml = '';
     if (actionType === 'TRANSLATE') {
-      actionBadgeHtml = '<span class="badge-sub pro font-mono">Dịch thuật</span>';
+      actionBadgeHtml = '<span class="badge-sub pro font-mono history-badge-translate">Dịch thuật</span>';
     } else if (actionType === 'SUMMARIZE') {
-      actionBadgeHtml = '<span class="badge-sub font-mono" style="background: #F0FDF4; color: #166534;">Tóm tắt</span>';
+      actionBadgeHtml = '<span class="badge-sub font-mono history-badge-summarize">Tóm tắt</span>';
     } else {
-      actionBadgeHtml = '<span class="badge-sub font-mono" style="background: #F1F5F9; color: #334155;">Trích xuất</span>';
+      actionBadgeHtml = '<span class="badge-sub font-mono history-badge-extract">Trích xuất</span>';
     }
 
     // Status Badge & Action Buttons
@@ -2231,7 +2257,7 @@
     let actionBtnHtml = '';
 
     if (status === 'SUCCESS') {
-      statusBadgeHtml = '<span class="status-pill active" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
+      statusBadgeHtml = '<span class="status-pill active history-status-pill-success" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
       actionBtnHtml = `
         <button type="button" class="doc-action-btn doc-table-download-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Mở lại kết quả">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2243,7 +2269,7 @@
       `;
     } else if (status === 'FAILED') {
       statusBadgeHtml = `
-        <span class="status-pill locked history-status-pill-failed" data-history-id="${record.id}" style="cursor: pointer;" title="Nhấn để xem chi tiết lỗi">
+        <span class="status-pill locked history-status-pill-failed" data-history-id="${record.id}" title="Nhấn để xem chi tiết lỗi">
           <svg class="status-lock-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -2263,15 +2289,15 @@
         </button>
       `;
     } else {
-      statusBadgeHtml = '<span class="status-pill pending" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;" title="Đang thực thi"><span class="status-dot" style="background: #F59E0B; animation: adminPulse 1.5s infinite;"></span>Đang xử lý</span>';
-      actionBtnHtml = '<span class="font-mono" style="font-size: 0.75rem; color: #94A3B8;">Đang chạy...</span>';
+      statusBadgeHtml = '<span class="status-pill pending history-status-pill-pending" title="Đang thực thi"><span class="status-dot"></span>Đang xử lý</span>';
+      actionBtnHtml = '<span class="history-running-indicator font-mono">Đang chạy...</span>';
     }
 
     // Delete Button (PDFL-166.2)
     let deleteBtnHtml = '';
     if (status === 'PENDING') {
       deleteBtnHtml = `
-        <button type="button" class="doc-action-btn history-btn-delete" disabled title="Không thể xóa khi đang xử lý" style="opacity: 0.5; cursor: not-allowed;" aria-label="Không thể xóa khi đang xử lý">
+        <button type="button" class="doc-action-btn history-btn-delete disabled" disabled title="Không thể xóa khi đang xử lý" aria-label="Không thể xóa khi đang xử lý">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -2302,16 +2328,16 @@
           </div>
           <div class="doc-file-info">
             <span class="user-cell-name doc-cell-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
-            <span class="doc-cell-id font-mono" style="font-size: 0.72rem; color: #94A3B8;">Tài liệu #${record.document_id}</span>
+            <span class="doc-cell-id font-mono">Tài liệu #${record.document_id}</span>
           </div>
         </div>
       </td>
       <td class="history-cell-action">${actionBadgeHtml}</td>
       <td class="history-cell-status">${statusBadgeHtml}</td>
       <td class="font-mono text-muted history-cell-duration">${escapeHtml(executionTime)}</td>
-      <td class="date-mono history-cell-date">${escapeHtml(formattedDate)}</td>
+      <td class="date-mono font-mono history-cell-date">${escapeHtml(formattedDate)}</td>
       <td class="text-right">
-        <div class="doc-actions-group" style="justify-content: flex-end; display: flex; gap: 0.4rem;">
+        <div class="doc-actions-group history-actions-group">
           ${actionBtnHtml}
           ${deleteBtnHtml}
         </div>

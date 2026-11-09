@@ -692,6 +692,7 @@
                 <!-- History Page Header (Consistent with Documents Workspace Header) -->
                 <div class="documents-page-header history-page-header">
                     <div class="documents-header-text">
+                        <span class="history-eyebrow font-mono">NHẬT KÝ HOẠT ĐỘNG</span>
                         <h2 class="documents-title">Lịch sử xử lý</h2>
                         <p class="documents-subtitle">Tra cứu nhật ký trích xuất văn bản, tiến trình dịch thuật song ngữ và chẩn đoán sự cố tài liệu.</p>
                     </div>
@@ -714,13 +715,63 @@
                     </div>
                 </div>
 
+                <!-- Bento Metrics Summary Grid -->
+                <div class="history-metrics-grid" id="historyMetricsGrid">
+                    <div class="history-metric-card">
+                        <div class="history-metric-icon-wrap primary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="history-metric-info">
+                            <span class="history-metric-label">Tổng tác vụ ghi nhận</span>
+                            <div class="history-metric-value-row">
+                                <span class="history-metric-value font-mono" id="historyMetricTotal">0</span>
+                                <span class="history-metric-subtext">bản ghi</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-metric-card">
+                        <div class="history-metric-icon-wrap success">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <div class="history-metric-info">
+                            <span class="history-metric-label">Tỷ lệ thành công</span>
+                            <div class="history-metric-value-row">
+                                <span class="history-metric-value font-mono text-success" id="historyMetricSuccessRate">100%</span>
+                                <span class="history-metric-subtext">hoàn thành đúng hạn</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-metric-card">
+                        <div class="history-metric-icon-wrap pro">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+                        <div class="history-metric-info">
+                            <span class="history-metric-label">Chính sách lưu trữ</span>
+                            <div class="history-metric-value-row">
+                                <span class="history-metric-value font-mono" id="historyMetricRetention">30 ngày</span>
+                                <span class="history-metric-subtext">bảo lưu dữ liệu</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- History List Card -->
                 <div class="documents-card history-card" id="historyListCard">
                     <!-- Filter & Search Toolbar (PDFL-166.2) -->
-                    <div class="documents-card-toolbar" id="historyCardToolbar">
-                        <div class="documents-toolbar-left" style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div class="documents-card-toolbar history-card-toolbar" id="historyCardToolbar">
+                        <div class="documents-toolbar-left history-toolbar-left">
                             <span class="documents-count-chip font-mono" id="historyCountBadge">0 bản ghi</span>
-                            <button type="button" class="btn btn-secondary btn-sm" id="btnHistoryCleanup" title="Dọn dẹp lịch sử cũ hơn chính sách lưu trữ">
+                            <button type="button" class="btn btn-secondary btn-sm history-cleanup-btn" id="btnHistoryCleanup" title="Dọn dẹp lịch sử cũ hơn chính sách lưu trữ">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -728,9 +779,9 @@
                                 <span>Dọn dẹp lịch sử</span>
                             </button>
                         </div>
-                        <div class="documents-toolbar-right" style="flex-wrap: wrap; gap: 0.65rem;">
+                        <div class="documents-toolbar-right history-toolbar-right">
                             <!-- Action Type Filter -->
-                            <div class="admin-filter-wrap">
+                            <div class="admin-filter-wrap history-filter-wrap">
                                 <select id="historyActionFilter" class="admin-filter-select" aria-label="Lọc theo loại thao tác">
                                     <option value="all">Tất cả thao tác</option>
                                     <option value="EXTRACT">Trích xuất văn bản (EXTRACT)</option>
@@ -740,7 +791,7 @@
                             </div>
 
                             <!-- Execution Status Filter -->
-                            <div class="admin-filter-wrap">
+                            <div class="admin-filter-wrap history-filter-wrap">
                                 <select id="historyStatusFilter" class="admin-filter-select" aria-label="Lọc theo trạng thái">
                                     <option value="all">Tất cả trạng thái</option>
                                     <option value="SUCCESS">Thành công (SUCCESS)</option>
@@ -750,7 +801,7 @@
                             </div>
 
                             <!-- Document Name Search Box -->
-                            <div class="documents-search-box">
+                            <div class="documents-search-box history-search-box">
                                 <svg class="documents-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -1889,8 +1940,15 @@
 
     <!-- History Error Detail Modal (PDFL-164.1) -->
     <div class="modal-overlay" id="historyErrorModal" role="dialog" aria-modal="true" aria-labelledby="historyErrorModalTitle" hidden style="display: none;">
-        <div class="account-modal-card" style="max-width: 520px;">
-            <div class="account-modal-header">
+        <div class="account-modal-card history-error-card">
+            <div class="account-modal-header history-error-header">
+                <div class="history-error-header-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
                 <div class="account-header-info">
                     <h2 class="account-modal-title" id="historyErrorModalTitle">Chi tiết sự cố xử lý</h2>
                     <p class="account-modal-desc font-mono" id="historyErrorModalSub">Mã bản ghi lịch sử: #---</p>
@@ -1904,11 +1962,11 @@
             </div>
 
             <div class="account-modal-body" id="historyErrorModalBody">
-                <div class="account-info-card">
+                <div class="account-info-card history-diagnostic-meta-card">
                     <div class="account-details-grid">
                         <div class="account-detail-item">
                             <span class="account-detail-label">Tài liệu</span>
-                            <span class="account-detail-value font-mono" id="historyErrorDocName" style="text-align: right; word-break: break-word; max-width: 65%;">---</span>
+                            <span class="account-detail-value font-mono history-docname-val" id="historyErrorDocName">---</span>
                         </div>
                         <div class="account-detail-item">
                             <span class="account-detail-label">Thao tác</span>
@@ -1921,15 +1979,13 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 1rem;">
-                    <label class="account-detail-label" style="display: block; margin-bottom: 0.4rem; font-weight: 600;">Thông báo lỗi hệ thống:</label>
-                    <div class="history-error-box font-mono" id="historyErrorMessage" style="background: #FFF1F2; border: 1px solid #FFE4E6; color: #9F1239; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.8125rem; line-height: 1.5; word-break: break-word; white-space: pre-wrap; max-height: 220px; overflow-y: auto;">
-                        Không có thông tin lỗi chi tiết.
-                    </div>
+                <div class="history-error-console-wrap">
+                    <label class="account-detail-label history-error-console-label">Thông báo lỗi hệ thống:</label>
+                    <div class="history-error-box font-mono" id="historyErrorMessage">Không có thông tin lỗi chi tiết.</div>
                 </div>
             </div>
 
-            <div class="account-modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+            <div class="account-modal-footer history-error-modal-footer">
                 <button type="button" class="btn btn-secondary btn-sm" id="btnCloseHistoryErrorFooter">Đóng</button>
             </div>
         </div>
@@ -1937,8 +1993,8 @@
 
     <!-- History Delete Confirmation Modal (PDFL-166.2) -->
     <div class="modal-overlay" id="historyDeleteConfirmModal" role="dialog" aria-modal="true" aria-labelledby="historyDeleteConfirmTitle" hidden style="display: none;">
-        <div class="admin-confirm-card">
-            <div class="confirm-icon-wrap" id="historyDeleteConfirmIconWrap">
+        <div class="admin-confirm-card history-delete-card">
+            <div class="confirm-icon-wrap history-delete-icon-wrap" id="historyDeleteConfirmIconWrap">
                 <svg class="confirm-warning-svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                     <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -1952,7 +2008,7 @@
                     <span class="target-label" id="historyDeleteTargetLabel">Bản ghi sẽ xóa:</span>
                     <strong class="target-email font-mono" id="historyDeleteConfirmTarget">---</strong>
                 </div>
-                <div class="form-alert alert-error" id="historyDeleteConfirmAlert" role="alert" style="display: none; margin-top: 0.75rem; text-align: left;"></div>
+                <div class="form-alert alert-error" id="historyDeleteConfirmAlert" role="alert" style="display: none;"></div>
             </div>
             <div class="confirm-actions">
                 <button type="button" class="btn btn-secondary" id="btnCancelHistoryDelete">Hủy bỏ</button>
