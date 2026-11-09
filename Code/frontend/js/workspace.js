@@ -219,6 +219,9 @@ function getAuthHeaders() {
     } else if (typeof localStorage !== 'undefined' && localStorage) {
       token = localStorage.getItem('pdfl_token');
     }
+    if (!token && typeof sessionStorage !== 'undefined' && sessionStorage) {
+      token = sessionStorage.getItem('pdfl_token');
+    }
   } catch (e) {
     token = null;
   }
@@ -272,7 +275,7 @@ function handleAuthError(result) {
 
   const msg = (result && (result.message || result.detail))
     ? (result.message || result.detail)
-    : 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.';
+    : 'Phiên đăng nhập đã hết hạn hoặc cần đăng nhập lại.';
   showToast(msg, 'error');
 }
 
@@ -838,7 +841,23 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
       try {
         result = await response.json();
       } catch (e) {}
-      handleAuthError(result);
+      const fallbackMsg = 'Phiên đăng nhập đã hết hạn hoặc cần đăng nhập lại.';
+      const msg = (result && (result.message || result.detail))
+        ? (result.message || result.detail)
+        : fallbackMsg;
+      handleAuthError({ message: msg });
+      return;
+    }
+
+    if (response.status === 403) {
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (e) {}
+      const msg = (result && (result.message || result.detail))
+        ? (result.message || result.detail)
+        : 'Tài khoản không có quyền truy cập.';
+      showToast(msg, 'error');
       return;
     }
 

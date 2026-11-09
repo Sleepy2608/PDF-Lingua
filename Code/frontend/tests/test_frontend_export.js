@@ -813,6 +813,248 @@ runTest('9.7: Complete empty-result integration matrix (null, empty, whitespace)
   }
 });
 
+// ==========================================
+// Test Suite 10: Download Authorization & Error Responses (PDFL-157.3)
+// ==========================================
+console.log('\n[Suite 10] Download Authorization & Error Responses (PDFL-157.3)');
+
+runTest('10.1: triggerDownload sends Bearer token from window.pdfLinguaAuth.getStoredToken()', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  context.window.pdfLinguaAuth = {
+    getStoredToken: () => 'auth_token_from_helper_123',
+    clearStoredSession: () => {},
+    updateHeaderAuthState: () => {},
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'auth_test.pdf',
+    original_text: 'Original content',
+    translated_text: 'Translated content',
+  });
+  elements.paneOriginal.innerText = 'Original content';
+  elements.paneTranslated.innerText = 'Translated content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('txt', 'translated');
+
+  assert.strictEqual(fetchCalls.length, 1);
+  assert.strictEqual(fetchCalls[0].options.headers['Authorization'], 'Bearer auth_token_from_helper_123');
+  assert.strictEqual(clickedLinks.length, 1);
+  assert.strictEqual(clickedLinks[0].download, 'auth_test_dich.txt');
+});
+
+runTest('10.2: triggerDownload falls back to localStorage/sessionStorage when helper is absent', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  delete context.window.pdfLinguaAuth;
+  context.localStorage.setItem('pdfl_token', 'token_from_storage_456');
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'storage_test.pdf',
+    original_text: 'Original content',
+    translated_text: 'Translated content',
+  });
+  elements.paneOriginal.innerText = 'Original content';
+  elements.paneTranslated.innerText = 'Translated content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('pdf', 'original');
+
+  assert.strictEqual(fetchCalls.length, 1);
+  assert.strictEqual(fetchCalls[0].options.headers['Authorization'], 'Bearer token_from_storage_456');
+  assert.strictEqual(clickedLinks.length, 1);
+  assert.strictEqual(clickedLinks[0].download, 'storage_test_goc.pdf');
+});
+
+runTest('10.3: triggerDownload handles HTTP 401: Clears session and displays authentication error toast', async () => {
+  const { context, elements, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  let sessionCleared = false;
+  let headerAuthReset = false;
+  context.window.pdfLinguaAuth = {
+    getStoredToken: () => 'expired_token',
+    clearStoredSession: () => { sessionCleared = true; },
+    updateHeaderAuthState: (u) => { if (u === null) headerAuthReset = true; },
+  };
+
+  context.fetch = async () => ({
+    ok: false,
+    status: 401,
+    json: async () => ({ message: 'Token đã hết hạn hoặc không hợp lệ.' }),
+  });
+
+  let toastMsg = '';
+  let toastType = '';
+  context.showToast = (msg, type) => {
+    toastMsg = msg;
+    toastType = type;
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'unauth.pdf',
+    original_text: 'Original content',
+    translated_text: 'Translated content',
+  });
+  elements.paneOriginal.innerText = 'Original content';
+  elements.paneTranslated.innerText = 'Translated content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('txt', 'translated');
+
+  assert.strictEqual(sessionCleared, true, 'Session must be cleared on 401');
+  assert.strictEqual(headerAuthReset, true, 'Header auth must be reset to null on 401');
+  assert.strictEqual(toastType, 'error');
+  assert(toastMsg.includes('hết hạn') || toastMsg.includes('đăng nhập lại'));
+  assert.strictEqual(clickedLinks.length, 0, 'No download link must be clicked on 401');
+});
+
+runTest('10.4: triggerDownload handles HTTP 401 with default message when response body is empty', async () => {
+  const { context, elements, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  context.fetch = async () => ({
+    ok: false,
+    status: 401,
+    json: async () => ({}),
+  });
+
+  let toastMsg = '';
+  let toastType = '';
+  context.showToast = (msg, type) => {
+    toastMsg = msg;
+    toastType = type;
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'unauth_empty.pdf',
+    original_text: 'Original content',
+    translated_text: 'Translated content',
+  });
+  elements.paneOriginal.innerText = 'Original content';
+  elements.paneTranslated.innerText = 'Translated content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('txt', 'translated');
+
+  assert.strictEqual(toastType, 'error');
+  assert(toastMsg.includes('Phiên đăng nhập đã hết hạn hoặc cần đăng nhập lại'));
+  assert.strictEqual(clickedLinks.length, 0);
+});
+
+runTest('10.5: triggerDownload handles HTTP 403: Displays forbidden toast without clearing session', async () => {
+  const { context, elements, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  let sessionCleared = false;
+  context.window.pdfLinguaAuth = {
+    getStoredToken: () => 'valid_user_token',
+    clearStoredSession: () => { sessionCleared = true; },
+    updateHeaderAuthState: () => {},
+  };
+
+  context.fetch = async () => ({
+    ok: false,
+    status: 403,
+    json: async () => ({ detail: 'Tài khoản không có quyền truy cập.' }),
+  });
+
+  let toastMsg = '';
+  let toastType = '';
+  context.showToast = (msg, type) => {
+    toastMsg = msg;
+    toastType = type;
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'forbidden.pdf',
+    original_text: 'Original content',
+    translated_text: 'Translated content',
+  });
+  elements.paneOriginal.innerText = 'Original content';
+  elements.paneTranslated.innerText = 'Translated content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('pdf', 'translated');
+
+  assert.strictEqual(sessionCleared, false, 'Session must NOT be cleared on 403');
+  assert.strictEqual(toastType, 'error');
+  assert(toastMsg.includes('không có quyền truy cập'));
+  assert.strictEqual(clickedLinks.length, 0);
+});
+
+runTest('10.6: triggerDownload handles other HTTP errors (e.g. 500): Displays server error toast', async () => {
+  const { context, elements, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  context.fetch = async () => ({
+    ok: false,
+    status: 500,
+    json: async () => ({ detail: 'Lỗi máy chủ nội bộ khi tạo file PDF.' }),
+  });
+
+  let toastMsg = '';
+  let toastType = '';
+  context.showToast = (msg, type) => {
+    toastMsg = msg;
+    toastType = type;
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'server_err.pdf',
+    original_text: 'Original content',
+    translated_text: 'Translated content',
+  });
+  elements.paneOriginal.innerText = 'Original content';
+  elements.paneTranslated.innerText = 'Translated content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('pdf', 'translated');
+
+  assert.strictEqual(toastType, 'error');
+  assert(toastMsg.includes('Lỗi máy chủ nội bộ') || toastMsg.includes('Lỗi khi tải tệp từ máy chủ'));
+  assert.strictEqual(clickedLinks.length, 0);
+});
+
+runTest('10.7: All 4 export types with valid token successfully trigger download for TXT and PDF', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  context.window.pdfLinguaAuth = {
+    getStoredToken: () => 'multi_target_auth_token',
+    clearStoredSession: () => {},
+    updateHeaderAuthState: () => {},
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'full_export.pdf',
+    original_text: 'Gốc toàn diện',
+    translated_text: 'Dịch toàn diện',
+    summary_text: 'Tóm tắt toàn diện',
+  });
+  elements.paneOriginal.innerText = 'Gốc toàn diện';
+  elements.paneTranslated.innerText = 'Dịch toàn diện';
+  elements.paneSummary.innerText = 'Tóm tắt toàn diện';
+
+  const types = [
+    { type: 'original', format: 'txt', suffix: '_goc.txt' },
+    { type: 'original', format: 'pdf', suffix: '_goc.pdf' },
+    { type: 'translated', format: 'txt', suffix: '_dich.txt' },
+    { type: 'translated', format: 'pdf', suffix: '_dich.pdf' },
+    { type: 'summary', format: 'txt', suffix: '_tomtat.txt' },
+    { type: 'summary', format: 'pdf', suffix: '_tomtat.pdf' },
+    { type: 'bilingual', format: 'txt', suffix: '_songngu.txt' },
+    { type: 'bilingual', format: 'pdf', suffix: '_songngu.pdf' },
+  ];
+
+  for (let i = 0; i < types.length; i++) {
+    const item = types[i];
+    await context.pdfLinguaWorkspace.triggerDownload(item.format, item.type);
+    assert.strictEqual(fetchCalls[i].options.headers['Authorization'], 'Bearer multi_target_auth_token');
+    assert.strictEqual(clickedLinks[i].download, `full_export${item.suffix}`);
+  }
+
+  assert.strictEqual(fetchCalls.length, 8);
+  assert.strictEqual(clickedLinks.length, 8);
+});
+
 
 console.log(`\n======================================================`);
 console.log(`KẾT QUẢ KIỂM THỬ FRONTEND EXPORT: ${passedTests}/${totalTests} tests passed`);
