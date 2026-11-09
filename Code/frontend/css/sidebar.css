@@ -245,6 +245,44 @@
   outline-offset: 2px;
 }
 
+/* Sidebar Toggle Button Arrows (Open: ◁ -> ◀ | Collapsed: ▷ -> ▶) */
+.sidebar-toggle-btn .toggle-icon-open,
+.sidebar-toggle-btn .toggle-icon-collapsed {
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn .toggle-icon-open polygon,
+.sidebar-toggle-btn .toggle-icon-collapsed polygon {
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+/* Open State (Default): Show Left Triangle ◁ -> ◀ on hover */
+.sidebar-toggle-btn .toggle-icon-open {
+  display: block;
+}
+
+.sidebar-toggle-btn .toggle-icon-collapsed {
+  display: none;
+}
+
+.sidebar-toggle-btn:hover .toggle-icon-open polygon {
+  fill: currentColor;
+}
+
+/* Collapsed State: Show Right Triangle ▷ -> ▶ on hover */
+.app-sidebar.collapsed .sidebar-toggle-btn .toggle-icon-open {
+  display: none;
+}
+
+.app-sidebar.collapsed .sidebar-toggle-btn .toggle-icon-collapsed {
+  display: block;
+}
+
+.app-sidebar.collapsed .sidebar-toggle-btn:hover .toggle-icon-collapsed polygon {
+  fill: currentColor;
+}
+
 /* ==========================================================================
    2. Action Button: Upload PDF ("Tải PDF lên")
    ========================================================================== */
