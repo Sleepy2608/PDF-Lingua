@@ -537,5 +537,69 @@ def test_download_valid_user_success():
     assert "Nội dung bản dịch thành công cho authenticated user." in response.content.decode("utf-8-sig")
 
 
+def test_download_inactive_account_returns_403():
+    """Tài khoản bị vô hiệu hóa (is_active=False) bị từ chối với HTTP 403 ACCOUNT_INACTIVE."""
+    from app.core.exceptions import ForbiddenException
+
+    def raise_inactive():
+        raise ForbiddenException(
+            message="Tài khoản này đã bị vô hiệu hóa.",
+            error_code="ACCOUNT_INACTIVE",
+        )
+
+    app.dependency_overrides[get_current_user] = raise_inactive
+    payload = {"content": "Sample content", "format": "txt"}
+    response = client.post("/api/process/download", json=payload)
+    assert response.status_code == 403
+    res_json = response.json()
+    assert res_json.get("error_code") == "ACCOUNT_INACTIVE"
+
+
+def test_download_roles_free_pro_admin_all_succeed():
+    """Cả 3 role FREE, PRO và ADMIN đều được phép xuất dữ liệu thành công."""
+    for role in (UserRole.FREE, UserRole.PRO, UserRole.ADMIN):
+        role_user = User(
+            id=10,
+            email=f"{role.value}@example.com",
+            full_name=f"{role.value.capitalize()} User",
+            role=role,
+            is_active=True,
+        )
+        app.dependency_overrides[get_current_user] = lambda u=role_user: u
+        payload = {
+            "content": f"Nội dung từ role {role.value}",
+            "format": "txt",
+            "export_type": "translated",
+            "filename": f"role_{role.value}",
+        }
+        response = client.post("/api/process/download", json=payload)
+        assert response.status_code == 200
+        assert f"role_{role.value}_dich.txt" in response.headers.get("content-disposition", "")
+
+
+def test_download_ignores_document_id_and_does_not_leak():
+    """Export API chỉ xuất dữ liệu từ body của request, không nhận document_id để truy vấn hoặc làm lộ tài liệu."""
+    payload_with_id_no_content = {
+        "document_id": 9999,
+        "format": "txt",
+        "export_type": "translated",
+    }
+    res1 = client.post("/api/process/download", json=payload_with_id_no_content)
+    assert res1.status_code == 400
+    msg1 = res1.json().get("message") or res1.json().get("detail", "")
+    assert "không được để trống" in msg1
+
+    payload_with_id_and_content = {
+        "document_id": 9999,
+        "content": "Văn bản client gửi lên.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "custom_doc",
+    }
+    res2 = client.post("/api/process/download", json=payload_with_id_and_content)
+    assert res2.status_code == 200
+    assert "Văn bản client gửi lên." in res2.content.decode("utf-8-sig")
+
+
 
 
