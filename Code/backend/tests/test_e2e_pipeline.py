@@ -104,3 +104,94 @@ def test_e2e_retranslate_multilingual():
     assert res_fr.status_code == 200
     body_fr = res_fr.json()["data"]
     assert len(body_fr["translated_text"]) > 0
+
+
+def test_e2e_full_pipeline_multi_target_export_and_empty_validation():
+    """
+    PDFL-156.4: E2E Integration test validating the entire document processing and export workflow:
+    1. Upload and translate digital PDF.
+    2. Extract original and translated content.
+    3. Successfully export to all 4 types (original, translated, summary, bilingual) via /api/process/download.
+    4. Validate that empty/whitespace requests across all 4 types are rejected with HTTP 400.
+    5. Validate that unexpected internal errors in ExportService return HTTP 500.
+    """
+    from unittest.mock import patch
+
+    # 1. Upload & Translate
+    text = "Artificial intelligence is transforming document engineering and automated localization."
+    pdf_bytes = generate_pdf_buffer([text])
+    files = {"file": ("integration_doc.pdf", pdf_bytes, "application/pdf")}
+    data = {"target_lang": "vi"}
+
+    res = client.post("/api/process/upload-and-translate", files=files, data=data)
+    assert res.status_code == 200
+    doc_res = res.json()["data"]
+    orig_text = doc_res["original_text"]
+    trans_text = doc_res["translated_text"]
+    assert len(orig_text) > 0
+    assert len(trans_text) > 0
+
+    # 2. Valid multi-target export (4 types x 2 formats = 8 successful exports)
+    export_matrix = [
+        ("original", "txt", orig_text, None, "_goc.txt"),
+        ("original", "pdf", orig_text, None, "_goc.pdf"),
+        ("translated", "txt", trans_text, None, "_dich.txt"),
+        ("translated", "pdf", trans_text, None, "_dich.pdf"),
+        ("summary", "txt", "1. Điểm chính A\n2. Điểm chính B", None, "_tomtat.txt"),
+        ("summary", "pdf", "1. Điểm chính A\n2. Điểm chính B", None, "_tomtat.pdf"),
+        ("bilingual", "txt", trans_text, orig_text, "_songngu.txt"),
+        ("bilingual", "pdf", trans_text, orig_text, "_songngu.pdf"),
+    ]
+
+    for exp_type, fmt, content, orig_content, expected_sfx in export_matrix:
+        payload = {
+            "content": content,
+            "format": fmt,
+            "export_type": exp_type,
+            "filename": "pipeline_doc",
+        }
+        if orig_content:
+            payload["original_content"] = orig_content
+
+        dl_res = client.post("/api/process/download", json=payload)
+        assert dl_res.status_code == 200
+        assert expected_sfx in dl_res.headers.get("content-disposition", "")
+        if fmt == "pdf":
+            assert dl_res.content.startswith(b"%PDF")
+        else:
+            assert len(dl_res.content) > 0
+
+    # 3. Empty / whitespace validation across all 4 export types -> must return HTTP 400
+    empty_cases = [
+        {"content": "", "export_type": "original"},
+        {"content": "   ", "export_type": "original"},
+        {"content": None, "export_type": "translated"},
+        {"content": " \t\n ", "export_type": "translated"},
+        {"content": "", "export_type": "summary"},
+        {"content": "   ", "export_type": "summary"},
+        {"content": "", "original_content": orig_text, "export_type": "bilingual"},
+        {"content": trans_text, "original_content": "   ", "export_type": "bilingual"},
+        {"content": None, "original_content": None, "export_type": "bilingual"},
+    ]
+
+    for ec in empty_cases:
+        ec["format"] = "txt"
+        ec["filename"] = "invalid_doc"
+        bad_res = client.post("/api/process/download", json=ec)
+        assert bad_res.status_code == 400
+        msg = bad_res.json().get("message", "") or bad_res.json().get("detail", "")
+        assert "không được để trống" in msg
+
+    # 4. Internal ExportService failure -> must return HTTP 500 without disclosing details
+    valid_payload = {
+        "content": trans_text,
+        "format": "pdf",
+        "export_type": "translated",
+        "filename": "pipeline_doc",
+    }
+    with patch("app.api.process.export_service.export_to_pdf", side_effect=Exception("Catastrophic memory error")):
+        err_res = client.post("/api/process/download", json=valid_payload)
+        assert err_res.status_code == 500
+        err_msg = err_res.json().get("message", "") or err_res.json().get("detail", "")
+        assert "Catastrophic memory error" not in err_msg
+        assert "lỗi nội bộ" in err_msg.lower() or "thử lại" in err_msg.lower()

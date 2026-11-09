@@ -443,4 +443,14 @@ def test_download_export_service_txt_exception_returns_500():
         assert "lỗi nội bộ" in err_msg.lower() or "thử lại" in err_msg.lower()
 
 
+def test_download_empty_payload_dict():
+    """Khi client gửi body là dict rỗng {}, API trả về HTTP 400 rõ ràng thay vì 500."""
+    response = client.post("/api/process/download", json={})
+    assert response.status_code == 400
+    res_json = response.json()
+    err_msg = res_json.get("message", "") or res_json.get("detail", "")
+    assert "không được để trống" in err_msg
+
+
+
 

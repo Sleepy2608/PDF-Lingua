@@ -774,6 +774,46 @@ runTest('9.6: renderWorkspace synchronizes UI state and enables buttons accordin
   assert.strictEqual(elements.summaryExportStatus.textContent, '(chưa có)');
 });
 
+runTest('9.7: Complete empty-result integration matrix (null, empty, whitespace) across all 4 export types confirms 0 API calls', async () => {
+  const invalidVariants = [null, '', '   ', '\t\n '];
+  const targetTypes = ['original', 'translated', 'summary', 'bilingual'];
+
+  for (const expType of targetTypes) {
+    for (const invalidVal of invalidVariants) {
+      const { context, elements, fetchCalls } = createEnvironment();
+      let origVal = 'Valid Original';
+      let transVal = 'Valid Translation';
+      let summVal = 'Valid Summary';
+
+      if (expType === 'original') origVal = invalidVal;
+      if (expType === 'translated') transVal = invalidVal;
+      if (expType === 'summary') summVal = invalidVal;
+      if (expType === 'bilingual') {
+        origVal = invalidVal;
+      }
+
+      context.pdfLinguaWorkspace.setCurrentDocData({
+        filename: 'matrix.pdf',
+        original_text: origVal,
+        translated_text: transVal,
+        summary_text: summVal,
+      });
+      elements.paneOriginal.innerText = origVal || '';
+      elements.paneTranslated.innerText = transVal || '';
+
+      let toastShown = false;
+      context.showToast = (_msg, type) => {
+        if (type === 'error') toastShown = true;
+      };
+
+      await context.pdfLinguaWorkspace.triggerDownload('txt', expType);
+      assert.strictEqual(fetchCalls.length, 0, `Fetch must NOT be called for ${expType} with invalid input ${JSON.stringify(invalidVal)}`);
+      assert.strictEqual(toastShown, true, `Toast error must be shown for ${expType} with invalid input`);
+    }
+  }
+});
+
+
 console.log(`\n======================================================`);
 console.log(`KẾT QUẢ KIỂM THỬ FRONTEND EXPORT: ${passedTests}/${totalTests} tests passed`);
 console.log(`======================================================\n`);
