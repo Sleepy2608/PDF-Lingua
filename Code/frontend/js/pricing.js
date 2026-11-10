@@ -194,6 +194,15 @@
       });
     }
 
+    const btnPricingBackToWorkspace = document.getElementById('btnPricingBackToWorkspace');
+
+    if (btnPricingBackToWorkspace) {
+      btnPricingBackToWorkspace.addEventListener('click', (e) => {
+        e.preventDefault();
+        closePricingView();
+      });
+    }
+
     if (topNavPricing) {
       topNavPricing.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1429,11 +1438,15 @@
 
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
     const adminSection = document.getElementById('adminSection');
     const pricingSection = document.getElementById('pricingSection');
 
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
     if (pricingSection) {
       pricingSection.style.display = 'block';
@@ -1461,11 +1474,15 @@
   function returnToMainWorkspace() {
     const pricingSection = document.getElementById('pricingSection');
     const adminSection = document.getElementById('adminSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
     const workspaceSection = document.getElementById('workspaceSection');
     const heroSection = document.getElementById('heroSection');
 
     if (pricingSection) pricingSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
 
     const hasLoadedDoc =
       typeof window !== 'undefined' &&

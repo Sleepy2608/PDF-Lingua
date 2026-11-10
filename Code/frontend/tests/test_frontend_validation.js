@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua — Frontend Validation Test Suite (PDFL-74.3)
+ * PDF-Lingua: Frontend Validation Test Suite (PDFL-74.3)
  * -------------------------------------------------------
  * Reproducible test suite for frontend registration validation,
  * password length limits, HTTP 422 schema error mapping, and security defenses.
