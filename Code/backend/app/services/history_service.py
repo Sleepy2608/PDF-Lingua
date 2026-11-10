@@ -47,14 +47,15 @@ class HistoryService:
         db: Session,
         document_id: int,
         user_id: int,
+        is_admin: bool = False,
     ) -> Document:
         """
-        Verify that `document_id` exists and is owned by `user_id`.
+        Verify that `document_id` exists and is owned by `user_id` (or caller is admin).
 
         Raises
         ------
         NotFoundException : If document with `document_id` does not exist.
-        ForbiddenException: If document is owned by a different user.
+        ForbiddenException: If document is owned by a different user and caller is not admin.
         """
         doc = db.query(Document).filter(Document.id == document_id).first()
         if doc is None:
@@ -62,7 +63,7 @@ class HistoryService:
                 message=f"Tài liệu id={document_id} không tồn tại.",
                 details={"document_id": document_id},
             )
-        if doc.user_id != user_id:
+        if not is_admin and doc.user_id != user_id:
             raise ForbiddenException(
                 message=f"Người dùng id={user_id} không có quyền truy cập tài liệu id={document_id}.",
                 details={"document_id": document_id, "user_id": user_id},
@@ -298,6 +299,7 @@ class HistoryService:
         db: Session,
         history_id: int,
         current_user_id: int,
+        is_admin: bool = False,
     ) -> dict:
         """
         Retrieve persisted result data for a specific ProcessingHistory record (PDFL-165.1).
@@ -316,7 +318,7 @@ class HistoryService:
             logger.error(f"[HistoryService] DB error querying history_id={history_id}: {exc}")
             raise
 
-        if record is None or record.user_id != current_user_id:
+        if record is None or (not is_admin and record.user_id != current_user_id):
             raise NotFoundException(
                 message=f"Bản ghi lịch sử với ID {history_id} không tồn tại.",
                 details={"history_id": history_id},
@@ -384,6 +386,7 @@ class HistoryService:
         db: Session,
         history_id: int,
         current_user_id: int,
+        is_admin: bool = False,
     ) -> bool:
         """
         Delete a single processing history record and its associated result JSON file (PDFL-166.1).
@@ -403,7 +406,7 @@ class HistoryService:
             logger.error(f"[HistoryService] DB error querying history_id={history_id} for deletion: {exc}")
             raise
 
-        if record is None or record.user_id != current_user_id:
+        if record is None or (not is_admin and record.user_id != current_user_id):
             raise NotFoundException(
                 message=f"Bản ghi lịch sử với ID {history_id} không tồn tại.",
                 details={"history_id": history_id},
@@ -466,6 +469,7 @@ class HistoryService:
         user_id: int,
         older_than_days: Optional[int] = None,
         current_user_id: Optional[int] = None,
+        is_admin: bool = False,
     ) -> dict:
         """
         Cleanup expired processing history records and associated result files for a user (PDFL-166.1).
@@ -473,7 +477,7 @@ class HistoryService:
         Skips PENDING records currently in processing.
         Does NOT delete original PDF documents.
         """
-        if current_user_id is not None and current_user_id != user_id:
+        if current_user_id is not None and not is_admin and current_user_id != user_id:
             raise ForbiddenException(
                 message="Bạn không có quyền dọn dẹp lịch sử của người dùng khác.",
                 details={"target_user_id": user_id, "current_user_id": current_user_id},
@@ -537,6 +541,7 @@ class HistoryService:
         db: Session,
         history_id: int,
         current_user_id: Optional[int] = None,
+        is_admin: bool = False,
     ) -> Optional[ProcessingHistory]:
         """
         Query a single history record by ID.
@@ -555,7 +560,7 @@ class HistoryService:
             logger.error(f"[HistoryService] DB error querying history_id={history_id}: {exc}")
             raise
 
-        if record is None or (current_user_id is not None and record.user_id != current_user_id):
+        if record is None or (current_user_id is not None and not is_admin and record.user_id != current_user_id):
             raise NotFoundException(
                 message=f"Bản ghi lịch sử với ID {history_id} không tồn tại.",
                 details={"history_id": history_id},
@@ -566,8 +571,9 @@ class HistoryService:
     def get_histories_by_user(
         cls,
         db: Session,
-        user_id: int,
+        user_id: Optional[int] = None,
         current_user_id: Optional[int] = None,
+        is_admin: bool = False,
         skip: int = 0,
         limit: int = 50,
         action_type: Optional[ActionType | str] = None,
@@ -576,14 +582,18 @@ class HistoryService:
     ) -> list[ProcessingHistory]:
         """
         Query paginated processing history for a specific user.
-        Enforces tenant isolation by checking `current_user_id == user_id`
+        Enforces tenant isolation by checking `current_user_id == user_id` (unless is_admin)
         and verifying `document_id` ownership when filtered by document.
         """
-        if current_user_id is not None and current_user_id != user_id:
-            raise ForbiddenException(
-                message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
-                details={"target_user_id": user_id, "current_user_id": current_user_id},
-            )
+        effective_user_id = user_id
+        if not is_admin:
+            if effective_user_id is None:
+                effective_user_id = current_user_id
+            elif current_user_id is not None and current_user_id != effective_user_id:
+                raise ForbiddenException(
+                    message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
+                    details={"target_user_id": effective_user_id, "current_user_id": current_user_id},
+                )
 
         if document_id is not None and document_id <= 0:
             raise BadRequestException(
@@ -627,13 +637,19 @@ class HistoryService:
 
         try:
             if document_id is not None:
-                cls.verify_document_ownership(db, document_id=document_id, user_id=user_id)
+                cls.verify_document_ownership(
+                    db,
+                    document_id=document_id,
+                    user_id=effective_user_id if effective_user_id is not None else (current_user_id or 0),
+                    is_admin=is_admin,
+                )
 
             query = (
                 db.query(ProcessingHistory)
                 .options(joinedload(ProcessingHistory.document))
-                .filter(ProcessingHistory.user_id == user_id)
             )
+            if effective_user_id is not None:
+                query = query.filter(ProcessingHistory.user_id == effective_user_id)
 
             if document_id is not None:
                 query = query.filter(ProcessingHistory.document_id == document_id)
@@ -652,7 +668,7 @@ class HistoryService:
             )
         except SQLAlchemyError as exc:
             db.rollback()
-            logger.error(f"[HistoryService] DB error querying histories for user_id={user_id}: {exc}")
+            logger.error(f"[HistoryService] DB error querying histories for user_id={effective_user_id}: {exc}")
             raise
 
     @classmethod
@@ -661,6 +677,7 @@ class HistoryService:
         db: Session,
         document_id: int,
         current_user_id: Optional[int] = None,
+        is_admin: bool = False,
         skip: int = 0,
         limit: int = 50,
     ) -> list[ProcessingHistory]:
@@ -673,7 +690,7 @@ class HistoryService:
 
         try:
             if current_user_id is not None:
-                cls.verify_document_ownership(db, document_id=document_id, user_id=current_user_id)
+                cls.verify_document_ownership(db, document_id=document_id, user_id=current_user_id, is_admin=is_admin)
             else:
                 doc = db.query(Document).filter(Document.id == document_id).first()
                 if doc is None:
@@ -699,24 +716,28 @@ class HistoryService:
     @staticmethod
     def count_histories_by_user(
         db: Session,
-        user_id: int,
+        user_id: Optional[int] = None,
         current_user_id: Optional[int] = None,
+        is_admin: bool = False,
     ) -> int:
         """Count total processing histories for a given user."""
-        if current_user_id is not None and current_user_id != user_id:
-            raise ForbiddenException(
-                message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
-                details={"target_user_id": user_id, "current_user_id": current_user_id},
-            )
+        effective_user_id = user_id
+        if not is_admin:
+            if effective_user_id is None:
+                effective_user_id = current_user_id
+            elif current_user_id is not None and current_user_id != effective_user_id:
+                raise ForbiddenException(
+                    message="Bạn không có quyền truy cập lịch sử của người dùng khác.",
+                    details={"target_user_id": effective_user_id, "current_user_id": current_user_id},
+                )
         try:
-            return (
-                db.query(ProcessingHistory)
-                .filter(ProcessingHistory.user_id == user_id)
-                .count()
-            )
+            query = db.query(ProcessingHistory)
+            if effective_user_id is not None:
+                query = query.filter(ProcessingHistory.user_id == effective_user_id)
+            return query.count()
         except SQLAlchemyError as exc:
             db.rollback()
-            logger.error(f"[HistoryService] DB error counting histories for user_id={user_id}: {exc}")
+            logger.error(f"[HistoryService] DB error counting histories for user_id={effective_user_id}: {exc}")
             raise
 
     # ── Workflow Automation & Fault Isolation (PDFL-160.1) ───────────────────
