@@ -307,3 +307,23 @@ def test_upload_rejects_encrypted_pdf_without_500():
         msg = res.json().get("message", "") or res.json().get("detail", "")
         assert "mật khẩu bảo vệ" in msg
 
+
+# ── 7. Endpoint Tests: Export Download Path Traversal Sanitization ───────────
+
+def test_download_export_filename_path_traversal_sanitized():
+    """Verify POST /api/process/download sanitizes path traversal filename sequences."""
+    payload = {
+        "content": "Nội dung bản dịch kiểm thử.",
+        "filename": "../../etc/passwd",
+        "format": "pdf",
+        "title": "Bản dịch",
+    }
+    res = client.post("/api/process/download", json=payload)
+    assert res.status_code == 200
+    disposition = res.headers.get("content-disposition", "")
+    assert ".." not in disposition
+    assert "/" not in disposition
+    assert "\\" not in disposition
+    assert "passwd.pdf" in disposition
+
+

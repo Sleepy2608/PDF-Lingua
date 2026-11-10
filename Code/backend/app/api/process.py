@@ -671,7 +671,9 @@ async def download_result(
             detail="Nội dung tệp xuất không được để trống.",
         )
 
-    base_name = re.sub(r'[\\/*?:"<>|]', "", request.filename.strip()) or "translated_document"
+    safe_name = storage_service.sanitize_filename(request.filename or "translated_document")
+    stem = safe_name[:-4] if safe_name.lower().endswith(".pdf") else safe_name
+    base_name = stem.strip(" ._") or "translated_document"
     fmt = request.format.strip().lower()
 
     if fmt == "pdf":
