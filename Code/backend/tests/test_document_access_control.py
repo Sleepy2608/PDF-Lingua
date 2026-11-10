@@ -17,6 +17,7 @@ from app.core.database import Base
 from app.core.dependencies import get_current_user, get_db
 from app.main import app
 from app.models.document import Document
+from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
 from app.models.user import User, UserRole
 from app.services.storage_service import StorageService
 from fastapi.testclient import TestClient
@@ -34,6 +35,8 @@ def access_control_env(tmp_path: Path, monkeypatch):
 
     test_storage_service = StorageService(base_dir=storage_dir)
     monkeypatch.setattr("app.api.documents.storage_service", test_storage_service)
+    monkeypatch.setattr("app.services.history_service.HistoryService.storage_service", test_storage_service)
+    monkeypatch.setattr("app.services.history_service.history_service.storage_service", test_storage_service)
 
     engine = create_engine(
         "sqlite:///:memory:",
@@ -114,6 +117,53 @@ def access_control_env(tmp_path: Path, monkeypatch):
     session.refresh(doc_a)
     session.refresh(doc_b)
 
+    # Create processing history & result file for User A
+    hist_a = ProcessingHistory(
+        user_id=user_a.id,
+        document_id=doc_a.id,
+        action_type=ActionType.TRANSLATE,
+        status=ProcessingStatus.SUCCESS,
+        execution_time_ms=120,
+    )
+    session.add(hist_a)
+    session.commit()
+    session.refresh(hist_a)
+    rel_res_a, _ = test_storage_service.save_result_file(
+        user_id=user_a.id,
+        history_id=hist_a.id,
+        result_data={
+            "original_text": "Văn bản gốc bí mật",
+            "translated_text": "Bản dịch tài liệu bí mật của A",
+            "page_count": 2,
+        },
+    )
+    hist_a.result_path = rel_res_a
+    session.commit()
+    session.refresh(hist_a)
+
+    # Create processing history & result file for User B
+    hist_b = ProcessingHistory(
+        user_id=user_b.id,
+        document_id=doc_b.id,
+        action_type=ActionType.EXTRACT,
+        status=ProcessingStatus.SUCCESS,
+        execution_time_ms=85,
+    )
+    session.add(hist_b)
+    session.commit()
+    session.refresh(hist_b)
+    rel_res_b, _ = test_storage_service.save_result_file(
+        user_id=user_b.id,
+        history_id=hist_b.id,
+        result_data={
+            "original_text": "User B public paper extracted",
+            "page_count": 1,
+        },
+    )
+    hist_b.result_path = rel_res_b
+    session.commit()
+    session.refresh(hist_b)
+
     yield {
         "session": session,
         "user_a": user_a,
@@ -121,6 +171,8 @@ def access_control_env(tmp_path: Path, monkeypatch):
         "admin": admin_user,
         "doc_a": doc_a,
         "doc_b": doc_b,
+        "hist_a": hist_a,
+        "hist_b": hist_b,
         "storage": test_storage_service,
     }
 
@@ -421,6 +473,256 @@ def test_pdfl_94_3_repeated_delete_and_post_delete_access_consistency(access_con
     docs_b = res_list_b.json()["data"]
     assert len(docs_b) == 1
     assert docs_b[0]["id"] == doc_b_id
+
+
+# ---------------------------------------------------------------------------
+# PDFL-214.3: Anti-IDOR, Multi-Tenant Ownership & Privilege Enforcement Tests
+# ---------------------------------------------------------------------------
+
+def test_pdfl_214_3_spoofed_user_id_ignored_for_regular_user(access_control_env):
+    """
+    Client-supplied user_id or owner_id query parameters are strictly ignored
+    for non-admin callers to prevent spoofing and data leakage across tenants.
+    """
+    env = access_control_env
+    user_a = env["user_a"]
+    user_b = env["user_b"]
+    doc_a = env["doc_a"]
+    hist_a = env["hist_a"]
+
+    # User A requests /api/documents spoofing user_id=user_b.id
+    app.dependency_overrides[get_current_user] = lambda: user_a
+    res_docs = client.get(f"/api/documents?user_id={user_b.id}")
+    assert res_docs.status_code == 200
+    doc_data = res_docs.json()["data"]
+    doc_ids = [d["id"] for d in doc_data]
+    assert doc_ids == [doc_a.id]
+    assert env["doc_b"].id not in doc_ids
+
+    # User A requests /api/history spoofing user_id=user_b.id
+    res_hist = client.get(f"/api/history?user_id={user_b.id}")
+    assert res_hist.status_code == 200
+    hist_data = res_hist.json()["data"]
+    hist_ids = [h["id"] for h in hist_data]
+    assert hist_ids == [hist_a.id]
+    assert env["hist_b"].id not in hist_ids
+
+
+def test_pdfl_214_3_admin_user_id_filter(access_control_env):
+    """
+    ADMIN has elevated privileges to filter documents and histories by user_id
+    or view all records across the system when no user_id is specified.
+    """
+    env = access_control_env
+    app.dependency_overrides[get_current_user] = lambda: env["admin"]
+
+    # Filter documents by User A
+    res_doc_a = client.get(f"/api/documents?user_id={env['user_a'].id}")
+    assert res_doc_a.status_code == 200
+    docs_a = res_doc_a.json()["data"]
+    assert len(docs_a) == 1
+    assert docs_a[0]["id"] == env["doc_a"].id
+
+    # Filter documents by User B
+    res_doc_b = client.get(f"/api/documents?user_id={env['user_b'].id}")
+    assert res_doc_b.status_code == 200
+    docs_b = res_doc_b.json()["data"]
+    assert len(docs_b) == 1
+    assert docs_b[0]["id"] == env["doc_b"].id
+
+    # View all documents
+    res_doc_all = client.get("/api/documents")
+    assert res_doc_all.status_code == 200
+    assert len(res_doc_all.json()["data"]) == 2
+
+    # Filter history by User A
+    res_h_a = client.get(f"/api/history?user_id={env['user_a'].id}")
+    assert res_h_a.status_code == 200
+    h_a = res_h_a.json()["data"]
+    assert len(h_a) == 1
+    assert h_a[0]["id"] == env["hist_a"].id
+
+    # Filter history by User B
+    res_h_b = client.get(f"/api/history?user_id={env['user_b'].id}")
+    assert res_h_b.status_code == 200
+    h_b = res_h_b.json()["data"]
+    assert len(h_b) == 1
+    assert h_b[0]["id"] == env["hist_b"].id
+
+    # View all histories
+    res_h_all = client.get("/api/history")
+    assert res_h_all.status_code == 200
+    assert len(res_h_all.json()["data"]) == 2
+
+
+def test_pdfl_214_3_cross_tenant_history_detail_and_result_anti_idor(access_control_env):
+    """
+    Regular users cannot inspect or fetch results of other users' processing histories.
+    Returns 404 Not Found to prevent leaking resource existence.
+    """
+    env = access_control_env
+    hist_a_id = env["hist_a"].id
+
+    # Owner (User A) accesses own history detail & result
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+    res_a_detail = client.get(f"/api/history/{hist_a_id}")
+    assert res_a_detail.status_code == 200
+    assert res_a_detail.json()["data"]["id"] == hist_a_id
+
+    res_a_result = client.get(f"/api/history/{hist_a_id}/result")
+    assert res_a_result.status_code == 200
+    assert "Bản dịch tài liệu bí mật của A" in res_a_result.text
+
+    # Cross-tenant attack: User B tries to view User A's history detail -> 404
+    app.dependency_overrides[get_current_user] = lambda: env["user_b"]
+    res_b_detail = client.get(f"/api/history/{hist_a_id}")
+    assert res_b_detail.status_code == 404
+
+    # Cross-tenant attack: User B tries to view User A's history result -> 404
+    res_b_result = client.get(f"/api/history/{hist_a_id}/result")
+    assert res_b_result.status_code == 404
+
+    # Cross-tenant attack: User B tries to delete User A's history -> 404
+    res_b_delete = client.delete(f"/api/history/{hist_a_id}")
+    assert res_b_delete.status_code == 404
+
+    # Verify User A's history and result file were NOT deleted
+    env["session"].expire_all()
+    assert env["session"].query(ProcessingHistory).filter(ProcessingHistory.id == hist_a_id).first() is not None
+    assert env["storage"].get_result_path(env["user_a"].id, env["hist_a"].result_path) is not None
+
+
+def test_pdfl_214_3_non_existent_history_returns_404(access_control_env):
+    """
+    Querying or deleting non-existent history records consistently returns 404 Not Found.
+    """
+    env = access_control_env
+    app.dependency_overrides[get_current_user] = lambda: env["user_a"]
+
+    assert client.get("/api/history/999999").status_code == 404
+    assert client.get("/api/history/999999/result").status_code == 404
+    assert client.delete("/api/history/999999").status_code == 404
+
+
+def test_pdfl_214_3_admin_can_access_and_delete_user_history(access_control_env):
+    """
+    ADMIN has authority to inspect, retrieve results, and delete any history record and physical result file.
+    """
+    env = access_control_env
+    hist_a_id = env["hist_a"].id
+    user_a_id = env["user_a"].id
+    res_path = env["hist_a"].result_path
+
+    app.dependency_overrides[get_current_user] = lambda: env["admin"]
+
+    # Admin accesses detail
+    res_detail = client.get(f"/api/history/{hist_a_id}")
+    assert res_detail.status_code == 200
+    assert res_detail.json()["data"]["id"] == hist_a_id
+
+    # Admin accesses result
+    res_result = client.get(f"/api/history/{hist_a_id}/result")
+    assert res_result.status_code == 200
+    assert "Bản dịch tài liệu bí mật của A" in res_result.text
+
+    # Admin deletes history
+    res_del = client.delete(f"/api/history/{hist_a_id}")
+    assert res_del.status_code == 200
+    assert res_del.json()["data"]["deleted"] is True
+
+    # Verify DB record and physical file are unlinked
+    env["session"].expire_all()
+    assert env["session"].query(ProcessingHistory).filter(ProcessingHistory.id == hist_a_id).first() is None
+    assert env["storage"].get_result_path(user_a_id, res_path) is None
+
+
+def test_pdfl_214_3_filter_history_by_unowned_document_forbidden(access_control_env):
+    """
+    Filtering history by a document owned by another user returns 403 Forbidden.
+    ADMIN can filter by any document.
+    """
+    env = access_control_env
+    doc_a_id = env["doc_a"].id
+
+    # User B attempts to filter history by User A's document
+    app.dependency_overrides[get_current_user] = lambda: env["user_b"]
+    res_b = client.get(f"/api/history?document_id={doc_a_id}")
+    assert res_b.status_code == 403
+
+    # ADMIN can filter history by User A's document
+    app.dependency_overrides[get_current_user] = lambda: env["admin"]
+    res_admin = client.get(f"/api/history?document_id={doc_a_id}")
+    assert res_admin.status_code == 200
+    assert len(res_admin.json()["data"]) == 1
+    assert res_admin.json()["data"][0]["document_id"] == doc_a_id
+
+
+def test_pdfl_214_3_cleanup_anti_idor(access_control_env):
+    """
+    Cleanup endpoint isolates tenants:
+    - Non-admin callers only clean their own histories even if user_id query param is supplied.
+    - ADMIN callers can specify user_id to clean that user's expired records.
+    """
+    from datetime import datetime, timedelta, timezone
+    env = access_control_env
+    session = env["session"]
+
+    # Create old expired history for User A (35 days old)
+    old_date = datetime.now(timezone.utc) - timedelta(days=35)
+    hist_old_a = ProcessingHistory(
+        user_id=env["user_a"].id,
+        document_id=env["doc_a"].id,
+        action_type=ActionType.EXTRACT,
+        status=ProcessingStatus.SUCCESS,
+        created_at=old_date,
+    )
+    session.add(hist_old_a)
+    session.commit()
+    session.refresh(hist_old_a)
+    old_a_id = hist_old_a.id
+
+    # User B calls cleanup with user_id=user_a.id -> User A's record must NOT be deleted
+    app.dependency_overrides[get_current_user] = lambda: env["user_b"]
+    res_b_cleanup = client.post(f"/api/history/cleanup?user_id={env['user_a'].id}&older_than_days=30")
+    assert res_b_cleanup.status_code == 200
+    assert res_b_cleanup.json()["data"]["deleted_count"] == 0
+
+    session.expire_all()
+    assert session.query(ProcessingHistory).filter(ProcessingHistory.id == old_a_id).first() is not None
+
+    # Admin calls cleanup with user_id=user_a.id -> User A's record is cleaned
+    app.dependency_overrides[get_current_user] = lambda: env["admin"]
+    res_admin_cleanup = client.post(f"/api/history/cleanup?user_id={env['user_a'].id}&older_than_days=30")
+    assert res_admin_cleanup.status_code == 200
+    assert res_admin_cleanup.json()["data"]["deleted_count"] == 1
+
+    session.expire_all()
+    assert session.query(ProcessingHistory).filter(ProcessingHistory.id == old_a_id).first() is None
+
+
+def test_pdfl_214_3_error_responses_do_not_leak_metadata(access_control_env):
+    """
+    Error responses on unauthorized access do not leak sensitive document/history metadata,
+    such as filenames, user emails, raw database details, or absolute file paths.
+    """
+    env = access_control_env
+    doc_a = env["doc_a"]
+    hist_a = env["hist_a"]
+
+    app.dependency_overrides[get_current_user] = lambda: env["user_b"]
+
+    # Attempting to access User A's document detail
+    res_doc = client.get(f"/api/documents/{doc_a.id}")
+    assert res_doc.status_code == 404
+    assert doc_a.original_filename not in res_doc.text
+    assert doc_a.stored_filename not in res_doc.text
+    assert "user_a@example.com" not in res_doc.text
+
+    # Attempting to access User A's history detail
+    res_hist = client.get(f"/api/history/{hist_a.id}")
+    assert res_hist.status_code == 404
+    assert doc_a.original_filename not in res_hist.text
+    assert "user_a@example.com" not in res_hist.text
 
 
 

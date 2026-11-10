@@ -8,9 +8,10 @@ Enforces:
 - Admins can access documents for administrative & audit purposes.
 """
 
+from typing import Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -28,16 +29,21 @@ storage_service = StorageService()
 
 @router.get("", response_model=ApiResponse[list[DocumentResponse]])
 async def list_user_documents(
+    user_id: Optional[int] = Query(None, description="Lọc theo User ID (chỉ dành cho ADMIN, người dùng thường bị bỏ qua)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     List all documents owned by the currently authenticated user.
-    Admins can view all system documents.
+    Admins can view all system documents or filter by specific user_id.
+    Never trusts client-supplied user_id for non-admin callers (Anti-IDOR).
     """
     query = db.query(Document)
     if current_user.role != UserRole.ADMIN:
+        # Strictly enforce current authenticated user ID for non-admins
         query = query.filter(Document.user_id == current_user.id)
+    elif user_id is not None:
+        query = query.filter(Document.user_id == user_id)
 
     documents = query.order_by(Document.created_at.desc()).all()
     data = [DocumentResponse.model_validate(doc) for doc in documents]

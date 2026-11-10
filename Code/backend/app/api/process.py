@@ -15,7 +15,12 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.dependencies import get_current_user, get_db, get_optional_current_user
+from app.core.dependencies import (
+    get_current_user,
+    get_db,
+    get_max_pages_by_role,
+    get_optional_current_user,
+)
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User, UserRole
@@ -56,10 +61,10 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     - Guest (None) & Free (UserRole.FREE): 20 MB, 100 pages
     - Pro (UserRole.PRO) & Admin (UserRole.ADMIN): 100 MB, 500 pages
     """
-    role_val = getattr(user.role, "value", str(user.role)).lower() if user and user.role else None
-    if role_val in (UserRole.PRO.value, UserRole.ADMIN.value):
-        return settings.MAX_UPLOAD_SIZE_PRO_MB, settings.MAX_PAGES_PRO
-    return settings.MAX_UPLOAD_SIZE_FREE_MB, settings.MAX_PAGES_FREE
+    max_pages = get_max_pages_by_role(user)
+    if max_pages >= settings.MAX_PAGES_PRO:
+        return settings.MAX_UPLOAD_SIZE_PRO_MB, max_pages
+    return settings.MAX_UPLOAD_SIZE_FREE_MB, max_pages
 
 
 def _execute_pdf_background_job(
@@ -261,32 +266,90 @@ async def create_processing_job(
     """
     Khởi tạo Background Job xử lý PDF (PDFL-111.4).
     Trả về ngay Job ID mà không giữ kết nối HTTP chờ toàn bộ quá trình OCR.
+    Thực thi kiểm tra tính hợp lệ và hạn mức số trang trước khi cấp Job ID (PDFL-178.3).
     """
-    max_upload_mb, max_ocr_pages = get_user_limits(current_user)
+    max_upload_mb, _ = get_user_limits(current_user)
+    max_allowed_pages = get_max_pages_by_role(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    # 1. Kiểm tra filename (PDFL-214.1)
+    valid_name, name_err = pdf_service.validate_filename(file.filename)
+    if not valid_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp tải lên phải có định dạng .pdf.",
+            detail=name_err or "Tệp tải lên phải có định dạng .pdf.",
+        )
+
+    # 2. Kiểm tra Content-Type (PDFL-214.1)
+    valid_ct, ct_err = pdf_service.validate_content_type(file.content_type)
+    if not valid_ct:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ct_err or "Content-Type không hợp lệ, yêu cầu application/pdf.",
         )
 
     content = await file.read()
     if len(content) > max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
-    if not content.startswith(b"%PDF"):
+    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1. (PDFL-214.1)
+    valid_raw, raw_err = pdf_service.validate_raw_pdf_content(content)
+    if not valid_raw:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+            detail=raw_err or "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
         )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(content)
         tmp_path = Path(tmp.name)
+
+    try:
+        validation = pdf_service.validate_pdf(tmp_path)
+        if not validation["is_valid"]:
+            error_msg = validation["error"] or "Tệp PDF không hợp lệ."
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
+
+        page_count = validation["page_count"]
+        if page_count <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
+            )
+
+        if page_count > max_allowed_pages:
+            role_label = (
+                "Guest"
+                if current_user is None
+                else getattr(current_user.role, "value", str(current_user.role)).upper()
+            )
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=(
+                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                ),
+            )
+    except HTTPException:
+        if tmp_path.exists():
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        raise
+    except Exception as exc:
+        if tmp_path.exists():
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        logger.warning(f"Lỗi kiểm tra tệp PDF: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tệp PDF không hợp lệ hoặc bị lỗi không thể xử lý.",
+        )
 
     job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
     file_size_bytes = len(content)
@@ -301,7 +364,7 @@ async def create_processing_job(
             tmp_path,
             file.filename,
             target_lang,
-            max_ocr_pages,
+            max_allowed_pages,
             file_size_mb,
             authenticated_user_id,
             file_size_bytes,
@@ -372,23 +435,35 @@ async def upload_and_translate(
     max_upload_mb, max_ocr_pages = get_user_limits(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    # 1. Kiểm tra filename (PDFL-214.1)
+    valid_name, name_err = pdf_service.validate_filename(file.filename)
+    if not valid_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp tải lên phải có định dạng .pdf.",
+            detail=name_err or "Tệp tải lên phải có định dạng .pdf.",
+        )
+
+    # 2. Kiểm tra Content-Type (PDFL-214.1)
+    valid_ct, ct_err = pdf_service.validate_content_type(file.content_type)
+    if not valid_ct:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ct_err or "Content-Type không hợp lệ, yêu cầu application/pdf.",
         )
 
     content = await file.read()
     if len(content) > max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
-    if not content.startswith(b"%PDF"):
+    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1. (PDFL-214.1)
+    valid_raw, raw_err = pdf_service.validate_raw_pdf_content(content)
+    if not valid_raw:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+            detail=raw_err or "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
         )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -408,21 +483,19 @@ async def upload_and_translate(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        max_allowed_pages = max_ocr_pages
+        max_allowed_pages = get_max_pages_by_role(current_user)
         if page_count > max_allowed_pages:
-            if current_user is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        f"Tài liệu có {page_count} trang, vượt quá giới hạn của gói Miễn phí "
-                        f"(tối đa {max_allowed_pages} trang/tệp). Vui lòng nâng cấp gói Pro hoặc chia nhỏ tài liệu."
-                    ),
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
-                )
+            role_label = (
+                "Guest"
+                if current_user is None
+                else getattr(current_user.role, "value", str(current_user.role)).upper()
+            )
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=(
+                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                ),
+            )
 
         is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
         is_ocr_used = False
@@ -433,21 +506,16 @@ async def upload_and_translate(
 
         if not original_text.strip():
             is_ocr_used = True
-            if page_count > max_ocr_pages:
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
-                )
-            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_ocr_pages})...")
+            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_allowed_pages})...")
             ocr_res = ocr_service.extract_text_from_scanned_pdf(
                 tmp_path,
-                max_pages=max_ocr_pages,
+                max_pages=max_allowed_pages,
             )
             original_text = ocr_res.get("text", "")
 
         if not original_text.strip():
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Không thể trích xuất văn bản từ tài liệu này (tài liệu rỗng hoặc máy chủ chưa bật OCR).",
             )
 
@@ -550,6 +618,14 @@ async def upload_and_translate(
 
         return ApiResponse(data=response_data, message="Xử lý và dịch thuật tài liệu thành công.")
 
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning(f"Lỗi xử lý tệp PDF tải lên: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tệp PDF không hợp lệ hoặc bị lỗi không thể xử lý.",
+        )
     finally:
         if tmp_path.exists():
             try:

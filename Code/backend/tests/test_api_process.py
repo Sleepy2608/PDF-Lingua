@@ -260,7 +260,7 @@ def test_upload_exceeds_max_pages():
     data = {"target_lang": "vi"}
 
     response = client.post("/api/process/upload-and-translate", files=files, data=data)
-    assert response.status_code == 400
+    assert response.status_code == 413
     resp_body = response.json()
     msg = resp_body.get("message", "") or resp_body.get("detail", "")
     assert "vượt quá giới hạn" in msg

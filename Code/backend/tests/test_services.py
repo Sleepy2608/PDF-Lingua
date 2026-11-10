@@ -30,6 +30,59 @@ def test_pdf_service_page_count_and_validation(sample_pdf: Path):
     assert service.get_page_count(sample_pdf) == 1
 
 
+def test_pdf_service_invalid_and_edge_case_handling(tmp_path: Path):
+    """PDFL-178.1: Safe handling of missing, 0-byte, corrupt, 0-page, and encrypted PDFs."""
+    service = PDFService()
+
+    # 1. Non-existent file
+    missing_file = tmp_path / "does_not_exist.pdf"
+    res_missing = service.validate_pdf(missing_file)
+    assert res_missing["is_valid"] is False
+    assert res_missing["page_count"] == 0
+    assert "Tệp không tồn tại" in res_missing["error"]
+    assert service.get_page_count(missing_file) == 0
+
+    # 2. 0-byte file
+    zero_file = tmp_path / "zero_bytes.pdf"
+    zero_file.write_bytes(b"")
+    res_zero = service.validate_pdf(zero_file)
+    assert res_zero["is_valid"] is False
+    assert res_zero["page_count"] == 0
+    assert service.get_page_count(zero_file) == 0
+
+    # 3. Corrupt / Non-PDF file
+    corrupt_file = tmp_path / "corrupt.pdf"
+    corrupt_file.write_bytes(b"%PDF-1.4 corrupt content not valid trailer")
+    res_corrupt = service.validate_pdf(corrupt_file)
+    assert res_corrupt["is_valid"] is False
+    assert res_corrupt["page_count"] == 0
+    assert service.get_page_count(corrupt_file) == 0
+
+    # 4. Zero-page PDF (valid PDF structure but 0 pages)
+    zero_page_file = tmp_path / "zero_pages.pdf"
+    writer = pypdf.PdfWriter()
+    with open(zero_page_file, "wb") as f:
+        writer.write(f)
+    res_zero_page = service.validate_pdf(zero_page_file)
+    assert res_zero_page["is_valid"] is False
+    assert res_zero_page["page_count"] == 0
+    assert "không có trang nào hợp lệ" in res_zero_page["error"]
+    assert service.get_page_count(zero_page_file) == 0
+
+    # 5. Encrypted PDF with password
+    encrypted_file = tmp_path / "encrypted.pdf"
+    enc_writer = pypdf.PdfWriter()
+    enc_writer.add_blank_page(width=100, height=100)
+    enc_writer.encrypt("super_secret_password")
+    with open(encrypted_file, "wb") as f:
+        enc_writer.write(f)
+    res_encrypted = service.validate_pdf(encrypted_file)
+    assert res_encrypted["is_valid"] is False
+    assert res_encrypted["is_encrypted"] is True
+    assert "mật khẩu bảo vệ" in res_encrypted["error"]
+    assert service.get_page_count(encrypted_file) == 0
+
+
 def test_pdf_service_scanned_detection(sample_pdf: Path):
     service = PDFService()
     assert service.is_scanned_pdf(sample_pdf) is True

@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.security import decode_access_token
@@ -135,3 +136,38 @@ def require_roles(
         return current_user
 
     return role_checker
+
+
+def get_max_pages_by_role(role_or_user: Optional[Union[User, UserRole, str]] = None) -> int:
+    """
+    Chuẩn hóa chính sách giới hạn số trang PDF theo Role (PDFL-178.1).
+
+    Chính sách hạn mức:
+    - Guest (None hoặc 'guest'): 100 trang (settings.MAX_PAGES_FREE)
+    - FREE (UserRole.FREE hoặc 'free'): 100 trang (settings.MAX_PAGES_FREE)
+    - PRO (UserRole.PRO hoặc 'pro'): 500 trang (settings.MAX_PAGES_PRO)
+    - ADMIN (UserRole.ADMIN hoặc 'admin'): 500 trang (settings.MAX_PAGES_PRO)
+    - Giá trị role không hợp lệ / không nhận diện: An toàn fallback về 100 trang (FREE).
+    """
+    if role_or_user is None:
+        return settings.MAX_PAGES_FREE
+
+    # Nếu tham số là instance của User (hoặc object có thuộc tính role)
+    if hasattr(role_or_user, "role"):
+        user_role = getattr(role_or_user, "role")
+        raw_role = getattr(user_role, "value", str(user_role)) if user_role is not None else None
+    elif isinstance(role_or_user, UserRole):
+        raw_role = role_or_user.value
+    elif isinstance(role_or_user, str):
+        raw_role = role_or_user
+    else:
+        raw_role = str(role_or_user)
+
+    if not raw_role:
+        return settings.MAX_PAGES_FREE
+
+    normalized = raw_role.strip().lower()
+    if normalized in (UserRole.PRO.value, UserRole.ADMIN.value):
+        return settings.MAX_PAGES_PRO
+
+    return settings.MAX_PAGES_FREE
