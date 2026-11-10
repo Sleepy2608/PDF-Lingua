@@ -583,6 +583,7 @@ class PDFService:
 
         # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang theo cơ chế Parallel / Lazy Loading
         doc_fitz = None
+        doc_pdfium = None
         try:
             pages_extracted = self.extract_pages(path, max_pages=max_pages)
 
@@ -626,13 +627,20 @@ class PDFService:
             # 2b. Tổng hợp kết quả theo ĐÚNG THỨ TỰ TRANG BAN ĐẦU (1 -> N)
             ocr_count = 0
 
-            # Mở sẵn doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned (tránh nạp lại file liên tục vào RAM)
+            # Mở sẵn doc_pdfium hoặc doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned
             if ocr_service and getattr(ocr_service, "is_available", lambda: False)():
                 try:
-                    import pymupdf
-                    doc_fitz = pymupdf.open(str(path))
+                    import pypdfium2 as pdfium
+                    doc_pdfium = pdfium.PdfDocument(str(path))
                 except Exception:
-                    doc_fitz = None
+                    doc_pdfium = None
+
+                if doc_pdfium is None:
+                    try:
+                        import pymupdf
+                        doc_fitz = pymupdf.open(str(path))
+                    except Exception:
+                        doc_fitz = None
 
             for idx, p_info in enumerate(pages_extracted):
                 cleaned = p_info["text"]
@@ -653,44 +661,71 @@ class PDFService:
                     ocr_text = ""
                     is_blank = False
 
-                    if doc_fitz is not None:
-                        try:
-                            import io
-                            fitz_page = doc_fitz.load_page(idx)
-                            pix = fitz_page.get_pixmap(dpi=150)
-                            raw_bytes = pix.tobytes("png")
-                            del pix
-                            del fitz_page
-
-                            pil_img = Image.open(io.BytesIO(raw_bytes))
+                    # 1. Tận dụng kết quả từ parallel worker nếu đã có ở 2a
+                    if idx in ocr_results_by_idx:
+                        res = ocr_results_by_idx[idx]
+                        ocr_text = res.get("text", "")
+                        is_blank = res.get("is_blank", False)
+                    # 2. Nếu chưa có kết quả (ví dụ chỉ có 1 trang scan), gọi _ocr_single_page_isolated
+                    elif ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                        if hasattr(ocr_service, "_ocr_single_page_isolated"):
                             try:
-                                proc_img, meta = ocr_service.preprocess_image(
-                                    pil_img,
-                                    check_blank=True,
-                                    auto_rotate=True,
-                                    auto_deskew=True,
-                                    auto_enhance=True,
+                                res = ocr_service._ocr_single_page_isolated(
+                                    path,
+                                    idx,
+                                    getattr(ocr_service, "default_lang", "vie+eng"),
                                 )
-                                try:
-                                    if meta.get("is_blank", False):
-                                        is_blank = True
-                                    else:
-                                        ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
-                                finally:
-                                    if proc_img is not pil_img:
+                                ocr_text = res.get("text", "")
+                                is_blank = res.get("is_blank", False)
+                            except Exception:
+                                ocr_text = ""
+
+                        # 3. Fallback render bằng doc_pdfium hoặc doc_fitz nếu chưa lấy được text
+                        if not ocr_text and (doc_pdfium is not None or doc_fitz is not None):
+                            pil_img = None
+                            try:
+                                if doc_pdfium is not None:
+                                    pdfium_page = doc_pdfium.get_page(idx)
+                                    pil_img = pdfium_page.render(scale=2.0).to_pil()
+                                    del pdfium_page
+                                elif doc_fitz is not None:
+                                    import io
+                                    fitz_page = doc_fitz.load_page(idx)
+                                    pix = fitz_page.get_pixmap(dpi=150)
+                                    raw_bytes = pix.tobytes("png")
+                                    del pix
+                                    del fitz_page
+                                    pil_img = Image.open(io.BytesIO(raw_bytes))
+
+                                if pil_img is not None:
+                                    try:
+                                        proc_img, meta = ocr_service.preprocess_image(
+                                            pil_img,
+                                            check_blank=True,
+                                            auto_rotate=True,
+                                            auto_deskew=True,
+                                            auto_enhance=True,
+                                        )
                                         try:
-                                            proc_img.close()
+                                            if meta.get("is_blank", False):
+                                                is_blank = True
+                                            else:
+                                                ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
+                                        finally:
+                                            if proc_img is not pil_img:
+                                                try:
+                                                    proc_img.close()
+                                                except Exception:
+                                                    pass
+                                            del proc_img
+                                    finally:
+                                        try:
+                                            pil_img.close()
                                         except Exception:
                                             pass
-                                    del proc_img
-                            finally:
-                                try:
-                                    pil_img.close()
-                                except Exception:
-                                    pass
-                                del pil_img
-                        except Exception:
-                            ocr_text = cleaned
+                                        del pil_img
+                            except Exception:
+                                ocr_text = cleaned
                     else:
                         ocr_text = cleaned
 
@@ -729,6 +764,12 @@ class PDFService:
                 "ocr_pages_count": 0,
             }
         finally:
+            if doc_pdfium is not None:
+                try:
+                    doc_pdfium.close()
+                except Exception:
+                    pass
+                del doc_pdfium
             if doc_fitz is not None:
                 try:
                     doc_fitz.close()
