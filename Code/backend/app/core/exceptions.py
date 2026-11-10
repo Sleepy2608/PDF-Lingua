@@ -88,7 +88,7 @@ class QuotaExceededException(AppException):
     def __init__(self, message: str = "Plan limit exceeded", details: Optional[Any] = None):
         super().__init__(
             message=message,
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             error_code="QUOTA_EXCEEDED",
             details=details,
         )
@@ -133,7 +133,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
 
         logger.info(f"Validation error on {request.method} {request.url.path}: {formatted_errors}")
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content={
                 "success": False,
                 "error_code": "VALIDATION_ERROR",

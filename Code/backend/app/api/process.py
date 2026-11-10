@@ -284,7 +284,7 @@ async def create_processing_job(
     content = await file.read()
     if len(content) > max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
@@ -320,7 +320,7 @@ async def create_processing_job(
                 else getattr(current_user.role, "value", str(current_user.role)).upper()
             )
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=(
                     f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
@@ -447,7 +447,7 @@ async def upload_and_translate(
     content = await file.read()
     if len(content) > max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
@@ -484,7 +484,7 @@ async def upload_and_translate(
                 else getattr(current_user.role, "value", str(current_user.role)).upper()
             )
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=(
                     f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
@@ -508,7 +508,7 @@ async def upload_and_translate(
 
         if not original_text.strip():
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Không thể trích xuất văn bản từ tài liệu này (tài liệu rỗng hoặc máy chủ chưa bật OCR).",
             )
 
