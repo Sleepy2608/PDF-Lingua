@@ -522,3 +522,182 @@ def test_download_invalid_token_rejects_without_downgrade(client):
     )
     assert res.status_code == 401
     assert res.json()["error_code"] == "INVALID_TOKEN"
+
+
+# ── 5. PDFL-178.2 Synchronous Upload Page Limit Enforcement Tests ─────────────
+
+def test_sync_page_limit_free_user_accepts_100_rejects_101(client, db_session, monkeypatch):
+    """PDFL-178.2: Free user accepts 100 pages, rejects 101 pages with 413 and role/limit detail."""
+    _, free_token = create_user_with_role(db_session, "free_p178@example.com", UserRole.FREE)
+    from app.api.process import pdf_service, translation_service
+
+    monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
+        "translated_text": "Bản dịch 100 trang.",
+        "engine_used": "mock",
+    })
+
+    # Case 1: 100 pages accepted
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 100, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "Văn bản trang 1-100.")
+
+    res_100 = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {free_token}"},
+        files={"file": ("doc_100p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_100.status_code == 200
+    assert res_100.json()["success"] is True
+
+    # Case 2: 101 pages rejected
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 101, "error": None})
+    res_101 = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {free_token}"},
+        files={"file": ("doc_101p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_101.status_code == 413
+    msg = res_101.json()["message"]
+    assert "101 trang" in msg
+    assert "100 trang" in msg
+    assert "FREE" in msg
+
+
+def test_sync_page_limit_pro_user_accepts_500_rejects_501(client, db_session, monkeypatch):
+    """PDFL-178.2: Pro user accepts 500 pages, rejects 501 pages with 413 and role/limit detail."""
+    _, pro_token = create_user_with_role(db_session, "pro_p178@example.com", UserRole.PRO)
+    from app.api.process import pdf_service, translation_service
+
+    monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
+        "translated_text": "Bản dịch 500 trang.",
+        "engine_used": "mock",
+    })
+
+    # Case 1: 500 pages accepted
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 500, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "Văn bản trang 1-500.")
+
+    res_500 = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {pro_token}"},
+        files={"file": ("doc_500p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_500.status_code == 200
+    assert res_500.json()["success"] is True
+
+    # Case 2: 501 pages rejected
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 501, "error": None})
+    res_501 = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {pro_token}"},
+        files={"file": ("doc_501p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_501.status_code == 413
+    msg = res_501.json()["message"]
+    assert "501 trang" in msg
+    assert "500 trang" in msg
+    assert "PRO" in msg
+
+
+def test_sync_page_limit_admin_user_accepts_500_rejects_501(client, db_session, monkeypatch):
+    """PDFL-178.2: Admin user applies 500 pages limit (accepts 500, rejects 501)."""
+    _, admin_token = create_user_with_role(db_session, "admin_p178@example.com", UserRole.ADMIN)
+    from app.api.process import pdf_service, translation_service
+
+    monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
+        "translated_text": "Bản dịch Admin 500 trang.",
+        "engine_used": "mock",
+    })
+
+    # Case 1: 500 pages accepted
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 500, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "Văn bản Admin trang 1-500.")
+
+    res_500 = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        files={"file": ("doc_admin_500p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_500.status_code == 200
+    assert res_500.json()["success"] is True
+
+    # Case 2: 501 pages rejected
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 501, "error": None})
+    res_501 = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        files={"file": ("doc_admin_501p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_501.status_code == 413
+    msg = res_501.json()["message"]
+    assert "501 trang" in msg
+    assert "500 trang" in msg
+    assert "ADMIN" in msg
+
+
+def test_sync_page_limit_guest_user_accepts_100_rejects_101(client, monkeypatch):
+    """PDFL-178.2: Guest user applies 100 pages limit (accepts 100, rejects 101 with 413)."""
+    from app.api.process import pdf_service, translation_service
+
+    monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
+        "translated_text": "Bản dịch Guest 100 trang.",
+        "engine_used": "mock",
+    })
+
+    # Case 1: 100 pages accepted
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 100, "error": None})
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "Văn bản Guest 100 trang.")
+
+    res_100 = client.post(
+        "/api/process/upload-and-translate",
+        files={"file": ("doc_guest_100p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_100.status_code == 200
+    assert res_100.json()["success"] is True
+
+    # Case 2: 101 pages rejected with 413
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 101, "error": None})
+    res_101 = client.post(
+        "/api/process/upload-and-translate",
+        files={"file": ("doc_guest_101p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res_101.status_code == 413
+    msg = res_101.json()["message"]
+    assert "101 trang" in msg
+    assert "100 trang" in msg
+    assert "Guest" in msg
+
+
+def test_sync_page_limit_does_not_call_ocr_or_translation_on_excess(client, db_session, monkeypatch):
+    """PDFL-178.2: Ensure OCR and Translation services are never invoked when page limit is exceeded."""
+    _, free_token = create_user_with_role(db_session, "no_ocr_trans@example.com", UserRole.FREE)
+    from app.api.process import ocr_service, pdf_service, translation_service
+
+    def forbidden_call(*args, **kwargs):
+        raise AssertionError("OCR or Translation service was unexpectedly called despite exceeding page limit!")
+
+    monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 150, "error": None})
+    monkeypatch.setattr(ocr_service, "extract_text_from_scanned_pdf", forbidden_call)
+    monkeypatch.setattr(translation_service, "translate_text", forbidden_call)
+
+    res = client.post(
+        "/api/process/upload-and-translate",
+        headers={"Authorization": f"Bearer {free_token}"},
+        files={"file": ("doc_150p.pdf", b"%PDF-1.4 content", "application/pdf")},
+        data={"target_lang": "vi"},
+    )
+    assert res.status_code == 413
+    assert "150 trang" in res.json()["message"]
+    assert "100 trang" in res.json()["message"]
+

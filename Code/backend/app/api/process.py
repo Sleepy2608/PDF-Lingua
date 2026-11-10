@@ -406,21 +406,19 @@ async def upload_and_translate(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        max_allowed_pages = max_ocr_pages
+        max_allowed_pages = get_max_pages_by_role(current_user)
         if page_count > max_allowed_pages:
-            if current_user is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        f"Tài liệu có {page_count} trang, vượt quá giới hạn của gói Miễn phí "
-                        f"(tối đa {max_allowed_pages} trang/tệp). Vui lòng nâng cấp gói Pro hoặc chia nhỏ tài liệu."
-                    ),
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
-                )
+            role_label = (
+                "Guest"
+                if current_user is None
+                else getattr(current_user.role, "value", str(current_user.role)).upper()
+            )
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                ),
+            )
 
         is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
         is_ocr_used = False
@@ -431,15 +429,10 @@ async def upload_and_translate(
 
         if not original_text.strip():
             is_ocr_used = True
-            if page_count > max_ocr_pages:
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"Số trang tài liệu OCR ({page_count} trang) vượt quá giới hạn {max_ocr_pages} trang.",
-                )
-            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_ocr_pages})...")
+            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_allowed_pages})...")
             ocr_res = ocr_service.extract_text_from_scanned_pdf(
                 tmp_path,
-                max_pages=max_ocr_pages,
+                max_pages=max_allowed_pages,
             )
             original_text = ocr_res.get("text", "")
 
