@@ -10,8 +10,8 @@
   - Product Backlog chi tiết: [PDF_Lingua_Jira_Backlog.md](./PDF_Lingua_Jira_Backlog.md)
   - Bảng phân công nhiệm vụ: [Assignment.md](./Assignment.md)
 - **Ngày khởi tạo kế hoạch**: `15/10/2026` (Bắt đầu chu kỳ Sprint 1)
-- **Ngày cập nhật lần cuối**: `07/11/2026` (Đồng bộ hóa 100% Sprint 3 theo Jira Board với 38 work items đã hoàn thành)
-- **Tiến độ hiện tại**: Đã hoàn thành xuất sắc **Sprint 3 (31/10 - 06/11/2026)**: 38/38 tasks đã hoàn thành (Done). Đang chuẩn bị triển khai **Sprint 4 (07/11 - 13/11/2026)**.
+- **Ngày cập nhật lần cuối**: `11/11/2026` (Đồng bộ hóa 100% Sprint 4 theo Jira Board với 31 work items đã hoàn thành)
+- **Tiến độ hiện tại**: Đã hoàn thành xuất sắc **Sprint 4 (07/11 - 13/11/2026)**: 31/31 tasks đã hoàn thành (Done). Đang chuẩn bị triển khai **Sprint 5 (14/11 - 20/11/2026)**.
 
 ---
 
@@ -42,9 +42,9 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | **Sprint 1** | 15/10 - 22/10/2026 | Phân tích yêu cầu, thiết kế hệ thống & khởi tạo khung dự án | **EPIC 01, EPIC 02**, một phần EPIC 03 & 04 | 31 tasks | ✅ Đã hoàn thành (31/31 Done) |
 | **Sprint 2** | 23/10 - 30/10/2026 | Hệ thống tài khoản, xác thực & Cốt lõi xử lý PDF, OCR | **EPIC 05, EPIC 06, EPIC 07**, EPIC 03 & 04 | 32 tasks | ✅ **Đã hoàn thành** (32/32 Done) |
 | **Sprint 3** | 31/10 - 06/11/2026 | Quản lý tài liệu, OCR nâng cao, Dịch thuật cốt lõi, Xuất file & UI hoàn thiện | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, EPIC 17** | 38 tasks | ✅ **Đã hoàn thành** (38/38 Done) |
-| **Sprint 4** | 07/11 - 13/11/2026 | Tinh chỉnh dịch thuật fallback, kiểm thử xuất file & hoàn thiện Gói Free | **EPIC 08, EPIC 11** | 8 tasks | 📋 Kế hoạch |
-| **Sprint 5** | 14/11 - 20/11/2026 | AI tóm tắt văn bản & Trợ lý AI hỏi đáp tài liệu (*Khởi động Gói Pro*) | **EPIC 09, EPIC 10**, tiếp tục EPIC 03 | 26 tasks | 📋 Kế hoạch |
-| **Sprint 6** | 21/11 - 27/11/2026 | Quản lý gói Pro, Lịch sử, Quản trị Admin, Kiểm thử & Đóng gói | **EPIC 12, 13, 14, 15, 16**, EPIC 03, 04 | 67 work items | 📋 Kế hoạch |
+| **Sprint 4** | 07/11 - 13/11/2026 | Dịch thuật fallback, xuất file, lịch sử, admin cơ bản & quyền lợi Free/Pro | **EPIC 08, EPIC 11, EPIC 12, EPIC 13, EPIC 14, EPIC 15, EPIC 16, EPIC 17** | 31 tasks | ✅ **Đã hoàn thành** (31/31 Done) |
+| **Sprint 5** | 13/11 - 20/11/2026 | Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng & Thiết kế | **EPIC 03, EPIC 04, EPIC 12, EPIC 13, EPIC 14, EPIC 16, EPIC 17** | 34 tasks | 🚀 **Đang triển khai** |
+| **Sprint 6** | 21/11 - 28/11/2026 | AI tóm tắt văn bản & Trợ lý AI hỏi đáp tài liệu theo ngữ cảnh | **EPIC 03, EPIC 09, EPIC 10** | 26 tasks | 📋 Kế hoạch |
 | **Sprint 7** | 28/11 - 04/12/2026 | Tính năng mở rộng nâng cao, tối ưu UX & Buffer dự phòng | **EPIC 17 (`PDFL-252` $\rightarrow$ `PDFL-265`)**, Demo Dry Run | 13 tasks | 📋 Kế hoạch |
 
 ---
@@ -185,45 +185,112 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 
 ---
 
-### 🔹 Sprint 4: Tinh Chỉnh Dịch Thuật Fallback, Kiểm Thử Xuất File & Hoàn Thiện Gói Free
+### 🔹 Sprint 4: Dịch Thuật Fallback, Xuất File, Lịch Sử Xử Lý, Quản Trị Admin Cơ Bản & Quyền Lợi Gói
 - **Thời gian**: 07/11/2026 - 13/11/2026 (Tuần 4)
-- **Mục tiêu**: Xử lý các kịch bản ngoại lệ của dịch vụ dịch thuật (mạng lỗi, rate limit, fallback đa tầng), kiểm thử chất lượng bản dịch và bảo toàn cấu trúc văn bản dài; kiểm thử xuất file định dạng TXT/PDF trên nhiều môi trường; rà soát quyền tải xuống và hoàn thiện nghiệm thu Gói Free.
-- **Trạng thái**: 📋 **Theo kế hoạch** - 8 Work Items (các tasks cốt lõi đã được đẩy nhanh và hoàn thành trước hạn tại Sprint 3)
+- **Mục tiêu**: Xử lý các kịch bản ngoại lệ của dịch vụ dịch thuật (mạng lỗi, rate limit, fallback đa tầng), kiểm thử xuất file định dạng TXT/PDF, hoàn thiện cơ sở dữ liệu và API lịch sử xử lý tài liệu, thiết lập quyền lợi gói Free/Pro và Dashboard quản trị Admin cơ bản.
+- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)** - **31 Work Items** (31 Done / 0 In Progress / 0 To Do)
 
 | Mã Task | Tên nhiệm vụ | Epic | Trạng thái Jira |
 | :--- | :--- | :---: | :---: |
-| `PDFL-120` | Xử lý lỗi mạng, giới hạn API và lỗi dịch thuật (Multi-tier Fallback) | EPIC 08 | To Do |
-| `PDFL-123` | Kiểm thử các trường hợp dịch tiếng Việt, tiếng Anh và các ngôn ngữ được lựa chọn | EPIC 08 | To Do |
-| `PDFL-124` | Đánh giá khả năng giữ nguyên đoạn văn, danh sách và nội dung quan trọng khi dịch | EPIC 08 | To Do |
-| `PDFL-125` | Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài | EPIC 08 | To Do |
-| `PDFL-150` | Xác định các loại kết quả có thể xuất: văn bản gốc, bản dịch và bản tóm tắt | EPIC 11 | To Do |
-| `PDFL-156` | Xử lý trường hợp nội dung rỗng hoặc không có kết quả | EPIC 11 | To Do |
-| `PDFL-157` | Kiểm tra quyền tải xuống và quyền truy cập kết quả | EPIC 11 | To Do |
-| `PDFL-158` | Kiểm thử file xuất trên các trình đọc file thông dụng | EPIC 11 | To Do |
+| `PDFL-120` | Xử lý lỗi mạng, giới hạn API và lỗi dịch thuật | EPIC 08 | **Done** |
+| `PDFL-123` | Kiểm thử các trường hợp dịch tiếng Việt, tiếng Anh và các ngôn ngữ được lựa chọn | EPIC 08 | **Done** |
+| `PDFL-124` | Đánh giá khả năng giữ nguyên đoạn văn, danh sách và nội dung quan trọng khi dịch | EPIC 08 | **Done** |
+| `PDFL-125` | Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài | EPIC 08 | **Done** |
+| `PDFL-150` | Xác định các loại kết quả có thể xuất: văn bản gốc, bản dịch và bản tóm tắt | EPIC 11 | **Done** |
+| `PDFL-156` | Xử lý trường hợp nội dung rỗng hoặc không có kết quả | EPIC 11 | **Done** |
+| `PDFL-157` | Kiểm tra quyền tải xuống và quyền truy cập kết quả | EPIC 11 | **Done** |
+| `PDFL-158` | Kiểm thử file xuất trên các trình đọc file thông dụng | EPIC 11 | **Done** |
+| `PDFL-159` | Thiết kế bảng dữ liệu lưu lịch sử xử lý | EPIC 12 | **Done** |
+| `PDFL-160` | Lưu thông tin tài liệu và loại thao tác đã thực hiện | EPIC 12 | **Done** |
+| `PDFL-161` | Lưu kết quả trích xuất, dịch thuật hoặc tóm tắt theo phạm vi chức năng đã thống nhất | EPIC 12 | **Done** |
+| `PDFL-162` | Xây dựng API lấy danh sách lịch sử | EPIC 12 | **Done** |
+| `PDFL-163` | Xây dựng API xem chi tiết một bản ghi lịch sử | EPIC 12 | **Done** |
+| `PDFL-164` | Hiển thị lịch sử trên giao diện | EPIC 12 | **Done** |
+| `PDFL-165` | Cho phép mở lại kết quả đã lưu | EPIC 12 | **Done** |
+| `PDFL-166` | Cho phép xóa lịch sử theo chính sách lưu trữ | EPIC 12 | **Done** |
+| `PDFL-172` | Xác định quyền lợi cụ thể của gói Free | EPIC 13 | **Done** |
+| `PDFL-176` | Giới hạn tải lên tối đa 20 MB/tệp đối với Free | EPIC 13 | **Done** |
+| `PDFL-178` | Xác định và thực thi giới hạn số trang PDF cho từng gói | EPIC 13 | **Done** |
+| `PDFL-185` | Kiểm thử việc áp dụng hạn mức ở Backend, kể cả khi người dùng gọi API trực tiếp | EPIC 13 | **Done** |
+| `PDFL-207` | Kiểm thử PDF văn bản thông thường | EPIC 15 | **Done** |
+| `PDFL-214` | Kiểm tra an toàn file tải lên và ngăn việc truy cập file ngoài phạm vi cho phép | EPIC 15 | **Done** |
+| `PDFL-186` | Xác định vai trò và quyền hạn của Admin | EPIC 14 | **Done** |
+| `PDFL-188` | Xây dựng trang tổng quan quản trị | EPIC 14 | **Done** |
+| `PDFL-189` | Hiển thị danh sách tài khoản người dùng | EPIC 14 | **Done** |
+| `PDFL-194` | Khóa hoặc mở khóa tài khoản khi cần | EPIC 14 | **Done** |
+| `PDFL-197` | Xử lý thông báo xác nhận trước những thao tác có ảnh hưởng lớn | EPIC 14 | **Done** |
+| `PDFL-198` | Kiểm thử quyền Admin và đảm bảo tài khoản thường không thể truy cập chức năng quản trị | EPIC 14 | **Done** |
+| `PDFL-240` | Viết README giới thiệu PDF Lingua | EPIC 16 | **Done** |
+| `PDFL-260` | Gửi thông báo về trạng thái xử lý tài liệu | EPIC 17 | **Done** |
+| `PDFL-173` | Xác định quyền lợi cụ thể của gói Pro | EPIC 13 | **Done** |
 
 ---
 
-### 🔹 Sprint 5: Tích Hợp AI - Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu (Khởi Động Gói Pro)
-- **Thời gian**: 14/11/2026 - 20/11/2026 (Tuần 5)
-- **Mục tiêu**: Tích hợp các mô hình trí tuệ nhân tạo (LLM API) để tóm tắt ý chính tài liệu PDF và xây dựng Trợ lý ảo chat hỏi đáp trực tiếp dựa trên nội dung văn bản (Document QA/RAG).
-- **Trạng thái**: 📋 **Theo kế hoạch** - 26 Work Items
+### 🔹 Sprint 5: Quản Trị Hệ Thống Admin, Gói Dịch Vụ Pro, Tính Năng Mở Rộng & Thiết Kế Đồ Án
+- **Thời gian**: 13/11/2026 - 20/11/2026 (Tuần 5)
+- **Mục tiêu**: Hoàn thiện toàn diện hệ sinh thái gói dịch vụ Free/Pro, phân quyền tài khoản, bảng điều khiển quản trị Admin, xử lý tác vụ nền, các tính năng mở rộng nâng cao trải nghiệm người dùng và hoàn thiện hồ sơ thiết kế kiến trúc hệ thống, lược đồ use case, lược đồ lớp.
+- **Trạng thái**: 🚀 **Đang triển khai** - **34 Work Items**
 
 | Mã Task | Tên nhiệm vụ | Epic | Trạng thái Jira |
 | :--- | :--- | :---: | :---: |
-| `PDFL-126` | Lựa chọn mô hình AI hoặc dịch vụ API phù hợp (Google Gemini / OpenAI) | EPIC 09 | To Do |
-| `PDFL-127` | Quản lý API key an toàn thông qua biến môi trường `.env` | EPIC 09 | To Do |
+| `PDFL-167` | Chỉ cho phép tài khoản Pro sử dụng chức năng lịch sử nếu đây là quyền lợi đã chốt | EPIC 12 | - |
+| `PDFL-168` | Kiểm soát quyền truy cập lịch sử theo tài khoản | EPIC 12 | - |
+| `PDFL-169` | Xác định thời gian lưu trữ và cách xóa dữ liệu khi cần | EPIC 12 | - |
+| `PDFL-170` | Kiểm thử khả năng lưu, truy vấn, mở lại và xóa lịch sử | EPIC 12 | - |
+| `PDFL-171` | Thiết kế dữ liệu gói dịch vụ và trạng thái đăng ký của người dùng | EPIC 13 | - |
+| `PDFL-174` | Hiển thị gói hiện tại của người dùng | EPIC 13 | - |
+| `PDFL-175` | Xây dựng cơ chế kiểm tra gói dịch vụ ở Backend | EPIC 13 | - |
+| `PDFL-177` | Giới hạn tải lên tối đa 100 MB/tệp đối với Pro | EPIC 13 | - |
+| `PDFL-179` | Xác định hạn mức OCR, dịch thuật và AI theo gói | EPIC 13 | - |
+| `PDFL-180` | Chặn hoặc thông báo khi người dùng vượt hạn mức | EPIC 13 | - |
+| `PDFL-181` | Xây dựng trang so sánh quyền lợi Free và Pro | EPIC 13 | - |
+| `PDFL-182` | Xây dựng luồng yêu cầu nâng cấp lên Pro | EPIC 13 | - |
+| `PDFL-183` | Cập nhật quyền sử dụng khi tài khoản được nâng cấp hoặc hạ cấp | EPIC 13 | - |
+| `PDFL-184` | Hiển thị thông báo nâng cấp khi người dùng truy cập tính năng dành cho Pro | EPIC 13 | - |
+| `PDFL-187` | Thiết lập cách khởi tạo tài khoản Admin an toàn | EPIC 14 | - |
+| `PDFL-190` | Tìm kiếm và lọc tài khoản theo thông tin phù hợp | EPIC 14 | - |
+| `PDFL-191` | Xem thông tin và trạng thái tài khoản | EPIC 14 | - |
+| `PDFL-192` | Theo dõi trạng thái gói Free/Pro | EPIC 14 | - |
+| `PDFL-193` | Cấp, gia hạn, hạ cấp hoặc thu hồi quyền Pro theo quy định của hệ thống | EPIC 14 | - |
+| `PDFL-195` | Kiểm soát quyền Admin ở Backend | EPIC 14 | - |
+| `PDFL-196` | Ghi nhận nhật ký các thao tác quản trị quan trọng | EPIC 14 | - |
+| `PDFL-252` | Cho phép xử lý nhiều file PDF theo lô | EPIC 17 | - |
+| `PDFL-254` | Cho phép người dùng Pro tải kết quả dưới định dạng DOCX | EPIC 17 | - |
+| `PDFL-255` | Cho phép chọn các trang cụ thể cần trích xuất hoặc dịch | EPIC 17 | - |
+| `PDFL-256` | Hỗ trợ xem trước PDF và chuyển trang ngay trên ứng dụng | EPIC 17 | - |
+| `PDFL-67` | Xây dựng API kiểm tra giới hạn upload, AI và các hạn mức khác | EPIC 04 | - |
+| `PDFL-71` | Xử lý các tác vụ mất nhiều thời gian mà không khóa toàn bộ ứng dụng | EPIC 04 | - |
+| `PDFL-53` | Xây dựng giao diện lịch sử xử lý tài liệu | EPIC 03 | - |
+| `PDFL-54` | Xây dựng trang giới thiệu và so sánh gói Free/Pro | EPIC 03 | - |
+| `PDFL-55` | Xây dựng giao diện nâng cấp gói Pro | EPIC 03 | - |
+| `PDFL-56` | Xây dựng giao diện quản trị Admin | EPIC 03 | - |
+| `PDFL-269` | Kiến trúc hệ thống (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | - |
+| `PDFL-270` | Lược đồ usecase (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | - |
+| `PDFL-271` | Lược đồ lớp (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | - |
+
+---
+
+### 🔹 Sprint 6: Tích Hợp AI - Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu
+- **Thời gian**: 21/11/2026 - 28/11/2026 (Tuần 6)
+- **Mục tiêu**: Tích hợp các mô hình trí tuệ nhân tạo (LLM API) để tóm tắt ý chính tài liệu PDF và xây dựng Trợ lý ảo chat hỏi đáp trực tiếp dựa trên nội dung văn bản (Document QA/RAG).
+- **Trạng thái**: 📋 **Theo kế hoạch** - **26 Work Items**
+
+| Mã Task | Tên nhiệm vụ | Epic | Trạng thái Jira |
+| :--- | :--- | :---: | :---: |
+| `PDFL-126` | Lựa chọn mô hình AI hoặc dịch vụ API phù hợp | EPIC 09 | To Do |
+| `PDFL-127` | Quản lý API key thông qua biến môi trường | EPIC 09 | To Do |
 | `PDFL-128` | Xây dựng cấu trúc prompt tóm tắt văn bản | EPIC 09 | To Do |
-| `PDFL-129` | Xây dựng API tóm tắt nội dung tài liệu (`/api/ai/summarize`) | EPIC 09 | To Do |
+| `PDFL-129` | Xây dựng API tóm tắt nội dung tài liệu | EPIC 09 | To Do |
 | `PDFL-130` | Hỗ trợ lựa chọn độ dài hoặc kiểu tóm tắt nếu mô hình cho phép | EPIC 09 | To Do |
 | `PDFL-131` | Hỗ trợ tóm tắt văn bản dài bằng cách chia đoạn hoặc tóm tắt nhiều bước | EPIC 09 | To Do |
-| `PDFL-132` | Hiển thị nội dung tóm tắt đẹp mắt trên giao diện người dùng | EPIC 09 | To Do |
+| `PDFL-132` | Hiển thị nội dung tóm tắt trên giao diện | EPIC 09 | To Do |
 | `PDFL-133` | Cho phép sao chép kết quả tóm tắt | EPIC 09 | To Do |
 | `PDFL-134` | Kiểm tra quyền sử dụng AI của tài khoản Pro | EPIC 09 | To Do |
 | `PDFL-135` | Kiểm soát số lượt sử dụng, lượng văn bản đầu vào và chi phí | EPIC 09 | To Do |
 | `PDFL-136` | Xử lý lỗi khi dịch vụ AI không phản hồi hoặc vượt giới hạn | EPIC 09 | To Do |
 | `PDFL-137` | Kiểm thử chất lượng tóm tắt trên các loại tài liệu khác nhau | EPIC 09 | To Do |
 | `PDFL-138` | Xác định phạm vi câu hỏi mà trợ lý AI có thể xử lý | EPIC 10 | To Do |
-| `PDFL-139` | Xây dựng API gửi câu hỏi về tài liệu (`/api/ai/chat`) | EPIC 10 | To Do |
+| `PDFL-139` | Xây dựng API gửi câu hỏi về tài liệu | EPIC 10 | To Do |
 | `PDFL-140` | Cung cấp nội dung tài liệu liên quan làm ngữ cảnh cho AI | EPIC 10 | To Do |
 | `PDFL-141` | Xử lý tài liệu dài bằng cách chọn các đoạn liên quan trước khi gửi cho AI | EPIC 10 | To Do |
 | `PDFL-142` | Xây dựng giao diện khung chat | EPIC 10 | To Do |
@@ -231,79 +298,11 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-144` | Xử lý trạng thái AI đang suy nghĩ, câu trả lời lỗi và yêu cầu thử lại | EPIC 10 | To Do |
 | `PDFL-145` | Giới hạn số lượt hỏi đáp hoặc lượng nội dung theo gói dịch vụ | EPIC 10 | To Do |
 | `PDFL-146` | Đảm bảo câu trả lời dựa trên nội dung tài liệu khi người dùng hỏi về tài liệu | EPIC 10 | To Do |
-| `PDFL-147` | Xử lý trường hợp tài liệu không có thông tin để trả lời | EPIC 10 | To Do |
 | `PDFL-148` | Kiểm soát quyền truy cập để người dùng không hỏi hoặc truy xuất tài liệu của người khác | EPIC 10 | To Do |
 | `PDFL-149` | Kiểm thử khả năng trả lời đúng nội dung, hạn chế bịa đặt và xử lý câu hỏi ngoài phạm vi | EPIC 10 | To Do |
+| `PDFL-147` | Xử lý trường hợp tài liệu không có thông tin để trả lời | EPIC 10 | To Do |
 | `PDFL-50` | Xây dựng giao diện tóm tắt văn bản bằng AI | EPIC 03 | To Do |
 | `PDFL-51` | Xây dựng giao diện trò chuyện với trợ lý AI | EPIC 03 | To Do |
-
----
-
-### 🔹 Sprint 6: Quản Lý Gói Free/Pro, Lịch Sử, Quản Trị Admin, Kiểm Thử Toàn Diện & Đóng Gói
-- **Thời gian**: 21/11/2026 - 27/11/2026 (Tuần 6)
-- **Mục tiêu**: Hoàn tất phân chia quyền lợi Free/Pro (100MB), lưu trữ lịch sử xử lý, Dashboard quản trị Admin, kiểm thử bảo mật & hiệu năng, triển khai hệ thống và chuẩn bị hồ sơ báo cáo đồ án.
-- **Trạng thái**: 📋 **Theo kế hoạch** - 64 Work Items
-
-| Nhóm chức năng | Mã Task | Tên nhiệm vụ chính | Epic | Trạng thái Jira |
-| :--- | :--- | :--- | :---: | :---: |
-| **Lịch sử xử lý** | `PDFL-159` | Thiết kế bảng dữ liệu lưu trữ lịch sử thao tác tài liệu | EPIC 12 | To Do |
-| | `PDFL-160` | Lưu thông tin lịch sử như ngày thực hiện, tên file, loại tác vụ | EPIC 12 | To Do |
-| | `PDFL-161` | Lưu kết quả trích xuất, dịch thuật hoặc tóm tắt vào lịch sử | EPIC 12 | To Do |
-| | `PDFL-162` | Xây dựng API lấy danh sách lịch sử xử lý | EPIC 12 | To Do |
-| | `PDFL-163` | Xây dựng API xem chi tiết một bản ghi lịch sử | EPIC 12 | To Do |
-| | `PDFL-164` | Hiển thị danh sách lịch sử trên giao diện | EPIC 12 | To Do |
-| | `PDFL-165` | Cho phép mở lại kết quả từ lịch sử | EPIC 12 | To Do |
-| | `PDFL-166` | Cho phép xóa một hoặc nhiều bản ghi lịch sử | EPIC 12 | To Do |
-| | `PDFL-167` | Chỉ cho phép tài khoản Pro sử dụng chức năng lịch sử | EPIC 12 | To Do |
-| | `PDFL-168` | Kiểm soát quyền truy cập lịch sử theo tài khoản cá nhân | EPIC 12 | To Do |
-| | `PDFL-169` | Xác định thời gian lưu trữ hoặc chính sách tự động xóa | EPIC 12 | To Do |
-| | `PDFL-170` | Kiểm thử các thao tác thêm, xem, mở lại và xóa lịch sử | EPIC 12 | To Do |
-| **Gói Free / Pro** | `PDFL-171` | Thiết kế cấu trúc dữ liệu lưu thông tin gói người dùng trong DB | EPIC 13 | To Do |
-| | `PDFL-172` | Xác định quyền lợi của gói Free (tối đa 20MB, trích xuất & dịch) | EPIC 13 | To Do |
-| | `PDFL-173` | Xác định quyền lợi của gói Pro (100MB, mở khóa AI, lưu lịch sử) | EPIC 13 | To Do |
-| | `PDFL-174` | Hiển thị thông tin gói và huy hiệu người dùng trên giao diện | EPIC 13 | To Do |
-| | `PDFL-175` | Xây dựng cơ chế kiểm tra gói dịch vụ ở Backend | EPIC 13 | To Do |
-| | `PDFL-176` | Áp dụng giới hạn tải lên tối đa 20 MB đối với Free | EPIC 13 | To Do |
-| | `PDFL-177` | Áp dụng giới hạn tải lên tối đa 100 MB đối với Pro | EPIC 13 | To Do |
-| | `PDFL-178` | Giới hạn số trang được phép xử lý cho từng gói | EPIC 13 | To Do |
-| | `PDFL-179` | Giới hạn lượt OCR, dịch thuật và hỏi đáp AI | EPIC 13 | To Do |
-| | `PDFL-180` | Cảnh báo hoặc thông báo khi người dùng vượt giới hạn | EPIC 13 | To Do |
-| | `PDFL-181` | Xây dựng trang so sánh quyền lợi Free và Pro | EPIC 13 | To Do |
-| | `PDFL-182` | Xây dựng luồng yêu cầu nâng cấp Pro | EPIC 13 | To Do |
-| | `PDFL-183` | Cập nhật quyền sử dụng khi tài khoản được nâng cấp | EPIC 13 | To Do |
-| | `PDFL-184` | Hiển thị thông báo nâng cấp khi người dùng truy cập tính năng Pro | EPIC 13 | To Do |
-| | `PDFL-185` | Kiểm thử việc áp dụng hạn mức ở Backend | EPIC 13 | To Do |
-| **Quản trị Admin** | `PDFL-186` | Xác định vai trò và quyền hạn của Admin | EPIC 14 | To Do |
-| | `PDFL-187` | Thiết lập tài khoản quản trị Admin an toàn | EPIC 14 | To Do |
-| | `PDFL-188` | Xây dựng trang tổng quan quản trị (Dashboard) | EPIC 14 | To Do |
-| | `PDFL-189` | Hiển thị danh sách tài khoản người dùng | EPIC 14 | To Do |
-| | `PDFL-190` | Tìm kiếm và lọc tài khoản theo thông tin | EPIC 14 | To Do |
-| | `PDFL-191` | Xem thông tin chi tiết của người dùng | EPIC 14 | To Do |
-| | `PDFL-192` | Theo dõi số lượng tài khoản Free và Pro | EPIC 14 | To Do |
-| | `PDFL-193` | Cấp, gia hạn, hạ cấp hoặc thu hồi quyền Pro | EPIC 14 | To Do |
-| | `PDFL-194` | Khóa hoặc mở khóa tài khoản người dùng | EPIC 14 | To Do |
-| | `PDFL-195` | Kiểm soát bảo vệ các thao tác quản trị quan trọng (Guard) | EPIC 14 | To Do |
-| | `PDFL-196` | Ghi thông tin xác nhận trước khi thực hiện thao tác rủi ro | EPIC 14 | To Do |
-| | `PDFL-197` | Kiểm tra quyền quản trị Admin ở Backend | EPIC 14 | To Do |
-| | `PDFL-198` | Đảm bảo tài khoản thường không thể truy cập chức năng quản trị | EPIC 14 | To Do |
-| **Kiểm thử hệ thống** | `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng (Unit/Integration) | EPIC 15 | To Do |
-| | `PDFL-207` | Kiểm thử độ chính xác với PDF thông thường và đa dạng tài liệu | EPIC 15 | To Do |
-| | `PDFL-214` | Kiểm tra an toàn file tải lên và ngăn việc truy cập file trái phép | EPIC 15 | To Do |
-| **Triển khai & Bàn giao** | `PDFL-228` | Chọn nền tảng triển khai Frontend và Backend | EPIC 16 | To Do |
-| | `PDFL-240` | Viết README giới thiệu PDF Lingua và hướng dẫn cài đặt | EPIC 16 | To Do |
-| | `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực và kiểm thử phần mềm | EPIC 16 | To Do |
-| | `PDFL-249` | Soạn thảo slide thuyết trình bảo vệ đồ án | EPIC 16 | To Do |
-| | `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | To Do |
-| | `PDFL-251` | Rà soát bảo mật toàn diện repo, loại bỏ API key trước khi bàn giao | EPIC 16 | To Do |
-| | `PDFL-269` | Kiến trúc hệ thống (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | To Do |
-| | `PDFL-270` | Lược đồ usecase (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | To Do |
-| | `PDFL-271` | Lược đồ lớp (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | To Do |
-| **Backend & Giao diện** | `PDFL-67` | Xây dựng API kiểm tra giới hạn upload, AI và hạn mức người dùng | EPIC 04 | To Do |
-| | `PDFL-71` | Xử lý các tác vụ nền cho các tệp nặng (Background Tasks) | EPIC 04 | To Do |
-| | `PDFL-53` | Xây dựng giao diện lịch sử thao tác tài liệu | EPIC 03 | To Do |
-| | `PDFL-54` | Xây dựng trang giới thiệu và so sánh gói Free/Pro | EPIC 03 | To Do |
-| | `PDFL-55` | Xây dựng giao diện form yêu cầu nâng cấp gói Pro | EPIC 03 | To Do |
-| | `PDFL-56` | Xây dựng giao diện quản trị Admin | EPIC 03 | To Do |
 
 ---
 
