@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, event, text
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.core.config import settings
 from app.core.logger import logger
@@ -24,7 +24,8 @@ if settings.DATABASE_URL.startswith("sqlite"):
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 
 def check_db_connection() -> bool:
@@ -51,4 +52,9 @@ def init_db() -> None:
     """
     import app.models  # noqa: F401 — registers User (and future models) with Base.metadata
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        app.models.seed_pricing_plans(db)
+    finally:
+        db.close()
     logger.info("[DB] Tables verified / created successfully.")

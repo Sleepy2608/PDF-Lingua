@@ -11,6 +11,22 @@ from app.models.processing_history import (  # noqa: F401
     ProcessingHistory,
     ProcessingStatus,
 )
+from app.models.subscription import (  # noqa: F401
+    PaymentTransaction,
+    PricingPlan,
+    Subscription,
+    seed_pricing_plans,
+)
 from app.models.user import User  # noqa: F401
 
-__all__ = ["User", "Document", "ProcessingHistory", "ActionType", "ProcessingStatus"]
+__all__ = [
+    "User",
+    "Document",
+    "ProcessingHistory",
+    "ActionType",
+    "ProcessingStatus",
+    "PricingPlan",
+    "Subscription",
+    "PaymentTransaction",
+    "seed_pricing_plans",
+]

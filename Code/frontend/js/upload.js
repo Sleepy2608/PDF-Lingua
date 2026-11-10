@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua — Upload & Dropzone Module (PDFL-81.4)
+ * PDF-Lingua - Upload & Dropzone Module (PDFL-81.4)
  * --------------------------------------------------------------------------
  * Handles PDF file selection via dropzone and file input, enforces role-based
  * client-side size limits (Guest/Free: 20MB, Pro/Admin: 100MB), and updates
@@ -83,7 +83,7 @@ function updateUploadLimitsUI(user) {
     if (limits.role === 'pro') {
       dropzoneLimitEl.innerHTML = '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, nhận diện OCR tối đa <strong>500 trang</strong>';
     } else if (limits.role === 'admin') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">ADMIN</span> Tệp tối đa <strong>100 MB</strong>, nhận diện OCR tối đa <strong>500 trang</strong>';
+      dropzoneLimitEl.innerHTML = '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">QUẢN TRỊ VIÊN</span> Tệp tối đa <strong>100 MB</strong>, nhận diện OCR tối đa <strong>500 trang</strong>';
     } else if (limits.role === 'free') {
       dropzoneLimitEl.innerHTML = 'Tệp miễn phí tối đa <strong>20 MB</strong>, OCR tối đa <strong>100 trang</strong> (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     } else {
@@ -194,6 +194,14 @@ function initDropzone() {
         showToast(msg, 'error');
       } else {
         alert(msg);
+      }
+      if (
+        typeof window !== 'undefined' &&
+        window.PDFLinguaPricing &&
+        typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function' &&
+        limits.maxFileSizeMb < 100
+      ) {
+        window.PDFLinguaPricing.openQuotaExceededModal(msg);
       }
       return;
     }
