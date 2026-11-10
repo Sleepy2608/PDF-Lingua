@@ -125,6 +125,7 @@ class StorageService:
             except Exception as e:
                 logger.error(f"[StorageService] Failed to delete file {target_path}: {e}")
                 return False
+        return False
 
     def save_result_file(
         self,

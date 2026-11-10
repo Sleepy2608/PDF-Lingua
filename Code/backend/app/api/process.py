@@ -265,10 +265,20 @@ async def create_processing_job(
     max_allowed_pages = get_max_pages_by_role(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    # 1. Kiểm tra filename (PDFL-214.1)
+    valid_name, name_err = pdf_service.validate_filename(file.filename)
+    if not valid_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp tải lên phải có định dạng .pdf.",
+            detail=name_err or "Tệp tải lên phải có định dạng .pdf.",
+        )
+
+    # 2. Kiểm tra Content-Type (PDFL-214.1)
+    valid_ct, ct_err = pdf_service.validate_content_type(file.content_type)
+    if not valid_ct:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ct_err or "Content-Type không hợp lệ, yêu cầu application/pdf.",
         )
 
     content = await file.read()
@@ -278,10 +288,12 @@ async def create_processing_job(
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
-    if not content.startswith(b"%PDF"):
+    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1. (PDFL-214.1)
+    valid_raw, raw_err = pdf_service.validate_raw_pdf_content(content)
+    if not valid_raw:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+            detail=raw_err or "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
         )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -313,13 +325,24 @@ async def create_processing_job(
                     f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
             )
-    except Exception:
+    except HTTPException:
         if tmp_path.exists():
             try:
                 os.remove(tmp_path)
             except Exception:
                 pass
         raise
+    except Exception as exc:
+        if tmp_path.exists():
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        logger.warning(f"Lỗi kiểm tra tệp PDF: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tệp PDF không hợp lệ hoặc bị lỗi không thể xử lý.",
+        )
 
     job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
     file_size_bytes = len(content)
@@ -405,10 +428,20 @@ async def upload_and_translate(
     max_upload_mb, max_ocr_pages = get_user_limits(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    # 1. Kiểm tra filename (PDFL-214.1)
+    valid_name, name_err = pdf_service.validate_filename(file.filename)
+    if not valid_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp tải lên phải có định dạng .pdf.",
+            detail=name_err or "Tệp tải lên phải có định dạng .pdf.",
+        )
+
+    # 2. Kiểm tra Content-Type (PDFL-214.1)
+    valid_ct, ct_err = pdf_service.validate_content_type(file.content_type)
+    if not valid_ct:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ct_err or "Content-Type không hợp lệ, yêu cầu application/pdf.",
         )
 
     content = await file.read()
@@ -418,10 +451,12 @@ async def upload_and_translate(
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
-    if not content.startswith(b"%PDF"):
+    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1. (PDFL-214.1)
+    valid_raw, raw_err = pdf_service.validate_raw_pdf_content(content)
+    if not valid_raw:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+            detail=raw_err or "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
         )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -576,6 +611,14 @@ async def upload_and_translate(
 
         return ApiResponse(data=response_data, message="Xử lý và dịch thuật tài liệu thành công.")
 
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning(f"Lỗi xử lý tệp PDF tải lên: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tệp PDF không hợp lệ hoặc bị lỗi không thể xử lý.",
+        )
     finally:
         if tmp_path.exists():
             try:

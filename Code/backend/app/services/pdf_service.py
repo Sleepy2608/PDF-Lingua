@@ -1,5 +1,7 @@
+import os
 import re
 import statistics
+import urllib.parse
 from pathlib import Path
 from typing import Any, Callable, Optional
 try:
@@ -51,6 +53,103 @@ class PDFService:
         except Exception:
             return False
 
+    def validate_filename(self, filename: Optional[str]) -> tuple[bool, Optional[str]]:
+        """
+        Kiểm tra tính hợp lệ của tên tệp PDF (PDFL-214.1):
+        - Bắt buộc phải có tên tệp và có phần mở rộng .pdf (không phân biệt hoa thường).
+        - Chặn null byte (\x00, \0) và các ký tự điều khiển.
+        - Chặn double extension (ví dụ: file.php.pdf, malicious.exe.pdf, test.txt.pdf, doc.pdf.pdf).
+        - Chặn tên tệp không hợp lệ (tên tệp rỗng, chỉ có .pdf, hoặc chỉ có khoảng trắng).
+        """
+        if not filename or not isinstance(filename, str):
+            return False, "Tên tệp không được để trống."
+
+        # Chặn null byte (kể cả URL-encoded %00)
+        unquoted = urllib.parse.unquote(filename)
+        if "\x00" in filename or "\0" in filename or "\x00" in unquoted or "%00" in filename.lower():
+            return False, "Tên tệp không hợp lệ (chứa null byte)."
+
+        # Chặn ký tự điều khiển (cả raw và unquoted)
+        if re.search(r"[\x00-\x1f\x7f]", filename) or re.search(r"[\x00-\x1f\x7f]", unquoted):
+            return False, "Tên tệp không hợp lệ (chứa ký tự điều khiển)."
+
+        clean_name = filename.strip()
+        if not clean_name:
+            return False, "Tên tệp không được để trống."
+
+        basename = os.path.basename(clean_name)
+        if not basename:
+            return False, "Tên tệp không được để trống."
+
+        # Phải kết thúc bằng .pdf (không phân biệt hoa thường)
+        if not basename.lower().endswith(".pdf"):
+            return False, "Tệp tải lên phải có định dạng .pdf."
+
+        stem = basename[:-4].strip()
+        # Tên gốc trước .pdf không được rỗng hoặc chỉ có dấu chấm
+        if not stem or stem.strip(".") == "":
+            return False, "Tên tệp không hợp lệ (thiếu phần tên chính trước .pdf)."
+
+        # Chặn double extension: stem không được chứa dấu chấm '.'
+        # (Ví dụ: shell.php.pdf, file.exe.pdf, test.txt.pdf, doc.pdf.pdf)
+        if "." in stem:
+            return False, "Tên tệp không hợp lệ (không cho phép double extension)."
+
+        return True, None
+
+    def validate_content_type(self, content_type: Optional[str]) -> tuple[bool, Optional[str]]:
+        """
+        Kiểm tra Content-Type của tệp tải lên (PDFL-214.1):
+        Bắt buộc phải là application/pdf (không phân biệt hoa thường).
+        """
+        if not content_type or not isinstance(content_type, str):
+            return False, "Content-Type không hợp lệ, yêu cầu application/pdf."
+
+        raw = content_type.strip().lower()
+        media_type = raw.split(";")[0].strip()
+        if media_type != "application/pdf":
+            return False, "Content-Type không hợp lệ, yêu cầu application/pdf."
+
+        return True, None
+
+    def validate_raw_pdf_content(self, content: bytes) -> tuple[bool, Optional[str]]:
+        """
+        Kiểm tra dữ liệu nhị phân thô của tệp PDF (PDFL-214.1):
+        - Không được là tệp rỗng (0 bytes).
+        - Bắt buộc phải có Magic Bytes bắt đầu bằng %PDF-1.
+        """
+        if not content or len(content) == 0:
+            return False, "Tệp rỗng hoặc không có dữ liệu."
+
+        if not content.startswith(b"%PDF-1."):
+            return False, "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes)."
+
+        return True, None
+
+    def validate_upload(
+        self,
+        filename: Optional[str],
+        content_type: Optional[str],
+        content: bytes,
+    ) -> tuple[bool, Optional[str]]:
+        """
+        Harden PDF upload validation toàn diện (PDFL-214.1).
+        Kiểm tra đồng thời filename, content-type, magic bytes và dung lượng thô.
+        """
+        valid_name, err_name = self.validate_filename(filename)
+        if not valid_name:
+            return False, err_name
+
+        valid_ct, err_ct = self.validate_content_type(content_type)
+        if not valid_ct:
+            return False, err_ct
+
+        valid_content, err_content = self.validate_raw_pdf_content(content)
+        if not valid_content:
+            return False, err_content
+
+        return True, None
+
     def validate_pdf(self, file_path: Path | str) -> dict[str, Any]:
         """
         Kiểm tra tính hợp lệ của tệp PDF và xác định số trang từ catalog/metadata.
@@ -85,6 +184,24 @@ class PDFService:
                 "is_encrypted": False,
                 "page_count": 0,
                 "error": f"Lỗi truy cập tệp tin: {stat_err}",
+            }
+
+        try:
+            with open(path, "rb") as f:
+                header = f.read(8)
+                if not header.startswith(b"%PDF-1."):
+                    return {
+                        "is_valid": False,
+                        "is_encrypted": False,
+                        "page_count": 0,
+                        "error": "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+                    }
+        except Exception as read_err:
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": f"Lỗi đọc tệp tin: {read_err}",
             }
 
         try:
