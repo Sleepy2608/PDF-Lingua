@@ -391,7 +391,16 @@ async function handleProcessPdf() {
     ? getCurrentUserLimits()
     : { maxFileSizeBytes: 20 * 1024 * 1024, maxFileSizeMb: 20 };
   if (selectedFile.size > limits.maxFileSizeBytes) {
-    showToast(`Dung lượng tệp (${formatFileSize(selectedFile.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!`, 'error');
+    const overMsg = `Dung lượng tệp (${formatFileSize(selectedFile.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!`;
+    showToast(overMsg, 'error');
+    if (
+      typeof window !== 'undefined' &&
+      window.PDFLinguaPricing &&
+      typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function' &&
+      limits.maxFileSizeMb < 100
+    ) {
+      window.PDFLinguaPricing.openQuotaExceededModal(overMsg);
+    }
     return;
   }
 
@@ -436,6 +445,13 @@ async function handleProcessPdf() {
         ? (result.message || result.detail)
         : 'Tệp hoặc số trang vượt quá giới hạn cho phép của tài khoản!';
       showToast(msg, 'error');
+      if (
+        typeof window !== 'undefined' &&
+        window.PDFLinguaPricing &&
+        typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function'
+      ) {
+        window.PDFLinguaPricing.openQuotaExceededModal(msg);
+      }
       if (btnProcessPdf) btnProcessPdf.disabled = false;
       return;
     }

@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua — Main Frontend Logic
+ * PDF-Lingua: Main Frontend Logic
  */
 
 document.addEventListener('DOMContentLoaded', () => {
