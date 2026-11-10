@@ -259,8 +259,10 @@ async def create_processing_job(
     """
     Khởi tạo Background Job xử lý PDF (PDFL-111.4).
     Trả về ngay Job ID mà không giữ kết nối HTTP chờ toàn bộ quá trình OCR.
+    Thực thi kiểm tra tính hợp lệ và hạn mức số trang trước khi cấp Job ID (PDFL-178.3).
     """
-    max_upload_mb, max_ocr_pages = get_user_limits(current_user)
+    max_upload_mb, _ = get_user_limits(current_user)
+    max_allowed_pages = get_max_pages_by_role(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -286,6 +288,39 @@ async def create_processing_job(
         tmp.write(content)
         tmp_path = Path(tmp.name)
 
+    try:
+        validation = pdf_service.validate_pdf(tmp_path)
+        if not validation["is_valid"]:
+            error_msg = validation["error"] or "Tệp PDF không hợp lệ."
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
+
+        page_count = validation["page_count"]
+        if page_count <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
+            )
+
+        if page_count > max_allowed_pages:
+            role_label = (
+                "Guest"
+                if current_user is None
+                else getattr(current_user.role, "value", str(current_user.role)).upper()
+            )
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=(
+                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                ),
+            )
+    except Exception:
+        if tmp_path.exists():
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        raise
+
     job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
     file_size_bytes = len(content)
     file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
@@ -299,7 +334,7 @@ async def create_processing_job(
             tmp_path,
             file.filename,
             target_lang,
-            max_ocr_pages,
+            max_allowed_pages,
             file_size_mb,
             authenticated_user_id,
             file_size_bytes,

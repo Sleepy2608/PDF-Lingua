@@ -7,10 +7,10 @@
  */
 
 const ROLE_LIMITS = {
-  guest: { maxFileSizeMb: 20, maxOcrPages: 100, label: 'Khách' },
-  free: { maxFileSizeMb: 20, maxOcrPages: 100, label: 'Miễn phí' },
-  pro: { maxFileSizeMb: 100, maxOcrPages: 500, label: 'Pro' },
-  admin: { maxFileSizeMb: 100, maxOcrPages: 500, label: 'Quản trị viên' },
+  guest: { maxFileSizeMb: 20, maxPages: 100, maxOcrPages: 100, label: 'Khách' },
+  free: { maxFileSizeMb: 20, maxPages: 100, maxOcrPages: 100, label: 'Miễn phí' },
+  pro: { maxFileSizeMb: 100, maxPages: 500, maxOcrPages: 500, label: 'Pro' },
+  admin: { maxFileSizeMb: 100, maxPages: 500, maxOcrPages: 500, label: 'Quản trị viên' },
 };
 
 const DEFAULT_LIMITS = ROLE_LIMITS.guest;
@@ -66,7 +66,8 @@ function getCurrentUserLimits(user) {
     role: role,
     maxFileSizeMb: config.maxFileSizeMb,
     maxFileSizeBytes: config.maxFileSizeMb * 1024 * 1024,
-    maxOcrPages: config.maxOcrPages,
+    maxPages: config.maxPages || 100,
+    maxOcrPages: config.maxOcrPages || 100,
     label: config.label,
   };
 }
@@ -81,14 +82,14 @@ function updateUploadLimitsUI(user) {
 
   if (dropzoneLimitEl) {
     if (limits.role === 'pro') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, nhận diện OCR tối đa <strong>500 trang</strong>';
+      dropzoneLimitEl.innerHTML = '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
     } else if (limits.role === 'admin') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">ADMIN</span> Tệp tối đa <strong>100 MB</strong>, nhận diện OCR tối đa <strong>500 trang</strong>';
+      dropzoneLimitEl.innerHTML = '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">ADMIN</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
     } else if (limits.role === 'free') {
-      dropzoneLimitEl.innerHTML = 'Tệp miễn phí tối đa <strong>20 MB</strong>, OCR tối đa <strong>100 trang</strong> (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
+      dropzoneLimitEl.innerHTML = 'Tệp miễn phí tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     } else {
       // Guest (unauthenticated)
-      dropzoneLimitEl.innerHTML = 'Tệp tối đa <strong>20 MB</strong>, OCR tối đa <strong>100 trang</strong> (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
+      dropzoneLimitEl.innerHTML = 'Tệp tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     }
   }
 
