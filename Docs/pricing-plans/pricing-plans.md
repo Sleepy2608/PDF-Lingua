@@ -54,7 +54,7 @@ Hệ thống quyền lợi được phân chia thành 3 nhóm năng lực cốt 
 | Tiêu Chí / Tính Năng | Gói Miễn Phí (Free) | Gói Nâng Cao (Pro) | Chi Tiết Kỹ Thuật |
 |---|:---:|:---:|---|
 | **Kho lưu trữ tài liệu cá nhân** | **5 tệp gần đây** | **Không giới hạn** | Lưu trữ đám mây an toàn, tra cứu lại bản dịch bất cứ lúc nào |
-| **Huy hiệu nhận diện tài khoản** | **Không có nhãn** | **Huy hiệu VIP** | Hiển thị huy hiệu VIP nổi bật trên thanh Sidebar và hồ sơ tài khoản |
+| **Huy hiệu nhận diện tài khoản** | **Không có huy hiệu** | **Huy hiệu VIP** | Hiển thị huy hiệu VIP nổi bật trên thanh Sidebar và hồ sơ tài khoản |
 | **Nhật ký lịch sử xử lý** | Lưu 30 ngày | **Lưu trữ vĩnh viễn** | Tra cứu trạng thái, thời gian xử lý và tải lại tệp tin |
 | **Chính sách quản lý & Hủy gia hạn** | Mặc định | **Hủy bất cứ lúc nào** | Người dùng chủ động bật / tắt tự động gia hạn trong phần cài đặt |
 | **Hỗ trợ kỹ thuật** | Hỗ trợ cộng đồng | **Ưu tiên 24/7** | Giải quyết sự cố và phản hồi yêu cầu qua kênh ưu tiên |

@@ -202,7 +202,7 @@ Sau khi hoàn tất việc đọc và biên dịch tài liệu, bạn có thể 
 | **Trợ lý hỏi đáp AI Copilot** | ❌ Không hỗ trợ | ❌ **Không có** | ✅ **15 câu / ngày** |
 | **Tóm tắt văn bản AI Summary** | ❌ Không hỗ trợ | ✅ Cơ bản | ✅ **Chuyên sâu & Thuật ngữ** |
 | **Kho lưu trữ tài liệu cá nhân** | ❌ Không lưu | 5 tệp gần nhất | **Không giới hạn** |
-| **Huy hiệu nhận diện tài khoản** | Không có nhãn | **Không có nhãn** | **Huy hiệu VIP** |
+| **Huy hiệu nhận diện tài khoản** | Không có huy hiệu | **Không có huy hiệu** | **Huy hiệu VIP** |
 
 ---
 

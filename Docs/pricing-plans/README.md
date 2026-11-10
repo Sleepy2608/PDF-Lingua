@@ -17,5 +17,5 @@ Thư mục này chứa tài liệu đặc tả chi tiết về mô hình gói c�
 | **Tóm tắt AI & Thuật ngữ** | Cơ bản | Chuyên sâu & Bảng thuật ngữ |
 | **Định dạng tải xuống** | PDF, TXT | PDF, Word (.docx), TXT |
 | **Kho tài liệu cá nhân** | 5 tệp gần nhất | Không giới hạn |
-| **Huy hiệu nhận diện** | **Không có nhãn** | **Huy hiệu VIP** |
+| **Huy hiệu nhận diện** | **Không có huy hiệu** | **Huy hiệu VIP** |
 
