@@ -18,7 +18,7 @@
 
 # 1. Danh sách Epic tổng quan
 
-Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển của dự án PDF-Lingua:
+Bảng dưới đây tổng hợp 17 Epic chính trong lộ trình phát triển của dự án PDF-Lingua:
 
 | STT | Mã Epic | Tên Epic | Mục tiêu & Phạm vi chính |
 | :---: | :--- | :--- | :--- |
@@ -38,6 +38,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 | 14 | **EPIC 14** | Quản trị hệ thống Admin | Dashboard quản trị người dùng, theo dõi trạng thái tài khoản, nâng cấp/hạ cấp gói Pro và ghi log quản trị. |
 | 15 | **EPIC 15** | Kiểm thử, bảo mật và tối ưu | Viết Unit/Integration tests, kiểm thử an toàn file, SQL injection, XSS, rate limit và tối ưu hiệu năng. |
 | 16 | **EPIC 16** | Triển khai, tài liệu và bàn giao | Triển khai Frontend & Backend lên server/cloud, viết tài liệu README, API docs và chuẩn bị demo. |
+| 17 | **EPIC 17** | Tính năng mở rộng & Nâng cao trải nghiệm người dùng | Các tính năng giá trị gia tăng (xử lý file theo lô, tải file DOCX, xem trước PDF, Dark mode, thanh toán trực tuyến, đặt lại mật khẩu,...). |
 
 ---
 
@@ -176,6 +177,7 @@ Bảng dưới đây tổng hợp 16 Epic chính trong lộ trình phát triển
 - PDFL-123: Kiểm thử các trường hợp dịch tiếng Việt, tiếng Anh và các ngôn ngữ được lựa chọn.
 - PDFL-124: Đánh giá khả năng giữ nguyên đoạn văn, danh sách và nội dung quan trọng khi dịch.
 - PDFL-125: Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài.
+- PDFL-268: Tích hợp thư viện dịch thuật deep-translator.
 
 ## EPIC 09 - AI tóm tắt văn bản
 
@@ -341,10 +343,11 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-249: Chuẩn bị slide thuyết trình.
 - PDFL-250: Chuẩn bị kịch bản demo các chức năng chính.
 - PDFL-251: Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao.
+- PDFL-269: Kiến trúc hệ thống (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
+- PDFL-270: Lược đồ usecase (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
+- PDFL-271: Lược đồ lớp (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
 
-# 3. Các chức năng mở rộng - chưa cần làm ngay
-
-Những task sau chỉ nên đưa vào Backlog nếu nhóm còn thời gian sau khi các chức năng chính đã ổn định.
+## EPIC 17 - Tính năng mở rộng & Nâng cao trải nghiệm người dùng
 
 - PDFL-252: Cho phép xử lý nhiều file PDF theo lô.
 - PDFL-253: Hỗ trợ kéo thả file vào giao diện.
@@ -360,4 +363,3 @@ Những task sau chỉ nên đưa vào Backlog nếu nhóm còn thời gian sau 
 - PDFL-263: Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan.
 - PDFL-264: Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối.
 - PDFL-265: Xem xét sử dụng hàng đợi tác vụ cho các file lớn và quy trình OCR/AI kéo dài.
-- PDFL-267: Xây dựng nội dung và giao diện Điều khoản và bảo mật cho người dùng.

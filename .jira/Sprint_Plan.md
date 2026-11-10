@@ -41,11 +41,11 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | :---: | :---: | :--- | :--- | :---: | :---: |
 | **Sprint 1** | 15/10 - 22/10/2026 | Phân tích yêu cầu, thiết kế hệ thống & khởi tạo khung dự án | **EPIC 01, EPIC 02**, một phần EPIC 03 & 04 | 31 tasks | ✅ Đã hoàn thành (31/31 Done) |
 | **Sprint 2** | 23/10 - 30/10/2026 | Hệ thống tài khoản, xác thực & Cốt lõi xử lý PDF, OCR | **EPIC 05, EPIC 06, EPIC 07**, EPIC 03 & 04 | 32 tasks | ✅ **Đã hoàn thành** (32/32 Done) |
-| **Sprint 3** | 31/10 - 06/11/2026 | Quản lý tài liệu, OCR nâng cao, Dịch thuật cốt lõi, Xuất file & UI hoàn thiện | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, Section 3** | 38 tasks | ✅ **Đã hoàn thành** (38/38 Done) |
+| **Sprint 3** | 31/10 - 06/11/2026 | Quản lý tài liệu, OCR nâng cao, Dịch thuật cốt lõi, Xuất file & UI hoàn thiện | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, EPIC 17** | 38 tasks | ✅ **Đã hoàn thành** (38/38 Done) |
 | **Sprint 4** | 07/11 - 13/11/2026 | Tinh chỉnh dịch thuật fallback, kiểm thử xuất file & hoàn thiện Gói Free | **EPIC 08, EPIC 11** | 8 tasks | 📋 Kế hoạch |
 | **Sprint 5** | 14/11 - 20/11/2026 | AI tóm tắt văn bản & Trợ lý AI hỏi đáp tài liệu (*Khởi động Gói Pro*) | **EPIC 09, EPIC 10**, tiếp tục EPIC 03 | 26 tasks | 📋 Kế hoạch |
-| **Sprint 6** | 21/11 - 27/11/2026 | Quản lý gói Pro, Lịch sử, Quản trị Admin, Kiểm thử & Đóng gói | **EPIC 12, 13, 14, 15, 16**, EPIC 03, 04 | 64 work items | 📋 Kế hoạch |
-| **Sprint 7** | 28/11 - 04/12/2026 | Tính năng mở rộng nâng cao, tối ưu UX & Buffer dự phòng | **Section 3 (`PDFL-252` $\rightarrow$ `PDFL-265`)**, Demo Dry Run | 13 tasks | 📋 Kế hoạch |
+| **Sprint 6** | 21/11 - 27/11/2026 | Quản lý gói Pro, Lịch sử, Quản trị Admin, Kiểm thử & Đóng gói | **EPIC 12, 13, 14, 15, 16**, EPIC 03, 04 | 67 work items | 📋 Kế hoạch |
+| **Sprint 7** | 28/11 - 04/12/2026 | Tính năng mở rộng nâng cao, tối ưu UX & Buffer dự phòng | **EPIC 17 (`PDFL-252` $\rightarrow$ `PDFL-265`)**, Demo Dry Run | 13 tasks | 📋 Kế hoạch |
 
 ---
 
@@ -180,7 +180,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-153` | Xây dựng chức năng tải file kết quả về thiết bị người dùng | EPIC 11 | **Done** |
 | `PDFL-154` | Đặt tên file kết quả theo tài liệu, ngôn ngữ hoặc loại nội dung | EPIC 11 | **Done** |
 | `PDFL-155` | Đảm bảo tiếng Việt và Unicode được hiển thị đúng trong file xuất | EPIC 11 | **Done** |
-| `PDFL-253` | Hỗ trợ kéo thả file vào giao diện | Section 3 | **Done** |
+| `PDFL-253` | Hỗ trợ kéo thả file vào giao diện | EPIC 17 | **Done** |
 | `PDFL-267` | Điều khoản và bảo mật cho người dùng | EPIC 03 | **Done** |
 
 ---
@@ -295,6 +295,9 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | | `PDFL-249` | Soạn thảo slide thuyết trình bảo vệ đồ án | EPIC 16 | To Do |
 | | `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | To Do |
 | | `PDFL-251` | Rà soát bảo mật toàn diện repo, loại bỏ API key trước khi bàn giao | EPIC 16 | To Do |
+| | `PDFL-269` | Kiến trúc hệ thống (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | To Do |
+| | `PDFL-270` | Lược đồ usecase (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | To Do |
+| | `PDFL-271` | Lược đồ lớp (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | To Do |
 | **Backend & Giao diện** | `PDFL-67` | Xây dựng API kiểm tra giới hạn upload, AI và hạn mức người dùng | EPIC 04 | To Do |
 | | `PDFL-71` | Xử lý các tác vụ nền cho các tệp nặng (Background Tasks) | EPIC 04 | To Do |
 | | `PDFL-53` | Xây dựng giao diện lịch sử thao tác tài liệu | EPIC 03 | To Do |
@@ -304,30 +307,30 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 
 ---
 
-### 🔹 Sprint 7: Tính Năng Mở Rộng Nâng Cao & Buffer Dự Phòng
+### 🔹 Sprint 7: Tính Năng Mở Rộng Nâng Cao & Buffer Dự Phòng (EPIC 17)
 - **Thời gian**: 28/11/2026 - 04/12/2026 (Tuần 7)
 - **Mục tiêu**:
   1. **Buffer dự phòng**: Hoàn tất các task tồn đọng từ 6 tuần trước (nếu có).
   2. **Tối ưu UX**: Sửa các lỗi nhỏ phát sinh trong quá trình chạy thử nghiệm.
-  3. **Chức năng mở rộng**: Hiện thực 13 tính năng giá trị gia tăng (`PDFL-252`, `PDFL-254` đến `PDFL-265`) đã được chốt trên Jira (lưu ý: `PDFL-253` đã hoàn thành trước hạn tại Sprint 3).
+  3. **Chức năng mở rộng (EPIC 17)**: Hiện thực 13 tính năng giá trị gia tăng (`PDFL-252`, `PDFL-254` đến `PDFL-265`) thuộc **EPIC 17: Tính năng mở rộng & Nâng cao trải nghiệm người dùng** (lưu ý: `PDFL-253` đã hoàn thành trước hạn tại Sprint 3).
   4. **Tổng duyệt**: Diễn tập buổi thuyết trình và demo kịch bản hoàn chỉnh (`DEMO-DRY`).
 - **Trạng thái**: 📋 **Theo kế hoạch** - 13 Work Items
 
-| Mã Task | Tên nhiệm vụ mở rộng | Ý nghĩa & Giá trị mang lại | Trạng thái Jira |
-| :--- | :--- | :--- | :---: |
-| `PDFL-252` | Cho phép xử lý nhiều file PDF theo lô | Tải lên và xử lý hàng loạt tài liệu cùng lúc | To Do |
-| `PDFL-254` | Cho phép tải kết quả dưới định dạng DOCX | Tiện lợi cho người dùng muốn chỉnh sửa tiếp trên Microsoft Word | To Do |
-| `PDFL-255` | Cho phép chọn các trang cụ thể cần trích xuất hoặc dịch | Tiết kiệm tài nguyên và thời gian khi tài liệu quá dài | To Do |
-| `PDFL-256` | Hỗ trợ xem trước PDF và chuyển trang ngay trên ứng dụng | Người dùng xem được tài liệu gốc song song khi đối chiếu bản dịch | To Do |
-| `PDFL-257` | Hỗ trợ lưu hoặc tải lại kết quả dịch theo từng trang | Quản lý kết quả dịch chi tiết theo từng trang riêng biệt | To Do |
-| `PDFL-258` | Bổ sung đặt lại mật khẩu qua email | Hoàn thiện luồng quên mật khẩu người dùng với OTP/Token | To Do |
-| `PDFL-259` | Tích hợp thanh toán trực tuyến cho gói Pro | Mô phỏng quy trình nâng cấp gói cước trực tuyến | To Do |
-| `PDFL-260` | Gửi thông báo về trạng thái xử lý tài liệu | Trải nghiệm thông báo thời gian thực (Toast Notification) | To Do |
-| `PDFL-261` | Cho phép người dùng gửi phản hồi hoặc báo cáo lỗi | Kênh tiếp nhận ý kiến đóng góp từ người dùng | To Do |
-| `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | Biểu đồ trực quan số trang đã đọc, số từ đã dịch trong Dashboard | To Do |
-| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI | Tham chiếu trang hoặc đoạn văn liên quan để tăng độ tin cậy AI | To Do |
-| `PDFL-264` | Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối (Dark mode) | Tùy chọn giao diện bảo vệ mắt khi làm việc ban đêm | To Do |
-| `PDFL-265` | Xem xét sử dụng hàng đợi tác vụ cho các file lớn (Task Queue) | Kiến trúc mở rộng chịu tải cao (Celery/Redis) cho quy trình OCR/AI | To Do |
+| Mã Task | Tên nhiệm vụ mở rộng | Epic | Ý nghĩa & Giá trị mang lại | Trạng thái Jira |
+| :--- | :--- | :---: | :--- | :---: |
+| `PDFL-252` | Cho phép xử lý nhiều file PDF theo lô | EPIC 17 | Tải lên và xử lý hàng loạt tài liệu cùng lúc | To Do |
+| `PDFL-254` | Cho phép tải kết quả dưới định dạng DOCX | EPIC 17 | Tiện lợi cho người dùng muốn chỉnh sửa tiếp trên Microsoft Word | To Do |
+| `PDFL-255` | Cho phép chọn các trang cụ thể cần trích xuất hoặc dịch | EPIC 17 | Tiết kiệm tài nguyên và thời gian khi tài liệu quá dài | To Do |
+| `PDFL-256` | Hỗ trợ xem trước PDF và chuyển trang ngay trên ứng dụng | EPIC 17 | Người dùng xem được tài liệu gốc song song khi đối chiếu bản dịch | To Do |
+| `PDFL-257` | Hỗ trợ lưu hoặc tải lại kết quả dịch theo từng trang | EPIC 17 | Quản lý kết quả dịch chi tiết theo từng trang riêng biệt | To Do |
+| `PDFL-258` | Bổ sung đặt lại mật khẩu qua email | EPIC 17 | Hoàn thiện luồng quên mật khẩu người dùng với OTP/Token | To Do |
+| `PDFL-259` | Tích hợp thanh toán trực tuyến cho gói Pro | EPIC 17 | Mô phỏng quy trình nâng cấp gói cước trực tuyến | To Do |
+| `PDFL-260` | Gửi thông báo về trạng thái xử lý tài liệu | EPIC 17 | Trải nghiệm thông báo thời gian thực (Toast Notification) | To Do |
+| `PDFL-261` | Cho phép người dùng gửi phản hồi hoặc báo cáo lỗi | EPIC 17 | Kênh tiếp nhận ý kiến đóng góp từ người dùng | To Do |
+| `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | EPIC 17 | Biểu đồ trực quan số trang đã đọc, số từ đã dịch trong Dashboard | To Do |
+| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI | EPIC 17 | Tham chiếu trang hoặc đoạn văn liên quan để tăng độ tin cậy AI | To Do |
+| `PDFL-264` | Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối (Dark mode) | EPIC 17 | Tùy chọn giao diện bảo vệ mắt khi làm việc ban đêm | To Do |
+| `PDFL-265` | Xem xét sử dụng hàng đợi tác vụ cho các file lớn (Task Queue) | EPIC 17 | Kiến trúc mở rộng chịu tải cao (Celery/Redis) cho quy trình OCR/AI | To Do |
 
 ---
 
