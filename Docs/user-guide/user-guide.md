@@ -2,7 +2,7 @@
 
 > **Tài liệu**: Hướng dẫn sử dụng chi tiết & Quy chuẩn vận hành ứng dụng Web PDF-Lingua  
 > **Vị trí tệp**: `Docs/USER_GUIDE.md`  
-> **Dự án**: **PDF-Lingua** — Nền tảng trích xuất văn bản PDF thông minh, OCR tài liệu scan và dịch thuật đa ngôn ngữ  
+> **Dự án**: **PDF-Lingua**: Nền tảng trích xuất văn bản PDF thông minh, OCR tài liệu scan và dịch thuật đa ngôn ngữ  
 > **Phiên bản**: `1.0.0` (Cập nhật tháng 11/2026)
 
 ---
@@ -177,7 +177,7 @@ Sau khi hoàn tất việc đọc và biên dịch tài liệu, bạn có thể 
   - Hạn chế tài liệu scan bị bóng đen ở nếp gấp sách để bộ nhận diện OCR không nhận nhầm thành ký tự lạ.
 
 ### ⚡ Quy chuẩn 2: Dung lượng và phân đoạn tài liệu
-- Đối với sách giáo trình dày hàng trăm trang, khuyến nghị nên tách theo từng chương mục nhỏ (20–50 trang/lần) để:
+- Đối với sách giáo trình dày hàng trăm trang, khuyến nghị nên tách theo từng chương mục nhỏ (20-50 trang/lần) để:
   - Tối ưu hóa thời gian chờ đợi phản hồi từ máy chủ.
   - Giúp bản dịch giữ được tính liên kết ngữ cảnh chặt chẽ hơn.
 
@@ -192,14 +192,17 @@ Sau khi hoàn tất việc đọc và biên dịch tài liệu, bạn có thể 
 | Tiêu Chí / Tính Năng | Khách Vãng Lai (Guest) | Tài Khoản Miễn Phí (Free) | Tài Khoản Nâng Cao (Pro) |
 |---|:---:|:---:|:---:|
 | **Yêu cầu đăng nhập** | Không | Bắt buộc | Bắt buộc |
+| **Giá dịch vụ** | Miễn phí | Miễn phí | 49.000đ/tháng hoặc 399.000đ/năm |
 | **Dung lượng tối đa mỗi tệp** | **20 MB** | **20 MB** | **100 MB** |
 | **Giới hạn số trang tối đa** | 100 trang | 100 trang | **500 trang** |
 | **Trích xuất văn bản số** | ✅ Hỗ trợ | ✅ Hỗ trợ | ✅ Hỗ trợ |
 | **Nhận dạng OCR PDF scan** | ✅ Hỗ trợ | ✅ Hỗ trợ | ✅ Ưu tiên tốc độ cao |
 | **Dịch thuật đa ngôn ngữ** | ✅ Không giới hạn | ✅ Không giới hạn | ✅ Không giới hạn |
-| **Xuất kết quả TXT / PDF** | ✅ Hỗ trợ | ✅ Hỗ trợ | ✅ Hỗ trợ |
-| **Tự động lưu lịch sử tệp** | ❌ Không | ❌ Không | ⭐ Có trong Sprint tới |
-| **Trợ lý AI hỏi đáp & Tóm tắt** | ❌ Không | ❌ Không | ⭐ Có trong Sprint tới |
+| **Định dạng tải xuống bản dịch** | TXT, PDF | TXT, PDF | **TXT, PDF, Word (.docx)** |
+| **Trợ lý hỏi đáp AI Copilot** | ❌ Không hỗ trợ | ❌ **Không có** | ✅ **15 câu / ngày** |
+| **Tóm tắt văn bản AI Summary** | ❌ Không hỗ trợ | ✅ Cơ bản | ✅ **Chuyên sâu & Thuật ngữ** |
+| **Kho lưu trữ tài liệu cá nhân** | ❌ Không lưu | 5 tệp gần nhất | **Không giới hạn** |
+| **Huy hiệu nhận diện tài khoản** | Không có nhãn | **Không có nhãn** | **Huy hiệu VIP** |
 
 ---
 
