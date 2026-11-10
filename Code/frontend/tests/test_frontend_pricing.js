@@ -349,6 +349,8 @@ async function main() {
     assert.ok(htmlSource.includes('id="btnSimulatePaymentSuccess"'), 'btnSimulatePaymentSuccess must exist');
     assert.ok(pricingCssSource.includes('.pricing-bento-grid'), 'pricing.css must define .pricing-bento-grid');
     assert.ok(pricingCssSource.includes('.checkout-modal-card'), 'pricing.css must define .checkout-modal-card');
+    assert.ok(pricingCssSource.includes('checkoutLaserScanOnce'), 'pricing.css must define checkoutLaserScanOnce');
+    assert.ok(pricingCssSource.includes('1 forwards'), 'pricing.css checkout laser must run exactly 1 time with forwards');
     assert.ok(pricingCssSource.includes('prefers-reduced-motion: reduce'), 'pricing.css must support prefers-reduced-motion');
   });
 

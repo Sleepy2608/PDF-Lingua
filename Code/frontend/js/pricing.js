@@ -949,6 +949,15 @@
         if (qrFallback) qrFallback.style.display = 'flex';
       }
     }
+
+    const laser = document.getElementById('checkoutQrLaser');
+    if (laser && laser.style) {
+      laser.style.animation = 'none';
+      if (typeof laser.offsetHeight !== 'undefined') {
+        void laser.offsetHeight;
+      }
+      laser.style.animation = '';
+    }
   }
 
   function formatCountdownSeconds(secs) {
