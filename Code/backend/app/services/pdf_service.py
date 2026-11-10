@@ -52,31 +52,101 @@ class PDFService:
             return False
 
     def validate_pdf(self, file_path: Path | str) -> dict[str, Any]:
+        """
+        Kiểm tra tính hợp lệ của tệp PDF và xác định số trang từ catalog/metadata.
+        Tránh nạp hoặc render toàn bộ trang nhằm tối ưu hiệu năng và bộ nhớ.
+        Xử lý an toàn:
+        - Tệp không tồn tại
+        - Tệp rỗng (0 bytes)
+        - Tệp hỏng hoặc không phải PDF
+        - Tệp có mật khẩu bảo vệ
+        - Tệp có page_count <= 0
+        """
         path = Path(file_path)
         if not path.exists():
-            return {"is_valid": False, "is_encrypted": False, "page_count": 0, "error": "Tệp không tồn tại."}
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": "Tệp không tồn tại.",
+            }
+
+        try:
+            if not path.is_file() or path.stat().st_size == 0:
+                return {
+                    "is_valid": False,
+                    "is_encrypted": False,
+                    "page_count": 0,
+                    "error": "Tệp rỗng hoặc không phải tệp tin hợp lệ.",
+                }
+        except Exception as stat_err:
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": f"Lỗi truy cập tệp tin: {stat_err}",
+            }
 
         try:
             reader = pypdf.PdfReader(str(path))
             if reader.is_encrypted:
+                page_count = 0
+                try:
+                    page_count = len(reader.pages)
+                except Exception:
+                    page_count = 0
                 return {
                     "is_valid": False,
                     "is_encrypted": True,
-                    "page_count": len(reader.pages),
+                    "page_count": page_count,
                     "error": "Tệp PDF có mật khẩu bảo vệ.",
                 }
+
+            page_count = len(reader.pages)
+            if page_count <= 0:
+                return {
+                    "is_valid": False,
+                    "is_encrypted": False,
+                    "page_count": 0,
+                    "error": "Tài liệu PDF không có trang nào hợp lệ để xử lý.",
+                }
+
             return {
                 "is_valid": True,
                 "is_encrypted": False,
-                "page_count": len(reader.pages),
+                "page_count": page_count,
                 "error": None,
             }
         except Exception as e:
-            return {"is_valid": False, "is_encrypted": False, "page_count": 0, "error": f"Lỗi đọc tệp PDF: {e}"}
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": f"Lỗi đọc tệp PDF: {e}",
+            }
 
     def get_page_count(self, file_path: Path | str) -> int:
-        reader = pypdf.PdfReader(str(file_path))
-        return len(reader.pages)
+        """
+        Lấy số trang PDF an toàn và nhanh chóng từ catalog/metadata.
+        Tránh hoàn toàn việc render hoặc nạp stream nội dung trang.
+        Trả về 0 nếu tệp không tồn tại, rỗng, bị hỏng hoặc không có trang nào.
+        """
+        path = Path(file_path)
+        if not path.is_file():
+            return 0
+
+        try:
+            if path.stat().st_size == 0:
+                return 0
+            reader = pypdf.PdfReader(str(path))
+            if reader.is_encrypted:
+                try:
+                    return max(0, len(reader.pages))
+                except Exception:
+                    return 0
+            return max(0, len(reader.pages))
+        except Exception:
+            return 0
 
     def extract_text(self, file_path: Path | str, max_pages: int | None = None) -> str:
         pages_data = self.extract_pages(file_path, max_pages=max_pages)

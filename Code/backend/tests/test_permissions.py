@@ -14,7 +14,7 @@ from datetime import timedelta
 from typing import Optional
 
 import pytest
-from app.api.process import get_user_limits
+from app.api.process import get_max_pages_by_role, get_user_limits
 from app.core.config import settings
 from app.core.database import Base
 from app.core.dependencies import get_db, get_optional_current_user, require_roles
@@ -124,6 +124,37 @@ def test_get_user_limits_unknown_role_fallback():
     upload_mb, ocr_pages = get_user_limits(MockUser())
     assert upload_mb == 20
     assert ocr_pages == 100
+
+
+def test_get_max_pages_by_role_standardized_limits():
+    """PDFL-178.1: Verify standardized max pages policy across all roles and input formats."""
+    # Guest (None / 'guest') -> 100
+    assert get_max_pages_by_role(None) == 100
+    assert get_max_pages_by_role("guest") == 100
+    assert get_max_pages_by_role("GUEST") == 100
+
+    # FREE (UserRole.FREE / 'free' / User instance) -> 100
+    assert get_max_pages_by_role(UserRole.FREE) == 100
+    assert get_max_pages_by_role("free") == 100
+    assert get_max_pages_by_role("FREE") == 100
+    assert get_max_pages_by_role(User(role=UserRole.FREE)) == 100
+
+    # PRO (UserRole.PRO / 'pro' / User instance) -> 500
+    assert get_max_pages_by_role(UserRole.PRO) == 500
+    assert get_max_pages_by_role("pro") == 500
+    assert get_max_pages_by_role("PRO") == 500
+    assert get_max_pages_by_role(User(role=UserRole.PRO)) == 500
+
+    # ADMIN (UserRole.ADMIN / 'admin' / User instance) -> 500
+    assert get_max_pages_by_role(UserRole.ADMIN) == 500
+    assert get_max_pages_by_role("admin") == 500
+    assert get_max_pages_by_role("ADMIN") == 500
+    assert get_max_pages_by_role(User(role=UserRole.ADMIN)) == 500
+
+    # Unknown / unexpected values safely fallback to Free limit (100)
+    assert get_max_pages_by_role("unknown") == 100
+    assert get_max_pages_by_role("") == 100
+    assert get_max_pages_by_role(12345) == 100
 
 
 # ── 2. RBAC require_roles() Dependency Tests ──────────────────────────────────

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.dependencies import get_db, get_optional_current_user
+from app.core.dependencies import get_db, get_max_pages_by_role, get_optional_current_user
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User, UserRole
@@ -54,10 +54,10 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     - Guest (None) & Free (UserRole.FREE): 20 MB, 100 pages
     - Pro (UserRole.PRO) & Admin (UserRole.ADMIN): 100 MB, 500 pages
     """
-    role_val = getattr(user.role, "value", str(user.role)).lower() if user and user.role else None
-    if role_val in (UserRole.PRO.value, UserRole.ADMIN.value):
-        return settings.MAX_UPLOAD_SIZE_PRO_MB, settings.MAX_PAGES_PRO
-    return settings.MAX_UPLOAD_SIZE_FREE_MB, settings.MAX_PAGES_FREE
+    max_pages = get_max_pages_by_role(user)
+    if max_pages >= settings.MAX_PAGES_PRO:
+        return settings.MAX_UPLOAD_SIZE_PRO_MB, max_pages
+    return settings.MAX_UPLOAD_SIZE_FREE_MB, max_pages
 
 
 def _execute_pdf_background_job(
