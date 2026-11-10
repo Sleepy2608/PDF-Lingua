@@ -871,15 +871,19 @@
     }
   }
 
+  const DEFAULT_VIETQR_PRO_IMAGE = 'assets/images/vietqr-pro.png';
+  const DEFAULT_BANK_INFO = {
+    bank_name: 'VietinBank (CN Thủ Thiêm - Hội Sở)',
+    account_number: '0779562608',
+    account_name: 'NGUYEN LE HUY TAM',
+  };
+
   function buildFallbackCheckoutData(planCode) {
     const isYearly = planCode === 'pro_yearly';
     const amountVnd = isYearly ? 399000 : 49000;
     const durationDays = isYearly ? 365 : 30;
     const txCode = `PDL-SUB-${String(Date.now()).slice(-6)}`;
     const transferNote = txCode.replace(/-/g, ' ');
-    const qrUrl = `https://img.vietqr.io/image/MB-0345678999-compact2.png?amount=${amountVnd}&addInfo=${encodeURIComponent(
-      transferNote
-    )}&accountName=${encodeURIComponent('PDF LINGUA PROJECT')}`;
 
     return {
       transaction_code: txCode,
@@ -890,11 +894,11 @@
       amount_display: `${amountVnd.toLocaleString('vi-VN').replace(/,/g, '.')} VNĐ`,
       payment_method: 'vietqr',
       payment_status: 'pending',
-      qr_code_url: qrUrl,
+      qr_code_url: DEFAULT_VIETQR_PRO_IMAGE,
       bank_info: {
-        bank_name: 'MB Bank (Ngân hàng Quân Đội)',
-        account_number: '0345678999',
-        account_name: 'PDF LINGUA PROJECT',
+        bank_name: DEFAULT_BANK_INFO.bank_name,
+        account_number: DEFAULT_BANK_INFO.account_number,
+        account_name: DEFAULT_BANK_INFO.account_name,
         transfer_note: transferNote,
       },
       expires_in_seconds: 900,
@@ -917,13 +921,13 @@
 
     const bank = txData.bank_info || {};
     if (bankNameEl) {
-      bankNameEl.textContent = bank.bank_name || 'MB Bank (Ngân hàng Quân Đội)';
+      bankNameEl.textContent = bank.bank_name || DEFAULT_BANK_INFO.bank_name;
     }
     if (accountNameEl) {
-      accountNameEl.textContent = bank.account_name || 'PDF LINGUA PROJECT';
+      accountNameEl.textContent = bank.account_name || DEFAULT_BANK_INFO.account_name;
     }
     if (accountNumEl) {
-      accountNumEl.textContent = bank.account_number || '0345678999';
+      accountNumEl.textContent = bank.account_number || DEFAULT_BANK_INFO.account_number;
     }
     if (transferAmountEl) {
       transferAmountEl.textContent = formatVnd(txData.amount_vnd || 49000);
@@ -940,14 +944,13 @@
     }
 
     if (qrImg) {
-      if (txData.qr_code_url) {
-        qrImg.src = txData.qr_code_url;
-        qrImg.style.display = 'block';
-        if (qrFallback) qrFallback.style.display = 'none';
-      } else {
-        qrImg.style.display = 'none';
-        if (qrFallback) qrFallback.style.display = 'flex';
-      }
+      const qrSource =
+        txData.qr_code_url && !txData.qr_code_url.includes('img.vietqr.io')
+          ? txData.qr_code_url
+          : DEFAULT_VIETQR_PRO_IMAGE;
+      qrImg.src = qrSource;
+      qrImg.style.display = 'block';
+      if (qrFallback) qrFallback.style.display = 'none';
     }
 
     const laser = document.getElementById('checkoutQrLaser');

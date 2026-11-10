@@ -488,11 +488,11 @@ async function main() {
                 amount_display: '49.000 VNĐ',
                 payment_method: 'vietqr',
                 payment_status: 'pending',
-                qr_code_url: 'https://img.vietqr.io/image/MB-0345678999-compact2.png?amount=49000&addInfo=PDL%20SUB%20202611%208899',
+                qr_code_url: 'assets/images/vietqr-pro.png',
                 bank_info: {
-                  bank_name: 'MB Bank (Ngân hàng Quân Đội)',
-                  account_number: '0345678999',
-                  account_name: 'PDF LINGUA PROJECT',
+                  bank_name: 'VietinBank (CN Thủ Thiêm - Hội Sở)',
+                  account_number: '0779562608',
+                  account_name: 'NGUYEN LE HUY TAM',
                   transfer_note: 'PDL SUB 202611 8899',
                 },
                 expires_in_seconds: 900,
@@ -510,11 +510,12 @@ async function main() {
     assert.strictEqual(env.elements.pricingCheckoutModal.style.display, 'flex');
     assert.strictEqual(subscribePayload.plan_code, 'pro_monthly');
     assert.strictEqual(env.elements.checkoutTransactionCode.textContent, 'PDL-SUB-202611-8899');
-    assert.strictEqual(env.elements.checkoutAccountNumber.textContent, '0345678999');
+    assert.strictEqual(env.elements.checkoutAccountNumber.textContent, '0779562608');
+    assert.strictEqual(env.elements.checkoutAccountName.textContent, 'NGUYEN LE HUY TAM');
     assert.strictEqual(env.elements.checkoutTransferNote.textContent, 'PDL SUB 202611 8899');
     assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '49.000 VNĐ');
     assert.strictEqual(env.elements.checkoutCountdownTimer.textContent, '15:00');
-    assert.ok(env.elements.checkoutQrImage.src.includes('img.vietqr.io'));
+    assert.ok(env.elements.checkoutQrImage.src.includes('vietqr-pro.png'));
   });
 
   await runTest('VietQR Checkout Modal: In-modal cycle switcher updates breakdown to 399.000 VNĐ (365 ngày) & -189.000đ savings', async () => {
