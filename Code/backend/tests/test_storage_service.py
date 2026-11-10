@@ -298,3 +298,139 @@ def test_background_job_authenticated_upload_persists_file_and_db(isolated_db_an
     assert saved_path.is_file()
     assert saved_path.read_bytes() == pdf_bytes
 
+
+# ---------------------------------------------------------------------------
+# PDFL-214.2: Filename Sanitization & Path Traversal Protection Tests
+# ---------------------------------------------------------------------------
+
+def test_pdfl_214_2_sanitize_filename_encoded_and_special_cases(tmp_path: Path):
+    service = StorageService(base_dir=tmp_path)
+
+    # 1. URL-encoded and double-encoded path traversal
+    encoded1 = service.sanitize_filename("..%2f..%2fetc%2fpasswd.pdf")
+    assert ".." not in encoded1
+    assert "/" not in encoded1
+    assert "\\" not in encoded1
+    assert "passwd.pdf" in encoded1
+
+    double_encoded = service.sanitize_filename("%252e%252e%252f%252e%252e%252fwindows%252fsystem32.pdf")
+    assert ".." not in double_encoded
+    assert "/" not in double_encoded
+    assert "\\" not in double_encoded
+    assert "system32.pdf" in double_encoded
+
+    win_encoded = service.sanitize_filename("..%5c..%5cboot.ini.pdf")
+    assert ".." not in win_encoded
+    assert "\\" not in win_encoded
+
+    # 2. Absolute paths (POSIX & Windows)
+    posix_abs = service.sanitize_filename("/var/log/nginx/access.log.pdf")
+    assert not posix_abs.startswith("/")
+    assert "access.log.pdf" in posix_abs
+
+    win_abs = service.sanitize_filename("C:\\Windows\\System32\\drivers\\etc\\hosts.pdf")
+    assert "C:" not in win_abs
+    assert "\\" not in win_abs
+    assert "hosts.pdf" in win_abs
+
+    # 3. Unicode normalization and unusual characters (RTL override, zero-width space)
+    rtl_override = service.sanitize_filename("test\u202e_spoofed.pdf")
+    assert "\u202e" not in rtl_override
+
+    zero_width = service.sanitize_filename("clean\u200b\ufeff_name.pdf")
+    assert "\u200b" not in zero_width
+    assert "\ufeff" not in zero_width
+
+    # Valid Vietnamese Unicode preserved
+    vietnamese = service.sanitize_filename("Báo Cáo Tài Chính Quý 1 - Năm 2026.pdf")
+    assert "Báo Cáo Tài Chính Quý 1 - Năm 2026.pdf" in vietnamese
+
+    # 4. Windows reserved device names (CON, PRN, AUX, NUL, COM1, LPT1)
+    con_name = service.sanitize_filename("CON.pdf")
+    assert con_name == "safe_CON.pdf"
+
+    nul_name = service.sanitize_filename("NUL.pdf")
+    assert nul_name == "safe_NUL.pdf"
+
+    prn_name = service.sanitize_filename("prn.pdf")
+    assert "safe_" in prn_name
+
+    # 5. Null bytes and control characters
+    null_byte = service.sanitize_filename("doc\x00evil.pdf")
+    assert "\x00" not in null_byte
+    assert "docevil.pdf" in null_byte
+
+    ctrl_char = service.sanitize_filename("doc\n\r\tname.pdf")
+    assert "\n" not in ctrl_char
+    assert "\r" not in ctrl_char
+    assert "\t" not in ctrl_char
+
+
+def test_pdfl_214_2_path_traversal_read_write_delete_isolation(tmp_path: Path):
+    storage_root = tmp_path / "storage"
+    outside_dir = tmp_path / "outside"
+    storage_root.mkdir(parents=True, exist_ok=True)
+    outside_dir.mkdir(parents=True, exist_ok=True)
+
+    # Place a secret file outside the storage root
+    secret_file = outside_dir / "secret.txt"
+    secret_file.write_text("SENSITIVE_SECRET_DATA", encoding="utf-8")
+
+    service = StorageService(base_dir=storage_root)
+    user_id = 101
+
+    # Save a legitimate file
+    stored_name, _, abs_path = service.save_document_file(
+        user_id=user_id,
+        original_filename="user101_file.pdf",
+        content=b"%PDF-1.4 User 101 content",
+    )
+    assert abs_path.is_file()
+    assert abs_path.is_relative_to(storage_root)
+
+    # 1. Attempt Path Traversal via get_document_path
+    traversal_candidates = [
+        "../../outside/secret.txt",
+        "..\\..\\outside\\secret.txt",
+        "..%2f..%2foutside%2fsecret.txt",
+        "%2e%2e%2f%2e%2e%2foutside%2fsecret.txt",
+        str(secret_file),  # Absolute path to secret file
+        "/etc/passwd",
+        "C:\\Windows\\win.ini",
+        "doc\x00../../secret.txt",
+    ]
+
+    for attack_path in traversal_candidates:
+        res = service.get_document_path(user_id=user_id, stored_filename=attack_path)
+        assert res is None, f"Expected None for traversal path '{attack_path}' but got '{res}'"
+
+    # 2. Attempt Path Traversal via delete_document_file
+    for attack_path in traversal_candidates:
+        del_res = service.delete_document_file(user_id=user_id, stored_filename=attack_path)
+        assert del_res is False
+        assert secret_file.exists()  # Ensure external file was NOT deleted!
+
+    # 3. Invalid or malicious user_id cannot escape storage directory
+    invalid_user_ids = ["../admin", -1, 0, "admin"]
+    for bad_uid in invalid_user_ids:
+        assert service.get_document_path(user_id=bad_uid, stored_filename=stored_name) is None
+
+    # 4. Result file path traversal prevention
+    result_traversals = [
+        "../../secret.txt",
+        "..%2f..%2fsecret.txt",
+        str(secret_file),
+        "/etc/passwd",
+    ]
+    for res_attack in result_traversals:
+        assert service.get_result_path(user_id=user_id, result_path_or_filename=res_attack) is None
+        assert service.read_result_file(user_id=user_id, result_path_or_filename=res_attack) is None
+        assert service.delete_result_file(user_id=user_id, result_path_or_filename=res_attack) is False
+        assert secret_file.exists()
+
+    # Clean delete of legitimate file
+    assert service.delete_document_file(user_id=user_id, stored_filename=stored_name) is True
+    assert not abs_path.exists()
+    assert secret_file.exists()
+
+

@@ -1,5 +1,7 @@
+import os
 import re
 import statistics
+import urllib.parse
 from pathlib import Path
 from typing import Any, Callable, Optional
 try:
@@ -51,32 +53,217 @@ class PDFService:
         except Exception:
             return False
 
+    def validate_filename(self, filename: Optional[str]) -> tuple[bool, Optional[str]]:
+        """
+        Kiểm tra tính hợp lệ của tên tệp PDF (PDFL-214.1):
+        - Bắt buộc phải có tên tệp và có phần mở rộng .pdf (không phân biệt hoa thường).
+        - Chặn null byte (\x00, \0) và các ký tự điều khiển.
+        - Chặn double extension (ví dụ: file.php.pdf, malicious.exe.pdf, test.txt.pdf, doc.pdf.pdf).
+        - Chặn tên tệp không hợp lệ (tên tệp rỗng, chỉ có .pdf, hoặc chỉ có khoảng trắng).
+        """
+        if not filename or not isinstance(filename, str):
+            return False, "Tên tệp không được để trống."
+
+        # Chặn null byte (kể cả URL-encoded %00)
+        unquoted = urllib.parse.unquote(filename)
+        if "\x00" in filename or "\0" in filename or "\x00" in unquoted or "%00" in filename.lower():
+            return False, "Tên tệp không hợp lệ (chứa null byte)."
+
+        # Chặn ký tự điều khiển (cả raw và unquoted)
+        if re.search(r"[\x00-\x1f\x7f]", filename) or re.search(r"[\x00-\x1f\x7f]", unquoted):
+            return False, "Tên tệp không hợp lệ (chứa ký tự điều khiển)."
+
+        clean_name = filename.strip()
+        if not clean_name:
+            return False, "Tên tệp không được để trống."
+
+        basename = os.path.basename(clean_name)
+        if not basename:
+            return False, "Tên tệp không được để trống."
+
+        # Phải kết thúc bằng .pdf (không phân biệt hoa thường)
+        if not basename.lower().endswith(".pdf"):
+            return False, "Tệp tải lên phải có định dạng .pdf."
+
+        stem = basename[:-4].strip()
+        # Tên gốc trước .pdf không được rỗng hoặc chỉ có dấu chấm
+        if not stem or stem.strip(".") == "":
+            return False, "Tên tệp không hợp lệ (thiếu phần tên chính trước .pdf)."
+
+        # Chặn double extension: stem không được chứa dấu chấm '.'
+        # (Ví dụ: shell.php.pdf, file.exe.pdf, test.txt.pdf, doc.pdf.pdf)
+        if "." in stem:
+            return False, "Tên tệp không hợp lệ (không cho phép double extension)."
+
+        return True, None
+
+    def validate_content_type(self, content_type: Optional[str]) -> tuple[bool, Optional[str]]:
+        """
+        Kiểm tra Content-Type của tệp tải lên (PDFL-214.1):
+        Bắt buộc phải là application/pdf (không phân biệt hoa thường).
+        """
+        if not content_type or not isinstance(content_type, str):
+            return False, "Content-Type không hợp lệ, yêu cầu application/pdf."
+
+        raw = content_type.strip().lower()
+        media_type = raw.split(";")[0].strip()
+        if media_type != "application/pdf":
+            return False, "Content-Type không hợp lệ, yêu cầu application/pdf."
+
+        return True, None
+
+    def validate_raw_pdf_content(self, content: bytes) -> tuple[bool, Optional[str]]:
+        """
+        Kiểm tra dữ liệu nhị phân thô của tệp PDF (PDFL-214.1):
+        - Không được là tệp rỗng (0 bytes).
+        - Bắt buộc phải có Magic Bytes bắt đầu bằng %PDF-1.
+        """
+        if not content or len(content) == 0:
+            return False, "Tệp rỗng hoặc không có dữ liệu."
+
+        if not content.startswith(b"%PDF-1."):
+            return False, "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes)."
+
+        return True, None
+
+    def validate_upload(
+        self,
+        filename: Optional[str],
+        content_type: Optional[str],
+        content: bytes,
+    ) -> tuple[bool, Optional[str]]:
+        """
+        Harden PDF upload validation toàn diện (PDFL-214.1).
+        Kiểm tra đồng thời filename, content-type, magic bytes và dung lượng thô.
+        """
+        valid_name, err_name = self.validate_filename(filename)
+        if not valid_name:
+            return False, err_name
+
+        valid_ct, err_ct = self.validate_content_type(content_type)
+        if not valid_ct:
+            return False, err_ct
+
+        valid_content, err_content = self.validate_raw_pdf_content(content)
+        if not valid_content:
+            return False, err_content
+
+        return True, None
+
     def validate_pdf(self, file_path: Path | str) -> dict[str, Any]:
+        """
+        Kiểm tra tính hợp lệ của tệp PDF và xác định số trang từ catalog/metadata.
+        Tránh nạp hoặc render toàn bộ trang nhằm tối ưu hiệu năng và bộ nhớ.
+        Xử lý an toàn:
+        - Tệp không tồn tại
+        - Tệp rỗng (0 bytes)
+        - Tệp hỏng hoặc không phải PDF
+        - Tệp có mật khẩu bảo vệ
+        - Tệp có page_count <= 0
+        """
         path = Path(file_path)
         if not path.exists():
-            return {"is_valid": False, "is_encrypted": False, "page_count": 0, "error": "Tệp không tồn tại."}
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": "Tệp không tồn tại.",
+            }
+
+        try:
+            if not path.is_file() or path.stat().st_size == 0:
+                return {
+                    "is_valid": False,
+                    "is_encrypted": False,
+                    "page_count": 0,
+                    "error": "Tệp rỗng hoặc không phải tệp tin hợp lệ.",
+                }
+        except Exception as stat_err:
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": f"Lỗi truy cập tệp tin: {stat_err}",
+            }
+
+        try:
+            with open(path, "rb") as f:
+                header = f.read(8)
+                if not header.startswith(b"%PDF-1."):
+                    return {
+                        "is_valid": False,
+                        "is_encrypted": False,
+                        "page_count": 0,
+                        "error": "Tệp không phải là tài liệu PDF hợp lệ (sai Magic Bytes).",
+                    }
+        except Exception as read_err:
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": f"Lỗi đọc tệp tin: {read_err}",
+            }
 
         try:
             reader = pypdf.PdfReader(str(path))
             if reader.is_encrypted:
+                page_count = 0
+                try:
+                    page_count = len(reader.pages)
+                except Exception:
+                    page_count = 0
                 return {
                     "is_valid": False,
                     "is_encrypted": True,
-                    "page_count": len(reader.pages),
+                    "page_count": page_count,
                     "error": "Tệp PDF có mật khẩu bảo vệ.",
                 }
+
+            page_count = len(reader.pages)
+            if page_count <= 0:
+                return {
+                    "is_valid": False,
+                    "is_encrypted": False,
+                    "page_count": 0,
+                    "error": "Tài liệu PDF không có trang nào hợp lệ để xử lý.",
+                }
+
             return {
                 "is_valid": True,
                 "is_encrypted": False,
-                "page_count": len(reader.pages),
+                "page_count": page_count,
                 "error": None,
             }
         except Exception as e:
-            return {"is_valid": False, "is_encrypted": False, "page_count": 0, "error": f"Lỗi đọc tệp PDF: {e}"}
+            return {
+                "is_valid": False,
+                "is_encrypted": False,
+                "page_count": 0,
+                "error": f"Lỗi đọc tệp PDF: {e}",
+            }
 
     def get_page_count(self, file_path: Path | str) -> int:
-        reader = pypdf.PdfReader(str(file_path))
-        return len(reader.pages)
+        """
+        Lấy số trang PDF an toàn và nhanh chóng từ catalog/metadata.
+        Tránh hoàn toàn việc render hoặc nạp stream nội dung trang.
+        Trả về 0 nếu tệp không tồn tại, rỗng, bị hỏng hoặc không có trang nào.
+        """
+        path = Path(file_path)
+        if not path.is_file():
+            return 0
+
+        try:
+            if path.stat().st_size == 0:
+                return 0
+            reader = pypdf.PdfReader(str(path))
+            if reader.is_encrypted:
+                try:
+                    return max(0, len(reader.pages))
+                except Exception:
+                    return 0
+            return max(0, len(reader.pages))
+        except Exception:
+            return 0
 
     def extract_text(self, file_path: Path | str, max_pages: int | None = None) -> str:
         pages_data = self.extract_pages(file_path, max_pages=max_pages)
@@ -396,6 +583,7 @@ class PDFService:
 
         # 2. Nếu là Scanned hoặc Mixed: xử lý riêng từng trang theo cơ chế Parallel / Lazy Loading
         doc_fitz = None
+        doc_pdfium = None
         try:
             pages_extracted = self.extract_pages(path, max_pages=max_pages)
 
@@ -439,13 +627,20 @@ class PDFService:
             # 2b. Tổng hợp kết quả theo ĐÚNG THỨ TỰ TRANG BAN ĐẦU (1 -> N)
             ocr_count = 0
 
-            # Mở sẵn doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned (tránh nạp lại file liên tục vào RAM)
+            # Mở sẵn doc_pdfium hoặc doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned
             if ocr_service and getattr(ocr_service, "is_available", lambda: False)():
                 try:
-                    import pymupdf
-                    doc_fitz = pymupdf.open(str(path))
+                    import pypdfium2 as pdfium
+                    doc_pdfium = pdfium.PdfDocument(str(path))
                 except Exception:
-                    doc_fitz = None
+                    doc_pdfium = None
+
+                if doc_pdfium is None:
+                    try:
+                        import pymupdf
+                        doc_fitz = pymupdf.open(str(path))
+                    except Exception:
+                        doc_fitz = None
 
             for idx, p_info in enumerate(pages_extracted):
                 cleaned = p_info["text"]
@@ -466,44 +661,71 @@ class PDFService:
                     ocr_text = ""
                     is_blank = False
 
-                    if doc_fitz is not None:
-                        try:
-                            import io
-                            fitz_page = doc_fitz.load_page(idx)
-                            pix = fitz_page.get_pixmap(dpi=150)
-                            raw_bytes = pix.tobytes("png")
-                            del pix
-                            del fitz_page
-
-                            pil_img = Image.open(io.BytesIO(raw_bytes))
+                    # 1. Tận dụng kết quả từ parallel worker nếu đã có ở 2a
+                    if idx in ocr_results_by_idx:
+                        res = ocr_results_by_idx[idx]
+                        ocr_text = res.get("text", "")
+                        is_blank = res.get("is_blank", False)
+                    # 2. Nếu chưa có kết quả (ví dụ chỉ có 1 trang scan), gọi _ocr_single_page_isolated
+                    elif ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+                        if hasattr(ocr_service, "_ocr_single_page_isolated"):
                             try:
-                                proc_img, meta = ocr_service.preprocess_image(
-                                    pil_img,
-                                    check_blank=True,
-                                    auto_rotate=True,
-                                    auto_deskew=True,
-                                    auto_enhance=True,
+                                res = ocr_service._ocr_single_page_isolated(
+                                    path,
+                                    idx,
+                                    getattr(ocr_service, "default_lang", "vie+eng"),
                                 )
-                                try:
-                                    if meta.get("is_blank", False):
-                                        is_blank = True
-                                    else:
-                                        ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
-                                finally:
-                                    if proc_img is not pil_img:
+                                ocr_text = res.get("text", "")
+                                is_blank = res.get("is_blank", False)
+                            except Exception:
+                                ocr_text = ""
+
+                        # 3. Fallback render bằng doc_pdfium hoặc doc_fitz nếu chưa lấy được text
+                        if not ocr_text and (doc_pdfium is not None or doc_fitz is not None):
+                            pil_img = None
+                            try:
+                                if doc_pdfium is not None:
+                                    pdfium_page = doc_pdfium.get_page(idx)
+                                    pil_img = pdfium_page.render(scale=2.0).to_pil()
+                                    del pdfium_page
+                                elif doc_fitz is not None:
+                                    import io
+                                    fitz_page = doc_fitz.load_page(idx)
+                                    pix = fitz_page.get_pixmap(dpi=150)
+                                    raw_bytes = pix.tobytes("png")
+                                    del pix
+                                    del fitz_page
+                                    pil_img = Image.open(io.BytesIO(raw_bytes))
+
+                                if pil_img is not None:
+                                    try:
+                                        proc_img, meta = ocr_service.preprocess_image(
+                                            pil_img,
+                                            check_blank=True,
+                                            auto_rotate=True,
+                                            auto_deskew=True,
+                                            auto_enhance=True,
+                                        )
                                         try:
-                                            proc_img.close()
+                                            if meta.get("is_blank", False):
+                                                is_blank = True
+                                            else:
+                                                ocr_text = ocr_service.extract_text_from_image(proc_img, preprocess=False)
+                                        finally:
+                                            if proc_img is not pil_img:
+                                                try:
+                                                    proc_img.close()
+                                                except Exception:
+                                                    pass
+                                            del proc_img
+                                    finally:
+                                        try:
+                                            pil_img.close()
                                         except Exception:
                                             pass
-                                    del proc_img
-                            finally:
-                                try:
-                                    pil_img.close()
-                                except Exception:
-                                    pass
-                                del pil_img
-                        except Exception:
-                            ocr_text = cleaned
+                                        del pil_img
+                            except Exception:
+                                ocr_text = cleaned
                     else:
                         ocr_text = cleaned
 
@@ -542,6 +764,12 @@ class PDFService:
                 "ocr_pages_count": 0,
             }
         finally:
+            if doc_pdfium is not None:
+                try:
+                    doc_pdfium.close()
+                except Exception:
+                    pass
+                del doc_pdfium
             if doc_fitz is not None:
                 try:
                     doc_fitz.close()
