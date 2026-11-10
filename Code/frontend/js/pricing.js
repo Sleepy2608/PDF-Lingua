@@ -66,11 +66,11 @@
       shared_features: [
         'Tải lên tệp PDF siêu lớn đến 100 MB',
         'Nhận dạng OCR chuyên sâu đến 500 trang',
-        'Trợ lý AI Hỏi đáp (AI Copilot) không giới hạn',
+        'Trợ lý AI Hỏi đáp (AI Copilot) 15 câu / ngày',
         'Tóm tắt thông minh AI Summary & bảng thuật ngữ',
         'Hàng đợi ưu tiên tốc độ cao (Fast-track Worker)',
         'Kho lưu trữ tài liệu cá nhân không giới hạn',
-        'Huy hiệu Pro VIP ánh kim trên hồ sơ và giao diện',
+        'Huy hiệu VIP trên hồ sơ và giao diện',
         'Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)',
       ],
     },
