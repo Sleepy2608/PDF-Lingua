@@ -1849,6 +1849,11 @@
       };
       detailRole.textContent = roleLabels[roleStr] || 'Gói Miễn phí';
       detailRole.className = `badge-role role-${roleStr}`;
+
+      const btnAccountUpgradePro = document.getElementById('btnAccountUpgradePro');
+      if (btnAccountUpgradePro) {
+        btnAccountUpgradePro.style.display = roleStr === 'free' ? 'inline-flex' : 'none';
+      }
     }
 
     if (detailStatus) {

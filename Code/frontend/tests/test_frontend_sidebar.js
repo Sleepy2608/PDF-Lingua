@@ -410,13 +410,13 @@ async function main() {
     assert.strictEqual(env.elements.appShell.classList.contains('guest-mode'), false);
   });
 
-  await runTest('User Sync: Pro VIP user renders amber role and user name', () => {
+  await runTest('User Sync: Pro user renders amber role and user name', () => {
     const env = createTestEnvironment();
     env.dispatchAuthChange({ full_name: 'Nguyen Van A', email: 'a@example.com', role: 'pro' });
 
     assert.strictEqual(env.elements.sidebarUserAvatar.textContent, 'N');
     assert.strictEqual(env.elements.sidebarUserName.textContent, 'Nguyen Van A');
-    assert.strictEqual(env.elements.sidebarUserRole.textContent, 'Gói Pro VIP');
+    assert.strictEqual(env.elements.sidebarUserRole.textContent, 'Gói Pro');
     assert.strictEqual(env.elements.sidebarUserRole.style.color, '#F59E0B');
     assert.strictEqual(env.elements.sideNavAdminItem.style.display, 'none');
   });
