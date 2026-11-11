@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.admin import router as admin_router
+from app.api.ai import router as ai_router
 from app.api.auth import router as auth_router
 from app.api.documents import router as documents_router
 from app.api.history import router as history_router
@@ -72,6 +73,7 @@ app.include_router(documents_router)
 app.include_router(admin_router)
 app.include_router(history_router)
 app.include_router(pricing_router)
+app.include_router(ai_router)
 
 
 @app.get("/")
