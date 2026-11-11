@@ -8,10 +8,10 @@ execution statuses, performance metrics, and error diagnostics (PDFL-159.1).
 Columns
 -------
 id                : Integer primary key (auto-increment).
-user_id           : Foreign key to `users.id` — owner who requested the action.
-document_id       : Foreign key to `documents.id` — document processed.
-action_type       : Enum(EXTRACT | TRANSLATE | SUMMARIZE) — type of action.
-status            : Enum(PENDING | SUCCESS | FAILED) — processing state.
+user_id           : Foreign key to `users.id` - owner who requested the action.
+document_id       : Foreign key to `documents.id` - document processed.
+action_type       : Enum(EXTRACT | TRANSLATE | SUMMARIZE) - type of action.
+status            : Enum(PENDING | SUCCESS | FAILED) - processing state.
 execution_time_ms : Optional execution duration in milliseconds.
 error_message     : Diagnostic error message / stack trace if failed.
 created_at        : UTC timestamp when the operation record was created.
@@ -33,6 +33,7 @@ class ActionType(str, enum.Enum):
     EXTRACT = "EXTRACT"
     TRANSLATE = "TRANSLATE"
     SUMMARIZE = "SUMMARIZE"
+    CHAT = "CHAT"
 
 
 class ProcessingStatus(str, enum.Enum):
@@ -70,7 +71,7 @@ class ProcessingHistory(Base):
     document_id: int = Column(
         Integer,
         ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
         comment="Target document ID on which the action was performed.",
     )

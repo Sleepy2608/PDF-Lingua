@@ -56,6 +56,18 @@ class AIService:
         "Tuyet doi khong tu y suy dien, bia dat thong tin khong co trong tai lieu nguon (chong ao giac)."
     )
 
+    COPILOT_SYSTEM_PROMPT = (
+        "Ban la Tro ly AI Copilot thong minh cua he thong PDF-Lingua. "
+        "Nhiem vu cua ban la tra loi cau hoi cua nguoi dung DUA HOAN TOAN VAO NGU CANH TAI LIEU duoc cung cap duoi day.\n\n"
+        "Quy tac nghiem ngat:\n"
+        "1. Chi su dung cac thong tin va du kien xuat hien trong phan 'NGU CANH TAI LIEU'.\n"
+        "2. Neu thong tin trong tai lieu khong du hoac khong de cap den cau tra loi, hay tra loi ro rang: "
+        "'Tai lieu hien tai khong de cap den thong tin nay.' Tuyet doi khong tu y bia dat hoac suy dien ngoai van ban (chong ao giac).\n"
+        "3. Tra loi ngan gon, suc tich, trung thuc bang tieng Viet."
+    )
+
+    NO_INFO_RESPONSE = "Tai lieu hien tai khong de cap den thong tin nay."
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -146,8 +158,9 @@ class AIService:
 
     async def _call_bai_api(
         self,
-        prompt: str,
+        prompt: str = "",
         system_prompt: str | None = None,
+        messages: list[dict[str, str]] | None = None,
         model: str | None = None,
         max_tokens: int = 1500,
         temperature: float = 0.3,
@@ -159,10 +172,12 @@ class AIService:
         model_name = model or self.default_model
         endpoint = f"{self.base_url}/chat/completions"
 
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
+        if messages is None:
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            if prompt:
+                messages.append({"role": "user", "content": prompt})
 
         payload = {
             "model": model_name,
@@ -399,6 +414,222 @@ class AIService:
             "style": style,
             "length": length,
             "word_count": len(summary_result.split()),
+            "model_used": model_name,
+            "provider": "b.ai",
+            "fallback_used": fallback_used,
+            "fallback_reason": fallback_reason,
+            "execution_time_ms": elapsed_ms,
+        }
+
+    def _extract_relevant_chunks(
+        self,
+        document_text: str,
+        query: str,
+        top_k: int = 3,
+        max_chunk_words: int = 300,
+    ) -> list[dict[str, Any]]:
+        """
+        Split document text into semantic chunks and score by query keyword relevance (RAG context).
+        """
+        if not document_text or not document_text.strip():
+            return []
+
+        raw_chunks = self._split_into_chunks(document_text, max_words=max_chunk_words)
+        if not raw_chunks:
+            return []
+
+        # Extract search keywords from query (ignore short stop words < 3 chars)
+        stop_words = {
+            "la", "va", "cua", "cac", "nhung", "mot", "trong", "cho",
+            "duoc", "voi", "khi", "nay", "do", "the", "nao", "gi",
+            "sao", "bao", "nhieu", "co", "hay", "khong", "thi", "neu",
+            "o", "ve", "tu", "den", "nguoi", "rat", "dan", "dung", "vay",
+            "ai", "dau", "se", "bi", "ra", "vao", "theo",
+        }
+        query_words = [
+            w.lower().strip("?,.!;:\"'()[]{}")
+            for w in query.split()
+            if len(w.strip("?,.!;:\"'()[]{}")) >= 2 and w.lower() not in stop_words
+        ]
+
+        scored_chunks = []
+        for idx, chunk in enumerate(raw_chunks):
+            chunk_lower = chunk.lower()
+            score = 0
+            matched_terms = []
+
+            for qw in query_words:
+                pattern = r"\b" + re.escape(qw) + r"\b"
+                matches = re.findall(pattern, chunk_lower)
+                count = len(matches)
+                if count > 0:
+                    score += count * 2
+                    matched_terms.append(qw)
+
+            # Bonus for diverse term match
+            unique_matches = set(matched_terms)
+            score += len(unique_matches) * 5
+
+            # Anti-hallucination guardrail: Require high term coverage for the query
+            if query_words:
+                match_ratio = len(unique_matches) / len(query_words)
+                if len(query_words) >= 4 and match_ratio < 0.45:
+                    score = 0
+                elif len(query_words) >= 2 and len(unique_matches) < 2:
+                    score = 0
+                elif len(unique_matches) == 0:
+                    score = 0
+
+            scored_chunks.append({
+                "chunk_index": idx + 1,
+                "text": chunk,
+                "score": score,
+                "matched_terms": list(unique_matches),
+            })
+
+        # Sort by relevance score descending
+        scored_chunks.sort(key=lambda c: c["score"], reverse=True)
+
+        return scored_chunks[:top_k]
+
+    def _generate_mock_chat_response(
+        self,
+        query: str,
+        relevant_chunks: list[dict[str, Any]],
+    ) -> str:
+        """
+        Generate intelligent offline fallback answer based on query and relevant context.
+        Enforces PDFL-147: Returns NO_INFO_RESPONSE if no relevant information is found.
+        """
+        if not relevant_chunks or all(c["score"] == 0 for c in relevant_chunks):
+            return self.NO_INFO_RESPONSE
+
+        # Extract sentences from highest-scoring chunk that contain matched keywords
+        best_chunk = relevant_chunks[0]
+        chunk_text = best_chunk["text"]
+        matched_terms = set(best_chunk.get("matched_terms", []))
+
+        sentences = [
+            s.strip()
+            for s in re.split(r"(?<=[.!?。！？])\s+", chunk_text)
+            if len(s.strip()) > 10
+        ]
+
+        # Rank sentences by keyword match density
+        sentence_scores = []
+        for sent in sentences:
+            sent_lower = sent.lower()
+            cnt = sum(1 for term in matched_terms if term in sent_lower)
+            if cnt > 0:
+                sentence_scores.append((cnt, sent))
+
+        sentence_scores.sort(key=lambda x: x[0], reverse=True)
+        if sentence_scores:
+            top_sentences = [s for _, s in sentence_scores[:2]]
+            extracted = " ".join(top_sentences)
+            return f"Dua tren tai lieu (Doan {best_chunk['chunk_index']}): {extracted}"
+
+        # If sentences don't isolate well, return first sentence of best chunk
+        if sentences:
+            return f"Dua tren tai lieu (Doan {best_chunk['chunk_index']}): {sentences[0]}"
+
+        return self.NO_INFO_RESPONSE
+
+    async def chat_with_document(
+        self,
+        query: str,
+        document_text: str,
+        conversation_history: list[dict[str, str]] | None = None,
+        model: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Interactive Copilot QA over document context using RAG retrieval and anti-hallucination guardrails.
+        """
+        start_time = time.time()
+        model_name = model or settings.BAI_MODEL_CHAT or self.default_model
+
+        if not query or not query.strip():
+            return {
+                "answer": "Vui long nhap cau hoi ve noi dung tai lieu.",
+                "relevant_chunks": [],
+                "model_used": model_name,
+                "provider": "b.ai",
+                "fallback_used": False,
+                "fallback_reason": None,
+                "execution_time_ms": 0,
+            }
+
+        if not document_text or not document_text.strip():
+            return {
+                "answer": self.NO_INFO_RESPONSE,
+                "relevant_chunks": [],
+                "model_used": model_name,
+                "provider": "b.ai",
+                "fallback_used": False,
+                "fallback_reason": None,
+                "execution_time_ms": 0,
+            }
+
+        # 1. Retrieve most relevant context chunks
+        relevant_chunks = self._extract_relevant_chunks(
+            document_text=document_text,
+            query=query,
+            top_k=3,
+        )
+
+        formatted_context = "\n\n".join([
+            f"[Doan {c['chunk_index']}]: {c['text']}"
+            for c in relevant_chunks
+        ])
+
+        user_prompt = (
+            f"--- NGU CANH TAI LIEU ---\n{formatted_context}\n--- HET NGU CANH TAI LIEU ---\n\n"
+            f"Cau hoi cua nguoi dung: {query.strip()}\n\n"
+            f"Tra loi dua tren ngu canh:"
+        )
+
+        answer_text: str = ""
+        fallback_used = False
+        fallback_reason: str | None = None
+
+        try:
+            # Prepare messages with history
+            messages = [{"role": "system", "content": self.COPILOT_SYSTEM_PROMPT}]
+            if conversation_history:
+                for turn in conversation_history[-6:]:
+                    r = turn.get("role", "user")
+                    c = turn.get("content", "")
+                    if r in ("user", "assistant") and c:
+                        messages.append({"role": r, "content": c})
+
+            messages.append({"role": "user", "content": user_prompt})
+
+            answer_text = await self._call_bai_api(
+                messages=messages,
+                model=model_name,
+                max_tokens=1000,
+                temperature=0.2,
+            )
+
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            error_body = e.response.text
+            logger.warning(f"[AIService Chat] B.AI HTTP {status_code} error: {error_body}")
+            fallback_used = True
+            fallback_reason = f"B.AI HTTP {status_code}: {error_body}"
+            answer_text = self._generate_mock_chat_response(query, relevant_chunks)
+
+        except (httpx.TimeoutException, httpx.ConnectError, Exception) as e:
+            logger.warning(f"[AIService Chat] Connection or API exception: {e}. Activating fallback.")
+            fallback_used = True
+            fallback_reason = str(e)
+            answer_text = self._generate_mock_chat_response(query, relevant_chunks)
+
+        elapsed_ms = int((time.time() - start_time) * 1000)
+
+        return {
+            "answer": answer_text,
+            "relevant_chunks": [c["text"] for c in relevant_chunks],
             "model_used": model_name,
             "provider": "b.ai",
             "fallback_used": fallback_used,
