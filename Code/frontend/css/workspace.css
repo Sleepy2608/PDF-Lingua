@@ -169,6 +169,115 @@
   color: var(--color-primary-indigo);
 }
 
+/* Multi-target Export Dropdown (PDFL-150.4) */
+.dropdown-menu-export {
+  min-width: 270px;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-lg, 10px);
+}
+
+.dropdown-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.25rem 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.dropdown-group-title .group-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+}
+
+.dropdown-group-title .summary-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
+.dropdown-group-title .summary-badge.ready {
+  color: #10B981;
+}
+
+.dropdown-format-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.dropdown-format-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-body);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.dropdown-format-btn:hover:not(:disabled) {
+  background-color: var(--bg-subtle);
+  border-color: var(--color-primary-indigo);
+  color: var(--color-primary-indigo);
+  transform: translateY(-1px);
+}
+
+.dropdown-format-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background-color: var(--bg-subtle);
+  border-color: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  transform: none;
+}
+
+.dropdown-format-btn:disabled .fmt-pill {
+  opacity: 0.6;
+  filter: grayscale(40%);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: 0.35rem 0 0.25rem;
+}
+
+.fmt-pill {
+  display: inline-block;
+  padding: 1px 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+
+.fmt-pill.txt {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563EB;
+}
+
+.fmt-pill.pdf {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+}
+
 /* Dual Pane Layout (Flexbox) */
 .dual-pane-grid {
   display: flex;

@@ -1,5 +1,13 @@
+from enum import Enum
 from typing import Any, Optional
 from pydantic import BaseModel, Field
+
+
+class ExportTargetType(str, Enum):
+    ORIGINAL = "original"
+    TRANSLATED = "translated"
+    SUMMARY = "summary"
+    BILINGUAL = "bilingual"
 
 
 class JobProgressData(BaseModel):
@@ -39,10 +47,14 @@ class RetranslateRequest(BaseModel):
 
 
 class DownloadRequest(BaseModel):
-    content: str = Field(..., min_length=1, description="Nội dung cần xuất file")
+    content: Optional[str] = Field(default=None, description="Nội dung cần xuất file")
     format: str = Field(default="txt", description="Định dạng tệp: txt hoặc pdf")
+    export_type: ExportTargetType = Field(
+        default=ExportTargetType.TRANSLATED,
+        description="Loại nội dung cần xuất: original | translated | summary | bilingual",
+    )
     filename: str = Field(default="translated_document", description="Tên tệp tải về không gồm đuôi")
-    title: Optional[str] = Field(default="PDF-Lingua Translation", description="Tiêu đề tài liệu")
+    title: Optional[str] = Field(default=None, description="Tiêu đề tài liệu")
     original_content: Optional[str] = Field(default=None, description="Nội dung văn bản gốc nếu muốn xuất song ngữ")
 
 

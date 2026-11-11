@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 import threading
+import unicodedata
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
@@ -14,13 +15,19 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.dependencies import get_db, get_max_pages_by_role, get_optional_current_user
+from app.core.dependencies import (
+    get_current_user,
+    get_db,
+    get_max_pages_by_role,
+    get_optional_current_user,
+)
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import (
     DownloadRequest,
+    ExportTargetType,
     FeedbackRequest,
     JobProgressData,
     ProcessResponseData,
@@ -663,39 +670,150 @@ async def retranslate(
 @router.post("/download")
 async def download_result(
     request: DownloadRequest,
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    if not request.content.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nội dung tệp xuất không được để trống.",
-        )
+    export_type = request.export_type
 
-    safe_name = storage_service.sanitize_filename(request.filename or "translated_document")
-    stem = safe_name[:-4] if safe_name.lower().endswith(".pdf") else safe_name
-    base_name = stem.strip(" ._") or "translated_document"
-    fmt = request.format.strip().lower()
+    content_str = (request.content or "").strip()
+    original_str = (request.original_content or "").strip()
 
-    if fmt == "pdf":
-        file_bytes = export_service.export_to_pdf(
-            content=request.content,
-            title=request.title or "PDF-Lingua Translation",
-            original_content=request.original_content,
-        )
-        media_type = "application/pdf"
-        download_name = f"{base_name}.pdf"
+    # PDFL-156.1: Kiểm tra nội dung không rỗng theo export_type
+    # Xét đầy đủ các trường hợp: None, chuỗi rỗng và chuỗi chỉ chứa whitespace.
+    if export_type == ExportTargetType.ORIGINAL:
+        original_text = content_str or original_str
+        if not original_text:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung văn bản gốc không được để trống.",
+            )
+        export_content = original_text
+
+    elif export_type == ExportTargetType.TRANSLATED:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung bản dịch không được để trống.",
+            )
+        export_content = content_str
+
+    elif export_type == ExportTargetType.SUMMARY:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung tóm tắt không được để trống.",
+            )
+        export_content = content_str
+
+    elif export_type == ExportTargetType.BILINGUAL:
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung bản dịch không được để trống khi xuất song ngữ.",
+            )
+        if not original_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung văn bản gốc (original_content) không được để trống khi xuất song ngữ.",
+            )
+        export_content = content_str
+
     else:
-        file_bytes = export_service.export_to_txt(
-            content=request.content,
-            title=request.title,
-        )
-        media_type = "text/plain; charset=utf-8"
-        download_name = f"{base_name}.txt"
+        if not content_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nội dung tệp xuất không được để trống.",
+            )
+        export_content = content_str
 
+    # Chuẩn hóa tiêu đề mặc định theo loại xuất
+    default_titles = {
+        ExportTargetType.ORIGINAL: "PDF-Lingua - Văn Bản Gốc",
+        ExportTargetType.TRANSLATED: "PDF-Lingua - Bản Dịch",
+        ExportTargetType.SUMMARY: "PDF-Lingua - Tóm Tắt Nội Dung",
+        ExportTargetType.BILINGUAL: "PDF-Lingua - Bản Dịch Song Ngữ",
+    }
+    if request.title and request.title.strip() and request.title.strip() != "PDF-Lingua Translation":
+        title = request.title.strip()
+    elif request.title and request.title.strip() == "PDF-Lingua Translation" and export_type == ExportTargetType.TRANSLATED:
+        title = request.title.strip()
+    else:
+        title = default_titles.get(export_type, "PDF-Lingua Translation")
+
+    # Chuẩn hóa tên file theo loại xuất: original -> _goc, translated -> _dich, summary -> _tomtat, bilingual -> _songngu
+    suffix_map = {
+        ExportTargetType.ORIGINAL: "_goc",
+        ExportTargetType.TRANSLATED: "_dich",
+        ExportTargetType.SUMMARY: "_tomtat",
+        ExportTargetType.BILINGUAL: "_songngu",
+    }
+    target_suffix = suffix_map.get(export_type, "_dich")
+
+    # Loại bỏ ký tự CR/LF để chống CRLF Injection trong HTTP Headers
+    raw_name_input = re.sub(r'[\r\n]+', '', request.filename or '').strip()
+    raw_filename = re.sub(r'[\\/*?:"<>|]', "", raw_name_input).strip() or "document"
+    raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE).strip()
+    for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
+        if raw_filename.endswith(sfx):
+            raw_filename = raw_filename[:-len(sfx)]
+            break
+
+    if raw_filename in ("translated_document", "document", ""):
+        raw_filename = "document"
+
+    base_name = f"{raw_filename}{target_suffix}"
+    fmt = (request.format or "txt").strip().lower()
+    ext = "pdf" if fmt == "pdf" else "txt"
+
+    try:
+        if ext == "pdf":
+            file_bytes = export_service.export_to_pdf(
+                content=export_content,
+                title=title,
+                original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
+                export_type=export_type,
+            )
+            media_type = "application/pdf"
+        else:
+            file_bytes = export_service.export_to_txt(
+                content=export_content,
+                title=title,
+                export_type=export_type,
+                original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
+            )
+            media_type = "text/plain; charset=utf-8"
+    except Exception as e:
+        logger.exception(f"[Download] Export failed unexpectedly: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Đã xảy ra lỗi nội bộ khi tạo tệp xuất. Vui lòng thử lại sau.",
+        ) from e
+
+    # Chuẩn hóa tên file theo RFC 6266:
+    # 1. UTF-8 filename (hỗ trợ đầy đủ tiếng Việt Unicode)
+    download_name = f"{base_name}.{ext}"
     encoded_name = quote(download_name)
+
+    # 2. ASCII fallback filename cho các trình duyệt hoặc client không hỗ trợ filename*
+    normalized = unicodedata.normalize('NFKD', base_name)
+    ascii_clean = normalized.encode('ascii', 'ignore').decode('ascii')
+    # Loại bỏ dấu ngoặc kép, gạch chéo ngược để an toàn trong filename="..."
+    ascii_clean = re.sub(r'["\\]', '', ascii_clean)
+    # Giữ lại các ký tự ASCII an toàn (chữ cái, chữ số, gạch dưới, gạch ngang, chấm, khoảng trắng)
+    ascii_clean = re.sub(r'[^a-zA-Z0-9_\-\. ]', '_', ascii_clean).strip()
+    if not ascii_clean:
+        ascii_clean = f"document{target_suffix}"
+    ascii_filename = f"{ascii_clean}.{ext}"
+
+    # Định dạng Content-Disposition có cả ASCII fallback và UTF-8 mở rộng
+    content_disposition = f'attachment; filename="{ascii_filename}"; filename*=UTF-8\'\'{encoded_name}'
+
     headers = {
-        "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_name}",
-        "Access-Control-Expose-Headers": "Content-Disposition",
+        "Content-Disposition": content_disposition,
+        "Cache-Control": "no-cache, no-store, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Expose-Headers": "Content-Disposition, Content-Length",
     }
 
     return Response(

@@ -1,7 +1,11 @@
+import codecs
 import io
 
 import pypdf
+import pytest
+from app.core.dependencies import get_current_user
 from app.main import app
+from app.models.user import User, UserRole
 from app.services.export_service import ExportService
 from app.services.translation_service import TranslationService
 from fastapi.testclient import TestClient
@@ -9,6 +13,22 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 client = TestClient(app)
+
+mock_auth_user = User(
+    id=1,
+    email="test_pipeline_user@example.com",
+    full_name="Test Pipeline User",
+    role=UserRole.FREE,
+    is_active=True,
+)
+
+
+@pytest.fixture(autouse=True)
+def setup_auth_for_export():
+    """Mặc định cung cấp authenticated user cho các bước export trong e2e pipeline."""
+    app.dependency_overrides[get_current_user] = lambda: mock_auth_user
+    yield mock_auth_user
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 def generate_pdf_buffer(paragraphs: list[str]) -> bytes:
@@ -104,3 +124,183 @@ def test_e2e_retranslate_multilingual():
     assert res_fr.status_code == 200
     body_fr = res_fr.json()["data"]
     assert len(body_fr["translated_text"]) > 0
+
+
+def test_e2e_full_pipeline_multi_target_export_and_empty_validation():
+    """
+    PDFL-156.4: E2E Integration test validating the entire document processing and export workflow:
+    1. Upload and translate digital PDF.
+    2. Extract original and translated content.
+    3. Successfully export to all 4 types (original, translated, summary, bilingual) via /api/process/download.
+    4. Validate that empty/whitespace requests across all 4 types are rejected with HTTP 400.
+    5. Validate that unexpected internal errors in ExportService return HTTP 500.
+    """
+    from unittest.mock import patch
+
+    # 1. Upload & Translate
+    text = "Artificial intelligence is transforming document engineering and automated localization."
+    pdf_bytes = generate_pdf_buffer([text])
+    files = {"file": ("integration_doc.pdf", pdf_bytes, "application/pdf")}
+    data = {"target_lang": "vi"}
+
+    res = client.post("/api/process/upload-and-translate", files=files, data=data)
+    assert res.status_code == 200
+    doc_res = res.json()["data"]
+    orig_text = doc_res["original_text"]
+    trans_text = doc_res["translated_text"]
+    assert len(orig_text) > 0
+    assert len(trans_text) > 0
+
+    # 2. Valid multi-target export (4 types x 2 formats = 8 successful exports)
+    export_matrix = [
+        ("original", "txt", orig_text, None, "_goc.txt"),
+        ("original", "pdf", orig_text, None, "_goc.pdf"),
+        ("translated", "txt", trans_text, None, "_dich.txt"),
+        ("translated", "pdf", trans_text, None, "_dich.pdf"),
+        ("summary", "txt", "1. Điểm chính A\n2. Điểm chính B", None, "_tomtat.txt"),
+        ("summary", "pdf", "1. Điểm chính A\n2. Điểm chính B", None, "_tomtat.pdf"),
+        ("bilingual", "txt", trans_text, orig_text, "_songngu.txt"),
+        ("bilingual", "pdf", trans_text, orig_text, "_songngu.pdf"),
+    ]
+
+    for exp_type, fmt, content, orig_content, expected_sfx in export_matrix:
+        payload = {
+            "content": content,
+            "format": fmt,
+            "export_type": exp_type,
+            "filename": "pipeline_doc",
+        }
+        if orig_content:
+            payload["original_content"] = orig_content
+
+        dl_res = client.post("/api/process/download", json=payload)
+        assert dl_res.status_code == 200
+        assert expected_sfx in dl_res.headers.get("content-disposition", "")
+        if fmt == "pdf":
+            assert dl_res.content.startswith(b"%PDF")
+        else:
+            assert len(dl_res.content) > 0
+
+    # 3. Empty / whitespace validation across all 4 export types -> must return HTTP 400
+    empty_cases = [
+        {"content": "", "export_type": "original"},
+        {"content": "   ", "export_type": "original"},
+        {"content": None, "export_type": "translated"},
+        {"content": " \t\n ", "export_type": "translated"},
+        {"content": "", "export_type": "summary"},
+        {"content": "   ", "export_type": "summary"},
+        {"content": "", "original_content": orig_text, "export_type": "bilingual"},
+        {"content": trans_text, "original_content": "   ", "export_type": "bilingual"},
+        {"content": None, "original_content": None, "export_type": "bilingual"},
+    ]
+
+    for ec in empty_cases:
+        ec["format"] = "txt"
+        ec["filename"] = "invalid_doc"
+        bad_res = client.post("/api/process/download", json=ec)
+        assert bad_res.status_code == 400
+        msg = bad_res.json().get("message", "") or bad_res.json().get("detail", "")
+        assert "không được để trống" in msg
+
+    # 4. Internal ExportService failure -> must return HTTP 500 without disclosing details
+    valid_payload = {
+        "content": trans_text,
+        "format": "pdf",
+        "export_type": "translated",
+        "filename": "pipeline_doc",
+    }
+    with patch("app.api.process.export_service.export_to_pdf", side_effect=Exception("Catastrophic memory error")):
+        err_res = client.post("/api/process/download", json=valid_payload)
+        assert err_res.status_code == 500
+        err_msg = err_res.json().get("message", "") or err_res.json().get("detail", "")
+        assert "Catastrophic memory error" not in err_msg
+        assert "lỗi nội bộ" in err_msg.lower() or "thử lại" in err_msg.lower()
+
+
+# ── PDFL-158.3: E2E Export Compatibility & Interoperability Tests ──────────────
+
+def test_e2e_pipeline_export_compatibility_txt_and_pdf():
+    """
+    Xác thực toàn trình E2E về tính tương thích file xuất:
+    1. Upload và dịch tài liệu mẫu.
+    2. Xuất TXT song ngữ: kiểm tra UTF-8 BOM, giải mã UTF-8/UTF-8-SIG, cấu trúc 2 phần.
+    3. Xuất PDF song ngữ: phân tích cấu trúc qua pypdf, trích xuất text tiếng Việt nguyên vẹn.
+    4. Xuất PDF tóm tắt: trích xuất bullet points và tiêu đề tóm tắt.
+    """
+    raw_doc_text = "Machine learning models require robust evaluation metrics and data integrity."
+    input_pdf = generate_pdf_buffer([raw_doc_text])
+    files = {"file": ("compat_test.pdf", input_pdf, "application/pdf")}
+    data = {"target_lang": "vi"}
+
+    res = client.post("/api/process/upload-and-translate", files=files, data=data)
+    assert res.status_code == 200
+    doc_data = res.json()["data"]
+    orig_text = doc_data["original_text"]
+    trans_text = doc_data["translated_text"]
+    assert len(orig_text) > 0
+    assert len(trans_text) > 0
+
+    # 1. Xuất TXT song ngữ (Bilingual)
+    payload_txt = {
+        "content": trans_text,
+        "original_content": orig_text,
+        "format": "txt",
+        "export_type": "bilingual",
+        "filename": "e2e_compat_bilingual",
+        "title": "Báo Cáo Song Ngữ E2E",
+    }
+    txt_res = client.post("/api/process/download", json=payload_txt)
+    assert txt_res.status_code == 200
+    assert txt_res.content.startswith(codecs.BOM_UTF8)
+    assert txt_res.content[:3] == b"\xef\xbb\xbf"
+
+    # Đọc lại bằng utf-8-sig
+    decoded_txt = txt_res.content.decode("utf-8-sig")
+    assert "Báo Cáo Song Ngữ E2E" in decoded_txt
+    assert "=== 1. VĂN BẢN GỐC ===" in decoded_txt
+    assert "=== 2. BẢN DỊCH ===" in decoded_txt
+    assert orig_text in decoded_txt
+    assert trans_text in decoded_txt
+
+    # Đọc lại bằng utf-8 tiêu chuẩn
+    utf8_raw = txt_res.content.decode("utf-8")
+    assert utf8_raw.startswith("\ufeff")
+    assert "\ufffd" not in utf8_raw
+
+    # 2. Xuất PDF song ngữ (Bilingual)
+    payload_pdf = {
+        "content": trans_text,
+        "original_content": orig_text,
+        "format": "pdf",
+        "export_type": "bilingual",
+        "filename": "e2e_compat_bilingual",
+        "title": "Báo Cáo Song Ngữ E2E",
+    }
+    pdf_res = client.post("/api/process/download", json=payload_pdf)
+    assert pdf_res.status_code == 200
+    assert pdf_res.content.startswith(b"%PDF-")
+
+    pdf_reader = pypdf.PdfReader(io.BytesIO(pdf_res.content))
+    assert not pdf_reader.is_encrypted
+    assert len(pdf_reader.pages) >= 1
+
+    extracted_pdf_text = "".join(p.extract_text() for p in pdf_reader.pages)
+    assert "1. VĂN BẢN GỐC" in extracted_pdf_text
+    assert "2. BẢN DỊCH" in extracted_pdf_text
+    assert "Machine learning models" in extracted_pdf_text
+
+    # 3. Xuất PDF tóm tắt (Summary)
+    payload_summary = {
+        "content": "- Điểm 1: Đánh giá độ tin cậy mô hình\n- Điểm 2: Tối ưu dữ liệu đầu vào",
+        "format": "pdf",
+        "export_type": "summary",
+        "filename": "e2e_compat_summary",
+        "title": "Tóm Tắt Báo Cáo E2E",
+    }
+    summary_res = client.post("/api/process/download", json=payload_summary)
+    assert summary_res.status_code == 200
+    summary_reader = pypdf.PdfReader(io.BytesIO(summary_res.content))
+    summary_text = "".join(p.extract_text() for p in summary_reader.pages)
+    assert "BẢN TÓM TẮT NỘI DUNG" in summary_text
+    assert "Đánh giá độ tin cậy mô hình" in summary_text
+

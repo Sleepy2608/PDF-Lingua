@@ -20,7 +20,9 @@ from app.core.database import Base
 from app.core.dependencies import get_db, get_optional_current_user, require_roles
 from app.core.security import create_access_token, hash_password
 from app.main import app
+from app.models.document import Document
 from app.models.user import User, UserRole
+from app.services.storage_service import StorageService
 from fastapi import APIRouter, Depends
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -524,7 +526,216 @@ def test_download_invalid_token_rejects_without_downgrade(client):
     assert res.json()["error_code"] == "INVALID_TOKEN"
 
 
-# ── 5. PDFL-178.2 Synchronous Upload Page Limit Enforcement Tests ─────────────
+# ── 5. PDFL-157.4: Export API Permission & Anti-IDOR Tests ────────────────────
+
+def test_download_guest_without_token_rejected_401(client):
+    """Guest request without Authorization header to /api/process/download returns 401 NOT_AUTHENTICATED."""
+    payload = {"content": "Sample content to export", "format": "txt"}
+    res = client.post("/api/process/download", json=payload)
+    assert res.status_code == 401
+    assert res.json()["error_code"] == "NOT_AUTHENTICATED"
+
+
+def test_download_expired_token_rejected_401(client):
+    """Request with expired JWT token to /api/process/download returns 401 TOKEN_EXPIRED."""
+    expired_token = create_access_token(subject=1, expires_delta=timedelta(seconds=-1))
+    payload = {"content": "Sample content to export", "format": "txt"}
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {expired_token}"},
+        json=payload,
+    )
+    assert res.status_code == 401
+    assert res.json()["error_code"] == "TOKEN_EXPIRED"
+
+
+def test_download_inactive_account_rejected_403(client, db_session):
+    """Inactive user account token to /api/process/download returns 403 ACCOUNT_INACTIVE."""
+    _, inactive_token = create_user_with_role(
+        db_session, "inactive_export@example.com", UserRole.FREE, is_active=False
+    )
+    payload = {"content": "Sample content to export", "format": "txt"}
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {inactive_token}"},
+        json=payload,
+    )
+    assert res.status_code == 403
+    assert res.json()["error_code"] == "ACCOUNT_INACTIVE"
+
+
+def test_download_free_user_success(client, db_session):
+    """Active FREE user exports TXT successfully."""
+    _, token = create_user_with_role(db_session, "free_export@example.com", UserRole.FREE)
+    payload = {
+        "content": "Nội dung văn bản cho tài khoản FREE.",
+        "format": "txt",
+        "export_type": "translated",
+        "filename": "free_doc",
+    }
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+    assert res.status_code == 200
+    assert "free_doc_dich.txt" in res.headers.get("content-disposition", "")
+    assert "Nội dung văn bản cho tài khoản FREE." in res.content.decode("utf-8-sig")
+
+
+def test_download_pro_user_success(client, db_session):
+    """Active PRO user exports PDF successfully."""
+    _, token = create_user_with_role(db_session, "pro_export@example.com", UserRole.PRO)
+    payload = {
+        "content": "Nội dung văn bản cho tài khoản PRO.",
+        "format": "pdf",
+        "export_type": "summary",
+        "filename": "pro_doc",
+    }
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+    assert res.status_code == 200
+    assert res.headers.get("content-type") == "application/pdf"
+    assert res.content.startswith(b"%PDF")
+    assert "pro_doc_tomtat.pdf" in res.headers.get("content-disposition", "")
+
+
+def test_download_admin_user_success(client, db_session):
+    """Active ADMIN user exports bilingual TXT successfully."""
+    _, token = create_user_with_role(db_session, "admin_export@example.com", UserRole.ADMIN)
+    payload = {
+        "content": "Bản dịch song ngữ của Admin.",
+        "original_content": "Original bilingual content of Admin.",
+        "format": "txt",
+        "export_type": "bilingual",
+        "filename": "admin_doc",
+    }
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+    assert res.status_code == 200
+    assert "admin_doc_songngu.txt" in res.headers.get("content-disposition", "")
+    decoded = res.content.decode("utf-8-sig")
+    assert "Bản dịch song ngữ của Admin." in decoded
+    assert "Original bilingual content of Admin." in decoded
+
+
+def test_export_api_anti_idor_does_not_fetch_or_leak_document_by_id(client, db_session):
+    """
+    IDOR Security Verification for Export API (/api/process/download):
+    - Export API generates files on-the-fly strictly from client request body.
+    - Supplying another user's document_id without content is rejected with HTTP 400.
+    - Supplying document_id with custom content only exports the client's content, never querying or leaking the target document.
+    """
+    owner, _ = create_user_with_role(db_session, "victim_owner@example.com", UserRole.FREE)
+    attacker, attacker_token = create_user_with_role(db_session, "malicious_user@example.com", UserRole.FREE)
+
+    victim_doc = Document(
+        user_id=owner.id,
+        original_filename="confidential_contract.pdf",
+        stored_filename="stored_confidential.pdf",
+        stored_path="victim/stored_confidential.pdf",
+        file_size_bytes=2048,
+        page_count=3,
+        target_lang="vi",
+    )
+    db_session.add(victim_doc)
+    db_session.commit()
+    db_session.refresh(victim_doc)
+
+    # 1. Attacker attempts to download victim's document by only passing victim document_id without content
+    res_no_content = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {attacker_token}"},
+        json={"document_id": victim_doc.id, "format": "txt", "export_type": "translated"},
+    )
+    assert res_no_content.status_code == 400
+    msg = res_no_content.json().get("message") or res_no_content.json().get("detail", "")
+    assert "không được để trống" in msg
+
+    # 2. Attacker passes victim document_id along with custom content -> only custom content is exported
+    res_with_content = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {attacker_token}"},
+        json={
+            "document_id": victim_doc.id,
+            "content": "Attacker controlled payload text.",
+            "format": "txt",
+            "export_type": "translated",
+            "filename": "exploit_attempt",
+        },
+    )
+    assert res_with_content.status_code == 200
+    exported_text = res_with_content.content.decode("utf-8-sig")
+    assert "Attacker controlled payload text." in exported_text
+    assert "confidential_contract" not in exported_text
+
+
+def test_documents_download_anti_idor_and_admin_audit(client, db_session, tmp_path, monkeypatch):
+    """
+    Documents Download API Anti-IDOR test:
+    - User B cannot download User A's document (returns 404 Not Found to prevent enumeration).
+    - Owner can download their own document (returns 200 OK).
+    - Admin has permission to download any document for administrative audit (returns 200 OK).
+    """
+    test_storage = StorageService(base_dir=tmp_path / "storage")
+    monkeypatch.setattr("app.api.documents.storage_service", test_storage)
+
+    user_a, token_a = create_user_with_role(db_session, "user_a_doc@example.com", UserRole.FREE)
+    user_b, token_b = create_user_with_role(db_session, "user_b_doc@example.com", UserRole.FREE)
+    admin_user, token_admin = create_user_with_role(db_session, "admin_doc_audit@example.com", UserRole.ADMIN)
+
+    # Save physical file for User A
+    stored_name_a, rel_path_a, _ = test_storage.save_document_file(
+        user_id=user_a.id,
+        original_filename="private_doc_a.pdf",
+        content=b"%PDF-1.4 User A confidential data",
+    )
+    doc_a = Document(
+        user_id=user_a.id,
+        original_filename="private_doc_a.pdf",
+        stored_filename=stored_name_a,
+        stored_path=rel_path_a,
+        file_size_bytes=32,
+        page_count=1,
+        target_lang="vi",
+    )
+    db_session.add(doc_a)
+    db_session.commit()
+    db_session.refresh(doc_a)
+
+    # 1. User B (malicious/other user) tries to download User A's document -> 404 Not Found (Anti-IDOR)
+    res_b = client.get(
+        f"/api/documents/{doc_a.id}/download",
+        headers={"Authorization": f"Bearer {token_b}"},
+    )
+    assert res_b.status_code == 404
+    msg_b = res_b.json().get("message") or res_b.json().get("detail", "")
+    assert "Tài liệu không tồn tại hoặc bạn không có quyền truy cập" in msg_b
+
+    # 2. User A (owner) downloads their own document -> 200 OK
+    res_a = client.get(
+        f"/api/documents/{doc_a.id}/download",
+        headers={"Authorization": f"Bearer {token_a}"},
+    )
+    assert res_a.status_code == 200
+    assert b"User A confidential data" in res_a.content
+
+    # 3. Admin user downloads User A's document according to system policy -> 200 OK
+    res_admin = client.get(
+        f"/api/documents/{doc_a.id}/download",
+        headers={"Authorization": f"Bearer {token_admin}"},
+    )
+    assert res_admin.status_code == 200
+    assert b"User A confidential data" in res_admin.content
+
+
+# ── 6. PDFL-178.2 Synchronous Upload Page Limit Enforcement Tests ─────────────
 
 def test_sync_page_limit_free_user_accepts_100_rejects_101(client, db_session, monkeypatch):
     """PDFL-178.2: Free user accepts 100 pages, rejects 101 pages with 413 and role/limit detail."""
@@ -873,5 +1084,4 @@ def test_job_worker_second_layer_check_aborts_excess_pages(tmp_path, monkeypatch
     assert updated_job.status == JobStatus.FAILED
     assert "150 trang" in (updated_job.error or "")
     assert "100 trang" in (updated_job.error or "")
-
 
