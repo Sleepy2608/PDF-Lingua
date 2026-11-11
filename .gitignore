@@ -35,8 +35,11 @@ uv.lock
 
 # Environment variables & secrets
 .env
-.env.local
+.env.*
 *.env
+**/.env
+**/.env.*
+Code/backend/.env
 
 # IDE & Editors
 .vscode/

@@ -68,8 +68,12 @@ class Settings:
     TRANSLATION_ENGINE: str = os.getenv("TRANSLATION_ENGINE", "deep-translator")
     TRANSLATION_DEFAULT_TARGET: str = os.getenv("TRANSLATION_DEFAULT_TARGET", "vi")
 
-    # AI Services
-    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini")
+    # AI Services (B.AI Multi-model Gateway / OpenAI / Gemini)
+    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "b.ai")
+    BAI_API_KEY: str = os.getenv("BAI_API_KEY", "")
+    BAI_BASE_URL: str = os.getenv("BAI_BASE_URL", "https://api.b.ai/v1")
+    BAI_MODEL_SUMMARIZE: str = os.getenv("BAI_MODEL_SUMMARIZE", "gpt-5-mini")
+    BAI_MODEL_CHAT: str = os.getenv("BAI_MODEL_CHAT", "gpt-5-mini")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
