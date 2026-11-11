@@ -557,6 +557,16 @@
                                     <span>Dịch lại</span>
                                 </button>
 
+                                <button type="button" class="btn btn-ai-summary" id="btnAiSummarize"
+                                    title="Tóm tắt văn bản bằng AI (Pro VIP)">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    <span>Tóm tắt AI</span>
+                                    <span class="badge-pro-pill">PRO</span>
+                                </button>
+
                                 <div class="download-wrap">
                                     <button type="button" class="btn btn-gradient" id="btnDownloadMenu"
                                         aria-haspopup="true" aria-expanded="false" title="Tải xuống tệp">
@@ -657,6 +667,30 @@
                                                 <span>File PDF</span>
                                             </button>
                                         </div>
+
+                                        <div class="dropdown-divider"></div>
+
+                                        <!-- Nhóm 4: Bản tóm tắt AI -->
+                                        <div class="dropdown-group-title">
+                                            <span class="group-label">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2.5">
+                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                </svg>
+                                                <span>Bản tóm tắt</span>
+                                            </span>
+                                            <span class="summary-badge" id="summaryExportStatus">(chưa có)</span>
+                                        </div>
+                                        <div class="dropdown-format-row">
+                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryTxt" data-export-type="summary" data-format="txt" title="Chưa có bản tóm tắt" disabled>
+                                                <span class="fmt-pill txt">TXT</span>
+                                                <span>File TXT</span>
+                                            </button>
+                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryPdf" data-export-type="summary" data-format="pdf" title="Chưa có bản tóm tắt" disabled>
+                                                <span class="fmt-pill pdf">PDF</span>
+                                                <span>File PDF</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -669,6 +703,95 @@
                                     </svg>
                                     <span>Tệp khác</span>
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- AI Document Summarization Card (Collapsible, Initially Hidden) -->
+                        <div class="ai-summary-card" id="aiSummaryCard" style="display: none;">
+                            <div class="ai-summary-header">
+                                <div class="ai-summary-title-wrap">
+                                    <div class="ai-sparkle-icon" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ai-summary-title-text">
+                                        <div class="ai-summary-title">
+                                            <span>Tóm tắt văn bản bằng AI</span>
+                                            <span class="badge-pro-pill">PRO VIP</span>
+                                        </div>
+                                        <div class="ai-summary-subtitle">Đúc kết thông điệp cốt lõi, rút trích luận điểm chính từ tài liệu với AI Gateway</div>
+                                    </div>
+                                </div>
+
+                                <div class="ai-summary-controls">
+                                    <div class="ai-control-group">
+                                        <label for="aiSummaryStyle" class="ai-control-label">Kiểu tóm tắt:</label>
+                                        <select class="ai-select" id="aiSummaryStyle">
+                                            <option value="brief" selected>Ngắn gọn (2-3 câu)</option>
+                                            <option value="bullets">Ý chính (Gạch đầu dòng)</option>
+                                            <option value="detailed">Chi tiết (Phân tích chuyên sâu)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="ai-control-group">
+                                        <label for="aiSummaryLength" class="ai-control-label">Độ dài:</label>
+                                        <select class="ai-select" id="aiSummaryLength">
+                                            <option value="short">Ngắn (50 - 100 từ)</option>
+                                            <option value="medium" selected>Vừa (150 - 300 từ)</option>
+                                            <option value="long">Dài (400 - 600 từ)</option>
+                                        </select>
+                                    </div>
+
+                                    <button type="button" class="btn btn-ai-generate" id="btnExecuteAiSummary" title="Bắt đầu phân tích và tóm tắt">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                        <span id="btnExecuteAiSummaryText">Bắt đầu tóm tắt</span>
+                                    </button>
+
+                                    <button type="button" class="btn-icon-close" id="btnCloseAiSummary" title="Thu gọn bảng tóm tắt">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Loading Skeleton & Shimmer State -->
+                            <div class="ai-summary-loading" id="aiSummaryLoading" style="display: none;">
+                                <div class="ai-loading-spinner-wrap">
+                                    <div class="ai-loading-spinner" aria-hidden="true"></div>
+                                    <span class="ai-loading-text">AI đang phân tích và đúc kết ý chính từ tài liệu...</span>
+                                </div>
+                                <div class="ai-skeleton-shimmer" aria-hidden="true">
+                                    <div class="skeleton-line full"></div>
+                                    <div class="skeleton-line mid"></div>
+                                    <div class="skeleton-line short"></div>
+                                </div>
+                            </div>
+
+                            <!-- Summary Result Display -->
+                            <div class="ai-summary-result" id="aiSummaryResult" style="display: none;">
+                                <div class="ai-result-meta-bar">
+                                    <div class="ai-result-meta">
+                                        <span class="meta-tag model-tag" id="aiModelUsedBadge">gpt-5-mini</span>
+                                        <span class="meta-tag style-tag" id="aiStyleUsedBadge">Ngắn gọn</span>
+                                        <span class="meta-tag word-tag" id="aiWordCountBadge">0 từ</span>
+                                        <span class="meta-tag time-tag" id="aiTimeElapsedBadge">0ms</span>
+                                    </div>
+                                    <div class="ai-result-actions">
+                                        <button type="button" class="btn-action-copy" id="btnCopyAiSummary" title="Sao chép kết quả tóm tắt">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            <span id="btnCopyAiSummaryText">Sao chép tóm tắt</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="ai-summary-content markdown-body" id="aiSummaryContent" tabindex="0"></div>
                             </div>
                         </div>
 
@@ -3165,10 +3288,61 @@
         </div>
     </div>
 
+    <!-- AI Pro VIP Upgrade Upsell Modal -->
+    <div class="modal-backdrop" id="aiProModal" hidden style="display: none;">
+        <div class="modal-dialog modal-dialog-pro">
+            <div class="modal-header">
+                <div class="modal-pro-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span>GÓI PRO VIP</span>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseAiProModal" title="Đóng">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body modal-pro-body">
+                <h3 class="modal-pro-title">Mở Khóa Tính Năng Tóm Tắt AI</h3>
+                <p class="modal-pro-desc">
+                    Tính năng Tóm tắt thông minh bằng AI được thiết kế độc quyền cho gói <strong>Pro VIP</strong>.
+                    Đúc kết văn bản dài hàng trăm trang chỉ trong tích tắc, hỗ trợ 3 phong cách chuyên nghiệp và tối ưu hóa thời gian nghiên cứu.
+                </p>
+                <div class="modal-pro-features">
+                    <div class="pro-feature-item">
+                        <span class="pro-feature-icon">✓</span>
+                        <span>Tóm tắt tức thì 3 phong cách: Ngắn gọn, Ý chính, Chi tiết</span>
+                    </div>
+                    <div class="pro-feature-item">
+                        <span class="pro-feature-icon">✓</span>
+                        <span>Xử lý tài liệu lớn lên tới 500 trang / 100 MB với Map-Reduce</span>
+                    </div>
+                    <div class="pro-feature-item">
+                        <span class="pro-feature-icon">✓</span>
+                        <span>Trợ lý AI Copilot hỏi đáp tài liệu chuyên sâu</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-pro-footer">
+                <button type="button" class="btn btn-secondary" id="btnDismissAiProModal">Để sau</button>
+                <button type="button" class="btn btn-gradient btn-upgrade-pro" id="btnGoToPricingFromAi">
+                    <span>Nâng cấp Pro ngay</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
     <script src="js/auth.js?v=2.0.0"></script>
     <script src="js/workspace.js?v=2.1.0"></script>
+    <script src="js/ai_summary.js?v=1.0.0"></script>
     <script src="js/admin.js"></script>
     <script src="js/pricing.js"></script>
     <script src="js/sidebar.js?v=2.1.0"></script>
