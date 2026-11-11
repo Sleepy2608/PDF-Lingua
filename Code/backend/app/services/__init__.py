@@ -16,10 +16,18 @@ __all__ = [
     "history_service",
     "JobManager",
     "job_manager",
+    "AIService",
+    "ai_service",
 ]
 
 def __getattr__(name: str):
-    if name == "AuthService":
+    if name == "AIService":
+        from app.services.ai_service import AIService
+        return AIService
+    elif name == "ai_service":
+        from app.services.ai_service import ai_service
+        return ai_service
+    elif name == "AuthService":
         from app.services.auth_service import AuthService
         return AuthService
     elif name == "PDFService":
