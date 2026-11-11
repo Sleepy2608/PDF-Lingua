@@ -1,0 +1,174 @@
+{
+  "task": "PDFL-149",
+  "benchmark_name": "AI Copilot 20-Question Groundedness and Anti-Hallucination Audit",
+  "total_questions": 20,
+  "in_domain_total": 10,
+  "in_domain_passed": 10,
+  "in_domain_accuracy_pct": 100.0,
+  "out_of_domain_total": 10,
+  "out_of_domain_rejected": 10,
+  "anti_hallucination_rate_pct": 100.0,
+  "overall_pass_rate_pct": 100.0,
+  "detailed_results": [
+    {
+      "case_id": "IN-01",
+      "type": "in_domain",
+      "query": "Goi Pro VIP co chi phi la bao nhieu tien moi thang?",
+      "answer": "Dua tren tai lieu (Doan 1): - Goi Pro VIP: Chi phi 99.000 VND moi thang. Chinh sach goi cuoc va phi dich vu: - Goi Free (Mien phi): Ho tro xu ly toi da 5 tai lieu moi thang, dung luong toi da 10 MB va 20 trang moi tai lieu.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-02",
+      "type": "in_domain",
+      "query": "Han ngach cau hoi AI Copilot cua goi Pro moi ngay la bao nhieu?",
+      "answer": "Dua tren tai lieu (Doan 1): Ho tro tom tat van ban AI khong gioi han va 15 cau hoi AI Copilot moi ngay. - Goi Pro VIP: Chi phi 99.000 VND moi thang.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-03",
+      "type": "in_domain",
+      "query": "Goi Enterprise co gia bao nhieu moi thang?",
+      "answer": "Dua tren tai lieu (Doan 1): - Goi Enterprise: Chi phi 499.000 VND moi thang. Chinh sach goi cuoc va phi dich vu: - Goi Free (Mien phi): Ho tro xu ly toi da 5 tai lieu moi thang, dung luong toi da 10 MB va 20 trang moi tai lieu.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-04",
+      "type": "in_domain",
+      "query": "Dung luong toi da cua tep PDF tai len trong goi Free la bao nhieu?",
+      "answer": "Dua tren tai lieu (Doan 1): Chinh sach goi cuoc va phi dich vu: - Goi Free (Mien phi): Ho tro xu ly toi da 5 tai lieu moi thang, dung luong toi da 10 MB va 20 trang moi tai lieu. Han ngach 50 tai lieu moi thang, dung luong toi da 50 MB va 100 trang.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-05",
+      "type": "in_domain",
+      "query": "Tieu chuan ma hoa duoc ap dung de bao mat tai lieu la gi?",
+      "answer": "Dua tren tai lieu (Doan 1): Bao mat va luu tru: Tat ca tai lieu tai len duoc ma hoa theo tieu chuan AES-256 tai he thong luu tru cuc bo. Gioi thieu he thong: PDF-Lingua la nen tang xu ly va dich thuat tai lieu PDF da ngon ngu truc tuyen.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-06",
+      "type": "in_domain",
+      "query": "Thoi gian xu ly trung binh cua OCR la bao lau moi trang?",
+      "answer": "Dua tren tai lieu (Doan 1): Thoi gian xu ly va cam ket chat luong (SLA): Thoi gian phan hoi trung binh cua OCR la duoi 3 giay moi trang. Doi voi dich thuat song ngu, thoi gian xu ly khong vuot qua 15 giay cho tai lieu 10 trang.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-07",
+      "type": "in_domain",
+      "query": "Tai lieu tam cua goi Free se bi tu dong xoa sau bao nhieu ngay?",
+      "answer": "Dua tren tai lieu (Doan 1): He thong tu dong xoa tai lieu tam sau 30 ngay doi voi goi Free va 90 ngay doi voi goi Pro neu nguoi dung khong luu tru lau dai. Chinh sach goi cuoc va phi dich vu: - Goi Free (Mien phi): Ho tro xu ly toi da 5 tai lieu moi thang, dung luong toi da 10 MB va 20 trang moi tai lieu.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-08",
+      "type": "in_domain",
+      "query": "Tai lieu tam cua goi Pro se duoc giu trong bao lau truoc khi xoa?",
+      "answer": "Dua tren tai lieu (Doan 1): He thong tu dong xoa tai lieu tam sau 30 ngay doi voi goi Free va 90 ngay doi voi goi Pro neu nguoi dung khong luu tru lau dai. Chinh sach goi cuoc va phi dich vu: - Goi Free (Mien phi): Ho tro xu ly toi da 5 tai lieu moi thang, dung luong toi da 10 MB va 20 trang moi tai lieu.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-09",
+      "type": "in_domain",
+      "query": "Nen tang AI Gateway nao duoc tich hop vao PDF-Lingua?",
+      "answer": "Dua tren tai lieu (Doan 1): Gioi thieu he thong: PDF-Lingua la nen tang xu ly va dich thuat tai lieu PDF da ngon ngu truc tuyen. He thong ho tro nhan dang chu viet quang hoc (OCR), dich thuat song song giu nguyen dinh dang, va tich hop tro ly tri tue nhan tao AI dua tren B.AI Gateway voi giao thuc OpenAI.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "IN-10",
+      "type": "in_domain",
+      "query": "Goi Free co su dung duoc tinh nang AI Copilot khong?",
+      "answer": "Dua tren tai lieu (Doan 1): Khong ho tro tinh nang tom tat AI va AI Copilot. He thong tu dong xoa tai lieu tam sau 30 ngay doi voi goi Free va 90 ngay doi voi goi Pro neu nguoi dung khong luu tru lau dai.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-01",
+      "type": "out_of_domain",
+      "query": "Thu do cua nuoc Phap ten la gi va dan so la bao nhieu?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-02",
+      "type": "out_of_domain",
+      "query": "Cau thu bong da Cristiano Ronaldo sinh nam bao nhieu?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-03",
+      "type": "out_of_domain",
+      "query": "Cong thuc hoa hoc cua axit sunfuric la gi?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-04",
+      "type": "out_of_domain",
+      "query": "Gia co phieu Apple ngay hom nay tang hay giam?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-05",
+      "type": "out_of_domain",
+      "query": "Ai la vi tong thong dau tien cua nuoc My?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-06",
+      "type": "out_of_domain",
+      "query": "Khoang cach tu Trai Dat den Mat Trang la bao nhieu km?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-07",
+      "type": "out_of_domain",
+      "query": "Nhan vien ten John Doe lam viec o phong ban nao cua cong ty?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-08",
+      "type": "out_of_domain",
+      "query": "Thoi tiet Ha Noi ngay mai co mua khong?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-09",
+      "type": "out_of_domain",
+      "query": "Dia chi tru so ngan hang Vietcombank o dau?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    },
+    {
+      "case_id": "OUT-10",
+      "type": "out_of_domain",
+      "query": "Lich chieu phim tai rap chieu bong toi nay the nao?",
+      "answer": "Tai lieu hien tai khong de cap den thong tin nay.",
+      "relevant_chunks_count": 1,
+      "passed": true
+    }
+  ]
+}

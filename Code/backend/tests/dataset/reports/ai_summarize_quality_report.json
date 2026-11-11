@@ -1,0 +1,66 @@
+{
+  "total_documents_tested": 5,
+  "styles_evaluated": [
+    "brief",
+    "bullets",
+    "detailed"
+  ],
+  "criteria_satisfied": [
+    "non_empty",
+    "structural_conformance",
+    "bullet_markers",
+    "section_headers"
+  ],
+  "documents": [
+    {
+      "document": "Digital Single Column",
+      "filename": "digital_single_column.txt",
+      "input_word_count": 52,
+      "brief_words": 38,
+      "bullets_count": 4,
+      "detailed_chars": 530,
+      "detailed_sections": 3,
+      "status": "PASSED"
+    },
+    {
+      "document": "Digital Multi Column",
+      "filename": "digital_multi_column.txt",
+      "input_word_count": 57,
+      "brief_words": 30,
+      "bullets_count": 6,
+      "detailed_chars": 534,
+      "detailed_sections": 3,
+      "status": "PASSED"
+    },
+    {
+      "document": "Complex Tables and Symbols",
+      "filename": "complex_tables_and_symbols.txt",
+      "input_word_count": 65,
+      "brief_words": 65,
+      "bullets_count": 1,
+      "detailed_chars": 847,
+      "detailed_sections": 3,
+      "status": "PASSED"
+    },
+    {
+      "document": "Mixed Digital and Scanned",
+      "filename": "mixed_digital_and_scanned.txt",
+      "input_word_count": 52,
+      "brief_words": 44,
+      "bullets_count": 4,
+      "detailed_chars": 483,
+      "detailed_sections": 3,
+      "status": "PASSED"
+    },
+    {
+      "document": "Scanned High Quality",
+      "filename": "scanned_high_quality.txt",
+      "input_word_count": 38,
+      "brief_words": 38,
+      "bullets_count": 3,
+      "detailed_chars": 405,
+      "detailed_sections": 3,
+      "status": "PASSED"
+    }
+  ]
+}
