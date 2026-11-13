@@ -150,6 +150,22 @@
     return role === 'pro' || role === 'admin';
   }
 
+  // Update active document badge in Copilot header
+  function updateCopilotDocBadge() {
+    const badge = document.getElementById('copilotDocBadge');
+    if (!badge) return;
+    let docName = '';
+    const nameEl = document.getElementById('docNameDisplay');
+    if (nameEl && nameEl.textContent && nameEl.textContent.trim()) {
+      docName = nameEl.textContent.trim();
+    }
+    if (!docName && typeof window !== 'undefined' && window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function') {
+      const doc = window.pdfLinguaWorkspace.getCurrentDocData();
+      if (doc && doc.filename) docName = doc.filename;
+    }
+    badge.textContent = docName || 'Tài liệu song ngữ';
+  }
+
   // Open Copilot Drawer
   function openCopilotDrawer() {
     const user = getStoredUser();
@@ -174,9 +190,11 @@
       drawer.classList.add('open');
     }
     if (backdrop) {
-      backdrop.style.display = 'block';
+      backdrop.style.display = 'none';
       backdrop.classList.add('visible');
     }
+
+    updateCopilotDocBadge();
 
     state.isOpen = true;
 
@@ -233,6 +251,11 @@
   function appendUserMessage(text) {
     const list = document.getElementById('copilotMessagesList');
     if (!list) return;
+
+    const welcomeHero = document.getElementById('copilotWelcomeHero');
+    if (welcomeHero) welcomeHero.style.display = 'none';
+    const welcomeMsg = document.getElementById('copilotWelcomeMsg');
+    if (welcomeMsg) welcomeMsg.style.display = 'none';
 
     const msgDiv = document.createElement('div');
     msgDiv.className = 'copilot-msg copilot-msg-user';
@@ -403,6 +426,9 @@
         </div>
       </div>
     `;
+
+    const welcomeHero = document.getElementById('copilotWelcomeHero');
+    if (welcomeHero) welcomeHero.style.display = 'flex';
 
     showToast('Da xoa lich su hoi dap voi AI Copilot.', 'info');
   }

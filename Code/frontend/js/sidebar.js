@@ -206,7 +206,12 @@
         if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
         if (heroSection) heroSection.style.display = 'none';
         if (workspaceSection) workspaceSection.style.display = 'none';
-        if (adminSection) adminSection.style.display = 'none';
+        const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
+    if (adminSection) adminSection.style.display = 'none';
         if (historySection) historySection.style.display = 'none';
         if (documentsSection) documentsSection.style.display = 'block';
 
@@ -228,7 +233,12 @@
         if (sideNavHistory) setActiveNavItem(sideNavHistory);
         if (heroSection) heroSection.style.display = 'none';
         if (workspaceSection) workspaceSection.style.display = 'none';
-        if (adminSection) adminSection.style.display = 'none';
+        const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
+    if (adminSection) adminSection.style.display = 'none';
         if (documentsSection) documentsSection.style.display = 'none';
         if (historySection) historySection.style.display = 'block';
         fetchProcessingHistories();
@@ -333,6 +343,11 @@
     const historySection = document.getElementById('historySection');
 
     if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
@@ -360,6 +375,11 @@
     const historySection = document.getElementById('historySection');
 
     if (sideNavHistory) setActiveNavItem(sideNavHistory);
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
@@ -390,6 +410,11 @@
     const pricingSection = document.getElementById('pricingSection');
     const workspaceSection = document.getElementById('workspaceSection');
     const heroSection = document.getElementById('heroSection');
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
     if (adminSection) adminSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'none';
     if (historySection) historySection.style.display = 'none';
@@ -411,6 +436,11 @@
 
     if (documentsSection) documentsSection.style.display = 'none';
     if (historySection) historySection.style.display = 'none';
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
     if (adminSection) adminSection.style.display = 'none';
 
     const hasActiveDoc = window.pdfLinguaWorkspace
@@ -601,6 +631,11 @@
     const workspaceSection = document.getElementById('workspaceSection');
     const sideNavAiSummarize = document.getElementById('sideNavAiSummarize');
 
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
     if (adminSection) adminSection.style.display = 'none';
     if (pricingSection) pricingSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'none';
@@ -798,7 +833,12 @@
           const historySection = document.getElementById('historySection');
           const heroSection = document.getElementById('heroSection');
           const workspaceSection = document.getElementById('workspaceSection');
-          if (adminSection) adminSection.style.display = 'none';
+          const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
+    if (adminSection) adminSection.style.display = 'none';
           if (pricingSection) pricingSection.style.display = 'none';
           if (documentsSection) documentsSection.style.display = 'none';
           if (historySection) historySection.style.display = 'none';
@@ -894,7 +934,12 @@
           const heroSection = document.getElementById('heroSection');
           const workspaceSection = document.getElementById('workspaceSection');
           const pricingSection = document.getElementById('pricingSection');
-          if (adminSection) adminSection.style.display = 'none';
+          const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
+    if (adminSection) adminSection.style.display = 'none';
           if (heroSection) heroSection.style.display = 'none';
           if (workspaceSection) workspaceSection.style.display = 'none';
           if (pricingSection) pricingSection.style.display = 'block';
@@ -1828,7 +1873,12 @@
       if (sideNavDocuments) setActiveNavItem(sideNavDocuments);
       if (heroSection) heroSection.style.display = 'none';
       if (workspaceSection) workspaceSection.style.display = 'none';
-      if (adminSection) adminSection.style.display = 'none';
+      const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
+    if (adminSection) adminSection.style.display = 'none';
       if (documentsSection) documentsSection.style.display = 'block';
 
       // 4. Display success toast notification
@@ -2744,7 +2794,12 @@
       if (historySection) historySection.style.display = 'none';
       if (heroSection) heroSection.style.display = 'none';
       if (documentsSection) documentsSection.style.display = 'none';
-      if (adminSection) adminSection.style.display = 'none';
+      const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      copilotDrawer.classList.remove('open');
+    }
+    if (adminSection) adminSection.style.display = 'none';
       if (workspaceSection) workspaceSection.style.display = 'block';
 
       if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
