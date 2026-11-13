@@ -1987,6 +1987,132 @@
             <!-- Toast Notification Container -->
             <div class="toast-container" id="toastContainer"></div>
 
+            <!-- AI Copilot Chat Interface (ChatGPT-Style Full Frame) -->
+            <div class="ai-copilot-backdrop" id="aiCopilotBackdrop" style="display: none !important;"></div>
+            <aside class="ai-copilot-drawer ai-copilot-chat-frame" id="aiCopilotDrawer" style="display: none;" aria-label="AI Copilot Chat">
+                <div class="copilot-drawer-header">
+                    <div class="copilot-header-info">
+                        <button type="button" class="btn-copilot-back" id="btnCloseCopilotDrawer" title="Quay lại Dịch PDF">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            <span>Quay lại Dịch PDF</span>
+                        </button>
+                        <div class="copilot-header-divider"></div>
+                        <div class="copilot-avatar-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="copilot-header-title">
+                                <span>AI Copilot</span>
+                                <span class="badge-pro-pill">PRO VIP</span>
+                                <span class="copilot-doc-badge" id="copilotDocBadge">tai-lieu.pdf</span>
+                            </div>
+                            <div class="copilot-header-status" id="copilotStatusText">Sẵn sàng hỗ trợ tài liệu</div>
+                        </div>
+                    </div>
+
+                    <div class="copilot-header-actions">
+                        <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay">15/15 câu hỏi</span>
+                        <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat" title="Xóa toàn bộ lịch sử trò chuyện">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Message Thread Container -->
+                <div class="copilot-messages-container" id="copilotMessagesContainer" tabindex="0">
+                    <!-- Welcome Hero (ChatGPT Style - Image 2) -->
+                    <div class="copilot-welcome-hero" id="copilotWelcomeHero">
+                        <div class="copilot-hero-sparkle" aria-hidden="true">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <h1 class="copilot-hero-title">Bạn muốn tìm hiểu gì về tài liệu?</h1>
+                        <p class="copilot-hero-subtitle">Hỏi đáp ngữ cảnh, trích xuất dữ kiện quan trọng và nhận giải đáp tức thì từ tài liệu song ngữ của bạn.</p>
+                        <div class="copilot-quick-prompts-grid" id="copilotQuickPrompts">
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?">
+                                <span class="prompt-icon">📝</span>
+                                <span class="prompt-card-content">
+                                    <strong class="prompt-card-title">Tóm tắt 3 ý chính</strong>
+                                    <span class="prompt-card-desc">Khái quát nội dung cốt lõi</span>
+                                </span>
+                            </button>
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?">
+                                <span class="prompt-icon">📊</span>
+                                <span class="prompt-card-content">
+                                    <strong class="prompt-card-title">Số liệu quan trọng</strong>
+                                    <span class="prompt-card-desc">Trích xuất thống kê & mốc thời gian</span>
+                                </span>
+                            </button>
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?">
+                                <span class="prompt-icon">💡</span>
+                                <span class="prompt-card-content">
+                                    <strong class="prompt-card-title">Giải thích thuật ngữ</strong>
+                                    <span class="prompt-card-desc">Làm rõ khái niệm chuyên ngành</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Messages Thread List -->
+                    <div class="copilot-messages-list" id="copilotMessagesList">
+                        <div class="copilot-msg copilot-msg-assistant" id="copilotWelcomeMsg" style="display: none;">
+                            <div class="copilot-msg-avatar">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                                </svg>
+                            </div>
+                            <div class="copilot-msg-content">
+                                <p>Xin chào! Tôi là <strong>AI Copilot</strong>. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator (Animated 3 Dots) -->
+                    <div class="copilot-typing-indicator" id="copilotTypingIndicator" style="display: none;">
+                        <div class="copilot-msg-avatar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="typing-bubble">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer: Chat Input and Send -->
+                <div class="copilot-drawer-footer">
+                    <form class="copilot-input-form" id="copilotChatForm">
+                        <div class="copilot-input-sparkle" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <textarea class="copilot-input" id="copilotInput" rows="1"
+                            placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)"
+                            maxlength="2000"></textarea>
+                        <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                    <div class="copilot-footer-tip">Nhấn Enter để gửi (Shift+Enter xuống dòng) • Giới hạn 15 câu/ngày (Gói Pro VIP)</div>
+                </div>
+            </aside>
+
             <footer class="site-footer">
                 <div class="container footer-content">
                     <p>&copy; 2026 PDF-Lingua Project</p>
@@ -3347,103 +3473,6 @@
             </div>
         </div>
     </div>
-
-    <!-- AI Copilot Chat Drawer (Collapsible Right Sidebar / Floating Drawer) -->
-    <div class="ai-copilot-backdrop" id="aiCopilotBackdrop" style="display: none;"></div>
-    <aside class="ai-copilot-drawer" id="aiCopilotDrawer" style="display: none;" aria-label="AI Copilot Chat">
-        <div class="copilot-drawer-header">
-            <div class="copilot-header-info">
-                <div class="copilot-avatar-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="copilot-header-title">
-                        <span>AI Copilot</span>
-                        <span class="badge-pro-pill">PRO VIP</span>
-                    </div>
-                    <div class="copilot-header-status" id="copilotStatusText">Sẵn sàng hỗ trợ tài liệu</div>
-                </div>
-            </div>
-
-            <div class="copilot-header-actions">
-                <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay">15/15 câu hỏi</span>
-                <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat" title="Xóa toàn bộ lịch sử trò chuyện">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-                <button type="button" class="btn-copilot-icon btn-copilot-close" id="btnCloseCopilotDrawer" title="Đóng trợ lý AI">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Suggested Quick Prompts -->
-        <div class="copilot-quick-prompts" id="copilotQuickPrompts">
-            <button type="button" class="copilot-prompt-chip" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?">
-                Tóm tắt 3 ý chính
-            </button>
-            <button type="button" class="copilot-prompt-chip" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?">
-                Số liệu quan trọng
-            </button>
-            <button type="button" class="copilot-prompt-chip" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?">
-                Giải thích thuật ngữ
-            </button>
-        </div>
-
-        <!-- Message Thread Container -->
-        <div class="copilot-messages-container" id="copilotMessagesContainer" tabindex="0">
-            <div class="copilot-messages-list" id="copilotMessagesList">
-                <!-- Initial Assistant Greeting -->
-                <div class="copilot-msg copilot-msg-assistant" id="copilotWelcomeMsg">
-                    <div class="copilot-msg-avatar">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
-                        </svg>
-                    </div>
-                    <div class="copilot-msg-content">
-                        <p>Xin chào! Tôi là <strong>AI Copilot</strong>. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Typing Indicator (Animated 3 Dots) -->
-            <div class="copilot-typing-indicator" id="copilotTypingIndicator" style="display: none;">
-                <div class="copilot-msg-avatar">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
-                    </svg>
-                </div>
-                <div class="typing-bubble">
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer: Chat Input and Send -->
-        <div class="copilot-drawer-footer">
-            <form class="copilot-input-form" id="copilotChatForm">
-                <textarea class="copilot-input" id="copilotInput" rows="1"
-                    placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)"
-                    maxlength="2000"></textarea>
-                <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                </button>
-            </form>
-            <div class="copilot-footer-tip">Nhấn Enter để gửi (Shift+Enter xuống dòng) • Giới hạn 15 câu/ngày (Gói Pro VIP)</div>
-        </div>
-    </aside>
 
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
