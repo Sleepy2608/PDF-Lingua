@@ -499,7 +499,7 @@ class AIService:
     ) -> str:
         """
         Generate intelligent offline fallback answer based on query and relevant context.
-        Enforces PDFL-147: Returns NO_INFO_RESPONSE if no relevant information is found.
+        Enforces anti-hallucination: Returns NO_INFO_RESPONSE if no relevant information is found.
         """
         if not relevant_chunks or all(c["score"] == 0 for c in relevant_chunks):
             return self.NO_INFO_RESPONSE
