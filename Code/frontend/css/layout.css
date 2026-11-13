@@ -321,12 +321,16 @@
 
 /* Footer */
 .site-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 95;
   margin-top: auto;
   height: var(--footer-height, 68px);
   min-height: var(--footer-height, 68px);
   box-sizing: border-box;
   background-color: var(--bg-subtle);
   border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.03);
   display: flex;
   align-items: center;
   font-size: 0.875rem;

@@ -211,7 +211,7 @@
 }
 
 .sidebar-brand-text {
-  color: var(--sidebar-text-primary);
+  color: var(--color-primary-indigo, #4F46E5);
 }
 
 /* Toggle Collapse/Expand Button */
