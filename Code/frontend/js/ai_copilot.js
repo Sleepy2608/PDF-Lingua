@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua - AI Copilot Chat Module (PDFL-51, PDFL-142, PDFL-143, PDFL-144)
+ * PDF-Lingua - AI Copilot Chat Module
  * -----------------------------------------------------------------------------
  * Interactive Copilot assistant for asking questions and conversing with documents.
  * Features:
@@ -411,17 +411,25 @@
   function getDocumentContext() {
     let text = '';
 
-    // Check editor translation pane first
-    const editorTranslated = document.getElementById('editorTranslated');
-    if (editorTranslated && editorTranslated.innerText && editorTranslated.innerText.trim()) {
-      text = editorTranslated.innerText.trim();
+    // Check workspace translated pane first
+    const transPane = document.getElementById('paneTranslated') || document.getElementById('editorTranslated');
+    if (transPane && transPane.innerText && transPane.innerText.trim()) {
+      text = transPane.innerText.trim();
     }
 
     // Fallback to original document pane
     if (!text) {
-      const editorOriginal = document.getElementById('editorOriginal');
-      if (editorOriginal && editorOriginal.innerText && editorOriginal.innerText.trim()) {
-        text = editorOriginal.innerText.trim();
+      const origPane = document.getElementById('paneOriginal') || document.getElementById('editorOriginal');
+      if (origPane && origPane.innerText && origPane.innerText.trim()) {
+        text = origPane.innerText.trim();
+      }
+    }
+
+    // Fallback to workspace module state if available
+    if (!text && typeof window !== 'undefined' && window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function') {
+      const currentDoc = window.pdfLinguaWorkspace.getCurrentDocData();
+      if (currentDoc) {
+        text = currentDoc.translated_text || currentDoc.original_text || '';
       }
     }
 
@@ -463,6 +471,11 @@
     let docId = null;
     if (typeof window !== 'undefined' && window.workspaceState && window.workspaceState.currentDocumentId) {
       docId = window.workspaceState.currentDocumentId;
+    } else if (typeof window !== 'undefined' && window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function') {
+      const currentDoc = window.pdfLinguaWorkspace.getCurrentDocData();
+      if (currentDoc && (currentDoc.document_id || currentDoc.id)) {
+        docId = currentDoc.document_id || currentDoc.id;
+      }
     }
 
     const payload = {

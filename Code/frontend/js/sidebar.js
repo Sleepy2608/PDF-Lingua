@@ -128,7 +128,7 @@
       }
     });
 
-    // Document Detail, Delete Confirmation & History Error Modal controls (PDFL-93.1, PDFL-94.2, PDFL-164.1 & PDFL-166.2)
+    // Document Detail, Delete Confirmation & History Error Modal controls
     initDocumentDetailModal();
     initDocumentDeleteConfirmModal();
     initHistoryErrorModal();
@@ -253,7 +253,7 @@
       }
     });
 
-    // Listen to document processed events from workspace.js for auto-refresh (PDFL-92.3 & PDFL-164.2)
+    // Listen to document processed events from workspace.js for auto-refresh
     window.addEventListener('pdfl:document-processed', () => {
       fetchRecentDocuments();
       const historySection = document.getElementById('historySection');
@@ -447,6 +447,217 @@
     closeDocumentsView();
   }
 
+  /**
+   * Open AI Copilot Chat drawer and switch active view to Workspace
+   */
+  function openAiCopilotView() {
+    const user = getStoredUser();
+    const token = getStoredAuthToken();
+
+    // 1. Authentication check
+    if (!token || !user) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để sử dụng Trợ lý Hỏi đáp AI.', 'info');
+      }
+      if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+        window.pdfLinguaAuth.openLoginModal();
+      } else if (window.pdfLinguaAiSummary && typeof window.pdfLinguaAiSummary.openAiProModal === 'function') {
+        window.pdfLinguaAiSummary.openAiProModal();
+      } else {
+        const modal = document.getElementById('aiProModal');
+        if (modal) {
+          modal.removeAttribute('hidden');
+          modal.style.display = 'flex';
+        }
+      }
+      return;
+    }
+
+    // 2. Pro VIP authorization check
+    const role = String(user.role || '').toLowerCase();
+    const isPro = role === 'pro' || role === 'admin';
+    if (!isPro) {
+      if (window.pdfLinguaAiSummary && typeof window.pdfLinguaAiSummary.openAiProModal === 'function') {
+        window.pdfLinguaAiSummary.openAiProModal();
+      } else {
+        const modal = document.getElementById('aiProModal');
+        if (modal) {
+          modal.removeAttribute('hidden');
+          modal.style.display = 'flex';
+        }
+      }
+      return;
+    }
+
+    // 3. Switch view to Workspace
+    const adminSection = document.getElementById('adminSection');
+    const pricingSection = document.getElementById('pricingSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
+    const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const sideNavAiCopilot = document.getElementById('sideNavAiCopilot');
+
+    if (adminSection) adminSection.style.display = 'none';
+    if (pricingSection) pricingSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
+    if (heroSection) heroSection.style.display = 'none';
+    if (workspaceSection) workspaceSection.style.display = 'block';
+
+    if (sideNavAiCopilot) setActiveNavItem(sideNavAiCopilot);
+
+    try {
+      sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
+    } catch (_err) {}
+
+    // 4. Restore workspace document data from storage if empty
+    if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function') {
+      const currentDoc = window.pdfLinguaWorkspace.getCurrentDocData();
+      if (!currentDoc) {
+        try {
+          const savedDocRaw = sessionStorage.getItem('pdfl_workspace_doc');
+          if (savedDocRaw && typeof window.pdfLinguaWorkspace.renderWorkspace === 'function') {
+            const parsedDoc = JSON.parse(savedDocRaw);
+            if (parsedDoc) {
+              window.pdfLinguaWorkspace.renderWorkspace(parsedDoc);
+              if (sideNavAiCopilot) setActiveNavItem(sideNavAiCopilot);
+            }
+          }
+        } catch (_e) {}
+      }
+    }
+
+    // 5. Open AI Copilot Chat Drawer
+    if (window.pdfLinguaCopilot && typeof window.pdfLinguaCopilot.open === 'function') {
+      window.pdfLinguaCopilot.open();
+    } else {
+      const drawer = document.getElementById('aiCopilotDrawer');
+      const backdrop = document.getElementById('aiCopilotBackdrop');
+      if (drawer) {
+        drawer.style.display = 'flex';
+        drawer.classList.add('open');
+      }
+      if (backdrop) {
+        backdrop.style.display = 'block';
+        backdrop.classList.add('visible');
+      }
+      const input = document.getElementById('copilotInput');
+      if (input) setTimeout(() => input.focus(), 150);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) closeMobileSidebar();
+  }
+
+  /**
+   * Open AI Summarization card and switch active view to Workspace
+   */
+  function openAiSummarizeView() {
+    const user = getStoredUser();
+    const token = getStoredAuthToken();
+
+    // 1. Authentication check
+    if (!token || !user) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để sử dụng tính năng Tóm tắt văn bản AI.', 'info');
+      }
+      if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+        window.pdfLinguaAuth.openLoginModal();
+      } else if (window.pdfLinguaAiSummary && typeof window.pdfLinguaAiSummary.openAiProModal === 'function') {
+        window.pdfLinguaAiSummary.openAiProModal();
+      } else {
+        const modal = document.getElementById('aiProModal');
+        if (modal) {
+          modal.removeAttribute('hidden');
+          modal.style.display = 'flex';
+        }
+      }
+      return;
+    }
+
+    // 2. Pro VIP authorization check
+    const role = String(user.role || '').toLowerCase();
+    const isPro = role === 'pro' || role === 'admin';
+    if (!isPro) {
+      if (window.pdfLinguaAiSummary && typeof window.pdfLinguaAiSummary.openAiProModal === 'function') {
+        window.pdfLinguaAiSummary.openAiProModal();
+      } else {
+        const modal = document.getElementById('aiProModal');
+        if (modal) {
+          modal.removeAttribute('hidden');
+          modal.style.display = 'flex';
+        }
+      }
+      return;
+    }
+
+    // 3. Switch view to Workspace
+    const adminSection = document.getElementById('adminSection');
+    const pricingSection = document.getElementById('pricingSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
+    const heroSection = document.getElementById('heroSection');
+    const workspaceSection = document.getElementById('workspaceSection');
+    const sideNavAiSummarize = document.getElementById('sideNavAiSummarize');
+
+    if (adminSection) adminSection.style.display = 'none';
+    if (pricingSection) pricingSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
+    if (heroSection) heroSection.style.display = 'none';
+    if (workspaceSection) workspaceSection.style.display = 'block';
+
+    if (sideNavAiSummarize) setActiveNavItem(sideNavAiSummarize);
+
+    try {
+      sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
+    } catch (_err) {}
+
+    // 4. Restore workspace document data from storage if empty
+    if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function') {
+      const currentDoc = window.pdfLinguaWorkspace.getCurrentDocData();
+      if (!currentDoc) {
+        try {
+          const savedDocRaw = sessionStorage.getItem('pdfl_workspace_doc');
+          if (savedDocRaw && typeof window.pdfLinguaWorkspace.renderWorkspace === 'function') {
+            const parsedDoc = JSON.parse(savedDocRaw);
+            if (parsedDoc) {
+              window.pdfLinguaWorkspace.renderWorkspace(parsedDoc);
+              if (sideNavAiSummarize) setActiveNavItem(sideNavAiSummarize);
+            }
+          }
+        } catch (_e) {}
+      }
+    }
+
+    // 5. Open AI Summary Card
+    const card = document.getElementById('aiSummaryCard');
+    if (card) {
+      card.removeAttribute('hidden');
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Check if workspace currently has content to summarize
+    const hasWorkspaceDoc = window.pdfLinguaWorkspace
+      && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function'
+      && Boolean(window.pdfLinguaWorkspace.getCurrentDocData());
+    const paneOriginal = document.getElementById('paneOriginal');
+    const paneTranslated = document.getElementById('paneTranslated');
+    const hasText = (paneOriginal && paneOriginal.innerText && paneOriginal.innerText.trim())
+      || (paneTranslated && paneTranslated.innerText && paneTranslated.innerText.trim());
+
+    if (!hasWorkspaceDoc && !hasText) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng mở một tài liệu hoặc tải lên tệp PDF để bắt đầu tóm tắt AI!', 'info');
+      }
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.innerWidth < 768) closeMobileSidebar();
+  }
+
   function handleProfileClick() {
     const btnOpenAccountModal = document.getElementById('btnOpenAccountModal');
     const btnLogin = document.getElementById('btnLogin');
@@ -612,22 +823,14 @@
     if (sideNavAiCopilot) {
       sideNavAiCopilot.addEventListener('click', (e) => {
         e.preventDefault();
-        setActiveNavItem(sideNavAiCopilot);
-        if (typeof showToast === 'function') {
-          showToast('Trợ lý Hỏi đáp AI sẵn sàng giải đáp mọi thắc mắc trong tài liệu song ngữ!', 'info');
-        }
-        if (window.innerWidth < 768) closeMobileSidebar();
+        openAiCopilotView();
       });
     }
 
     if (sideNavAiSummarize) {
       sideNavAiSummarize.addEventListener('click', (e) => {
         e.preventDefault();
-        setActiveNavItem(sideNavAiSummarize);
-        if (typeof showToast === 'function') {
-          showToast('Tính năng Tóm tắt văn bản thông minh bằng AI đang được phát triển!', 'info');
-        }
-        if (window.innerWidth < 768) closeMobileSidebar();
+        openAiSummarizeView();
       });
     }
 
@@ -745,7 +948,10 @@
               if (sideNavTranslate) sideNavTranslate.click();
             } else if (href === '#ai-copilot') {
               e.preventDefault();
-              if (sideNavAiCopilot) sideNavAiCopilot.click();
+              openAiCopilotView();
+            } else if (href === '#ai-summarize') {
+              e.preventDefault();
+              openAiSummarizeView();
             } else if (href === '#pricing') {
               e.preventDefault();
               if (sideNavPricing) sideNavPricing.click();
@@ -897,7 +1103,23 @@
   }
 
   /**
-   * Helper to switch UI states in #documentsSection (PDFL-92.3)
+   * Retrieve stored user profile from auth module or session/local storage
+   */
+  function getStoredUser() {
+    if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredUser === 'function') {
+      const authUser = window.pdfLinguaAuth.getStoredUser();
+      if (authUser) return authUser;
+    }
+    try {
+      const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  /**
+   * Helper to switch UI states in #documentsSection
    * Supported states: 'loading' | 'empty' | 'error' | 'unauthenticated' | 'content'
    */
   function setDocumentsSectionState(state, errorMessage) {
@@ -931,7 +1153,7 @@
   }
 
   /**
-   * Fetch and Render User Documents from Backend (PDFL-92.2 & PDFL-92.3)
+   * Fetch and Render User Documents from Backend
    * Updates both Sidebar recent list and Main #documentsSection table.
    * Deduplicates concurrent requests for the same auth token.
    */
@@ -1162,7 +1384,7 @@
   }
 
   /**
-   * Initialize Document Detail Modal events (PDFL-93.1 & PDFL-93.3)
+   * Initialize Document Detail Modal events
    */
   function initDocumentDetailModal() {
     const modalEl = document.getElementById('documentDetailModal');
@@ -1209,7 +1431,7 @@
   }
 
   /**
-   * Update loading UI state for #btnDocDetailDownload (PDFL-93.3)
+   * Update loading UI state for #btnDocDetailDownload
    */
   function setDetailDownloadLoadingState(loading) {
     isDetailDownloading = Boolean(loading);
@@ -1239,7 +1461,7 @@
   }
 
   /**
-   * Handle download action inside Document Detail Modal (PDFL-93.3)
+   * Handle download action inside Document Detail Modal
    * Guarantees downloading the exact currently open document ID and handles missing auth/ID or errors.
    */
   async function handleDocumentDetailDownload() {
@@ -1300,7 +1522,7 @@
   }
 
   /**
-   * Integration hook for #btnDocDetailDelete (PDFL-93.3 -> PDFL-94.2)
+   * Integration hook for #btnDocDetailDelete
    * Dispatches pdfl:document-delete-intent to open the Delete Confirmation Modal.
    */
   function handleDocumentDetailDeleteIntent() {
@@ -1327,7 +1549,7 @@
   }
 
   /**
-   * Initialize Document Delete Confirmation Modal events and pdfl:document-delete-intent listener (PDFL-94.2)
+   * Initialize Document Delete Confirmation Modal events and pdfl:document-delete-intent listener
    */
   function initDocumentDeleteConfirmModal() {
     const confirmModalEl = document.getElementById('documentDeleteConfirmModal');
@@ -1369,7 +1591,7 @@
   }
 
   /**
-   * Toggle loading state inside #documentDeleteConfirmModal and prevent double-clicks (PDFL-94.2)
+   * Toggle loading state inside #documentDeleteConfirmModal and prevent double-clicks
    */
   function setDocumentDeleteLoadingState(loading) {
     isDocDeleting = Boolean(loading);
@@ -1385,7 +1607,7 @@
   }
 
   /**
-   * Open Document Delete Confirmation Modal with target document filename and irreversible warning (PDFL-94.2)
+   * Open Document Delete Confirmation Modal with target document filename and irreversible warning
    */
   function openDocumentDeleteConfirmModal(docTarget) {
     const confirmModalEl = document.getElementById('documentDeleteConfirmModal');
@@ -1416,7 +1638,7 @@
   }
 
   /**
-   * Close Document Delete Confirmation Modal without mutating document data (PDFL-94.2)
+   * Close Document Delete Confirmation Modal without mutating document data
    */
   function closeDocumentDeleteConfirmModal() {
     const confirmModalEl = document.getElementById('documentDeleteConfirmModal');
@@ -1437,7 +1659,7 @@
   }
 
   /**
-   * Sync Sidebar recent list and #documentsSection table after removing a document locally (PDFL-94.2)
+   * Sync Sidebar recent list and #documentsSection table after removing a document locally
    */
   function removeDocumentFromLocalLists(deletedDocId) {
     cachedDocuments = cachedDocuments.filter((d) => String(d.id) !== String(deletedDocId));
@@ -1477,7 +1699,7 @@
   }
 
   /**
-   * Execute DELETE /api/documents/{document_id} on user confirmation (PDFL-94.2)
+   * Execute DELETE /api/documents/{document_id} on user confirmation
    */
   async function confirmDocumentDelete() {
     if (!isDocDeleteConfirmOpen || isDocDeleting || !pendingDeleteDoc || pendingDeleteDoc.id === undefined || pendingDeleteDoc.id === null) {
@@ -1633,7 +1855,7 @@
   }
 
   /**
-   * Reset all 7 metadata display fields in #documentDetailModal to prevent stale data (PDFL-93.2)
+   * Reset all 7 metadata display fields in #documentDetailModal to prevent stale data
    */
   function resetDocumentDetailMetadata() {
     const heroFilenameEl = document.getElementById('docDetailHeroFilename');
@@ -1662,7 +1884,7 @@
   }
 
   /**
-   * Render document metadata into the 7 fields of #documentDetailModal (PDFL-93.1 & PDFL-93.2)
+   * Render document metadata into the 7 fields of #documentDetailModal
    */
   function populateDocumentDetailMetadata(targetDoc) {
     const docData = targetDoc || {};
@@ -1711,7 +1933,7 @@
   }
 
   /**
-   * Toggle UI states inside #documentDetailModal: 'loading' | 'content' | 'error' (PDFL-93.2)
+   * Toggle UI states inside #documentDetailModal: 'loading' | 'content' | 'error'
    */
   function setDocumentDetailModalState(state, errorMessage) {
     const loadingEl = document.getElementById('documentDetailLoading');
@@ -1740,7 +1962,7 @@
 
   /**
    * Open Document Detail Modal and fetch latest detail from GET /api/documents/{document_id}
-   * Prevents stale metadata display and out-of-order response overwriting (PDFL-93.1 & PDFL-93.2)
+   * Prevents stale metadata display and out-of-order response overwriting
    */
   async function openDocumentDetailModal(docOrId) {
     const modalEl = document.getElementById('documentDetailModal');
@@ -1850,7 +2072,7 @@
   }
 
   /**
-   * Close Document Detail Modal (PDFL-93.1, PDFL-93.2 & PDFL-93.3)
+   * Close Document Detail Modal
    */
   function closeDocumentDetailModal() {
     const modalEl = document.getElementById('documentDetailModal');
@@ -1997,7 +2219,7 @@
       .replace(/'/g, '&#39;');
   }
 
-  // ── Processing History Controller (PDFL-164.2) ──────────────────────────
+  // ── Processing History Controller ──────────────────────────
   let cachedHistories = [];
   let cachedHistoryToken = null;
   let historyCurrentPage = 1;
@@ -2007,7 +2229,7 @@
   let isHistoryListenersInitialized = false;
 
   /**
-   * Helper to switch UI states in #historySection (PDFL-164.2)
+   * Helper to switch UI states in #historySection
    * Supported states: 'loading' | 'empty' | 'error' | 'unauthenticated' | 'content'
    */
   function setHistorySectionState(state, errorMessage) {
@@ -2071,7 +2293,7 @@
   }
 
   /**
-   * Fetch paginated processing histories from GET /api/history (PDFL-164.2)
+   * Fetch paginated processing histories from GET /api/history
    */
   async function fetchProcessingHistories() {
     const token = getStoredAuthToken();
@@ -2295,7 +2517,7 @@
       actionBtnHtml = '<span class="history-running-indicator font-mono">Đang chạy...</span>';
     }
 
-    // Delete Button (PDFL-166.2)
+    // Delete Button
     let deleteBtnHtml = '';
     if (status === 'PENDING') {
       deleteBtnHtml = `
@@ -2355,7 +2577,7 @@
       });
     }
 
-    // Click handler for Reopening Result (PDFL-165.2)
+    // Click handler for Reopening Result
     const btnReopen = tr.querySelector('.history-btn-reopen');
     if (btnReopen) {
       btnReopen.addEventListener('click', (e) => {
@@ -2364,7 +2586,7 @@
       });
     }
 
-    // Click handler for Deleting History (PDFL-166.2)
+    // Click handler for Deleting History
     const btnDelete = tr.querySelector('.history-btn-delete');
     if (btnDelete && status !== 'PENDING') {
       btnDelete.addEventListener('click', (e) => {
@@ -2381,7 +2603,7 @@
   }
 
   /**
-   * Open #historyErrorModal to display diagnostics for a failed processing history (PDFL-164.2)
+   * Open #historyErrorModal to display diagnostics for a failed processing history
    */
   async function openHistoryErrorModal(historyId) {
     const historyErrorModal = document.getElementById('historyErrorModal');
@@ -2426,7 +2648,7 @@
   }
 
   /**
-   * Reopen stored processing result and display in Workspace (PDFL-165.2)
+   * Reopen stored processing result and display in Workspace
    */
   async function reopenHistoryResult(historyId, buttonEl) {
     if (!historyId) return;
@@ -2670,7 +2892,7 @@
   }
 
   /**
-   * Initialize History Delete Confirmation Modal events (PDFL-166.2)
+   * Initialize History Delete Confirmation Modal events
    */
   function initHistoryDeleteConfirmModal() {
     const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
@@ -2720,7 +2942,7 @@
   }
 
   /**
-   * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks (PDFL-166.2)
+   * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks
    */
   function setHistoryDeleteLoadingState(loading) {
     isHistoryDeleting = Boolean(loading);
@@ -2744,7 +2966,7 @@
   }
 
   /**
-   * Open #historyDeleteConfirmModal for single record or expired histories cleanup (PDFL-166.2)
+   * Open #historyDeleteConfirmModal for single record or expired histories cleanup
    */
   function openHistoryDeleteConfirmModal(payload) {
     const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
@@ -2795,7 +3017,7 @@
   }
 
   /**
-   * Close History Delete Confirmation Modal (PDFL-166.2)
+   * Close History Delete Confirmation Modal
    */
   function closeHistoryDeleteConfirmModal() {
     const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
@@ -2816,7 +3038,7 @@
   }
 
   /**
-   * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation (PDFL-166.2)
+   * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation
    */
   async function confirmHistoryDelete() {
     if (!isHistoryDeleteConfirmOpen || isHistoryDeleting || !pendingHistoryDelete) {
@@ -3038,6 +3260,12 @@
     } else if (navKey === 'admin') {
       const el = document.getElementById('sideNavAdmin');
       if (el) setActiveNavItem(el);
+    } else if (navKey === 'ai-copilot' || navKey === 'copilot') {
+      const el = document.getElementById('sideNavAiCopilot');
+      if (el) setActiveNavItem(el);
+    } else if (navKey === 'ai-summarize' || navKey === 'summarize') {
+      const el = document.getElementById('sideNavAiSummarize');
+      if (el) setActiveNavItem(el);
     }
   }
 
@@ -3054,6 +3282,8 @@
     closeDocumentsView: closeDocumentsView,
     openHistoryView: openHistoryView,
     closeHistoryView: closeHistoryView,
+    openAiCopilotView: openAiCopilotView,
+    openAiSummarizeView: openAiSummarizeView,
     navigateToHome: navigateToHome,
     setActiveNav: setActiveNav,
     setActiveNavItem: setActiveNavItem,

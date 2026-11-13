@@ -185,6 +185,13 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     docDetailOcrStatus: new MockElement('docDetailOcrStatus', 'span'),
     docDetailCreatedAt: new MockElement('docDetailCreatedAt', 'span'),
     btnOpenAdmin: new MockElement('btnOpenAdmin', 'button'),
+    pricingSection: new MockElement('pricingSection', 'section'),
+    historySection: new MockElement('historySection', 'section'),
+    aiCopilotDrawer: new MockElement('aiCopilotDrawer', 'aside'),
+    aiCopilotBackdrop: new MockElement('aiCopilotBackdrop', 'div'),
+    copilotInput: new MockElement('copilotInput', 'textarea'),
+    aiSummaryCard: new MockElement('aiSummaryCard', 'div'),
+    aiProModal: new MockElement('aiProModal', 'div'),
   };
 
   elements.sidebarRecentDocs.appendChild(elements.sidebarEmptyDocsState);
@@ -482,6 +489,96 @@ async function main() {
     env.elements.sideNavAdmin.click();
     assert.strictEqual(env.elements.sideNavAdmin.classList.contains('active'), true);
     assert.strictEqual(adminOpened, true);
+  });
+
+  await runTest('PDFL-51: Clicking "Hỏi đáp AI" (#sideNavAiCopilot) verifies auth, Pro role, and transitions to Workspace opening Copilot chat drawer', () => {
+    // 1. Guest user click
+    const envGuest = createTestEnvironment();
+    let loginPrompted = false;
+    envGuest.sandbox.window.pdfLinguaAuth = {
+      openLoginModal: () => { loginPrompted = true; },
+      getStoredToken: () => null,
+      getStoredUser: () => null,
+    };
+    envGuest.elements.sideNavAiCopilot.click();
+    assert.strictEqual(loginPrompted, true);
+    assert.notStrictEqual(envGuest.elements.workspaceSection.style.display, 'block');
+
+    // 2. Free user click
+    const envFree = createTestEnvironment();
+    let proModalOpened = false;
+    envFree.sandbox.window.pdfLinguaAuth = {
+      getStoredToken: () => 'fake_token',
+      getStoredUser: () => ({ email: 'free@test.com', role: 'free' }),
+    };
+    envFree.sandbox.window.pdfLinguaAiSummary = {
+      openAiProModal: () => { proModalOpened = true; },
+    };
+    envFree.elements.sideNavAiCopilot.click();
+    assert.strictEqual(proModalOpened, true);
+    assert.notStrictEqual(envFree.elements.workspaceSection.style.display, 'block');
+
+    // 3. Pro user click
+    const envPro = createTestEnvironment();
+    let copilotOpened = false;
+    envPro.sandbox.window.pdfLinguaAuth = {
+      getStoredToken: () => 'valid_pro_token',
+      getStoredUser: () => ({ email: 'pro@test.com', role: 'pro' }),
+    };
+    envPro.sandbox.window.pdfLinguaCopilot = {
+      open: () => { copilotOpened = true; },
+    };
+    envPro.elements.sideNavDocuments.click(); // Start on documents page like user screenshot
+    assert.strictEqual(envPro.elements.documentsSection.style.display, 'block');
+
+    envPro.elements.sideNavAiCopilot.click();
+    assert.strictEqual(envPro.elements.sideNavAiCopilot.classList.contains('active'), true);
+    assert.strictEqual(envPro.elements.workspaceSection.style.display, 'block');
+    assert.strictEqual(envPro.elements.documentsSection.style.display, 'none');
+    assert.strictEqual(copilotOpened, true);
+  });
+
+  await runTest('PDFL-50: Clicking "Tóm tắt văn bản" (#sideNavAiSummarize) verifies auth, Pro role, and transitions to Workspace opening AI Summary card', () => {
+    // 1. Guest user click
+    const envGuest = createTestEnvironment();
+    let loginPrompted = false;
+    envGuest.sandbox.window.pdfLinguaAuth = {
+      openLoginModal: () => { loginPrompted = true; },
+      getStoredToken: () => null,
+      getStoredUser: () => null,
+    };
+    envGuest.elements.sideNavAiSummarize.click();
+    assert.strictEqual(loginPrompted, true);
+    assert.notStrictEqual(envGuest.elements.workspaceSection.style.display, 'block');
+
+    // 2. Free user click
+    const envFree = createTestEnvironment();
+    let proModalOpened = false;
+    envFree.sandbox.window.pdfLinguaAuth = {
+      getStoredToken: () => 'fake_token',
+      getStoredUser: () => ({ email: 'free@test.com', role: 'free' }),
+    };
+    envFree.sandbox.window.pdfLinguaAiSummary = {
+      openAiProModal: () => { proModalOpened = true; },
+    };
+    envFree.elements.sideNavAiSummarize.click();
+    assert.strictEqual(proModalOpened, true);
+    assert.notStrictEqual(envFree.elements.workspaceSection.style.display, 'block');
+
+    // 3. Pro user click
+    const envPro = createTestEnvironment();
+    envPro.sandbox.window.pdfLinguaAuth = {
+      getStoredToken: () => 'valid_pro_token',
+      getStoredUser: () => ({ email: 'pro@test.com', role: 'pro' }),
+    };
+    envPro.elements.sideNavDocuments.click(); // Start on documents page like user screenshot
+    assert.strictEqual(envPro.elements.documentsSection.style.display, 'block');
+
+    envPro.elements.sideNavAiSummarize.click();
+    assert.strictEqual(envPro.elements.sideNavAiSummarize.classList.contains('active'), true);
+    assert.strictEqual(envPro.elements.workspaceSection.style.display, 'block');
+    assert.strictEqual(envPro.elements.documentsSection.style.display, 'none');
+    assert.strictEqual(envPro.elements.aiSummaryCard.style.display, 'block');
   });
 
   await runTest('PDFL-92.1: Sidebar item renamed to "Tài liệu" and main #documentsSection layout exists', () => {
