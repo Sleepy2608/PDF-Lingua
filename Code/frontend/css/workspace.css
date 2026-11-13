@@ -1,7 +1,8 @@
 /* Workspace Section */
 .workspace-section {
   padding: 2rem 0 4rem;
-  min-height: calc(100vh - 72px - 80px);
+  background-color: var(--bg-subtle, #F8FAFC);
+  min-height: calc(100vh - 72px - var(--footer-height, 68px));
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -312,8 +313,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.25rem;
-  background-color: var(--bg-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-card, #FFFFFF);
+  border-bottom: 1px solid var(--border-subtle, #E2E8F0);
 }
 
 .pane-title-group {

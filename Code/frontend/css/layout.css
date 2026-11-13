@@ -111,6 +111,8 @@
 /* Hero Section */
 .hero-section {
   padding: 3rem 0 4rem;
+  background-color: var(--bg-subtle, #F8FAFC);
+  min-height: calc(100vh - 72px - var(--footer-height, 68px));
 }
 
 .hero-grid {
