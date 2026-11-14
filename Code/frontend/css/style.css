@@ -159,3 +159,358 @@ img, svg {
   align-items: center;
   justify-content: center;
 }
+
+/* ========================================================================== */
+/* PDFL-71.2: Processing Modal Actions & Floating Mini-Widget               */
+/* ========================================================================== */
+
+.progress-card {
+  position: relative;
+}
+
+.progress-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.progress-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary-indigo);
+  background: rgba(79, 70, 229, 0.08);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-primary-indigo);
+  box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5);
+  animation: pulseDot 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pulseDot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+.progress-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-modal-action {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-modal-action:hover {
+  background: #F1F5F9;
+  color: var(--text-title);
+  border-color: var(--border-subtle);
+}
+
+.btn-modal-action:active {
+  transform: scale(0.94);
+}
+
+.progress-card-footer {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  padding-top: 1rem;
+}
+
+.btn-cancel-job {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-cancel-job:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--color-pdf-coral-dark);
+  transform: translateY(-1px);
+}
+
+.btn-cancel-job:active {
+  transform: scale(0.96);
+}
+
+.btn-cancel-job:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Floating Mini-Widget (PDFL-71.2) */
+.bg-job-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  width: 330px;
+  max-width: calc(100vw - 32px);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  animation: widgetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
+}
+
+@keyframes widgetSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bg-job-widget:hover {
+  box-shadow: 0 18px 40px -4px rgba(79, 70, 229, 0.16), 0 6px 16px -2px rgba(15, 23, 42, 0.08);
+  border-color: rgba(79, 70, 229, 0.3);
+}
+
+.bg-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.bg-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bg-widget-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.bg-widget-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #E2E8F0;
+  border-top-color: var(--color-primary-indigo);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.bg-widget-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.bg-widget-filename {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  line-height: 1.25;
+}
+
+.bg-widget-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  line-height: 1.25;
+  margin-top: 1px;
+}
+
+.bg-widget-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.btn-widget-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-widget-icon:hover {
+  background: #F1F5F9;
+  color: var(--text-title);
+  border-color: var(--border-subtle);
+}
+
+.btn-widget-icon:active {
+  transform: scale(0.92);
+}
+
+.bg-widget-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bg-widget-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.bg-widget-bar-fill {
+  height: 100%;
+  width: 10%;
+  background: var(--color-gradient-cta);
+  border-radius: var(--radius-pill);
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bg-widget-percent {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-primary-indigo);
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .bg-job-widget {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+  }
+}
+
+/* ========================================================================== */
+/* Global Completion Toast & Action Navigation (PDFL-71.4)                     */
+/* ========================================================================== */
+
+.toast.has-action {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  min-width: 320px;
+  max-width: 460px;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35), 0 0 15px rgba(59, 130, 246, 0.15);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.toast.has-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.25);
+}
+
+.toast.has-action.success {
+  background: #064E3B;
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35), 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.toast.has-action.success:hover {
+  border-color: rgba(52, 211, 153, 0.6);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.35);
+}
+
+.toast-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-sm);
+  font-size: 0.785rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.toast-action-btn:hover {
+  background: rgba(255, 255, 255, 0.38);
+  border-color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toast-action-btn:active {
+  transform: translateY(0);
+}

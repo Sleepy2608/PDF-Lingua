@@ -1,7 +1,8 @@
 ﻿filename,pdf_type,subtype,processing_time_seconds,status,error_message,cer,wer,char_distance,word_distance,text_similarity_percentage,reading_order_score,paragraph_structure_score,table_structure_score,column_order_score,overall_layout_score,bleu_score,translation_similarity_score,semantic_similarity_score,overall_translation_score
-digital_single_column.pdf,Digital PDF,single_column,0.076,SUCCESS,,0.0027,0.0,1,0,99.73,50.0,25.84,100.0,50.0,53.96,100.0,100.0,100.0,100.0
-digital_multi_column.pdf,Digital PDF,multi_column,0.091,SUCCESS,,0.0071,0.0,3,0,99.29,25.0,12.15,100.0,25.0,36.79,100.0,100.0,100.0,100.0
-complex_tables_and_symbols.pdf,Complex PDF,tables_symbols_formulas,0.064,SUCCESS,,0.0058,0.0,2,0,99.42,33.33,21.16,100.0,33.33,43.62,100.0,100.0,100.0,100.0
-scanned_high_quality.pdf,Scanned PDF,high_quality,1.61,SUCCESS,,0.1053,0.5263,26,20,89.47,0.0,17.53,100.0,89.47,46.75,100.0,100.0,100.0,100.0
-scanned_medium_skewed.pdf,Scanned PDF,medium_skewed,1.603,SUCCESS,,0.0674,0.4324,18,16,93.26,100.0,17.42,100.0,93.26,77.67,0.0,0.0,0.0,0.0
-scanned_low_blurry_noisy.pdf,Scanned PDF,low_blurry_noisy,1.283,WARNING,Extraction returned empty text.,1.0,1.0,232,29,0.0,0.0,0.0,100.0,0.0,20.0,0.0,0.0,0.0,0.0
+digital_single_column.pdf,Digital PDF,single_column,0.817,SUCCESS,,0.0027,0.0,1,0,99.73,50.0,25.84,100.0,50.0,53.96,0.94,5.48,5.81,3.76
+digital_multi_column.pdf,Digital PDF,multi_column,0.339,SUCCESS,,0.5853,0.7368,247,42,41.47,25.0,12.15,100.0,25.0,36.79,0.61,2.6,1.44,1.46
+complex_tables_and_symbols.pdf,Complex PDF,tables_symbols_formulas,0.242,SUCCESS,,0.0058,0.0,2,0,99.42,33.33,21.16,100.0,33.33,43.62,34.29,48.21,46.32,42.08
+scanned_high_quality.pdf,Scanned PDF,high_quality,3.151,SUCCESS,,0.1093,0.5789,27,22,89.07,0.0,18.5,100.0,89.07,46.89,0.68,2.35,2.18,1.63
+scanned_medium_skewed.pdf,Scanned PDF,medium_skewed,2.459,SUCCESS,,0.0749,0.3784,20,14,92.51,100.0,17.42,100.0,92.51,77.48,0.0,0.0,0.0,0.0
+scanned_low_blurry_noisy.pdf,Scanned PDF,low_blurry_noisy,2.584,WARNING,Extraction returned empty text.,1.0,1.0,232,29,0.0,0.0,0.0,100.0,0.0,20.0,0.0,0.0,0.0,0.0
+mixed_digital_and_scanned.pdf,Mixed PDF,digital_and_scanned,0.299,SUCCESS,,0.5153,0.4615,168,24,48.47,25.0,17.97,100.0,25.0,38.24,0.0,0.0,0.0,0.0

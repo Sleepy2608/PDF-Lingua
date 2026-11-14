@@ -79,12 +79,12 @@ class MockElement {
 
   click() {
     if (this.listeners['click']) {
-      this.listeners['click'].forEach((fn) => fn({ target: this, preventDefault: () => {}, stopPropagation: () => {} }));
+      this.listeners['click'].forEach((fn) => fn({ target: this, preventDefault: () => { }, stopPropagation: () => { } }));
     }
   }
 
-  remove() {}
-  scrollIntoView() {}
+  remove() { }
+  scrollIntoView() { }
   appendChild(child) {
     child.parentElement = this;
     this.children.push(child);
@@ -248,7 +248,7 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     },
     body: {
       style: {},
-      appendChild: () => {},
+      appendChild: () => { },
     },
   };
 
@@ -276,10 +276,10 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
           docListeners[type].forEach((fn) => fn(event));
         }
       },
-      scrollTo: () => {},
+      scrollTo: () => { },
       URL: {
         createObjectURL: () => 'blob:mock-url',
-        revokeObjectURL: () => {},
+        revokeObjectURL: () => { },
       },
     },
     URLSearchParams: global.URLSearchParams || URLSearchParams,
@@ -290,7 +290,7 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     showToast: (msg, type) => {
       context.toasts.push({ msg, type });
     },
-    console: { log: () => {}, error: () => {}, warn: () => {} },
+    console: { log: () => { }, error: () => { }, warn: () => { } },
   };
 
   vm.createContext(context);
@@ -744,7 +744,7 @@ async function main() {
         key: 'Escape',
         ctrlKey: false,
         metaKey: false,
-        preventDefault: () => {},
+        preventDefault: () => { },
       }));
     }
 
@@ -1249,7 +1249,7 @@ async function main() {
         key: 'Escape',
         ctrlKey: false,
         metaKey: false,
-        preventDefault: () => {},
+        preventDefault: () => { },
       }));
     }
     assert.strictEqual(env.elements.historyDeleteConfirmModal.style.display, 'none');
@@ -1289,8 +1289,71 @@ async function main() {
     assert.ok(row3Html.includes('disabled title="Không thể xóa khi đang xử lý"'));
   });
 
+  // Test 24: PDFL-169: Execution time calculation & display in history table
+  await runTest('PDFL-169: Execution time is formatted and rendered in history table row with duration', async () => {
+    const env = createTestEnvironment({ pdfl_token: 'token-duration' });
+
+    const mockRecords = [
+      {
+        id: 101,
+        document_id: 1,
+        action_type: 'TRANSLATE',
+        status: 'SUCCESS',
+        execution_time_ms: 2450,
+        created_at: '2026-11-14T16:05:00Z',
+        document_filename: 'tai_lieu_mau_15_trang.pdf',
+      },
+      {
+        id: 102,
+        document_id: 2,
+        action_type: 'TRANSLATE',
+        status: 'SUCCESS',
+        execution_time_ms: 850,
+        created_at: '2026-11-14T16:00:00Z',
+        document_filename: 'short_doc.pdf',
+      },
+      {
+        id: 103,
+        document_id: 3,
+        action_type: 'TRANSLATE',
+        status: 'SUCCESS',
+        execution_time_ms: null,
+        created_at: '2026-11-14T16:00:00Z',
+        updated_at: '2026-11-14T16:00:03.200Z',
+        document_filename: 'fallback_time_doc.pdf',
+      },
+      {
+        id: 104,
+        document_id: 4,
+        action_type: 'TRANSLATE',
+        status: 'PENDING',
+        execution_time_ms: null,
+        created_at: '2026-11-14T16:10:00Z',
+        document_filename: 'pending_doc.pdf',
+      },
+    ];
+
+    env.context.window.PDFLinguaSidebar.renderHistoryPageList(mockRecords, 'token-duration');
+
+    const rows = env.elements.historyTableBody.children;
+    assert.strictEqual(rows.length, 4);
+
+    // Row 1: 2450 ms -> 2.45s
+    assert.ok(rows[0].innerHTML.includes('2.45s'), 'Row 1 must display 2.45s');
+    assert.ok(rows[0].innerHTML.includes('history-cell-duration'));
+
+    // Row 2: 850 ms -> 850 ms
+    assert.ok(rows[1].innerHTML.includes('850 ms'), 'Row 2 must display 850 ms');
+
+    // Row 3: fallback timestamp difference (3200 ms) -> 3.20s
+    assert.ok(rows[2].innerHTML.includes('3.20s'), 'Row 3 fallback must display 3.20s');
+
+    // Row 4: pending -> '-'
+    assert.ok(rows[3].innerHTML.includes('<td class="font-mono text-muted history-cell-duration">-</td>'), 'Row 4 pending must display -');
+  });
+
   console.log('\n================================================================');
-  console.log('SUMMARY: All 23 History UI & Integration tests passed (0 failed).');
+  console.log('SUMMARY: All 24 History UI & Integration tests passed (0 failed).');
   console.log('================================================================');
 }
 

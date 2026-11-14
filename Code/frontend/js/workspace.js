@@ -1,10 +1,413 @@
 const API_BASE_URL = 'http://localhost:8000/api/process';
 const WORKSPACE_DOC_STORAGE_KEY = 'pdfl_workspace_doc_data';
 const ACTIVE_JOB_STORAGE_KEY = 'pdfl_active_job_id';
+const BG_MINIMIZED_STORAGE_KEY = 'pdfl_bg_minimized';
 const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
 const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
+const VIEW_MODE_STORAGE_KEY = 'pdfl_workspace_view_mode';
 
 let currentDocData = null;
+let currentViewMode = 'split';
+let currentSplitMobileTab = 'pdf';
+
+/**
+ * PDFL-256.2: Switch workspace view modes:
+ * - 'text': Text only (original text pane & translated text pane side-by-side)
+ * - 'pdf': Full-width PDF canvas preview only
+ * - 'split': Dual view (PDF preview on left, translated text pane on right; tabbed on mobile)
+ */
+function setViewMode(mode) {
+  const validModes = ['text', 'pdf', 'split'];
+  const targetMode = validModes.includes(mode) ? mode : 'split';
+  currentViewMode = targetMode;
+
+  const wrapper = document.getElementById('workspaceViewsWrapper');
+  if (wrapper) {
+    wrapper.classList.remove('view-mode-text', 'view-mode-pdf', 'view-mode-split');
+    wrapper.classList.add(`view-mode-${targetMode}`);
+    wrapper.setAttribute('data-view-mode', targetMode);
+  }
+
+  const modeButtons = [
+    { id: 'btnViewModeText', mode: 'text' },
+    { id: 'btnViewModePdf', mode: 'pdf' },
+    { id: 'btnViewModeSplit', mode: 'split' },
+  ];
+
+  modeButtons.forEach((btnConfig) => {
+    const btn = document.getElementById(btnConfig.id);
+    if (btn) {
+      const isActive = btnConfig.mode === targetMode;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    }
+  });
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(VIEW_MODE_STORAGE_KEY, targetMode);
+    } catch (_e) {}
+  }
+
+  if ((targetMode === 'split' || targetMode === 'pdf') && typeof window !== 'undefined' && window.pdfLinguaPreview) {
+    setTimeout(() => {
+      if (typeof window.pdfLinguaPreview.zoomFit === 'function') {
+        window.pdfLinguaPreview.zoomFit();
+      }
+    }, 60);
+  }
+}
+
+/**
+ * PDFL-256.2: Switch mobile/tablet tab in split mode (<= 1024px):
+ * - 'pdf': Displays PDF Preview
+ * - 'translated': Displays Translated text pane
+ */
+function setSplitMobileTab(tab) {
+  const validTabs = ['pdf', 'translated'];
+  const targetTab = validTabs.includes(tab) ? tab : 'pdf';
+  currentSplitMobileTab = targetTab;
+
+  const wrapper = document.getElementById('workspaceViewsWrapper');
+  if (wrapper) {
+    wrapper.setAttribute('data-split-tab', targetTab);
+  }
+
+  const btnPdf = document.getElementById('btnSplitTabPdf');
+  const btnTranslated = document.getElementById('btnSplitTabTranslated');
+
+  if (btnPdf) {
+    const isPdf = targetTab === 'pdf';
+    btnPdf.classList.toggle('active', isPdf);
+    btnPdf.setAttribute('aria-selected', isPdf ? 'true' : 'false');
+  }
+  if (btnTranslated) {
+    const isTrans = targetTab === 'translated';
+    btnTranslated.classList.toggle('active', isTrans);
+    btnTranslated.setAttribute('aria-selected', isTrans ? 'true' : 'false');
+  }
+
+  if (targetTab === 'pdf' && typeof window !== 'undefined' && window.pdfLinguaPreview) {
+    setTimeout(() => {
+      if (typeof window.pdfLinguaPreview.zoomFit === 'function') {
+        window.pdfLinguaPreview.zoomFit();
+      }
+    }, 60);
+  }
+}
+
+/**
+ * PDFL-256.2: Display error message inside PDF Preview container
+ */
+function showPreviewErrorState(msg) {
+  const errorEl = document.getElementById('pdfPreviewError');
+  const errorMsgEl = document.getElementById('pdfPreviewErrorMsg');
+  const canvasWrap = document.getElementById('pdfCanvasWrap');
+  if (errorEl) errorEl.style.display = 'flex';
+  if (errorMsgEl) errorMsgEl.textContent = msg || 'Không thể hiển thị bản xem trước tệp PDF.';
+  if (canvasWrap) canvasWrap.style.opacity = '1';
+}
+
+/**
+ * PDFL-256.2: Authenticated PDF stream fetch for History records
+ * Requests GET /api/documents/{document_id}/file with Authorization Bearer header.
+ */
+async function fetchDocumentPreview(documentId, filename) {
+  if (!documentId) return;
+
+  const previewContainer = document.getElementById('pdfPreviewContainer');
+  if (previewContainer) {
+    previewContainer.style.display = 'block';
+  }
+
+  const loadingEl = document.getElementById('pdfPreviewLoading');
+  const errorEl = document.getElementById('pdfPreviewError');
+  const canvasWrap = document.getElementById('pdfCanvasWrap');
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
+    const textEl = loadingEl.querySelector('.preview-loading-text');
+    if (textEl) textEl.textContent = 'Đang tải tệp PDF xem trước từ máy chủ...';
+  }
+  if (errorEl) errorEl.style.display = 'none';
+  if (canvasWrap) canvasWrap.style.opacity = '0.5';
+
+  const authHeaders = getAuthHeaders();
+  const rootBase = (typeof API_BASE_URL === 'string')
+    ? API_BASE_URL.replace(/\/api\/process\/?$/, '').replace(/\/process\/?$/, '')
+    : 'http://localhost:8000';
+  const fileUrl = `${rootBase}/api/documents/${encodeURIComponent(documentId)}/file`;
+
+  try {
+    const response = await fetch(fileUrl, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    if (response.status === 200) {
+      const blob = await response.blob();
+      try {
+        Object.defineProperty(blob, 'name', {
+          value: filename || 'tai_lieu.pdf',
+          writable: true,
+          configurable: true,
+        });
+      } catch (_e) {
+        blob.name = filename || 'tai_lieu.pdf';
+      }
+
+      if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.loadPdfPreview === 'function') {
+        await window.pdfLinguaPreview.loadPdfPreview(blob);
+      }
+    } else if (response.status === 401) {
+      let errData = null;
+      try {
+        errData = await response.json();
+      } catch (_e) {}
+      handleAuthError(errData);
+      showPreviewErrorState('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xem trước PDF.');
+    } else if (response.status === 403) {
+      showToast('Bạn không có quyền xem trước tài liệu này.', 'error');
+      showPreviewErrorState('Bạn không có quyền truy cập tệp PDF này.');
+    } else if (response.status === 404) {
+      showToast('Không tìm thấy tệp PDF gốc trên hệ thống.', 'error');
+      showPreviewErrorState('Tệp tin PDF không tồn tại trên hệ thống lưu trữ.');
+    } else {
+      showToast('Không thể tải tệp PDF xem trước.', 'error');
+      showPreviewErrorState('Đã xảy ra lỗi khi tải tệp tin PDF.');
+    }
+  } catch (err) {
+    console.error('[PDFPreview] Fetch preview failed:', err);
+    showToast('Lỗi kết nối khi tải bản xem trước PDF.', 'error');
+    showPreviewErrorState('Lỗi kết nối khi tải bản xem trước.');
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (canvasWrap) canvasWrap.style.opacity = '1';
+  }
+}
+
+/* ==========================================================================
+   Page Selection UI & Quick Chips (PDFL-255.2)
+   ========================================================================== */
+function initPageSelection() {
+  const radioAll = document.getElementById('radioPageModeAll');
+  const radioCustom = document.getElementById('radioPageModeCustom');
+  const labelAll = document.getElementById('labelPageModeAll');
+  const labelCustom = document.getElementById('labelPageModeCustom');
+  const wrap = document.getElementById('pageRangeCustomWrap');
+  const input = document.getElementById('inputPageRange');
+  const chips = document.querySelectorAll ? document.querySelectorAll('.quick-chip') : [];
+
+  if (!radioAll && !radioCustom && !input) {
+    return;
+  }
+
+  const handleModeChange = (mode) => {
+    if (mode === 'all') {
+      if (radioAll) radioAll.checked = true;
+      if (radioCustom) radioCustom.checked = false;
+      if (labelAll) labelAll.classList.add('active');
+      if (labelCustom) labelCustom.classList.remove('active');
+      if (wrap) wrap.style.display = 'none';
+      if (input) input.classList.remove('input-error');
+    } else {
+      if (radioCustom) radioCustom.checked = true;
+      if (radioAll) radioAll.checked = false;
+      if (labelCustom) labelCustom.classList.add('active');
+      if (labelAll) labelAll.classList.remove('active');
+      if (wrap) wrap.style.display = 'block';
+      if (input) {
+        input.focus();
+      }
+    }
+  };
+
+  if (radioAll) {
+    radioAll.addEventListener('change', () => {
+      if (radioAll.checked) handleModeChange('all');
+    });
+  }
+  if (labelAll) {
+    labelAll.addEventListener('click', (e) => {
+      if (e.target !== radioAll) {
+        handleModeChange('all');
+      }
+    });
+  }
+
+  if (radioCustom) {
+    radioCustom.addEventListener('change', () => {
+      if (radioCustom.checked) handleModeChange('custom');
+    });
+  }
+  if (labelCustom) {
+    labelCustom.addEventListener('click', (e) => {
+      if (e.target !== radioCustom) {
+        handleModeChange('custom');
+      }
+    });
+  }
+
+  const updateChipsActiveState = (currentVal) => {
+    const trimmed = (currentVal || '').trim();
+    if (chips && typeof chips.forEach === 'function') {
+      chips.forEach((chip) => {
+        const range = chip.getAttribute('data-range') || '';
+        if (trimmed && range === trimmed) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    }
+  };
+
+  if (chips && typeof chips.forEach === 'function') {
+    chips.forEach((chip) => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const range = chip.getAttribute('data-range') || '';
+        if (input) {
+          input.value = range;
+          input.classList.remove('input-error');
+          input.focus();
+        }
+        updateChipsActiveState(range);
+      });
+    });
+  }
+
+  if (input) {
+    input.addEventListener('input', () => {
+      input.classList.remove('input-error');
+      updateChipsActiveState(input.value);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btnProcessPdf = document.getElementById('btnProcessPdf');
+        if (btnProcessPdf && !btnProcessPdf.disabled) {
+          btnProcessPdf.click();
+        }
+      }
+    });
+  }
+}
+
+function getSelectedPageMode() {
+  const radioCustom = document.getElementById('radioPageModeCustom');
+  if (radioCustom && radioCustom.checked) {
+    return 'custom';
+  }
+  return 'all';
+}
+
+function setPageSelectionMode(mode) {
+  const radioAll = document.getElementById('radioPageModeAll');
+  const radioCustom = document.getElementById('radioPageModeCustom');
+  const labelAll = document.getElementById('labelPageModeAll');
+  const labelCustom = document.getElementById('labelPageModeCustom');
+  const wrap = document.getElementById('pageRangeCustomWrap');
+  const input = document.getElementById('inputPageRange');
+
+  if (mode === 'custom') {
+    if (radioCustom) radioCustom.checked = true;
+    if (radioAll) radioAll.checked = false;
+    if (labelCustom) labelCustom.classList.add('active');
+    if (labelAll) labelAll.classList.remove('active');
+    if (wrap) wrap.style.display = 'block';
+  } else {
+    if (radioAll) radioAll.checked = true;
+    if (radioCustom) radioCustom.checked = false;
+    if (labelAll) labelAll.classList.add('active');
+    if (labelCustom) labelCustom.classList.remove('active');
+    if (wrap) wrap.style.display = 'none';
+    if (input) input.classList.remove('input-error');
+  }
+}
+
+function getPageSelectionValue() {
+  const mode = getSelectedPageMode();
+  if (mode === 'all') {
+    return { mode: 'all', pages: null };
+  }
+  const input = document.getElementById('inputPageRange');
+  const pages = input ? input.value.trim() : '';
+  return { mode: 'custom', pages: pages || null };
+}
+
+function setPageRangeInput(val) {
+  const input = document.getElementById('inputPageRange');
+  if (input) {
+    input.value = val || '';
+    input.classList.remove('input-error');
+  }
+  const chips = document.querySelectorAll ? document.querySelectorAll('.quick-chip') : [];
+  const trimmed = (val || '').trim();
+  if (chips && typeof chips.forEach === 'function') {
+    chips.forEach((chip) => {
+      if (trimmed && chip.getAttribute('data-range') === trimmed) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+}
+
+function validatePageSelection() {
+  const mode = getSelectedPageMode();
+  if (mode === 'all') {
+    return { valid: true, mode: 'all', pages: null };
+  }
+
+  const input = document.getElementById('inputPageRange');
+  const raw = input ? input.value : '';
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return {
+      valid: false,
+      mode: 'custom',
+      error: 'Vui lòng nhập số trang hoặc khoảng trang cần xử lý (ví dụ: 1-5, 8).',
+    };
+  }
+
+  if (!/\d/.test(trimmed)) {
+    return {
+      valid: false,
+      mode: 'custom',
+      error: 'Dải trang không hợp lệ. Vui lòng nhập số trang (ví dụ: 1-5, 8).',
+    };
+  }
+
+  if (!/^[\d\s,-]+$/.test(trimmed)) {
+    return {
+      valid: false,
+      mode: 'custom',
+      error: 'Dải trang chứa ký tự không hợp lệ. Chỉ chấp nhận số, dấu phẩy và dấu gạch ngang.',
+    };
+  }
+
+  return {
+    valid: true,
+    mode: 'custom',
+    pages: trimmed,
+  };
+}
+
+function resetPageSelection() {
+  setPageSelectionMode('all');
+  const input = document.getElementById('inputPageRange');
+  if (input) {
+    input.value = '';
+    input.classList.remove('input-error');
+  }
+  const chips = document.querySelectorAll ? document.querySelectorAll('.quick-chip') : [];
+  if (chips && typeof chips.forEach === 'function') {
+    chips.forEach((c) => c.classList.remove('active'));
+  }
+}
 
 function getWorkspaceSessionStorage() {
   try {
@@ -31,6 +434,7 @@ function clearActiveJobFromStorage() {
   if (!store) return;
   try {
     store.removeItem(ACTIVE_JOB_STORAGE_KEY);
+    store.removeItem(BG_MINIMIZED_STORAGE_KEY);
   } catch (_e) {}
 }
 
@@ -196,16 +600,20 @@ function initWorkspace() {
     }
   });
 
-  // Multi-target Export Listeners (PDFL-150.4 & PDFL-156.3)
+  // Multi-target Export Listeners (PDFL-150.4, PDFL-156.3 & PDFL-254.2)
   const exportBtnConfigs = [
     { id: 'btnDownloadTxt', format: 'txt', type: 'translated' },
     { id: 'btnDownloadPdf', format: 'pdf', type: 'translated' },
+    { id: 'btnDownloadDocx', format: 'docx', type: 'translated' },
     { id: 'btnDownloadOriginalTxt', format: 'txt', type: 'original' },
     { id: 'btnDownloadOriginalPdf', format: 'pdf', type: 'original' },
+    { id: 'btnDownloadOriginalDocx', format: 'docx', type: 'original' },
     { id: 'btnDownloadBilingualTxt', format: 'txt', type: 'bilingual' },
     { id: 'btnDownloadBilingualPdf', format: 'pdf', type: 'bilingual' },
+    { id: 'btnDownloadBilingualDocx', format: 'docx', type: 'bilingual' },
     { id: 'btnDownloadSummaryTxt', format: 'txt', type: 'summary' },
     { id: 'btnDownloadSummaryPdf', format: 'pdf', type: 'summary' },
+    { id: 'btnDownloadSummaryDocx', format: 'docx', type: 'summary' },
   ];
 
   exportBtnConfigs.forEach(({ id, format, type }) => {
@@ -213,10 +621,39 @@ function initWorkspace() {
     if (btn) {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        triggerDownload(format, type);
+        return triggerDownload(format, type);
       });
     }
   });
+
+  // View Mode Switcher Listeners (PDFL-256.2)
+  const btnViewModeText = document.getElementById('btnViewModeText');
+  const btnViewModePdf = document.getElementById('btnViewModePdf');
+  const btnViewModeSplit = document.getElementById('btnViewModeSplit');
+  const btnSplitTabPdf = document.getElementById('btnSplitTabPdf');
+  const btnSplitTabTranslated = document.getElementById('btnSplitTabTranslated');
+
+  if (btnViewModeText) {
+    btnViewModeText.addEventListener('click', () => setViewMode('text'));
+  }
+  if (btnViewModePdf) {
+    btnViewModePdf.addEventListener('click', () => setViewMode('pdf'));
+  }
+  if (btnViewModeSplit) {
+    btnViewModeSplit.addEventListener('click', () => setViewMode('split'));
+  }
+
+  if (btnSplitTabPdf) {
+    btnSplitTabPdf.addEventListener('click', () => setSplitMobileTab('pdf'));
+  }
+  if (btnSplitTabTranslated) {
+    btnSplitTabTranslated.addEventListener('click', () => setSplitMobileTab('translated'));
+  }
+
+  // Page Selection UI & Quick Chips (PDFL-255.2)
+  initPageSelection();
+  // Background Job Controls & Floating Mini-Widget (PDFL-71.2)
+  initBackgroundJobControls();
 
   updateExportUIState();
 
@@ -288,9 +725,7 @@ function initWorkspace() {
       const savedJobId = store.getItem(ACTIVE_JOB_STORAGE_KEY);
       const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
       if (savedJobId) {
-        showProgressModal(true);
-        updateProgress(85, 'Đang hoàn tất xử lý và dịch thuật...', 3);
-        listenToJobProgress(savedJobId, btnProcessPdf);
+        recoverActiveJob(savedJobId);
       } else if (currentDocData && activeView === 'workspace') {
         renderWorkspace(currentDocData);
         const pendingToastRaw = store.getItem(PENDING_TOAST_STORAGE_KEY);
@@ -340,6 +775,8 @@ function getAuthHeaders() {
 
 let activeEventSource = null;
 let activePollTimer = null;
+let currentActiveJobId = null;
+let currentJobFileName = null;
 
 function cleanupProgressTracking() {
   if (activeEventSource) {
@@ -381,53 +818,300 @@ function handleAuthError(result) {
   showToast(msg, 'error');
 }
 
+// Tập hợp lưu trữ các Job ID đã hoàn tất để ngăn chặn kích hoạt Toast và Event trùng lặp (PDFL-71.4)
+const completedJobIds = new Set();
+
+/**
+ * Kiểm tra xem người dùng hiện tại có đang xem một phân hệ khác ngoài Workspace/Home không (PDFL-71.4).
+ * Ví dụ: Lịch sử xử lý (History), Danh sách tài liệu (Documents), Quản trị (Admin), Bảng giá (Pricing).
+ */
+function checkIsOtherViewActive() {
+  const historySection = document.getElementById('historySection');
+  if (historySection && historySection.style.display !== 'none') return true;
+
+  const documentsSection = document.getElementById('documentsSection');
+  if (documentsSection && documentsSection.style.display !== 'none') return true;
+
+  const adminSection = document.getElementById('adminSection');
+  if (adminSection && adminSection.style.display !== 'none') return true;
+
+  const pricingSection = document.getElementById('pricingSection');
+  if (pricingSection && pricingSection.style.display !== 'none') return true;
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
+      if (activeView === 'history' || activeView === 'documents' || activeView === 'admin' || activeView === 'pricing') {
+        return true;
+      }
+    } catch (_e) {}
+  }
+
+  return false;
+}
+
+/**
+ * Phát sự kiện toàn cục pdfl:job-completed và hiển thị Toast hoàn tất kèm hành động "Xem ngay" (PDFL-71.4).
+ * Ngăn chặn kích hoạt sự kiện và Toast trùng lặp cho cùng một job.
+ */
+function notifyJobCompleted(jobData) {
+  if (!jobData) return;
+  const jobId = jobData.job_id || currentActiveJobId;
+
+  // Ngăn chặn thông báo trùng lặp cho cùng một job (PDFL-71.4)
+  if (jobId && completedJobIds.has(jobId)) {
+    return;
+  }
+  if (jobId) {
+    completedJobIds.add(jobId);
+  }
+
+  const filename = jobData.filename
+    || currentJobFileName
+    || (jobData.result && (jobData.result.filename || jobData.result.original_filename))
+    || 'tài liệu';
+
+  const docResult = jobData.result || currentDocData;
+  const docId = (docResult && docResult.document_id) || jobData.document_id || null;
+
+  // 1. Kích hoạt sự kiện toàn cục pdfl:job-completed (PDFL-71.4)
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+    try {
+      window.dispatchEvent(new CustomEvent('pdfl:job-completed', {
+        detail: {
+          job_id: jobId,
+          filename: filename,
+          result: docResult,
+          document_id: docId,
+          status: 'COMPLETED',
+        },
+      }));
+    } catch (_e) {}
+
+    // Kích hoạt đồng thời pdfl:document-processed để tương thích với các module cũ
+    if (docResult) {
+      try {
+        window.dispatchEvent(new CustomEvent('pdfl:document-processed', {
+          detail: { document: docResult },
+        }));
+      } catch (_e) {}
+    }
+  }
+
+  // 2. Cập nhật danh sách Tài liệu gần đây trên Sidebar
+  if (typeof window !== 'undefined' && window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
+    try {
+      window.PDFLinguaSidebar.fetchRecentDocuments();
+    } catch (_e) {}
+  }
+
+  // 3. Hiển thị Toast thông báo với hành động "Xem ngay"
+  const isOtherViewActive = checkIsOtherViewActive();
+  const toastMessage = `🎉 Xử lý hoàn tất tài liệu ${filename}! Bấm để xem kết quả.`;
+
+  const action = {
+    text: 'Xem ngay',
+    duration: 6500,
+    onClick: () => {
+      if (docResult) {
+        renderWorkspace(docResult);
+      }
+    },
+  };
+
+  showToast(toastMessage, 'success', action);
+
+  // Nếu người dùng KHÔNG ở view khác (đang ở home hoặc đang theo dõi tiến trình),
+  // chuyển tiếp trực tiếp vào workspace sau 400ms để trải nghiệm mượt mà
+  if (!isOtherViewActive && docResult) {
+    setTimeout(() => {
+      renderWorkspace(docResult);
+    }, 400);
+  }
+}
+
+/**
+ * Khôi phục trạng thái Background Job sau khi reload F5 hoặc mở lại ứng dụng (PDFL-71.3).
+ * Xác thực trạng thái thực tế từ Backend làm nguồn chân lý duy nhất (Single Source of Truth).
+ */
+async function recoverActiveJob(savedJobId) {
+  if (!savedJobId) return;
+
+  const store = getWorkspaceSessionStorage();
+  const btnProcessPdf = document.getElementById('btnProcessPdf');
+
+  try {
+    const authHeaders = getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/jobs/${savedJobId}`, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    if (response.status === 404 || !response.ok) {
+      // Job không tồn tại trên backend (hoặc máy chủ lỗi) -> dọn dẹp job giả tạo
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+      showProgressModal(false);
+      return;
+    }
+
+    let body = null;
+    try {
+      body = await response.json();
+    } catch (_e) {}
+
+    const job = body && body.data;
+    if (!job || !job.status) {
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+      showProgressModal(false);
+      return;
+    }
+
+    currentActiveJobId = job.job_id || savedJobId;
+    if (job.filename) {
+      currentJobFileName = job.filename;
+    }
+
+    // ── XỬ LÝ THEO TRẠNG THÁI THỰC TẾ CỦA BACKEND ──
+    if (job.status === 'PENDING' || job.status === 'PROCESSING') {
+      if (btnProcessPdf) btnProcessPdf.disabled = true;
+
+      // Đồng bộ tên file lên widget và modal
+      const bgFileNameEl = document.getElementById('bgJobFileName');
+      if (bgFileNameEl && currentJobFileName) {
+        bgFileNameEl.textContent = currentJobFileName;
+      }
+
+      const isMinimized = store ? store.getItem(BG_MINIMIZED_STORAGE_KEY) === 'true' : false;
+      const pct = typeof job.progress_percentage === 'number' ? job.progress_percentage : 10;
+      const msg = job.message || 'Đang tiếp tục xử lý tài liệu...';
+      const step = typeof job.current_step === 'number' ? job.current_step : 2;
+
+      updateProgress(pct, msg, step);
+
+      if (isMinimized) {
+        // Khôi phục dạng Floating Mini-Widget (modal ẩn)
+        const modal = document.getElementById('processingModal');
+        if (modal) modal.style.display = 'none';
+
+        const widget = document.getElementById('bgJobWidget');
+        if (widget) widget.style.display = 'flex';
+      } else {
+        // Khôi phục dạng Modal chính (widget ẩn)
+        const widget = document.getElementById('bgJobWidget');
+        if (widget) widget.style.display = 'none';
+
+        const modal = document.getElementById('processingModal');
+        if (modal) modal.style.display = 'flex';
+      }
+
+      // Khôi phục kết nối SSE / Polling fallback theo dõi tiến trình thực
+      listenToJobProgress(currentActiveJobId, btnProcessPdf);
+
+    } else if (job.status === 'COMPLETED') {
+      // Job đã hoàn tất trước hoặc trong lúc reload F5
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+
+      const modal = document.getElementById('processingModal');
+      if (modal) modal.style.display = 'none';
+      const widget = document.getElementById('bgJobWidget');
+      if (widget) widget.style.display = 'none';
+
+      if (job.result) {
+        currentDocData = job.result;
+        saveWorkspaceDocToStorage(currentDocData);
+      }
+
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+
+      notifyJobCompleted(job);
+
+    } else if (job.status === 'FAILED') {
+      // Job thất bại trước hoặc trong lúc reload F5
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+
+      const modal = document.getElementById('processingModal');
+      if (modal) modal.style.display = 'none';
+      const widget = document.getElementById('bgJobWidget');
+      if (widget) widget.style.display = 'none';
+
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+      showToast(job.error || job.message || 'Xử lý tài liệu thất bại.', 'error');
+
+    } else if (job.status === 'CANCELLED') {
+      // Job đã bị hủy
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+
+      const modal = document.getElementById('processingModal');
+      if (modal) modal.style.display = 'none';
+      const widget = document.getElementById('bgJobWidget');
+      if (widget) widget.style.display = 'none';
+
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+      showToast(job.message || 'Tác vụ đã được hủy.', 'info');
+    }
+
+  } catch (err) {
+    console.warn('Lỗi khi khôi phục background job:', err);
+  }
+}
+
 /**
  * Theo dõi tiến độ xử lý Background Job theo thời gian thực (PDFL-111.4).
  * Sử dụng SSE (Server-Sent Events) và tự động fallback sang polling nếu SSE ngắt kết nối.
  */
 function listenToJobProgress(jobId, btnProcessPdf) {
+  // Ngăn kết nối SSE trùng lặp cho cùng một job đang được theo dõi (PDFL-71.3)
+  if (activeEventSource && currentActiveJobId === jobId) {
+    const isClosed = activeEventSource.closed || activeEventSource.readyState === 2;
+    if (!isClosed) {
+      return;
+    }
+  }
+
   cleanupProgressTracking();
+  currentActiveJobId = jobId;
+
+  if (!currentJobFileName && typeof selectedFile !== 'undefined' && selectedFile && selectedFile.name) {
+    currentJobFileName = selectedFile.name;
+  }
+  const bgFileNameEl = document.getElementById('bgJobFileName');
+  if (bgFileNameEl && currentJobFileName) {
+    bgFileNameEl.textContent = currentJobFileName;
+  }
 
   const handleJobSuccess = (jobData) => {
     cleanupProgressTracking();
     clearActiveJobFromStorage();
+    currentActiveJobId = null;
+
+    const widget = document.getElementById('bgJobWidget');
+    if (widget) widget.style.display = 'none';
+
     currentDocData = jobData.result;
     saveWorkspaceDocToStorage(currentDocData);
-    const store = getWorkspaceSessionStorage();
-    if (store) {
-      try {
-        store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
-        store.setItem(
-          PENDING_TOAST_STORAGE_KEY,
-          JSON.stringify({ msg: 'Tài liệu đã được dịch thuật thành công!', type: 'success', ts: Date.now() })
-        );
-      } catch (_e) {}
-    }
     updateProgress(100, jobData.message || 'Xử lý và dịch thuật hoàn tất!', 4);
-    setTimeout(() => {
-      if (store) {
-        try {
-          store.removeItem(PENDING_TOAST_STORAGE_KEY);
-        } catch (_e) {}
-      }
-      showProgressModal(false);
-      renderWorkspace(jobData.result);
-      showToast('Tài liệu đã được dịch thuật thành công!', 'success');
-      if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
-        window.PDFLinguaSidebar.fetchRecentDocuments();
-      }
-      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
-        try {
-          window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: jobData.result } }));
-        } catch (e) {}
-      }
-      if (btnProcessPdf) btnProcessPdf.disabled = false;
-    }, 400);
+
+    showProgressModal(false);
+    const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
+    if (btn) btn.disabled = false;
+
+    notifyJobCompleted(jobData);
   };
 
   const handleJobFailure = (errorMsg) => {
     cleanupProgressTracking();
     clearActiveJobFromStorage();
+    currentActiveJobId = null;
+
+    const widget = document.getElementById('bgJobWidget');
+    if (widget) widget.style.display = 'none';
+
     showProgressModal(false);
     const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
     if (btn) btn.disabled = false;
@@ -459,6 +1143,8 @@ function listenToJobProgress(jobId, btnProcessPdf) {
             handleJobSuccess(jd);
           } else if (jd.status === 'FAILED') {
             handleJobFailure(jd.error || jd.message);
+          } else if (jd.status === 'CANCELLED') {
+            handleJobCancelled(jd.message || 'Tác vụ đã được hủy.');
           }
         }
       } catch (e) {}
@@ -485,6 +1171,8 @@ function listenToJobProgress(jobId, btnProcessPdf) {
             handleJobSuccess(data);
           } else if (data.status === 'FAILED') {
             handleJobFailure(data.error || data.message);
+          } else if (data.status === 'CANCELLED') {
+            handleJobCancelled(data.message || 'Tác vụ đã được hủy.');
           }
         } catch (e) {}
       };
@@ -528,6 +1216,30 @@ async function handleProcessPdf() {
     return;
   }
 
+  // PDFL-252.2: If multiple files are in the batch queue, delegate to BatchOrchestrator
+  if (
+    typeof window !== 'undefined' &&
+    window.pdfLinguaBatchQueue &&
+    window.pdfLinguaBatchQueue.getQueueCount() > 1 &&
+    window.pdfLinguaBatchOrchestrator &&
+    typeof window.pdfLinguaBatchOrchestrator.startBatch === 'function'
+  ) {
+    window.pdfLinguaBatchOrchestrator.startBatch();
+    return;
+  }
+
+  // Validate Page Selection (PDFL-255.2)
+  const pageValidation = validatePageSelection();
+  if (!pageValidation.valid) {
+    showToast(pageValidation.error || 'Dải trang không hợp lệ!', 'warning');
+    const inputPageRange = document.getElementById('inputPageRange');
+    if (inputPageRange) {
+      inputPageRange.classList.add('input-error');
+      inputPageRange.focus();
+    }
+    return;
+  }
+
   const btnProcessPdf = document.getElementById('btnProcessPdf');
   if (btnProcessPdf) btnProcessPdf.disabled = true;
 
@@ -535,6 +1247,9 @@ async function handleProcessPdf() {
   const formData = new FormData();
   formData.append('file', selectedFile);
   formData.append('target_lang', targetLang);
+  if (pageValidation.mode === 'custom' && pageValidation.pages) {
+    formData.append('pages', pageValidation.pages);
+  }
 
   showProgressModal(true);
   updateProgress(15, 'Đang tải tệp PDF lên máy chủ...', 1);
@@ -559,6 +1274,19 @@ async function handleProcessPdf() {
 
     if (response.status === 401) {
       handleAuthError(result);
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+      return;
+    }
+
+    if (response.status === 400) {
+      showProgressModal(false);
+      const msg = (result && (result.detail || result.message)) || 'Dải trang được chọn không hợp lệ.';
+      showToast(msg, 'error');
+      const inputPageRange = document.getElementById('inputPageRange');
+      if (inputPageRange) {
+        inputPageRange.classList.add('input-error');
+        inputPageRange.focus();
+      }
       if (btnProcessPdf) btnProcessPdf.disabled = false;
       return;
     }
@@ -623,8 +1351,18 @@ async function handleProcessPdf() {
     if (store) {
       try {
         store.setItem(ACTIVE_JOB_STORAGE_KEY, String(jobId));
+        store.setItem(BG_MINIMIZED_STORAGE_KEY, 'false');
         store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
       } catch (_e) {}
+    }
+
+    currentActiveJobId = jobId;
+    currentJobFileName = (typeof selectedFile !== 'undefined' && selectedFile && selectedFile.name)
+      ? selectedFile.name
+      : 'Tài liệu PDF';
+    const bgFileNameEl = document.getElementById('bgJobFileName');
+    if (bgFileNameEl && currentJobFileName) {
+      bgFileNameEl.textContent = currentJobFileName;
     }
 
     // Theo dõi tiến độ thời gian thực qua Server-Sent Events (SSE)
@@ -770,7 +1508,43 @@ function getSummaryContent() {
 }
 
 /**
- * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả 8 nút tải xuống (PDFL-156.3).
+ * PDFL-254.2: Kiểm tra người dùng hiện tại có quyền Pro hoặc Admin không.
+ * Bảo đảm:
+ * - Bắt buộc phải có Bearer token hợp lệ (nếu không có token -> Guest).
+ * - Tài khoản không bị khóa (is_active !== false).
+ * - Role phải chính xác là 'pro' hoặc 'admin' (chuẩn hóa trim & lowercase).
+ * - Backend (/download) luôn là nguồn xác thực bảo mật cuối cùng.
+ */
+function isProOrAdminUser() {
+  let token = null;
+  if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
+    token = window.pdfLinguaAuth.getStoredToken();
+  }
+  if (!token && typeof localStorage !== 'undefined') {
+    try {
+      token = localStorage.getItem('pdfl_token') || sessionStorage.getItem('pdfl_token');
+    } catch (_e) {}
+  }
+  if (!token) return false;
+
+  let user = null;
+  if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredUser === 'function') {
+    user = window.pdfLinguaAuth.getStoredUser();
+  }
+  if (!user && typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
+      if (raw) user = JSON.parse(raw);
+    } catch (_e) {}
+  }
+  if (!user || user.is_active === false) return false;
+
+  const role = String(user.role || '').trim().toLowerCase();
+  return role === 'pro' || role === 'admin';
+}
+
+/**
+ * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả các nút tải xuống (PDFL-156.3 & PDFL-254.2).
  */
 function updateExportUIState() {
   const originalText = getOriginalContent();
@@ -786,6 +1560,7 @@ function updateExportUIState() {
   // 1. Bản dịch (translated)
   const btnTransTxt = document.getElementById('btnDownloadTxt');
   const btnTransPdf = document.getElementById('btnDownloadPdf');
+  const btnTransDocx = document.getElementById('btnDownloadDocx');
   if (btnTransTxt) {
     btnTransTxt.disabled = !hasTranslated;
     btnTransTxt.title = hasTranslated ? 'Tải bản dịch định dạng TXT' : 'Chưa có nội dung bản dịch';
@@ -794,10 +1569,15 @@ function updateExportUIState() {
     btnTransPdf.disabled = !hasTranslated;
     btnTransPdf.title = hasTranslated ? 'Tải bản dịch định dạng PDF' : 'Chưa có nội dung bản dịch';
   }
+  if (btnTransDocx) {
+    btnTransDocx.disabled = !hasTranslated;
+    btnTransDocx.title = hasTranslated ? 'Tải bản dịch định dạng Word (.docx) - Pro VIP' : 'Chưa có nội dung bản dịch';
+  }
 
   // 2. Văn bản gốc (original)
   const btnOrigTxt = document.getElementById('btnDownloadOriginalTxt');
   const btnOrigPdf = document.getElementById('btnDownloadOriginalPdf');
+  const btnOrigDocx = document.getElementById('btnDownloadOriginalDocx');
   if (btnOrigTxt) {
     btnOrigTxt.disabled = !hasOriginal;
     btnOrigTxt.title = hasOriginal ? 'Tải văn bản gốc định dạng TXT' : 'Chưa có nội dung văn bản gốc';
@@ -806,15 +1586,23 @@ function updateExportUIState() {
     btnOrigPdf.disabled = !hasOriginal;
     btnOrigPdf.title = hasOriginal ? 'Tải văn bản gốc định dạng PDF' : 'Chưa có nội dung văn bản gốc';
   }
+  if (btnOrigDocx) {
+    btnOrigDocx.disabled = !hasOriginal;
+    btnOrigDocx.title = hasOriginal ? 'Tải văn bản gốc định dạng Word (.docx) - Pro VIP' : 'Chưa có nội dung văn bản gốc';
+  }
 
   // 3. Song ngữ (bilingual)
   const btnBiTxt = document.getElementById('btnDownloadBilingualTxt');
   const btnBiPdf = document.getElementById('btnDownloadBilingualPdf');
+  const btnBiDocx = document.getElementById('btnDownloadBilingualDocx');
   const biTitle = hasBilingual
     ? 'Tải song ngữ định dạng TXT'
     : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
   const biPdfTitle = hasBilingual
     ? 'Tải song ngữ định dạng PDF'
+    : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
+  const biDocxTitle = hasBilingual
+    ? 'Tải song ngữ định dạng Word (.docx) - Pro VIP'
     : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
   if (btnBiTxt) {
     btnBiTxt.disabled = !hasBilingual;
@@ -824,10 +1612,15 @@ function updateExportUIState() {
     btnBiPdf.disabled = !hasBilingual;
     btnBiPdf.title = biPdfTitle;
   }
+  if (btnBiDocx) {
+    btnBiDocx.disabled = !hasBilingual;
+    btnBiDocx.title = biDocxTitle;
+  }
 
   // 4. Bản tóm tắt (summary)
   const btnSummTxt = document.getElementById('btnDownloadSummaryTxt');
   const btnSummPdf = document.getElementById('btnDownloadSummaryPdf');
+  const btnSummDocx = document.getElementById('btnDownloadSummaryDocx');
   const statusBadge = document.getElementById('summaryExportStatus');
   if (btnSummTxt) {
     btnSummTxt.disabled = !hasSummary;
@@ -836,6 +1629,10 @@ function updateExportUIState() {
   if (btnSummPdf) {
     btnSummPdf.disabled = !hasSummary;
     btnSummPdf.title = hasSummary ? 'Tải bản tóm tắt định dạng PDF' : 'Chưa có bản tóm tắt';
+  }
+  if (btnSummDocx) {
+    btnSummDocx.disabled = !hasSummary;
+    btnSummDocx.title = hasSummary ? 'Tải bản tóm tắt định dạng Word (.docx) - Pro VIP' : 'Chưa có bản tóm tắt';
   }
   if (statusBadge) {
     statusBadge.textContent = hasSummary ? '(sẵn sàng)' : '(chưa có)';
@@ -854,6 +1651,27 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   if (!currentDocData) {
     showToast('Chưa có tài liệu để tải về!', 'error');
     return;
+  }
+
+  const cleanFormat = (format || 'txt').trim().toLowerCase();
+
+  // PDFL-254.2: Pro Guard cho định dạng DOCX (Chặn trước ở client cho Guest / Free)
+  if (cleanFormat === 'docx') {
+    if (!isProOrAdminUser()) {
+      showToast('Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!', 'warning');
+      if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.showUpgradeModal === 'function') {
+        window.pdfLinguaAuth.showUpgradeModal();
+      } else if (typeof window !== 'undefined' && window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
+        window.PDFLinguaPricing.openPricingView();
+      } else {
+        const aiProModal = document.getElementById('aiProModal');
+        if (aiProModal) {
+          aiProModal.removeAttribute('hidden');
+          aiProModal.style.display = 'flex';
+        }
+      }
+      return; // Tuyệt đối không gọi API!
+    }
   }
 
   const dropdown = document.getElementById('downloadDropdown');
@@ -934,7 +1752,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   };
   const title = titleMap[exportType] || `PDF-Lingua - ${cleanName}`;
 
-  showToast(`Đang chuẩn bị tệp .${format.toUpperCase()}...`, 'info');
+  showToast(`Đang chuẩn bị tệp .${cleanFormat.toUpperCase()}...`, 'info');
 
   try {
     const authHeaders = getAuthHeaders();
@@ -942,7 +1760,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
 
     const payload = {
       content: targetContent,
-      format: format,
+      format: cleanFormat,
       export_type: exportType,
       filename: downloadFileName,
       title: title,
@@ -979,6 +1797,11 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
         ? (result.message || result.detail)
         : 'Tài khoản không có quyền truy cập.';
       showToast(msg, 'error');
+      if (result && (result.error_code === 'PRO_REQUIRED' || (result.message && result.message.includes('Pro')))) {
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.showUpgradeModal === 'function') {
+          window.pdfLinguaAuth.showUpgradeModal();
+        }
+      }
       return;
     }
 
@@ -997,13 +1820,13 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = downloadUrl;
-    a.download = `${downloadFileName}.${format}`;
+    a.download = `${downloadFileName}.${cleanFormat}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(downloadUrl);
 
-    showToast(`Đã tải xuống thành công tệp .${format.toUpperCase()}!`, 'success');
+    showToast(`Đã tải xuống thành công tệp .${cleanFormat.toUpperCase()}!`, 'success');
   } catch (error) {
     showToast(error.message || 'Tải tệp thất bại!', 'error');
   }
@@ -1098,14 +1921,56 @@ function renderWorkspace(data) {
 
   updateCounters();
   updateExportUIState();
+
+  // Initialize or restore View Mode (PDFL-256.2)
+  const storeRef = getWorkspaceSessionStorage();
+  let savedMode = 'split';
+  if (storeRef) {
+    try {
+      savedMode = storeRef.getItem(VIEW_MODE_STORAGE_KEY) || 'split';
+    } catch (_e) {}
+  }
+  setViewMode(savedMode);
+  setSplitMobileTab('pdf');
+
+  // Initialize PDF Preview (PDFL-256.1 & PDFL-256.2)
+  try {
+    let previewSource = null;
+    if (typeof window !== 'undefined' && window.pdfLinguaUpload && typeof window.pdfLinguaUpload.getSelectedFile === 'function') {
+      previewSource = window.pdfLinguaUpload.getSelectedFile();
+    }
+    if (!previewSource && data) {
+      previewSource = data.file_url || data.preview_url || data.pdf_url || null;
+    }
+    const previewContainer = document.getElementById('pdfPreviewContainer');
+    if (previewSource) {
+      if (previewContainer) previewContainer.style.display = 'block';
+      if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.loadPdfPreview === 'function') {
+        window.pdfLinguaPreview.loadPdfPreview(previewSource);
+      }
+    } else if (data && data.document_id) {
+      // PDFL-256.2: When opened from History with document_id and no local File, fetch authenticated stream
+      fetchDocumentPreview(data.document_id, filename);
+    } else {
+      if (previewContainer) previewContainer.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('PDF Preview initialization error:', err);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function resetToUpload() {
   cleanupProgressTracking();
   clearActiveJobFromStorage();
+  currentActiveJobId = null;
+  currentJobFileName = null;
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) widget.style.display = 'none';
   currentDocData = null;
   saveWorkspaceDocToStorage(null);
+  resetPageSelection();
   const store = getWorkspaceSessionStorage();
   if (store) {
     try {
@@ -1142,6 +2007,19 @@ function resetToUpload() {
 
   updateCounters();
   updateExportUIState();
+
+  // Cleanup PDF Canvas Preview & reset View Mode (PDFL-256.1 & PDFL-256.2)
+  try {
+    if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.cleanupPdfPreview === 'function') {
+      window.pdfLinguaPreview.cleanupPdfPreview();
+    }
+    const previewContainer = document.getElementById('pdfPreviewContainer');
+    if (previewContainer) previewContainer.style.display = 'none';
+  } catch (_e) {}
+
+  setViewMode('split');
+  setSplitMobileTab('pdf');
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1191,11 +2069,223 @@ function showProgressModal(show) {
   const modal = document.getElementById('processingModal');
   if (!modal) return;
   modal.style.display = show ? 'flex' : 'none';
+  const widget = document.getElementById('bgJobWidget');
   if (show) {
+    if (widget) widget.style.display = 'none';
     updateProgress(10, 'Đang chuẩn bị...', 1);
   } else {
+    if (widget) widget.style.display = 'none';
     cleanupProgressTracking();
   }
+}
+
+/**
+ * Thu nhỏ modal tiến trình thành Floating Mini-Widget (PDFL-71.2).
+ * Tác vụ xử lý nền (SSE/Polling) vẫn tiếp tục chạy không bị gián đoạn.
+ */
+function minimizeProgressModal() {
+  const modal = document.getElementById('processingModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(BG_MINIMIZED_STORAGE_KEY, 'true');
+    } catch (_e) {}
+  }
+
+  // Nếu đang có tác vụ xử lý đang chạy, hiển thị Floating Mini-Widget
+  if (currentActiveJobId || activeEventSource || activePollTimer) {
+    const widget = document.getElementById('bgJobWidget');
+    if (widget) {
+      widget.style.display = 'flex';
+      const bgFileNameEl = document.getElementById('bgJobFileName');
+      if (bgFileNameEl && currentJobFileName) {
+        bgFileNameEl.textContent = currentJobFileName;
+      }
+    }
+    showToast('Tác vụ đang tiếp tục xử lý ở chế độ nền.', 'info');
+  }
+}
+
+/**
+ * Phóng to lại modal chi tiết từ Floating Mini-Widget (PDFL-71.2).
+ */
+function maximizeProgressModal() {
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(BG_MINIMIZED_STORAGE_KEY, 'false');
+    } catch (_e) {}
+  }
+
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) {
+    widget.style.display = 'none';
+  }
+  const modal = document.getElementById('processingModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+/**
+ * Đóng Floating Mini-Widget nhưng KHÔNG hủy background job (PDFL-71.2).
+ */
+function closeBgWidget() {
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) {
+    widget.style.display = 'none';
+  }
+}
+
+/**
+ * Hủy tác vụ xử lý đang chạy qua API backend POST /api/process/jobs/{job_id}/cancel (PDFL-71.1 & PDFL-71.2).
+ */
+async function cancelActiveJob() {
+  const btnCancel = document.getElementById('btnCancelJob');
+  const originalHtml = btnCancel ? btnCancel.innerHTML : '';
+
+  if (!currentActiveJobId) {
+    showProgressModal(false);
+    return;
+  }
+
+  if (btnCancel) {
+    btnCancel.disabled = true;
+    btnCancel.innerHTML = `
+      <svg class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+      </svg>
+      <span>Đang hủy...</span>
+    `;
+  }
+
+  try {
+    const authHeaders = getAuthHeaders();
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+    const response = await fetch(`${API_BASE_URL}/jobs/${currentActiveJobId}/cancel`, {
+      method: 'POST',
+      headers: headers,
+    });
+
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (_e) {}
+
+    if (response.ok && result && result.success) {
+      handleJobCancelled(result.message || 'Đã hủy tác vụ xử lý thành công.');
+    } else {
+      const errMsg = (result && (result.detail || result.message)) || 'Không thể hủy tác vụ xử lý.';
+      showToast(errMsg, 'warning');
+      if (response.status === 400 || response.status === 404) {
+        handleJobCancelled(errMsg);
+      }
+    }
+  } catch (error) {
+    showToast(error.message || 'Lỗi kết nối khi gửi yêu cầu hủy tác vụ.', 'error');
+  } finally {
+    if (btnCancel) {
+      btnCancel.disabled = false;
+      btnCancel.innerHTML = originalHtml || `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        <span>Hủy tác vụ</span>
+      `;
+    }
+  }
+}
+
+/**
+ * Xử lý dọn dẹp giao diện và trạng thái khi tác vụ đã hủy (PDFL-71.2).
+ */
+function handleJobCancelled(message) {
+  cleanupProgressTracking();
+  clearActiveJobFromStorage();
+  currentActiveJobId = null;
+
+  const modal = document.getElementById('processingModal');
+  if (modal) modal.style.display = 'none';
+
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) widget.style.display = 'none';
+
+  const btnProcessPdf = document.getElementById('btnProcessPdf');
+  if (btnProcessPdf) btnProcessPdf.disabled = false;
+
+  showToast(message || 'Đã hủy tác vụ xử lý thành công.', 'info');
+}
+
+/**
+ * Khởi tạo các sự kiện điều khiển cho modal xử lý và Floating Mini-Widget (PDFL-71.2).
+ */
+function initBackgroundJobControls() {
+  const btnMinimizeProgress = document.getElementById('btnMinimizeProgress');
+  const btnCloseProgressModal = document.getElementById('btnCloseProgressModal');
+  const btnMaximizeProgress = document.getElementById('btnMaximizeProgress');
+  const btnCloseBgWidget = document.getElementById('btnCloseBgWidget');
+  const btnCancelJob = document.getElementById('btnCancelJob');
+  const processingModal = document.getElementById('processingModal');
+
+  if (btnMinimizeProgress) {
+    btnMinimizeProgress.addEventListener('click', (e) => {
+      e.stopPropagation();
+      minimizeProgressModal();
+    });
+  }
+
+  if (btnCloseProgressModal) {
+    btnCloseProgressModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      minimizeProgressModal();
+    });
+  }
+
+  if (btnMaximizeProgress) {
+    btnMaximizeProgress.addEventListener('click', (e) => {
+      e.stopPropagation();
+      maximizeProgressModal();
+    });
+  }
+
+  if (btnCloseBgWidget) {
+    btnCloseBgWidget.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeBgWidget();
+    });
+  }
+
+  if (btnCancelJob) {
+    btnCancelJob.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cancelActiveJob();
+    });
+  }
+
+  // Click bên ngoài hộp thoại (trên lớp nền mờ overlay) để thu nhỏ thay vì hủy
+  if (processingModal) {
+    processingModal.addEventListener('click', (e) => {
+      if (e.target === processingModal) {
+        minimizeProgressModal();
+      }
+    });
+  }
+
+  // Hỗ trợ phím Esc để thu nhỏ modal khi đang hiển thị
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      const modal = document.getElementById('processingModal');
+      if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
+        minimizeProgressModal();
+      }
+    }
+  });
 }
 
 function updateProgress(percentage, text, currentStep) {
@@ -1215,24 +2305,63 @@ function updateProgress(percentage, text, currentStep) {
       stepEl.classList.add('active');
     }
   }
+
+  // Đồng bộ tiến độ với Floating Mini-Widget (PDFL-71.2)
+  const bgBar = document.getElementById('bgJobProgressBarFill');
+  const bgStatus = document.getElementById('bgJobStatusText');
+  const bgPercent = document.getElementById('bgJobPercent');
+  const bgFileName = document.getElementById('bgJobFileName');
+
+  if (bgBar) bgBar.style.width = `${percentage}%`;
+  if (bgPercent) bgPercent.textContent = `${Math.round(percentage)}%`;
+  if (bgStatus && text) bgStatus.textContent = text;
+  if (bgFileName && currentJobFileName) bgFileName.textContent = currentJobFileName;
 }
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', action = null) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${message}</span>`;
+  if (action && typeof action.onClick === 'function') {
+    toast.classList.add('has-action');
+  }
+
+  const textSpan = document.createElement('span');
+  textSpan.textContent = message;
+  toast.appendChild(textSpan);
+
+  if (action && typeof action.onClick === 'function') {
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'toast-action-btn';
+    actionBtn.textContent = action.text || 'Xem ngay';
+    actionBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      action.onClick();
+      toast.remove();
+    });
+    toast.appendChild(actionBtn);
+
+    toast.style.cursor = 'pointer';
+    toast.addEventListener('click', () => {
+      action.onClick();
+      toast.remove();
+    });
+  }
 
   container.appendChild(toast);
 
+  const duration = (action && action.duration) || 3200;
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(10px)';
     toast.style.transition = 'all 0.25s ease';
     setTimeout(() => toast.remove(), 250);
-  }, 3200);
+  }, duration);
+
+  return toast;
 }
 
 function getLangName(code) {
@@ -1251,8 +2380,18 @@ function getLangName(code) {
   return names[code] || code;
 }
 
-// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4 & PDFL-156.3)
+// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4 & PDFL-156.3 & PDFL-255.2)
 if (typeof window !== 'undefined') {
+  window.pdfLinguaPageSelection = Object.assign(window.pdfLinguaPageSelection || {}, {
+    initPageSelection,
+    getSelectedPageMode,
+    setPageSelectionMode,
+    getPageSelectionValue,
+    setPageRangeInput,
+    validatePageSelection,
+    resetPageSelection,
+  });
+
   window.pdfLinguaWorkspace = Object.assign(window.pdfLinguaWorkspace || {}, {
     getAuthHeaders,
     handleAuthError,
@@ -1268,12 +2407,45 @@ if (typeof window !== 'undefined') {
     cleanupProgressTracking,
     listenToJobProgress,
     renderWorkspace,
+    resetToUpload,
+    isProOrAdminUser,
+    setViewMode,
+    getViewMode: () => currentViewMode,
+    setSplitMobileTab,
+    getSplitMobileTab: () => currentSplitMobileTab,
+    fetchDocumentPreview,
     getCurrentDocData: () => currentDocData,
     setCurrentDocData: (d) => {
       currentDocData = d;
       saveWorkspaceDocToStorage(d);
       updateExportUIState();
     },
+    initPageSelection,
+    getSelectedPageMode,
+    setPageSelectionMode,
+    getPageSelectionValue,
+    setPageRangeInput,
+    validatePageSelection,
+    resetPageSelection,
+    minimizeProgressModal,
+    maximizeProgressModal,
+    closeBgWidget,
+    cancelActiveJob,
+    handleJobCancelled,
+    initBackgroundJobControls,
+    getActiveJobId: () => currentActiveJobId,
+    setActiveJobId: (id) => { currentActiveJobId = id; },
+    getCurrentJobFileName: () => currentJobFileName,
+    setCurrentJobFileName: (name) => { currentJobFileName = name; },
+    recoverActiveJob,
+    notifyJobCompleted,
+    checkIsOtherViewActive,
+    getCompletedJobIds: () => completedJobIds,
+    resetCompletedJobsCache: () => completedJobIds.clear(),
+    ACTIVE_JOB_STORAGE_KEY,
+    BG_MINIMIZED_STORAGE_KEY,
+    getEventSource: () => activeEventSource,
+    getPollTimer: () => activePollTimer,
   });
   window.showToast = showToast;
 }

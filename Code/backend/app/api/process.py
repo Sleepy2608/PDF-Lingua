@@ -1,16 +1,20 @@
 import asyncio
+import io
 import json
 import os
 import re
 import tempfile
 import threading
+import time
 import unicodedata
+import zipfile
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -20,12 +24,15 @@ from app.core.dependencies import (
     get_db,
     get_max_pages_by_role,
     get_optional_current_user,
+    http_bearer,
 )
+from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import (
+    BatchDownloadRequest,
     DownloadRequest,
     ExportTargetType,
     FeedbackRequest,
@@ -67,6 +74,11 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     return settings.MAX_UPLOAD_SIZE_FREE_MB, max_pages
 
 
+class JobCancelledException(Exception):
+    """Ngoại lệ khi tác vụ nền bị hủy bởi người dùng (PDFL-71.1)"""
+    pass
+
+
 def _execute_pdf_background_job(
     job_id: str,
     tmp_path: Path,
@@ -76,62 +88,106 @@ def _execute_pdf_background_job(
     file_size_mb: float,
     user_id: Optional[int] = None,
     file_size_bytes: Optional[int] = None,
+    selected_pages: Optional[list[int]] = None,
 ) -> None:
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
-    Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
+    Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5, PDFL-71.1).
+    Hỗ trợ xếp hàng PENDING khi vượt quá giới hạn và hủy tác vụ an toàn.
     Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
     và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công (PDFL-90, PDFL-91).
+    Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages (PDFL-255.1).
     """
-    try:
-        acquired = _job_semaphore.acquire(blocking=False)
-        if not acquired:
-            try:
-                job_manager.update_progress(
-                    job_id,
-                    processed_pages=0,
-                    message="Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
-                    step=1,
-                )
-            except Exception:
-                pass
-            _job_semaphore.acquire(blocking=True)
+    semaphore_acquired = False
+    start_time = time.time()
+    document_id: Optional[int] = None
 
+    try:
+        job = job_manager.get_job(job_id)
+        if job and getattr(job, "created_at", None):
+            try:
+                start_time = float(job.created_at)
+            except (ValueError, TypeError):
+                start_time = time.time()
+
+        # Kiểm tra nếu job đã bị hủy trước khi vào hàng đợi
+        if job_manager.is_job_cancelled(job_id):
+            logger.info(f"[Job {job_id}] Đã bị hủy trước khi chạy.")
+            return
+
+        # 1. Thử acquire semaphore không chờ (non-blocking)
+        acquired = _job_semaphore.acquire(blocking=False)
+        if acquired:
+            semaphore_acquired = True
+        else:
+            # Vượt quá 4 job đồng thời: Cập nhật thông báo xếp hàng nhưng GIỮ nguyên trạng thái PENDING
+            job_manager.set_queued(
+                job_id,
+                message="Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
+            )
+            logger.info(f"[Job {job_id}] Đang xếp hàng chờ worker slot trống (PENDING)...")
+
+            # Chờ semaphore theo chu kỳ ngắn để phát hiện kịp thời nếu job bị cancel
+            while not job_manager.is_job_cancelled(job_id):
+                if _job_semaphore.acquire(timeout=0.5):
+                    semaphore_acquired = True
+                    break
+
+        if not semaphore_acquired:
+            logger.info(f"[Job {job_id}] Kết thúc do không acquire được semaphore hoặc đã bị hủy trong hàng đợi.")
+            return
+
+        if job_manager.is_job_cancelled(job_id):
+            logger.info(f"[Job {job_id}] Đã bị hủy ngay sau khi acquire semaphore.")
+            return
+
+        # 2. Đã chiếm slot worker: Bắt đầu xử lý
         try:
             validation = pdf_service.validate_pdf(tmp_path)
             if not validation["is_valid"]:
                 job_manager.set_failed(job_id, validation["error"] or "Tệp PDF không hợp lệ.")
                 return
 
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
+
             page_count = validation["page_count"]
             if page_count <= 0:
                 job_manager.set_failed(job_id, "Tài liệu PDF không có trang nào hợp lệ để xử lý.")
                 return
 
-            if page_count > max_allowed_pages:
+            effective_total = len(selected_pages) if selected_pages is not None else page_count
+
+            if effective_total > max_allowed_pages:
                 job_manager.set_failed(
                     job_id,
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn ({max_allowed_pages} trang).",
+                    f"Tài liệu yêu cầu xử lý {effective_total} trang, vượt quá giới hạn ({max_allowed_pages} trang).",
                 )
                 return
 
             job_manager.set_processing(
                 job_id,
-                total_pages=page_count,
-                message=f"Đang phân tích {page_count} trang PDF...",
+                total_pages=effective_total,
+                message=f"Đang phân tích {effective_total} trang PDF...",
             )
 
             def on_progress(processed: int, total: int, msg: str) -> None:
+                if job_manager.is_job_cancelled(job_id):
+                    raise JobCancelledException("Tác vụ đã bị hủy trong quá trình trích xuất.")
                 job_manager.update_progress(job_id, processed_pages=processed, total_pages=total, message=msg)
 
-            # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng
+            # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng với selected_pages
             extract_res = pdf_service.extract_hybrid_fast_path(
                 tmp_path,
                 ocr_service=ocr_service,
                 max_pages=max_allowed_pages,
                 progress_callback=on_progress,
+                selected_pages=selected_pages,
             )
+
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
 
             original_text = extract_res.get("text", "")
             if not original_text.strip():
@@ -139,17 +195,23 @@ def _execute_pdf_background_job(
                 return
 
             job_manager.set_translating(job_id, message="Đang dịch thuật văn bản sang ngôn ngữ đích...")
+
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
+
             trans_res = translation_service.translate_text(
                 original_text,
                 target_lang=target_lang,
                 source_lang="auto",
             )
 
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
+
             is_ocr_used = bool(
                 extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
             )
 
-            document_id: Optional[int] = None
             if user_id is not None:
                 db_session = SessionLocal()
                 try:
@@ -166,7 +228,7 @@ def _execute_pdf_background_job(
                         stored_filename=stored_filename,
                         stored_path=rel_path,
                         file_size_bytes=actual_size_bytes,
-                        page_count=page_count,
+                        page_count=effective_total,
                         target_lang=target_lang,
                         is_ocr_used=is_ocr_used,
                     )
@@ -185,19 +247,22 @@ def _execute_pdf_background_job(
                 finally:
                     db_session.close()
 
+            execution_time_ms = max(1, int((time.time() - start_time) * 1000))
+
             result_data = {
                 "document_id": document_id,
                 "filename": filename,
-                "page_count": page_count,
+                "page_count": effective_total,
                 "file_size_mb": file_size_mb,
                 "target_lang": target_lang,
                 "is_ocr_used": is_ocr_used,
                 "original_text": original_text,
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
+                "execution_time_ms": execution_time_ms,
             }
 
-            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1)
+            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1, PDFL-169)
             history_id: Optional[int] = None
             if user_id is not None and document_id is not None:
                 hist_session = SessionLocal()
@@ -213,6 +278,7 @@ def _execute_pdf_background_job(
                             document_id=document_id,
                             action_type=ActionType.TRANSLATE,
                             status=ProcessingStatus.PENDING,
+                            execution_time_ms=execution_time_ms,
                         ),
                         reuse_pending=False,
                     )
@@ -222,10 +288,11 @@ def _execute_pdf_background_job(
                         history_id=history_id,
                         user_id=user_id,
                         result_data=result_data,
+                        execution_time_ms=execution_time_ms,
                     )
                     result_data["history_id"] = history_id
                     logger.info(
-                        f"[Job {job_id}] Persisted processing history id={history_id} and result file for user_id={user_id}"
+                        f"[Job {job_id}] Persisted processing history id={history_id} (duration={execution_time_ms}ms) and result file for user_id={user_id}"
                     )
                 except Exception as hist_err:
                     try:
@@ -238,18 +305,55 @@ def _execute_pdf_background_job(
                 finally:
                     hist_session.close()
 
-            job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
+            job_manager.set_completed(
+                job_id,
+                result=result_data,
+                message="Xử lý và dịch thuật hoàn tất!",
+                execution_time_ms=execution_time_ms,
+                history_id=history_id,
+            )
 
+        except JobCancelledException:
+            logger.info(f"[Job {job_id}] Đã dừng xử lý do nhận được tín hiệu hủy tác vụ.")
         except Exception as e:
             logger.error(f"[Job {job_id}] Lỗi xử lý nền: {e}")
-            job_manager.set_failed(job_id, str(e))
-        finally:
-            _job_semaphore.release()
+            fail_time_ms = max(1, int((time.time() - start_time) * 1000))
+            job_manager.set_failed(job_id, str(e), execution_time_ms=fail_time_ms)
+            if user_id is not None and document_id is not None:
+                fail_session = SessionLocal()
+                try:
+                    from app.models.processing_history import ActionType, ProcessingStatus
+                    from app.schemas.processing_history import ProcessingHistoryCreate
+                    from app.services.history_service import history_service
+
+                    history_service.create_history(
+                        fail_session,
+                        ProcessingHistoryCreate(
+                            user_id=user_id,
+                            document_id=document_id,
+                            action_type=ActionType.TRANSLATE,
+                            status=ProcessingStatus.FAILED,
+                            execution_time_ms=fail_time_ms,
+                            error_message=str(e),
+                        ),
+                        reuse_pending=False,
+                    )
+                except Exception as fail_hist_err:
+                    try:
+                        fail_session.rollback()
+                    except Exception:
+                        pass
+                    logger.warning(f"[Job {job_id}] Could not log failed history: {fail_hist_err}")
+                finally:
+                    fail_session.close()
 
     except Exception as outer_e:
         logger.error(f"[Job {job_id}] Lỗi chuẩn bị hoặc xếp hàng tác vụ: {outer_e}")
         job_manager.set_failed(job_id, str(outer_e))
     finally:
+        if semaphore_acquired:
+            _job_semaphore.release()
+            semaphore_acquired = False
         if tmp_path.exists():
             try:
                 os.remove(tmp_path)
@@ -261,12 +365,14 @@ def _execute_pdf_background_job(
 async def create_processing_job(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
+    pages: Optional[str] = Form(None),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
     Khởi tạo Background Job xử lý PDF (PDFL-111.4).
     Trả về ngay Job ID mà không giữ kết nối HTTP chờ toàn bộ quá trình OCR.
     Thực thi kiểm tra tính hợp lệ và hạn mức số trang trước khi cấp Job ID (PDFL-178.3).
+    Hỗ trợ lựa chọn dải trang pages (PDFL-255.1).
     """
     max_upload_mb, _ = get_user_limits(current_user)
     max_allowed_pages = get_max_pages_by_role(current_user)
@@ -320,7 +426,20 @@ async def create_processing_job(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        if page_count > max_allowed_pages:
+        # PDFL-255.1: Parse và validate dải trang nếu được truyền vào
+        selected_pages: Optional[list[int]] = None
+        if pages is not None and pages.strip() and pages.strip().lower() != "all":
+            try:
+                selected_pages = pdf_service.parse_page_selection(pages, total_pages=page_count)
+            except ValueError as pe:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Dải trang không hợp lệ: {pe}",
+                )
+
+        effective_page_count = len(selected_pages) if selected_pages is not None else page_count
+
+        if effective_page_count > max_allowed_pages:
             role_label = (
                 "Guest"
                 if current_user is None
@@ -329,7 +448,7 @@ async def create_processing_job(
             raise HTTPException(
                 status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=(
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                    f"Tài liệu có {effective_page_count} trang cần xử lý, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
             )
     except HTTPException:
@@ -351,10 +470,14 @@ async def create_processing_job(
             detail="Tệp PDF không hợp lệ hoặc bị lỗi không thể xử lý.",
         )
 
-    job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
+    authenticated_user_id = current_user.id if current_user is not None else None
+    job = job_manager.create_job(
+        filename=file.filename,
+        target_lang=target_lang,
+        user_id=authenticated_user_id,
+    )
     file_size_bytes = len(content)
     file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
-    authenticated_user_id = current_user.id if current_user is not None else None
 
     # Khởi chạy Worker trong luồng nền độc lập
     thread = threading.Thread(
@@ -368,6 +491,7 @@ async def create_processing_job(
             file_size_mb,
             authenticated_user_id,
             file_size_bytes,
+            selected_pages,
         ),
         daemon=True,
     )
@@ -388,6 +512,51 @@ async def get_job_status(job_id: str):
     return ApiResponse(data=job.to_dict(), message="Lấy trạng thái tác vụ thành công.")
 
 
+@router.post("/jobs/{job_id}/cancel", response_model=ApiResponse[JobProgressData])
+async def cancel_processing_job(
+    job_id: str,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """
+    Hủy một Background Job đang xếp hàng (PENDING) hoặc đang chạy (PROCESSING) (PDFL-71.1).
+    Phân biệt rõ ràng với hành động ngắt kết nối theo dõi SSE (unsubscribe):
+    - Khi hủy: Trạng thái Job chuyển thành CANCELLED, giải phóng worker slot và file tạm.
+    - Người dùng chỉ có quyền hủy job của chính họ hoặc nếu là admin.
+    """
+    authenticated_user_id = current_user.id if current_user is not None else None
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
+
+    if job.user_id is not None:
+        if authenticated_user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Vui lòng đăng nhập để thao tác với tác vụ này.",
+            )
+        is_admin = getattr(current_user.role, "value", str(current_user.role)) == "admin"
+        if job.user_id != authenticated_user_id and not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bạn không có quyền hủy tác vụ của người dùng khác.",
+            )
+
+    success, message, updated_job = job_manager.cancel_job(
+        job_id,
+        user_id=authenticated_user_id,
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        )
+
+    return ApiResponse(
+        data=updated_job.to_dict(),
+        message=message,
+    )
+
+
 @router.get("/jobs/{job_id}/events")
 async def stream_job_events(job_id: str):
     """
@@ -406,7 +575,11 @@ async def stream_job_events(job_id: str):
                     data = await asyncio.wait_for(q.get(), timeout=10.0)
                     payload = json.dumps(data, ensure_ascii=False)
                     yield f"data: {payload}\n\n"
-                    if data.get("status") in (JobStatus.COMPLETED.value, JobStatus.FAILED.value):
+                    if data.get("status") in (
+                        JobStatus.COMPLETED.value,
+                        JobStatus.FAILED.value,
+                        JobStatus.CANCELLED.value,
+                    ):
                         break
                 except asyncio.TimeoutError:
                     # Gửi heartbeat giữ kết nối
@@ -429,9 +602,11 @@ async def stream_job_events(job_id: str):
 async def upload_and_translate(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
+    pages: Optional[str] = Form(None),
     current_user: Optional[User] = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ):
+    start_time = time.time()
     max_upload_mb, max_ocr_pages = get_user_limits(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
@@ -483,8 +658,21 @@ async def upload_and_translate(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
+        # PDFL-255.1: Parse và validate dải trang nếu được truyền vào
+        selected_pages: Optional[list[int]] = None
+        if pages is not None and pages.strip() and pages.strip().lower() != "all":
+            try:
+                selected_pages = pdf_service.parse_page_selection(pages, total_pages=page_count)
+            except ValueError as pe:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Dải trang không hợp lệ: {pe}",
+                )
+
+        effective_page_count = len(selected_pages) if selected_pages is not None else page_count
+
         max_allowed_pages = get_max_pages_by_role(current_user)
-        if page_count > max_allowed_pages:
+        if effective_page_count > max_allowed_pages:
             role_label = (
                 "Guest"
                 if current_user is None
@@ -493,25 +681,29 @@ async def upload_and_translate(
             raise HTTPException(
                 status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=(
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                    f"Tài liệu có {effective_page_count} trang cần xử lý, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
             )
 
-        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
+        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
         is_ocr_used = False
         original_text = ""
 
         if not is_scanned:
-            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
+            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
 
         if not original_text.strip():
-            is_ocr_used = True
-            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_allowed_pages})...")
-            ocr_res = ocr_service.extract_text_from_scanned_pdf(
+            logger.info(f"[Process] Fallback to OCR / Hybrid for scanned document (max_pages={max_allowed_pages}, selected_pages={selected_pages})...")
+            hybrid_res = pdf_service.extract_hybrid_fast_path(
                 tmp_path,
+                ocr_service=ocr_service,
                 max_pages=max_allowed_pages,
+                selected_pages=selected_pages,
             )
-            original_text = ocr_res.get("text", "")
+            original_text = hybrid_res.get("text", "")
+            is_ocr_used = bool(
+                hybrid_res.get("ocr_pages_count", 0) > 0 or hybrid_res.get("fast_path_used") is False
+            )
 
         if not original_text.strip():
             raise HTTPException(
@@ -521,7 +713,7 @@ async def upload_and_translate(
 
         logger.info(
             f"[Upload-and-Translate Request] file={file.filename!r}, target_lang={target_lang!r}, "
-            f"text_len={len(original_text)}, text_preview={original_text[:80]!r}"
+            f"pages={pages!r}, text_len={len(original_text)}, text_preview={original_text[:80]!r}"
         )
 
         translation_result = translation_service.translate_text(
@@ -535,6 +727,7 @@ async def upload_and_translate(
             f"result_preview={translation_result.get('translated_text', '')[:80]!r}"
         )
 
+        execution_time_ms = max(1, int((time.time() - start_time) * 1000))
         document_id: Optional[int] = None
         history_id: Optional[int] = None
         if current_user is not None:
@@ -550,7 +743,7 @@ async def upload_and_translate(
                     stored_filename=stored_filename,
                     stored_path=rel_path,
                     file_size_bytes=len(content),
-                    page_count=page_count,
+                    page_count=effective_page_count,
                     target_lang=target_lang,
                     is_ocr_used=is_ocr_used,
                 )
@@ -562,7 +755,7 @@ async def upload_and_translate(
                     f"[Process] Saved document id={document_id} for user_id={current_user.id}"
                 )
 
-                # Persist processing history & result (PDFL-165.1)
+                # Persist processing history & result (PDFL-165.1, PDFL-169)
                 try:
                     from app.models.processing_history import ActionType, ProcessingStatus
                     from app.schemas.processing_history import ProcessingHistoryCreate
@@ -575,6 +768,7 @@ async def upload_and_translate(
                             document_id=document_id,
                             action_type=ActionType.TRANSLATE,
                             status=ProcessingStatus.PENDING,
+                            execution_time_ms=execution_time_ms,
                         ),
                         reuse_pending=False,
                     )
@@ -586,14 +780,16 @@ async def upload_and_translate(
                         result_data={
                             "document_id": document_id,
                             "filename": file.filename,
-                            "page_count": page_count,
+                            "page_count": effective_page_count,
                             "file_size_mb": round(len(content) / (1024 * 1024), 2),
                             "target_lang": target_lang,
                             "is_ocr_used": is_ocr_used,
                             "original_text": original_text,
                             "translated_text": translation_result["translated_text"],
                             "engine_used": translation_result["engine_used"],
+                            "execution_time_ms": execution_time_ms,
                         },
+                        execution_time_ms=execution_time_ms,
                     )
                 except Exception as hist_err:
                     logger.error(f"[Process] Failed to persist history for user_id={current_user.id}: {hist_err}")
@@ -607,13 +803,14 @@ async def upload_and_translate(
             document_id=document_id,
             history_id=history_id,
             filename=file.filename,
-            page_count=page_count,
+            page_count=effective_page_count,
             file_size_mb=round(len(content) / (1024 * 1024), 2),
             target_lang=target_lang,
             is_ocr_used=is_ocr_used,
             original_text=original_text,
             translated_text=translation_result["translated_text"],
             engine_used=translation_result["engine_used"],
+            execution_time_ms=execution_time_ms,
         )
 
         return ApiResponse(data=response_data, message="Xử lý và dịch thuật tài liệu thành công.")
@@ -632,6 +829,30 @@ async def upload_and_translate(
                 os.remove(tmp_path)
             except Exception:
                 pass
+
+
+compat_router = APIRouter(tags=["Document Processing Compat"])
+
+
+@compat_router.post("/process", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+@router.post("", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+@router.post("/", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+@router.post("/process", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+async def process_compatibility_endpoint(
+    file: UploadFile = File(...),
+    target_lang: str = Form("vi"),
+    pages: Optional[str] = Form(None),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
+    """PDFL-255.1: Compatibility endpoint for /process and /api/process."""
+    return await upload_and_translate(
+        file=file,
+        target_lang=target_lang,
+        pages=pages,
+        current_user=current_user,
+        db=db,
+    )
 
 
 @router.post("/retranslate", response_model=ApiResponse[dict])
@@ -667,10 +888,38 @@ async def retranslate(
     )
 
 
+def get_download_current_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """
+    PDFL-254.1: Xác định người dùng cho endpoint tải tài liệu (/download):
+    - Tương thích ngược: Nếu app.dependency_overrides chứa get_current_user hoặc
+      get_download_current_user (mock auth trong các test suite), sử dụng override đó.
+    - Nếu request có Bearer token: xác thực chặt chẽ qua get_current_user (401 INVALID/EXPIRED, 403 INACTIVE).
+    - Nếu không có token: trả về None (Guest).
+    """
+    if hasattr(request, "app") and getattr(request.app, "dependency_overrides", None):
+        overrides = request.app.dependency_overrides
+        if get_download_current_user in overrides:
+            return overrides[get_download_current_user]()
+        if get_current_user in overrides:
+            return overrides[get_current_user]()
+        if get_optional_current_user in overrides:
+            return overrides[get_optional_current_user]()
+
+    auth_header = request.headers.get("authorization")
+    if not auth_header or not auth_header.strip():
+        return None
+
+    return get_current_user(request=request, credentials=credentials, db=db)
+
+
 @router.post("/download")
 async def download_result(
     request: DownloadRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_download_current_user),
 ):
     export_type = request.export_type
 
@@ -752,7 +1001,7 @@ async def download_result(
     clean_path_name = Path(re.sub(r'[\r\n]+', '', request.filename or '').strip().replace('\\', '/')).name
     raw_filename = re.sub(r'[\\/*?:"<>|]', "", clean_path_name).strip()
     raw_filename = re.sub(r'^\.+', '', raw_filename).strip() or "document"
-    raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE).strip()
+    raw_filename = re.sub(r'\.(pdf|txt|docx)$', '', raw_filename, flags=re.IGNORECASE).strip()
     for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
         if raw_filename.endswith(sfx):
             raw_filename = raw_filename[:-len(sfx)]
@@ -763,7 +1012,38 @@ async def download_result(
 
     base_name = f"{raw_filename}{target_suffix}"
     fmt = (request.format or "txt").strip().lower()
-    ext = "pdf" if fmt == "pdf" else "txt"
+    if fmt == "docx":
+        ext = "docx"
+    elif fmt == "pdf":
+        ext = "pdf"
+    else:
+        ext = "txt"
+
+    # PDFL-254.1: Kiểm tra quyền tải file DOCX (chỉ dành riêng cho tài khoản Pro/Admin; Free/Guest trả về HTTP 403)
+    if ext == "docx":
+        user_role = current_user.role if current_user else None
+        is_pro_or_admin = (
+            user_role in (UserRole.PRO, UserRole.ADMIN)
+            or (isinstance(user_role, str) and user_role.lower() in ("pro", "admin"))
+            or getattr(current_user, "is_pro", False)
+        )
+        if not is_pro_or_admin:
+            logger.warning(
+                f"[Download] Caller (user_id={getattr(current_user, 'id', None)}, role='{user_role}') denied DOCX export."
+            )
+            raise ForbiddenException(
+                message="Tính năng tải tệp DOCX chỉ dành riêng cho tài khoản Pro.",
+                error_code="PRO_REQUIRED",
+                details={"upgrade_url": "/#pricingSection"},
+            )
+    else:
+        # Đối với các định dạng khác (txt, pdf): Nếu chưa đăng nhập (Guest không có Bearer token)
+        # thì yêu cầu xác thực HTTP 401 theo chuẩn bảo mật hệ thống
+        if current_user is None:
+            raise UnauthorizedException(
+                message="Yêu cầu xác thực. Vui lòng gửi kèm Bearer token.",
+                error_code="NOT_AUTHENTICATED",
+            )
 
     try:
         if ext == "pdf":
@@ -774,6 +1054,14 @@ async def download_result(
                 export_type=export_type,
             )
             media_type = "application/pdf"
+        elif ext == "docx":
+            file_bytes = export_service.export_to_docx(
+                content=export_content,
+                title=title,
+                original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
+                export_type=export_type,
+            )
+            media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         else:
             file_bytes = export_service.export_to_txt(
                 content=export_content,
@@ -782,6 +1070,8 @@ async def download_result(
                 original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
             )
             media_type = "text/plain; charset=utf-8"
+    except (ForbiddenException, HTTPException):
+        raise
     except Exception as e:
         logger.exception(f"[Download] Export failed unexpectedly: {e}")
         raise HTTPException(
@@ -820,6 +1110,288 @@ async def download_result(
     return Response(
         content=file_bytes,
         media_type=media_type,
+        headers=headers,
+    )
+
+
+@router.post("/batch-download")
+async def batch_download_results(
+    request: BatchDownloadRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    PDFL-252.2: Tải về trọn bộ file kết quả dịch dưới dạng tệp ZIP nén.
+    - Yêu cầu xác thực tài khoản (Bearer Token).
+    - Kiểm tra danh sách Job ID / History ID hợp lệ, không rỗng và không trùng lặp (400 Bad Request).
+    - Kiểm tra quyền sở hữu (Anti-IDOR): Chỉ cho phép tải file của chính mình hoặc Admin (403/404).
+    - Tạo nội dung tài liệu theo định dạng yêu cầu (PDF/TXT/DOCX).
+    - Đóng gói file ZIP với cơ chế khử trùng lặp tên file (ví dụ: report (1).pdf).
+    - Trả về application/zip với header Content-Disposition phù hợp.
+    """
+    raw_job_ids = request.job_ids
+    raw_hist_ids = request.history_ids
+
+    # 1. Kiểm tra danh sách không được rỗng (PDFL-252.2)
+    has_job_ids = raw_job_ids is not None and len(raw_job_ids) > 0
+    has_hist_ids = raw_hist_ids is not None and len(raw_hist_ids) > 0
+
+    if not has_job_ids and not has_hist_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách mã tác vụ (job_ids) hoặc lịch sử (history_ids) không được để trống.",
+        )
+
+    if raw_job_ids is not None and len(raw_job_ids) == 0 and not has_hist_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách job_ids không được để trống.",
+        )
+    if raw_hist_ids is not None and len(raw_hist_ids) == 0 and not has_job_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách history_ids không được để trống.",
+        )
+
+    # 2. Kiểm tra trùng lặp ID (reject duplicates)
+    if raw_job_ids and len(raw_job_ids) != len(set(raw_job_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách job_ids chứa mã định danh trùng lặp.",
+        )
+    if raw_hist_ids and len(raw_hist_ids) != len(set(raw_hist_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách history_ids chứa mã định danh trùng lặp.",
+        )
+
+    items_to_package: list[tuple[str, str, bytes]] = []
+    is_admin = (current_user.role == UserRole.ADMIN or str(current_user.role).lower() == "admin")
+
+    fmt = (request.format or "pdf").strip().lower()
+    export_type = request.export_type or ExportTargetType.TRANSLATED
+
+    # Kiểm tra quyền tải file DOCX (chỉ dành riêng cho Pro/Admin)
+    if fmt == "docx":
+        user_role = current_user.role
+        is_pro_or_admin = (
+            user_role in (UserRole.PRO, UserRole.ADMIN)
+            or (isinstance(user_role, str) and user_role.lower() in ("pro", "admin"))
+            or getattr(current_user, "is_pro", False)
+        )
+        if not is_pro_or_admin:
+            logger.warning(
+                f"[BatchDownload] Caller (user_id={current_user.id}, role='{user_role}') denied DOCX batch export."
+            )
+            raise ForbiddenException(
+                message="Tính năng tải tệp DOCX chỉ dành riêng cho tài khoản Pro.",
+                error_code="PRO_REQUIRED",
+                details={"upgrade_url": "/#pricingSection"},
+            )
+
+    # Xử lý theo job_ids
+    if raw_job_ids:
+        for jid in raw_job_ids:
+            job = job_manager.get_job(jid)
+            if not job:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Không tìm thấy tác vụ xử lý có mã: {jid}.",
+                )
+            # Anti-IDOR: chỉ owner hoặc Admin mới được tải
+            if not is_admin:
+                if job.user_id is None or job.user_id != current_user.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Bạn không có quyền truy cập tác vụ {jid}.",
+                    )
+            if job.status != JobStatus.COMPLETED:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Tác vụ {jid} chưa hoàn thành thành công (trạng thái: {job.status.value}).",
+                )
+
+            res = job.result or {}
+            raw_filename = res.get("filename") or job.filename or "document.pdf"
+            translated_text = res.get("translated_text", "")
+            original_text = res.get("original_text", "")
+
+            if export_type == ExportTargetType.ORIGINAL:
+                content_text = original_text or translated_text
+            elif export_type == ExportTargetType.BILINGUAL:
+                content_text = translated_text
+            else:
+                content_text = translated_text or original_text
+
+            if not content_text:
+                continue
+
+            clean_stem = Path(raw_filename).stem or "document"
+            title = f"PDF-Lingua - {clean_stem}"
+
+            try:
+                if fmt == "pdf":
+                    file_bytes = export_service.export_to_pdf(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".pdf"
+                elif fmt == "docx":
+                    file_bytes = export_service.export_to_docx(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".docx"
+                else:
+                    file_bytes = export_service.export_to_txt(
+                        content=content_text,
+                        title=title,
+                        export_type=export_type,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                    )
+                    ext = ".txt"
+            except Exception as exp_err:
+                logger.error(f"[BatchDownload] Export error for job {jid}: {exp_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Lỗi khi tạo định dạng xuất cho tác vụ {jid}.",
+                ) from exp_err
+
+            items_to_package.append((raw_filename, ext, file_bytes))
+
+    # Xử lý theo history_ids
+    if raw_hist_ids:
+        from app.models.processing_history import ProcessingHistory, ProcessingStatus
+
+        for hid in raw_hist_ids:
+            hist = db.query(ProcessingHistory).filter(ProcessingHistory.id == hid).first()
+            if not hist:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Không tìm thấy bản ghi lịch sử xử lý có mã: {hid}.",
+                )
+            if not is_admin and hist.user_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Bạn không có quyền truy cập bản ghi lịch sử {hid}.",
+                )
+            if hist.status != ProcessingStatus.SUCCESS:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Bản ghi lịch sử {hid} chưa xử lý thành công.",
+                )
+
+            result_dict = None
+            if hist.result_path:
+                result_dict = storage_service.read_result_file(hist.user_id, hist.result_path)
+
+            raw_filename = (
+                (result_dict and result_dict.get("filename"))
+                or (hist.document and hist.document.original_filename)
+                or f"document_{hid}.pdf"
+            )
+            translated_text = (result_dict and result_dict.get("translated_text")) or ""
+            original_text = (result_dict and result_dict.get("original_text")) or ""
+
+            if export_type == ExportTargetType.ORIGINAL:
+                content_text = original_text or translated_text
+            elif export_type == ExportTargetType.BILINGUAL:
+                content_text = translated_text
+            else:
+                content_text = translated_text or original_text
+
+            if not content_text:
+                continue
+
+            clean_stem = Path(raw_filename).stem or f"document_{hid}"
+            title = f"PDF-Lingua - {clean_stem}"
+
+            try:
+                if fmt == "pdf":
+                    file_bytes = export_service.export_to_pdf(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".pdf"
+                elif fmt == "docx":
+                    file_bytes = export_service.export_to_docx(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".docx"
+                else:
+                    file_bytes = export_service.export_to_txt(
+                        content=content_text,
+                        title=title,
+                        export_type=export_type,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                    )
+                    ext = ".txt"
+            except Exception as exp_err:
+                logger.error(f"[BatchDownload] Export error for history {hid}: {exp_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Lỗi khi tạo định dạng xuất cho bản ghi lịch sử {hid}.",
+                ) from exp_err
+
+            items_to_package.append((raw_filename, ext, file_bytes))
+
+    if not items_to_package:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Không có nội dung tệp hợp lệ để đóng gói vào tệp ZIP.",
+        )
+
+    # Đóng gói ZIP với cơ chế khử trùng lặp tên tệp
+    zip_buffer = io.BytesIO()
+    used_archive_names: set[str] = set()
+
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for raw_name, ext, file_data in items_to_package:
+            sanitized_basename = os.path.basename(raw_name.replace("\\", "/"))
+            stem = re.sub(r'\.(pdf|txt|docx)$', '', sanitized_basename, flags=re.IGNORECASE).strip() or "document"
+            stem = re.sub(r'[\\/*?:"<>|]', "", stem).strip() or "document"
+
+            candidate_name = f"{stem}{ext}"
+            if candidate_name not in used_archive_names:
+                used_archive_names.add(candidate_name)
+                final_entry_name = candidate_name
+            else:
+                counter = 1
+                while True:
+                    candidate = f"{stem} ({counter}){ext}"
+                    if candidate not in used_archive_names:
+                        used_archive_names.add(candidate)
+                        final_entry_name = candidate
+                        break
+                    counter += 1
+
+            zf.writestr(final_entry_name, file_data)
+
+    zip_bytes = zip_buffer.getvalue()
+
+    headers = {
+        "Content-Disposition": 'attachment; filename="PDFLingua_Batch_Results.zip"',
+        "Content-Length": str(len(zip_bytes)),
+        "Content-Type": "application/zip",
+        "Cache-Control": "no-cache, no-store, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Expose-Headers": "Content-Disposition, Content-Length",
+    }
+
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
         headers=headers,
     )
 

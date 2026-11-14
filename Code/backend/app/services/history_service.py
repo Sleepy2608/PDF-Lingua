@@ -275,6 +275,17 @@ class HistoryService:
             record.result_path = rel_path
             record.status = ProcessingStatus.SUCCESS
             record.error_message = None
+
+            if execution_time_ms is None and isinstance(result_data, dict):
+                raw_time = result_data.get("execution_time_ms")
+                if raw_time is not None:
+                    try:
+                        parsed = int(raw_time)
+                        if parsed >= 0:
+                            execution_time_ms = parsed
+                    except (ValueError, TypeError):
+                        pass
+
             if execution_time_ms is not None and execution_time_ms >= 0:
                 record.execution_time_ms = execution_time_ms
             record.updated_at = datetime.now(timezone.utc)
@@ -377,6 +388,7 @@ class HistoryService:
         result_data.setdefault("document_filename", record.document_filename or (record.document.original_filename if record.document else None))
         result_data.setdefault("action_type", record.action_type.value if hasattr(record.action_type, "value") else str(record.action_type))
         result_data.setdefault("created_at", record.created_at)
+        result_data.setdefault("execution_time_ms", record.execution_time_ms)
 
         return result_data
 

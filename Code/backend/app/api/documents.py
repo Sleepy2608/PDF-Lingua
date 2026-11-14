@@ -8,7 +8,9 @@ Enforces:
 - Admins can access documents for administrative & audit purposes.
 """
 
+import re
 from typing import Optional
+import unicodedata
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -124,6 +126,90 @@ async def download_document_file(
             "Content-Disposition": f"attachment; filename=\"{encoded_name}\"; filename*=UTF-8''{encoded_name}"
         },
     )
+
+
+compat_router = APIRouter(prefix="/documents", tags=["Documents Compat"])
+
+
+@router.get("/{document_id}/file")
+@router.get("/{document_id}/preview")
+async def preview_document_file(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Securely stream inline PDF document for browser Canvas Preview & Dual/Split View (PDFL-256.2).
+    - Returns Content-Type: application/pdf and Content-Disposition: inline.
+    - Strict multi-tenant access control: only Owner or Admin can access.
+    - Anti-IDOR: Returns 403 Forbidden if user attempts to access another user's document.
+    - Path-traversal safe: Resolves storage path solely via storage_service.
+    """
+    query = db.query(Document).filter(Document.id == document_id)
+    doc = query.first()
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tài liệu không tồn tại.",
+        )
+
+    if current_user.role != UserRole.ADMIN and doc.user_id != current_user.id:
+        logger.warning(
+            f"[PDFPreview] Access denied: user_id={current_user.id} attempted to access "
+            f"document_id={document_id} owned by user_id={doc.user_id}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền truy cập tài liệu này.",
+        )
+
+    file_path = storage_service.get_document_path(
+        user_id=doc.user_id,
+        stored_filename=doc.stored_filename,
+    )
+    if not file_path or not file_path.is_file():
+        logger.error(
+            f"[PDFPreview] Physical file missing for document_id={document_id}, "
+            f"user_id={doc.user_id}, file={doc.stored_filename}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tệp tin vật lý không tồn tại trên hệ thống lưu trữ.",
+        )
+
+    # Sanitize filename against CRLF / Header Injection (RFC 6266 & RFC 5987)
+    raw_name = re.sub(r'[\r\n]+', '', doc.original_filename or '').strip() or "document.pdf"
+    encoded_name = quote(raw_name)
+
+    normalized = unicodedata.normalize('NFKD', raw_name)
+    ascii_clean = normalized.encode('ascii', 'ignore').decode('ascii')
+    ascii_clean = re.sub(r'["\\]', '', ascii_clean)
+    ascii_clean = re.sub(r'[^a-zA-Z0-9_\-\. ]', '_', ascii_clean).strip() or "document.pdf"
+
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        headers={
+            "Content-Type": "application/pdf",
+            "Content-Disposition": f'inline; filename="{ascii_clean}"; filename*=UTF-8\'\'{encoded_name}',
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+# Attach routes to compat_router so GET /documents/{document_id}/file works directly
+compat_router.add_api_route(
+    "/{document_id}/file",
+    preview_document_file,
+    methods=["GET"],
+    summary="Secure Inline PDF Stream Compat Route",
+)
+compat_router.add_api_route(
+    "/{document_id}/preview",
+    preview_document_file,
+    methods=["GET"],
+    summary="Secure Inline PDF Stream Compat Preview Route",
+)
 
 
 @router.delete("/{document_id}", response_model=ApiResponse[dict])

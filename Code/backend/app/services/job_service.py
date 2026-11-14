@@ -12,6 +12,7 @@ class JobStatus(str, Enum):
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
 @dataclass
@@ -19,6 +20,7 @@ class Job:
     job_id: str
     filename: str
     target_lang: str
+    user_id: Optional[int] = None
     status: JobStatus = JobStatus.PENDING
     total_pages: int = 0
     processed_pages: int = 0
@@ -30,12 +32,22 @@ class Job:
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     completed_at: Optional[float] = None
+    execution_time_ms: Optional[int] = None
+    history_id: Optional[int] = None
+    _cancel_event: threading.Event = field(default_factory=threading.Event, repr=False)
+
+    @property
+    def is_cancelled(self) -> bool:
+        return self.status == JobStatus.CANCELLED or self._cancel_event.is_set()
 
     def to_dict(self) -> dict[str, Any]:
+        res_exec_time = self.result.get("execution_time_ms") if isinstance(self.result, dict) else None
+        res_hist_id = self.result.get("history_id") if isinstance(self.result, dict) else None
         return {
             "job_id": self.job_id,
             "filename": self.filename,
             "target_lang": self.target_lang,
+            "user_id": self.user_id,
             "status": self.status.value,
             "total_pages": self.total_pages,
             "processed_pages": self.processed_pages,
@@ -47,6 +59,8 @@ class Job:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "completed_at": self.completed_at,
+            "execution_time_ms": self.execution_time_ms if self.execution_time_ms is not None else res_exec_time,
+            "history_id": self.history_id if self.history_id is not None else res_hist_id,
         }
 
 
@@ -63,11 +77,11 @@ class JobManager:
         self._max_retained_jobs = max_retained_jobs
         self._job_ttl_seconds = job_ttl_seconds
 
-    def create_job(self, filename: str, target_lang: str) -> Job:
+    def create_job(self, filename: str, target_lang: str, user_id: Optional[int] = None) -> Job:
         with self._lock:
             self._cleanup_expired_jobs_locked()
             job_id = str(uuid.uuid4())
-            job = Job(job_id=job_id, filename=filename, target_lang=target_lang)
+            job = Job(job_id=job_id, filename=filename, target_lang=target_lang, user_id=user_id)
             self._jobs[job_id] = job
             return job
 
@@ -84,12 +98,29 @@ class JobManager:
     ) -> Optional[Job]:
         with self._lock:
             job = self._jobs.get(job_id)
-            if not job:
+            if not job or job.is_cancelled:
                 return None
             job.status = JobStatus.PROCESSING
             job.total_pages = total_pages
             job.progress_percentage = max(job.progress_percentage, progress_percentage)
             job.current_step = 2
+            job.message = message
+            job.updated_at = time.time()
+            self._notify_subscribers_locked(job)
+            return job
+
+    def set_queued(
+        self,
+        job_id: str,
+        message: str = "Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
+    ) -> Optional[Job]:
+        """Cập nhật thông điệp hàng đợi chờ, giữ nguyên trạng thái PENDING (PDFL-71.1)"""
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if not job or job.is_cancelled:
+                return None
+            job.status = JobStatus.PENDING
+            job.current_step = 1
             job.message = message
             job.updated_at = time.time()
             self._notify_subscribers_locked(job)
@@ -105,7 +136,11 @@ class JobManager:
     ) -> Optional[Job]:
         with self._lock:
             job = self._jobs.get(job_id)
-            if not job or job.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+            if (
+                not job
+                or job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED)
+                or job.is_cancelled
+            ):
                 return None
 
             job.status = JobStatus.PROCESSING
@@ -138,7 +173,11 @@ class JobManager:
     ) -> Optional[Job]:
         with self._lock:
             job = self._jobs.get(job_id)
-            if not job or job.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+            if (
+                not job
+                or job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED)
+                or job.is_cancelled
+            ):
                 return None
             job.status = JobStatus.PROCESSING
             job.current_step = 3
@@ -153,33 +192,90 @@ class JobManager:
         job_id: str,
         result: dict[str, Any],
         message: str = "Xử lý và dịch thuật hoàn tất!",
+        execution_time_ms: Optional[int] = None,
+        history_id: Optional[int] = None,
     ) -> Optional[Job]:
         with self._lock:
             job = self._jobs.get(job_id)
-            if not job:
+            if not job or job.status in (JobStatus.FAILED, JobStatus.CANCELLED) or job.is_cancelled:
                 return None
             job.status = JobStatus.COMPLETED
             job.progress_percentage = 100.0
             job.current_step = 4
             job.message = message
             job.result = result
+            if execution_time_ms is not None:
+                job.execution_time_ms = execution_time_ms
+            elif isinstance(result, dict) and "execution_time_ms" in result:
+                job.execution_time_ms = result["execution_time_ms"]
+            if history_id is not None:
+                job.history_id = history_id
+            elif isinstance(result, dict) and "history_id" in result:
+                job.history_id = result["history_id"]
             job.updated_at = time.time()
             job.completed_at = time.time()
             self._notify_subscribers_locked(job)
             return job
 
-    def set_failed(self, job_id: str, error: str) -> Optional[Job]:
+    def set_failed(
+        self,
+        job_id: str,
+        error: str,
+        execution_time_ms: Optional[int] = None,
+    ) -> Optional[Job]:
         with self._lock:
             job = self._jobs.get(job_id)
             if not job:
                 return None
+            if job.status == JobStatus.CANCELLED:
+                return job
             job.status = JobStatus.FAILED
             job.error = error
             job.message = f"Xử lý thất bại: {error}"
+            if execution_time_ms is not None:
+                job.execution_time_ms = execution_time_ms
             job.updated_at = time.time()
             job.completed_at = time.time()
             self._notify_subscribers_locked(job)
             return job
+
+    def cancel_job(
+        self,
+        job_id: str,
+        user_id: Optional[int] = None,
+        reason: str = "Tác vụ đã bị hủy.",
+    ) -> tuple[bool, str, Optional[Job]]:
+        """
+        Hủy tác vụ một cách an toàn và dứt khoát (PDFL-71.1).
+        Phân biệt rõ ràng với ngừng theo dõi SSE (unsubscribe):
+        - Hủy job: Thay đổi trạng thái Job sang CANCELLED, phát sự kiện hủy qua _cancel_event.
+        - Ngừng theo dõi: Chỉ ngắt kết nối subscriber queue của client mà job vẫn tiếp tục chạy.
+        """
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if not job:
+                return False, "Không tìm thấy tác vụ.", None
+
+            if user_id is not None and job.user_id is not None and job.user_id != user_id:
+                return False, "Bạn không có quyền hủy tác vụ của người dùng khác.", None
+
+            if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
+                return False, f"Không thể hủy tác vụ vì đã ở trạng thái {job.status.value}.", job
+
+            job.status = JobStatus.CANCELLED
+            job.message = reason
+            job.error = "Tác vụ đã bị hủy."
+            job.updated_at = time.time()
+            job.completed_at = time.time()
+            job._cancel_event.set()
+            self._notify_subscribers_locked(job)
+            return True, "Hủy tác vụ thành công.", job
+
+    def is_job_cancelled(self, job_id: str) -> bool:
+        """Kiểm tra xem tác vụ đã nhận tín hiệu hủy hay chưa (thread-safe)"""
+        with self._lock:
+            job = self._jobs.get(job_id)
+            return job.is_cancelled if job else False
 
     def subscribe(self, job_id: str, loop: Optional[asyncio.AbstractEventLoop] = None) -> asyncio.Queue:
         """Đăng ký nhận stream event cho một Job ID (dành cho SSE)"""
@@ -238,7 +334,7 @@ class JobManager:
         expired_ids = [
             jid
             for jid, j in self._jobs.items()
-            if (j.status in (JobStatus.COMPLETED, JobStatus.FAILED))
+            if (j.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED))
             and (now - (j.completed_at or j.updated_at) > self._job_ttl_seconds)
         ]
         for jid in expired_ids:
@@ -248,7 +344,11 @@ class JobManager:
 
         # Giới hạn số lượng job tối đa trong RAM:
         # TUYỆT ĐỐI KHÔNG XÓA các Job đang hoạt động (PENDING hoặc PROCESSING) (PDFL-111.4)
-        finished_jobs = [j for j in self._jobs.values() if j.status in (JobStatus.COMPLETED, JobStatus.FAILED)]
+        finished_jobs = [
+            j
+            for j in self._jobs.values()
+            if j.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED)
+        ]
         if len(self._jobs) > self._max_retained_jobs and finished_jobs:
             sorted_finished = sorted(finished_jobs, key=lambda x: (x.completed_at or x.updated_at or x.created_at))
             excess = len(self._jobs) - self._max_retained_jobs
