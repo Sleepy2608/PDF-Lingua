@@ -532,6 +532,35 @@
                             </div>
 
                             <div class="toolbar-actions">
+                                <!-- View Mode Switcher (PDFL-256.2) -->
+                                <div class="view-mode-switcher" id="viewModeSwitcher" role="group" aria-label="Chế độ hiển thị">
+                                    <button type="button" class="view-mode-btn" id="btnViewModeText" data-mode="text" title="Chỉ xem văn bản trích xuất" aria-pressed="false">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="21" y1="10" x2="3" y2="10"></line>
+                                            <line x1="21" y1="6" x2="3" y2="6"></line>
+                                            <line x1="21" y1="14" x2="3" y2="14"></line>
+                                            <line x1="21" y1="18" x2="3" y2="18"></line>
+                                        </svg>
+                                        <span>Văn bản</span>
+                                    </button>
+                                    <button type="button" class="view-mode-btn" id="btnViewModePdf" data-mode="pdf" title="Xem trước PDF gốc" aria-pressed="false">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        </svg>
+                                        <span>PDF gốc</span>
+                                    </button>
+                                    <button type="button" class="view-mode-btn active" id="btnViewModeSplit" data-mode="split" title="So sánh song song (PDF gốc | Bản dịch)" aria-pressed="true">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                            <line x1="12" y1="3" x2="12" y2="21"></line>
+                                        </svg>
+                                        <span>Song song</span>
+                                    </button>
+                                </div>
+
                                 <div class="lang-select-wrap">
                                     <span class="lang-select-label">Dịch sang:</span>
                                     <select class="lang-select" id="targetLangSelect">
@@ -831,8 +860,27 @@
                             </div>
                         </div>
 
-                        <!-- PDF.js Canvas Preview & Page Navigation Controls (PDFL-256.1) -->
-                        <div class="pdf-preview-card" id="pdfPreviewContainer" style="display: none;">
+                        <!-- Workspace Dynamic Views Wrapper (PDFL-256.2) -->
+                        <div class="workspace-views-wrapper view-mode-split" id="workspaceViewsWrapper" data-view-mode="split" data-split-tab="pdf">
+                            <!-- Mobile Tab Bar for Split Mode (Visible on <= 1024px) -->
+                            <div class="split-mobile-tab-bar" id="splitMobileTabBar" style="display: none;" role="tablist" aria-label="Chuyển tab so sánh">
+                                <button type="button" class="split-tab-btn active" id="btnSplitTabPdf" role="tab" aria-selected="true" data-tab="pdf">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span>PDF Gốc</span>
+                                </button>
+                                <button type="button" class="split-tab-btn" id="btnSplitTabTranslated" role="tab" aria-selected="false" data-tab="translated">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6" />
+                                    </svg>
+                                    <span>Bản Dịch</span>
+                                </button>
+                            </div>
+
+                            <!-- PDF.js Canvas Preview & Page Navigation Controls (PDFL-256.1) -->
+                            <div class="pdf-preview-card" id="pdfPreviewContainer" style="display: none;">
                             <div class="pdf-preview-header">
                                 <div class="preview-title-group">
                                     <div class="preview-badge-icon" aria-hidden="true">
@@ -942,9 +990,9 @@
                         </div>
 
                         <!-- Dual-Pane Split View -->
-                        <div class="dual-pane-grid">
+                        <div class="dual-pane-grid" id="dualPaneGrid">
                             <!-- Left: Original Text Pane -->
-                            <div class="pane-card">
+                            <div class="pane-card" id="paneCardOriginal">
                                 <div class="pane-header">
                                     <div class="pane-title-group">
                                         <span class="pane-title">Văn bản gốc</span>
@@ -969,7 +1017,7 @@
                             </div>
 
                             <!-- Right: Translated Text Pane -->
-                            <div class="pane-card">
+                            <div class="pane-card" id="paneCardTranslated">
                                 <div class="pane-header">
                                     <div class="pane-title-group">
                                         <span class="pane-title">Bản dịch</span>
@@ -995,7 +1043,8 @@
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
 
                 <!-- Document Management Page Section (PDFL-92.1 & PDFL-92.2, Initially Hidden) -->

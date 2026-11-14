@@ -1946,3 +1946,213 @@
     max-width: 100%;
   }
 }
+
+/* ==========================================================================
+   Dual/Split View & View Mode Switcher (PDFL-256.2)
+   ========================================================================== */
+
+/* Segmented View Mode Switcher */
+.view-mode-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  border: 1px solid var(--border-subtle);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.view-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.6875rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  line-height: 1.2;
+}
+
+.view-mode-btn:hover {
+  color: var(--text-title);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.view-mode-btn.active {
+  background: #FFFFFF;
+  color: var(--color-primary-indigo);
+  border-color: rgba(79, 70, 229, 0.15);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  font-weight: 700;
+}
+
+.view-mode-btn:focus-visible {
+  outline: 2px solid var(--color-primary-indigo);
+  outline-offset: 1px;
+}
+
+/* Mobile Split Tab Bar (Visible on screens <= 1024px in split mode) */
+.split-mobile-tab-bar {
+  display: none;
+  align-items: center;
+  width: 100%;
+  background: #F1F5F9;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 0.875rem;
+}
+
+.split-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.875rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.split-tab-btn:hover {
+  color: var(--text-title);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.split-tab-btn.active {
+  background: #FFFFFF;
+  color: var(--color-primary-indigo);
+  border-color: rgba(79, 70, 229, 0.15);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+  font-weight: 700;
+}
+
+/* Dynamic Views Wrapper Mode Logic */
+.workspace-views-wrapper {
+  width: 100%;
+  position: relative;
+}
+
+/* 1. View Mode Text (Only extracted text panes) */
+.workspace-views-wrapper.view-mode-text #pdfPreviewContainer {
+  display: none !important;
+}
+.workspace-views-wrapper.view-mode-text .split-mobile-tab-bar {
+  display: none !important;
+}
+.workspace-views-wrapper.view-mode-text #dualPaneGrid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.workspace-views-wrapper.view-mode-text #paneCardOriginal {
+  display: flex !important;
+}
+.workspace-views-wrapper.view-mode-text #paneCardTranslated {
+  display: flex !important;
+}
+
+/* 2. View Mode PDF (Full-width PDF Preview) */
+.workspace-views-wrapper.view-mode-pdf #pdfPreviewContainer {
+  display: flex !important;
+  width: 100% !important;
+  margin-bottom: 1.5rem;
+}
+.workspace-views-wrapper.view-mode-pdf .split-mobile-tab-bar {
+  display: none !important;
+}
+.workspace-views-wrapper.view-mode-pdf #dualPaneGrid {
+  display: none !important;
+}
+
+/* 3. View Mode Split (Side-by-side on desktop > 1024px; tabbed on <= 1024px) */
+@media (min-width: 1025px) {
+  .workspace-views-wrapper.view-mode-split {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.5rem !important;
+    align-items: stretch !important;
+  }
+  .workspace-views-wrapper.view-mode-split .split-mobile-tab-bar {
+    display: none !important;
+  }
+  .workspace-views-wrapper.view-mode-split #pdfPreviewContainer {
+    display: flex !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    height: 100% !important;
+    min-height: 560px;
+  }
+  .workspace-views-wrapper.view-mode-split #dualPaneGrid {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+  }
+  .workspace-views-wrapper.view-mode-split #paneCardOriginal {
+    display: none !important;
+  }
+  .workspace-views-wrapper.view-mode-split #paneCardTranslated {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 560px;
+  }
+  .workspace-views-wrapper.view-mode-split .pdf-preview-viewport {
+    height: calc(100% - 62px);
+    max-height: 720px;
+    min-height: 500px;
+  }
+  .workspace-views-wrapper.view-mode-split #paneTranslated {
+    min-height: 500px;
+    max-height: 720px;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 1024px) {
+  .workspace-views-wrapper.view-mode-split {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  .workspace-views-wrapper.view-mode-split .split-mobile-tab-bar {
+    display: flex !important;
+  }
+  .workspace-views-wrapper.view-mode-split:not([data-split-tab="translated"]) #pdfPreviewContainer,
+  .workspace-views-wrapper.view-mode-split[data-split-tab="pdf"] #pdfPreviewContainer {
+    display: flex !important;
+    width: 100% !important;
+  }
+  .workspace-views-wrapper.view-mode-split:not([data-split-tab="translated"]) #dualPaneGrid,
+  .workspace-views-wrapper.view-mode-split[data-split-tab="pdf"] #dualPaneGrid {
+    display: none !important;
+  }
+  .workspace-views-wrapper.view-mode-split[data-split-tab="translated"] #pdfPreviewContainer {
+    display: none !important;
+  }
+  .workspace-views-wrapper.view-mode-split[data-split-tab="translated"] #dualPaneGrid {
+    display: block !important;
+    width: 100% !important;
+  }
+  .workspace-views-wrapper.view-mode-split[data-split-tab="translated"] #paneCardOriginal {
+    display: none !important;
+  }
+  .workspace-views-wrapper.view-mode-split[data-split-tab="translated"] #paneCardTranslated {
+    display: flex !important;
+    width: 100% !important;
+  }
+}

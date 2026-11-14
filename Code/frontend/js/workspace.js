@@ -3,8 +3,187 @@ const WORKSPACE_DOC_STORAGE_KEY = 'pdfl_workspace_doc_data';
 const ACTIVE_JOB_STORAGE_KEY = 'pdfl_active_job_id';
 const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
 const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
+const VIEW_MODE_STORAGE_KEY = 'pdfl_workspace_view_mode';
 
 let currentDocData = null;
+let currentViewMode = 'split';
+let currentSplitMobileTab = 'pdf';
+
+/**
+ * PDFL-256.2: Switch workspace view modes:
+ * - 'text': Text only (original text pane & translated text pane side-by-side)
+ * - 'pdf': Full-width PDF canvas preview only
+ * - 'split': Dual view (PDF preview on left, translated text pane on right; tabbed on mobile)
+ */
+function setViewMode(mode) {
+  const validModes = ['text', 'pdf', 'split'];
+  const targetMode = validModes.includes(mode) ? mode : 'split';
+  currentViewMode = targetMode;
+
+  const wrapper = document.getElementById('workspaceViewsWrapper');
+  if (wrapper) {
+    wrapper.classList.remove('view-mode-text', 'view-mode-pdf', 'view-mode-split');
+    wrapper.classList.add(`view-mode-${targetMode}`);
+    wrapper.setAttribute('data-view-mode', targetMode);
+  }
+
+  const modeButtons = [
+    { id: 'btnViewModeText', mode: 'text' },
+    { id: 'btnViewModePdf', mode: 'pdf' },
+    { id: 'btnViewModeSplit', mode: 'split' },
+  ];
+
+  modeButtons.forEach((btnConfig) => {
+    const btn = document.getElementById(btnConfig.id);
+    if (btn) {
+      const isActive = btnConfig.mode === targetMode;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    }
+  });
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(VIEW_MODE_STORAGE_KEY, targetMode);
+    } catch (_e) {}
+  }
+
+  if ((targetMode === 'split' || targetMode === 'pdf') && typeof window !== 'undefined' && window.pdfLinguaPreview) {
+    setTimeout(() => {
+      if (typeof window.pdfLinguaPreview.zoomFit === 'function') {
+        window.pdfLinguaPreview.zoomFit();
+      }
+    }, 60);
+  }
+}
+
+/**
+ * PDFL-256.2: Switch mobile/tablet tab in split mode (<= 1024px):
+ * - 'pdf': Displays PDF Preview
+ * - 'translated': Displays Translated text pane
+ */
+function setSplitMobileTab(tab) {
+  const validTabs = ['pdf', 'translated'];
+  const targetTab = validTabs.includes(tab) ? tab : 'pdf';
+  currentSplitMobileTab = targetTab;
+
+  const wrapper = document.getElementById('workspaceViewsWrapper');
+  if (wrapper) {
+    wrapper.setAttribute('data-split-tab', targetTab);
+  }
+
+  const btnPdf = document.getElementById('btnSplitTabPdf');
+  const btnTranslated = document.getElementById('btnSplitTabTranslated');
+
+  if (btnPdf) {
+    const isPdf = targetTab === 'pdf';
+    btnPdf.classList.toggle('active', isPdf);
+    btnPdf.setAttribute('aria-selected', isPdf ? 'true' : 'false');
+  }
+  if (btnTranslated) {
+    const isTrans = targetTab === 'translated';
+    btnTranslated.classList.toggle('active', isTrans);
+    btnTranslated.setAttribute('aria-selected', isTrans ? 'true' : 'false');
+  }
+
+  if (targetTab === 'pdf' && typeof window !== 'undefined' && window.pdfLinguaPreview) {
+    setTimeout(() => {
+      if (typeof window.pdfLinguaPreview.zoomFit === 'function') {
+        window.pdfLinguaPreview.zoomFit();
+      }
+    }, 60);
+  }
+}
+
+/**
+ * PDFL-256.2: Display error message inside PDF Preview container
+ */
+function showPreviewErrorState(msg) {
+  const errorEl = document.getElementById('pdfPreviewError');
+  const errorMsgEl = document.getElementById('pdfPreviewErrorMsg');
+  const canvasWrap = document.getElementById('pdfCanvasWrap');
+  if (errorEl) errorEl.style.display = 'flex';
+  if (errorMsgEl) errorMsgEl.textContent = msg || 'Không thể hiển thị bản xem trước tệp PDF.';
+  if (canvasWrap) canvasWrap.style.opacity = '1';
+}
+
+/**
+ * PDFL-256.2: Authenticated PDF stream fetch for History records
+ * Requests GET /api/documents/{document_id}/file with Authorization Bearer header.
+ */
+async function fetchDocumentPreview(documentId, filename) {
+  if (!documentId) return;
+
+  const previewContainer = document.getElementById('pdfPreviewContainer');
+  if (previewContainer) {
+    previewContainer.style.display = 'block';
+  }
+
+  const loadingEl = document.getElementById('pdfPreviewLoading');
+  const errorEl = document.getElementById('pdfPreviewError');
+  const canvasWrap = document.getElementById('pdfCanvasWrap');
+  if (loadingEl) {
+    loadingEl.style.display = 'flex';
+    const textEl = loadingEl.querySelector('.preview-loading-text');
+    if (textEl) textEl.textContent = 'Đang tải tệp PDF xem trước từ máy chủ...';
+  }
+  if (errorEl) errorEl.style.display = 'none';
+  if (canvasWrap) canvasWrap.style.opacity = '0.5';
+
+  const authHeaders = getAuthHeaders();
+  const rootBase = (typeof API_BASE_URL === 'string')
+    ? API_BASE_URL.replace(/\/api\/process\/?$/, '').replace(/\/process\/?$/, '')
+    : 'http://localhost:8000';
+  const fileUrl = `${rootBase}/api/documents/${encodeURIComponent(documentId)}/file`;
+
+  try {
+    const response = await fetch(fileUrl, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    if (response.status === 200) {
+      const blob = await response.blob();
+      try {
+        Object.defineProperty(blob, 'name', {
+          value: filename || 'tai_lieu.pdf',
+          writable: true,
+          configurable: true,
+        });
+      } catch (_e) {
+        blob.name = filename || 'tai_lieu.pdf';
+      }
+
+      if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.loadPdfPreview === 'function') {
+        await window.pdfLinguaPreview.loadPdfPreview(blob);
+      }
+    } else if (response.status === 401) {
+      let errData = null;
+      try {
+        errData = await response.json();
+      } catch (_e) {}
+      handleAuthError(errData);
+      showPreviewErrorState('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xem trước PDF.');
+    } else if (response.status === 403) {
+      showToast('Bạn không có quyền xem trước tài liệu này.', 'error');
+      showPreviewErrorState('Bạn không có quyền truy cập tệp PDF này.');
+    } else if (response.status === 404) {
+      showToast('Không tìm thấy tệp PDF gốc trên hệ thống.', 'error');
+      showPreviewErrorState('Tệp tin PDF không tồn tại trên hệ thống lưu trữ.');
+    } else {
+      showToast('Không thể tải tệp PDF xem trước.', 'error');
+      showPreviewErrorState('Đã xảy ra lỗi khi tải tệp tin PDF.');
+    }
+  } catch (err) {
+    console.error('[PDFPreview] Fetch preview failed:', err);
+    showToast('Lỗi kết nối khi tải bản xem trước PDF.', 'error');
+    showPreviewErrorState('Lỗi kết nối khi tải bản xem trước.');
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (canvasWrap) canvasWrap.style.opacity = '1';
+  }
+}
 
 function getWorkspaceSessionStorage() {
   try {
@@ -119,6 +298,30 @@ function initWorkspace() {
       });
     }
   });
+
+  // View Mode Switcher Listeners (PDFL-256.2)
+  const btnViewModeText = document.getElementById('btnViewModeText');
+  const btnViewModePdf = document.getElementById('btnViewModePdf');
+  const btnViewModeSplit = document.getElementById('btnViewModeSplit');
+  const btnSplitTabPdf = document.getElementById('btnSplitTabPdf');
+  const btnSplitTabTranslated = document.getElementById('btnSplitTabTranslated');
+
+  if (btnViewModeText) {
+    btnViewModeText.addEventListener('click', () => setViewMode('text'));
+  }
+  if (btnViewModePdf) {
+    btnViewModePdf.addEventListener('click', () => setViewMode('pdf'));
+  }
+  if (btnViewModeSplit) {
+    btnViewModeSplit.addEventListener('click', () => setViewMode('split'));
+  }
+
+  if (btnSplitTabPdf) {
+    btnSplitTabPdf.addEventListener('click', () => setSplitMobileTab('pdf'));
+  }
+  if (btnSplitTabTranslated) {
+    btnSplitTabTranslated.addEventListener('click', () => setSplitMobileTab('translated'));
+  }
 
   updateExportUIState();
 
@@ -1083,7 +1286,18 @@ function renderWorkspace(data) {
   updateCounters();
   updateExportUIState();
 
-  // Initialize PDF Preview if preview module and file/url are available (PDFL-256.1)
+  // Initialize or restore View Mode (PDFL-256.2)
+  const storeRef = getWorkspaceSessionStorage();
+  let savedMode = 'split';
+  if (storeRef) {
+    try {
+      savedMode = storeRef.getItem(VIEW_MODE_STORAGE_KEY) || 'split';
+    } catch (_e) {}
+  }
+  setViewMode(savedMode);
+  setSplitMobileTab('pdf');
+
+  // Initialize PDF Preview (PDFL-256.1 & PDFL-256.2)
   try {
     let previewSource = null;
     if (typeof window !== 'undefined' && window.pdfLinguaUpload && typeof window.pdfLinguaUpload.getSelectedFile === 'function') {
@@ -1093,13 +1307,16 @@ function renderWorkspace(data) {
       previewSource = data.file_url || data.preview_url || data.pdf_url || null;
     }
     const previewContainer = document.getElementById('pdfPreviewContainer');
-    if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.loadPdfPreview === 'function') {
-      if (previewSource) {
-        if (previewContainer) previewContainer.style.display = 'block';
+    if (previewSource) {
+      if (previewContainer) previewContainer.style.display = 'block';
+      if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.loadPdfPreview === 'function') {
         window.pdfLinguaPreview.loadPdfPreview(previewSource);
-      } else {
-        if (previewContainer) previewContainer.style.display = 'none';
       }
+    } else if (data && data.document_id) {
+      // PDFL-256.2: When opened from History with document_id and no local File, fetch authenticated stream
+      fetchDocumentPreview(data.document_id, filename);
+    } else {
+      if (previewContainer) previewContainer.style.display = 'none';
     }
   } catch (err) {
     console.warn('PDF Preview initialization error:', err);
@@ -1150,7 +1367,7 @@ function resetToUpload() {
   updateCounters();
   updateExportUIState();
 
-  // Cleanup PDF Canvas Preview (PDFL-256.1)
+  // Cleanup PDF Canvas Preview & reset View Mode (PDFL-256.1 & PDFL-256.2)
   try {
     if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.cleanupPdfPreview === 'function') {
       window.pdfLinguaPreview.cleanupPdfPreview();
@@ -1158,6 +1375,9 @@ function resetToUpload() {
     const previewContainer = document.getElementById('pdfPreviewContainer');
     if (previewContainer) previewContainer.style.display = 'none';
   } catch (_e) {}
+
+  setViewMode('split');
+  setSplitMobileTab('pdf');
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1287,6 +1507,11 @@ if (typeof window !== 'undefined') {
     renderWorkspace,
     resetToUpload,
     isProOrAdminUser,
+    setViewMode,
+    getViewMode: () => currentViewMode,
+    setSplitMobileTab,
+    getSplitMobileTab: () => currentSplitMobileTab,
+    fetchDocumentPreview,
     getCurrentDocData: () => currentDocData,
     setCurrentDocData: (d) => {
       currentDocData = d;
