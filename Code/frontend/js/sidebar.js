@@ -358,6 +358,17 @@
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
     } catch (_err) {}
 
+    const user = getStoredUser();
+    const token = getStoredAuthToken();
+    if (!token || !user) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để sử dụng tính năng Tài liệu.', 'info');
+      }
+      if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+        window.pdfLinguaAuth.openLoginModal();
+      }
+    }
+
     fetchRecentDocuments();
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -389,6 +400,17 @@
     try {
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'history');
     } catch (_err) {}
+
+    const user = getStoredUser();
+    const token = getStoredAuthToken();
+    if (!token || !user) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để sử dụng tính năng Lịch sử xử lý.', 'info');
+      }
+      if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+        window.pdfLinguaAuth.openLoginModal();
+      }
+    }
 
     fetchProcessingHistories();
 

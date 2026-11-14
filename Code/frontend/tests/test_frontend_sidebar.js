@@ -131,6 +131,7 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     sideNavAiCopilot: new MockElement('sideNavAiCopilot', 'a'),
     sideNavAiSummarize: new MockElement('sideNavAiSummarize', 'a'),
     sideNavDocuments: new MockElement('sideNavDocuments', 'a'),
+    sideNavHistory: new MockElement('sideNavHistory', 'a'),
     sideNavPricing: new MockElement('sideNavPricing', 'a'),
     sideNavAdmin: new MockElement('sideNavAdmin', 'a'),
     sideNavAdminItem: new MockElement('sideNavAdminItem', 'li'),
@@ -211,6 +212,7 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
           elements.sideNavAiCopilot,
           elements.sideNavAiSummarize,
           elements.sideNavDocuments,
+          elements.sideNavHistory,
           elements.sideNavPricing,
           elements.sideNavAdmin,
         ];
@@ -632,6 +634,32 @@ async function main() {
     assert.strictEqual(env.elements.documentsSection.style.display, 'none');
     assert.strictEqual(env.elements.heroSection.style.display, 'none');
     assert.strictEqual(env.elements.workspaceSection.style.display, 'block');
+  });
+
+  await runTest('Auth: Guest user clicking "Tài liệu" or "Lịch sử xử lý" triggers toast and opens login modal', () => {
+    const envGuest = createTestEnvironment();
+    let loginOpenCount = 0;
+    const toasts = [];
+    envGuest.sandbox.window.pdfLinguaAuth = {
+      openLoginModal: () => { loginOpenCount++; },
+      getStoredToken: () => null,
+      getStoredUser: () => null,
+    };
+    envGuest.sandbox.showToast = (msg, type) => {
+      toasts.push({ msg, type });
+    };
+
+    // 1. Click "Tài liệu"
+    envGuest.elements.sideNavDocuments.click();
+    assert.strictEqual(loginOpenCount, 1, 'Clicking "Tài liệu" as guest must trigger openLoginModal');
+    assert.strictEqual(toasts.length, 1, 'Clicking "Tài liệu" as guest must show a toast');
+    assert.ok(toasts[0].msg.includes('Vui lòng đăng nhập để sử dụng tính năng Tài liệu'), 'Toast message must inform user to log in for documents');
+
+    // 2. Click "Lịch sử xử lý"
+    envGuest.elements.sideNavHistory.click();
+    assert.strictEqual(loginOpenCount, 2, 'Clicking "Lịch sử xử lý" as guest must trigger openLoginModal');
+    assert.strictEqual(toasts.length, 2, 'Clicking "Lịch sử xử lý" as guest must show a toast');
+    assert.ok(toasts[1].msg.includes('Vui lòng đăng nhập để sử dụng tính năng Lịch sử xử lý'), 'Toast message must inform user to log in for history');
   });
 
   await runTest('HTML: Admin button in account modal is removed', () => {
