@@ -46,8 +46,6 @@ function initWorkspace() {
   const btnCopyTranslated = document.getElementById('btnCopyTranslated');
   const btnDownloadMenu = document.getElementById('btnDownloadMenu');
   const downloadDropdown = document.getElementById('downloadDropdown');
-  const btnAiToolsMenu = document.getElementById('btnAiToolsMenu');
-  const aiToolsDropdown = document.getElementById('aiToolsDropdown');
   const btnAiSummarize = document.getElementById('btnAiSummarize');
   const btnAiCopilot = document.getElementById('btnAiCopilot');
   const btnMoreActionsMenu = document.getElementById('btnMoreActionsMenu');
@@ -90,10 +88,8 @@ function initWorkspace() {
 
   function closeAllWorkspaceDropdowns() {
     if (downloadDropdown) downloadDropdown.classList.remove('show');
-    if (aiToolsDropdown) aiToolsDropdown.classList.remove('show');
     if (moreActionsDropdown) moreActionsDropdown.classList.remove('show');
     if (btnDownloadMenu) btnDownloadMenu.setAttribute('aria-expanded', 'false');
-    if (btnAiToolsMenu) btnAiToolsMenu.setAttribute('aria-expanded', 'false');
     if (btnMoreActionsMenu) btnMoreActionsMenu.setAttribute('aria-expanded', 'false');
   }
 
@@ -110,30 +106,16 @@ function initWorkspace() {
     });
   }
 
-  if (btnAiToolsMenu && aiToolsDropdown) {
-    btnAiToolsMenu.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isShown = aiToolsDropdown.classList.contains('show');
+  if (btnAiSummarize) {
+    btnAiSummarize.addEventListener('click', () => {
       closeAllWorkspaceDropdowns();
-      if (!isShown) {
-        aiToolsDropdown.classList.add('show');
-        btnAiToolsMenu.setAttribute('aria-expanded', 'true');
-      }
     });
+  }
 
-    if (btnAiSummarize) {
-      btnAiSummarize.addEventListener('click', () => {
-        aiToolsDropdown.classList.remove('show');
-        if (btnAiToolsMenu) btnAiToolsMenu.setAttribute('aria-expanded', 'false');
-      });
-    }
-
-    if (btnAiCopilot) {
-      btnAiCopilot.addEventListener('click', () => {
-        aiToolsDropdown.classList.remove('show');
-        if (btnAiToolsMenu) btnAiToolsMenu.setAttribute('aria-expanded', 'false');
-      });
-    }
+  if (btnAiCopilot) {
+    btnAiCopilot.addEventListener('click', () => {
+      closeAllWorkspaceDropdowns();
+    });
   }
 
   if (btnMoreActionsMenu && moreActionsDropdown) {
@@ -175,10 +157,8 @@ function initWorkspace() {
   document.addEventListener('click', (e) => {
     if (
       (!downloadDropdown || !downloadDropdown.contains(e.target)) &&
-      (!aiToolsDropdown || !aiToolsDropdown.contains(e.target)) &&
       (!moreActionsDropdown || !moreActionsDropdown.contains(e.target)) &&
       e.target !== btnDownloadMenu &&
-      e.target !== btnAiToolsMenu &&
       e.target !== btnMoreActionsMenu
     ) {
       closeAllWorkspaceDropdowns();

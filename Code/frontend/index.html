@@ -560,60 +560,7 @@
                                     </button>
                                 </div>
 
-                                <div class="toolbar-divider" aria-hidden="true"></div>
-
-                                <!-- AI Tools Dropdown -->
-                                <div class="ai-tools-wrap">
-                                    <button type="button" class="btn btn-ai-suite" id="btnAiToolsMenu"
-                                        aria-haspopup="true" aria-expanded="false" title="Công cụ AI thông minh (Pro VIP)">
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
-                                        </svg>
-                                        <span>Tiện ích AI</span>
-                                        <span class="badge-pro-pill">PRO</span>
-                                        <svg class="chevron-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                            <polyline points="6 9 12 15 18 9"></polyline>
-                                        </svg>
-                                    </button>
-
-                                    <div class="dropdown-menu dropdown-menu-ai-suite" id="aiToolsDropdown" role="menu">
-                                        <button type="button" class="dropdown-suite-item btn-ai-summary" id="btnAiSummarize"
-                                            title="Tóm tắt văn bản bằng AI (Pro VIP)">
-                                            <div class="suite-item-icon">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                </svg>
-                                            </div>
-                                            <div class="suite-item-text">
-                                                <div class="suite-item-header">
-                                                    <span class="suite-item-title">Tóm tắt AI</span>
-                                                    <span class="badge-pro-pill">PRO</span>
-                                                </div>
-                                                <div class="suite-item-desc">Rút trích luận điểm cốt lõi tài liệu</div>
-                                            </div>
-                                        </button>
-
-                                        <button type="button" class="dropdown-suite-item btn-ai-copilot" id="btnAiCopilot"
-                                            title="Trò chuyện với AI Copilot về tài liệu (Pro VIP)">
-                                            <div class="suite-item-icon">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                                </svg>
-                                            </div>
-                                            <div class="suite-item-text">
-                                                <div class="suite-item-header">
-                                                    <span class="suite-item-title">Hỏi đáp AI</span>
-                                                    <span class="badge-pro-pill">PRO</span>
-                                                </div>
-                                                <div class="suite-item-desc">Hỏi đáp ngữ cảnh tài liệu song ngữ</div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
-
+                                <!-- Export / Download Dropdown -->
                                 <div class="download-wrap">
                                     <button type="button" class="btn btn-gradient" id="btnDownloadMenu"
                                         aria-haspopup="true" aria-expanded="false" title="Tải xuống tệp">
@@ -753,6 +700,64 @@
                                     </button>
 
                                     <div class="dropdown-menu dropdown-menu-more" id="moreActionsDropdown" role="menu">
+                                        <!-- Nhom 1: Tien ich AI Pro -->
+                                        <div class="dropdown-group-title">
+                                            <span class="group-label">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                                                </svg>
+                                                <span>Tiện ích AI</span>
+                                            </span>
+                                            <span class="badge-pro-pill">PRO</span>
+                                        </div>
+
+                                        <button type="button" class="dropdown-suite-item btn-ai-summary" id="btnAiSummarize"
+                                            title="Tóm tắt văn bản bằng AI (Pro VIP)">
+                                            <div class="suite-item-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                </svg>
+                                            </div>
+                                            <div class="suite-item-text">
+                                                <div class="suite-item-header">
+                                                    <span class="suite-item-title">Tóm tắt AI</span>
+                                                    <span class="badge-pro-pill">PRO</span>
+                                                </div>
+                                                <div class="suite-item-desc">Rút trích luận điểm cốt lõi tài liệu</div>
+                                            </div>
+                                        </button>
+
+                                        <button type="button" class="dropdown-suite-item btn-ai-copilot" id="btnAiCopilot"
+                                            title="Trò chuyện với AI Copilot về tài liệu (Pro VIP)">
+                                            <div class="suite-item-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="suite-item-text">
+                                                <div class="suite-item-header">
+                                                    <span class="suite-item-title">Hỏi đáp AI</span>
+                                                    <span class="badge-pro-pill">PRO</span>
+                                                </div>
+                                                <div class="suite-item-desc">Hỏi đáp ngữ cảnh tài liệu song ngữ</div>
+                                            </div>
+                                        </button>
+
+                                        <div class="dropdown-divider"></div>
+
+                                        <!-- Nhom 2: Thao tac tai lieu -->
+                                        <div class="dropdown-group-title">
+                                            <span class="group-label">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
+                                                <span>Thao tác tài liệu</span>
+                                            </span>
+                                        </div>
+
                                         <button type="button" class="dropdown-item" id="btnNewFile" title="Tải lên tệp PDF khác">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

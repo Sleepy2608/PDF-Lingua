@@ -367,15 +367,23 @@
 }
 
 .dropdown-menu-more {
-  min-width: 215px;
-  padding: 0.4rem;
+  min-width: 285px;
+  padding: 0.5rem;
   border-radius: var(--radius-md, 10px);
+}
+
+.dropdown-menu-more .dropdown-group-title {
+  padding: 0.35rem 0.5rem 0.25rem;
+}
+
+.dropdown-menu-more .dropdown-suite-item {
+  margin-bottom: 0.2rem;
 }
 
 .dropdown-menu-more .dropdown-item {
   border-radius: var(--radius-sm, 6px);
   font-size: 0.83rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   gap: 0.65rem;
   border: none;
   color: var(--text-body, #334155);
