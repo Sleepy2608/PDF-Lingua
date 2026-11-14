@@ -1052,6 +1052,10 @@
     const roleEl = document.getElementById('sidebarUserRole');
     const sideNavAdminItem = document.getElementById('sideNavAdminItem');
     const profileCard = document.getElementById('sidebarUserProfile');
+    const sideNavAiCopilot = document.getElementById('sideNavAiCopilot');
+    const sideNavAiSummarize = document.getElementById('sideNavAiSummarize');
+    const btnAiSummarize = document.getElementById('btnAiSummarize');
+    const btnAiCopilot = document.getElementById('btnAiCopilot');
 
     if (appShell) {
       appShell.classList.remove('guest-mode');
@@ -1061,10 +1065,53 @@
       profileCard.setAttribute('data-tooltip', currentUser && (currentUser.email || currentUser.id) ? 'Tài khoản cá nhân' : 'Khách');
     }
 
+    const role = currentUser ? (currentUser.role || 'free') : 'guest';
+    const isProOrAdmin = role === 'pro' || role === 'admin';
+
+    // Update Pro VIP AI features appearance (dimmed on Free/Guest, fully active on Pro/Admin)
+    if (sideNavAiCopilot) {
+      if (isProOrAdmin) {
+        sideNavAiCopilot.classList.remove('is-dimmed');
+        sideNavAiCopilot.removeAttribute('title');
+      } else {
+        sideNavAiCopilot.classList.add('is-dimmed');
+        sideNavAiCopilot.setAttribute('title', 'Tính năng Hỏi đáp AI dành cho Gói Pro');
+      }
+    }
+
+    if (sideNavAiSummarize) {
+      if (isProOrAdmin) {
+        sideNavAiSummarize.classList.remove('is-dimmed');
+        sideNavAiSummarize.removeAttribute('title');
+      } else {
+        sideNavAiSummarize.classList.add('is-dimmed');
+        sideNavAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản dành cho Gói Pro');
+      }
+    }
+
+    if (btnAiSummarize) {
+      if (isProOrAdmin) {
+        btnAiSummarize.classList.remove('is-dimmed');
+        btnAiSummarize.removeAttribute('title');
+      } else {
+        btnAiSummarize.classList.add('is-dimmed');
+        btnAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản bằng AI (Dành cho Gói Pro)');
+      }
+    }
+
+    if (btnAiCopilot) {
+      if (isProOrAdmin) {
+        btnAiCopilot.classList.remove('is-dimmed');
+        btnAiCopilot.removeAttribute('title');
+      } else {
+        btnAiCopilot.classList.add('is-dimmed');
+        btnAiCopilot.setAttribute('title', 'Tính năng Hỏi đáp AI về tài liệu (Dành cho Gói Pro)');
+      }
+    }
+
     if (currentUser && (currentUser.email || currentUser.id)) {
       const displayName = currentUser.full_name || currentUser.email || 'Người dùng';
       const initial = (currentUser.full_name || currentUser.email || 'U').charAt(0).toUpperCase();
-      const role = currentUser.role || 'free';
 
       if (avatarEl) {
         avatarEl.textContent = initial;

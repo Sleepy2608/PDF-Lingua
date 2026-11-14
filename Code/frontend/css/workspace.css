@@ -478,6 +478,14 @@
   transform: scale(0.98) !important;
 }
 
+.dropdown-menu-more .dropdown-item.is-dimmed {
+  opacity: 0.42;
+}
+
+.dropdown-menu-more .dropdown-item.is-dimmed:hover {
+  opacity: 0.8;
+}
+
 .dropdown-menu-more .dropdown-item.text-danger {
   color: #DC2626 !important;
 }

@@ -56,6 +56,31 @@ function initWorkspace() {
   const btnDownloadPdf = document.getElementById('btnDownloadPdf');
   const btnNewFile = document.getElementById('btnNewFile');
 
+  function syncWorkspaceAiRoles(user) {
+    let currentUser = user;
+    if (currentUser === undefined) {
+      try {
+        const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
+        if (raw) currentUser = JSON.parse(raw);
+      } catch (_e) {}
+    }
+    const role = currentUser ? (currentUser.role || 'free') : 'guest';
+    const isPro = role === 'pro' || role === 'admin';
+    if (btnAiSummarize) {
+      if (isPro) btnAiSummarize.classList.remove('is-dimmed');
+      else btnAiSummarize.classList.add('is-dimmed');
+    }
+    if (btnAiCopilot) {
+      if (isPro) btnAiCopilot.classList.remove('is-dimmed');
+      else btnAiCopilot.classList.add('is-dimmed');
+    }
+  }
+
+  syncWorkspaceAiRoles();
+  window.addEventListener('pdfl:auth-change', (e) => {
+    syncWorkspaceAiRoles(e.detail ? e.detail.user : null);
+  });
+
   if (btnProcessPdf) {
     btnProcessPdf.addEventListener('click', handleProcessPdf);
   }
