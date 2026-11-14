@@ -859,6 +859,18 @@ async function handleProcessPdf() {
     return;
   }
 
+  // PDFL-252.2: If multiple files are in the batch queue, delegate to BatchOrchestrator
+  if (
+    typeof window !== 'undefined' &&
+    window.pdfLinguaBatchQueue &&
+    window.pdfLinguaBatchQueue.getQueueCount() > 1 &&
+    window.pdfLinguaBatchOrchestrator &&
+    typeof window.pdfLinguaBatchOrchestrator.startBatch === 'function'
+  ) {
+    window.pdfLinguaBatchOrchestrator.startBatch();
+    return;
+  }
+
   // Validate Page Selection (PDFL-255.2)
   const pageValidation = validatePageSelection();
   if (!pageValidation.valid) {

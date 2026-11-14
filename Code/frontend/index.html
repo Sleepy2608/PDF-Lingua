@@ -550,6 +550,30 @@
                                             </svg>
                                             <span>Hàng đợi trống. Kéo thả hoặc chọn tệp PDF để thêm vào.</span>
                                         </div>
+
+                                        <!-- Batch Overall Progress (PDFL-252.2) -->
+                                        <div class="batch-overall-progress-wrap" id="batchOverallProgressWrap" style="display: none;">
+                                            <div class="batch-overall-progress-header">
+                                                <span class="batch-progress-title">Tiến độ xử lý hàng đợi</span>
+                                                <span class="batch-progress-text" id="batchOverallProgressText">0 / 0 hoàn thành (0%)</span>
+                                            </div>
+                                            <div class="batch-progress-bar-bg" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                <div class="batch-progress-bar-fill" id="batchOverallProgressFill" style="width: 0%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Batch Footer Actions & Download ZIP (PDFL-252.2) -->
+                                        <div class="batch-queue-footer" id="batchQueueFooter" style="display: none;">
+                                            <div class="batch-footer-info" id="batchFooterNotice" style="display: none;"></div>
+                                            <button type="button" class="btn btn-gradient btn-batch-zip" id="btnDownloadBatchZip" style="display: none;">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                                <span>Tải trọn bộ kết quả (.ZIP)</span>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Page Selection UI & Quick Chips (PDFL-255.2) -->
@@ -3738,6 +3762,7 @@
 
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
+    <script src="js/batch_processor.js"></script>
     <script src="js/auth.js?v=2.0.0"></script>
     <!-- PDF.js Library CDN & Canvas Preview Module (PDFL-256.1) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

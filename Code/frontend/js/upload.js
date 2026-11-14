@@ -201,10 +201,22 @@ function initDropzone() {
     if (card) card.style.display = 'block';
 
     let html = '';
+    const isBatchActive = Boolean(
+      typeof window !== 'undefined' &&
+      window.pdfLinguaBatchOrchestrator &&
+      window.pdfLinguaBatchOrchestrator.isProcessing
+    );
+
     batchQueue.forEach((item, index) => {
       const formattedSize = formatFileSize(item.size);
+      const isProcessing = item.status === 'processing';
+      const isDone = item.status === 'completed';
+      const isFailed = item.status === 'failed';
+      const showProgress = isProcessing || isDone || (item.progress > 0);
+      const pct = Math.min(100, Math.max(0, Math.round(item.progress || (isDone ? 100 : 0))));
+
       html += `
-        <div class="batch-queue-item" data-id="${item.id}" data-index="${index}">
+        <div class="batch-queue-item ${isProcessing ? 'item-processing' : ''} ${isDone ? 'item-completed' : ''} ${isFailed ? 'item-failed' : ''}" data-id="${item.id}" data-index="${index}">
           <div class="queue-item-icon">
             <span class="badge-pdf-mini">PDF</span>
           </div>
@@ -212,10 +224,15 @@ function initDropzone() {
             <div class="queue-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
             <div class="queue-item-meta">
               <span class="queue-item-size">${formattedSize}</span>
-              <span class="queue-item-status status-${item.status}">${item.statusText || 'Sẵn sàng'}</span>
+              <span class="queue-item-status status-${item.status}">${escapeHtml(item.statusText || 'Sẵn sàng')}</span>
+              ${showProgress ? `<span class="queue-item-percent">${pct}%</span>` : ''}
             </div>
+            ${showProgress ? `
+            <div class="queue-item-progress-wrap">
+              <div class="queue-item-progress-fill status-fill-${item.status}" style="width: ${pct}%;"></div>
+            </div>` : ''}
           </div>
-          <button type="button" class="btn-queue-remove" data-id="${item.id}" title="Xóa tệp ${escapeHtml(item.name)} khỏi hàng đợi" aria-label="Xóa tệp khỏi hàng đợi">
+          <button type="button" class="btn-queue-remove" data-id="${item.id}" title="Xóa tệp ${escapeHtml(item.name)} khỏi hàng đợi" aria-label="Xóa tệp khỏi hàng đợi" ${isBatchActive ? 'disabled' : ''}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -461,6 +478,14 @@ if (typeof window !== 'undefined') {
       }
       return { valid: true };
     },
+    updateItem: (id, updates) => {
+      const item = batchQueue.find(i => i.id === id);
+      if (item && updates) {
+        Object.assign(item, updates);
+        renderBatchQueueUI();
+      }
+    },
+    getItem: (id) => batchQueue.find(i => i.id === id),
   };
 
   window.pdfLinguaUpload = Object.assign(window.pdfLinguaUpload || {}, {

@@ -557,6 +557,148 @@
   opacity: 0.6;
 }
 
+/* Batch Queue Status Badges & Item Progress (PDFL-252.2) */
+.queue-item-status.status-waiting {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.queue-item-status.status-processing {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.queue-item-status.status-completed {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.queue-item-status.status-failed {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.queue-item-percent {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-primary, #4f46e5);
+  margin-left: auto;
+}
+
+.queue-item-progress-wrap {
+  width: 100%;
+  height: 4px;
+  background-color: var(--border-subtle, #e2e8f0);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.queue-item-progress-fill {
+  height: 100%;
+  background-color: var(--color-primary, #4f46e5);
+  border-radius: 2px;
+  transition: width 0.25s ease;
+}
+
+.queue-item-progress-fill.status-fill-completed {
+  background-color: #16a34a;
+}
+
+.queue-item-progress-fill.status-fill-failed {
+  background-color: #dc2626;
+}
+
+/* Batch Overall Progress UI (PDFL-252.2) */
+.batch-overall-progress-wrap {
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  background-color: var(--bg-subtle, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.batch-overall-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.375rem;
+  font-size: 0.71875rem;
+}
+
+.batch-progress-title {
+  font-weight: 600;
+  color: var(--text-title, #1e293b);
+}
+
+.batch-progress-text {
+  font-weight: 600;
+  color: var(--color-primary, #4f46e5);
+}
+
+.batch-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background-color: var(--border-subtle, #e2e8f0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.batch-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Batch Footer & ZIP Download (PDFL-252.2) */
+.batch-queue-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--border-subtle, #f1f5f9);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.batch-footer-info {
+  font-size: 0.71875rem;
+  color: #b45309;
+  background-color: #fef3c7;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid #fde68a;
+  line-height: 1.4;
+}
+
+.btn-batch-zip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-batch-zip.loading {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.btn-batch-zip .spinner-svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ==========================================================================
    Page Selection UI & Quick Chips (PDFL-255.2)
    ========================================================================== */
@@ -814,6 +956,10 @@
   .quick-chip {
     padding: 0.25rem 0.45rem;
     font-size: 0.6875rem;
+  }
+  .btn-batch-zip {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.65rem;
   }
 }
 
