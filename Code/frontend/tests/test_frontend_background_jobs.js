@@ -108,6 +108,9 @@ function createTestEnvironment() {
     'stepItem1', 'stepItem2', 'stepItem3', 'stepItem4',
     'toastContainer', 'docTitle', 'docMeta', 'originalTextMeta', 'translatedTextMeta',
     'docName', 'docSize', 'docPages', 'uploadDropzone', 'dropzoneText', 'fileInput',
+    'btnMinimizeProgress', 'btnCloseProgressModal', 'btnCancelJob',
+    'bgJobWidget', 'bgJobFileName', 'bgJobStatusText', 'btnMaximizeProgress', 'btnCloseBgWidget',
+    'bgJobProgressBarFill', 'bgJobPercent',
   ];
   elementIds.forEach(id => { elements[id] = new Element(id); });
 
@@ -179,6 +182,11 @@ function createTestEnvironment() {
     fireDomReady: () => {
       if (listeners['DOMContentLoaded']) {
         listeners['DOMContentLoaded'].forEach(h => h());
+      }
+    },
+    fireKeyDown: (key) => {
+      if (listeners['keydown']) {
+        listeners['keydown'].forEach(h => h({ key }));
       }
     },
   };
@@ -416,6 +424,265 @@ async function runAllTests() {
     assert(pollCount >= 1, 'Polling fallback should have queried job status');
     const docData = env.context.window.pdfLinguaWorkspace.getCurrentDocData();
     assert.strictEqual(docData.translated_text, 'Kết quả polling');
+  });
+
+  await test('PDFL-71.2: Minimizing modal hides modal, displays floating mini-widget, and keeps SSE connection alive', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'annual_report_2026.pdf', type: 'application/pdf', size: 5000 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 202,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-minimize-test', status: 'PENDING' },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+    assert.strictEqual(env.elements['processingModal'].style.display, 'flex');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+
+    // Click btnMinimizeProgress
+    env.elements['btnMinimizeProgress'].click();
+
+    // Modal should be hidden, widget should be visible with filename
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'flex');
+    assert.strictEqual(env.elements['bgJobFileName'].textContent, 'annual_report_2026.pdf');
+
+    // SSE connection must NOT be closed when minimized
+    assert.strictEqual(es.closed, false, 'SSE must remain alive during minimization');
+  });
+
+  await test('PDFL-71.2: Progress update synchronizes with floating mini-widget bar, percent, status and filename', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'finance_q3.pdf', type: 'application/pdf', size: 8192 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 202,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-sync-test', status: 'PENDING' },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+
+    // Emit progress event
+    es.emitMessage({
+      job_id: 'job-sync-test',
+      status: 'PROCESSING',
+      progress_percentage: 68,
+      message: 'Đang dịch thuật văn bản trang 5/8...',
+      current_step: 3,
+    });
+
+    // Check modal sync
+    assert.strictEqual(env.elements['progressBarFill'].style.width, '68%');
+    assert.strictEqual(env.elements['progressDesc'].textContent, 'Đang dịch thuật văn bản trang 5/8...');
+
+    // Check floating mini-widget sync
+    assert.strictEqual(env.elements['bgJobProgressBarFill'].style.width, '68%');
+    assert.strictEqual(env.elements['bgJobPercent'].textContent, '68%');
+    assert.strictEqual(env.elements['bgJobStatusText'].textContent, 'Đang dịch thuật văn bản trang 5/8...');
+    assert.strictEqual(env.elements['bgJobFileName'].textContent, 'finance_q3.pdf');
+  });
+
+  await test('PDFL-71.2: Maximizing from mini-widget restores modal and hides widget', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'doc_restore.pdf', type: 'application/pdf', size: 3000 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 202,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-restore-test', status: 'PENDING' },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+
+    // Minimize modal
+    env.context.window.pdfLinguaWorkspace.minimizeProgressModal();
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'flex');
+
+    // Click btnMaximizeProgress
+    env.elements['btnMaximizeProgress'].click();
+    assert.strictEqual(env.elements['processingModal'].style.display, 'flex');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(es.closed, false, 'SSE must remain active');
+  });
+
+  await test('PDFL-71.2: Closing widget hides mini-widget without stopping SSE background job', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'doc_close_widget.pdf', type: 'application/pdf', size: 4000 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 202,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-close-widget-test', status: 'PENDING' },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+
+    // Minimize first
+    env.elements['btnMinimizeProgress'].click();
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'flex');
+
+    // Click btnCloseBgWidget
+    env.elements['btnCloseBgWidget'].click();
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(es.closed, false, 'Closing widget must NOT cancel or stop SSE');
+  });
+
+  await test('PDFL-71.2: Escape key and backdrop overlay click minimize modal without stopping job', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'doc_esc.pdf', type: 'application/pdf', size: 2000 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 202,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-esc-test', status: 'PENDING' },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+    assert.strictEqual(env.elements['processingModal'].style.display, 'flex');
+
+    // Test Escape key press
+    env.fireKeyDown('Escape');
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'flex');
+    assert.strictEqual(es.closed, false);
+
+    // Restore modal
+    env.context.window.pdfLinguaWorkspace.maximizeProgressModal();
+    assert.strictEqual(env.elements['processingModal'].style.display, 'flex');
+
+    // Test backdrop click (target === processingModal)
+    env.elements['processingModal'].trigger('click', { target: env.elements['processingModal'] });
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'flex');
+    assert.strictEqual(es.closed, false);
+  });
+
+  await test('PDFL-71.2: Cancelling job calls cancel endpoint, closes SSE, and resets UI', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'doc_cancel.pdf', type: 'application/pdf', size: 1000 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    let cancelEndpointCalled = false;
+    let cancelMethod = '';
+
+    env.context.fetch = async (url, opts) => {
+      if (url.includes('/jobs') && opts && opts.body) {
+        return {
+          ok: true,
+          status: 202,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            data: { job_id: 'job-to-cancel-999', status: 'PENDING' },
+          }),
+        };
+      }
+      if (url.includes('/jobs/job-to-cancel-999/cancel')) {
+        cancelEndpointCalled = true;
+        cancelMethod = opts ? opts.method : '';
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            message: 'Tác vụ đã được hủy thành công.',
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    };
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+
+    // Trigger cancel job
+    await env.context.window.pdfLinguaWorkspace.cancelActiveJob();
+
+    assert.strictEqual(cancelEndpointCalled, true, 'POST /jobs/{job_id}/cancel must be called');
+    assert.strictEqual(cancelMethod, 'POST');
+    assert.strictEqual(es.closed, true, 'SSE must be closed after cancelling');
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(env.elements['btnProcessPdf'].disabled, false);
+  });
+
+  await test('PDFL-71.2: SSE CANCELLED event terminates tracking and updates UI', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockFile = { name: 'doc_remote_cancel.pdf', type: 'application/pdf', size: 1500 };
+    env.context.window.pdfLinguaUpload.setSelectedFile(mockFile);
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 202,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-remote-cancel', status: 'PENDING' },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.handleProcessPdf();
+    const es = MockEventSource.instances[0];
+
+    // Emit CANCELLED status over SSE
+    es.emitMessage({
+      job_id: 'job-remote-cancel',
+      status: 'CANCELLED',
+      message: 'Tác vụ đã được hủy bởi hệ thống.',
+    });
+
+    assert.strictEqual(es.closed, true, 'SSE must be closed when CANCELLED status arrives');
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(env.elements['btnProcessPdf'].disabled, false);
   });
 
   console.log('\n================================================================');

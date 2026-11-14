@@ -548,6 +548,8 @@ function initWorkspace() {
 
   // Page Selection UI & Quick Chips (PDFL-255.2)
   initPageSelection();
+  // Background Job Controls & Floating Mini-Widget (PDFL-71.2)
+  initBackgroundJobControls();
 
   updateExportUIState();
 
@@ -619,6 +621,7 @@ function initWorkspace() {
       const savedJobId = store.getItem(ACTIVE_JOB_STORAGE_KEY);
       const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
       if (savedJobId) {
+        currentActiveJobId = savedJobId;
         showProgressModal(true);
         updateProgress(85, 'Đang hoàn tất xử lý và dịch thuật...', 3);
         listenToJobProgress(savedJobId, btnProcessPdf);
@@ -671,6 +674,8 @@ function getAuthHeaders() {
 
 let activeEventSource = null;
 let activePollTimer = null;
+let currentActiveJobId = null;
+let currentJobFileName = null;
 
 function cleanupProgressTracking() {
   if (activeEventSource) {
@@ -718,10 +723,24 @@ function handleAuthError(result) {
  */
 function listenToJobProgress(jobId, btnProcessPdf) {
   cleanupProgressTracking();
+  currentActiveJobId = jobId;
+
+  if (!currentJobFileName && typeof selectedFile !== 'undefined' && selectedFile && selectedFile.name) {
+    currentJobFileName = selectedFile.name;
+  }
+  const bgFileNameEl = document.getElementById('bgJobFileName');
+  if (bgFileNameEl && currentJobFileName) {
+    bgFileNameEl.textContent = currentJobFileName;
+  }
 
   const handleJobSuccess = (jobData) => {
     cleanupProgressTracking();
     clearActiveJobFromStorage();
+    currentActiveJobId = null;
+
+    const widget = document.getElementById('bgJobWidget');
+    if (widget) widget.style.display = 'none';
+
     currentDocData = jobData.result;
     saveWorkspaceDocToStorage(currentDocData);
     const store = getWorkspaceSessionStorage();
@@ -759,6 +778,11 @@ function listenToJobProgress(jobId, btnProcessPdf) {
   const handleJobFailure = (errorMsg) => {
     cleanupProgressTracking();
     clearActiveJobFromStorage();
+    currentActiveJobId = null;
+
+    const widget = document.getElementById('bgJobWidget');
+    if (widget) widget.style.display = 'none';
+
     showProgressModal(false);
     const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
     if (btn) btn.disabled = false;
@@ -790,6 +814,8 @@ function listenToJobProgress(jobId, btnProcessPdf) {
             handleJobSuccess(jd);
           } else if (jd.status === 'FAILED') {
             handleJobFailure(jd.error || jd.message);
+          } else if (jd.status === 'CANCELLED') {
+            handleJobCancelled(jd.message || 'Tác vụ đã được hủy.');
           }
         }
       } catch (e) {}
@@ -816,6 +842,8 @@ function listenToJobProgress(jobId, btnProcessPdf) {
             handleJobSuccess(data);
           } else if (data.status === 'FAILED') {
             handleJobFailure(data.error || data.message);
+          } else if (data.status === 'CANCELLED') {
+            handleJobCancelled(data.message || 'Tác vụ đã được hủy.');
           }
         } catch (e) {}
       };
@@ -996,6 +1024,15 @@ async function handleProcessPdf() {
         store.setItem(ACTIVE_JOB_STORAGE_KEY, String(jobId));
         store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
       } catch (_e) {}
+    }
+
+    currentActiveJobId = jobId;
+    currentJobFileName = (typeof selectedFile !== 'undefined' && selectedFile && selectedFile.name)
+      ? selectedFile.name
+      : 'Tài liệu PDF';
+    const bgFileNameEl = document.getElementById('bgJobFileName');
+    if (bgFileNameEl && currentJobFileName) {
+      bgFileNameEl.textContent = currentJobFileName;
     }
 
     // Theo dõi tiến độ thời gian thực qua Server-Sent Events (SSE)
@@ -1594,6 +1631,10 @@ function renderWorkspace(data) {
 function resetToUpload() {
   cleanupProgressTracking();
   clearActiveJobFromStorage();
+  currentActiveJobId = null;
+  currentJobFileName = null;
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) widget.style.display = 'none';
   currentDocData = null;
   saveWorkspaceDocToStorage(null);
   resetPageSelection();
@@ -1695,11 +1736,209 @@ function showProgressModal(show) {
   const modal = document.getElementById('processingModal');
   if (!modal) return;
   modal.style.display = show ? 'flex' : 'none';
+  const widget = document.getElementById('bgJobWidget');
   if (show) {
+    if (widget) widget.style.display = 'none';
     updateProgress(10, 'Đang chuẩn bị...', 1);
   } else {
+    if (widget) widget.style.display = 'none';
     cleanupProgressTracking();
   }
+}
+
+/**
+ * Thu nhỏ modal tiến trình thành Floating Mini-Widget (PDFL-71.2).
+ * Tác vụ xử lý nền (SSE/Polling) vẫn tiếp tục chạy không bị gián đoạn.
+ */
+function minimizeProgressModal() {
+  const modal = document.getElementById('processingModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+
+  // Nếu đang có tác vụ xử lý đang chạy, hiển thị Floating Mini-Widget
+  if (currentActiveJobId || activeEventSource || activePollTimer) {
+    const widget = document.getElementById('bgJobWidget');
+    if (widget) {
+      widget.style.display = 'flex';
+      const bgFileNameEl = document.getElementById('bgJobFileName');
+      if (bgFileNameEl && currentJobFileName) {
+        bgFileNameEl.textContent = currentJobFileName;
+      }
+    }
+    showToast('Tác vụ đang tiếp tục xử lý ở chế độ nền.', 'info');
+  }
+}
+
+/**
+ * Phóng to lại modal chi tiết từ Floating Mini-Widget (PDFL-71.2).
+ */
+function maximizeProgressModal() {
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) {
+    widget.style.display = 'none';
+  }
+  const modal = document.getElementById('processingModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+/**
+ * Đóng Floating Mini-Widget nhưng KHÔNG hủy background job (PDFL-71.2).
+ */
+function closeBgWidget() {
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) {
+    widget.style.display = 'none';
+  }
+}
+
+/**
+ * Hủy tác vụ xử lý đang chạy qua API backend POST /api/process/jobs/{job_id}/cancel (PDFL-71.1 & PDFL-71.2).
+ */
+async function cancelActiveJob() {
+  const btnCancel = document.getElementById('btnCancelJob');
+  const originalHtml = btnCancel ? btnCancel.innerHTML : '';
+
+  if (!currentActiveJobId) {
+    showProgressModal(false);
+    return;
+  }
+
+  if (btnCancel) {
+    btnCancel.disabled = true;
+    btnCancel.innerHTML = `
+      <svg class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+      </svg>
+      <span>Đang hủy...</span>
+    `;
+  }
+
+  try {
+    const authHeaders = getAuthHeaders();
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+    const response = await fetch(`${API_BASE_URL}/jobs/${currentActiveJobId}/cancel`, {
+      method: 'POST',
+      headers: headers,
+    });
+
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (_e) {}
+
+    if (response.ok && result && result.success) {
+      handleJobCancelled(result.message || 'Đã hủy tác vụ xử lý thành công.');
+    } else {
+      const errMsg = (result && (result.detail || result.message)) || 'Không thể hủy tác vụ xử lý.';
+      showToast(errMsg, 'warning');
+      if (response.status === 400 || response.status === 404) {
+        handleJobCancelled(errMsg);
+      }
+    }
+  } catch (error) {
+    showToast(error.message || 'Lỗi kết nối khi gửi yêu cầu hủy tác vụ.', 'error');
+  } finally {
+    if (btnCancel) {
+      btnCancel.disabled = false;
+      btnCancel.innerHTML = originalHtml || `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        <span>Hủy tác vụ</span>
+      `;
+    }
+  }
+}
+
+/**
+ * Xử lý dọn dẹp giao diện và trạng thái khi tác vụ đã hủy (PDFL-71.2).
+ */
+function handleJobCancelled(message) {
+  cleanupProgressTracking();
+  clearActiveJobFromStorage();
+  currentActiveJobId = null;
+
+  const modal = document.getElementById('processingModal');
+  if (modal) modal.style.display = 'none';
+
+  const widget = document.getElementById('bgJobWidget');
+  if (widget) widget.style.display = 'none';
+
+  const btnProcessPdf = document.getElementById('btnProcessPdf');
+  if (btnProcessPdf) btnProcessPdf.disabled = false;
+
+  showToast(message || 'Đã hủy tác vụ xử lý thành công.', 'info');
+}
+
+/**
+ * Khởi tạo các sự kiện điều khiển cho modal xử lý và Floating Mini-Widget (PDFL-71.2).
+ */
+function initBackgroundJobControls() {
+  const btnMinimizeProgress = document.getElementById('btnMinimizeProgress');
+  const btnCloseProgressModal = document.getElementById('btnCloseProgressModal');
+  const btnMaximizeProgress = document.getElementById('btnMaximizeProgress');
+  const btnCloseBgWidget = document.getElementById('btnCloseBgWidget');
+  const btnCancelJob = document.getElementById('btnCancelJob');
+  const processingModal = document.getElementById('processingModal');
+
+  if (btnMinimizeProgress) {
+    btnMinimizeProgress.addEventListener('click', (e) => {
+      e.stopPropagation();
+      minimizeProgressModal();
+    });
+  }
+
+  if (btnCloseProgressModal) {
+    btnCloseProgressModal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      minimizeProgressModal();
+    });
+  }
+
+  if (btnMaximizeProgress) {
+    btnMaximizeProgress.addEventListener('click', (e) => {
+      e.stopPropagation();
+      maximizeProgressModal();
+    });
+  }
+
+  if (btnCloseBgWidget) {
+    btnCloseBgWidget.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeBgWidget();
+    });
+  }
+
+  if (btnCancelJob) {
+    btnCancelJob.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cancelActiveJob();
+    });
+  }
+
+  // Click bên ngoài hộp thoại (trên lớp nền mờ overlay) để thu nhỏ thay vì hủy
+  if (processingModal) {
+    processingModal.addEventListener('click', (e) => {
+      if (e.target === processingModal) {
+        minimizeProgressModal();
+      }
+    });
+  }
+
+  // Hỗ trợ phím Esc để thu nhỏ modal khi đang hiển thị
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      const modal = document.getElementById('processingModal');
+      if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
+        minimizeProgressModal();
+      }
+    }
+  });
 }
 
 function updateProgress(percentage, text, currentStep) {
@@ -1719,6 +1958,17 @@ function updateProgress(percentage, text, currentStep) {
       stepEl.classList.add('active');
     }
   }
+
+  // Đồng bộ tiến độ với Floating Mini-Widget (PDFL-71.2)
+  const bgBar = document.getElementById('bgJobProgressBarFill');
+  const bgStatus = document.getElementById('bgJobStatusText');
+  const bgPercent = document.getElementById('bgJobPercent');
+  const bgFileName = document.getElementById('bgJobFileName');
+
+  if (bgBar) bgBar.style.width = `${percentage}%`;
+  if (bgPercent) bgPercent.textContent = `${Math.round(percentage)}%`;
+  if (bgStatus && text) bgStatus.textContent = text;
+  if (bgFileName && currentJobFileName) bgFileName.textContent = currentJobFileName;
 }
 
 function showToast(message, type = 'info') {
@@ -1802,6 +2052,16 @@ if (typeof window !== 'undefined') {
     setPageRangeInput,
     validatePageSelection,
     resetPageSelection,
+    minimizeProgressModal,
+    maximizeProgressModal,
+    closeBgWidget,
+    cancelActiveJob,
+    handleJobCancelled,
+    initBackgroundJobControls,
+    getActiveJobId: () => currentActiveJobId,
+    setActiveJobId: (id) => { currentActiveJobId = id; },
+    getCurrentJobFileName: () => currentJobFileName,
+    setCurrentJobFileName: (name) => { currentJobFileName = name; },
   });
   window.showToast = showToast;
 }
