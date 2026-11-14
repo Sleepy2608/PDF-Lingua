@@ -1266,36 +1266,11 @@
 }
 
 .btn-copilot-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  background-color: var(--bg-page, #FFFFFF);
-  border: 1px solid var(--border-dashed, #CBD5E1);
-  border-radius: var(--radius-md, 8px);
-  color: var(--text-body, #334155);
-  font-size: 0.8rem;
-  font-weight: 550;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-copilot-back:hover {
-  background-color: var(--sidebar-active-bg, #EEF2FF);
-  border-color: var(--sidebar-active-border, #C7D2FE);
-  color: var(--color-primary-indigo, #4F46E5);
-  transform: translateX(-1px);
-}
-
-.btn-copilot-back:active {
-  transform: translateX(0) scale(0.98);
+  display: none !important;
 }
 
 .copilot-header-divider {
-  width: 1px;
-  height: 20px;
-  background-color: var(--border-subtle, #E2E8F0);
-  margin: 0 0.1rem;
+  display: none !important;
 }
 
 .copilot-avatar-icon {
@@ -1575,13 +1550,18 @@
 
 .copilot-msg-user .copilot-msg-content {
   max-width: 75%;
-  background: var(--color-gradient-cta, linear-gradient(135deg, #4F46E5 0%, #2563EB 100%));
-  color: var(--text-inverse, #FFFFFF);
+  background: var(--bg-card, #FFFFFF);
+  color: var(--text-title, #0F172A);
+  border: 1px solid var(--border-subtle, #E2E8F0);
   border-radius: 18px 18px 4px 18px;
   padding: 0.75rem 1.15rem;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   font-size: 0.91rem;
   line-height: 1.6;
+}
+
+.copilot-msg-user .copilot-msg-time {
+  color: var(--text-muted, #64748B);
 }
 
 .copilot-msg-assistant {
