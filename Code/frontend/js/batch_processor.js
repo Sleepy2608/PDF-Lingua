@@ -262,7 +262,7 @@
         let result = null;
         try {
           result = await response.json();
-        } catch (_e) {}
+        } catch (_e) { }
 
         if (response.status === 401) {
           this.handleItemFailure(item, 'Chưa xác thực hoặc phiên đăng nhập đã hết hạn (401).');
@@ -355,7 +355,7 @@
               this.cleanupStream(jobId);
               this.handleItemFailure(item, data.error || 'Xử lý thất bại.');
             }
-          } catch (_parseErr) {}
+          } catch (_parseErr) { }
         };
 
         es.onerror = () => {
@@ -399,7 +399,7 @@
             this.cleanupPolling(jobId);
             this.handleItemFailure(item, data.error || 'Xử lý thất bại.');
           }
-        } catch (_err) {}
+        } catch (_err) { }
       }, 1500);
 
       this.pollingTimers.set(jobId, timer);
@@ -410,7 +410,7 @@
         try {
           const es = this.activeStreams.get(jobId);
           es.close();
-        } catch (_e) {}
+        } catch (_e) { }
         this.activeStreams.delete(jobId);
       }
     }
@@ -424,7 +424,7 @@
 
     cleanupAllConnections() {
       this.activeStreams.forEach((es) => {
-        try { es.close(); } catch (_e) {}
+        try { es.close(); } catch (_e) { }
       });
       this.activeStreams.clear();
 
@@ -533,46 +533,46 @@
     }
 
     async downloadBatchZip(format = 'pdf') {
-      if (this.completedJobs.length === 0) {
-        this.showToast('Không có tệp nào xử lý thành công để tải về.', 'warning');
-        return;
-      }
-
-      // Kiểm tra quyền Pro đối với định dạng Word (.docx)
-      if (format === 'docx' && !this.isProOrAdminUser()) {
-        const proMsg = 'Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro.';
-        this.showToast(proMsg, 'warning');
-        if (
-          typeof window !== 'undefined' &&
-          window.PDFLinguaPricing &&
-          typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function'
-        ) {
-          window.PDFLinguaPricing.openQuotaExceededModal('Tính năng tải trọn bộ ZIP file Word (.docx) chỉ dành riêng cho tài khoản Pro. Vui lòng nâng cấp gói để sử dụng!');
+        if (this.completedJobs.length === 0) {
+          this.showToast('Không có tệp nào xử lý thành công để tải về.', 'warning');
+          return;
         }
-        return;
-      }
 
-      const jobIds = this.completedJobs.map((i) => i.job_id).filter(Boolean);
-      if (jobIds.length === 0) {
-        this.showToast('Không tìm thấy mã tác vụ hợp lệ để tải về.', 'warning');
-        return;
-      }
+        // Kiểm tra quyền Pro đối với định dạng Word (.docx)
+        if (format === 'docx' && !this.isProOrAdminUser()) {
+          const proMsg = 'Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro.';
+          this.showToast(proMsg, 'warning');
+          if (
+            typeof window !== 'undefined' &&
+            window.PDFLinguaPricing &&
+            typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function'
+          ) {
+            window.PDFLinguaPricing.openQuotaExceededModal('Tính năng tải trọn bộ ZIP file Word (.docx) chỉ dành riêng cho tài khoản Pro. Vui lòng nâng cấp gói để sử dụng!');
+          }
+          return;
+        }
 
-      const targetBtn = (format === 'docx')
-        ? document.getElementById('btnDownloadBatchZipDocx')
-        : document.getElementById('btnDownloadBatchZip');
+        const jobIds = this.completedJobs.map((i) => i.job_id).filter(Boolean);
+        if (jobIds.length === 0) {
+          this.showToast('Không tìm thấy mã tác vụ hợp lệ để tải về.', 'warning');
+          return;
+        }
 
-      let prevHtml = '';
+        const targetBtn = (format === 'docx')
+          ? document.getElementById('btnDownloadBatchZipDocx')
+          : document.getElementById('btnDownloadBatchZip');
+
+        let prevHtml = '';
       if (targetBtn) {
         targetBtn.disabled = true;
         prevHtml = targetBtn.innerHTML;
         targetBtn.innerHTML = `
-          <svg class="spinner-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            < svg class="spinner-svg" width = "15" height = "15" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2.5" >
             <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
             <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
-          </svg>
+          </svg >
           <span>Đang tạo ZIP...</span>
-        `;
+          `;
       }
 
       try {
@@ -582,7 +582,7 @@
           ...authHeaders,
         };
 
-        const response = await fetch(`${BATCH_API_BASE_URL}/process/batch-download`, {
+        const response = await fetch(`${ BATCH_API_BASE_URL } /process/batch - download`, {
           method: 'POST',
           headers: fetchHeaders,
           body: JSON.stringify({
@@ -627,7 +627,7 @@
         window.URL.revokeObjectURL(blobUrl);
 
         const fmtLabel = format === 'docx' ? 'Word (.docx)' : 'PDF';
-        this.showToast(`Đã tải về trọn bộ file ZIP (${fmtLabel}) thành công!`, 'success');
+        this.showToast(`Đã tải về trọn bộ file ZIP(${ fmtLabel }) thành công!`, 'success');
       } catch (err) {
         const msg = err.message || 'Lỗi khi tải tệp ZIP.';
         this.showToast(msg, 'error');
