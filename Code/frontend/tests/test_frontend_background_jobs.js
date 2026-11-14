@@ -685,6 +685,241 @@ async function runAllTests() {
     assert.strictEqual(env.elements['btnProcessPdf'].disabled, false);
   });
 
+  await test('PDFL-71.3: F5 Reload with active PENDING/PROCESSING job recovers state and reconnects SSE', async () => {
+    const env = createTestEnvironment();
+    env.storage.setItem('pdfl_active_job_id', 'job-f5-active-101');
+    env.storage.setItem('pdfl_bg_minimized', 'false');
+
+    let getJobCalled = false;
+    env.context.fetch = async (url) => {
+      if (url.includes('/jobs/job-f5-active-101')) {
+        getJobCalled = true;
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            data: {
+              job_id: 'job-f5-active-101',
+              status: 'PROCESSING',
+              filename: 'financial_q4.pdf',
+              progress_percentage: 55,
+              current_step: 3,
+              message: 'Đang dịch thuật văn bản trang 3/5...',
+            },
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    };
+
+    // Run recovery
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-f5-active-101');
+
+    assert.strictEqual(getJobCalled, true, 'GET /jobs/{job_id} must be called to verify backend state');
+    assert.strictEqual(env.elements['processingModal'].style.display, 'flex');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(env.elements['progressBarFill'].style.width, '55%');
+    assert.strictEqual(env.elements['bgJobPercent'].textContent, '55%');
+    assert.strictEqual(env.elements['bgJobFileName'].textContent, 'financial_q4.pdf');
+    assert.strictEqual(env.elements['btnProcessPdf'].disabled, true);
+
+    // Verify SSE reconnection
+    assert.strictEqual(MockEventSource.instances.length, 1);
+    assert(MockEventSource.instances[0].url.includes('/jobs/job-f5-active-101/events'));
+    assert.strictEqual(MockEventSource.instances[0].closed, false);
+  });
+
+  await test('PDFL-71.3: F5 Reload recovers minimized state (bgJobWidget visible, modal hidden)', async () => {
+    const env = createTestEnvironment();
+    env.storage.setItem('pdfl_active_job_id', 'job-f5-minimized-202');
+    env.storage.setItem('pdfl_bg_minimized', 'true');
+
+    env.context.fetch = async (url) => {
+      if (url.includes('/jobs/job-f5-minimized-202')) {
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            data: {
+              job_id: 'job-f5-minimized-202',
+              status: 'PROCESSING',
+              filename: 'contract_draft.pdf',
+              progress_percentage: 30,
+              current_step: 2,
+              message: 'Đang trích xuất nội dung văn bản...',
+            },
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    };
+
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-f5-minimized-202');
+
+    // Minimized state check: widget should be flex, modal should be none
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'flex');
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobProgressBarFill'].style.width, '30%');
+    assert.strictEqual(env.elements['bgJobPercent'].textContent, '30%');
+    assert.strictEqual(env.elements['bgJobFileName'].textContent, 'contract_draft.pdf');
+    assert.strictEqual(MockEventSource.instances.length, 1);
+  });
+
+  await test('PDFL-71.3: F5 Reload with COMPLETED job renders workspace and clears storage', async () => {
+    const env = createTestEnvironment();
+    env.storage.setItem('pdfl_active_job_id', 'job-already-done-303');
+    env.storage.setItem('pdfl_bg_minimized', 'true');
+
+    env.context.fetch = async (url) => {
+      if (url.includes('/jobs/job-already-done-303')) {
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            data: {
+              job_id: 'job-already-done-303',
+              status: 'COMPLETED',
+              progress_percentage: 100,
+              current_step: 4,
+              filename: 'done_doc.pdf',
+              result: {
+                filename: 'done_doc.pdf',
+                original_text: 'Hello world',
+                translated_text: 'Xin chào thế giới',
+              },
+            },
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    };
+
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-already-done-303');
+
+    // Job completed: modal and widget must NOT show, no fake running state
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(env.storage.getItem('pdfl_active_job_id'), null, 'pdfl_active_job_id must be cleaned up');
+    assert.strictEqual(env.storage.getItem('pdfl_bg_minimized'), null, 'pdfl_bg_minimized must be cleaned up');
+
+    // Workspace rendered
+    const docData = env.context.window.pdfLinguaWorkspace.getCurrentDocData();
+    assert.strictEqual(docData.translated_text, 'Xin chào thế giới');
+    assert.strictEqual(MockEventSource.instances.length, 0, 'No fake running SSE stream should be created');
+  });
+
+  await test('PDFL-71.3: F5 Reload with FAILED or CANCELLED job cleans up storage and notifies user', async () => {
+    const env = createTestEnvironment();
+    env.storage.setItem('pdfl_active_job_id', 'job-failed-404');
+    env.storage.setItem('pdfl_bg_minimized', 'false');
+
+    env.context.fetch = async (url) => {
+      if (url.includes('/jobs/job-failed-404')) {
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            data: {
+              job_id: 'job-failed-404',
+              status: 'FAILED',
+              error: 'Dung lượng tệp vượt quá khả năng xử lý của bộ nhớ.',
+            },
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    };
+
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-failed-404');
+
+    assert.strictEqual(env.elements['processingModal'].style.display, 'none');
+    assert.strictEqual(env.elements['bgJobWidget'].style.display, 'none');
+    assert.strictEqual(env.storage.getItem('pdfl_active_job_id'), null);
+    assert.strictEqual(env.storage.getItem('pdfl_bg_minimized'), null);
+    assert.strictEqual(env.elements['btnProcessPdf'].disabled, false);
+    assert.strictEqual(MockEventSource.instances.length, 0);
+
+    // Also test CANCELLED
+    env.storage.setItem('pdfl_active_job_id', 'job-cancelled-505');
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: { job_id: 'job-cancelled-505', status: 'CANCELLED', message: 'Tác vụ đã bị hủy trước đó.' },
+      }),
+    });
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-cancelled-505');
+    assert.strictEqual(env.storage.getItem('pdfl_active_job_id'), null);
+  });
+
+  await test('PDFL-71.3: SSE reconnect with Polling Fallback during recovery', async () => {
+    const env = createTestEnvironment();
+    env.storage.setItem('pdfl_active_job_id', 'job-reconnect-poll-606');
+
+    let pollCount = 0;
+    env.context.fetch = async (url) => {
+      if (url.includes('/jobs/job-reconnect-poll-606')) {
+        pollCount++;
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            success: true,
+            data: {
+              job_id: 'job-reconnect-poll-606',
+              status: pollCount > 1 ? 'COMPLETED' : 'PROCESSING',
+              progress_percentage: 100,
+              current_step: 4,
+              result: { filename: 'rec.pdf', translated_text: 'Dịch qua reconnect polling' },
+            },
+          }),
+        };
+      }
+      return { ok: true, status: 200 };
+    };
+
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-reconnect-poll-606');
+    assert.strictEqual(MockEventSource.instances.length, 1);
+
+    // Trigger SSE error to force polling fallback
+    MockEventSource.instances[0].emitError(new Error('SSE disconnected during recovery'));
+    await new Promise(r => setImmediate(r));
+
+    assert(pollCount >= 2, 'Polling fallback should have queried job status');
+    const docData = env.context.window.pdfLinguaWorkspace.getCurrentDocData();
+    assert.strictEqual(docData.translated_text, 'Dịch qua reconnect polling');
+  });
+
+  await test('PDFL-71.3: Prevents duplicate SSE connections when switching views or calling listen repeatedly', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    // Start listening to job
+    env.context.window.pdfLinguaWorkspace.listenToJobProgress('job-no-duplicate-707');
+    assert.strictEqual(MockEventSource.instances.length, 1);
+
+    // Call listen again with SAME job id while SSE is open
+    env.context.window.pdfLinguaWorkspace.listenToJobProgress('job-no-duplicate-707');
+    assert.strictEqual(MockEventSource.instances.length, 1, 'Must NOT open a duplicate EventSource connection');
+
+    // Call listen with a DIFFERENT job id -> should clean up and open a new one
+    env.context.window.pdfLinguaWorkspace.listenToJobProgress('job-different-808');
+    assert.strictEqual(MockEventSource.instances.length, 2);
+    assert.strictEqual(MockEventSource.instances[0].closed, true, 'Previous SSE connection must be closed');
+    assert.strictEqual(MockEventSource.instances[1].closed, false, 'New SSE connection is active');
+  });
+
   console.log('\n================================================================');
   console.log('SUMMARY: All frontend background jobs tests passed.');
   console.log('================================================================');

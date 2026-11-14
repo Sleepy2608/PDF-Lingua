@@ -1,6 +1,7 @@
 const API_BASE_URL = 'http://localhost:8000/api/process';
 const WORKSPACE_DOC_STORAGE_KEY = 'pdfl_workspace_doc_data';
 const ACTIVE_JOB_STORAGE_KEY = 'pdfl_active_job_id';
+const BG_MINIMIZED_STORAGE_KEY = 'pdfl_bg_minimized';
 const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
 const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
 const VIEW_MODE_STORAGE_KEY = 'pdfl_workspace_view_mode';
@@ -433,6 +434,7 @@ function clearActiveJobFromStorage() {
   if (!store) return;
   try {
     store.removeItem(ACTIVE_JOB_STORAGE_KEY);
+    store.removeItem(BG_MINIMIZED_STORAGE_KEY);
   } catch (_e) {}
 }
 
@@ -621,10 +623,7 @@ function initWorkspace() {
       const savedJobId = store.getItem(ACTIVE_JOB_STORAGE_KEY);
       const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
       if (savedJobId) {
-        currentActiveJobId = savedJobId;
-        showProgressModal(true);
-        updateProgress(85, 'Đang hoàn tất xử lý và dịch thuật...', 3);
-        listenToJobProgress(savedJobId, btnProcessPdf);
+        recoverActiveJob(savedJobId);
       } else if (currentDocData && activeView === 'workspace') {
         renderWorkspace(currentDocData);
         const pendingToastRaw = store.getItem(PENDING_TOAST_STORAGE_KEY);
@@ -718,10 +717,161 @@ function handleAuthError(result) {
 }
 
 /**
+ * Khôi phục trạng thái Background Job sau khi reload F5 hoặc mở lại ứng dụng (PDFL-71.3).
+ * Xác thực trạng thái thực tế từ Backend làm nguồn chân lý duy nhất (Single Source of Truth).
+ */
+async function recoverActiveJob(savedJobId) {
+  if (!savedJobId) return;
+
+  const store = getWorkspaceSessionStorage();
+  const btnProcessPdf = document.getElementById('btnProcessPdf');
+
+  try {
+    const authHeaders = getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}/jobs/${savedJobId}`, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    if (response.status === 404 || !response.ok) {
+      // Job không tồn tại trên backend (hoặc máy chủ lỗi) -> dọn dẹp job giả tạo
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+      showProgressModal(false);
+      return;
+    }
+
+    let body = null;
+    try {
+      body = await response.json();
+    } catch (_e) {}
+
+    const job = body && body.data;
+    if (!job || !job.status) {
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+      showProgressModal(false);
+      return;
+    }
+
+    currentActiveJobId = job.job_id || savedJobId;
+    if (job.filename) {
+      currentJobFileName = job.filename;
+    }
+
+    // ── XỬ LÝ THEO TRẠNG THÁI THỰC TẾ CỦA BACKEND ──
+    if (job.status === 'PENDING' || job.status === 'PROCESSING') {
+      if (btnProcessPdf) btnProcessPdf.disabled = true;
+
+      // Đồng bộ tên file lên widget và modal
+      const bgFileNameEl = document.getElementById('bgJobFileName');
+      if (bgFileNameEl && currentJobFileName) {
+        bgFileNameEl.textContent = currentJobFileName;
+      }
+
+      const isMinimized = store ? store.getItem(BG_MINIMIZED_STORAGE_KEY) === 'true' : false;
+      const pct = typeof job.progress_percentage === 'number' ? job.progress_percentage : 10;
+      const msg = job.message || 'Đang tiếp tục xử lý tài liệu...';
+      const step = typeof job.current_step === 'number' ? job.current_step : 2;
+
+      updateProgress(pct, msg, step);
+
+      if (isMinimized) {
+        // Khôi phục dạng Floating Mini-Widget (modal ẩn)
+        const modal = document.getElementById('processingModal');
+        if (modal) modal.style.display = 'none';
+
+        const widget = document.getElementById('bgJobWidget');
+        if (widget) widget.style.display = 'flex';
+      } else {
+        // Khôi phục dạng Modal chính (widget ẩn)
+        const widget = document.getElementById('bgJobWidget');
+        if (widget) widget.style.display = 'none';
+
+        const modal = document.getElementById('processingModal');
+        if (modal) modal.style.display = 'flex';
+      }
+
+      // Khôi phục kết nối SSE / Polling fallback theo dõi tiến trình thực
+      listenToJobProgress(currentActiveJobId, btnProcessPdf);
+
+    } else if (job.status === 'COMPLETED') {
+      // Job đã hoàn tất trước hoặc trong lúc reload F5
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+
+      const modal = document.getElementById('processingModal');
+      if (modal) modal.style.display = 'none';
+      const widget = document.getElementById('bgJobWidget');
+      if (widget) widget.style.display = 'none';
+
+      if (job.result) {
+        currentDocData = job.result;
+        saveWorkspaceDocToStorage(currentDocData);
+        if (store) {
+          try {
+            store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
+          } catch (_e) {}
+        }
+        renderWorkspace(job.result);
+        showToast('Tài liệu đã được dịch thuật thành công!', 'success');
+
+        if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
+          window.PDFLinguaSidebar.fetchRecentDocuments();
+        }
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+          try {
+            window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: job.result } }));
+          } catch (e) {}
+        }
+      }
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+
+    } else if (job.status === 'FAILED') {
+      // Job thất bại trước hoặc trong lúc reload F5
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+
+      const modal = document.getElementById('processingModal');
+      if (modal) modal.style.display = 'none';
+      const widget = document.getElementById('bgJobWidget');
+      if (widget) widget.style.display = 'none';
+
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+      showToast(job.error || job.message || 'Xử lý tài liệu thất bại.', 'error');
+
+    } else if (job.status === 'CANCELLED') {
+      // Job đã bị hủy
+      clearActiveJobFromStorage();
+      cleanupProgressTracking();
+
+      const modal = document.getElementById('processingModal');
+      if (modal) modal.style.display = 'none';
+      const widget = document.getElementById('bgJobWidget');
+      if (widget) widget.style.display = 'none';
+
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+      showToast(job.message || 'Tác vụ đã được hủy.', 'info');
+    }
+
+  } catch (err) {
+    console.warn('Lỗi khi khôi phục background job:', err);
+  }
+}
+
+/**
  * Theo dõi tiến độ xử lý Background Job theo thời gian thực (PDFL-111.4).
  * Sử dụng SSE (Server-Sent Events) và tự động fallback sang polling nếu SSE ngắt kết nối.
  */
 function listenToJobProgress(jobId, btnProcessPdf) {
+  // Ngăn kết nối SSE trùng lặp cho cùng một job đang được theo dõi (PDFL-71.3)
+  if (activeEventSource && currentActiveJobId === jobId) {
+    const isClosed = activeEventSource.closed || activeEventSource.readyState === 2;
+    if (!isClosed) {
+      return;
+    }
+  }
+
   cleanupProgressTracking();
   currentActiveJobId = jobId;
 
@@ -1022,6 +1172,7 @@ async function handleProcessPdf() {
     if (store) {
       try {
         store.setItem(ACTIVE_JOB_STORAGE_KEY, String(jobId));
+        store.setItem(BG_MINIMIZED_STORAGE_KEY, 'false');
         store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
       } catch (_e) {}
     }
@@ -1756,6 +1907,13 @@ function minimizeProgressModal() {
     modal.style.display = 'none';
   }
 
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(BG_MINIMIZED_STORAGE_KEY, 'true');
+    } catch (_e) {}
+  }
+
   // Nếu đang có tác vụ xử lý đang chạy, hiển thị Floating Mini-Widget
   if (currentActiveJobId || activeEventSource || activePollTimer) {
     const widget = document.getElementById('bgJobWidget');
@@ -1774,6 +1932,13 @@ function minimizeProgressModal() {
  * Phóng to lại modal chi tiết từ Floating Mini-Widget (PDFL-71.2).
  */
 function maximizeProgressModal() {
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(BG_MINIMIZED_STORAGE_KEY, 'false');
+    } catch (_e) {}
+  }
+
   const widget = document.getElementById('bgJobWidget');
   if (widget) {
     widget.style.display = 'none';
@@ -2062,6 +2227,11 @@ if (typeof window !== 'undefined') {
     setActiveJobId: (id) => { currentActiveJobId = id; },
     getCurrentJobFileName: () => currentJobFileName,
     setCurrentJobFileName: (name) => { currentJobFileName = name; },
+    recoverActiveJob,
+    ACTIVE_JOB_STORAGE_KEY,
+    BG_MINIMIZED_STORAGE_KEY,
+    getEventSource: () => activeEventSource,
+    getPollTimer: () => activePollTimer,
   });
   window.showToast = showToast;
 }

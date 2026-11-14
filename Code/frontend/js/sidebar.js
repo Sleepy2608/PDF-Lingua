@@ -325,6 +325,14 @@
   }
 
   function openDocumentsView() {
+    // PDFL-71.3: If processing modal is open when switching views, auto-minimize to floating mini-widget
+    const processingModal = document.getElementById('processingModal');
+    if (processingModal && (processingModal.style.display === 'flex' || processingModal.style.display === 'block')) {
+      if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.minimizeProgressModal === 'function') {
+        window.pdfLinguaWorkspace.minimizeProgressModal();
+      }
+    }
+
     const sideNavDocuments = document.getElementById('sideNavDocuments');
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
@@ -352,6 +360,14 @@
   }
 
   function openHistoryView() {
+    // PDFL-71.3: If processing modal is open when switching views, auto-minimize to floating mini-widget
+    const processingModal = document.getElementById('processingModal');
+    if (processingModal && (processingModal.style.display === 'flex' || processingModal.style.display === 'block')) {
+      if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.minimizeProgressModal === 'function') {
+        window.pdfLinguaWorkspace.minimizeProgressModal();
+      }
+    }
+
     const sideNavHistory = document.getElementById('sideNavHistory');
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
