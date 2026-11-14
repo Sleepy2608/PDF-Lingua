@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -15,7 +16,9 @@ sys.path.insert(0, str(backend_dir))
 from app.services.job_service import JobStatus, job_manager
 from app.services.pdf_service import PDFService
 from app.services.ocr_service import OCRService
-from unittest.mock import MagicMock
+from app.api.process import _execute_pdf_background_job, cancel_processing_job, _job_semaphore
+from fastapi import HTTPException
+from unittest.mock import MagicMock, patch
 
 DATASET_DIR = Path(__file__).parent / "dataset"
 
@@ -92,6 +95,14 @@ def execute_pdf_job_sync(
 
     except Exception as e:
         job_manager.set_failed(job_id, str(e))
+
+
+def run_coro(coro):
+    """Thực thi coroutine đồng bộ không phụ thuộc asyncio.run()"""
+    try:
+        coro.send(None)
+    except StopIteration as exc:
+        return exc.value
 
 
 class TestBackgroundJobsAPI(unittest.TestCase):
@@ -226,6 +237,155 @@ class TestBackgroundJobsAPI(unittest.TestCase):
 
         not_found = job_manager.get_job("non-existent-id")
         self.assertIsNone(not_found)
+
+    def test_cancel_processing_job_endpoint(self):
+        """6. Kiểm tra API endpoint hủy job (/jobs/{job_id}/cancel) và các ràng buộc trạng thái (PDFL-71.1)"""
+        # Hủy job hợp lệ
+        job = job_manager.create_job("to_cancel.pdf", "vi")
+        jid = job.job_id
+
+        res = run_coro(cancel_processing_job(job_id=jid, current_user=None))
+        self.assertEqual(res.data["status"], "CANCELLED")
+        self.assertEqual(res.data["job_id"], jid)
+
+        # Hủy lại lần 2 -> 400 Bad Request
+        with self.assertRaises(HTTPException) as ctx:
+            run_coro(cancel_processing_job(job_id=jid, current_user=None))
+        self.assertEqual(ctx.exception.status_code, 400)
+
+        # Hủy job không tồn tại -> 404 Not Found
+        with self.assertRaises(HTTPException) as ctx404:
+            run_coro(cancel_processing_job(job_id="non-existent-1234", current_user=None))
+        self.assertEqual(ctx404.exception.status_code, 404)
+
+    @patch("app.api.process.translation_service.translate_text")
+    def test_cancel_during_execution_stops_worker_and_releases_semaphore(self, mock_translate):
+        """7. Kiểm tra hủy job khi đang xử lý (PROCESSING), đảm bảo worker dừng và giải phóng semaphore (PDFL-71.1)"""
+        mock_translate.return_value = {
+            "translated_text": "Bản dịch thử nghiệm.",
+            "engine_used": "mock_engine",
+        }
+
+        src_pdf = DATASET_DIR / "digital" / "digital_single_column.pdf"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(src_pdf.read_bytes())
+            tmp_path = Path(tmp.name)
+
+        job = job_manager.create_job("cancel_midway.pdf", "vi")
+        jid = job.job_id
+
+        # Hủy ngay trước khi trích xuất
+        job_manager.cancel_job(jid, reason="Người dùng chủ động hủy.")
+
+        _execute_pdf_background_job(
+            job_id=jid,
+            tmp_path=tmp_path,
+            filename="cancel_midway.pdf",
+            target_lang="vi",
+            max_allowed_pages=100,
+            file_size_mb=0.1,
+        )
+
+        final_job = job_manager.get_job(jid)
+        self.assertEqual(final_job.status, JobStatus.CANCELLED)
+        self.assertEqual(_job_semaphore._value, 4, "Semaphore phải được giải phóng hoàn toàn.")
+        self.assertFalse(tmp_path.exists())
+
+    @patch("app.api.process.translation_service.translate_text")
+    def test_execute_pdf_background_job_success_and_metrics(self, mock_translate):
+        """7. Kiểm tra hàm worker thực tế _execute_pdf_background_job hoàn tất và ghi nhận execution_time_ms (PDFL-71.1)"""
+        mock_translate.return_value = {
+            "translated_text": "Bản dịch thử nghiệm nền thành công.",
+            "engine_used": "mock_worker_engine",
+        }
+
+        # Chuẩn bị file tạm
+        src_pdf = DATASET_DIR / "digital" / "digital_single_column.pdf"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(src_pdf.read_bytes())
+            tmp_path = Path(tmp.name)
+
+        job = job_manager.create_job("digital_worker_test.pdf", "vi")
+        jid = job.job_id
+
+        _execute_pdf_background_job(
+            job_id=jid,
+            tmp_path=tmp_path,
+            filename="digital_worker_test.pdf",
+            target_lang="vi",
+            max_allowed_pages=100,
+            file_size_mb=0.1,
+        )
+
+        completed_job = job_manager.get_job(jid)
+        self.assertIsNotNone(completed_job)
+        self.assertEqual(completed_job.status, JobStatus.COMPLETED)
+        self.assertIsNotNone(completed_job.result)
+        self.assertIn("execution_time_ms", completed_job.result)
+        self.assertGreater(completed_job.result["execution_time_ms"], 0)
+        self.assertFalse(tmp_path.exists(), "Tệp tạm phải được xóa dọn dẹp sau khi xử lý xong.")
+
+    def test_concurrency_queueing_and_semaphore_release(self):
+        """8. Kiểm tra cơ chế xếp hàng khi vượt quá giới hạn 4 worker đồng thời và giải phóng tài nguyên (PDFL-71.1)"""
+        # Giả lập chiếm toàn bộ 4 permit của semaphore
+        for _ in range(4):
+            _job_semaphore.acquire()
+
+        self.assertEqual(_job_semaphore._value, 0)
+        try:
+            job = job_manager.create_job("queued_doc.pdf", "vi")
+            jid = job.job_id
+
+            worker_started = threading.Event()
+            worker_done = threading.Event()
+
+            # Tạo file tạm dummy
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(b"%PDF-1.4 dummy content")
+                tmp_path = Path(tmp.name)
+
+            try:
+                def run_worker():
+                    worker_started.set()
+                    _execute_pdf_background_job(
+                        job_id=jid,
+                        tmp_path=tmp_path,
+                        filename="queued_doc.pdf",
+                        target_lang="vi",
+                        max_allowed_pages=10,
+                        file_size_mb=0.01,
+                    )
+                    worker_done.set()
+
+                t = threading.Thread(target=run_worker)
+                t.start()
+                worker_started.wait(timeout=2.0)
+
+                # Chờ 0.6s để worker cố acquire semaphore và chuyển sang trạng thái xếp hàng
+                time.sleep(0.6)
+
+                queued_job = job_manager.get_job(jid)
+                self.assertEqual(queued_job.status, JobStatus.PENDING)
+                self.assertIn("Hệ thống đang bận", queued_job.message)
+
+                # Hủy job trong khi đang xếp hàng
+                job_manager.cancel_job(jid, reason="Hủy khi đang đợi slot.")
+
+                # Chờ worker phát hiện tín hiệu hủy và thoát vòng lặp
+                worker_done.wait(timeout=3.0)
+                t.join(timeout=3.0)
+
+                final_job = job_manager.get_job(jid)
+                self.assertEqual(final_job.status, JobStatus.CANCELLED)
+            finally:
+                if tmp_path.exists():
+                    tmp_path.unlink()
+        finally:
+            # Giải phóng lại 4 permit đã chiếm
+            for _ in range(4):
+                _job_semaphore.release()
+
+        self.assertEqual(_job_semaphore._value, 4, "Semaphore phải được hoàn trả đầy đủ 4 permit.")
 
 
 if __name__ == "__main__":

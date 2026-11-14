@@ -129,6 +129,87 @@ class TestJobService(unittest.TestCase):
         self.manager.create_job("new.pdf", "vi")
         self.assertIsNone(self.manager.get_job(jid), "Job cũ đã hoàn thành quá TTL phải được dọn dẹp khỏi bộ nhớ.")
 
+    def test_job_cancellation_lifecycle(self):
+        """Kiểm tra chu trình hủy job, đảm bảo trạng thái CANCELLED và chặn cập nhật tiếp theo (PDFL-71.1)"""
+        job = self.manager.create_job("cancel_test.pdf", "vi")
+        jid = job.job_id
+
+        self.assertEqual(job.status, JobStatus.PENDING)
+        self.assertFalse(self.manager.is_job_cancelled(jid))
+
+        # Hủy job thành công
+        success, msg, cancelled_job = self.manager.cancel_job(jid, reason="Người dùng hủy tác vụ.")
+        self.assertTrue(success)
+        self.assertEqual(cancelled_job.status, JobStatus.CANCELLED)
+        self.assertTrue(self.manager.is_job_cancelled(jid))
+
+        # Cố gắng cập nhật tiến độ sau khi đã hủy -> phải bị từ chối (None)
+        res_update = self.manager.update_progress(jid, processed_pages=5, total_pages=10)
+        self.assertIsNone(res_update)
+
+        res_complete = self.manager.set_completed(jid, result={"data": "test"})
+        self.assertIsNone(res_complete)
+
+        # Trạng thái vẫn là CANCELLED
+        self.assertEqual(self.manager.get_job(jid).status, JobStatus.CANCELLED)
+
+        # Cố gắng hủy lại lần nữa -> Báo lỗi trạng thái
+        retry_success, retry_msg, _ = self.manager.cancel_job(jid)
+        self.assertFalse(retry_success)
+        self.assertIn("CANCELLED", retry_msg)
+
+    def test_job_queued_maintains_pending(self):
+        """Kiểm tra trạng thái hàng đợi giữ nguyên PENDING khi hệ thống bận (PDFL-71.1)"""
+        job = self.manager.create_job("queue_test.pdf", "vi")
+        jid = job.job_id
+
+        queued_job = self.manager.set_queued(jid, message="Hệ thống đang bận. Đang xếp hàng chờ...")
+        self.assertIsNotNone(queued_job)
+        self.assertEqual(queued_job.status, JobStatus.PENDING)
+        self.assertEqual(queued_job.current_step, 1)
+        self.assertIn("Hệ thống đang bận", queued_job.message)
+
+    def test_job_cancellation_permissions(self):
+        """Kiểm tra phân quyền hủy tác vụ giữa các người dùng (PDFL-71.1)"""
+        job = self.manager.create_job("user_job.pdf", "vi", user_id=101)
+        jid = job.job_id
+
+        # Người dùng khác (user_id=202) không được phép hủy
+        diff_user_ok, diff_msg, _ = self.manager.cancel_job(jid, user_id=202)
+        self.assertFalse(diff_user_ok)
+        self.assertIn("quyền", diff_msg)
+        self.assertEqual(self.manager.get_job(jid).status, JobStatus.PENDING)
+
+        # Đúng người dùng (user_id=101) được phép hủy
+        owner_ok, owner_msg, _ = self.manager.cancel_job(jid, user_id=101)
+        self.assertTrue(owner_ok)
+        self.assertEqual(self.manager.get_job(jid).status, JobStatus.CANCELLED)
+
+    def test_execution_time_ms_and_history_id_tracking(self):
+        """Kiểm tra lưu trữ và truy xuất execution_time_ms và history_id (PDFL-71.1)"""
+        job = self.manager.create_job("timed_job.pdf", "vi")
+        jid = job.job_id
+
+        result_payload = {
+            "translated_text": "Xin chào",
+            "execution_time_ms": 1450,
+            "history_id": 88,
+        }
+        self.manager.set_completed(
+            jid,
+            result=result_payload,
+            execution_time_ms=1450,
+            history_id=88,
+        )
+
+        completed_job = self.manager.get_job(jid)
+        self.assertEqual(completed_job.execution_time_ms, 1450)
+        self.assertEqual(completed_job.history_id, 88)
+
+        job_dict = completed_job.to_dict()
+        self.assertEqual(job_dict["execution_time_ms"], 1450)
+        self.assertEqual(job_dict["history_id"], 88)
+
 
 if __name__ == "__main__":
     unittest.main()

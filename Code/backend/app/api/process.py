@@ -74,6 +74,11 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     return settings.MAX_UPLOAD_SIZE_FREE_MB, max_pages
 
 
+class JobCancelledException(Exception):
+    """Ngoại lệ khi tác vụ nền bị hủy bởi người dùng (PDFL-71.1)"""
+    pass
+
+
 def _execute_pdf_background_job(
     job_id: str,
     tmp_path: Path,
@@ -88,13 +93,17 @@ def _execute_pdf_background_job(
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
-    Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
+    Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5, PDFL-71.1).
+    Hỗ trợ xếp hàng PENDING khi vượt quá giới hạn và hủy tác vụ an toàn.
     Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
     và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công (PDFL-90, PDFL-91).
     Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages (PDFL-255.1).
     """
+    semaphore_acquired = False
+    start_time = time.time()
+    document_id: Optional[int] = None
+
     try:
-        start_time = time.time()
         job = job_manager.get_job(job_id)
         if job and getattr(job, "created_at", None):
             try:
@@ -102,24 +111,46 @@ def _execute_pdf_background_job(
             except (ValueError, TypeError):
                 start_time = time.time()
 
-        acquired = _job_semaphore.acquire(blocking=False)
-        if not acquired:
-            try:
-                job_manager.update_progress(
-                    job_id,
-                    processed_pages=0,
-                    message="Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
-                    step=1,
-                )
-            except Exception:
-                pass
-            _job_semaphore.acquire(blocking=True)
+        # Kiểm tra nếu job đã bị hủy trước khi vào hàng đợi
+        if job_manager.is_job_cancelled(job_id):
+            logger.info(f"[Job {job_id}] Đã bị hủy trước khi chạy.")
+            return
 
+        # 1. Thử acquire semaphore không chờ (non-blocking)
+        acquired = _job_semaphore.acquire(blocking=False)
+        if acquired:
+            semaphore_acquired = True
+        else:
+            # Vượt quá 4 job đồng thời: Cập nhật thông báo xếp hàng nhưng GIỮ nguyên trạng thái PENDING
+            job_manager.set_queued(
+                job_id,
+                message="Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
+            )
+            logger.info(f"[Job {job_id}] Đang xếp hàng chờ worker slot trống (PENDING)...")
+
+            # Chờ semaphore theo chu kỳ ngắn để phát hiện kịp thời nếu job bị cancel
+            while not job_manager.is_job_cancelled(job_id):
+                if _job_semaphore.acquire(timeout=0.5):
+                    semaphore_acquired = True
+                    break
+
+        if not semaphore_acquired:
+            logger.info(f"[Job {job_id}] Kết thúc do không acquire được semaphore hoặc đã bị hủy trong hàng đợi.")
+            return
+
+        if job_manager.is_job_cancelled(job_id):
+            logger.info(f"[Job {job_id}] Đã bị hủy ngay sau khi acquire semaphore.")
+            return
+
+        # 2. Đã chiếm slot worker: Bắt đầu xử lý
         try:
             validation = pdf_service.validate_pdf(tmp_path)
             if not validation["is_valid"]:
                 job_manager.set_failed(job_id, validation["error"] or "Tệp PDF không hợp lệ.")
                 return
+
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
 
             page_count = validation["page_count"]
             if page_count <= 0:
@@ -142,6 +173,8 @@ def _execute_pdf_background_job(
             )
 
             def on_progress(processed: int, total: int, msg: str) -> None:
+                if job_manager.is_job_cancelled(job_id):
+                    raise JobCancelledException("Tác vụ đã bị hủy trong quá trình trích xuất.")
                 job_manager.update_progress(job_id, processed_pages=processed, total_pages=total, message=msg)
 
             # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng với selected_pages
@@ -153,23 +186,32 @@ def _execute_pdf_background_job(
                 selected_pages=selected_pages,
             )
 
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
+
             original_text = extract_res.get("text", "")
             if not original_text.strip():
                 job_manager.set_failed(job_id, "Không thể trích xuất văn bản từ tài liệu này.")
                 return
 
             job_manager.set_translating(job_id, message="Đang dịch thuật văn bản sang ngôn ngữ đích...")
+
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
+
             trans_res = translation_service.translate_text(
                 original_text,
                 target_lang=target_lang,
                 source_lang="auto",
             )
 
+            if job_manager.is_job_cancelled(job_id):
+                raise JobCancelledException()
+
             is_ocr_used = bool(
                 extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
             )
 
-            document_id: Optional[int] = None
             if user_id is not None:
                 db_session = SessionLocal()
                 try:
@@ -263,11 +305,20 @@ def _execute_pdf_background_job(
                 finally:
                     hist_session.close()
 
-            job_manager.set_completed(job_id, result=result_data, message="Xử lý và dịch thuật hoàn tất!")
+            job_manager.set_completed(
+                job_id,
+                result=result_data,
+                message="Xử lý và dịch thuật hoàn tất!",
+                execution_time_ms=execution_time_ms,
+                history_id=history_id,
+            )
 
+        except JobCancelledException:
+            logger.info(f"[Job {job_id}] Đã dừng xử lý do nhận được tín hiệu hủy tác vụ.")
         except Exception as e:
             logger.error(f"[Job {job_id}] Lỗi xử lý nền: {e}")
-            job_manager.set_failed(job_id, str(e))
+            fail_time_ms = max(1, int((time.time() - start_time) * 1000))
+            job_manager.set_failed(job_id, str(e), execution_time_ms=fail_time_ms)
             if user_id is not None and document_id is not None:
                 fail_session = SessionLocal()
                 try:
@@ -275,7 +326,6 @@ def _execute_pdf_background_job(
                     from app.schemas.processing_history import ProcessingHistoryCreate
                     from app.services.history_service import history_service
 
-                    fail_time_ms = max(1, int((time.time() - start_time) * 1000))
                     history_service.create_history(
                         fail_session,
                         ProcessingHistoryCreate(
@@ -296,13 +346,14 @@ def _execute_pdf_background_job(
                     logger.warning(f"[Job {job_id}] Could not log failed history: {fail_hist_err}")
                 finally:
                     fail_session.close()
-        finally:
-            _job_semaphore.release()
 
     except Exception as outer_e:
         logger.error(f"[Job {job_id}] Lỗi chuẩn bị hoặc xếp hàng tác vụ: {outer_e}")
         job_manager.set_failed(job_id, str(outer_e))
     finally:
+        if semaphore_acquired:
+            _job_semaphore.release()
+            semaphore_acquired = False
         if tmp_path.exists():
             try:
                 os.remove(tmp_path)
@@ -461,6 +512,51 @@ async def get_job_status(job_id: str):
     return ApiResponse(data=job.to_dict(), message="Lấy trạng thái tác vụ thành công.")
 
 
+@router.post("/jobs/{job_id}/cancel", response_model=ApiResponse[JobProgressData])
+async def cancel_processing_job(
+    job_id: str,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """
+    Hủy một Background Job đang xếp hàng (PENDING) hoặc đang chạy (PROCESSING) (PDFL-71.1).
+    Phân biệt rõ ràng với hành động ngắt kết nối theo dõi SSE (unsubscribe):
+    - Khi hủy: Trạng thái Job chuyển thành CANCELLED, giải phóng worker slot và file tạm.
+    - Người dùng chỉ có quyền hủy job của chính họ hoặc nếu là admin.
+    """
+    authenticated_user_id = current_user.id if current_user is not None else None
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
+
+    if job.user_id is not None:
+        if authenticated_user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Vui lòng đăng nhập để thao tác với tác vụ này.",
+            )
+        is_admin = getattr(current_user.role, "value", str(current_user.role)) == "admin"
+        if job.user_id != authenticated_user_id and not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bạn không có quyền hủy tác vụ của người dùng khác.",
+            )
+
+    success, message, updated_job = job_manager.cancel_job(
+        job_id,
+        user_id=authenticated_user_id,
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message,
+        )
+
+    return ApiResponse(
+        data=updated_job.to_dict(),
+        message=message,
+    )
+
+
 @router.get("/jobs/{job_id}/events")
 async def stream_job_events(job_id: str):
     """
@@ -479,7 +575,11 @@ async def stream_job_events(job_id: str):
                     data = await asyncio.wait_for(q.get(), timeout=10.0)
                     payload = json.dumps(data, ensure_ascii=False)
                     yield f"data: {payload}\n\n"
-                    if data.get("status") in (JobStatus.COMPLETED.value, JobStatus.FAILED.value):
+                    if data.get("status") in (
+                        JobStatus.COMPLETED.value,
+                        JobStatus.FAILED.value,
+                        JobStatus.CANCELLED.value,
+                    ):
                         break
                 except asyncio.TimeoutError:
                     # Gửi heartbeat giữ kết nối
