@@ -20,10 +20,11 @@ class TestBenchmarkExecution(unittest.TestCase):
         reports_dir = Path(__file__).parent / "dataset" / "reports"
         summary = self.runner.run_all(output_dir=reports_dir)
 
+        total_pdfs = len(list((Path(__file__).parent / "dataset").glob("*/*.pdf")))
         self.assertIn("total_documents_tested", summary)
-        self.assertEqual(summary["total_documents_tested"], 6)
+        self.assertEqual(summary["total_documents_tested"], total_pdfs)
         self.assertIn("detailed_reports", summary)
-        self.assertEqual(len(summary["detailed_reports"]), 6)
+        self.assertEqual(len(summary["detailed_reports"]), total_pdfs)
 
         # Kiểm tra file báo cáo JSON và CSV đã xuất ra thành công
         json_report = reports_dir / "benchmark_report.json"
