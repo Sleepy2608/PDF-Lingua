@@ -44,7 +44,7 @@
   min-height: 100vh;
   width: 100%;
   position: relative;
-  background-color: var(--bg-page);
+  background-color: var(--bg-subtle, #F8FAFC);
 }
 
 /* Main Content Viewport adjusts margin based on sidebar state */
@@ -58,6 +58,7 @@
   min-height: 100vh;
   position: relative;
   z-index: 10;
+  background-color: var(--bg-subtle, #F8FAFC);
 }
 
 .app-shell.sidebar-collapsed .app-main-viewport {
@@ -211,7 +212,7 @@
 }
 
 .sidebar-brand-text {
-  color: var(--sidebar-text-primary);
+  color: var(--color-primary-indigo, #4F46E5);
 }
 
 /* Toggle Collapse/Expand Button */
@@ -414,7 +415,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
   text-align: left;
@@ -436,6 +437,15 @@
   background-color: #FFF1F0;
   color: #C9201C;
   border-color: #FFCDD2;
+}
+
+/* Pro Features Dimmed on Free Plan */
+.sidebar-nav-item.is-dimmed {
+  opacity: 0.42;
+}
+
+.sidebar-nav-item.is-dimmed:hover {
+  opacity: 0.75;
 }
 
 .nav-item-icon {

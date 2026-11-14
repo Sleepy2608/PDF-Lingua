@@ -407,3 +407,68 @@ class TestAIChatValidationAndErrorHandling:
             assert body["success"] is True
             assert body["data"]["fallback_used"] is True
             assert "Simulated connection timeout" in body["data"]["fallback_reason"]
+
+
+class TestAIChatLanguageSynchronization:
+    """Test suite ensuring AI uses the same language as the user asking."""
+
+    def test_vietnamese_accented_query_responds_in_accented_vietnamese(self, ai_chat_env):
+        """User asking in accented Vietnamese receives accented Vietnamese response."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        payload = {
+            "query": "Tìm kiếm thông tin về bảo mật trong tài liệu này?",
+            "document_text": "Hệ thống bảo mật áp dụng mã hóa AES-256 tiêu chuẩn quân đội.",
+        }
+
+        response = client.post("/api/ai/chat", json=payload, headers=headers)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        answer = body["data"]["answer"]
+        # Prefix must have proper Vietnamese diacritics
+        assert "Dựa trên tài liệu" in answer or "bảo mật" in answer.lower()
+
+    def test_vietnamese_unaccented_query_responds_in_accented_vietnamese(self, ai_chat_env):
+        """User asking in unaccented Vietnamese receives accented Vietnamese response."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        payload = {
+            "query": "tim thu co tu xin chao trong tai lieu khong?",
+            "document_text": "Tai lieu huong dan: Xin chao tat ca moi nguoi den voi he thong.",
+        }
+
+        response = client.post("/api/ai/chat", json=payload, headers=headers)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        answer = body["data"]["answer"]
+        assert "Dựa trên tài liệu" in answer
+
+    def test_english_query_responds_in_english(self, ai_chat_env):
+        """User asking in English receives English response."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        payload = {
+            "query": "What is the encryption standard mentioned in this document?",
+            "document_text": "Security policy: All files are encrypted using AES-256 standard.",
+        }
+
+        response = client.post("/api/ai/chat", json=payload, headers=headers)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        answer = body["data"]["answer"]
+        assert "Based on the document" in answer or "AES-256" in answer
+
+    def test_english_out_of_domain_query_refusal(self, ai_chat_env):
+        """User asking out-of-domain question in English receives English refusal."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        payload = {
+            "query": "What is the capital of France?",
+            "document_text": "User guide for accounting and inventory software.",
+        }
+
+        response = client.post("/api/ai/chat", json=payload, headers=headers)
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        answer = body["data"]["answer"]
+        assert answer == "The document currently does not mention this information."

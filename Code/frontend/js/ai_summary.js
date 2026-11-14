@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua - AI Document Summarization Module (PDFL-50, PDFL-132, PDFL-133)
+ * PDF-Lingua - AI Document Summarization Module
  * ----------------------------------------------------------------------------
  * Handles AI summarization UI interaction, Pro VIP role authorization gates,
  * multi-style prompt requests (brief, bullets, detailed), Markdown rendering,

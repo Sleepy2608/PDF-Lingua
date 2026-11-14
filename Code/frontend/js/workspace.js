@@ -46,9 +46,40 @@ function initWorkspace() {
   const btnCopyTranslated = document.getElementById('btnCopyTranslated');
   const btnDownloadMenu = document.getElementById('btnDownloadMenu');
   const downloadDropdown = document.getElementById('downloadDropdown');
+  const btnAiSummarize = document.getElementById('btnAiSummarize');
+  const btnAiCopilot = document.getElementById('btnAiCopilot');
+  const btnMoreActionsMenu = document.getElementById('btnMoreActionsMenu');
+  const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+  const btnCopyAllTranslatedText = document.getElementById('btnCopyAllTranslatedText');
+  const btnResetWorkspaceSession = document.getElementById('btnResetWorkspaceSession');
   const btnDownloadTxt = document.getElementById('btnDownloadTxt');
   const btnDownloadPdf = document.getElementById('btnDownloadPdf');
   const btnNewFile = document.getElementById('btnNewFile');
+
+  function syncWorkspaceAiRoles(user) {
+    let currentUser = user;
+    if (currentUser === undefined) {
+      try {
+        const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
+        if (raw) currentUser = JSON.parse(raw);
+      } catch (_e) {}
+    }
+    const role = currentUser ? (currentUser.role || 'free') : 'guest';
+    const isPro = role === 'pro' || role === 'admin';
+    if (btnAiSummarize) {
+      if (isPro) btnAiSummarize.classList.remove('is-dimmed');
+      else btnAiSummarize.classList.add('is-dimmed');
+    }
+    if (btnAiCopilot) {
+      if (isPro) btnAiCopilot.classList.remove('is-dimmed');
+      else btnAiCopilot.classList.add('is-dimmed');
+    }
+  }
+
+  syncWorkspaceAiRoles();
+  window.addEventListener('pdfl:auth-change', (e) => {
+    syncWorkspaceAiRoles(e.detail ? e.detail.user : null);
+  });
 
   if (btnProcessPdf) {
     btnProcessPdf.addEventListener('click', handleProcessPdf);
@@ -80,19 +111,90 @@ function initWorkspace() {
     });
   }
 
+  function closeAllWorkspaceDropdowns() {
+    if (downloadDropdown) downloadDropdown.classList.remove('show');
+    if (moreActionsDropdown) moreActionsDropdown.classList.remove('show');
+    if (btnDownloadMenu) btnDownloadMenu.setAttribute('aria-expanded', 'false');
+    if (btnMoreActionsMenu) btnMoreActionsMenu.setAttribute('aria-expanded', 'false');
+  }
+
   if (btnDownloadMenu && downloadDropdown) {
     btnDownloadMenu.addEventListener('click', (e) => {
       e.stopPropagation();
-      updateExportUIState();
-      downloadDropdown.classList.toggle('show');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!downloadDropdown.contains(e.target) && e.target !== btnDownloadMenu) {
-        downloadDropdown.classList.remove('show');
+      const isShown = downloadDropdown.classList.contains('show');
+      closeAllWorkspaceDropdowns();
+      if (!isShown) {
+        updateExportUIState();
+        downloadDropdown.classList.add('show');
+        btnDownloadMenu.setAttribute('aria-expanded', 'true');
       }
     });
   }
+
+  if (btnAiSummarize) {
+    btnAiSummarize.addEventListener('click', () => {
+      closeAllWorkspaceDropdowns();
+    });
+  }
+
+  if (btnAiCopilot) {
+    btnAiCopilot.addEventListener('click', () => {
+      closeAllWorkspaceDropdowns();
+    });
+  }
+
+  if (btnMoreActionsMenu && moreActionsDropdown) {
+    btnMoreActionsMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isShown = moreActionsDropdown.classList.contains('show');
+      closeAllWorkspaceDropdowns();
+      if (!isShown) {
+        moreActionsDropdown.classList.add('show');
+        btnMoreActionsMenu.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    if (btnCopyAllTranslatedText) {
+      btnCopyAllTranslatedText.addEventListener('click', () => {
+        closeAllWorkspaceDropdowns();
+        const editorTranslated = document.getElementById('editorTranslated');
+        const text = editorTranslated ? (editorTranslated.innerText || editorTranslated.value || '') : '';
+        if (!text.trim()) {
+          showToast('Chưa có nội dung bản dịch để sao chép!', 'error');
+          return;
+        }
+        navigator.clipboard.writeText(text.trim()).then(() => {
+          showToast('Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!', 'success');
+        }).catch(() => {
+          showToast('Không thể sao chép văn bản.', 'error');
+        });
+      });
+    }
+
+    if (btnResetWorkspaceSession) {
+      btnResetWorkspaceSession.addEventListener('click', () => {
+        closeAllWorkspaceDropdowns();
+        resetToUpload();
+      });
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (
+      (!downloadDropdown || !downloadDropdown.contains(e.target)) &&
+      (!moreActionsDropdown || !moreActionsDropdown.contains(e.target)) &&
+      e.target !== btnDownloadMenu &&
+      e.target !== btnMoreActionsMenu
+    ) {
+      closeAllWorkspaceDropdowns();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllWorkspaceDropdowns();
+    }
+  });
 
   // Multi-target Export Listeners (PDFL-150.4 & PDFL-156.3)
   const exportBtnConfigs = [
@@ -549,9 +651,11 @@ async function handleRetranslate() {
 
   if (btnRetranslate) {
     btnRetranslate.disabled = true;
+    btnRetranslate.classList.add('is-loading');
     btnRetranslate.innerHTML = `
-      <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+      <svg class="retranslate-spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="9.5"></circle>
+        <path d="M12 2.5a9.5 9.5 0 0 1 9.5 9.5"></path>
       </svg>
       <span>Đang dịch lại...</span>
     `;
@@ -603,8 +707,9 @@ async function handleRetranslate() {
   } finally {
     if (btnRetranslate) {
       btnRetranslate.disabled = false;
+      btnRetranslate.classList.remove('is-loading');
       btnRetranslate.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="retranslate-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="1 4 1 10 7 10"></polyline>
           <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
         </svg>

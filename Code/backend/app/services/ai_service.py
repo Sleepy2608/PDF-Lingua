@@ -57,16 +57,23 @@ class AIService:
     )
 
     COPILOT_SYSTEM_PROMPT = (
-        "Ban la Tro ly AI Copilot thong minh cua he thong PDF-Lingua. "
+        "Ban la Tro ly AI thong minh cua he thong PDF-Lingua chuyen phan tich va giai dap ve tai lieu. "
         "Nhiem vu cua ban la tra loi cau hoi cua nguoi dung DUA HOAN TOAN VAO NGU CANH TAI LIEU duoc cung cap duoi day.\n\n"
-        "Quy tac nghiem ngat:\n"
-        "1. Chi su dung cac thong tin va du kien xuat hien trong phan 'NGU CANH TAI LIEU'.\n"
-        "2. Neu thong tin trong tai lieu khong du hoac khong de cap den cau tra loi, hay tra loi ro rang: "
-        "'Tai lieu hien tai khong de cap den thong tin nay.' Tuyet doi khong tu y bia dat hoac suy dien ngoai van ban (chong ao giac).\n"
-        "3. Tra loi ngan gon, suc tich, trung thuc bang tieng Viet."
+        "Quy tac ngon ngu va chong ao giac bat buoc:\n"
+        "1. DONG BO NGON NGU: Luon tra loi bang chinh ngon ngu ma nguoi dung dang dung de dat cau hoi. "
+        "Neu nguoi dung dat cau hoi bang tieng Viet (ke ca khi go tieng Viet khong dau), ban BAT BUOC PHAI TRA LOI BANG TIENG VIET CO DAU DAY DU, dung chinh ta va ngu phap. "
+        "Neu nguoi dung hoi bang tieng Anh hoac bat ky ngon ngu nao khac, ban phai tra loi hoan toan bang ngon ngu do.\n"
+        "2. NGU CANH TAI LIEU: Chi su dung cac thong tin va du kien xuat hien trong phan 'NGU CANH TAI LIEU'.\n"
+        "3. TU CHOI KHI THIEU THONG TIN: Neu thong tin trong tai lieu khong du hoac khong de cap den cau tra loi, hay tu choi ro rang, trung thuc tuyet doi (chong ao giac):\n"
+        "- Tieng Viet: 'Tài liệu hiện tại không đề cập đến thông tin này.'\n"
+        "- Tieng Anh: 'The document currently does not mention this information.'\n"
+        "- Ngon ngu khac: Tra loi cau tu choi tuong duong bang ngon ngu cua nguoi dung.\n"
+        "Tuyet doi khong tu y bia dat, suy dien hoac tra loi ngoai ngu canh tai lieu.\n"
+        "4. Phong cach tra loi: Ngan gon, suc tich, trung thuc, de hieu va chuyen nghiep."
     )
 
-    NO_INFO_RESPONSE = "Tai lieu hien tai khong de cap den thong tin nay."
+    NO_INFO_RESPONSE = "Tài liệu hiện tại không đề cập đến thông tin này."
+    NO_INFO_RESPONSE_EN = "The document currently does not mention this information."
 
     def __init__(
         self,
@@ -438,13 +445,33 @@ class AIService:
         if not raw_chunks:
             return []
 
-        # Extract search keywords from query (ignore short stop words < 3 chars)
+        # Extract search keywords from query (ignore filler and stop words)
         stop_words = {
+            # Vietnamese unaccented
             "la", "va", "cua", "cac", "nhung", "mot", "trong", "cho",
             "duoc", "voi", "khi", "nay", "do", "the", "nao", "gi",
             "sao", "bao", "nhieu", "co", "hay", "khong", "thi", "neu",
             "o", "ve", "tu", "den", "nguoi", "rat", "dan", "dung", "vay",
-            "ai", "dau", "se", "bi", "ra", "vao", "theo",
+            "ai", "dau", "se", "bi", "ra", "vao", "theo", "tim", "kiem",
+            "tai", "lieu", "thong", "tin", "hoi", "dap", "thu", "biet",
+            "toi", "ban", "minh", "chung", "ta", "day", "kia", "roi",
+            # Vietnamese accented
+            "là", "và", "của", "các", "những", "một", "được", "với",
+            "này", "đó", "thế", "nào", "gì", "nhiêu", "có", "không",
+            "thì", "nếu", "ở", "về", "từ", "đến", "người", "rất",
+            "đã", "đang", "sẽ", "bị", "vào", "đâu", "tìm", "kiếm",
+            "tài", "liệu", "thông", "tin", "hỏi", "đáp", "thử", "biết",
+            "tôi", "bạn", "mình", "chúng", "đây", "rồi", "văn", "bản",
+            # English
+            "what", "is", "are", "was", "were", "the", "a", "an",
+            "in", "on", "at", "to", "for", "of", "with", "by", "from",
+            "and", "or", "not", "this", "that", "these", "those", "it",
+            "its", "they", "them", "their", "we", "us", "our", "you",
+            "your", "he", "him", "his", "she", "her", "can", "could",
+            "should", "would", "do", "does", "did", "have", "has", "had",
+            "how", "why", "where", "when", "which", "who", "whom", "whose",
+            "document", "text", "file", "information", "mentioned", "tell",
+            "show", "find", "search", "please", "about",
         }
         query_words = [
             w.lower().strip("?,.!;:\"'()[]{}")
@@ -462,6 +489,14 @@ class AIService:
                 pattern = r"\b" + re.escape(qw) + r"\b"
                 matches = re.findall(pattern, chunk_lower)
                 count = len(matches)
+
+                # Prefix/stem matching for words >= 5 chars (e.g. encrypt / encrypted / encryption)
+                if count == 0 and len(qw) >= 5:
+                    stem = qw[:5]
+                    stem_pattern = r"\b" + re.escape(stem) + r"\w*"
+                    stem_matches = re.findall(stem_pattern, chunk_lower)
+                    count = len(stem_matches)
+
                 if count > 0:
                     score += count * 2
                     matched_terms.append(qw)
@@ -492,17 +527,103 @@ class AIService:
 
         return scored_chunks[:top_k]
 
+    @staticmethod
+    def _detect_language(text: str) -> str:
+        """
+        Detect user query language.
+        Returns 'vi' for Vietnamese (accented or unaccented), 'en' for English,
+        or language codes ('ja', 'ko', 'zh', etc.).
+        Defaults to 'vi' for PDF-Lingua primary domain context.
+        """
+        if not text or not text.strip():
+            return "vi"
+
+        normalized = text.strip()
+
+        # 1. Check for Vietnamese diacritic characters
+        vi_diacritics_pattern = re.compile(
+            r"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]"
+        )
+        if vi_diacritics_pattern.search(normalized):
+            return "vi"
+
+        # 2. Check for Japanese characters (Hiragana, Katakana)
+        if re.search(r"[\u3040-\u309F\u30A0-\u30FF]", normalized):
+            return "ja"
+
+        # 3. Check for Korean Hangul
+        if re.search(r"[\uAC00-\uD7AF\u1100-\u11FF]", normalized):
+            return "ko"
+
+        # 4. Check for Chinese Hanzi
+        if re.search(r"[\u4E00-\u9FFF]", normalized):
+            return "zh"
+
+        # 5. Tokenize lower-case words
+        words = [re.sub(r"[^\w]", "", w.lower()) for w in normalized.split()]
+        words = [w for w in words if w]
+        if not words:
+            return "vi"
+
+        # Unaccented Vietnamese common words lexicon
+        unaccented_vi_lexicon = {
+            "khong", "tai", "lieu", "duoc", "trong", "nhung", "nguoi",
+            "chinh", "thong", "tin", "chao", "hoi", "dap", "ban", "cua",
+            "cac", "mot", "voi", "khi", "nay", "nao", "sao", "bao", "nhieu",
+            "gach", "dau", "dong", "tom", "tat", "thu", "co", "tu", "la",
+            "va", "cho", "thi", "neu", "ve", "den", "se", "bi", "ra", "vao",
+            "theo", "ai", "dau", "gi", "sao", "lam", "giup", "minh", "toi",
+            "em", "anh", "chi", "nhe", "a", "day", "do", "kia", "the", "nao",
+            "the", "hay", "vay", "chung", "ta", "moi", "het", "con", "lai",
+            "chua", "roi", "rat", "qua", "lam", "di", "lai", "nen", "phai",
+            "biet", "noi", "dung", "sai"
+        }
+        vi_count = sum(1 for w in words if w in unaccented_vi_lexicon)
+
+        # English common words lexicon
+        english_lexicon = {
+            "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
+            "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
+            "this", "but", "his", "by", "from", "they", "we", "say", "her",
+            "she", "or", "an", "will", "my", "one", "all", "would", "there",
+            "their", "what", "so", "up", "out", "if", "about", "who", "get",
+            "which", "go", "me", "when", "make", "can", "like", "time", "no",
+            "just", "him", "know", "take", "people", "into", "year", "your",
+            "good", "some", "could", "them", "see", "other", "than", "then",
+            "now", "look", "only", "come", "its", "over", "think", "also",
+            "back", "after", "use", "two", "how", "our", "work", "first",
+            "well", "way", "even", "new", "want", "because", "any", "these",
+            "give", "day", "most", "us", "hello", "hi", "summarize", "summary",
+            "explain", "document", "question", "answer", "help", "please",
+            "is", "are", "was", "were", "has", "had", "does", "did", "tell"
+        }
+        en_count = sum(1 for w in words if w in english_lexicon)
+
+        if vi_count > en_count:
+            return "vi"
+        elif en_count > vi_count:
+            return "en"
+        elif vi_count > 0:
+            return "vi"
+        elif any(w in {"hello", "hi", "hey", "what", "who", "where", "when", "why", "how", "is", "are"} for w in words):
+            return "en"
+
+        return "vi"
+
     def _generate_mock_chat_response(
         self,
         query: str,
         relevant_chunks: list[dict[str, Any]],
+        lang: str = "vi",
     ) -> str:
         """
         Generate intelligent offline fallback answer based on query and relevant context.
-        Enforces PDFL-147: Returns NO_INFO_RESPONSE if no relevant information is found.
+        Enforces anti-hallucination and matches query language (accented Vietnamese or target language).
         """
+        no_info = self.NO_INFO_RESPONSE_EN if lang == "en" else self.NO_INFO_RESPONSE
+
         if not relevant_chunks or all(c["score"] == 0 for c in relevant_chunks):
-            return self.NO_INFO_RESPONSE
+            return no_info
 
         # Extract sentences from highest-scoring chunk that contain matched keywords
         best_chunk = relevant_chunks[0]
@@ -524,16 +645,22 @@ class AIService:
                 sentence_scores.append((cnt, sent))
 
         sentence_scores.sort(key=lambda x: x[0], reverse=True)
+        prefix = (
+            f"Based on the document (Section {best_chunk['chunk_index']}): "
+            if lang == "en"
+            else f"Dựa trên tài liệu (Đoạn {best_chunk['chunk_index']}): "
+        )
+
         if sentence_scores:
             top_sentences = [s for _, s in sentence_scores[:2]]
             extracted = " ".join(top_sentences)
-            return f"Dua tren tai lieu (Doan {best_chunk['chunk_index']}): {extracted}"
+            return f"{prefix}{extracted}"
 
         # If sentences don't isolate well, return first sentence of best chunk
         if sentences:
-            return f"Dua tren tai lieu (Doan {best_chunk['chunk_index']}): {sentences[0]}"
+            return f"{prefix}{sentences[0]}"
 
-        return self.NO_INFO_RESPONSE
+        return no_info
 
     async def chat_with_document(
         self,
@@ -547,10 +674,16 @@ class AIService:
         """
         start_time = time.time()
         model_name = model or settings.BAI_MODEL_CHAT or self.default_model
+        lang = self._detect_language(query)
 
         if not query or not query.strip():
+            empty_msg = (
+                "Please enter a question regarding the document content."
+                if lang == "en"
+                else "Vui lòng nhập câu hỏi về nội dung tài liệu."
+            )
             return {
-                "answer": "Vui long nhap cau hoi ve noi dung tai lieu.",
+                "answer": empty_msg,
                 "relevant_chunks": [],
                 "model_used": model_name,
                 "provider": "b.ai",
@@ -559,9 +692,11 @@ class AIService:
                 "execution_time_ms": 0,
             }
 
+        no_info_msg = self.NO_INFO_RESPONSE_EN if lang == "en" else self.NO_INFO_RESPONSE
+
         if not document_text or not document_text.strip():
             return {
-                "answer": self.NO_INFO_RESPONSE,
+                "answer": no_info_msg,
                 "relevant_chunks": [],
                 "model_used": model_name,
                 "provider": "b.ai",
@@ -582,8 +717,16 @@ class AIService:
             for c in relevant_chunks
         ])
 
+        if lang == "vi":
+            lang_instruction = "BAT BUOC TRA LOI BANG TIENG VIET CO DAU DAY DU."
+        elif lang == "en":
+            lang_instruction = "RESPOND IN ENGLISH."
+        else:
+            lang_instruction = f"RESPOND IN THE SAME LANGUAGE AS THE USER QUERY ({lang})."
+
         user_prompt = (
             f"--- NGU CANH TAI LIEU ---\n{formatted_context}\n--- HET NGU CANH TAI LIEU ---\n\n"
+            f"Yeu cau ngon ngu: {lang_instruction}\n"
             f"Cau hoi cua nguoi dung: {query.strip()}\n\n"
             f"Tra loi dua tren ngu canh:"
         )
@@ -617,13 +760,13 @@ class AIService:
             logger.warning(f"[AIService Chat] B.AI HTTP {status_code} error: {error_body}")
             fallback_used = True
             fallback_reason = f"B.AI HTTP {status_code}: {error_body}"
-            answer_text = self._generate_mock_chat_response(query, relevant_chunks)
+            answer_text = self._generate_mock_chat_response(query, relevant_chunks, lang=lang)
 
         except (httpx.TimeoutException, httpx.ConnectError, Exception) as e:
             logger.warning(f"[AIService Chat] Connection or API exception: {e}. Activating fallback.")
             fallback_used = True
             fallback_reason = str(e)
-            answer_text = self._generate_mock_chat_response(query, relevant_chunks)
+            answer_text = self._generate_mock_chat_response(query, relevant_chunks, lang=lang)
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 
