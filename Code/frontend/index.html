@@ -532,50 +532,87 @@
                             </div>
 
                             <div class="toolbar-actions">
-                                <div class="lang-select-wrap">
-                                    <span class="lang-select-label">Dịch sang:</span>
-                                    <select class="lang-select" id="targetLangSelect">
-                                        <option value="vi" selected>Tiếng Việt (vi)</option>
-                                        <option value="en">English (en)</option>
-                                        <option value="ja">日本語 (ja)</option>
-                                        <option value="ko">한국어 (ko)</option>
-                                        <option value="zh-CN">中文 (zh)</option>
-                                        <option value="fr">Français (fr)</option>
-                                        <option value="de">Deutsch (de)</option>
-                                        <option value="es">Español (es)</option>
-                                        <option value="ru">Русский (ru)</option>
-                                    </select>
+                                <!-- Translation Controls Segment -->
+                                <div class="toolbar-control-group">
+                                    <div class="lang-select-wrap">
+                                        <span class="lang-select-label">Dịch sang:</span>
+                                        <select class="lang-select" id="targetLangSelect">
+                                            <option value="vi" selected>Tiếng Việt (vi)</option>
+                                            <option value="en">English (en)</option>
+                                            <option value="ja">日本語 (ja)</option>
+                                            <option value="ko">한국어 (ko)</option>
+                                            <option value="zh-CN">中文 (zh)</option>
+                                            <option value="fr">Français (fr)</option>
+                                            <option value="de">Deutsch (de)</option>
+                                            <option value="es">Español (es)</option>
+                                            <option value="ru">Русский (ru)</option>
+                                        </select>
+                                    </div>
+
+                                    <button type="button" class="btn btn-secondary btn-icon-text" id="btnRetranslate"
+                                        title="Dịch lại theo ngôn ngữ đã chọn">
+                                        <svg class="retranslate-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="1 4 1 10 7 10"></polyline>
+                                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                        </svg>
+                                        <span>Dịch lại</span>
+                                    </button>
                                 </div>
 
-                                <button type="button" class="btn btn-secondary" id="btnRetranslate"
-                                    title="Dịch lại theo ngôn ngữ đã chọn">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="1 4 1 10 7 10"></polyline>
-                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                                    </svg>
-                                    <span>Dịch lại</span>
-                                </button>
+                                <div class="toolbar-divider" aria-hidden="true"></div>
 
-                                <button type="button" class="btn btn-ai-summary" id="btnAiSummarize"
-                                    title="Tóm tắt văn bản bằng AI (Pro VIP)">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                    </svg>
-                                    <span>Tóm tắt AI</span>
-                                    <span class="badge-pro-pill">PRO</span>
-                                </button>
+                                <!-- AI Tools Dropdown -->
+                                <div class="ai-tools-wrap">
+                                    <button type="button" class="btn btn-ai-suite" id="btnAiToolsMenu"
+                                        aria-haspopup="true" aria-expanded="false" title="Công cụ AI thông minh (Pro VIP)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                                        </svg>
+                                        <span>Tiện ích AI</span>
+                                        <span class="badge-pro-pill">PRO</span>
+                                        <svg class="chevron-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
 
-                                <button type="button" class="btn btn-ai-copilot" id="btnAiCopilot"
-                                    title="Trò chuyện với AI Copilot về tài liệu (Pro VIP)">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                    </svg>
-                                    <span>Hỏi đáp AI</span>
-                                    <span class="badge-pro-pill">PRO</span>
-                                </button>
+                                    <div class="dropdown-menu dropdown-menu-ai-suite" id="aiToolsDropdown" role="menu">
+                                        <button type="button" class="dropdown-suite-item btn-ai-summary" id="btnAiSummarize"
+                                            title="Tóm tắt văn bản bằng AI (Pro VIP)">
+                                            <div class="suite-item-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                </svg>
+                                            </div>
+                                            <div class="suite-item-text">
+                                                <div class="suite-item-header">
+                                                    <span class="suite-item-title">Tóm tắt AI</span>
+                                                    <span class="badge-pro-pill">PRO</span>
+                                                </div>
+                                                <div class="suite-item-desc">Rút trích luận điểm cốt lõi tài liệu</div>
+                                            </div>
+                                        </button>
+
+                                        <button type="button" class="dropdown-suite-item btn-ai-copilot" id="btnAiCopilot"
+                                            title="Trò chuyện với AI Copilot về tài liệu (Pro VIP)">
+                                            <div class="suite-item-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="suite-item-text">
+                                                <div class="suite-item-header">
+                                                    <span class="suite-item-title">Hỏi đáp AI</span>
+                                                    <span class="badge-pro-pill">PRO</span>
+                                                </div>
+                                                <div class="suite-item-desc">Hỏi đáp ngữ cảnh tài liệu song ngữ</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div class="download-wrap">
                                     <button type="button" class="btn btn-gradient" id="btnDownloadMenu"
@@ -704,15 +741,48 @@
                                     </div>
                                 </div>
 
-                                <button type="button" class="btn btn-secondary" id="btnNewFile"
-                                    title="Tải lên tệp PDF khác">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    </svg>
-                                    <span>Tệp khác</span>
-                                </button>
+                                <!-- More Options Kebab Menu -->
+                                <div class="more-actions-wrap">
+                                    <button type="button" class="btn btn-icon-kebab" id="btnMoreActionsMenu"
+                                        aria-haspopup="true" aria-expanded="false" title="Tùy chọn khác">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <circle cx="12" cy="5" r="1.75"></circle>
+                                            <circle cx="12" cy="12" r="1.75"></circle>
+                                            <circle cx="12" cy="19" r="1.75"></circle>
+                                        </svg>
+                                    </button>
+
+                                    <div class="dropdown-menu dropdown-menu-more" id="moreActionsDropdown" role="menu">
+                                        <button type="button" class="dropdown-item" id="btnNewFile" title="Tải lên tệp PDF khác">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            <span>Tải lên tệp khác</span>
+                                        </button>
+
+                                        <button type="button" class="dropdown-item" id="btnCopyAllTranslatedText" title="Sao chép toàn bộ văn bản dịch">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            <span>Sao chép bản dịch</span>
+                                        </button>
+
+                                        <div class="dropdown-divider"></div>
+
+                                        <button type="button" class="dropdown-item text-danger" id="btnResetWorkspaceSession" title="Làm mới lại phiên làm việc">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                                <path d="M3 3v5h5"></path>
+                                            </svg>
+                                            <span>Làm mới phiên làm việc</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

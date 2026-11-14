@@ -46,6 +46,14 @@ function initWorkspace() {
   const btnCopyTranslated = document.getElementById('btnCopyTranslated');
   const btnDownloadMenu = document.getElementById('btnDownloadMenu');
   const downloadDropdown = document.getElementById('downloadDropdown');
+  const btnAiToolsMenu = document.getElementById('btnAiToolsMenu');
+  const aiToolsDropdown = document.getElementById('aiToolsDropdown');
+  const btnAiSummarize = document.getElementById('btnAiSummarize');
+  const btnAiCopilot = document.getElementById('btnAiCopilot');
+  const btnMoreActionsMenu = document.getElementById('btnMoreActionsMenu');
+  const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+  const btnCopyAllTranslatedText = document.getElementById('btnCopyAllTranslatedText');
+  const btnResetWorkspaceSession = document.getElementById('btnResetWorkspaceSession');
   const btnDownloadTxt = document.getElementById('btnDownloadTxt');
   const btnDownloadPdf = document.getElementById('btnDownloadPdf');
   const btnNewFile = document.getElementById('btnNewFile');
@@ -80,19 +88,108 @@ function initWorkspace() {
     });
   }
 
+  function closeAllWorkspaceDropdowns() {
+    if (downloadDropdown) downloadDropdown.classList.remove('show');
+    if (aiToolsDropdown) aiToolsDropdown.classList.remove('show');
+    if (moreActionsDropdown) moreActionsDropdown.classList.remove('show');
+    if (btnDownloadMenu) btnDownloadMenu.setAttribute('aria-expanded', 'false');
+    if (btnAiToolsMenu) btnAiToolsMenu.setAttribute('aria-expanded', 'false');
+    if (btnMoreActionsMenu) btnMoreActionsMenu.setAttribute('aria-expanded', 'false');
+  }
+
   if (btnDownloadMenu && downloadDropdown) {
     btnDownloadMenu.addEventListener('click', (e) => {
       e.stopPropagation();
-      updateExportUIState();
-      downloadDropdown.classList.toggle('show');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!downloadDropdown.contains(e.target) && e.target !== btnDownloadMenu) {
-        downloadDropdown.classList.remove('show');
+      const isShown = downloadDropdown.classList.contains('show');
+      closeAllWorkspaceDropdowns();
+      if (!isShown) {
+        updateExportUIState();
+        downloadDropdown.classList.add('show');
+        btnDownloadMenu.setAttribute('aria-expanded', 'true');
       }
     });
   }
+
+  if (btnAiToolsMenu && aiToolsDropdown) {
+    btnAiToolsMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isShown = aiToolsDropdown.classList.contains('show');
+      closeAllWorkspaceDropdowns();
+      if (!isShown) {
+        aiToolsDropdown.classList.add('show');
+        btnAiToolsMenu.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    if (btnAiSummarize) {
+      btnAiSummarize.addEventListener('click', () => {
+        aiToolsDropdown.classList.remove('show');
+        if (btnAiToolsMenu) btnAiToolsMenu.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    if (btnAiCopilot) {
+      btnAiCopilot.addEventListener('click', () => {
+        aiToolsDropdown.classList.remove('show');
+        if (btnAiToolsMenu) btnAiToolsMenu.setAttribute('aria-expanded', 'false');
+      });
+    }
+  }
+
+  if (btnMoreActionsMenu && moreActionsDropdown) {
+    btnMoreActionsMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isShown = moreActionsDropdown.classList.contains('show');
+      closeAllWorkspaceDropdowns();
+      if (!isShown) {
+        moreActionsDropdown.classList.add('show');
+        btnMoreActionsMenu.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    if (btnCopyAllTranslatedText) {
+      btnCopyAllTranslatedText.addEventListener('click', () => {
+        closeAllWorkspaceDropdowns();
+        const editorTranslated = document.getElementById('editorTranslated');
+        const text = editorTranslated ? (editorTranslated.innerText || editorTranslated.value || '') : '';
+        if (!text.trim()) {
+          showToast('Chưa có nội dung bản dịch để sao chép!', 'error');
+          return;
+        }
+        navigator.clipboard.writeText(text.trim()).then(() => {
+          showToast('Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!', 'success');
+        }).catch(() => {
+          showToast('Không thể sao chép văn bản.', 'error');
+        });
+      });
+    }
+
+    if (btnResetWorkspaceSession) {
+      btnResetWorkspaceSession.addEventListener('click', () => {
+        closeAllWorkspaceDropdowns();
+        resetToUpload();
+      });
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (
+      (!downloadDropdown || !downloadDropdown.contains(e.target)) &&
+      (!aiToolsDropdown || !aiToolsDropdown.contains(e.target)) &&
+      (!moreActionsDropdown || !moreActionsDropdown.contains(e.target)) &&
+      e.target !== btnDownloadMenu &&
+      e.target !== btnAiToolsMenu &&
+      e.target !== btnMoreActionsMenu
+    ) {
+      closeAllWorkspaceDropdowns();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAllWorkspaceDropdowns();
+    }
+  });
 
   // Multi-target Export Listeners (PDFL-150.4 & PDFL-156.3)
   const exportBtnConfigs = [
