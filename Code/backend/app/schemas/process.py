@@ -1,6 +1,12 @@
 from enum import Enum
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+class ExportFormat(str, Enum):
+    TXT = "txt"
+    PDF = "pdf"
+    DOCX = "docx"
 
 
 class ExportTargetType(str, Enum):
@@ -48,7 +54,10 @@ class RetranslateRequest(BaseModel):
 
 class DownloadRequest(BaseModel):
     content: Optional[str] = Field(default=None, description="Nội dung cần xuất file")
-    format: str = Field(default="txt", description="Định dạng tệp: txt hoặc pdf")
+    format: ExportFormat = Field(
+        default=ExportFormat.TXT,
+        description="Định dạng tệp: txt, pdf hoặc docx",
+    )
     export_type: ExportTargetType = Field(
         default=ExportTargetType.TRANSLATED,
         description="Loại nội dung cần xuất: original | translated | summary | bilingual",
@@ -56,6 +65,22 @@ class DownloadRequest(BaseModel):
     filename: str = Field(default="translated_document", description="Tên tệp tải về không gồm đuôi")
     title: Optional[str] = Field(default=None, description="Tiêu đề tài liệu")
     original_content: Optional[str] = Field(default=None, description="Nội dung văn bản gốc nếu muốn xuất song ngữ")
+
+    @field_validator("format", mode="before")
+    @classmethod
+    def validate_format(cls, v: Any) -> Any:
+        """PDFL-254.1: Kiểm tra định dạng tệp xuất chỉ chấp nhận: txt, pdf, docx."""
+        if not v or not isinstance(v, (str, ExportFormat)):
+            raise ValueError("Định dạng tệp không được để trống và phải là chuỗi ký tự hợp lệ.")
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            allowed = {f.value for f in ExportFormat}
+            if clean not in allowed:
+                raise ValueError(
+                    f"Định dạng tệp '{v}' không hợp lệ. Chỉ chấp nhận các định dạng: {', '.join(sorted(allowed))}."
+                )
+            return clean
+        return v
 
 
 class FeedbackRequest(BaseModel):

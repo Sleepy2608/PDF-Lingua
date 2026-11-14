@@ -625,6 +625,76 @@ def test_download_admin_user_success(client, db_session):
     assert "Original bilingual content of Admin." in decoded
 
 
+# ── PDFL-254.1: DOCX Export RBAC Tests (Pro VIP Gate) ─────────────────────────
+
+def test_download_docx_guest_without_token_rejected_403(client):
+    """Guest (chưa đăng nhập, không có token) yêu cầu tải DOCX phải nhận HTTP 403 PRO_REQUIRED."""
+    payload = {
+        "content": "Nội dung export DOCX bởi Guest.",
+        "format": "docx",
+        "export_type": "translated",
+    }
+    res = client.post("/api/process/download", json=payload)
+    assert res.status_code == 403
+    assert res.json().get("error_code") == "PRO_REQUIRED"
+
+
+def test_download_docx_free_user_rejected_403(client, db_session):
+    """Tài khoản FREE đã đăng nhập yêu cầu tải DOCX phải nhận HTTP 403 PRO_REQUIRED."""
+    _, token = create_user_with_role(db_session, "free_docx_test@example.com", UserRole.FREE)
+    payload = {
+        "content": "Nội dung export DOCX bởi Free user.",
+        "format": "docx",
+        "export_type": "translated",
+    }
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+    assert res.status_code == 403
+    assert res.json().get("error_code") == "PRO_REQUIRED"
+
+
+def test_download_docx_pro_user_success(client, db_session):
+    """Tài khoản PRO đã đăng nhập xuất DOCX thành công với HTTP 200."""
+    _, token = create_user_with_role(db_session, "pro_docx_test@example.com", UserRole.PRO)
+    payload = {
+        "content": "Nội dung export DOCX bởi Pro VIP user.",
+        "format": "docx",
+        "export_type": "translated",
+        "filename": "pro_vip_doc",
+    }
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+    assert res.status_code == 200
+    assert "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in res.headers.get("content-type", "")
+    assert "pro_vip_doc_dich.docx" in res.headers.get("content-disposition", "")
+
+
+def test_download_docx_admin_user_success(client, db_session):
+    """Tài khoản ADMIN đã đăng nhập xuất DOCX thành công với HTTP 200."""
+    _, token = create_user_with_role(db_session, "admin_docx_test@example.com", UserRole.ADMIN)
+    payload = {
+        "content": "Nội dung export DOCX bởi Admin.",
+        "format": "docx",
+        "export_type": "translated",
+        "filename": "admin_vip_doc",
+    }
+    res = client.post(
+        "/api/process/download",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+    assert res.status_code == 200
+    assert "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in res.headers.get("content-type", "")
+    assert "admin_vip_doc_dich.docx" in res.headers.get("content-disposition", "")
+
+
+
 def test_export_api_anti_idor_does_not_fetch_or_leak_document_by_id(client, db_session):
     """
     IDOR Security Verification for Export API (/api/process/download):

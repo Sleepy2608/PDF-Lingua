@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -20,7 +21,9 @@ from app.core.dependencies import (
     get_db,
     get_max_pages_by_role,
     get_optional_current_user,
+    http_bearer,
 )
+from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.logger import logger
 from app.models.document import Document
 from app.models.user import User, UserRole
@@ -667,10 +670,38 @@ async def retranslate(
     )
 
 
+def get_download_current_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """
+    PDFL-254.1: Xác định người dùng cho endpoint tải tài liệu (/download):
+    - Tương thích ngược: Nếu app.dependency_overrides chứa get_current_user hoặc
+      get_download_current_user (mock auth trong các test suite), sử dụng override đó.
+    - Nếu request có Bearer token: xác thực chặt chẽ qua get_current_user (401 INVALID/EXPIRED, 403 INACTIVE).
+    - Nếu không có token: trả về None (Guest).
+    """
+    if hasattr(request, "app") and getattr(request.app, "dependency_overrides", None):
+        overrides = request.app.dependency_overrides
+        if get_download_current_user in overrides:
+            return overrides[get_download_current_user]()
+        if get_current_user in overrides:
+            return overrides[get_current_user]()
+        if get_optional_current_user in overrides:
+            return overrides[get_optional_current_user]()
+
+    auth_header = request.headers.get("authorization")
+    if not auth_header or not auth_header.strip():
+        return None
+
+    return get_current_user(request=request, credentials=credentials, db=db)
+
+
 @router.post("/download")
 async def download_result(
     request: DownloadRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_download_current_user),
 ):
     export_type = request.export_type
 
@@ -751,7 +782,7 @@ async def download_result(
     # Loại bỏ ký tự CR/LF để chống CRLF Injection trong HTTP Headers
     raw_name_input = re.sub(r'[\r\n]+', '', request.filename or '').strip()
     raw_filename = re.sub(r'[\\/*?:"<>|]', "", raw_name_input).strip() or "document"
-    raw_filename = re.sub(r'\.(pdf|txt)$', '', raw_filename, flags=re.IGNORECASE).strip()
+    raw_filename = re.sub(r'\.(pdf|txt|docx)$', '', raw_filename, flags=re.IGNORECASE).strip()
     for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
         if raw_filename.endswith(sfx):
             raw_filename = raw_filename[:-len(sfx)]
@@ -762,7 +793,38 @@ async def download_result(
 
     base_name = f"{raw_filename}{target_suffix}"
     fmt = (request.format or "txt").strip().lower()
-    ext = "pdf" if fmt == "pdf" else "txt"
+    if fmt == "docx":
+        ext = "docx"
+    elif fmt == "pdf":
+        ext = "pdf"
+    else:
+        ext = "txt"
+
+    # PDFL-254.1: Kiểm tra quyền tải file DOCX (chỉ dành riêng cho tài khoản Pro/Admin; Free/Guest trả về HTTP 403)
+    if ext == "docx":
+        user_role = current_user.role if current_user else None
+        is_pro_or_admin = (
+            user_role in (UserRole.PRO, UserRole.ADMIN)
+            or (isinstance(user_role, str) and user_role.lower() in ("pro", "admin"))
+            or getattr(current_user, "is_pro", False)
+        )
+        if not is_pro_or_admin:
+            logger.warning(
+                f"[Download] Caller (user_id={getattr(current_user, 'id', None)}, role='{user_role}') denied DOCX export."
+            )
+            raise ForbiddenException(
+                message="Tính năng tải tệp DOCX chỉ dành riêng cho tài khoản Pro.",
+                error_code="PRO_REQUIRED",
+                details={"upgrade_url": "/#pricingSection"},
+            )
+    else:
+        # Đối với các định dạng khác (txt, pdf): Nếu chưa đăng nhập (Guest không có Bearer token)
+        # thì yêu cầu xác thực HTTP 401 theo chuẩn bảo mật hệ thống
+        if current_user is None:
+            raise UnauthorizedException(
+                message="Yêu cầu xác thực. Vui lòng gửi kèm Bearer token.",
+                error_code="NOT_AUTHENTICATED",
+            )
 
     try:
         if ext == "pdf":
@@ -773,6 +835,14 @@ async def download_result(
                 export_type=export_type,
             )
             media_type = "application/pdf"
+        elif ext == "docx":
+            file_bytes = export_service.export_to_docx(
+                content=export_content,
+                title=title,
+                original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
+                export_type=export_type,
+            )
+            media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         else:
             file_bytes = export_service.export_to_txt(
                 content=export_content,
@@ -781,6 +851,8 @@ async def download_result(
                 original_content=original_str if export_type == ExportTargetType.BILINGUAL else None,
             )
             media_type = "text/plain; charset=utf-8"
+    except (ForbiddenException, HTTPException):
+        raise
     except Exception as e:
         logger.exception(f"[Download] Export failed unexpectedly: {e}")
         raise HTTPException(
