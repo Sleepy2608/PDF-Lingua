@@ -997,9 +997,10 @@ async def download_result(
     }
     target_suffix = suffix_map.get(export_type, "_dich")
 
-    # Loại bỏ ký tự CR/LF để chống CRLF Injection trong HTTP Headers
-    raw_name_input = re.sub(r'[\r\n]+', '', request.filename or '').strip()
-    raw_filename = re.sub(r'[\\/*?:"<>|]', "", raw_name_input).strip() or "document"
+    # Loại bỏ ký tự CR/LF và path traversal để chống Header / File Injection
+    clean_path_name = Path(re.sub(r'[\r\n]+', '', request.filename or '').strip().replace('\\', '/')).name
+    raw_filename = re.sub(r'[\\/*?:"<>|]', "", clean_path_name).strip()
+    raw_filename = re.sub(r'^\.+', '', raw_filename).strip() or "document"
     raw_filename = re.sub(r'\.(pdf|txt|docx)$', '', raw_filename, flags=re.IGNORECASE).strip()
     for sfx in ("_goc", "_dich", "_tomtat", "_songngu"):
         if raw_filename.endswith(sfx):

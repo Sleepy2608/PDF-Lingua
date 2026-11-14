@@ -182,7 +182,7 @@ async def chat_copilot(
     - Pro VIP role requirement (HTTP 403 if role is FREE).
     - Daily question quota limit (15 questions/day for Pro users).
     - Document ownership isolation if document_id is provided.
-    - Anti-hallucination guardrails (PDFL-147).
+    - Anti-hallucination guardrails.
     - ProcessingHistory audit logging with ActionType.CHAT.
     """
     # 1. Enforce Pro role requirement
@@ -207,7 +207,7 @@ async def chat_copilot(
         or (isinstance(user_role, str) and user_role.lower() == "admin")
     )
 
-    # 2. Daily question quota check (PDFL-145: 15 questions/day for Pro)
+    # 2. Daily question quota check (15 questions/day for Pro)
     today_start = datetime.now(timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
@@ -236,7 +236,7 @@ async def chat_copilot(
             },
         )
 
-    # 3. Document ownership and context resolution (PDFL-148)
+    # 3. Document ownership and context resolution
     linked_document: Optional[Document] = None
     source_text: str = payload.document_text or ""
 

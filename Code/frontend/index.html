@@ -748,30 +748,33 @@
                                     </button>
                                 </div>
 
-                                <div class="lang-select-wrap">
-                                    <span class="lang-select-label">Dịch sang:</span>
-                                    <select class="lang-select" id="targetLangSelect">
-                                        <option value="vi" selected>Tiếng Việt (vi)</option>
-                                        <option value="en">English (en)</option>
-                                        <option value="ja">日本語 (ja)</option>
-                                        <option value="ko">한국어 (ko)</option>
-                                        <option value="zh-CN">中文 (zh)</option>
-                                        <option value="fr">Français (fr)</option>
-                                        <option value="de">Deutsch (de)</option>
-                                        <option value="es">Español (es)</option>
-                                        <option value="ru">Русский (ru)</option>
-                                    </select>
-                                </div>
+                                <!-- Translation Controls Segment -->
+                                <div class="toolbar-control-group">
+                                    <div class="lang-select-wrap">
+                                        <span class="lang-select-label">Dịch sang:</span>
+                                        <select class="lang-select" id="targetLangSelect">
+                                            <option value="vi" selected>Tiếng Việt (vi)</option>
+                                            <option value="en">English (en)</option>
+                                            <option value="ja">日本語 (ja)</option>
+                                            <option value="ko">한국어 (ko)</option>
+                                            <option value="zh-CN">中文 (zh)</option>
+                                            <option value="fr">Français (fr)</option>
+                                            <option value="de">Deutsch (de)</option>
+                                            <option value="es">Español (es)</option>
+                                            <option value="ru">Русский (ru)</option>
+                                        </select>
+                                    </div>
 
-                                <button type="button" class="btn btn-secondary" id="btnRetranslate"
-                                    title="Dịch lại theo ngôn ngữ đã chọn">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="1 4 1 10 7 10"></polyline>
-                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                                    </svg>
-                                    <span>Dịch lại</span>
-                                </button>
+                                    <button type="button" class="btn btn-secondary btn-icon-text" id="btnRetranslate"
+                                        title="Dịch lại theo ngôn ngữ đã chọn">
+                                        <svg class="retranslate-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="1 4 1 10 7 10"></polyline>
+                                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                        </svg>
+                                        <span>Dịch lại</span>
+                                    </button>
+                                </div>
 
                                 <button type="button" class="btn btn-ai-summary" id="btnAiSummarize"
                                     title="Tóm tắt văn bản bằng AI (Pro VIP)">
@@ -794,7 +797,6 @@
                                     <span>Hỏi đáp AI</span>
                                     <span class="badge-pro-pill">PRO</span>
                                 </button>
-
                                 <div class="download-wrap">
                                     <button type="button" class="btn btn-gradient" id="btnDownloadMenu"
                                         aria-haspopup="true" aria-expanded="false" title="Tải xuống tệp">
@@ -957,15 +959,90 @@
                                     </div>
                                 </div>
 
-                                <button type="button" class="btn btn-secondary" id="btnNewFile"
-                                    title="Tải lên tệp PDF khác">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    </svg>
-                                    <span>Tệp khác</span>
-                                </button>
+                                <!-- More Options Kebab Menu -->
+                                <div class="more-actions-wrap">
+                                    <button type="button" class="btn btn-icon-kebab" id="btnMoreActionsMenu"
+                                        aria-haspopup="true" aria-expanded="false" title="Tùy chọn khác">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <circle cx="12" cy="5" r="1.75"></circle>
+                                            <circle cx="12" cy="12" r="1.75"></circle>
+                                            <circle cx="12" cy="19" r="1.75"></circle>
+                                        </svg>
+                                    </button>
+
+                                    <div class="dropdown-menu dropdown-menu-more" id="moreActionsDropdown" role="menu">
+                                        <!-- Nhom 1: Tien ich AI Pro -->
+                                        <div class="dropdown-group-title">
+                                            <span class="group-label">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                                                </svg>
+                                                <span>Tiện ích AI</span>
+                                            </span>
+                                            <span class="badge-pro-pill">PRO</span>
+                                        </div>
+
+                                        <button type="button" class="dropdown-item btn-ai-summary" id="btnAiSummarize"
+                                            title="Tóm tắt văn bản bằng AI (Pro VIP)">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                            </svg>
+                                            <span>Tóm tắt AI</span>
+                                        </button>
+
+                                        <button type="button" class="dropdown-item btn-ai-copilot" id="btnAiCopilot"
+                                            title="Trò chuyện với AI Copilot về tài liệu (Pro VIP)">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                            <span>Hỏi đáp AI</span>
+                                        </button>
+
+                                        <div class="dropdown-divider"></div>
+
+                                        <!-- Nhom 2: Thao tac tai lieu -->
+                                        <div class="dropdown-group-title">
+                                            <span class="group-label">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
+                                                <span>Thao tác tài liệu</span>
+                                            </span>
+                                        </div>
+
+                                        <button type="button" class="dropdown-item" id="btnNewFile" title="Tải lên tệp PDF khác">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            <span>Tải lên tệp khác</span>
+                                        </button>
+
+                                        <button type="button" class="dropdown-item" id="btnCopyAllTranslatedText" title="Sao chép toàn bộ văn bản dịch">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            <span>Sao chép bản dịch</span>
+                                        </button>
+
+                                        <div class="dropdown-divider"></div>
+
+                                        <button type="button" class="dropdown-item text-danger" id="btnResetWorkspaceSession" title="Làm mới lại phiên làm việc">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                                <path d="M3 3v5h5"></path>
+                                            </svg>
+                                            <span>Làm mới phiên làm việc</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -981,8 +1058,8 @@
                                     </div>
                                     <div class="ai-summary-title-text">
                                         <div class="ai-summary-title">
-                                            <span>Tóm tắt văn bản bằng AI</span>
-                                            <span class="badge-pro-pill">PRO VIP</span>
+                                            <span>Tóm tắt văn bản thông minh</span>
+                                            <span class="badge-pro-pill">PRO</span>
                                         </div>
                                         <div class="ai-summary-subtitle">Đúc kết thông điệp cốt lõi, rút trích luận điểm
                                             chính từ tài liệu với AI Gateway</div>
@@ -1293,7 +1370,7 @@
                 </section>
 
 
-                <!-- Document Management Page Section (PDFL-92.1 & PDFL-92.2, Initially Hidden) -->
+                <!-- Document Management Page Section -->
                 <section class="documents-section" id="documentsSection" style="display: none;">
                     <div class="documents-container">
                         <!-- Documents Page Header (Open, Refined Workspace Header) -->
@@ -1437,7 +1514,7 @@
                     </div>
                 </section>
 
-                <!-- Processing History Page Section (PDFL-164.1, Initially Hidden) -->
+                <!-- Processing History Page Section -->
                 <section class="documents-section history-section" id="historySection" style="display: none;">
                     <div class="documents-container history-container">
                         <!-- History Page Header (Consistent with Documents Workspace Header) -->
@@ -1473,7 +1550,7 @@
 
                         <!-- History List Card -->
                         <div class="documents-card history-card" id="historyListCard">
-                            <!-- Filter & Search Toolbar (PDFL-166.2) -->
+                            <!-- Filter & Search Toolbar -->
                             <div class="documents-card-toolbar history-card-toolbar" id="historyCardToolbar">
                                 <div class="documents-toolbar-left history-toolbar-left">
                                     <span class="documents-count-chip font-mono" id="historyCountBadge">0 bản ghi</span>
@@ -2132,7 +2209,7 @@
                             </div>
                         </div>
 
-                        <!-- Admin Metrics Overview Bento Grid (PDFL-188) -->
+                        <!-- Admin Metrics Overview Bento Grid -->
                         <div class="admin-bento-grid">
                             <!-- Cell 1: Hero Metric (Spans 2 columns on desktop) -->
                             <div class="admin-bento-cell cell-hero-users">
@@ -2235,7 +2312,7 @@
                             </div>
                         </div>
 
-                        <!-- User Management Section (PDFL-189) -->
+                        <!-- User Management Section -->
                         <div class="admin-table-card">
                             <div class="admin-table-header">
                                 <div class="table-title-group">
@@ -2453,7 +2530,7 @@
                 </div>
             </div>
 
-            <!-- High-Impact Action Confirmation Modal (PDFL-197) -->
+            <!-- High-Impact Action Confirmation Modal -->
             <div class="modal-overlay" id="adminConfirmModal" style="display: none;">
                 <div class="admin-confirm-card">
                     <div class="confirm-icon-wrap" id="confirmModalIconWrap">
@@ -2485,8 +2562,151 @@
                 </div>
             </div>
 
-            <!-- Toast Notification Container -->
-            <div class="toast-container" id="toastContainer"></div>
+            <!-- AI Copilot Chat Interface (ChatGPT-Style Full Frame) -->
+            <div class="ai-copilot-backdrop" id="aiCopilotBackdrop" style="display: none !important;"></div>
+            <aside class="ai-copilot-drawer ai-copilot-chat-frame" id="aiCopilotDrawer" style="display: none;" aria-label="AI Copilot Chat">
+                <div class="copilot-drawer-header">
+                    <div class="copilot-header-info">
+                        <button type="button" class="btn-copilot-back" id="btnCloseCopilotDrawer" title="Quay lại Dịch PDF" style="display: none !important;" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            <span>Quay lại Dịch PDF</span>
+                        </button>
+                        <div class="copilot-header-divider" style="display: none !important;" aria-hidden="true"></div>
+                        <div class="copilot-avatar-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="copilot-header-title">
+                                <span>AI Copilot</span>
+                                <span class="badge-pro-pill">PRO VIP</span>
+                                <span class="copilot-doc-badge" id="copilotDocBadge">tai-lieu.pdf</span>
+                            </div>
+                            <div class="copilot-header-status" id="copilotStatusText">Sẵn sàng hỗ trợ tài liệu</div>
+                        </div>
+                    </div>
+
+                    <div class="copilot-header-actions">
+                        <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay">15/15 câu hỏi</span>
+                        <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat" title="Xóa toàn bộ lịch sử trò chuyện">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Message Thread Container -->
+                <div class="copilot-messages-container" id="copilotMessagesContainer" tabindex="0">
+                    <!-- Welcome Hero (Clean Minimalist Workspace Style) -->
+                    <div class="copilot-welcome-hero" id="copilotWelcomeHero">
+                        <div class="copilot-hero-sparkle" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="copilot-hero-title">Bạn muốn tìm hiểu gì về tài liệu?</h1>
+                        <p class="copilot-hero-subtitle">Đặt câu hỏi, trích xuất số liệu quan trọng hoặc giải thích thuật ngữ trong văn bản.</p>
+                        <div class="copilot-quick-prompts-grid" id="copilotQuickPrompts">
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?">
+                                <span class="prompt-icon-svg" aria-hidden="true">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                    </svg>
+                                </span>
+                                <span class="prompt-card-content">
+                                    <strong class="prompt-card-title">Tóm tắt 3 ý chính</strong>
+                                    <span class="prompt-card-desc">Khái quát nội dung cốt lõi</span>
+                                </span>
+                            </button>
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?">
+                                <span class="prompt-icon-svg" aria-hidden="true">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                </span>
+                                <span class="prompt-card-content">
+                                    <strong class="prompt-card-title">Số liệu quan trọng</strong>
+                                    <span class="prompt-card-desc">Thống kê & mốc thời gian</span>
+                                </span>
+                            </button>
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?">
+                                <span class="prompt-icon-svg" aria-hidden="true">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
+                                </span>
+                                <span class="prompt-card-content">
+                                    <strong class="prompt-card-title">Giải thích thuật ngữ</strong>
+                                    <span class="prompt-card-desc">Làm rõ khái niệm chuyên ngành</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Messages Thread List -->
+                    <div class="copilot-messages-list" id="copilotMessagesList">
+                        <div class="copilot-msg copilot-msg-assistant" id="copilotWelcomeMsg" style="display: none;">
+                            <div class="copilot-msg-avatar">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                                </svg>
+                            </div>
+                            <div class="copilot-msg-content">
+                                <p>Xin chào! Tôi là <strong>AI Copilot</strong>. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator (Animated 3 Dots) -->
+                    <div class="copilot-typing-indicator" id="copilotTypingIndicator" style="display: none;">
+                        <div class="copilot-msg-avatar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="typing-bubble">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer: Chat Input and Send -->
+                <div class="copilot-drawer-footer">
+                    <form class="copilot-input-form" id="copilotChatForm">
+                        <div class="copilot-input-sparkle" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"/>
+                            </svg>
+                        </div>
+                        <textarea class="copilot-input" id="copilotInput" rows="1"
+                            placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)"
+                            maxlength="2000"></textarea>
+                        <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                    <div class="copilot-footer-tip">Nhấn Enter để gửi (Shift+Enter xuống dòng) • Giới hạn 15 câu/ngày (Gói Pro VIP)</div>
+                </div>
+            </aside>
 
             <footer class="site-footer">
                 <div class="container footer-content">
@@ -2501,7 +2721,7 @@
         </div><!-- #appMainViewport -->
     </div><!-- #appShell -->
 
-    <!-- Registration Modal (PDFL-73.4) -->
+    <!-- Registration Modal -->
     <div class="modal-backdrop" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle"
         hidden>
         <div class="modal-dialog">
@@ -2638,7 +2858,7 @@
         </div>
     </div>
 
-    <!-- Login Modal (PDFL-76.4) -->
+    <!-- Login Modal -->
     <div class="modal-backdrop" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle"
         hidden>
         <div class="modal-dialog">
@@ -2725,7 +2945,7 @@
         </div>
     </div>
 
-    <!-- Account Details Modal (PDFL-79.2) -->
+    <!-- Account Details Modal -->
     <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle"
         hidden>
         <div class="modal-dialog account-modal-dialog">
@@ -2827,7 +3047,7 @@
                         </div>
                     </div>
 
-                    <!-- Security / Change Password Section (PDFL-80.4) -->
+                    <!-- Security / Change Password Section -->
                     <div class="account-security-section">
                         <div class="account-security-header">
                             <div>
@@ -3568,7 +3788,7 @@
         </div>
     </div>
 
-    <!-- Document Detail Modal (PDFL-93.1) -->
+    <!-- Document Detail Modal -->
     <div class="modal-backdrop" id="documentDetailModal" role="dialog" aria-modal="true"
         aria-labelledby="documentDetailModalTitle" hidden style="display: none;">
         <div class="modal-dialog account-modal-dialog document-detail-modal-dialog">
@@ -3587,11 +3807,11 @@
             </div>
 
             <div class="account-modal-body" id="documentDetailModalBody">
-                <!-- Alert notification (PDFL-93.2) -->
+                <!-- Alert notification -->
                 <div class="form-alert alert-error" id="documentDetailAlert" role="alert"
                     style="display: none; margin-bottom: 1rem;"></div>
 
-                <!-- Loading State (PDFL-93.2) -->
+                <!-- Loading State -->
                 <div class="account-loading-wrap" id="documentDetailLoading" style="display: none;">
                     <span class="account-spinner" aria-hidden="true"></span>
                     <p class="account-loading-text">Đang tải thông tin chi tiết tài liệu...</p>
@@ -3672,7 +3892,7 @@
         </div>
     </div>
 
-    <!-- Document Delete Confirmation Modal (PDFL-94.2) -->
+    <!-- Document Delete Confirmation Modal -->
     <div class="modal-overlay" id="documentDeleteConfirmModal" role="dialog" aria-modal="true"
         aria-labelledby="docDeleteConfirmTitle" hidden style="display: none;">
         <div class="admin-confirm-card">
@@ -3706,7 +3926,7 @@
         </div>
     </div>
 
-    <!-- History Error Detail Modal (PDFL-164.1) -->
+    <!-- History Error Detail Modal -->
     <div class="modal-overlay" id="historyErrorModal" role="dialog" aria-modal="true"
         aria-labelledby="historyErrorModalTitle" hidden style="display: none;">
         <div class="account-modal-card history-error-card">
@@ -3764,7 +3984,7 @@
         </div>
     </div>
 
-    <!-- History Delete Confirmation Modal (PDFL-166.2) -->
+    <!-- History Delete Confirmation Modal -->
     <div class="modal-overlay" id="historyDeleteConfirmModal" role="dialog" aria-modal="true"
         aria-labelledby="historyDeleteConfirmTitle" hidden style="display: none;">
         <div class="admin-confirm-card history-delete-card">
@@ -3957,6 +4177,9 @@
             <div class="copilot-footer-tip">Mô hình AI B.AI Gateway · Giới hạn 15 câu/ngày cho gói Pro</div>
         </div>
     </aside>
+
+    <!-- Toast Notification Container (Root level to float above all modal backdrops) -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>

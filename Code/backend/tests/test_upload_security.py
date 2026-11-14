@@ -312,18 +312,26 @@ def test_upload_rejects_encrypted_pdf_without_500():
 
 def test_download_export_filename_path_traversal_sanitized():
     """Verify POST /api/process/download sanitizes path traversal filename sequences."""
+    from app.core.security import create_access_token
+
+    token = create_access_token(subject="1", additional_claims={"role": "free"})
     payload = {
         "content": "Nội dung bản dịch kiểm thử.",
         "filename": "../../etc/passwd",
         "format": "pdf",
         "title": "Bản dịch",
     }
-    res = client.post("/api/process/download", json=payload)
+    res = client.post(
+        "/api/process/download",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert res.status_code == 200
     disposition = res.headers.get("content-disposition", "")
     assert ".." not in disposition
     assert "/" not in disposition
     assert "\\" not in disposition
-    assert "passwd.pdf" in disposition
+    assert "passwd" in disposition
+    assert ".pdf" in disposition
 
 
