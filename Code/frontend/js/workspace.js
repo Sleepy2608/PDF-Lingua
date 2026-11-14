@@ -1082,6 +1082,29 @@ function renderWorkspace(data) {
 
   updateCounters();
   updateExportUIState();
+
+  // Initialize PDF Preview if preview module and file/url are available (PDFL-256.1)
+  try {
+    let previewSource = null;
+    if (typeof window !== 'undefined' && window.pdfLinguaUpload && typeof window.pdfLinguaUpload.getSelectedFile === 'function') {
+      previewSource = window.pdfLinguaUpload.getSelectedFile();
+    }
+    if (!previewSource && data) {
+      previewSource = data.file_url || data.preview_url || data.pdf_url || null;
+    }
+    const previewContainer = document.getElementById('pdfPreviewContainer');
+    if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.loadPdfPreview === 'function') {
+      if (previewSource) {
+        if (previewContainer) previewContainer.style.display = 'block';
+        window.pdfLinguaPreview.loadPdfPreview(previewSource);
+      } else {
+        if (previewContainer) previewContainer.style.display = 'none';
+      }
+    }
+  } catch (err) {
+    console.warn('PDF Preview initialization error:', err);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1126,6 +1149,16 @@ function resetToUpload() {
 
   updateCounters();
   updateExportUIState();
+
+  // Cleanup PDF Canvas Preview (PDFL-256.1)
+  try {
+    if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.cleanupPdfPreview === 'function') {
+      window.pdfLinguaPreview.cleanupPdfPreview();
+    }
+    const previewContainer = document.getElementById('pdfPreviewContainer');
+    if (previewContainer) previewContainer.style.display = 'none';
+  } catch (_e) {}
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1252,6 +1285,7 @@ if (typeof window !== 'undefined') {
     cleanupProgressTracking,
     listenToJobProgress,
     renderWorkspace,
+    resetToUpload,
     isProOrAdminUser,
     getCurrentDocData: () => currentDocData,
     setCurrentDocData: (d) => {

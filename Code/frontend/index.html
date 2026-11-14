@@ -831,6 +831,116 @@
                             </div>
                         </div>
 
+                        <!-- PDF.js Canvas Preview & Page Navigation Controls (PDFL-256.1) -->
+                        <div class="pdf-preview-card" id="pdfPreviewContainer" style="display: none;">
+                            <div class="pdf-preview-header">
+                                <div class="preview-title-group">
+                                    <div class="preview-badge-icon" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="preview-title-text">
+                                        <span class="preview-heading">Xem trước PDF</span>
+                                        <span class="preview-subheading" id="previewDocName">Bản gốc</span>
+                                    </div>
+                                </div>
+
+                                <!-- PDF Navigation & Zoom Toolbar -->
+                                <div class="preview-toolbar-actions">
+                                    <!-- Page Navigation Controls -->
+                                    <div class="preview-page-controls" role="group" aria-label="Điều hướng trang">
+                                        <button type="button" class="preview-btn" id="btnPrevPage" title="Trang trước" aria-label="Trang trước" disabled>
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="15 18 9 12 15 6"></polyline>
+                                            </svg>
+                                        </button>
+                                        <div class="preview-page-indicator">
+                                            <span class="preview-page-label">Trang</span>
+                                            <input type="number" class="preview-page-input" id="previewPageInput" min="1" max="1" value="1" aria-label="Số trang hiện tại">
+                                            <span class="preview-page-slash">/</span>
+                                            <span class="preview-total-pages" id="previewTotalPages">1</span>
+                                        </div>
+                                        <button type="button" class="preview-btn" id="btnNextPage" title="Trang tiếp" aria-label="Trang tiếp" disabled>
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="9 18 15 12 9 6"></polyline>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div class="preview-divider" aria-hidden="true"></div>
+
+                                    <!-- Zoom Controls -->
+                                    <div class="preview-zoom-controls" role="group" aria-label="Thu phóng">
+                                        <button type="button" class="preview-btn" id="btnZoomOut" title="Thu nhỏ (-20%)" aria-label="Thu nhỏ">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="11" cy="11" r="8"></circle>
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                <line x1="8" y1="11" x2="14" y2="11"></line>
+                                            </svg>
+                                        </button>
+                                        <span class="preview-zoom-level" id="previewZoomLevel" title="Tỷ lệ hiển thị">100%</span>
+                                        <button type="button" class="preview-btn" id="btnZoomIn" title="Phóng to (+20%)" aria-label="Phóng to">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="11" cy="11" r="8"></circle>
+                                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                <line x1="11" y1="8" x2="11" y2="14"></line>
+                                                <line x1="8" y1="11" x2="14" y2="11"></line>
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="preview-btn preview-btn-fit" id="btnZoomFit" title="Vừa khung nhìn" aria-label="Vừa khung nhìn">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="8 3 4 3 4 7"></polyline>
+                                                <polyline points="4 17 4 21 8 21"></polyline>
+                                                <polyline points="16 3 20 3 20 7"></polyline>
+                                                <polyline points="20 17 20 21 16 21"></polyline>
+                                            </svg>
+                                            <span>Vừa khung</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="preview-divider" aria-hidden="true"></div>
+
+                                    <!-- Toggle Collapse Button -->
+                                    <button type="button" class="preview-btn preview-toggle-btn" id="btnTogglePdfPreview" title="Thu gọn / Mở rộng" aria-label="Thu gọn hoặc mở rộng bản xem trước">
+                                        <svg class="preview-toggle-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="18 15 12 9 6 15"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Preview Viewport Area -->
+                            <div class="pdf-preview-viewport" id="pdfPreviewViewport" tabindex="0" aria-label="Khu vực hiển thị tài liệu PDF">
+                                <!-- Loading State -->
+                                <div class="pdf-preview-loading" id="pdfPreviewLoading" style="display: none;">
+                                    <div class="preview-spinner" aria-hidden="true"></div>
+                                    <span class="preview-loading-text">Đang tải và dựng trang PDF...</span>
+                                </div>
+
+                                <!-- Error State -->
+                                <div class="pdf-preview-error" id="pdfPreviewError" style="display: none;">
+                                    <div class="preview-error-icon" aria-hidden="true">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="preview-error-msg" id="pdfPreviewErrorMsg">Không thể tải trước tài liệu PDF.</div>
+                                </div>
+
+                                <!-- Canvas Stage -->
+                                <div class="pdf-canvas-wrap" id="pdfCanvasWrap">
+                                    <canvas id="pdfPreviewCanvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Dual-Pane Split View -->
                         <div class="dual-pane-grid">
                             <!-- Left: Original Text Pane -->
@@ -3474,6 +3584,9 @@
     <script src="js/app.js"></script>
     <script src="js/upload.js"></script>
     <script src="js/auth.js?v=2.0.0"></script>
+    <!-- PDF.js Library CDN & Canvas Preview Module (PDFL-256.1) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="js/pdf_preview.js?v=1.0.0"></script>
     <script src="js/workspace.js?v=2.1.0"></script>
     <script src="js/ai_summary.js?v=1.0.0"></script>
     <script src="js/ai_copilot.js?v=1.0.0"></script>
