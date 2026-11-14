@@ -1577,6 +1577,8 @@
    ========================================================================== */
 
 .pdf-preview-card {
+  display: flex;
+  flex-direction: column;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -2068,6 +2070,7 @@
 /* 2. View Mode PDF (Full-width PDF Preview) */
 .workspace-views-wrapper.view-mode-pdf #pdfPreviewContainer {
   display: flex !important;
+  flex-direction: column !important;
   width: 100% !important;
   margin-bottom: 1.5rem;
 }
@@ -2091,6 +2094,7 @@
   }
   .workspace-views-wrapper.view-mode-split #pdfPreviewContainer {
     display: flex !important;
+    flex-direction: column !important;
     width: 100% !important;
     margin-bottom: 0 !important;
     height: 100% !important;
@@ -2135,6 +2139,7 @@
   .workspace-views-wrapper.view-mode-split:not([data-split-tab="translated"]) #pdfPreviewContainer,
   .workspace-views-wrapper.view-mode-split[data-split-tab="pdf"] #pdfPreviewContainer {
     display: flex !important;
+    flex-direction: column !important;
     width: 100% !important;
   }
   .workspace-views-wrapper.view-mode-split:not([data-split-tab="translated"]) #dualPaneGrid,
