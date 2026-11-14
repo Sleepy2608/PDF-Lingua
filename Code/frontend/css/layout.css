@@ -671,26 +671,67 @@
   line-height: 1.4;
 }
 
+.batch-zip-btn-group {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 .btn-batch-zip {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  width: 100%;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.8125rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78125rem;
   font-weight: 600;
   border-radius: var(--radius-sm, 8px);
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.btn-batch-zip.loading {
+.btn-batch-zip-docx {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  background-color: #ffffff;
+  color: var(--text-title, #1e293b);
+  border: 1px solid rgba(79, 70, 229, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-batch-zip-docx:hover {
+  background-color: rgba(79, 70, 229, 0.06);
+  border-color: var(--color-primary, #4f46e5);
+}
+
+.btn-batch-zip-docx .fmt-pill.docx {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 4px;
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.btn-batch-zip.loading,
+.btn-batch-zip-docx.loading {
   opacity: 0.75;
   cursor: wait;
 }
 
-.btn-batch-zip .spinner-svg {
+.btn-batch-zip .spinner-svg,
+.btn-batch-zip-docx .spinner-svg {
   animation: spin 1s linear infinite;
 }
 
@@ -957,9 +998,14 @@
     padding: 0.25rem 0.45rem;
     font-size: 0.6875rem;
   }
-  .btn-batch-zip {
+  .btn-batch-zip,
+  .btn-batch-zip-docx {
     font-size: 0.75rem;
     padding: 0.45rem 0.65rem;
+    width: 100%;
+  }
+  .batch-zip-btn-group {
+    flex-direction: column;
   }
 }
 

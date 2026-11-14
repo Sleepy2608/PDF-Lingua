@@ -46,7 +46,15 @@
       if (btnDownloadBatchZip) {
         btnDownloadBatchZip.addEventListener('click', (e) => {
           e.stopPropagation();
-          this.downloadBatchZip();
+          this.downloadBatchZip('pdf');
+        });
+      }
+
+      const btnDownloadBatchZipDocx = document.getElementById('btnDownloadBatchZipDocx');
+      if (btnDownloadBatchZipDocx) {
+        btnDownloadBatchZipDocx.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.downloadBatchZip('docx');
         });
       }
 
@@ -179,6 +187,9 @@
 
       const btnZip = document.getElementById('btnDownloadBatchZip');
       if (btnZip) btnZip.style.display = 'none';
+
+      const btnZipDocx = document.getElementById('btnDownloadBatchZipDocx');
+      if (btnZipDocx) btnZipDocx.style.display = 'none';
 
       const notice = document.getElementById('batchFooterNotice');
       if (notice) notice.style.display = 'none';
@@ -459,6 +470,23 @@
       this.pump();
     }
 
+    isProOrAdminUser() {
+      let targetUser = null;
+      try {
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredUser === 'function') {
+          targetUser = window.pdfLinguaAuth.getStoredUser();
+        } else if (typeof localStorage !== 'undefined' && localStorage) {
+          const raw = localStorage.getItem('pdfl_user');
+          targetUser = raw ? JSON.parse(raw) : null;
+        }
+      } catch (_e) {
+        targetUser = null;
+      }
+      if (!targetUser) return false;
+      const role = String(targetUser.role || '').toLowerCase();
+      return role === 'pro' || role === 'admin' || Boolean(targetUser.is_pro);
+    }
+
     onBatchComplete() {
       this.isProcessing = false;
       this.lockQueueUI(false);
@@ -466,12 +494,14 @@
 
       const footer = document.getElementById('batchQueueFooter');
       const btnZip = document.getElementById('btnDownloadBatchZip');
+      const btnZipDocx = document.getElementById('btnDownloadBatchZipDocx');
       const notice = document.getElementById('batchFooterNotice');
 
       if (footer) footer.style.display = 'block';
 
       if (this.completedJobs.length > 0) {
         if (btnZip) btnZip.style.display = 'inline-flex';
+        if (btnZipDocx) btnZipDocx.style.display = 'inline-flex';
 
         if (this.failedJobs.length > 0) {
           if (notice) {
@@ -485,6 +515,7 @@
         }
       } else {
         if (btnZip) btnZip.style.display = 'none';
+        if (btnZipDocx) btnZipDocx.style.display = 'none';
         if (notice) {
           notice.style.display = 'block';
           notice.textContent = 'Toàn bộ các tệp trong hàng đợi đều xử lý thất bại.';
@@ -501,9 +532,23 @@
       }
     }
 
-    async downloadBatchZip() {
+    async downloadBatchZip(format = 'pdf') {
       if (this.completedJobs.length === 0) {
         this.showToast('Không có tệp nào xử lý thành công để tải về.', 'warning');
+        return;
+      }
+
+      // Kiểm tra quyền Pro đối với định dạng Word (.docx)
+      if (format === 'docx' && !this.isProOrAdminUser()) {
+        const proMsg = 'Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro.';
+        this.showToast(proMsg, 'warning');
+        if (
+          typeof window !== 'undefined' &&
+          window.PDFLinguaPricing &&
+          typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function'
+        ) {
+          window.PDFLinguaPricing.openQuotaExceededModal('Tính năng tải trọn bộ ZIP file Word (.docx) chỉ dành riêng cho tài khoản Pro. Vui lòng nâng cấp gói để sử dụng!');
+        }
         return;
       }
 
@@ -513,17 +558,20 @@
         return;
       }
 
-      const btnZip = document.getElementById('btnDownloadBatchZip');
+      const targetBtn = (format === 'docx')
+        ? document.getElementById('btnDownloadBatchZipDocx')
+        : document.getElementById('btnDownloadBatchZip');
+
       let prevHtml = '';
-      if (btnZip) {
-        btnZip.disabled = true;
-        prevHtml = btnZip.innerHTML;
-        btnZip.innerHTML = `
-          <svg class="spinner-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      if (targetBtn) {
+        targetBtn.disabled = true;
+        prevHtml = targetBtn.innerHTML;
+        targetBtn.innerHTML = `
+          <svg class="spinner-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
             <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
           </svg>
-          <span>Đang tạo tệp ZIP...</span>
+          <span>Đang tạo ZIP...</span>
         `;
       }
 
@@ -539,7 +587,7 @@
           headers: fetchHeaders,
           body: JSON.stringify({
             job_ids: jobIds,
-            format: 'pdf',
+            format: format,
           }),
         });
 
@@ -564,24 +612,29 @@
           return;
         }
 
+        const downloadFilename = (format === 'docx')
+          ? 'PDFLingua_Batch_Word_Results.zip'
+          : 'PDFLingua_Batch_Results.zip';
+
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = 'PDFLingua_Batch_Results.zip';
+        link.download = downloadFilename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
 
-        this.showToast('Đã tải về trọn bộ file ZIP thành công!', 'success');
+        const fmtLabel = format === 'docx' ? 'Word (.docx)' : 'PDF';
+        this.showToast(`Đã tải về trọn bộ file ZIP (${fmtLabel}) thành công!`, 'success');
       } catch (err) {
         const msg = err.message || 'Lỗi khi tải tệp ZIP.';
         this.showToast(msg, 'error');
       } finally {
-        if (btnZip) {
-          btnZip.disabled = false;
-          btnZip.innerHTML = prevHtml;
+        if (targetBtn) {
+          targetBtn.disabled = false;
+          targetBtn.innerHTML = prevHtml;
         }
       }
     }

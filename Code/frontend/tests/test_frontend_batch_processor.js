@@ -72,9 +72,10 @@ runTest('1.2: index.html contains #batchOverallProgressWrap, #batchOverallProgre
   assert.ok(htmlContent.includes('id="batchOverallProgressText"'), '#batchOverallProgressText missing in HTML');
 });
 
-runTest('1.3: index.html contains #batchQueueFooter and #btnDownloadBatchZip', () => {
+runTest('1.3: index.html contains #batchQueueFooter, #btnDownloadBatchZip, and #btnDownloadBatchZipDocx', () => {
   assert.ok(htmlContent.includes('id="batchQueueFooter"'), '#batchQueueFooter missing in HTML');
   assert.ok(htmlContent.includes('id="btnDownloadBatchZip"'), '#btnDownloadBatchZip missing in HTML');
+  assert.ok(htmlContent.includes('id="btnDownloadBatchZipDocx"'), '#btnDownloadBatchZipDocx missing in HTML');
   assert.ok(htmlContent.includes('id="batchFooterNotice"'), '#batchFooterNotice missing in HTML');
 });
 
@@ -152,7 +153,7 @@ function createTestEnvironment(customFetch) {
     'chipFirstPage', 'chipFirst5Pages', 'chipFirst10Pages', 'pageRangeCustomWrap',
     'btnProcessPdf', 'targetLangSelect', 'toastContainer',
     'batchOverallProgressWrap', 'batchOverallProgressFill', 'batchOverallProgressText',
-    'batchQueueFooter', 'btnDownloadBatchZip', 'batchFooterNotice', 'btnStartBatchProcess',
+    'batchQueueFooter', 'btnDownloadBatchZip', 'btnDownloadBatchZipDocx', 'batchFooterNotice', 'btnStartBatchProcess',
   ];
 
   elIds.forEach(id => createElement(id));
@@ -617,6 +618,55 @@ runAsyncTest('7.2: downloadBatchZip handles 401 unauthenticated with appropriate
   await orchestrator.downloadBatchZip();
 
   assert.ok(env.toasts.some(t => t.type === 'warning' && t.msg.includes('đăng nhập')));
+});
+
+runAsyncTest('7.3: downloadBatchZip with format=docx downloads Word ZIP for Pro user', async () => {
+  let downloadPayload = null;
+  const customFetch = async (url, options) => {
+    if (url.includes('/batch-download')) {
+      downloadPayload = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        blob: async () => ({ size: 8000, type: 'application/zip' }),
+      };
+    }
+    return { ok: true, status: 200, json: async () => ({}) };
+  };
+
+  const env = createTestEnvironment(customFetch);
+  const orchestrator = env.ctx.window.pdfLinguaBatchOrchestrator;
+  orchestrator.completedJobs = [{ job_id: 'job_pro_w1', status: 'completed' }];
+
+  // Pro user logged in
+  env.ctx.localStorage.setItem('pdfl_user', JSON.stringify({ id: 10, role: 'pro' }));
+
+  await orchestrator.downloadBatchZip('docx');
+
+  assert.ok(downloadPayload, 'POST /batch-download must be dispatched');
+  assert.strictEqual(downloadPayload.format, 'docx', 'Format must be docx');
+  assert.strictEqual(env.downloads.length, 1);
+  assert.strictEqual(env.downloads[0].download, 'PDFLingua_Batch_Word_Results.zip');
+});
+
+runAsyncTest('7.4: downloadBatchZip with format=docx blocks Free user and shows Pro warning', async () => {
+  let fetchCalled = false;
+  const customFetch = async () => {
+    fetchCalled = true;
+    return { ok: true, status: 200 };
+  };
+
+  const env = createTestEnvironment(customFetch);
+  const orchestrator = env.ctx.window.pdfLinguaBatchOrchestrator;
+  orchestrator.completedJobs = [{ job_id: 'job_free_w1', status: 'completed' }];
+
+  // Free user
+  env.ctx.localStorage.setItem('pdfl_user', JSON.stringify({ id: 11, role: 'free' }));
+
+  await orchestrator.downloadBatchZip('docx');
+
+  assert.strictEqual(fetchCalled, false, 'Fetch must not be dispatched for Free user on docx export');
+  assert.ok(env.toasts.some(t => t.type === 'warning' && t.msg.includes('Pro')));
 });
 
 // ============================================================================
