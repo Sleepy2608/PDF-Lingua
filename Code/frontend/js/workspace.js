@@ -94,16 +94,20 @@ function initWorkspace() {
     });
   }
 
-  // Multi-target Export Listeners (PDFL-150.4 & PDFL-156.3)
+  // Multi-target Export Listeners (PDFL-150.4, PDFL-156.3 & PDFL-254.2)
   const exportBtnConfigs = [
     { id: 'btnDownloadTxt', format: 'txt', type: 'translated' },
     { id: 'btnDownloadPdf', format: 'pdf', type: 'translated' },
+    { id: 'btnDownloadDocx', format: 'docx', type: 'translated' },
     { id: 'btnDownloadOriginalTxt', format: 'txt', type: 'original' },
     { id: 'btnDownloadOriginalPdf', format: 'pdf', type: 'original' },
+    { id: 'btnDownloadOriginalDocx', format: 'docx', type: 'original' },
     { id: 'btnDownloadBilingualTxt', format: 'txt', type: 'bilingual' },
     { id: 'btnDownloadBilingualPdf', format: 'pdf', type: 'bilingual' },
+    { id: 'btnDownloadBilingualDocx', format: 'docx', type: 'bilingual' },
     { id: 'btnDownloadSummaryTxt', format: 'txt', type: 'summary' },
     { id: 'btnDownloadSummaryPdf', format: 'pdf', type: 'summary' },
+    { id: 'btnDownloadSummaryDocx', format: 'docx', type: 'summary' },
   ];
 
   exportBtnConfigs.forEach(({ id, format, type }) => {
@@ -111,7 +115,7 @@ function initWorkspace() {
     if (btn) {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        triggerDownload(format, type);
+        return triggerDownload(format, type);
       });
     }
   });
@@ -665,7 +669,43 @@ function getSummaryContent() {
 }
 
 /**
- * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả 8 nút tải xuống (PDFL-156.3).
+ * PDFL-254.2: Kiểm tra người dùng hiện tại có quyền Pro hoặc Admin không.
+ * Bảo đảm:
+ * - Bắt buộc phải có Bearer token hợp lệ (nếu không có token -> Guest).
+ * - Tài khoản không bị khóa (is_active !== false).
+ * - Role phải chính xác là 'pro' hoặc 'admin' (chuẩn hóa trim & lowercase).
+ * - Backend (/download) luôn là nguồn xác thực bảo mật cuối cùng.
+ */
+function isProOrAdminUser() {
+  let token = null;
+  if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
+    token = window.pdfLinguaAuth.getStoredToken();
+  }
+  if (!token && typeof localStorage !== 'undefined') {
+    try {
+      token = localStorage.getItem('pdfl_token') || sessionStorage.getItem('pdfl_token');
+    } catch (_e) {}
+  }
+  if (!token) return false;
+
+  let user = null;
+  if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredUser === 'function') {
+    user = window.pdfLinguaAuth.getStoredUser();
+  }
+  if (!user && typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
+      if (raw) user = JSON.parse(raw);
+    } catch (_e) {}
+  }
+  if (!user || user.is_active === false) return false;
+
+  const role = String(user.role || '').trim().toLowerCase();
+  return role === 'pro' || role === 'admin';
+}
+
+/**
+ * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả các nút tải xuống (PDFL-156.3 & PDFL-254.2).
  */
 function updateExportUIState() {
   const originalText = getOriginalContent();
@@ -681,6 +721,7 @@ function updateExportUIState() {
   // 1. Bản dịch (translated)
   const btnTransTxt = document.getElementById('btnDownloadTxt');
   const btnTransPdf = document.getElementById('btnDownloadPdf');
+  const btnTransDocx = document.getElementById('btnDownloadDocx');
   if (btnTransTxt) {
     btnTransTxt.disabled = !hasTranslated;
     btnTransTxt.title = hasTranslated ? 'Tải bản dịch định dạng TXT' : 'Chưa có nội dung bản dịch';
@@ -689,10 +730,15 @@ function updateExportUIState() {
     btnTransPdf.disabled = !hasTranslated;
     btnTransPdf.title = hasTranslated ? 'Tải bản dịch định dạng PDF' : 'Chưa có nội dung bản dịch';
   }
+  if (btnTransDocx) {
+    btnTransDocx.disabled = !hasTranslated;
+    btnTransDocx.title = hasTranslated ? 'Tải bản dịch định dạng Word (.docx) - Pro VIP' : 'Chưa có nội dung bản dịch';
+  }
 
   // 2. Văn bản gốc (original)
   const btnOrigTxt = document.getElementById('btnDownloadOriginalTxt');
   const btnOrigPdf = document.getElementById('btnDownloadOriginalPdf');
+  const btnOrigDocx = document.getElementById('btnDownloadOriginalDocx');
   if (btnOrigTxt) {
     btnOrigTxt.disabled = !hasOriginal;
     btnOrigTxt.title = hasOriginal ? 'Tải văn bản gốc định dạng TXT' : 'Chưa có nội dung văn bản gốc';
@@ -701,15 +747,23 @@ function updateExportUIState() {
     btnOrigPdf.disabled = !hasOriginal;
     btnOrigPdf.title = hasOriginal ? 'Tải văn bản gốc định dạng PDF' : 'Chưa có nội dung văn bản gốc';
   }
+  if (btnOrigDocx) {
+    btnOrigDocx.disabled = !hasOriginal;
+    btnOrigDocx.title = hasOriginal ? 'Tải văn bản gốc định dạng Word (.docx) - Pro VIP' : 'Chưa có nội dung văn bản gốc';
+  }
 
   // 3. Song ngữ (bilingual)
   const btnBiTxt = document.getElementById('btnDownloadBilingualTxt');
   const btnBiPdf = document.getElementById('btnDownloadBilingualPdf');
+  const btnBiDocx = document.getElementById('btnDownloadBilingualDocx');
   const biTitle = hasBilingual
     ? 'Tải song ngữ định dạng TXT'
     : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
   const biPdfTitle = hasBilingual
     ? 'Tải song ngữ định dạng PDF'
+    : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
+  const biDocxTitle = hasBilingual
+    ? 'Tải song ngữ định dạng Word (.docx) - Pro VIP'
     : (!hasOriginal ? 'Thiếu nội dung văn bản gốc để xuất song ngữ' : 'Thiếu nội dung bản dịch để xuất song ngữ');
   if (btnBiTxt) {
     btnBiTxt.disabled = !hasBilingual;
@@ -719,10 +773,15 @@ function updateExportUIState() {
     btnBiPdf.disabled = !hasBilingual;
     btnBiPdf.title = biPdfTitle;
   }
+  if (btnBiDocx) {
+    btnBiDocx.disabled = !hasBilingual;
+    btnBiDocx.title = biDocxTitle;
+  }
 
   // 4. Bản tóm tắt (summary)
   const btnSummTxt = document.getElementById('btnDownloadSummaryTxt');
   const btnSummPdf = document.getElementById('btnDownloadSummaryPdf');
+  const btnSummDocx = document.getElementById('btnDownloadSummaryDocx');
   const statusBadge = document.getElementById('summaryExportStatus');
   if (btnSummTxt) {
     btnSummTxt.disabled = !hasSummary;
@@ -731,6 +790,10 @@ function updateExportUIState() {
   if (btnSummPdf) {
     btnSummPdf.disabled = !hasSummary;
     btnSummPdf.title = hasSummary ? 'Tải bản tóm tắt định dạng PDF' : 'Chưa có bản tóm tắt';
+  }
+  if (btnSummDocx) {
+    btnSummDocx.disabled = !hasSummary;
+    btnSummDocx.title = hasSummary ? 'Tải bản tóm tắt định dạng Word (.docx) - Pro VIP' : 'Chưa có bản tóm tắt';
   }
   if (statusBadge) {
     statusBadge.textContent = hasSummary ? '(sẵn sàng)' : '(chưa có)';
@@ -749,6 +812,27 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   if (!currentDocData) {
     showToast('Chưa có tài liệu để tải về!', 'error');
     return;
+  }
+
+  const cleanFormat = (format || 'txt').trim().toLowerCase();
+
+  // PDFL-254.2: Pro Guard cho định dạng DOCX (Chặn trước ở client cho Guest / Free)
+  if (cleanFormat === 'docx') {
+    if (!isProOrAdminUser()) {
+      showToast('Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!', 'warning');
+      if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.showUpgradeModal === 'function') {
+        window.pdfLinguaAuth.showUpgradeModal();
+      } else if (typeof window !== 'undefined' && window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
+        window.PDFLinguaPricing.openPricingView();
+      } else {
+        const aiProModal = document.getElementById('aiProModal');
+        if (aiProModal) {
+          aiProModal.removeAttribute('hidden');
+          aiProModal.style.display = 'flex';
+        }
+      }
+      return; // Tuyệt đối không gọi API!
+    }
   }
 
   const dropdown = document.getElementById('downloadDropdown');
@@ -829,7 +913,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   };
   const title = titleMap[exportType] || `PDF-Lingua - ${cleanName}`;
 
-  showToast(`Đang chuẩn bị tệp .${format.toUpperCase()}...`, 'info');
+  showToast(`Đang chuẩn bị tệp .${cleanFormat.toUpperCase()}...`, 'info');
 
   try {
     const authHeaders = getAuthHeaders();
@@ -837,7 +921,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
 
     const payload = {
       content: targetContent,
-      format: format,
+      format: cleanFormat,
       export_type: exportType,
       filename: downloadFileName,
       title: title,
@@ -874,6 +958,11 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
         ? (result.message || result.detail)
         : 'Tài khoản không có quyền truy cập.';
       showToast(msg, 'error');
+      if (result && (result.error_code === 'PRO_REQUIRED' || (result.message && result.message.includes('Pro')))) {
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.showUpgradeModal === 'function') {
+          window.pdfLinguaAuth.showUpgradeModal();
+        }
+      }
       return;
     }
 
@@ -892,13 +981,13 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = downloadUrl;
-    a.download = `${downloadFileName}.${format}`;
+    a.download = `${downloadFileName}.${cleanFormat}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(downloadUrl);
 
-    showToast(`Đã tải xuống thành công tệp .${format.toUpperCase()}!`, 'success');
+    showToast(`Đã tải xuống thành công tệp .${cleanFormat.toUpperCase()}!`, 'success');
   } catch (error) {
     showToast(error.message || 'Tải tệp thất bại!', 'error');
   }
@@ -1163,6 +1252,7 @@ if (typeof window !== 'undefined') {
     cleanupProgressTracking,
     listenToJobProgress,
     renderWorkspace,
+    isProOrAdminUser,
     getCurrentDocData: () => currentDocData,
     setCurrentDocData: (d) => {
       currentDocData = d;

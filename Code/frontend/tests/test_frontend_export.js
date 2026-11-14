@@ -69,11 +69,13 @@ class Element {
   trigger(event, data = {}) {
     const ev = Object.assign({ stopPropagation: () => {}, target: this }, data);
     if (this.listeners[event]) {
-      this.listeners[event].forEach(h => h(ev));
+      const results = this.listeners[event].map(h => h(ev));
+      return Promise.all(results);
     }
+    return Promise.resolve();
   }
-  click() {
-    this.trigger('click', { stopPropagation: () => {} });
+  async click() {
+    return this.trigger('click', { stopPropagation: () => {} });
   }
   setAttribute(k, v) { this.attributes[k] = v; }
   getAttribute(k) { return this.attributes[k]; }
@@ -107,10 +109,10 @@ function createEnvironment() {
   const elementIds = [
     'btnProcessPdf', 'btnRetranslate', 'targetLangSelect', 'btnCopyOriginal', 'btnCopyTranslated',
     'btnDownloadMenu', 'downloadDropdown',
-    'btnDownloadTxt', 'btnDownloadPdf',
-    'btnDownloadOriginalTxt', 'btnDownloadOriginalPdf',
-    'btnDownloadBilingualTxt', 'btnDownloadBilingualPdf',
-    'btnDownloadSummaryTxt', 'btnDownloadSummaryPdf',
+    'btnDownloadTxt', 'btnDownloadPdf', 'btnDownloadDocx',
+    'btnDownloadOriginalTxt', 'btnDownloadOriginalPdf', 'btnDownloadOriginalDocx',
+    'btnDownloadBilingualTxt', 'btnDownloadBilingualPdf', 'btnDownloadBilingualDocx',
+    'btnDownloadSummaryTxt', 'btnDownloadSummaryPdf', 'btnDownloadSummaryDocx',
     'summaryExportStatus',
     'btnNewFile', 'btnRemoveFile',
     'paneOriginal', 'paneTranslated', 'paneSummary', 'summaryContent',
@@ -1053,6 +1055,378 @@ runTest('10.7: All 4 export types with valid token successfully trigger download
 
   assert.strictEqual(fetchCalls.length, 8);
   assert.strictEqual(clickedLinks.length, 8);
+});
+
+// ==========================================
+// Test Suite 11: PDFL-254.2 Frontend DOCX Download UI & Pro Guard
+// ==========================================
+console.log('\n[Suite 11] Frontend DOCX Download UI & Pro Guard (PDFL-254.2)');
+
+runTest('11.1: index.html contains all 4 DOCX download buttons with PRO role badge', () => {
+  const docxButtons = [
+    'btnDownloadDocx',
+    'btnDownloadOriginalDocx',
+    'btnDownloadBilingualDocx',
+    'btnDownloadSummaryDocx',
+  ];
+  docxButtons.forEach((btnId) => {
+    assert(htmlSource.includes(`id="${btnId}"`), `Missing button #${btnId} in index.html`);
+  });
+  // Check that PRO badges exist in HTML
+  assert(htmlSource.includes('<span class="badge-role role-pro">PRO</span>'), 'Missing PRO badge in download buttons');
+});
+
+runTest('11.2: updateExportUIState enables and disables DOCX buttons according to content', () => {
+  const { context, elements } = createEnvironment();
+
+  // Initially (no doc) -> all disabled
+  context.pdfLinguaWorkspace.updateExportUIState();
+  assert.strictEqual(elements.btnDownloadDocx.disabled, true);
+  assert.strictEqual(elements.btnDownloadOriginalDocx.disabled, true);
+  assert.strictEqual(elements.btnDownloadBilingualDocx.disabled, true);
+  assert.strictEqual(elements.btnDownloadSummaryDocx.disabled, true);
+
+  // Set document with translated text only
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'test_docx.pdf',
+    original_text: '',
+    translated_text: 'Bản dịch tiếng Việt',
+  });
+  elements.paneTranslated.innerText = 'Bản dịch tiếng Việt';
+  elements.paneOriginal.innerText = '';
+  context.pdfLinguaWorkspace.updateExportUIState();
+
+  assert.strictEqual(elements.btnDownloadDocx.disabled, false);
+  assert.strictEqual(elements.btnDownloadOriginalDocx.disabled, true);
+  assert.strictEqual(elements.btnDownloadBilingualDocx.disabled, true);
+  assert.strictEqual(elements.btnDownloadSummaryDocx.disabled, true);
+
+  // Add original text -> original and bilingual enabled
+  elements.paneOriginal.innerText = 'Original text';
+  context.pdfLinguaWorkspace.updateExportUIState();
+  assert.strictEqual(elements.btnDownloadDocx.disabled, false);
+  assert.strictEqual(elements.btnDownloadOriginalDocx.disabled, false);
+  assert.strictEqual(elements.btnDownloadBilingualDocx.disabled, false);
+  assert.strictEqual(elements.btnDownloadSummaryDocx.disabled, true);
+
+  // Add summary -> all 4 enabled
+  elements.paneSummary.innerText = 'Summary text';
+  context.pdfLinguaWorkspace.updateExportUIState();
+  assert.strictEqual(elements.btnDownloadSummaryDocx.disabled, false);
+});
+
+runTest('11.3: Guest user (no user session) clicking DOCX triggers warning toast, calls showUpgradeModal, and makes 0 fetch calls', async () => {
+  const { context, elements, fetchCalls } = createEnvironment();
+  context.initWorkspace();
+
+  let toastCalled = false;
+  let toastMsg = '';
+  let toastType = '';
+  context.showToast = (msg, type) => {
+    toastCalled = true;
+    toastMsg = msg;
+    toastType = type;
+  };
+
+  let upgradeModalCalled = false;
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => null,
+    getStoredToken: () => null,
+    showUpgradeModal: () => { upgradeModalCalled = true; },
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'guest_attempt.pdf',
+    translated_text: 'Bản dịch thử nghiệm',
+  });
+  elements.paneTranslated.innerText = 'Bản dịch thử nghiệm';
+
+  await context.pdfLinguaWorkspace.triggerDownload('docx', 'translated');
+
+  assert.strictEqual(fetchCalls.length, 0, 'Guest attempting DOCX must make 0 fetch calls');
+  assert.strictEqual(toastCalled, true, 'Toast must be triggered');
+  assert.strictEqual(toastType, 'warning', 'Toast type must be warning');
+  assert(toastMsg.includes('Pro VIP') || toastMsg.includes('Pro'), 'Toast message must indicate Pro required');
+  assert.strictEqual(upgradeModalCalled, true, 'showUpgradeModal must be called for Guest user');
+});
+
+runTest('11.4: Free user clicking DOCX triggers warning toast, calls showUpgradeModal, and makes 0 fetch calls', async () => {
+  const { context, elements, fetchCalls } = createEnvironment();
+  context.initWorkspace();
+
+  let toastCalled = false;
+  let toastMsg = '';
+  let toastType = '';
+  context.showToast = (msg, type) => {
+    toastCalled = true;
+    toastMsg = msg;
+    toastType = type;
+  };
+
+  let upgradeModalCalled = false;
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 2, email: 'free@example.com', role: 'free' }),
+    getStoredToken: () => 'free_token',
+    showUpgradeModal: () => { upgradeModalCalled = true; },
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'free_attempt.pdf',
+    translated_text: 'Bản dịch cho Free user',
+  });
+  elements.paneTranslated.innerText = 'Bản dịch cho Free user';
+
+  await context.pdfLinguaWorkspace.triggerDownload('docx', 'translated');
+
+  assert.strictEqual(fetchCalls.length, 0, 'Free user attempting DOCX must make 0 fetch calls');
+  assert.strictEqual(toastCalled, true, 'Toast must be triggered');
+  assert.strictEqual(toastType, 'warning', 'Toast type must be warning');
+  assert(toastMsg.includes('Pro VIP') || toastMsg.includes('Pro'), 'Toast message must indicate Pro required');
+  assert.strictEqual(upgradeModalCalled, true, 'showUpgradeModal must be called for Free user');
+});
+
+runTest('11.5: Pro user clicking DOCX dispatches POST /download with format=docx and receives .docx file', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  let toastSuccess = false;
+  context.showToast = (msg, type) => {
+    if (type === 'success') toastSuccess = true;
+  };
+
+  let upgradeModalCalled = false;
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 5, email: 'pro@example.com', role: 'pro' }),
+    getStoredToken: () => 'pro_vip_token',
+    showUpgradeModal: () => { upgradeModalCalled = true; },
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'pro_doc.pdf',
+    translated_text: 'Nội dung bản dịch VIP',
+  });
+  elements.paneTranslated.innerText = 'Nội dung bản dịch VIP';
+
+  await context.pdfLinguaWorkspace.triggerDownload('docx', 'translated');
+
+  assert.strictEqual(fetchCalls.length, 1, 'Pro user must trigger 1 fetch call');
+  assert.strictEqual(fetchCalls[0].body.format, 'docx');
+  assert.strictEqual(fetchCalls[0].body.export_type, 'translated');
+  assert.strictEqual(fetchCalls[0].options.headers['Authorization'], 'Bearer pro_vip_token');
+  assert.strictEqual(upgradeModalCalled, false, 'Upgrade modal must NOT be called for Pro user');
+
+  assert.strictEqual(clickedLinks.length, 1, 'Download link must be clicked');
+  assert.strictEqual(clickedLinks[0].download, 'pro_doc_dich.docx');
+  assert.strictEqual(toastSuccess, true, 'Success toast must be displayed');
+});
+
+runTest('11.6: Admin user clicking DOCX dispatches POST /download with format=docx', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  let upgradeModalCalled = false;
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 1, email: 'admin@example.com', role: 'admin' }),
+    getStoredToken: () => 'admin_token',
+    showUpgradeModal: () => { upgradeModalCalled = true; },
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'admin_doc.pdf',
+    translated_text: 'Admin translation content',
+  });
+  elements.paneTranslated.innerText = 'Admin translation content';
+
+  await context.pdfLinguaWorkspace.triggerDownload('docx', 'translated');
+
+  assert.strictEqual(fetchCalls.length, 1);
+  assert.strictEqual(fetchCalls[0].body.format, 'docx');
+  assert.strictEqual(clickedLinks[0].download, 'admin_doc_dich.docx');
+  assert.strictEqual(upgradeModalCalled, false);
+});
+
+runTest('11.7: Pro user downloading DOCX for all 4 types (translated, original, bilingual, summary)', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 7, email: 'pro_all@example.com', role: 'pro' }),
+    getStoredToken: () => 'pro_token_all',
+    showUpgradeModal: () => {},
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'report.pdf',
+    original_text: 'Original report',
+    translated_text: 'Bản dịch báo cáo',
+    summary_text: 'Tóm tắt báo cáo',
+  });
+  elements.paneOriginal.innerText = 'Original report';
+  elements.paneTranslated.innerText = 'Bản dịch báo cáo';
+  elements.paneSummary.innerText = 'Tóm tắt báo cáo';
+
+  const types = [
+    { type: 'translated', suffix: '_dich.docx' },
+    { type: 'original', suffix: '_goc.docx' },
+    { type: 'bilingual', suffix: '_songngu.docx' },
+    { type: 'summary', suffix: '_tomtat.docx' },
+  ];
+
+  for (let i = 0; i < types.length; i++) {
+    const item = types[i];
+    await context.pdfLinguaWorkspace.triggerDownload('docx', item.type);
+    assert.strictEqual(fetchCalls[i].body.format, 'docx');
+    assert.strictEqual(fetchCalls[i].body.export_type, item.type);
+    assert.strictEqual(clickedLinks[i].download, `report${item.suffix}`);
+  }
+
+  assert.strictEqual(fetchCalls.length, 4);
+  assert.strictEqual(clickedLinks.length, 4);
+});
+
+runTest('11.8: Backend 403 PRO_REQUIRED error handling displays error toast and calls showUpgradeModal', async () => {
+  const { context, elements, fetchCalls } = createEnvironment();
+  context.initWorkspace();
+
+  // Mock server returning 403 PRO_REQUIRED
+  context.fetch = async (url, options) => {
+    fetchCalls.push({ url, options });
+    return {
+      ok: false,
+      status: 403,
+      json: async () => ({
+        success: false,
+        error_code: 'PRO_REQUIRED',
+        message: 'Tính năng tải tệp DOCX chỉ dành riêng cho tài khoản Pro.',
+      }),
+    };
+  };
+
+  let upgradeModalTriggered = false;
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 10, role: 'pro' }), // passes client-side guard
+    getStoredToken: () => 'expired_pro_token',
+    showUpgradeModal: () => { upgradeModalTriggered = true; },
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'forbidden_test.pdf',
+    translated_text: 'Nội dung test 403',
+  });
+  elements.paneTranslated.innerText = 'Nội dung test 403';
+
+  await context.pdfLinguaWorkspace.triggerDownload('docx', 'translated');
+
+  assert.strictEqual(fetchCalls.length, 1);
+  assert.strictEqual(upgradeModalTriggered, true, 'Upgrade modal must be shown on 403 PRO_REQUIRED');
+});
+
+runTest('11.9: TXT and PDF export remain available for Free user without triggering Pro guard', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  let upgradeModalCalled = false;
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 20, role: 'free' }),
+    getStoredToken: () => 'free_token_valid',
+    showUpgradeModal: () => { upgradeModalCalled = true; },
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'free_standard.pdf',
+    translated_text: 'Bản dịch miễn phí TXT và PDF',
+  });
+  elements.paneTranslated.innerText = 'Bản dịch miễn phí TXT và PDF';
+
+  // Free user downloads TXT
+  await context.pdfLinguaWorkspace.triggerDownload('txt', 'translated');
+  assert.strictEqual(fetchCalls[0].body.format, 'txt');
+  assert.strictEqual(clickedLinks[0].download, 'free_standard_dich.txt');
+
+  // Free user downloads PDF
+  await context.pdfLinguaWorkspace.triggerDownload('pdf', 'translated');
+  assert.strictEqual(fetchCalls[1].body.format, 'pdf');
+  assert.strictEqual(clickedLinks[1].download, 'free_standard_dich.pdf');
+
+  assert.strictEqual(upgradeModalCalled, false, 'Upgrade modal must NOT be called for TXT/PDF');
+  assert.strictEqual(fetchCalls.length, 2);
+  assert.strictEqual(clickedLinks.length, 2);
+});
+
+runTest('11.10: isProOrAdminUser strictly validates token presence, active status, and rejects corrupted or unauthorized roles', () => {
+  const { context } = createEnvironment();
+
+  // Case 1: Pro user but no token (logged out) -> false
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 1, role: 'pro', is_active: true }),
+    getStoredToken: () => null,
+  };
+  assert.strictEqual(context.pdfLinguaWorkspace.isProOrAdminUser(), false);
+
+  // Case 2: Pro user but deactivated (is_active: false) -> false
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 1, role: 'pro', is_active: false }),
+    getStoredToken: () => 'valid_token',
+  };
+  assert.strictEqual(context.pdfLinguaWorkspace.isProOrAdminUser(), false);
+
+  // Case 3: Free user with corrupted is_pro: true in storage -> false
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 2, role: 'free', is_pro: true, is_active: true }),
+    getStoredToken: () => 'valid_token',
+  };
+  assert.strictEqual(context.pdfLinguaWorkspace.isProOrAdminUser(), false);
+
+  // Case 4: Invalid/unrecognized role (e.g. 'guest', 'vip', 'moderator') -> false
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 3, role: 'moderator', is_active: true }),
+    getStoredToken: () => 'valid_token',
+  };
+  assert.strictEqual(context.pdfLinguaWorkspace.isProOrAdminUser(), false);
+
+  // Case 5: Valid Pro user with token -> true
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 4, role: 'PRO', is_active: true }),
+    getStoredToken: () => 'valid_token',
+  };
+  assert.strictEqual(context.pdfLinguaWorkspace.isProOrAdminUser(), true);
+
+  // Case 6: Valid Admin user with token -> true
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 5, role: 'Admin', is_active: true }),
+    getStoredToken: () => 'valid_token',
+  };
+  assert.strictEqual(context.pdfLinguaWorkspace.isProOrAdminUser(), true);
+});
+
+runTest('11.11: btnDownloadSummaryDocx click event dispatches POST /download with format=docx and export_type=summary', async () => {
+  const { context, elements, fetchCalls, clickedLinks } = createEnvironment();
+  context.initWorkspace();
+
+  context.window.pdfLinguaAuth = {
+    getStoredUser: () => ({ id: 8, role: 'pro' }),
+    getStoredToken: () => 'pro_token',
+    showUpgradeModal: () => {},
+  };
+
+  context.pdfLinguaWorkspace.setCurrentDocData({
+    filename: 'summary_doc.pdf',
+    summary_text: 'Nội dung tóm tắt chuyên sâu bởi AI',
+  });
+  elements.paneSummary.innerText = 'Nội dung tóm tắt chuyên sâu bởi AI';
+  context.pdfLinguaWorkspace.updateExportUIState();
+
+  assert.strictEqual(elements.btnDownloadSummaryDocx.disabled, false);
+
+  await elements.btnDownloadSummaryDocx.click();
+
+  assert.strictEqual(fetchCalls.length, 1);
+  const call = fetchCalls[0];
+  assert.strictEqual(call.body.format, 'docx');
+  assert.strictEqual(call.body.export_type, 'summary');
+  assert.strictEqual(call.body.content, 'Nội dung tóm tắt chuyên sâu bởi AI');
+  assert.strictEqual(call.body.filename, 'summary_doc_tomtat');
+  assert.strictEqual(clickedLinks[0].download, 'summary_doc_tomtat.docx');
 });
 
 

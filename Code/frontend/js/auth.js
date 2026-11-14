@@ -160,6 +160,7 @@
       closeRegisterModal,
       openLoginModal,
       closeLoginModal,
+      showUpgradeModal,
     });
   }
 
@@ -1955,6 +1956,39 @@
     return fetch(url, Object.assign({}, options, { headers }));
   }
 
+  /**
+   * PDFL-254.2: Kích hoạt modal / giao diện nâng cấp tài khoản Pro VIP.
+   */
+  function showUpgradeModal() {
+    if (typeof window !== 'undefined' && window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
+      window.PDFLinguaPricing.openPricingView();
+      return;
+    }
+    const quotaModal = document.getElementById('quotaExceededModal');
+    if (quotaModal) {
+      quotaModal.removeAttribute('hidden');
+      quotaModal.setAttribute('aria-hidden', 'false');
+      quotaModal.style.display = 'flex';
+      return;
+    }
+    const aiProModal = document.getElementById('aiProModal');
+    if (aiProModal) {
+      aiProModal.removeAttribute('hidden');
+      aiProModal.style.display = 'flex';
+      return;
+    }
+    const checkoutModal = document.getElementById('pricingCheckoutModal');
+    if (checkoutModal) {
+      checkoutModal.removeAttribute('hidden');
+      checkoutModal.setAttribute('aria-hidden', 'false');
+      checkoutModal.style.display = 'flex';
+      return;
+    }
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.hash = '#pricingSection';
+    }
+  }
+
   // Expose helpers globally for testing or integration
   window.pdfLinguaAuth = Object.assign(window.pdfLinguaAuth || {}, {
     validateRegistrationForm,
@@ -1978,6 +2012,7 @@
     updateHeaderAuthState,
     restoreSession,
     handleLogout,
+    showUpgradeModal,
     authFetch,
     openLoginModal,
     closeLoginModal,
