@@ -261,6 +261,19 @@
         fetchProcessingHistories();
       }
     });
+
+    // Listen to global job completion events (PDFL-71.4)
+    window.addEventListener('pdfl:job-completed', () => {
+      fetchRecentDocuments();
+      const historySection = document.getElementById('historySection');
+      if (historySection && historySection.style.display !== 'none') {
+        fetchProcessingHistories();
+      }
+      const documentsSection = document.getElementById('documentsSection');
+      if (documentsSection && documentsSection.style.display !== 'none') {
+        fetchRecentDocuments();
+      }
+    });
   }
 
   function triggerPdfUpload() {

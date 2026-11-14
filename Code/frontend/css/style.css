@@ -448,3 +448,67 @@ img, svg {
     width: auto;
   }
 }
+
+/* ========================================================================== */
+/* Global Completion Toast & Action Navigation (PDFL-71.4)                     */
+/* ========================================================================== */
+
+.toast.has-action {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  min-width: 320px;
+  max-width: 460px;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35), 0 0 15px rgba(59, 130, 246, 0.15);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.toast.has-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.25);
+}
+
+.toast.has-action.success {
+  background: #064E3B;
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35), 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.toast.has-action.success:hover {
+  border-color: rgba(52, 211, 153, 0.6);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.35);
+}
+
+.toast-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-sm);
+  font-size: 0.785rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.toast-action-btn:hover {
+  background: rgba(255, 255, 255, 0.38);
+  border-color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toast-action-btn:active {
+  transform: translateY(0);
+}

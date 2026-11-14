@@ -716,6 +716,119 @@ function handleAuthError(result) {
   showToast(msg, 'error');
 }
 
+// Tập hợp lưu trữ các Job ID đã hoàn tất để ngăn chặn kích hoạt Toast và Event trùng lặp (PDFL-71.4)
+const completedJobIds = new Set();
+
+/**
+ * Kiểm tra xem người dùng hiện tại có đang xem một phân hệ khác ngoài Workspace/Home không (PDFL-71.4).
+ * Ví dụ: Lịch sử xử lý (History), Danh sách tài liệu (Documents), Quản trị (Admin), Bảng giá (Pricing).
+ */
+function checkIsOtherViewActive() {
+  const historySection = document.getElementById('historySection');
+  if (historySection && historySection.style.display !== 'none') return true;
+
+  const documentsSection = document.getElementById('documentsSection');
+  if (documentsSection && documentsSection.style.display !== 'none') return true;
+
+  const adminSection = document.getElementById('adminSection');
+  if (adminSection && adminSection.style.display !== 'none') return true;
+
+  const pricingSection = document.getElementById('pricingSection');
+  if (pricingSection && pricingSection.style.display !== 'none') return true;
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      const activeView = store.getItem(ACTIVE_VIEW_STORAGE_KEY);
+      if (activeView === 'history' || activeView === 'documents' || activeView === 'admin' || activeView === 'pricing') {
+        return true;
+      }
+    } catch (_e) {}
+  }
+
+  return false;
+}
+
+/**
+ * Phát sự kiện toàn cục pdfl:job-completed và hiển thị Toast hoàn tất kèm hành động "Xem ngay" (PDFL-71.4).
+ * Ngăn chặn kích hoạt sự kiện và Toast trùng lặp cho cùng một job.
+ */
+function notifyJobCompleted(jobData) {
+  if (!jobData) return;
+  const jobId = jobData.job_id || currentActiveJobId;
+
+  // Ngăn chặn thông báo trùng lặp cho cùng một job (PDFL-71.4)
+  if (jobId && completedJobIds.has(jobId)) {
+    return;
+  }
+  if (jobId) {
+    completedJobIds.add(jobId);
+  }
+
+  const filename = jobData.filename
+    || currentJobFileName
+    || (jobData.result && (jobData.result.filename || jobData.result.original_filename))
+    || 'tài liệu';
+
+  const docResult = jobData.result || currentDocData;
+  const docId = (docResult && docResult.document_id) || jobData.document_id || null;
+
+  // 1. Kích hoạt sự kiện toàn cục pdfl:job-completed (PDFL-71.4)
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+    try {
+      window.dispatchEvent(new CustomEvent('pdfl:job-completed', {
+        detail: {
+          job_id: jobId,
+          filename: filename,
+          result: docResult,
+          document_id: docId,
+          status: 'COMPLETED',
+        },
+      }));
+    } catch (_e) {}
+
+    // Kích hoạt đồng thời pdfl:document-processed để tương thích với các module cũ
+    if (docResult) {
+      try {
+        window.dispatchEvent(new CustomEvent('pdfl:document-processed', {
+          detail: { document: docResult },
+        }));
+      } catch (_e) {}
+    }
+  }
+
+  // 2. Cập nhật danh sách Tài liệu gần đây trên Sidebar
+  if (typeof window !== 'undefined' && window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
+    try {
+      window.PDFLinguaSidebar.fetchRecentDocuments();
+    } catch (_e) {}
+  }
+
+  // 3. Hiển thị Toast thông báo với hành động "Xem ngay"
+  const isOtherViewActive = checkIsOtherViewActive();
+  const toastMessage = `🎉 Xử lý hoàn tất tài liệu ${filename}! Bấm để xem kết quả.`;
+
+  const action = {
+    text: 'Xem ngay',
+    duration: 6500,
+    onClick: () => {
+      if (docResult) {
+        renderWorkspace(docResult);
+      }
+    },
+  };
+
+  showToast(toastMessage, 'success', action);
+
+  // Nếu người dùng KHÔNG ở view khác (đang ở home hoặc đang theo dõi tiến trình),
+  // chuyển tiếp trực tiếp vào workspace sau 400ms để trải nghiệm mượt mà
+  if (!isOtherViewActive && docResult) {
+    setTimeout(() => {
+      renderWorkspace(docResult);
+    }, 400);
+  }
+}
+
 /**
  * Khôi phục trạng thái Background Job sau khi reload F5 hoặc mở lại ứng dụng (PDFL-71.3).
  * Xác thực trạng thái thực tế từ Backend làm nguồn chân lý duy nhất (Single Source of Truth).
@@ -808,24 +921,11 @@ async function recoverActiveJob(savedJobId) {
       if (job.result) {
         currentDocData = job.result;
         saveWorkspaceDocToStorage(currentDocData);
-        if (store) {
-          try {
-            store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
-          } catch (_e) {}
-        }
-        renderWorkspace(job.result);
-        showToast('Tài liệu đã được dịch thuật thành công!', 'success');
-
-        if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
-          window.PDFLinguaSidebar.fetchRecentDocuments();
-        }
-        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
-          try {
-            window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: job.result } }));
-          } catch (e) {}
-        }
       }
+
       if (btnProcessPdf) btnProcessPdf.disabled = false;
+
+      notifyJobCompleted(job);
 
     } else if (job.status === 'FAILED') {
       // Job thất bại trước hoặc trong lúc reload F5
@@ -893,36 +993,13 @@ function listenToJobProgress(jobId, btnProcessPdf) {
 
     currentDocData = jobData.result;
     saveWorkspaceDocToStorage(currentDocData);
-    const store = getWorkspaceSessionStorage();
-    if (store) {
-      try {
-        store.setItem(ACTIVE_VIEW_STORAGE_KEY, 'workspace');
-        store.setItem(
-          PENDING_TOAST_STORAGE_KEY,
-          JSON.stringify({ msg: 'Tài liệu đã được dịch thuật thành công!', type: 'success', ts: Date.now() })
-        );
-      } catch (_e) {}
-    }
     updateProgress(100, jobData.message || 'Xử lý và dịch thuật hoàn tất!', 4);
-    setTimeout(() => {
-      if (store) {
-        try {
-          store.removeItem(PENDING_TOAST_STORAGE_KEY);
-        } catch (_e) {}
-      }
-      showProgressModal(false);
-      renderWorkspace(jobData.result);
-      showToast('Tài liệu đã được dịch thuật thành công!', 'success');
-      if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
-        window.PDFLinguaSidebar.fetchRecentDocuments();
-      }
-      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
-        try {
-          window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: jobData.result } }));
-        } catch (e) {}
-      }
-      if (btnProcessPdf) btnProcessPdf.disabled = false;
-    }, 400);
+
+    showProgressModal(false);
+    const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
+    if (btn) btn.disabled = false;
+
+    notifyJobCompleted(jobData);
   };
 
   const handleJobFailure = (errorMsg) => {
@@ -2136,22 +2213,50 @@ function updateProgress(percentage, text, currentStep) {
   if (bgFileName && currentJobFileName) bgFileName.textContent = currentJobFileName;
 }
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', action = null) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${message}</span>`;
+  if (action && typeof action.onClick === 'function') {
+    toast.classList.add('has-action');
+  }
+
+  const textSpan = document.createElement('span');
+  textSpan.textContent = message;
+  toast.appendChild(textSpan);
+
+  if (action && typeof action.onClick === 'function') {
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'toast-action-btn';
+    actionBtn.textContent = action.text || 'Xem ngay';
+    actionBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      action.onClick();
+      toast.remove();
+    });
+    toast.appendChild(actionBtn);
+
+    toast.style.cursor = 'pointer';
+    toast.addEventListener('click', () => {
+      action.onClick();
+      toast.remove();
+    });
+  }
 
   container.appendChild(toast);
 
+  const duration = (action && action.duration) || 3200;
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(10px)';
     toast.style.transition = 'all 0.25s ease';
     setTimeout(() => toast.remove(), 250);
-  }, 3200);
+  }, duration);
+
+  return toast;
 }
 
 function getLangName(code) {
@@ -2228,6 +2333,10 @@ if (typeof window !== 'undefined') {
     getCurrentJobFileName: () => currentJobFileName,
     setCurrentJobFileName: (name) => { currentJobFileName = name; },
     recoverActiveJob,
+    notifyJobCompleted,
+    checkIsOtherViewActive,
+    getCompletedJobIds: () => completedJobIds,
+    resetCompletedJobsCache: () => completedJobIds.clear(),
     ACTIVE_JOB_STORAGE_KEY,
     BG_MINIMIZED_STORAGE_KEY,
     getEventSource: () => activeEventSource,

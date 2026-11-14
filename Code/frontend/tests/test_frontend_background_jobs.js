@@ -32,7 +32,7 @@ class Element {
   constructor(id) {
     this.id = id;
     this.value = '';
-    this.textContent = '';
+    this._textContent = '';
     this.innerHTML = '';
     this.innerText = '';
     this.classList = new ClassList();
@@ -41,6 +41,24 @@ class Element {
     this.attributes = {};
     this.listeners = {};
     this.files = [];
+  }
+  get className() {
+    return Array.from(this.classList.values).join(' ');
+  }
+  set className(v) {
+    this.classList = new ClassList();
+    if (v) {
+      String(v).split(/\s+/).forEach(cls => { if (cls) this.classList.add(cls); });
+    }
+  }
+  get textContent() {
+    if (this.children && this.children.length > 0) {
+      return this.children.map(c => c.textContent || '').join(' ').trim();
+    }
+    return this._textContent;
+  }
+  set textContent(v) {
+    this._textContent = v;
   }
   addEventListener(event, handler) {
     if (!this.listeners[event]) this.listeners[event] = [];
@@ -62,8 +80,30 @@ class Element {
   getAttribute(k) { return this.attributes[k]; }
   removeAttribute(k) { delete this.attributes[k]; }
   hasAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attributes, k); }
-  appendChild(child) { this.children = this.children || []; this.children.push(child); }
-  remove() {}
+  appendChild(child) {
+    this.children = this.children || [];
+    this.children.push(child);
+    child.parentElement = this;
+  }
+  remove() {
+    this.removed = true;
+  }
+  querySelector(sel) {
+    if (!this.children) return null;
+    for (const child of this.children) {
+      if (sel.startsWith('.')) {
+        const cls = sel.slice(1);
+        if (child.classList && child.classList.contains(cls)) return child;
+      } else if (child.id === sel || child.tagName === sel) {
+        return child;
+      }
+      if (child.querySelector) {
+        const found = child.querySelector(sel);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
 }
 
 class MockStorage {
@@ -111,6 +151,9 @@ function createTestEnvironment() {
     'btnMinimizeProgress', 'btnCloseProgressModal', 'btnCancelJob',
     'bgJobWidget', 'bgJobFileName', 'bgJobStatusText', 'btnMaximizeProgress', 'btnCloseBgWidget',
     'bgJobProgressBarFill', 'bgJobPercent',
+    'historySection', 'documentsSection', 'adminSection', 'pricingSection',
+    'sideNavHistory', 'sideNavDocuments', 'sideNavTranslate', 'sideNavHome',
+    'docNameDisplay', 'docPagesDisplay', 'docSizeDisplay', 'docTypeDisplay',
   ];
   elementIds.forEach(id => { elements[id] = new Element(id); });
 
@@ -118,8 +161,16 @@ function createTestEnvironment() {
   const listeners = {};
   MockEventSource.instances = [];
 
+  const CustomEventClass = class CustomEvent {
+    constructor(type, init) {
+      this.type = type;
+      this.detail = init && init.detail;
+    }
+  };
+
   const context = {
     console,
+    CustomEvent: CustomEventClass,
     setTimeout: (fn) => { fn(); return 1; },
     clearTimeout: () => {},
     setInterval: (fn) => { fn(); return 2; },
@@ -169,6 +220,7 @@ function createTestEnvironment() {
   context.window.localStorage = storage;
   context.window.sessionStorage = storage;
   context.window.EventSource = MockEventSource;
+  context.window.CustomEvent = CustomEventClass;
 
   vm.createContext(context);
   vm.runInContext(authSource, context);
@@ -918,6 +970,206 @@ async function runAllTests() {
     assert.strictEqual(MockEventSource.instances.length, 2);
     assert.strictEqual(MockEventSource.instances[0].closed, true, 'Previous SSE connection must be closed');
     assert.strictEqual(MockEventSource.instances[1].closed, false, 'New SSE connection is active');
+  });
+
+  await test('PDFL-71.4: Job completes when user is on History view (stays on History, Toast with Xem ngay appears)', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    // Set user to be on History view
+    env.elements['historySection'].style.display = 'block';
+    env.elements['workspaceSection'].style.display = 'none';
+    env.elements['heroSection'].style.display = 'none';
+
+    let jobCompletedEventFired = false;
+    let eventDetail = null;
+    env.context.window.addEventListener('pdfl:job-completed', (e) => {
+      jobCompletedEventFired = true;
+      eventDetail = e.detail;
+    });
+
+    const mockJobData = {
+      job_id: 'job-history-view-test-1',
+      filename: 'financial_2026.pdf',
+      status: 'COMPLETED',
+      result: {
+        filename: 'financial_2026.pdf',
+        original_text: 'Annual revenue report',
+        translated_text: 'Báo cáo doanh thu hàng năm',
+      },
+    };
+
+    env.context.window.pdfLinguaWorkspace.notifyJobCompleted(mockJobData);
+
+    // Verify user remains on History view
+    assert.strictEqual(env.elements['historySection'].style.display, 'block', 'User must NOT be forcefully navigated away from History');
+    assert.strictEqual(env.elements['workspaceSection'].style.display, 'none');
+
+    // Verify pdfl:job-completed event was dispatched with full details
+    assert.strictEqual(jobCompletedEventFired, true);
+    assert.strictEqual(eventDetail.job_id, 'job-history-view-test-1');
+    assert.strictEqual(eventDetail.filename, 'financial_2026.pdf');
+    assert.strictEqual(eventDetail.status, 'COMPLETED');
+
+    // Verify Toast is rendered in container
+    const toast = env.elements['toastContainer'].children[0];
+    assert(toast, 'Toast element must exist in container');
+    assert(toast.textContent.includes('financial_2026.pdf'), 'Toast must mention filename');
+    assert(toast.textContent.includes('Xem ngay'), 'Toast must have action button');
+  });
+
+  await test('PDFL-71.4: Job completes when user is on Documents view (user stays on Documents)', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    env.elements['documentsSection'].style.display = 'block';
+    env.elements['workspaceSection'].style.display = 'none';
+    env.elements['heroSection'].style.display = 'none';
+
+    const mockJobData = {
+      job_id: 'job-docs-view-test-2',
+      filename: 'contract_nda.pdf',
+      status: 'COMPLETED',
+      result: {
+        filename: 'contract_nda.pdf',
+        original_text: 'Non-disclosure agreement',
+        translated_text: 'Thỏa thuận bảo mật thông tin',
+      },
+    };
+
+    env.context.window.pdfLinguaWorkspace.notifyJobCompleted(mockJobData);
+
+    assert.strictEqual(env.elements['documentsSection'].style.display, 'block', 'User must remain on Documents view');
+    assert.strictEqual(env.elements['workspaceSection'].style.display, 'none');
+
+    const toast = env.elements['toastContainer'].children[0];
+    assert(toast.textContent.includes('contract_nda.pdf'));
+  });
+
+  await test('PDFL-71.4: Toast displays correct file name and clicking "Xem ngay" navigates to Workspace and renders bilingual document', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    env.elements['historySection'].style.display = 'block';
+    env.elements['workspaceSection'].style.display = 'none';
+
+    const mockResult = {
+      filename: 'whitepaper.pdf',
+      original_text: 'Antigravity AI engine',
+      translated_text: 'Công cụ trí tuệ nhân tạo Antigravity',
+      total_pages: 12,
+      file_size: 102400,
+    };
+
+    env.context.window.pdfLinguaWorkspace.notifyJobCompleted({
+      job_id: 'job-nav-action-test-3',
+      filename: 'whitepaper.pdf',
+      status: 'COMPLETED',
+      result: mockResult,
+    });
+
+    const toast = env.elements['toastContainer'].children[0];
+    assert(toast.textContent.includes('whitepaper.pdf'));
+
+    const actionBtn = toast.querySelector('.toast-action-btn');
+    assert(actionBtn, 'Toast action button must be present');
+    assert.strictEqual(actionBtn.textContent, 'Xem ngay');
+
+    // Click "Xem ngay"
+    actionBtn.click();
+
+    // Verify navigation to Workspace
+    assert.strictEqual(env.elements['workspaceSection'].style.display, 'block', 'Workspace must be displayed');
+    assert.strictEqual(env.elements['historySection'].style.display, 'none', 'History must be hidden');
+    assert.strictEqual(env.elements['paneOriginal'].innerText, 'Antigravity AI engine');
+    assert.strictEqual(env.elements['paneTranslated'].innerText, 'Công cụ trí tuệ nhân tạo Antigravity');
+  });
+
+  await test('PDFL-71.4: Global completion event pdfl:job-completed updates Sidebar recent documents', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    let sidebarRecentCalled = false;
+    env.context.window.PDFLinguaSidebar = {
+      fetchRecentDocuments: () => {
+        sidebarRecentCalled = true;
+      },
+    };
+
+    env.context.window.pdfLinguaWorkspace.notifyJobCompleted({
+      job_id: 'job-sidebar-update-test-4',
+      filename: 'invoice.pdf',
+      status: 'COMPLETED',
+      result: { filename: 'invoice.pdf', translated_text: 'Hóa đơn' },
+    });
+
+    assert.strictEqual(sidebarRecentCalled, true, 'Sidebar.fetchRecentDocuments must be invoked on completion');
+  });
+
+  await test('PDFL-71.4: Prevents duplicate completion handling and duplicate Toasts for same job', async () => {
+    const env = createTestEnvironment();
+    env.fireDomReady();
+
+    const mockJob = {
+      job_id: 'job-dedup-555',
+      filename: 'dedup_sample.pdf',
+      status: 'COMPLETED',
+      result: { filename: 'dedup_sample.pdf', translated_text: 'Bản dịch' },
+    };
+
+    // First completion
+    env.context.window.pdfLinguaWorkspace.notifyJobCompleted(mockJob);
+    assert.strictEqual(env.elements['toastContainer'].children.length, 1);
+
+    // Duplicate completion (e.g. from simultaneous SSE and Polling)
+    env.context.window.pdfLinguaWorkspace.notifyJobCompleted(mockJob);
+    assert.strictEqual(env.elements['toastContainer'].children.length, 1, 'Duplicate completion must NOT render a second Toast');
+
+    const completedSet = env.context.window.pdfLinguaWorkspace.getCompletedJobIds();
+    assert(completedSet.has('job-dedup-555'));
+  });
+
+  await test('PDFL-71.4: COMPLETED job recovered after F5 when user is on History view renders Toast with action without forcing screen switch', async () => {
+    const env = createTestEnvironment();
+    env.storage.setItem('pdfl_active_job_id', 'job-f5-comp-view-666');
+    env.storage.setItem('pdfl_active_view', 'history');
+    env.elements['historySection'].style.display = 'block';
+    env.elements['workspaceSection'].style.display = 'none';
+
+    env.context.fetch = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        success: true,
+        data: {
+          job_id: 'job-f5-comp-view-666',
+          status: 'COMPLETED',
+          filename: 'recovered_f5.pdf',
+          result: {
+            filename: 'recovered_f5.pdf',
+            original_text: 'F5 Recovered text',
+            translated_text: 'Văn bản đã khôi phục sau F5',
+          },
+        },
+      }),
+    });
+
+    await env.context.window.pdfLinguaWorkspace.recoverActiveJob('job-f5-comp-view-666');
+
+    // User stays on History view
+    assert.strictEqual(env.elements['historySection'].style.display, 'block');
+    assert.strictEqual(env.elements['workspaceSection'].style.display, 'none');
+
+    // Toast shown
+    const toast = env.elements['toastContainer'].children[0];
+    assert(toast.textContent.includes('recovered_f5.pdf'));
+
+    // Clicking "Xem ngay" opens workspace
+    const actionBtn = toast.querySelector('.toast-action-btn');
+    actionBtn.click();
+    assert.strictEqual(env.elements['workspaceSection'].style.display, 'block');
+    assert.strictEqual(env.elements['paneTranslated'].innerText, 'Văn bản đã khôi phục sau F5');
   });
 
   console.log('\n================================================================');
