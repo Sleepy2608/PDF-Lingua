@@ -320,6 +320,244 @@
 }
 
 /* ==========================================================================
+   Batch Queue UI (PDFL-252.1)
+   ========================================================================== */
+.batch-queue-card {
+  width: 100%;
+  max-width: 380px;
+  background-color: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.batch-queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle, #f1f5f9);
+}
+
+.batch-queue-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.batch-queue-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-title, #1e293b);
+  letter-spacing: -0.01em;
+}
+
+.batch-queue-title svg {
+  color: var(--color-primary, #4f46e5);
+  flex-shrink: 0;
+}
+
+.batch-queue-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background-color: var(--bg-subtle, #f1f5f9);
+  color: var(--text-muted, #64748b);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+}
+
+.batch-queue-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-batch-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.71875rem;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  background-color: #ffffff;
+  color: var(--text-title, #334155);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.btn-batch-action:hover {
+  background-color: var(--bg-subtle, #f8fafc);
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.btn-batch-add {
+  color: var(--color-primary, #4f46e5);
+  border-color: rgba(79, 70, 229, 0.25);
+}
+
+.btn-batch-add:hover {
+  background-color: rgba(79, 70, 229, 0.05);
+  border-color: var(--color-primary, #4f46e5);
+}
+
+.btn-batch-clear {
+  color: var(--text-muted, #64748b);
+}
+
+.btn-batch-clear:hover {
+  color: var(--color-danger, #ef4444);
+  border-color: rgba(239, 68, 68, 0.25);
+  background-color: #fef2f2;
+}
+
+.batch-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.batch-queue-list::-webkit-scrollbar {
+  width: 4px;
+}
+.batch-queue-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.batch-queue-list::-webkit-scrollbar-thumb {
+  background: var(--border-subtle, #cbd5e1);
+  border-radius: 4px;
+}
+
+.batch-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  background-color: var(--bg-subtle, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.batch-queue-item:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.queue-item-icon {
+  flex-shrink: 0;
+}
+
+.badge-pdf-mini {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background-color: #fee2e2;
+  color: #ef4444;
+  border-radius: 4px;
+}
+
+.queue-item-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.queue-item-name {
+  font-size: 0.78125rem;
+  font-weight: 500;
+  color: var(--text-title, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+}
+
+.queue-item-size {
+  color: var(--text-muted, #64748b);
+}
+
+.queue-item-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.queue-item-status.status-ready {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.btn-queue-remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.btn-queue-remove:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.batch-queue-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.batch-queue-empty svg {
+  opacity: 0.6;
+}
+
+/* ==========================================================================
    Page Selection UI & Quick Chips (PDFL-255.2)
    ========================================================================== */
 
@@ -549,6 +787,21 @@
 }
 
 @media (max-width: 480px) {
+  .batch-queue-card {
+    padding: 0.75rem;
+  }
+  .batch-queue-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+  .batch-queue-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .batch-queue-list {
+    max-height: 180px;
+  }
   .page-selection-card {
     padding: 0.75rem;
   }
