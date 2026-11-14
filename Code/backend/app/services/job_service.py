@@ -19,6 +19,7 @@ class Job:
     job_id: str
     filename: str
     target_lang: str
+    user_id: Optional[int] = None
     status: JobStatus = JobStatus.PENDING
     total_pages: int = 0
     processed_pages: int = 0
@@ -36,6 +37,7 @@ class Job:
             "job_id": self.job_id,
             "filename": self.filename,
             "target_lang": self.target_lang,
+            "user_id": self.user_id,
             "status": self.status.value,
             "total_pages": self.total_pages,
             "processed_pages": self.processed_pages,
@@ -63,11 +65,11 @@ class JobManager:
         self._max_retained_jobs = max_retained_jobs
         self._job_ttl_seconds = job_ttl_seconds
 
-    def create_job(self, filename: str, target_lang: str) -> Job:
+    def create_job(self, filename: str, target_lang: str, user_id: Optional[int] = None) -> Job:
         with self._lock:
             self._cleanup_expired_jobs_locked()
             job_id = str(uuid.uuid4())
-            job = Job(job_id=job_id, filename=filename, target_lang=target_lang)
+            job = Job(job_id=job_id, filename=filename, target_lang=target_lang, user_id=user_id)
             self._jobs[job_id] = job
             return job
 

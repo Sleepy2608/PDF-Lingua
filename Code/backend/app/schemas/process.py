@@ -88,3 +88,33 @@ class FeedbackRequest(BaseModel):
     email: str = Field(..., min_length=5, max_length=255, description="Email người gửi")
     topic: str = Field(default="support", description="Chủ đề góp ý: bug | feature | support | other")
     message: str = Field(..., min_length=5, max_length=3000, description="Nội dung phản hồi")
+
+
+class BatchDownloadRequest(BaseModel):
+    """
+    PDFL-252.2: Yêu cầu tải về trọn bộ kết quả dịch dưới dạng tệp ZIP.
+    Hỗ trợ danh sách job_ids hoặc history_ids, định dạng tệp và loại nội dung.
+    """
+    job_ids: Optional[list[str]] = Field(default=None, description="Danh sách Job ID hoàn thành cần tải về")
+    history_ids: Optional[list[int]] = Field(default=None, description="Danh sách History ID hoàn thành cần tải về")
+    format: Optional[str] = Field(default="pdf", description="Định dạng tệp trong zip: pdf, txt, docx")
+    export_type: Optional[ExportTargetType] = Field(
+        default=ExportTargetType.TRANSLATED,
+        description="Loại nội dung cần xuất: original | translated | summary | bilingual",
+    )
+
+    @field_validator("format", mode="before")
+    @classmethod
+    def validate_batch_format(cls, v: Any) -> Any:
+        if v is None:
+            return "pdf"
+        if not isinstance(v, (str, ExportFormat)):
+            raise ValueError("Định dạng tệp không hợp lệ.")
+        clean = v.value if isinstance(v, ExportFormat) else str(v).strip().lower()
+        allowed = {f.value for f in ExportFormat}
+        if clean not in allowed:
+            raise ValueError(
+                f"Định dạng tệp '{v}' không hợp lệ. Chỉ chấp nhận các định dạng: {', '.join(sorted(allowed))}."
+            )
+        return clean
+

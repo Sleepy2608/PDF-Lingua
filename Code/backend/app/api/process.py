@@ -1,10 +1,12 @@
 import asyncio
+import io
 import json
 import os
 import re
 import tempfile
 import threading
 import unicodedata
+import zipfile
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
@@ -29,6 +31,7 @@ from app.models.document import Document
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.process import (
+    BatchDownloadRequest,
     DownloadRequest,
     ExportTargetType,
     FeedbackRequest,
@@ -374,10 +377,14 @@ async def create_processing_job(
             detail="Tệp PDF không hợp lệ hoặc bị lỗi không thể xử lý.",
         )
 
-    job = job_manager.create_job(filename=file.filename, target_lang=target_lang)
+    authenticated_user_id = current_user.id if current_user is not None else None
+    job = job_manager.create_job(
+        filename=file.filename,
+        target_lang=target_lang,
+        user_id=authenticated_user_id,
+    )
     file_size_bytes = len(content)
     file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
-    authenticated_user_id = current_user.id if current_user is not None else None
 
     # Khởi chạy Worker trong luồng nền độc lập
     thread = threading.Thread(
@@ -954,6 +961,288 @@ async def download_result(
     return Response(
         content=file_bytes,
         media_type=media_type,
+        headers=headers,
+    )
+
+
+@router.post("/batch-download")
+async def batch_download_results(
+    request: BatchDownloadRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    PDFL-252.2: Tải về trọn bộ file kết quả dịch dưới dạng tệp ZIP nén.
+    - Yêu cầu xác thực tài khoản (Bearer Token).
+    - Kiểm tra danh sách Job ID / History ID hợp lệ, không rỗng và không trùng lặp (400 Bad Request).
+    - Kiểm tra quyền sở hữu (Anti-IDOR): Chỉ cho phép tải file của chính mình hoặc Admin (403/404).
+    - Tạo nội dung tài liệu theo định dạng yêu cầu (PDF/TXT/DOCX).
+    - Đóng gói file ZIP với cơ chế khử trùng lặp tên file (ví dụ: report (1).pdf).
+    - Trả về application/zip với header Content-Disposition phù hợp.
+    """
+    raw_job_ids = request.job_ids
+    raw_hist_ids = request.history_ids
+
+    # 1. Kiểm tra danh sách không được rỗng (PDFL-252.2)
+    has_job_ids = raw_job_ids is not None and len(raw_job_ids) > 0
+    has_hist_ids = raw_hist_ids is not None and len(raw_hist_ids) > 0
+
+    if not has_job_ids and not has_hist_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách mã tác vụ (job_ids) hoặc lịch sử (history_ids) không được để trống.",
+        )
+
+    if raw_job_ids is not None and len(raw_job_ids) == 0 and not has_hist_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách job_ids không được để trống.",
+        )
+    if raw_hist_ids is not None and len(raw_hist_ids) == 0 and not has_job_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách history_ids không được để trống.",
+        )
+
+    # 2. Kiểm tra trùng lặp ID (reject duplicates)
+    if raw_job_ids and len(raw_job_ids) != len(set(raw_job_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách job_ids chứa mã định danh trùng lặp.",
+        )
+    if raw_hist_ids and len(raw_hist_ids) != len(set(raw_hist_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Danh sách history_ids chứa mã định danh trùng lặp.",
+        )
+
+    items_to_package: list[tuple[str, str, bytes]] = []
+    is_admin = (current_user.role == UserRole.ADMIN or str(current_user.role).lower() == "admin")
+
+    fmt = (request.format or "pdf").strip().lower()
+    export_type = request.export_type or ExportTargetType.TRANSLATED
+
+    # Kiểm tra quyền tải file DOCX (chỉ dành riêng cho Pro/Admin)
+    if fmt == "docx":
+        user_role = current_user.role
+        is_pro_or_admin = (
+            user_role in (UserRole.PRO, UserRole.ADMIN)
+            or (isinstance(user_role, str) and user_role.lower() in ("pro", "admin"))
+            or getattr(current_user, "is_pro", False)
+        )
+        if not is_pro_or_admin:
+            logger.warning(
+                f"[BatchDownload] Caller (user_id={current_user.id}, role='{user_role}') denied DOCX batch export."
+            )
+            raise ForbiddenException(
+                message="Tính năng tải tệp DOCX chỉ dành riêng cho tài khoản Pro.",
+                error_code="PRO_REQUIRED",
+                details={"upgrade_url": "/#pricingSection"},
+            )
+
+    # Xử lý theo job_ids
+    if raw_job_ids:
+        for jid in raw_job_ids:
+            job = job_manager.get_job(jid)
+            if not job:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Không tìm thấy tác vụ xử lý có mã: {jid}.",
+                )
+            # Anti-IDOR: chỉ owner hoặc Admin mới được tải
+            if not is_admin:
+                if job.user_id is None or job.user_id != current_user.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Bạn không có quyền truy cập tác vụ {jid}.",
+                    )
+            if job.status != JobStatus.COMPLETED:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Tác vụ {jid} chưa hoàn thành thành công (trạng thái: {job.status.value}).",
+                )
+
+            res = job.result or {}
+            raw_filename = res.get("filename") or job.filename or "document.pdf"
+            translated_text = res.get("translated_text", "")
+            original_text = res.get("original_text", "")
+
+            if export_type == ExportTargetType.ORIGINAL:
+                content_text = original_text or translated_text
+            elif export_type == ExportTargetType.BILINGUAL:
+                content_text = translated_text
+            else:
+                content_text = translated_text or original_text
+
+            if not content_text:
+                continue
+
+            clean_stem = Path(raw_filename).stem or "document"
+            title = f"PDF-Lingua - {clean_stem}"
+
+            try:
+                if fmt == "pdf":
+                    file_bytes = export_service.export_to_pdf(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".pdf"
+                elif fmt == "docx":
+                    file_bytes = export_service.export_to_docx(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".docx"
+                else:
+                    file_bytes = export_service.export_to_txt(
+                        content=content_text,
+                        title=title,
+                        export_type=export_type,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                    )
+                    ext = ".txt"
+            except Exception as exp_err:
+                logger.error(f"[BatchDownload] Export error for job {jid}: {exp_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Lỗi khi tạo định dạng xuất cho tác vụ {jid}.",
+                ) from exp_err
+
+            items_to_package.append((raw_filename, ext, file_bytes))
+
+    # Xử lý theo history_ids
+    if raw_hist_ids:
+        from app.models.processing_history import ProcessingHistory, ProcessingStatus
+
+        for hid in raw_hist_ids:
+            hist = db.query(ProcessingHistory).filter(ProcessingHistory.id == hid).first()
+            if not hist:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Không tìm thấy bản ghi lịch sử xử lý có mã: {hid}.",
+                )
+            if not is_admin and hist.user_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Bạn không có quyền truy cập bản ghi lịch sử {hid}.",
+                )
+            if hist.status != ProcessingStatus.SUCCESS:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Bản ghi lịch sử {hid} chưa xử lý thành công.",
+                )
+
+            result_dict = None
+            if hist.result_path:
+                result_dict = storage_service.read_result_file(hist.user_id, hist.result_path)
+
+            raw_filename = (
+                (result_dict and result_dict.get("filename"))
+                or (hist.document and hist.document.original_filename)
+                or f"document_{hid}.pdf"
+            )
+            translated_text = (result_dict and result_dict.get("translated_text")) or ""
+            original_text = (result_dict and result_dict.get("original_text")) or ""
+
+            if export_type == ExportTargetType.ORIGINAL:
+                content_text = original_text or translated_text
+            elif export_type == ExportTargetType.BILINGUAL:
+                content_text = translated_text
+            else:
+                content_text = translated_text or original_text
+
+            if not content_text:
+                continue
+
+            clean_stem = Path(raw_filename).stem or f"document_{hid}"
+            title = f"PDF-Lingua - {clean_stem}"
+
+            try:
+                if fmt == "pdf":
+                    file_bytes = export_service.export_to_pdf(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".pdf"
+                elif fmt == "docx":
+                    file_bytes = export_service.export_to_docx(
+                        content=content_text,
+                        title=title,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                        export_type=export_type,
+                    )
+                    ext = ".docx"
+                else:
+                    file_bytes = export_service.export_to_txt(
+                        content=content_text,
+                        title=title,
+                        export_type=export_type,
+                        original_content=original_text if export_type == ExportTargetType.BILINGUAL else None,
+                    )
+                    ext = ".txt"
+            except Exception as exp_err:
+                logger.error(f"[BatchDownload] Export error for history {hid}: {exp_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Lỗi khi tạo định dạng xuất cho bản ghi lịch sử {hid}.",
+                ) from exp_err
+
+            items_to_package.append((raw_filename, ext, file_bytes))
+
+    if not items_to_package:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Không có nội dung tệp hợp lệ để đóng gói vào tệp ZIP.",
+        )
+
+    # Đóng gói ZIP với cơ chế khử trùng lặp tên tệp
+    zip_buffer = io.BytesIO()
+    used_archive_names: set[str] = set()
+
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for raw_name, ext, file_data in items_to_package:
+            sanitized_basename = os.path.basename(raw_name.replace("\\", "/"))
+            stem = re.sub(r'\.(pdf|txt|docx)$', '', sanitized_basename, flags=re.IGNORECASE).strip() or "document"
+            stem = re.sub(r'[\\/*?:"<>|]', "", stem).strip() or "document"
+
+            candidate_name = f"{stem}{ext}"
+            if candidate_name not in used_archive_names:
+                used_archive_names.add(candidate_name)
+                final_entry_name = candidate_name
+            else:
+                counter = 1
+                while True:
+                    candidate = f"{stem} ({counter}){ext}"
+                    if candidate not in used_archive_names:
+                        used_archive_names.add(candidate)
+                        final_entry_name = candidate
+                        break
+                    counter += 1
+
+            zf.writestr(final_entry_name, file_data)
+
+    zip_bytes = zip_buffer.getvalue()
+
+    headers = {
+        "Content-Disposition": 'attachment; filename="PDFLingua_Batch_Results.zip"',
+        "Content-Length": str(len(zip_bytes)),
+        "Content-Type": "application/zip",
+        "Cache-Control": "no-cache, no-store, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Expose-Headers": "Content-Disposition, Content-Length",
+    }
+
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
         headers=headers,
     )
 
