@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 import threading
+import time
 import unicodedata
 import zipfile
 from pathlib import Path
@@ -93,6 +94,14 @@ def _execute_pdf_background_job(
     Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages (PDFL-255.1).
     """
     try:
+        start_time = time.time()
+        job = job_manager.get_job(job_id)
+        if job and getattr(job, "created_at", None):
+            try:
+                start_time = float(job.created_at)
+            except (ValueError, TypeError):
+                start_time = time.time()
+
         acquired = _job_semaphore.acquire(blocking=False)
         if not acquired:
             try:
@@ -196,6 +205,8 @@ def _execute_pdf_background_job(
                 finally:
                     db_session.close()
 
+            execution_time_ms = max(1, int((time.time() - start_time) * 1000))
+
             result_data = {
                 "document_id": document_id,
                 "filename": filename,
@@ -206,9 +217,10 @@ def _execute_pdf_background_job(
                 "original_text": original_text,
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
+                "execution_time_ms": execution_time_ms,
             }
 
-            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1)
+            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1, PDFL-169)
             history_id: Optional[int] = None
             if user_id is not None and document_id is not None:
                 hist_session = SessionLocal()
@@ -224,6 +236,7 @@ def _execute_pdf_background_job(
                             document_id=document_id,
                             action_type=ActionType.TRANSLATE,
                             status=ProcessingStatus.PENDING,
+                            execution_time_ms=execution_time_ms,
                         ),
                         reuse_pending=False,
                     )
@@ -233,10 +246,11 @@ def _execute_pdf_background_job(
                         history_id=history_id,
                         user_id=user_id,
                         result_data=result_data,
+                        execution_time_ms=execution_time_ms,
                     )
                     result_data["history_id"] = history_id
                     logger.info(
-                        f"[Job {job_id}] Persisted processing history id={history_id} and result file for user_id={user_id}"
+                        f"[Job {job_id}] Persisted processing history id={history_id} (duration={execution_time_ms}ms) and result file for user_id={user_id}"
                     )
                 except Exception as hist_err:
                     try:
@@ -254,6 +268,34 @@ def _execute_pdf_background_job(
         except Exception as e:
             logger.error(f"[Job {job_id}] Lỗi xử lý nền: {e}")
             job_manager.set_failed(job_id, str(e))
+            if user_id is not None and document_id is not None:
+                fail_session = SessionLocal()
+                try:
+                    from app.models.processing_history import ActionType, ProcessingStatus
+                    from app.schemas.processing_history import ProcessingHistoryCreate
+                    from app.services.history_service import history_service
+
+                    fail_time_ms = max(1, int((time.time() - start_time) * 1000))
+                    history_service.create_history(
+                        fail_session,
+                        ProcessingHistoryCreate(
+                            user_id=user_id,
+                            document_id=document_id,
+                            action_type=ActionType.TRANSLATE,
+                            status=ProcessingStatus.FAILED,
+                            execution_time_ms=fail_time_ms,
+                            error_message=str(e),
+                        ),
+                        reuse_pending=False,
+                    )
+                except Exception as fail_hist_err:
+                    try:
+                        fail_session.rollback()
+                    except Exception:
+                        pass
+                    logger.warning(f"[Job {job_id}] Could not log failed history: {fail_hist_err}")
+                finally:
+                    fail_session.close()
         finally:
             _job_semaphore.release()
 
@@ -464,6 +506,7 @@ async def upload_and_translate(
     current_user: Optional[User] = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ):
+    start_time = time.time()
     max_upload_mb, max_ocr_pages = get_user_limits(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
@@ -584,6 +627,7 @@ async def upload_and_translate(
             f"result_preview={translation_result.get('translated_text', '')[:80]!r}"
         )
 
+        execution_time_ms = max(1, int((time.time() - start_time) * 1000))
         document_id: Optional[int] = None
         history_id: Optional[int] = None
         if current_user is not None:
@@ -611,7 +655,7 @@ async def upload_and_translate(
                     f"[Process] Saved document id={document_id} for user_id={current_user.id}"
                 )
 
-                # Persist processing history & result (PDFL-165.1)
+                # Persist processing history & result (PDFL-165.1, PDFL-169)
                 try:
                     from app.models.processing_history import ActionType, ProcessingStatus
                     from app.schemas.processing_history import ProcessingHistoryCreate
@@ -624,6 +668,7 @@ async def upload_and_translate(
                             document_id=document_id,
                             action_type=ActionType.TRANSLATE,
                             status=ProcessingStatus.PENDING,
+                            execution_time_ms=execution_time_ms,
                         ),
                         reuse_pending=False,
                     )
@@ -642,7 +687,9 @@ async def upload_and_translate(
                             "original_text": original_text,
                             "translated_text": translation_result["translated_text"],
                             "engine_used": translation_result["engine_used"],
+                            "execution_time_ms": execution_time_ms,
                         },
+                        execution_time_ms=execution_time_ms,
                     )
                 except Exception as hist_err:
                     logger.error(f"[Process] Failed to persist history for user_id={current_user.id}: {hist_err}")
@@ -663,6 +710,7 @@ async def upload_and_translate(
             original_text=original_text,
             translated_text=translation_result["translated_text"],
             engine_used=translation_result["engine_used"],
+            execution_time_ms=execution_time_ms,
         )
 
         return ApiResponse(data=response_data, message="Xử lý và dịch thuật tài liệu thành công.")

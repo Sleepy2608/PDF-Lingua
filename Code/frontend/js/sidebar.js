@@ -51,7 +51,7 @@
     try {
       const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
       if (raw) initialUser = JSON.parse(raw);
-    } catch (_err) {}
+    } catch (_err) { }
 
     syncUserProfile(initialUser);
 
@@ -239,7 +239,7 @@
         const sideNavHome = document.getElementById('sideNavHome');
         if (sideNavHome) setActiveNavItem(sideNavHome);
       }
-    } catch (_err) {}
+    } catch (_err) { }
 
     // Listen to custom auth events from auth.js
     window.addEventListener('pdfl:auth-change', (e) => {
@@ -298,7 +298,7 @@
 
     try {
       sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-    } catch (_err) {}
+    } catch (_err) { }
 
     if (sideNavHome) {
       setActiveNavItem(sideNavHome);
@@ -341,7 +341,7 @@
 
     try {
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
-    } catch (_err) {}
+    } catch (_err) { }
 
     fetchRecentDocuments();
 
@@ -368,7 +368,7 @@
 
     try {
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'history');
-    } catch (_err) {}
+    } catch (_err) { }
 
     fetchProcessingHistories();
 
@@ -381,7 +381,7 @@
   function navigateToHome() {
     try {
       sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-    } catch (_err) {}
+    } catch (_err) { }
     const sideNavHome = document.getElementById('sideNavHome');
     if (sideNavHome) setActiveNavItem(sideNavHome);
     const adminSection = document.getElementById('adminSection');
@@ -423,7 +423,7 @@
       } else {
         sessionStorage.removeItem(ACTIVE_VIEW_KEY);
       }
-    } catch (_err) {}
+    } catch (_err) { }
 
     if (hasActiveDoc && workspaceSection) {
       if (heroSection) heroSection.style.display = 'none';
@@ -455,7 +455,7 @@
     try {
       const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
       if (raw) currentUser = JSON.parse(raw);
-    } catch (_err) {}
+    } catch (_err) { }
 
     if (currentUser && btnOpenAccountModal) {
       btnOpenAccountModal.click();
@@ -501,7 +501,7 @@
     if (save) {
       try {
         localStorage.setItem(STORAGE_KEY, String(isCollapsed));
-      } catch (_err) {}
+      } catch (_err) { }
     }
   }
 
@@ -596,7 +596,7 @@
           setActiveNavItem(sideNavTranslate);
           try {
             sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
-          } catch (_err) {}
+          } catch (_err) { }
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           // If no document has been translated yet, prompt user and stay on Trang chủ
@@ -708,7 +708,7 @@
         e.preventDefault();
         try {
           sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-        } catch (_err) {}
+        } catch (_err) { }
         setActiveNavItem(sideNavAdmin);
         const pricingSection = document.getElementById('pricingSection');
         const documentsSection = document.getElementById('documentsSection');
@@ -792,7 +792,7 @@
       try {
         const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
         if (raw) currentUser = JSON.parse(raw);
-      } catch (_err) {}
+      } catch (_err) { }
     }
 
     const appShell = document.getElementById('appShell');
@@ -892,7 +892,7 @@
       if (token && token !== 'null' && token !== 'undefined') {
         return token;
       }
-    } catch (_err) {}
+    } catch (_err) { }
     return null;
   }
 
@@ -998,7 +998,7 @@
           try {
             const errData = await response.json();
             if (errData && errData.detail) errMsg = errData.detail;
-          } catch (_e) {}
+          } catch (_e) { }
           throw new Error(errMsg);
         }
 
@@ -1514,7 +1514,7 @@
         PENDING_TOAST_KEY,
         JSON.stringify({ msg: `Đã xóa tài liệu "${targetFilename}" thành công.`, type: 'success', ts: Date.now() })
       );
-    } catch (_err) {}
+    } catch (_err) { }
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(targetId)}`, {
@@ -1525,7 +1525,7 @@
       });
 
       if (response.status === 401) {
-        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
         const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
@@ -1539,14 +1539,14 @@
       }
 
       if (response.status === 404) {
-        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
         let msg = 'Tài liệu không tồn tại hoặc bạn không có quyền xóa (404).';
         try {
           const errData = await response.json();
           if (errData && (errData.detail || errData.message)) {
             msg = errData.detail || errData.message;
           }
-        } catch (_e) {}
+        } catch (_e) { }
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
           alertEl.style.display = 'flex';
@@ -1559,14 +1559,14 @@
       }
 
       if (!response.ok) {
-        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+        try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
         let msg = 'Lỗi máy chủ khi xóa tài liệu. Vui lòng thử lại.';
         try {
           const errData = await response.json();
           if (errData && (errData.detail || errData.message)) {
             msg = errData.detail || errData.message;
           }
-        } catch (_e) {}
+        } catch (_e) { }
         setDocumentDeleteLoadingState(false);
         if (alertEl) {
           alertEl.style.display = 'flex';
@@ -1584,7 +1584,7 @@
         if (result && result.message) {
           successMessage = result.message;
         }
-      } catch (_e) {}
+      } catch (_e) { }
 
       // Only on successful DELETE:
       // 1. Close Delete Confirmation Modal and Detail Modal
@@ -1597,7 +1597,7 @@
       // 3. Keep user on the Documents page (#documentsSection) after deletion (not Translate or Home)
       try {
         sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
-      } catch (_err) {}
+      } catch (_err) { }
       const sideNavDocuments = document.getElementById('sideNavDocuments');
       const heroSection = document.getElementById('heroSection');
       const workspaceSection = document.getElementById('workspaceSection');
@@ -1616,7 +1616,7 @@
 
       return true;
     } catch (err) {
-      try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) {}
+      try { sessionStorage.removeItem(PENDING_TOAST_KEY); } catch (_e) { }
       setDocumentDeleteLoadingState(false);
       const msg = (err && err.message && err.message !== 'Failed to fetch')
         ? err.message
@@ -1812,7 +1812,7 @@
         try {
           const errData = await response.json();
           if (errData && errData.detail) errMsg = errData.detail;
-        } catch (_e) {}
+        } catch (_e) { }
         resetDocumentDetailMetadata();
         setDocumentDetailModalState('error', errMsg);
         return null;
@@ -2060,207 +2060,224 @@
     }
   }
 
-  function formatExecutionTime(ms) {
-    if (ms === null || ms === undefined || isNaN(ms)) return '-';
-    const num = Number(ms);
-    if (num < 0) return '-';
-    if (num >= 1000) {
-      return (num / 1000).toFixed(2) + 's';
-    }
-    return num + ' ms';
-  }
-
-  /**
-   * Fetch paginated processing histories from GET /api/history (PDFL-164.2)
-   */
-  async function fetchProcessingHistories() {
-    const token = getStoredAuthToken();
-    const countBadge = document.getElementById('historyCountBadge');
-    const btnRefresh = document.getElementById('btnHistoryRefresh');
-    const actionFilterEl = document.getElementById('historyActionFilter');
-    const statusFilterEl = document.getElementById('historyStatusFilter');
-
-    if (!token) {
-      cachedHistories = [];
-      cachedHistoryToken = null;
-      if (countBadge) countBadge.textContent = '0 bản ghi';
-      setHistorySectionState('unauthenticated');
-      return Promise.resolve([]);
-    }
-
-    const actionType = actionFilterEl && actionFilterEl.value !== 'all' ? actionFilterEl.value : null;
-    const status = statusFilterEl && statusFilterEl.value !== 'all' ? statusFilterEl.value : null;
-
-    const skip = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE;
-    const fetchLimit = HISTORY_PAGE_SIZE + 1; // Fetch 1 extra to detect next page
-
-    let queryParts = [
-      `skip=${encodeURIComponent(skip)}`,
-      `limit=${encodeURIComponent(fetchLimit)}`,
-    ];
-    if (actionType) queryParts.push(`action_type=${encodeURIComponent(actionType)}`);
-    if (status) queryParts.push(`status=${encodeURIComponent(status)}`);
-    const queryString = queryParts.join('&');
-
-    const requestSeq = ++historyRequestSequence;
-    setHistorySectionState('loading');
-    if (btnRefresh && btnRefresh.classList) btnRefresh.classList.add('loading');
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/history?${queryString}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (requestSeq !== historyRequestSequence) {
-        return []; // Ignore out-of-order response
-      }
-
-      if (response.status === 401) {
-        cachedHistories = [];
-        cachedHistoryToken = null;
-        if (countBadge) countBadge.textContent = '0 bản ghi';
-        setHistorySectionState('unauthenticated');
-        return [];
-      }
-
-      if (!response.ok) {
-        let errMsg = 'Không thể tải lịch sử xử lý từ máy chủ.';
-        try {
-          const errData = await response.json();
-          if (errData && (errData.detail || errData.message)) {
-            errMsg = errData.detail || errData.message;
+      function formatExecutionTime(ms, record) {
+        if (ms !== null && ms !== undefined && !isNaN(ms) && String(ms).trim() !== '') {
+          const num = Number(ms);
+          if (num >= 0) {
+            if (num >= 1000) {
+              return (num / 1000).toFixed(2) + 's';
+            }
+            return num + ' ms';
           }
-        } catch (_e) {}
-        throw new Error(errMsg);
+        }
+        // Fallback if record has timestamps and status SUCCESS (PDFL-169)
+        if (record && record.created_at && record.updated_at && record.status === 'SUCCESS') {
+          try {
+            const start = new Date(record.created_at).getTime();
+            const end = new Date(record.updated_at).getTime();
+            const diff = end - start;
+            if (diff > 0) {
+              if (diff >= 1000) {
+                return (diff / 1000).toFixed(2) + 's';
+              }
+              return diff + ' ms';
+            }
+          } catch (_e) { }
+        }
+        return '-';
       }
 
-      const result = await response.json();
-      const rawList = result && Array.isArray(result.data) ? result.data : [];
+      /**
+       * Fetch paginated processing histories from GET /api/history (PDFL-164.2)
+       */
+      async function fetchProcessingHistories() {
+        const token = getStoredAuthToken();
+        const countBadge = document.getElementById('historyCountBadge');
+        const btnRefresh = document.getElementById('btnHistoryRefresh');
+        const actionFilterEl = document.getElementById('historyActionFilter');
+        const statusFilterEl = document.getElementById('historyStatusFilter');
 
-      hasNextHistoryPage = rawList.length > HISTORY_PAGE_SIZE;
-      const pageRecords = hasNextHistoryPage ? rawList.slice(0, HISTORY_PAGE_SIZE) : rawList;
+        if (!token) {
+          cachedHistories = [];
+          cachedHistoryToken = null;
+          if (countBadge) countBadge.textContent = '0 bản ghi';
+          setHistorySectionState('unauthenticated');
+          return Promise.resolve([]);
+        }
 
-      cachedHistories = pageRecords;
-      cachedHistoryToken = token;
+        const actionType = actionFilterEl && actionFilterEl.value !== 'all' ? actionFilterEl.value : null;
+        const status = statusFilterEl && statusFilterEl.value !== 'all' ? statusFilterEl.value : null;
 
-      renderHistoryPageList(cachedHistories, token);
-      return cachedHistories;
-    } catch (err) {
-      if (requestSeq !== historyRequestSequence) {
-        return [];
-      }
-      cachedHistories = [];
-      cachedHistoryToken = null;
-      if (countBadge) countBadge.textContent = '0 bản ghi';
-      const errorMsg = (err && err.message && err.message !== 'Failed to fetch')
-        ? err.message
-        : 'Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.';
-      setHistorySectionState('error', errorMsg);
-      return [];
-    } finally {
-      if (btnRefresh && btnRefresh.classList) btnRefresh.classList.remove('loading');
-    }
-  }
+        const skip = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE;
+        const fetchLimit = HISTORY_PAGE_SIZE + 1; // Fetch 1 extra to detect next page
 
-  /**
-   * Render history list into #historyTable (#historyTableBody & #historyCountBadge)
-   */
-  function renderHistoryPageList(records, token) {
-    const tableEl = document.getElementById('historyTable');
-    const tbodyEl = document.getElementById('historyTableBody');
-    const countBadge = document.getElementById('historyCountBadge');
-    const searchInput = document.getElementById('historySearchInput');
-    const emptyTitleEl = document.getElementById('historyEmptyTitle');
-    const emptyTextEl = document.getElementById('historyEmptyText');
-    const paginationFooterEl = document.getElementById('historyPaginationFooter');
-    const paginationInfoEl = document.getElementById('historyPaginationInfo');
-    const currentPageBadge = document.getElementById('historyCurrentPageBadge');
-    const btnPrevPage = document.getElementById('btnHistoryPrevPage');
-    const btnNextPage = document.getElementById('btnHistoryNextPage');
+        let queryParts = [
+          `skip=${encodeURIComponent(skip)}`,
+          `limit=${encodeURIComponent(fetchLimit)}`,
+        ];
+        if (actionType) queryParts.push(`action_type=${encodeURIComponent(actionType)}`);
+        if (status) queryParts.push(`status=${encodeURIComponent(status)}`);
+        const queryString = queryParts.join('&');
 
-    const rawList = Array.isArray(records) ? records : [];
-    const query = searchInput && typeof searchInput.value === 'string'
-      ? searchInput.value.trim().toLowerCase()
-      : '';
+        const requestSeq = ++historyRequestSequence;
+        setHistorySectionState('loading');
+        if (btnRefresh && btnRefresh.classList) btnRefresh.classList.add('loading');
 
-    // Client-side search filtering by filename
-    const filtered = query
-      ? rawList.filter((item) => String(item.document_filename || '').toLowerCase().includes(query))
-      : rawList;
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/history?${queryString}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
 
-    if (countBadge) {
-      countBadge.textContent = `${filtered.length} bản ghi`;
-    }
+          if (requestSeq !== historyRequestSequence) {
+            return []; // Ignore out-of-order response
+          }
 
-    if (filtered.length === 0) {
-      if (emptyTitleEl && emptyTextEl) {
-        if (query) {
-          emptyTitleEl.textContent = 'Không tìm thấy bản ghi';
-          emptyTextEl.textContent = `Không có bản ghi lịch sử nào khớp với từ khóa "${query}".`;
-        } else {
-          emptyTitleEl.textContent = 'Bạn chưa có lịch sử xử lý nào';
-          emptyTextEl.textContent = 'Các thao tác trích xuất và dịch tài liệu PDF của bạn sẽ được tự động ghi nhận tại đây.';
+          if (response.status === 401) {
+            cachedHistories = [];
+            cachedHistoryToken = null;
+            if (countBadge) countBadge.textContent = '0 bản ghi';
+            setHistorySectionState('unauthenticated');
+            return [];
+          }
+
+          if (!response.ok) {
+            let errMsg = 'Không thể tải lịch sử xử lý từ máy chủ.';
+            try {
+              const errData = await response.json();
+              if (errData && (errData.detail || errData.message)) {
+                errMsg = errData.detail || errData.message;
+              }
+            } catch (_e) { }
+            throw new Error(errMsg);
+          }
+
+          const result = await response.json();
+          const rawList = result && Array.isArray(result.data) ? result.data : [];
+
+          hasNextHistoryPage = rawList.length > HISTORY_PAGE_SIZE;
+          const pageRecords = hasNextHistoryPage ? rawList.slice(0, HISTORY_PAGE_SIZE) : rawList;
+
+          cachedHistories = pageRecords;
+          cachedHistoryToken = token;
+
+          renderHistoryPageList(cachedHistories, token);
+          return cachedHistories;
+        } catch (err) {
+          if (requestSeq !== historyRequestSequence) {
+            return [];
+          }
+          cachedHistories = [];
+          cachedHistoryToken = null;
+          if (countBadge) countBadge.textContent = '0 bản ghi';
+          const errorMsg = (err && err.message && err.message !== 'Failed to fetch')
+            ? err.message
+            : 'Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.';
+          setHistorySectionState('error', errorMsg);
+          return [];
+        } finally {
+          if (btnRefresh && btnRefresh.classList) btnRefresh.classList.remove('loading');
         }
       }
-      setHistorySectionState('empty');
-      return;
-    }
 
-    setHistorySectionState('content');
-    if (tableEl) tableEl.style.display = 'table';
-    if (tbodyEl) tbodyEl.innerHTML = '';
+      /**
+       * Render history list into #historyTable (#historyTableBody & #historyCountBadge)
+       */
+      function renderHistoryPageList(records, token) {
+        const tableEl = document.getElementById('historyTable');
+        const tbodyEl = document.getElementById('historyTableBody');
+        const countBadge = document.getElementById('historyCountBadge');
+        const searchInput = document.getElementById('historySearchInput');
+        const emptyTitleEl = document.getElementById('historyEmptyTitle');
+        const emptyTextEl = document.getElementById('historyEmptyText');
+        const paginationFooterEl = document.getElementById('historyPaginationFooter');
+        const paginationInfoEl = document.getElementById('historyPaginationInfo');
+        const currentPageBadge = document.getElementById('historyCurrentPageBadge');
+        const btnPrevPage = document.getElementById('btnHistoryPrevPage');
+        const btnNextPage = document.getElementById('btnHistoryNextPage');
 
-    filtered.forEach((rec, idx) => {
-      const row = createHistoryTableRow(rec, token, idx);
-      if (tbodyEl) tbodyEl.appendChild(row);
-    });
+        const rawList = Array.isArray(records) ? records : [];
+        const query = searchInput && typeof searchInput.value === 'string'
+          ? searchInput.value.trim().toLowerCase()
+          : '';
 
-    // Update pagination controls
-    if (paginationFooterEl) paginationFooterEl.style.display = 'flex';
-    if (currentPageBadge) currentPageBadge.textContent = String(historyCurrentPage);
-    if (btnPrevPage) btnPrevPage.disabled = historyCurrentPage <= 1;
-    if (btnNextPage) btnNextPage.disabled = !hasNextHistoryPage;
+        // Client-side search filtering by filename
+        const filtered = query
+          ? rawList.filter((item) => String(item.document_filename || '').toLowerCase().includes(query))
+          : rawList;
 
-    if (paginationInfoEl) {
-      const startItem = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + 1;
-      const endItem = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + filtered.length;
-      paginationInfoEl.textContent = `Hiển thị ${startItem} - ${endItem} bản ghi (Trang ${historyCurrentPage})`;
-    }
-  }
+        if (countBadge) {
+          countBadge.textContent = `${filtered.length} bản ghi`;
+        }
 
-  function createHistoryTableRow(record, token, index) {
-    const tr = document.createElement('tr');
-    tr.className = 'history-table-row';
-    tr.dataset.historyId = String(record.id);
+        if (filtered.length === 0) {
+          if (emptyTitleEl && emptyTextEl) {
+            if (query) {
+              emptyTitleEl.textContent = 'Không tìm thấy bản ghi';
+              emptyTextEl.textContent = `Không có bản ghi lịch sử nào khớp với từ khóa "${query}".`;
+            } else {
+              emptyTitleEl.textContent = 'Bạn chưa có lịch sử xử lý nào';
+              emptyTextEl.textContent = 'Các thao tác trích xuất và dịch tài liệu PDF của bạn sẽ được tự động ghi nhận tại đây.';
+            }
+          }
+          setHistorySectionState('empty');
+          return;
+        }
 
-    const filename = record.document_filename || ('Tài liệu #' + record.document_id);
-    const actionType = String(record.action_type || 'EXTRACT').toUpperCase();
-    const status = String(record.status || 'PENDING').toUpperCase();
-    const executionTime = formatExecutionTime(record.execution_time_ms);
-    const formattedDate = formatDateTime(record.created_at);
-    const rowNumber = typeof index === 'number' ? (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + index + 1 : 1;
+        setHistorySectionState('content');
+        if (tableEl) tableEl.style.display = 'table';
+        if (tbodyEl) tbodyEl.innerHTML = '';
 
-    // Action text (clean typography, no box)
-    let actionText = 'Trích xuất';
-    let actionClass = 'history-action-extract';
-    if (actionType === 'TRANSLATE') {
-      actionText = 'Dịch thuật';
-      actionClass = 'history-action-translate';
-    } else if (actionType === 'SUMMARIZE') {
-      actionText = 'Tóm tắt';
-      actionClass = 'history-action-summarize';
-    }
-    const actionBadgeHtml = `<span class="history-action-text ${actionClass}">${actionText}</span>`;
+        filtered.forEach((rec, idx) => {
+          const row = createHistoryTableRow(rec, token, idx);
+          if (tbodyEl) tbodyEl.appendChild(row);
+        });
 
-    // Status Badge & Action Buttons
-    let statusBadgeHtml = '';
-    let actionBtnHtml = '';
+        // Update pagination controls
+        if (paginationFooterEl) paginationFooterEl.style.display = 'flex';
+        if (currentPageBadge) currentPageBadge.textContent = String(historyCurrentPage);
+        if (btnPrevPage) btnPrevPage.disabled = historyCurrentPage <= 1;
+        if (btnNextPage) btnNextPage.disabled = !hasNextHistoryPage;
 
-    if (status === 'SUCCESS') {
-      statusBadgeHtml = '<span class="status-pill active history-status-pill-success" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
-      actionBtnHtml = `
+        if (paginationInfoEl) {
+          const startItem = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + 1;
+          const endItem = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + filtered.length;
+          paginationInfoEl.textContent = `Hiển thị ${startItem} - ${endItem} bản ghi (Trang ${historyCurrentPage})`;
+        }
+      }
+
+      function createHistoryTableRow(record, token, index) {
+        const tr = document.createElement('tr');
+        tr.className = 'history-table-row';
+        tr.dataset.historyId = String(record.id);
+
+        const filename = record.document_filename || ('Tài liệu #' + record.document_id);
+        const actionType = String(record.action_type || 'EXTRACT').toUpperCase();
+        const status = String(record.status || 'PENDING').toUpperCase();
+        const executionTime = formatExecutionTime(record.execution_time_ms, record);
+        const formattedDate = formatDateTime(record.created_at);
+        const rowNumber = typeof index === 'number' ? (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + index + 1 : 1;
+
+        // Action text (clean typography, no box)
+        let actionText = 'Trích xuất';
+        let actionClass = 'history-action-extract';
+        if (actionType === 'TRANSLATE') {
+          actionText = 'Dịch thuật';
+          actionClass = 'history-action-translate';
+        } else if (actionType === 'SUMMARIZE') {
+          actionText = 'Tóm tắt';
+          actionClass = 'history-action-summarize';
+        }
+        const actionBadgeHtml = `<span class="history-action-text ${actionClass}">${actionText}</span>`;
+
+        // Status Badge & Action Buttons
+        let statusBadgeHtml = '';
+        let actionBtnHtml = '';
+
+        if (status === 'SUCCESS') {
+          statusBadgeHtml = '<span class="status-pill active history-status-pill-success" title="Thao tác hoàn tất thành công"><span class="status-dot"></span>Thành công</span>';
+          actionBtnHtml = `
         <button type="button" class="doc-action-btn history-btn-reopen" data-history-id="${record.id}" data-doc-id="${record.document_id}" title="Xem chi tiết kết quả" aria-label="Chi tiết">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -2269,8 +2286,8 @@
           <span>Chi tiết</span>
         </button>
       `;
-    } else if (status === 'FAILED') {
-      statusBadgeHtml = `
+        } else if (status === 'FAILED') {
+          statusBadgeHtml = `
         <span class="status-pill locked history-status-pill-failed" data-history-id="${record.id}" title="Nhấn để xem chi tiết lỗi">
           <svg class="status-lock-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -2280,7 +2297,7 @@
           Thất bại
         </span>
       `;
-      actionBtnHtml = `
+          actionBtnHtml = `
         <button type="button" class="doc-action-btn history-btn-error" data-history-id="${record.id}" title="Xem chi tiết sự cố">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -2290,15 +2307,15 @@
           <span>Chi tiết lỗi</span>
         </button>
       `;
-    } else {
-      statusBadgeHtml = '<span class="status-pill pending history-status-pill-pending" title="Đang thực thi"><span class="status-dot"></span>Đang xử lý</span>';
-      actionBtnHtml = '<span class="history-running-indicator font-mono">Đang chạy...</span>';
-    }
+        } else {
+          statusBadgeHtml = '<span class="status-pill pending history-status-pill-pending" title="Đang thực thi"><span class="status-dot"></span>Đang xử lý</span>';
+          actionBtnHtml = '<span class="history-running-indicator font-mono">Đang chạy...</span>';
+        }
 
-    // Delete Button (PDFL-166.2)
-    let deleteBtnHtml = '';
-    if (status === 'PENDING') {
-      deleteBtnHtml = `
+        // Delete Button (PDFL-166.2)
+        let deleteBtnHtml = '';
+        if (status === 'PENDING') {
+          deleteBtnHtml = `
         <button type="button" class="doc-action-btn history-btn-delete disabled" disabled title="Không thể xóa khi đang xử lý" aria-label="Không thể xóa khi đang xử lý">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -2307,8 +2324,8 @@
           <span>Xóa</span>
         </button>
       `;
-    } else {
-      deleteBtnHtml = `
+        } else {
+          deleteBtnHtml = `
         <button type="button" class="doc-action-btn history-btn-delete" data-history-id="${record.id}" title="Xóa bản ghi lịch sử" aria-label="Xóa">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -2317,9 +2334,9 @@
           <span>Xóa</span>
         </button>
       `;
-    }
+        }
 
-    tr.innerHTML = `
+        tr.innerHTML = `
       <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
       <td>
         <div class="doc-file-info">
@@ -2338,115 +2355,115 @@
       </td>
     `;
 
-    // Click handler for opening Error Modal
-    const btnError = tr.querySelector('.history-btn-error');
-    if (btnError) {
-      btnError.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openHistoryErrorModal(record.id);
-      });
-    }
+        // Click handler for opening Error Modal
+        const btnError = tr.querySelector('.history-btn-error');
+        if (btnError) {
+          btnError.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openHistoryErrorModal(record.id);
+          });
+        }
 
-    const pillError = tr.querySelector('.history-status-pill-failed');
-    if (pillError) {
-      pillError.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openHistoryErrorModal(record.id);
-      });
-    }
+        const pillError = tr.querySelector('.history-status-pill-failed');
+        if (pillError) {
+          pillError.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openHistoryErrorModal(record.id);
+          });
+        }
 
-    // Click handler for Reopening Result (PDFL-165.2)
-    const btnReopen = tr.querySelector('.history-btn-reopen');
-    if (btnReopen) {
-      btnReopen.addEventListener('click', (e) => {
-        e.stopPropagation();
-        reopenHistoryResult(record.id, btnReopen);
-      });
-    }
+        // Click handler for Reopening Result (PDFL-165.2)
+        const btnReopen = tr.querySelector('.history-btn-reopen');
+        if (btnReopen) {
+          btnReopen.addEventListener('click', (e) => {
+            e.stopPropagation();
+            reopenHistoryResult(record.id, btnReopen);
+          });
+        }
 
-    // Click handler for Deleting History (PDFL-166.2)
-    const btnDelete = tr.querySelector('.history-btn-delete');
-    if (btnDelete && status !== 'PENDING') {
-      btnDelete.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openHistoryDeleteConfirmModal({
-          type: 'single',
-          id: record.id,
-          document_filename: filename,
-        });
-      });
-    }
+        // Click handler for Deleting History (PDFL-166.2)
+        const btnDelete = tr.querySelector('.history-btn-delete');
+        if (btnDelete && status !== 'PENDING') {
+          btnDelete.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openHistoryDeleteConfirmModal({
+              type: 'single',
+              id: record.id,
+              document_filename: filename,
+            });
+          });
+        }
 
-    return tr;
-  }
+        return tr;
+      }
 
-  /**
-   * Open #historyErrorModal to display diagnostics for a failed processing history (PDFL-164.2)
-   */
-  async function openHistoryErrorModal(historyId) {
-    const historyErrorModal = document.getElementById('historyErrorModal');
-    const modalSub = document.getElementById('historyErrorModalSub');
-    const docNameEl = document.getElementById('historyErrorDocName');
-    const actionTypeEl = document.getElementById('historyErrorActionType');
-    const timestampEl = document.getElementById('historyErrorTimestamp');
-    const errorMsgEl = document.getElementById('historyErrorMessage');
+      /**
+       * Open #historyErrorModal to display diagnostics for a failed processing history (PDFL-164.2)
+       */
+      async function openHistoryErrorModal(historyId) {
+        const historyErrorModal = document.getElementById('historyErrorModal');
+        const modalSub = document.getElementById('historyErrorModalSub');
+        const docNameEl = document.getElementById('historyErrorDocName');
+        const actionTypeEl = document.getElementById('historyErrorActionType');
+        const timestampEl = document.getElementById('historyErrorTimestamp');
+        const errorMsgEl = document.getElementById('historyErrorMessage');
 
-    if (!historyErrorModal) return;
+        if (!historyErrorModal) return;
 
-    const record = cachedHistories.find((h) => Number(h.id) === Number(historyId));
+        const record = cachedHistories.find((h) => Number(h.id) === Number(historyId));
 
-    if (modalSub) modalSub.textContent = `Mã bản ghi lịch sử: #${historyId}`;
-    if (docNameEl) docNameEl.textContent = record ? (record.document_filename || `Tài liệu #${record.document_id}`) : `Bản ghi #${historyId}`;
-    if (actionTypeEl) actionTypeEl.textContent = record ? record.action_type : '---';
-    if (timestampEl) timestampEl.textContent = record ? formatDateTime(record.created_at) : '---';
-    if (errorMsgEl) errorMsgEl.textContent = (record && record.error_message) ? record.error_message : 'Đang tải thông tin lỗi chi tiết...';
+        if (modalSub) modalSub.textContent = `Mã bản ghi lịch sử: #${historyId}`;
+        if (docNameEl) docNameEl.textContent = record ? (record.document_filename || `Tài liệu #${record.document_id}`) : `Bản ghi #${historyId}`;
+        if (actionTypeEl) actionTypeEl.textContent = record ? record.action_type : '---';
+        if (timestampEl) timestampEl.textContent = record ? formatDateTime(record.created_at) : '---';
+        if (errorMsgEl) errorMsgEl.textContent = (record && record.error_message) ? record.error_message : 'Đang tải thông tin lỗi chi tiết...';
 
-    historyErrorModal.style.display = 'flex';
-    historyErrorModal.removeAttribute('hidden');
+        historyErrorModal.style.display = 'flex';
+        historyErrorModal.removeAttribute('hidden');
 
-    // Optionally query detail endpoint for fresh or full error message
-    const token = getStoredAuthToken();
-    if (token) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(historyId)}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const resData = await response.json();
-          const detail = resData && resData.data ? resData.data : null;
-          if (detail && errorMsgEl) {
-            errorMsgEl.textContent = detail.error_message || 'Không có thông tin lỗi chi tiết.';
-            if (docNameEl && detail.document_filename) docNameEl.textContent = detail.document_filename;
+        // Optionally query detail endpoint for fresh or full error message
+        const token = getStoredAuthToken();
+        if (token) {
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(historyId)}`, {
+              headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (response.ok) {
+              const resData = await response.json();
+              const detail = resData && resData.data ? resData.data : null;
+              if (detail && errorMsgEl) {
+                errorMsgEl.textContent = detail.error_message || 'Không có thông tin lỗi chi tiết.';
+                if (docNameEl && detail.document_filename) docNameEl.textContent = detail.document_filename;
+              }
+            }
+          } catch (_err) {
+            // Fallback to record error_message
           }
         }
-      } catch (_err) {
-        // Fallback to record error_message
       }
-    }
-  }
 
-  /**
-   * Reopen stored processing result and display in Workspace (PDFL-165.2)
-   */
-  async function reopenHistoryResult(historyId, buttonEl) {
-    if (!historyId) return;
+      /**
+       * Reopen stored processing result and display in Workspace (PDFL-165.2)
+       */
+      async function reopenHistoryResult(historyId, buttonEl) {
+        if (!historyId) return;
 
-    if (buttonEl && buttonEl.disabled) return;
+        if (buttonEl && buttonEl.disabled) return;
 
-    const token = getStoredAuthToken();
-    if (!token) {
-      if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để mở lại kết quả.', 'warning');
-      }
-      setHistorySectionState('unauthenticated');
-      return;
-    }
+        const token = getStoredAuthToken();
+        if (!token) {
+          if (typeof showToast === 'function') {
+            showToast('Vui lòng đăng nhập để mở lại kết quả.', 'warning');
+          }
+          setHistorySectionState('unauthenticated');
+          return;
+        }
 
-    const originalHtml = buttonEl ? buttonEl.innerHTML : '';
-    if (buttonEl) {
-      buttonEl.disabled = true;
-      buttonEl.classList.add('loading');
-      buttonEl.innerHTML = `
+        const originalHtml = buttonEl ? buttonEl.innerHTML : '';
+        if (buttonEl) {
+          buttonEl.disabled = true;
+          buttonEl.classList.add('loading');
+          buttonEl.innerHTML = `
         <svg class="history-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="2" x2="12" y2="6"></line>
           <line x1="12" y1="18" x2="12" y2="22"></line>
@@ -2459,619 +2476,619 @@
         </svg>
         <span>Đang mở...</span>
       `;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(historyId)}/result`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 401) {
-        if (typeof showToast === 'function') {
-          showToast('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.', 'error');
         }
-        setHistorySectionState('unauthenticated');
-        return;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(historyId)}/result`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          if (response.status === 401) {
+            if (typeof showToast === 'function') {
+              showToast('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+            }
+            setHistorySectionState('unauthenticated');
+            return;
+          }
+
+          if (!response.ok) {
+            let errorDetail = 'Không thể tải kết quả xử lý từ máy chủ.';
+            try {
+              const errData = await response.json();
+              if (errData && (errData.message || errData.detail)) {
+                errorDetail = errData.message || errData.detail;
+              }
+            } catch (_e) { }
+
+            if (response.status === 404) {
+              if (typeof showToast === 'function') {
+                showToast(errorDetail || 'Không tìm thấy dữ liệu kết quả cho bản ghi này.', 'error');
+              }
+            } else if (response.status === 400) {
+              if (typeof showToast === 'function') {
+                showToast(errorDetail, 'info');
+              }
+            } else {
+              if (typeof showToast === 'function') {
+                showToast(errorDetail, 'error');
+              }
+            }
+            return;
+          }
+
+          const resJson = await response.json();
+          const resultData = resJson && resJson.data ? resJson.data : null;
+
+          if (!resultData) {
+            if (typeof showToast === 'function') {
+              showToast('Dữ liệu kết quả trống hoặc không hợp lệ.', 'error');
+            }
+            return;
+          }
+
+          // Hide History section & switch view to Workspace
+          const historySection = document.getElementById('historySection');
+          const heroSection = document.getElementById('heroSection');
+          const documentsSection = document.getElementById('documentsSection');
+          const adminSection = document.getElementById('adminSection');
+          const workspaceSection = document.getElementById('workspaceSection');
+          const sideNavTranslate = document.getElementById('sideNavTranslate');
+
+          if (historySection) historySection.style.display = 'none';
+          if (heroSection) heroSection.style.display = 'none';
+          if (documentsSection) documentsSection.style.display = 'none';
+          if (adminSection) adminSection.style.display = 'none';
+          if (workspaceSection) workspaceSection.style.display = 'block';
+
+          if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
+
+          try {
+            sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
+          } catch (_err) { }
+
+          // Delegate rendering to workspace.js
+          if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.renderWorkspace === 'function') {
+            window.pdfLinguaWorkspace.renderWorkspace(resultData);
+          } else {
+            // Fallback pane population if workspace module is not yet attached
+            const paneOriginal = document.getElementById('paneOriginal');
+            const paneTranslated = document.getElementById('paneTranslated');
+            const docName = document.getElementById('docNameDisplay');
+
+            if (docName) docName.textContent = resultData.document_filename || resultData.filename || 'Tài liệu không tên';
+            if (paneOriginal) paneOriginal.innerText = resultData.original_text || '';
+            if (paneTranslated) {
+              paneTranslated.innerText = (resultData.action_type === 'SUMMARIZE' && resultData.summary_text)
+                ? resultData.summary_text
+                : (resultData.translated_text || '');
+            }
+          }
+
+          const docTitle = resultData.document_filename || resultData.filename || (`Tài liệu #${resultData.document_id}`);
+          const actionName = resultData.action_type === 'TRANSLATE'
+            ? 'dịch thuật'
+            : (resultData.action_type === 'SUMMARIZE' ? 'tóm tắt' : 'trích xuất');
+
+          if (typeof showToast === 'function') {
+            showToast(`Đã mở lại kết quả ${actionName} của "${docTitle}".`, 'success');
+          }
+
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (window.innerWidth < 768) {
+            closeMobileSidebar();
+          }
+        } catch (err) {
+          if (typeof showToast === 'function') {
+            showToast('Đã xảy ra lỗi kết nối khi mở lại kết quả. Vui lòng thử lại.', 'error');
+          }
+        } finally {
+          if (buttonEl) {
+            buttonEl.disabled = false;
+            buttonEl.classList.remove('loading');
+            buttonEl.innerHTML = originalHtml;
+          }
+        }
       }
 
-      if (!response.ok) {
-        let errorDetail = 'Không thể tải kết quả xử lý từ máy chủ.';
-        try {
-          const errData = await response.json();
-          if (errData && (errData.message || errData.detail)) {
-            errorDetail = errData.message || errData.detail;
-          }
-        } catch (_e) {}
+      function initHistoryErrorModal() {
+        const historyErrorModal = document.getElementById('historyErrorModal');
+        const btnCloseHistoryErrorModal = document.getElementById('btnCloseHistoryErrorModal');
+        const btnCloseHistoryErrorFooter = document.getElementById('btnCloseHistoryErrorFooter');
 
-        if (response.status === 404) {
-          if (typeof showToast === 'function') {
-            showToast(errorDetail || 'Không tìm thấy dữ liệu kết quả cho bản ghi này.', 'error');
+        function closeErrorModal() {
+          if (historyErrorModal) {
+            historyErrorModal.style.display = 'none';
+            historyErrorModal.setAttribute('hidden', '');
           }
-        } else if (response.status === 400) {
-          if (typeof showToast === 'function') {
-            showToast(errorDetail, 'info');
+        }
+
+        if (btnCloseHistoryErrorModal) {
+          btnCloseHistoryErrorModal.addEventListener('click', closeErrorModal);
+        }
+        if (btnCloseHistoryErrorFooter) {
+          btnCloseHistoryErrorFooter.addEventListener('click', closeErrorModal);
+        }
+        if (historyErrorModal) {
+          historyErrorModal.addEventListener('click', (e) => {
+            if (e.target === historyErrorModal) {
+              closeErrorModal();
+            }
+          });
+        }
+      }
+
+      function initHistoryEventListeners() {
+        if (isHistoryListenersInitialized) return;
+        isHistoryListenersInitialized = true;
+
+        const btnRefresh = document.getElementById('btnHistoryRefresh');
+        const btnRetry = document.getElementById('btnHistoryRetry');
+        const actionFilter = document.getElementById('historyActionFilter');
+        const statusFilter = document.getElementById('historyStatusFilter');
+        const searchInput = document.getElementById('historySearchInput');
+        const btnPrevPage = document.getElementById('btnHistoryPrevPage');
+        const btnNextPage = document.getElementById('btnHistoryNextPage');
+
+        if (btnRefresh) {
+          btnRefresh.addEventListener('click', (e) => {
+            e.preventDefault();
+            fetchProcessingHistories();
+          });
+        }
+
+        if (btnRetry) {
+          btnRetry.addEventListener('click', (e) => {
+            e.preventDefault();
+            fetchProcessingHistories();
+          });
+        }
+
+        if (actionFilter) {
+          actionFilter.addEventListener('change', () => {
+            historyCurrentPage = 1;
+            fetchProcessingHistories();
+          });
+        }
+
+        if (statusFilter) {
+          statusFilter.addEventListener('change', () => {
+            historyCurrentPage = 1;
+            fetchProcessingHistories();
+          });
+        }
+
+        if (searchInput) {
+          searchInput.addEventListener('input', () => {
+            renderHistoryPageList(cachedHistories, getStoredAuthToken());
+          });
+        }
+
+        if (btnPrevPage) {
+          btnPrevPage.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (historyCurrentPage > 1) {
+              historyCurrentPage--;
+              fetchProcessingHistories();
+            }
+          });
+        }
+
+        if (btnNextPage) {
+          btnNextPage.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (hasNextHistoryPage) {
+              historyCurrentPage++;
+              fetchProcessingHistories();
+            }
+          });
+        }
+      }
+
+      /**
+       * Initialize History Delete Confirmation Modal events (PDFL-166.2)
+       */
+      function initHistoryDeleteConfirmModal() {
+        const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
+        const btnCancel = document.getElementById('btnCancelHistoryDelete');
+        const btnConfirm = document.getElementById('btnConfirmHistoryDelete');
+        const btnCleanup = document.getElementById('btnHistoryCleanup');
+
+        if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+          window.addEventListener('pdfl:history-delete-intent', (e) => {
+            const target = e && e.detail ? e.detail : null;
+            if (target) {
+              openHistoryDeleteConfirmModal(target);
+            }
+          });
+        }
+
+        if (btnCleanup) {
+          btnCleanup.addEventListener('click', (e) => {
+            e.preventDefault();
+            openHistoryDeleteConfirmModal({ type: 'cleanup' });
+          });
+        }
+
+        if (btnCancel) {
+          btnCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!isHistoryDeleting) {
+              closeHistoryDeleteConfirmModal();
+            }
+          });
+        }
+
+        if (btnConfirm) {
+          btnConfirm.addEventListener('click', (e) => {
+            e.preventDefault();
+            confirmHistoryDelete();
+          });
+        }
+
+        if (confirmModalEl) {
+          confirmModalEl.addEventListener('click', (e) => {
+            if (e.target === confirmModalEl && !isHistoryDeleting) {
+              closeHistoryDeleteConfirmModal();
+            }
+          });
+        }
+      }
+
+      /**
+       * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks (PDFL-166.2)
+       */
+      function setHistoryDeleteLoadingState(loading) {
+        isHistoryDeleting = Boolean(loading);
+        const btnConfirm = document.getElementById('btnConfirmHistoryDelete');
+        const btnCancel = document.getElementById('btnCancelHistoryDelete');
+        const spinnerEl = document.getElementById('historyDeleteSpinner');
+        const btnTextEl = document.getElementById('historyDeleteBtnText');
+
+        if (btnConfirm) btnConfirm.disabled = isHistoryDeleting;
+        if (btnCancel) btnCancel.disabled = isHistoryDeleting;
+        if (spinnerEl) spinnerEl.style.display = isHistoryDeleting ? 'inline-block' : 'none';
+
+        if (btnTextEl) {
+          const isCleanup = pendingHistoryDelete && pendingHistoryDelete.type === 'cleanup';
+          if (isHistoryDeleting) {
+            btnTextEl.textContent = isCleanup ? 'Đang dọn dẹp...' : 'Đang xóa...';
+          } else {
+            btnTextEl.textContent = isCleanup ? 'Xác nhận dọn dẹp' : 'Xác nhận xóa';
           }
+        }
+      }
+
+      /**
+       * Open #historyDeleteConfirmModal for single record or expired histories cleanup (PDFL-166.2)
+       */
+      function openHistoryDeleteConfirmModal(payload) {
+        const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
+        if (!confirmModalEl || !payload) return;
+
+        const titleEl = document.getElementById('historyDeleteConfirmTitle');
+        const descEl = document.getElementById('historyDeleteConfirmDesc');
+        const targetLabelEl = document.getElementById('historyDeleteTargetLabel');
+        const targetValEl = document.getElementById('historyDeleteConfirmTarget');
+        const alertEl = document.getElementById('historyDeleteConfirmAlert');
+        const btnTextEl = document.getElementById('historyDeleteBtnText');
+
+        if (payload.type === 'cleanup') {
+          pendingHistoryDelete = { type: 'cleanup' };
+          if (titleEl) titleEl.textContent = 'Dọn dẹp lịch sử hết hạn';
+          if (descEl) descEl.textContent = 'Hệ thống sẽ dọn dẹp các bản ghi lịch sử cũ hơn chính sách lưu trữ (30 ngày) và các kết quả đã lưu kèm theo. Tài liệu gốc PDF trong hệ thống sẽ không bị ảnh hưởng.';
+          if (targetLabelEl) targetLabelEl.textContent = 'Phạm vi dọn dẹp:';
+          if (targetValEl) targetValEl.textContent = 'Lịch sử xử lý cũ hơn 30 ngày (mặc định hệ thống)';
+          if (btnTextEl) btnTextEl.textContent = 'Xác nhận dọn dẹp';
         } else {
-          if (typeof showToast === 'function') {
-            showToast(errorDetail, 'error');
+          const targetId = payload.id !== undefined ? payload.id : (payload.history_id || null);
+          if (targetId === null) return;
+          const targetName = payload.document_filename || payload.filename || `Bản ghi #${targetId}`;
+
+          pendingHistoryDelete = {
+            type: 'single',
+            id: targetId,
+            filename: targetName,
+          };
+
+          if (titleEl) titleEl.textContent = 'Xác nhận xóa lịch sử';
+          if (descEl) descEl.textContent = 'Thao tác này không thể hoàn tác. Bản ghi lịch sử và kết quả xử lý đã lưu sẽ bị xóa vĩnh viễn khỏi hệ thống (tài liệu gốc PDF sẽ không bị ảnh hưởng).';
+          if (targetLabelEl) targetLabelEl.textContent = 'Bản ghi sẽ xóa:';
+          if (targetValEl) targetValEl.textContent = targetName;
+          if (btnTextEl) btnTextEl.textContent = 'Xác nhận xóa';
+        }
+
+        isHistoryDeleteConfirmOpen = true;
+        setHistoryDeleteLoadingState(false);
+
+        if (alertEl) {
+          alertEl.style.display = 'none';
+          alertEl.textContent = '';
+        }
+
+        confirmModalEl.removeAttribute('hidden');
+        confirmModalEl.style.display = 'flex';
+      }
+
+      /**
+       * Close History Delete Confirmation Modal (PDFL-166.2)
+       */
+      function closeHistoryDeleteConfirmModal() {
+        const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
+        isHistoryDeleteConfirmOpen = false;
+        pendingHistoryDelete = null;
+        setHistoryDeleteLoadingState(false);
+
+        const alertEl = document.getElementById('historyDeleteConfirmAlert');
+        if (alertEl) {
+          alertEl.style.display = 'none';
+          alertEl.textContent = '';
+        }
+
+        if (confirmModalEl) {
+          confirmModalEl.setAttribute('hidden', '');
+          confirmModalEl.style.display = 'none';
+        }
+      }
+
+      /**
+       * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation (PDFL-166.2)
+       */
+      async function confirmHistoryDelete() {
+        if (!isHistoryDeleteConfirmOpen || isHistoryDeleting || !pendingHistoryDelete) {
+          return false;
+        }
+
+        const alertEl = document.getElementById('historyDeleteConfirmAlert');
+        const token = getStoredAuthToken();
+
+        if (!token) {
+          const msg = 'Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập (401). Vui lòng đăng nhập lại.';
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = msg;
           }
+          if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+          }
+          return false;
         }
-        return;
+
+        setHistoryDeleteLoadingState(true);
+        if (alertEl) {
+          alertEl.style.display = 'none';
+          alertEl.textContent = '';
+        }
+
+        try {
+          if (pendingHistoryDelete.type === 'cleanup') {
+            const response = await fetch(`${API_BASE_URL}/api/history/cleanup`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+
+            if (response.status === 401) {
+              const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
+              setHistoryDeleteLoadingState(false);
+              if (alertEl) {
+                alertEl.style.display = 'flex';
+                alertEl.textContent = msg;
+              }
+              if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+              }
+              return false;
+            }
+
+            if (!response.ok) {
+              let msg = 'Lỗi máy chủ khi dọn dẹp lịch sử. Vui lòng thử lại.';
+              try {
+                const errData = await response.json();
+                if (errData && (errData.detail || errData.message)) {
+                  msg = errData.detail || errData.message;
+                }
+              } catch (_e) { }
+              setHistoryDeleteLoadingState(false);
+              if (alertEl) {
+                alertEl.style.display = 'flex';
+                alertEl.textContent = msg;
+              }
+              if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+              }
+              return false;
+            }
+
+            let cleanupMsg = 'Đã dọn dẹp các bản ghi lịch sử hết hạn thành công.';
+            try {
+              const result = await response.json();
+              if (result && typeof result.deleted_count === 'number') {
+                cleanupMsg = `Đã dọn dẹp thành công ${result.deleted_count} bản ghi lịch sử hết hạn.`;
+              } else if (result && result.message) {
+                cleanupMsg = result.message;
+              }
+            } catch (_e) { }
+
+            closeHistoryDeleteConfirmModal();
+            if (typeof showToast === 'function') {
+              showToast(cleanupMsg, 'success');
+            }
+
+            historyCurrentPage = 1;
+            fetchProcessingHistories();
+            return true;
+          } else {
+            const targetId = pendingHistoryDelete.id;
+            const targetFilename = pendingHistoryDelete.filename || `Bản ghi #${targetId}`;
+
+            const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(targetId)}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+
+            if (response.status === 401) {
+              const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
+              setHistoryDeleteLoadingState(false);
+              if (alertEl) {
+                alertEl.style.display = 'flex';
+                alertEl.textContent = msg;
+              }
+              if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+              }
+              return false;
+            }
+
+            if (response.status === 404) {
+              let msg = 'Bản ghi lịch sử không tồn tại hoặc bạn không có quyền xóa (404).';
+              try {
+                const errData = await response.json();
+                if (errData && (errData.detail || errData.message)) {
+                  msg = errData.detail || errData.message;
+                }
+              } catch (_e) { }
+              setHistoryDeleteLoadingState(false);
+              if (alertEl) {
+                alertEl.style.display = 'flex';
+                alertEl.textContent = msg;
+              }
+              if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+              }
+              return false;
+            }
+
+            if (response.status === 400) {
+              let msg = 'Không thể xóa bản ghi lịch sử này.';
+              try {
+                const errData = await response.json();
+                if (errData && (errData.detail || errData.message)) {
+                  msg = errData.detail || errData.message;
+                }
+              } catch (_e) { }
+              setHistoryDeleteLoadingState(false);
+              if (alertEl) {
+                alertEl.style.display = 'flex';
+                alertEl.textContent = msg;
+              }
+              if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+              }
+              return false;
+            }
+
+            if (!response.ok) {
+              let msg = 'Lỗi máy chủ khi xóa bản ghi lịch sử. Vui lòng thử lại.';
+              try {
+                const errData = await response.json();
+                if (errData && (errData.detail || errData.message)) {
+                  msg = errData.detail || errData.message;
+                }
+              } catch (_e) { }
+              setHistoryDeleteLoadingState(false);
+              if (alertEl) {
+                alertEl.style.display = 'flex';
+                alertEl.textContent = msg;
+              }
+              if (typeof showToast === 'function') {
+                showToast(msg, 'error');
+              }
+              return false;
+            }
+
+            let successMsg = `Đã xóa bản ghi lịch sử của "${targetFilename}" thành công.`;
+            try {
+              const result = await response.json();
+              if (result && result.message) {
+                successMsg = result.message;
+              }
+            } catch (_e) { }
+
+            // Remove from cached histories
+            cachedHistories = cachedHistories.filter((h) => String(h.id) !== String(targetId));
+
+            // If deleting the last item on current page (> 1), go back to previous page
+            if (cachedHistories.length === 0 && historyCurrentPage > 1) {
+              historyCurrentPage--;
+            }
+
+            closeHistoryDeleteConfirmModal();
+            if (typeof showToast === 'function') {
+              showToast(successMsg, 'success');
+            }
+
+            fetchProcessingHistories();
+            return true;
+          }
+        } catch (_err) {
+          setHistoryDeleteLoadingState(false);
+          const connMsg = 'Đã xảy ra lỗi kết nối khi xử lý yêu cầu. Vui lòng kiểm tra lại.';
+          if (alertEl) {
+            alertEl.style.display = 'flex';
+            alertEl.textContent = connMsg;
+          }
+          if (typeof showToast === 'function') {
+            showToast(connMsg, 'error');
+          }
+          return false;
+        }
       }
 
-      const resJson = await response.json();
-      const resultData = resJson && resJson.data ? resJson.data : null;
-
-      if (!resultData) {
-        if (typeof showToast === 'function') {
-          showToast('Dữ liệu kết quả trống hoặc không hợp lệ.', 'error');
-        }
-        return;
-      }
-
-      // Hide History section & switch view to Workspace
-      const historySection = document.getElementById('historySection');
-      const heroSection = document.getElementById('heroSection');
-      const documentsSection = document.getElementById('documentsSection');
-      const adminSection = document.getElementById('adminSection');
-      const workspaceSection = document.getElementById('workspaceSection');
-      const sideNavTranslate = document.getElementById('sideNavTranslate');
-
-      if (historySection) historySection.style.display = 'none';
-      if (heroSection) heroSection.style.display = 'none';
-      if (documentsSection) documentsSection.style.display = 'none';
-      if (adminSection) adminSection.style.display = 'none';
-      if (workspaceSection) workspaceSection.style.display = 'block';
-
-      if (sideNavTranslate) setActiveNavItem(sideNavTranslate);
-
-      try {
-        sessionStorage.setItem(ACTIVE_VIEW_KEY, 'workspace');
-      } catch (_err) {}
-
-      // Delegate rendering to workspace.js
-      if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.renderWorkspace === 'function') {
-        window.pdfLinguaWorkspace.renderWorkspace(resultData);
-      } else {
-        // Fallback pane population if workspace module is not yet attached
-        const paneOriginal = document.getElementById('paneOriginal');
-        const paneTranslated = document.getElementById('paneTranslated');
-        const docName = document.getElementById('docNameDisplay');
-
-        if (docName) docName.textContent = resultData.document_filename || resultData.filename || 'Tài liệu không tên';
-        if (paneOriginal) paneOriginal.innerText = resultData.original_text || '';
-        if (paneTranslated) {
-          paneTranslated.innerText = (resultData.action_type === 'SUMMARIZE' && resultData.summary_text)
-            ? resultData.summary_text
-            : (resultData.translated_text || '');
+      function setActiveNav(navKey) {
+        if (navKey === 'home') {
+          const el = document.getElementById('sideNavHome');
+          if (el) setActiveNavItem(el);
+        } else if (navKey === 'translate') {
+          const el = document.getElementById('sideNavTranslate');
+          if (el) setActiveNavItem(el);
+        } else if (navKey === 'documents') {
+          const el = document.getElementById('sideNavDocuments');
+          if (el) setActiveNavItem(el);
+        } else if (navKey === 'history') {
+          const el = document.getElementById('sideNavHistory');
+          if (el) setActiveNavItem(el);
+        } else if (navKey === 'admin') {
+          const el = document.getElementById('sideNavAdmin');
+          if (el) setActiveNavItem(el);
         }
       }
 
-      const docTitle = resultData.document_filename || resultData.filename || (`Tài liệu #${resultData.document_id}`);
-      const actionName = resultData.action_type === 'TRANSLATE'
-        ? 'dịch thuật'
-        : (resultData.action_type === 'SUMMARIZE' ? 'tóm tắt' : 'trích xuất');
-
-      if (typeof showToast === 'function') {
-        showToast(`Đã mở lại kết quả ${actionName} của "${docTitle}".`, 'success');
-      }
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (window.innerWidth < 768) {
-        closeMobileSidebar();
-      }
-    } catch (err) {
-      if (typeof showToast === 'function') {
-        showToast('Đã xảy ra lỗi kết nối khi mở lại kết quả. Vui lòng thử lại.', 'error');
-      }
-    } finally {
-      if (buttonEl) {
-        buttonEl.disabled = false;
-        buttonEl.classList.remove('loading');
-        buttonEl.innerHTML = originalHtml;
-      }
-    }
-  }
-
-  function initHistoryErrorModal() {
-    const historyErrorModal = document.getElementById('historyErrorModal');
-    const btnCloseHistoryErrorModal = document.getElementById('btnCloseHistoryErrorModal');
-    const btnCloseHistoryErrorFooter = document.getElementById('btnCloseHistoryErrorFooter');
-
-    function closeErrorModal() {
-      if (historyErrorModal) {
-        historyErrorModal.style.display = 'none';
-        historyErrorModal.setAttribute('hidden', '');
-      }
-    }
-
-    if (btnCloseHistoryErrorModal) {
-      btnCloseHistoryErrorModal.addEventListener('click', closeErrorModal);
-    }
-    if (btnCloseHistoryErrorFooter) {
-      btnCloseHistoryErrorFooter.addEventListener('click', closeErrorModal);
-    }
-    if (historyErrorModal) {
-      historyErrorModal.addEventListener('click', (e) => {
-        if (e.target === historyErrorModal) {
-          closeErrorModal();
-        }
-      });
-    }
-  }
-
-  function initHistoryEventListeners() {
-    if (isHistoryListenersInitialized) return;
-    isHistoryListenersInitialized = true;
-
-    const btnRefresh = document.getElementById('btnHistoryRefresh');
-    const btnRetry = document.getElementById('btnHistoryRetry');
-    const actionFilter = document.getElementById('historyActionFilter');
-    const statusFilter = document.getElementById('historyStatusFilter');
-    const searchInput = document.getElementById('historySearchInput');
-    const btnPrevPage = document.getElementById('btnHistoryPrevPage');
-    const btnNextPage = document.getElementById('btnHistoryNextPage');
-
-    if (btnRefresh) {
-      btnRefresh.addEventListener('click', (e) => {
-        e.preventDefault();
-        fetchProcessingHistories();
-      });
-    }
-
-    if (btnRetry) {
-      btnRetry.addEventListener('click', (e) => {
-        e.preventDefault();
-        fetchProcessingHistories();
-      });
-    }
-
-    if (actionFilter) {
-      actionFilter.addEventListener('change', () => {
-        historyCurrentPage = 1;
-        fetchProcessingHistories();
-      });
-    }
-
-    if (statusFilter) {
-      statusFilter.addEventListener('change', () => {
-        historyCurrentPage = 1;
-        fetchProcessingHistories();
-      });
-    }
-
-    if (searchInput) {
-      searchInput.addEventListener('input', () => {
-        renderHistoryPageList(cachedHistories, getStoredAuthToken());
-      });
-    }
-
-    if (btnPrevPage) {
-      btnPrevPage.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (historyCurrentPage > 1) {
-          historyCurrentPage--;
-          fetchProcessingHistories();
-        }
-      });
-    }
-
-    if (btnNextPage) {
-      btnNextPage.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (hasNextHistoryPage) {
-          historyCurrentPage++;
-          fetchProcessingHistories();
-        }
-      });
-    }
-  }
-
-  /**
-   * Initialize History Delete Confirmation Modal events (PDFL-166.2)
-   */
-  function initHistoryDeleteConfirmModal() {
-    const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
-    const btnCancel = document.getElementById('btnCancelHistoryDelete');
-    const btnConfirm = document.getElementById('btnConfirmHistoryDelete');
-    const btnCleanup = document.getElementById('btnHistoryCleanup');
-
-    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-      window.addEventListener('pdfl:history-delete-intent', (e) => {
-        const target = e && e.detail ? e.detail : null;
-        if (target) {
-          openHistoryDeleteConfirmModal(target);
-        }
-      });
-    }
-
-    if (btnCleanup) {
-      btnCleanup.addEventListener('click', (e) => {
-        e.preventDefault();
-        openHistoryDeleteConfirmModal({ type: 'cleanup' });
-      });
-    }
-
-    if (btnCancel) {
-      btnCancel.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!isHistoryDeleting) {
-          closeHistoryDeleteConfirmModal();
-        }
-      });
-    }
-
-    if (btnConfirm) {
-      btnConfirm.addEventListener('click', (e) => {
-        e.preventDefault();
-        confirmHistoryDelete();
-      });
-    }
-
-    if (confirmModalEl) {
-      confirmModalEl.addEventListener('click', (e) => {
-        if (e.target === confirmModalEl && !isHistoryDeleting) {
-          closeHistoryDeleteConfirmModal();
-        }
-      });
-    }
-  }
-
-  /**
-   * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks (PDFL-166.2)
-   */
-  function setHistoryDeleteLoadingState(loading) {
-    isHistoryDeleting = Boolean(loading);
-    const btnConfirm = document.getElementById('btnConfirmHistoryDelete');
-    const btnCancel = document.getElementById('btnCancelHistoryDelete');
-    const spinnerEl = document.getElementById('historyDeleteSpinner');
-    const btnTextEl = document.getElementById('historyDeleteBtnText');
-
-    if (btnConfirm) btnConfirm.disabled = isHistoryDeleting;
-    if (btnCancel) btnCancel.disabled = isHistoryDeleting;
-    if (spinnerEl) spinnerEl.style.display = isHistoryDeleting ? 'inline-block' : 'none';
-
-    if (btnTextEl) {
-      const isCleanup = pendingHistoryDelete && pendingHistoryDelete.type === 'cleanup';
-      if (isHistoryDeleting) {
-        btnTextEl.textContent = isCleanup ? 'Đang dọn dẹp...' : 'Đang xóa...';
-      } else {
-        btnTextEl.textContent = isCleanup ? 'Xác nhận dọn dẹp' : 'Xác nhận xóa';
-      }
-    }
-  }
-
-  /**
-   * Open #historyDeleteConfirmModal for single record or expired histories cleanup (PDFL-166.2)
-   */
-  function openHistoryDeleteConfirmModal(payload) {
-    const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
-    if (!confirmModalEl || !payload) return;
-
-    const titleEl = document.getElementById('historyDeleteConfirmTitle');
-    const descEl = document.getElementById('historyDeleteConfirmDesc');
-    const targetLabelEl = document.getElementById('historyDeleteTargetLabel');
-    const targetValEl = document.getElementById('historyDeleteConfirmTarget');
-    const alertEl = document.getElementById('historyDeleteConfirmAlert');
-    const btnTextEl = document.getElementById('historyDeleteBtnText');
-
-    if (payload.type === 'cleanup') {
-      pendingHistoryDelete = { type: 'cleanup' };
-      if (titleEl) titleEl.textContent = 'Dọn dẹp lịch sử hết hạn';
-      if (descEl) descEl.textContent = 'Hệ thống sẽ dọn dẹp các bản ghi lịch sử cũ hơn chính sách lưu trữ (30 ngày) và các kết quả đã lưu kèm theo. Tài liệu gốc PDF trong hệ thống sẽ không bị ảnh hưởng.';
-      if (targetLabelEl) targetLabelEl.textContent = 'Phạm vi dọn dẹp:';
-      if (targetValEl) targetValEl.textContent = 'Lịch sử xử lý cũ hơn 30 ngày (mặc định hệ thống)';
-      if (btnTextEl) btnTextEl.textContent = 'Xác nhận dọn dẹp';
-    } else {
-      const targetId = payload.id !== undefined ? payload.id : (payload.history_id || null);
-      if (targetId === null) return;
-      const targetName = payload.document_filename || payload.filename || `Bản ghi #${targetId}`;
-
-      pendingHistoryDelete = {
-        type: 'single',
-        id: targetId,
-        filename: targetName,
+      // Export globally for testing and integration
+      window.PDFLinguaSidebar = {
+        toggle: toggleSidebar,
+        setCollapsed: setCollapsed,
+        openMobile: openMobileSidebar,
+        closeMobile: closeMobileSidebar,
+        syncUser: syncUserProfile,
+        fetchRecentDocuments: fetchRecentDocuments,
+        triggerUpload: triggerPdfUpload,
+        openDocumentsView: openDocumentsView,
+        closeDocumentsView: closeDocumentsView,
+        openHistoryView: openHistoryView,
+        closeHistoryView: closeHistoryView,
+        navigateToHome: navigateToHome,
+        setActiveNav: setActiveNav,
+        setActiveNavItem: setActiveNavItem,
+        openDocumentDetailModal: openDocumentDetailModal,
+        closeDocumentDetailModal: closeDocumentDetailModal,
+        openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
+        closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
+        confirmDocumentDelete: confirmDocumentDelete,
+        openHistoryDeleteConfirmModal: openHistoryDeleteConfirmModal,
+        closeHistoryDeleteConfirmModal: closeHistoryDeleteConfirmModal,
+        confirmHistoryDelete: confirmHistoryDelete,
+        fetchProcessingHistories: fetchProcessingHistories,
+        renderHistoryPageList: renderHistoryPageList,
+        openHistoryErrorModal: openHistoryErrorModal,
+        reopenHistoryResult: reopenHistoryResult,
+        setHistorySectionState: setHistorySectionState,
+        getHistoryCurrentPage: () => historyCurrentPage,
+        setHistoryCurrentPage: (p) => { historyCurrentPage = p; },
+        getCachedHistories: () => cachedHistories,
       };
-
-      if (titleEl) titleEl.textContent = 'Xác nhận xóa lịch sử';
-      if (descEl) descEl.textContent = 'Thao tác này không thể hoàn tác. Bản ghi lịch sử và kết quả xử lý đã lưu sẽ bị xóa vĩnh viễn khỏi hệ thống (tài liệu gốc PDF sẽ không bị ảnh hưởng).';
-      if (targetLabelEl) targetLabelEl.textContent = 'Bản ghi sẽ xóa:';
-      if (targetValEl) targetValEl.textContent = targetName;
-      if (btnTextEl) btnTextEl.textContent = 'Xác nhận xóa';
-    }
-
-    isHistoryDeleteConfirmOpen = true;
-    setHistoryDeleteLoadingState(false);
-
-    if (alertEl) {
-      alertEl.style.display = 'none';
-      alertEl.textContent = '';
-    }
-
-    confirmModalEl.removeAttribute('hidden');
-    confirmModalEl.style.display = 'flex';
-  }
-
-  /**
-   * Close History Delete Confirmation Modal (PDFL-166.2)
-   */
-  function closeHistoryDeleteConfirmModal() {
-    const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
-    isHistoryDeleteConfirmOpen = false;
-    pendingHistoryDelete = null;
-    setHistoryDeleteLoadingState(false);
-
-    const alertEl = document.getElementById('historyDeleteConfirmAlert');
-    if (alertEl) {
-      alertEl.style.display = 'none';
-      alertEl.textContent = '';
-    }
-
-    if (confirmModalEl) {
-      confirmModalEl.setAttribute('hidden', '');
-      confirmModalEl.style.display = 'none';
-    }
-  }
-
-  /**
-   * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation (PDFL-166.2)
-   */
-  async function confirmHistoryDelete() {
-    if (!isHistoryDeleteConfirmOpen || isHistoryDeleting || !pendingHistoryDelete) {
-      return false;
-    }
-
-    const alertEl = document.getElementById('historyDeleteConfirmAlert');
-    const token = getStoredAuthToken();
-
-    if (!token) {
-      const msg = 'Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập (401). Vui lòng đăng nhập lại.';
-      if (alertEl) {
-        alertEl.style.display = 'flex';
-        alertEl.textContent = msg;
-      }
-      if (typeof showToast === 'function') {
-        showToast(msg, 'error');
-      }
-      return false;
-    }
-
-    setHistoryDeleteLoadingState(true);
-    if (alertEl) {
-      alertEl.style.display = 'none';
-      alertEl.textContent = '';
-    }
-
-    try {
-      if (pendingHistoryDelete.type === 'cleanup') {
-        const response = await fetch(`${API_BASE_URL}/api/history/cleanup`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
-          setHistoryDeleteLoadingState(false);
-          if (alertEl) {
-            alertEl.style.display = 'flex';
-            alertEl.textContent = msg;
-          }
-          if (typeof showToast === 'function') {
-            showToast(msg, 'error');
-          }
-          return false;
-        }
-
-        if (!response.ok) {
-          let msg = 'Lỗi máy chủ khi dọn dẹp lịch sử. Vui lòng thử lại.';
-          try {
-            const errData = await response.json();
-            if (errData && (errData.detail || errData.message)) {
-              msg = errData.detail || errData.message;
-            }
-          } catch (_e) {}
-          setHistoryDeleteLoadingState(false);
-          if (alertEl) {
-            alertEl.style.display = 'flex';
-            alertEl.textContent = msg;
-          }
-          if (typeof showToast === 'function') {
-            showToast(msg, 'error');
-          }
-          return false;
-        }
-
-        let cleanupMsg = 'Đã dọn dẹp các bản ghi lịch sử hết hạn thành công.';
-        try {
-          const result = await response.json();
-          if (result && typeof result.deleted_count === 'number') {
-            cleanupMsg = `Đã dọn dẹp thành công ${result.deleted_count} bản ghi lịch sử hết hạn.`;
-          } else if (result && result.message) {
-            cleanupMsg = result.message;
-          }
-        } catch (_e) {}
-
-        closeHistoryDeleteConfirmModal();
-        if (typeof showToast === 'function') {
-          showToast(cleanupMsg, 'success');
-        }
-
-        historyCurrentPage = 1;
-        fetchProcessingHistories();
-        return true;
-      } else {
-        const targetId = pendingHistoryDelete.id;
-        const targetFilename = pendingHistoryDelete.filename || `Bản ghi #${targetId}`;
-
-        const response = await fetch(`${API_BASE_URL}/api/history/${encodeURIComponent(targetId)}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          const msg = 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn (401). Vui lòng đăng nhập lại.';
-          setHistoryDeleteLoadingState(false);
-          if (alertEl) {
-            alertEl.style.display = 'flex';
-            alertEl.textContent = msg;
-          }
-          if (typeof showToast === 'function') {
-            showToast(msg, 'error');
-          }
-          return false;
-        }
-
-        if (response.status === 404) {
-          let msg = 'Bản ghi lịch sử không tồn tại hoặc bạn không có quyền xóa (404).';
-          try {
-            const errData = await response.json();
-            if (errData && (errData.detail || errData.message)) {
-              msg = errData.detail || errData.message;
-            }
-          } catch (_e) {}
-          setHistoryDeleteLoadingState(false);
-          if (alertEl) {
-            alertEl.style.display = 'flex';
-            alertEl.textContent = msg;
-          }
-          if (typeof showToast === 'function') {
-            showToast(msg, 'error');
-          }
-          return false;
-        }
-
-        if (response.status === 400) {
-          let msg = 'Không thể xóa bản ghi lịch sử này.';
-          try {
-            const errData = await response.json();
-            if (errData && (errData.detail || errData.message)) {
-              msg = errData.detail || errData.message;
-            }
-          } catch (_e) {}
-          setHistoryDeleteLoadingState(false);
-          if (alertEl) {
-            alertEl.style.display = 'flex';
-            alertEl.textContent = msg;
-          }
-          if (typeof showToast === 'function') {
-            showToast(msg, 'error');
-          }
-          return false;
-        }
-
-        if (!response.ok) {
-          let msg = 'Lỗi máy chủ khi xóa bản ghi lịch sử. Vui lòng thử lại.';
-          try {
-            const errData = await response.json();
-            if (errData && (errData.detail || errData.message)) {
-              msg = errData.detail || errData.message;
-            }
-          } catch (_e) {}
-          setHistoryDeleteLoadingState(false);
-          if (alertEl) {
-            alertEl.style.display = 'flex';
-            alertEl.textContent = msg;
-          }
-          if (typeof showToast === 'function') {
-            showToast(msg, 'error');
-          }
-          return false;
-        }
-
-        let successMsg = `Đã xóa bản ghi lịch sử của "${targetFilename}" thành công.`;
-        try {
-          const result = await response.json();
-          if (result && result.message) {
-            successMsg = result.message;
-          }
-        } catch (_e) {}
-
-        // Remove from cached histories
-        cachedHistories = cachedHistories.filter((h) => String(h.id) !== String(targetId));
-
-        // If deleting the last item on current page (> 1), go back to previous page
-        if (cachedHistories.length === 0 && historyCurrentPage > 1) {
-          historyCurrentPage--;
-        }
-
-        closeHistoryDeleteConfirmModal();
-        if (typeof showToast === 'function') {
-          showToast(successMsg, 'success');
-        }
-
-        fetchProcessingHistories();
-        return true;
-      }
-    } catch (_err) {
-      setHistoryDeleteLoadingState(false);
-      const connMsg = 'Đã xảy ra lỗi kết nối khi xử lý yêu cầu. Vui lòng kiểm tra lại.';
-      if (alertEl) {
-        alertEl.style.display = 'flex';
-        alertEl.textContent = connMsg;
-      }
-      if (typeof showToast === 'function') {
-        showToast(connMsg, 'error');
-      }
-      return false;
-    }
-  }
-
-  function setActiveNav(navKey) {
-    if (navKey === 'home') {
-      const el = document.getElementById('sideNavHome');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'translate') {
-      const el = document.getElementById('sideNavTranslate');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'documents') {
-      const el = document.getElementById('sideNavDocuments');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'history') {
-      const el = document.getElementById('sideNavHistory');
-      if (el) setActiveNavItem(el);
-    } else if (navKey === 'admin') {
-      const el = document.getElementById('sideNavAdmin');
-      if (el) setActiveNavItem(el);
-    }
-  }
-
-  // Export globally for testing and integration
-  window.PDFLinguaSidebar = {
-    toggle: toggleSidebar,
-    setCollapsed: setCollapsed,
-    openMobile: openMobileSidebar,
-    closeMobile: closeMobileSidebar,
-    syncUser: syncUserProfile,
-    fetchRecentDocuments: fetchRecentDocuments,
-    triggerUpload: triggerPdfUpload,
-    openDocumentsView: openDocumentsView,
-    closeDocumentsView: closeDocumentsView,
-    openHistoryView: openHistoryView,
-    closeHistoryView: closeHistoryView,
-    navigateToHome: navigateToHome,
-    setActiveNav: setActiveNav,
-    setActiveNavItem: setActiveNavItem,
-    openDocumentDetailModal: openDocumentDetailModal,
-    closeDocumentDetailModal: closeDocumentDetailModal,
-    openDocumentDeleteConfirmModal: openDocumentDeleteConfirmModal,
-    closeDocumentDeleteConfirmModal: closeDocumentDeleteConfirmModal,
-    confirmDocumentDelete: confirmDocumentDelete,
-    openHistoryDeleteConfirmModal: openHistoryDeleteConfirmModal,
-    closeHistoryDeleteConfirmModal: closeHistoryDeleteConfirmModal,
-    confirmHistoryDelete: confirmHistoryDelete,
-    fetchProcessingHistories: fetchProcessingHistories,
-    renderHistoryPageList: renderHistoryPageList,
-    openHistoryErrorModal: openHistoryErrorModal,
-    reopenHistoryResult: reopenHistoryResult,
-    setHistorySectionState: setHistorySectionState,
-    getHistoryCurrentPage: () => historyCurrentPage,
-    setHistoryCurrentPage: (p) => { historyCurrentPage = p; },
-    getCachedHistories: () => cachedHistories,
-  };
-})();
+    }) ();

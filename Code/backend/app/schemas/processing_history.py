@@ -221,6 +221,7 @@ class ProcessingResultResponse(BaseModel):
     page_count: Optional[int] = Field(default=1, ge=1, description="Tổng số trang tài liệu.")
     file_size_mb: Optional[float] = Field(default=None, ge=0, description="Kích thước tệp tài liệu (MB).")
     is_ocr_used: Optional[bool] = Field(default=False, description="Xác định có sử dụng OCR nhận dạng quang học.")
+    execution_time_ms: Optional[int] = Field(default=None, ge=0, description="Thời gian thực thi tính bằng mili-giây.")
     created_at: Optional[datetime] = Field(default=None, description="Thời điểm hoàn tất xử lý (UTC).")
 
     @field_serializer("created_at")

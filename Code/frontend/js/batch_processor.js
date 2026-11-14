@@ -220,6 +220,7 @@
     }
 
     async processItem(item) {
+      item.startTime = Date.now();
       window.pdfLinguaBatchQueue.updateItem(item.id, {
         status: 'processing',
         statusText: 'Đang gửi tệp lên máy chủ...',
@@ -439,6 +440,13 @@
       item.statusText = 'Hoàn thành';
       item.progress = 100;
       item.result = result;
+      if (item.startTime) {
+        item.durationMs = Date.now() - item.startTime;
+      }
+      const execTimeMs = (result && typeof result.execution_time_ms === 'number')
+        ? result.execution_time_ms
+        : item.durationMs;
+      item.execution_time_ms = execTimeMs;
 
       this.completedJobs.push(item);
       this.activeCount = Math.max(0, this.activeCount - 1);
@@ -448,7 +456,15 @@
         statusText: 'Hoàn thành',
         progress: 100,
         result: result,
+        execution_time_ms: execTimeMs,
       });
+
+      // Notify other modules (e.g. History, Recent Documents) that document is processed (PDFL-169)
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        try {
+          window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: result } }));
+        } catch (_e) {}
+      }
 
       this.updateOverallProgress();
       this.pump();
@@ -529,6 +545,12 @@
         if (typeof renderWorkspace === 'function') {
           renderWorkspace(res);
         }
+      }
+
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        try {
+          window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { batch: true, completedCount: this.completedJobs.length } }));
+        } catch (_e) {}
       }
     }
 

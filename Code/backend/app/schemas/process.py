@@ -44,6 +44,7 @@ class ProcessResponseData(BaseModel):
     original_text: str
     translated_text: str
     engine_used: str
+    execution_time_ms: Optional[int] = Field(default=None, ge=0, description="Thời gian xử lý tính bằng mili-giây")
 
 
 class RetranslateRequest(BaseModel):
