@@ -12,9 +12,95 @@ import pypdf
 from PIL import Image
 
 
+def parse_page_selection(pages_str: Optional[str], total_pages: int) -> list[int]:
+    """
+    Parse chuỗi lựa chọn trang PDF thành danh sách các index trang (0-based) đã sắp xếp và không trùng lặp (PDFL-255.1).
+
+    Cú pháp hỗ trợ:
+    - Trang đơn: '1', '5'
+    - Khoảng trang: '1-3' (bao gồm cả trang 1, 2, 3)
+    - Danh sách kết hợp: '2, 4, 6', '1-2, 5', '1, 3-5, 8'
+    - Toàn bộ trang: None, '', '   ', 'all', 'ALL' -> trả về list(range(total_pages))
+
+    Quy tắc & Xử lý lỗi:
+    - Chuyển đổi số trang người dùng nhập (1-based) thành index (0-based).
+    - Loại bỏ trang trùng lặp và sắp xếp tăng dần.
+    - Ném ValueError trong các trường hợp:
+      + total_pages < 1 hoặc không phải kiểu số nguyên
+      + Cú pháp sai: chứa ký tự không hợp lệ ('abc', '1a'), dải trang thiếu đầu/cuối ('1-', '-3', '1-2-3'), dấu phẩy thừa (',,', '1,,2')
+      + Số trang nhỏ hơn 1 (ví dụ: '0', '-2')
+      + Khoảng trang ngược (ví dụ: '5-1', '10-3')
+      + Số trang vượt quá total_pages (ví dụ: '10' khi total_pages=5, hoặc '2-8' khi total_pages=5)
+    """
+    if isinstance(total_pages, bool) or not isinstance(total_pages, int) or total_pages < 1:
+        raise ValueError("Tổng số trang của tài liệu không hợp lệ.")
+
+    if pages_str is None:
+        return list(range(total_pages))
+
+    clean_str = pages_str.strip()
+    if not clean_str or clean_str.lower() == "all":
+        return list(range(total_pages))
+
+    # Chặn dấu phẩy ở đầu, cuối hoặc liên tiếp
+    raw_tokens = [tok.strip() for tok in clean_str.split(",")]
+    if any(not tok for tok in raw_tokens):
+        raise ValueError(f"Cú pháp khoảng trang không hợp lệ: '{clean_str}'.")
+
+    selected_indices: set[int] = set()
+
+    for token in raw_tokens:
+        if "-" in token:
+            parts = token.split("-")
+            if len(parts) != 2 or not parts[0].strip() or not parts[1].strip():
+                raise ValueError(f"Cú pháp khoảng trang không hợp lệ: '{token}'.")
+
+            start_part, end_part = parts[0].strip(), parts[1].strip()
+            if not start_part.isdigit() or not end_part.isdigit():
+                raise ValueError(f"Khoảng trang phải là số nguyên dương: '{token}'.")
+
+            start = int(start_part)
+            end = int(end_part)
+
+            if start < 1:
+                raise ValueError(f"Số trang phải lớn hơn hoặc bằng 1 (nhận được {start}).")
+            if end < 1:
+                raise ValueError(f"Số trang phải lớn hơn hoặc bằng 1 (nhận được {end}).")
+            if start > end:
+                raise ValueError(f"Khoảng trang ngược không hợp lệ: '{start}-{end}'.")
+            if end > total_pages:
+                raise ValueError(f"Trang {end} vượt quá tổng số trang của tài liệu ({total_pages}).")
+            if start > total_pages:
+                raise ValueError(f"Trang {start} vượt quá tổng số trang của tài liệu ({total_pages}).")
+
+            for p in range(start, end + 1):
+                selected_indices.add(p - 1)
+        else:
+            if not token.isdigit():
+                raise ValueError(f"Số trang không hợp lệ: '{token}'.")
+
+            p = int(token)
+            if p < 1:
+                raise ValueError(f"Số trang phải lớn hơn hoặc bằng 1 (nhận được {p}).")
+            if p > total_pages:
+                raise ValueError(f"Trang {p} vượt quá tổng số trang của tài liệu ({total_pages}).")
+
+            selected_indices.add(p - 1)
+
+    if not selected_indices:
+        raise ValueError("Không có trang nào được chọn.")
+
+    return sorted(selected_indices)
+
+
 class PDFService:
     def __init__(self):
         pass
+
+    @staticmethod
+    def parse_page_selection(pages_str: Optional[str], total_pages: int) -> list[int]:
+        """PDFL-255.1: Phân tích cú pháp lựa chọn dải trang."""
+        return parse_page_selection(pages_str, total_pages)
 
     def is_blank_page(
         self,
@@ -265,18 +351,37 @@ class PDFService:
         except Exception:
             return 0
 
-    def extract_text(self, file_path: Path | str, max_pages: int | None = None) -> str:
-        pages_data = self.extract_pages(file_path, max_pages=max_pages)
+    def extract_text(
+        self,
+        file_path: Path | str,
+        max_pages: int | None = None,
+        selected_pages: Optional[list[int]] = None,
+    ) -> str:
+        pages_data = self.extract_pages(file_path, max_pages=max_pages, selected_pages=selected_pages)
         return "\n\n".join(p["text"] for p in pages_data if p["text"])
 
-    def extract_pages(self, file_path: Path | str, max_pages: int | None = None) -> list[dict[str, Any]]:
+    def extract_pages(
+        self,
+        file_path: Path | str,
+        max_pages: int | None = None,
+        selected_pages: Optional[list[int]] = None,
+    ) -> list[dict[str, Any]]:
         path = Path(file_path)
         pages_data: list[dict[str, Any]] = []
 
         try:
             with pdfplumber.open(str(path)) as pdf:
-                pages = pdf.pages[:max_pages] if max_pages is not None else pdf.pages
-                for idx, page in enumerate(pages):
+                total_in_doc = len(pdf.pages)
+                if selected_pages is not None:
+                    target_indices = [i for i in selected_pages if 0 <= i < total_in_doc]
+                else:
+                    target_indices = list(range(total_in_doc))
+
+                if max_pages is not None:
+                    target_indices = target_indices[:max_pages]
+
+                for idx in target_indices:
+                    page = pdf.pages[idx]
                     raw_text = self._extract_page_smart_layout(page)
                     cleaned = self._clean_whitespace(raw_text)
 
@@ -296,8 +401,17 @@ class PDFService:
         except Exception:
             # Fallback to pypdf in case pdfplumber fails
             reader = pypdf.PdfReader(str(path))
-            pages = reader.pages[:max_pages] if max_pages is not None else reader.pages
-            for idx, page in enumerate(pages):
+            total_in_doc = len(reader.pages)
+            if selected_pages is not None:
+                target_indices = [i for i in selected_pages if 0 <= i < total_in_doc]
+            else:
+                target_indices = list(range(total_in_doc))
+
+            if max_pages is not None:
+                target_indices = target_indices[:max_pages]
+
+            for idx in target_indices:
+                page = reader.pages[idx]
                 raw_text = page.extract_text() or ""
                 cleaned = self._clean_whitespace(raw_text)
                 pages_data.append({
@@ -458,6 +572,7 @@ class PDFService:
         file_path: Path | str,
         threshold_chars: int = 30,
         max_pages: int | None = None,
+        selected_pages: Optional[list[int]] = None,
     ) -> dict[str, Any]:
         """
         Tự động phân loại tài liệu PDF:
@@ -470,12 +585,20 @@ class PDFService:
         pages_classification: list[dict[str, Any]] = []
 
         reader = pypdf.PdfReader(str(path))
-        pages = reader.pages[:max_pages] if max_pages is not None else reader.pages
+        total_in_doc = len(reader.pages)
+        if selected_pages is not None:
+            target_indices = [i for i in selected_pages if 0 <= i < total_in_doc]
+        else:
+            target_indices = list(range(total_in_doc))
+
+        if max_pages is not None:
+            target_indices = target_indices[:max_pages]
 
         digital_count = 0
         scanned_count = 0
 
-        for idx, page in enumerate(pages):
+        for idx in target_indices:
+            page = reader.pages[idx]
             try:
                 raw_text = page.extract_text() or ""
                 cleaned = self._clean_whitespace(raw_text)
@@ -496,7 +619,7 @@ class PDFService:
                 "has_text": len(cleaned) > 0,
             })
 
-        total = len(pages)
+        total = len(target_indices)
         if total == 0 or scanned_count == total:
             doc_type = "scanned"
         elif digital_count == total:
@@ -512,8 +635,14 @@ class PDFService:
             "pages": pages_classification,
         }
 
-    def is_scanned_pdf(self, file_path: Path | str, threshold_chars: int = 25, max_pages: int | None = None) -> bool:
-        pages = self.extract_pages(file_path, max_pages=max_pages)
+    def is_scanned_pdf(
+        self,
+        file_path: Path | str,
+        threshold_chars: int = 25,
+        max_pages: int | None = None,
+        selected_pages: Optional[list[int]] = None,
+    ) -> bool:
+        pages = self.extract_pages(file_path, max_pages=max_pages, selected_pages=selected_pages)
         if not pages:
             return True
 
@@ -529,6 +658,7 @@ class PDFService:
         threshold_chars: int = 30,
         max_workers: int | None = 2,
         progress_callback: Optional[Any] = None,
+        selected_pages: Optional[list[int]] = None,
     ) -> dict[str, Any]:
         """
         Cơ chế Hybrid Fast Path:
@@ -552,8 +682,13 @@ class PDFService:
 
         pages_result: list[dict[str, Any]] = []
 
-        # Phân loại toàn bộ tài liệu
-        classification = self.classify_document(path, threshold_chars=threshold_chars, max_pages=max_pages)
+        # Phân loại toàn bộ tài liệu (hoặc các trang được chọn)
+        classification = self.classify_document(
+            path,
+            threshold_chars=threshold_chars,
+            max_pages=max_pages,
+            selected_pages=selected_pages,
+        )
         doc_type = classification["document_type"]
         total_classified = classification["total_pages"]
 
@@ -565,7 +700,7 @@ class PDFService:
 
         # 1. Nếu toàn bộ là Digital: trích xuất nhanh 100% bằng Fast Path
         if doc_type == "digital":
-            pages_data = self.extract_pages(path, max_pages=max_pages)
+            pages_data = self.extract_pages(path, max_pages=max_pages, selected_pages=selected_pages)
             full_text = "\n\n".join(p["text"] for p in pages_data if p["text"])
             if progress_callback is not None:
                 try:
@@ -585,22 +720,22 @@ class PDFService:
         doc_fitz = None
         doc_pdfium = None
         try:
-            pages_extracted = self.extract_pages(path, max_pages=max_pages)
+            pages_extracted = self.extract_pages(path, max_pages=max_pages, selected_pages=selected_pages)
 
-            # Lọc danh sách trang scanned cần OCR
-            scanned_indices: list[int] = []
-            for idx, p_info in enumerate(pages_extracted):
+            # Lọc danh sách trang scanned cần OCR (dùng 0-based document page index thực tế)
+            scanned_orig_indices: list[int] = []
+            for p_info in pages_extracted:
                 cleaned = p_info["text"]
                 page_type = self.classify_page(cleaned, threshold_chars=threshold_chars)
                 if not (page_type == "digital" and cleaned.strip()):
-                    scanned_indices.append(idx)
+                    scanned_orig_indices.append(p_info["page"] - 1)
 
             # 2a. Xử lý song song với isolated workers nếu có >= 2 trang scanned và ocr_service khả dụng
             # Nếu chỉ có 1 trang Scanned, xử lý tuần tự trực tiếp ở bước 2b để tránh overhead tạo thread
             ocr_results_by_idx: dict[int, dict[str, Any]] = {}
-            if len(scanned_indices) > 1 and ocr_service and getattr(ocr_service, "is_available", lambda: False)():
+            if len(scanned_orig_indices) > 1 and ocr_service and getattr(ocr_service, "is_available", lambda: False)():
                 effective_workers = max_workers if (max_workers is not None and max_workers > 1) else 1
-                effective_workers = min(effective_workers, 4, len(scanned_indices))
+                effective_workers = min(effective_workers, 4, len(scanned_orig_indices))
 
                 if effective_workers > 1 and hasattr(ocr_service, "_ocr_single_page_isolated"):
                     try:
@@ -613,7 +748,7 @@ class PDFService:
                                     s_idx,
                                     getattr(ocr_service, "default_lang", "vie+eng"),
                                 ): s_idx
-                                for s_idx in scanned_indices
+                                for s_idx in scanned_orig_indices
                             }
                             for future in concurrent.futures.as_completed(future_to_idx):
                                 s_idx = future_to_idx[future]
@@ -624,7 +759,7 @@ class PDFService:
                     except Exception:
                         ocr_results_by_idx = {}
 
-            # 2b. Tổng hợp kết quả theo ĐÚNG THỨ TỰ TRANG BAN ĐẦU (1 -> N)
+            # 2b. Tổng hợp kết quả theo ĐÚNG THỨ TỰ TRANG ĐÃ CHỌN
             ocr_count = 0
 
             # Mở sẵn doc_pdfium hoặc doc_fitz 1 lần duy nhất cho toàn bộ các trang scanned
@@ -642,14 +777,16 @@ class PDFService:
                     except Exception:
                         doc_fitz = None
 
-            for idx, p_info in enumerate(pages_extracted):
+            for seq_idx, p_info in enumerate(pages_extracted):
+                orig_page_num = p_info["page"]
+                orig_idx = orig_page_num - 1
                 cleaned = p_info["text"]
                 page_type = self.classify_page(cleaned, threshold_chars=threshold_chars)
 
                 # TRANG DIGITAL: Fast Path tức thì, không nạp ảnh
                 if page_type == "digital" and cleaned.strip():
                     pages_result.append({
-                        "page": idx + 1,
+                        "page": orig_page_num,
                         "text": cleaned,
                         "type": "digital",
                         "is_ocr_used": False,
@@ -662,8 +799,8 @@ class PDFService:
                     is_blank = False
 
                     # 1. Tận dụng kết quả từ parallel worker nếu đã có ở 2a
-                    if idx in ocr_results_by_idx:
-                        res = ocr_results_by_idx[idx]
+                    if orig_idx in ocr_results_by_idx:
+                        res = ocr_results_by_idx[orig_idx]
                         ocr_text = res.get("text", "")
                         is_blank = res.get("is_blank", False)
                     # 2. Nếu chưa có kết quả (ví dụ chỉ có 1 trang scan), gọi _ocr_single_page_isolated
@@ -672,7 +809,7 @@ class PDFService:
                             try:
                                 res = ocr_service._ocr_single_page_isolated(
                                     path,
-                                    idx,
+                                    orig_idx,
                                     getattr(ocr_service, "default_lang", "vie+eng"),
                                 )
                                 ocr_text = res.get("text", "")
@@ -685,12 +822,12 @@ class PDFService:
                             pil_img = None
                             try:
                                 if doc_pdfium is not None:
-                                    pdfium_page = doc_pdfium.get_page(idx)
+                                    pdfium_page = doc_pdfium.get_page(orig_idx)
                                     pil_img = pdfium_page.render(scale=2.0).to_pil()
                                     del pdfium_page
                                 elif doc_fitz is not None:
                                     import io
-                                    fitz_page = doc_fitz.load_page(idx)
+                                    fitz_page = doc_fitz.load_page(orig_idx)
                                     pix = fitz_page.get_pixmap(dpi=150)
                                     raw_bytes = pix.tobytes("png")
                                     del pix
@@ -730,7 +867,7 @@ class PDFService:
                         ocr_text = cleaned
 
                     pages_result.append({
-                        "page": idx + 1,
+                        "page": orig_page_num,
                         "text": ocr_text,
                         "type": "scanned",
                         "is_ocr_used": True,
@@ -739,7 +876,11 @@ class PDFService:
 
                 if progress_callback is not None:
                     try:
-                        progress_callback(idx + 1, len(pages_extracted), f"Đã hoàn thành phân tích trang {idx + 1}/{len(pages_extracted)}")
+                        progress_callback(
+                            seq_idx + 1,
+                            len(pages_extracted),
+                            f"Đã hoàn thành phân tích trang {orig_page_num} ({seq_idx + 1}/{len(pages_extracted)})",
+                        )
                     except Exception:
                         pass
 
@@ -753,7 +894,7 @@ class PDFService:
                 "ocr_pages_count": ocr_count,
             }
         except Exception:
-            pages_data = self.extract_pages(path, max_pages=max_pages)
+            pages_data = self.extract_pages(path, max_pages=max_pages, selected_pages=selected_pages)
             full_text = "\n\n".join(p["text"] for p in pages_data if p["text"])
             return {
                 "document_type": "fallback",
@@ -776,6 +917,30 @@ class PDFService:
                 except Exception:
                     pass
                 del doc_fitz
+
+    def extract_hybrid_text(
+        self,
+        file_path: Path | str,
+        ocr_service: Any = None,
+        max_pages: int | None = None,
+        threshold_chars: int = 30,
+        max_workers: int | None = 2,
+        progress_callback: Optional[Any] = None,
+        selected_pages: Optional[list[int]] = None,
+    ) -> dict[str, Any]:
+        """
+        PDFL-255.1: Trích xuất văn bản hybrid kết hợp layout extraction và OCR.
+        Hỗ trợ selective extraction thông qua `selected_pages`.
+        """
+        return self.extract_hybrid_fast_path(
+            file_path=file_path,
+            ocr_service=ocr_service,
+            max_pages=max_pages,
+            threshold_chars=threshold_chars,
+            max_workers=max_workers,
+            progress_callback=progress_callback,
+            selected_pages=selected_pages,
+        )
 
     @staticmethod
     def _clean_whitespace(text: str) -> str:

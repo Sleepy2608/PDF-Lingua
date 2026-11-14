@@ -10,7 +10,7 @@ from app.api.auth import router as auth_router
 from app.api.documents import compat_router as documents_compat_router, router as documents_router
 from app.api.history import router as history_router
 from app.api.pricing import router as pricing_router
-from app.api.process import router as process_router
+from app.api.process import compat_router as process_compat_router, router as process_router
 from app.core.config import settings
 from app.core.database import check_db_connection, init_db
 from app.core.exceptions import setup_exception_handlers
@@ -69,6 +69,7 @@ setup_exception_handlers(app)
 # Register API Routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(process_router)
+app.include_router(process_compat_router)
 app.include_router(documents_router)
 app.include_router(documents_compat_router)
 app.include_router(admin_router)

@@ -79,6 +79,7 @@ def _execute_pdf_background_job(
     file_size_mb: float,
     user_id: Optional[int] = None,
     file_size_bytes: Optional[int] = None,
+    selected_pages: Optional[list[int]] = None,
 ) -> None:
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
@@ -86,6 +87,7 @@ def _execute_pdf_background_job(
     Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5).
     Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
     và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công (PDFL-90, PDFL-91).
+    Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages (PDFL-255.1).
     """
     try:
         acquired = _job_semaphore.acquire(blocking=False)
@@ -112,28 +114,31 @@ def _execute_pdf_background_job(
                 job_manager.set_failed(job_id, "Tài liệu PDF không có trang nào hợp lệ để xử lý.")
                 return
 
-            if page_count > max_allowed_pages:
+            effective_total = len(selected_pages) if selected_pages is not None else page_count
+
+            if effective_total > max_allowed_pages:
                 job_manager.set_failed(
                     job_id,
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn ({max_allowed_pages} trang).",
+                    f"Tài liệu yêu cầu xử lý {effective_total} trang, vượt quá giới hạn ({max_allowed_pages} trang).",
                 )
                 return
 
             job_manager.set_processing(
                 job_id,
-                total_pages=page_count,
-                message=f"Đang phân tích {page_count} trang PDF...",
+                total_pages=effective_total,
+                message=f"Đang phân tích {effective_total} trang PDF...",
             )
 
             def on_progress(processed: int, total: int, msg: str) -> None:
                 job_manager.update_progress(job_id, processed_pages=processed, total_pages=total, message=msg)
 
-            # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng
+            # Sử dụng Hybrid Fast Path đã tối ưu bộ nhớ và đa luồng với selected_pages
             extract_res = pdf_service.extract_hybrid_fast_path(
                 tmp_path,
                 ocr_service=ocr_service,
                 max_pages=max_allowed_pages,
                 progress_callback=on_progress,
+                selected_pages=selected_pages,
             )
 
             original_text = extract_res.get("text", "")
@@ -169,7 +174,7 @@ def _execute_pdf_background_job(
                         stored_filename=stored_filename,
                         stored_path=rel_path,
                         file_size_bytes=actual_size_bytes,
-                        page_count=page_count,
+                        page_count=effective_total,
                         target_lang=target_lang,
                         is_ocr_used=is_ocr_used,
                     )
@@ -191,7 +196,7 @@ def _execute_pdf_background_job(
             result_data = {
                 "document_id": document_id,
                 "filename": filename,
-                "page_count": page_count,
+                "page_count": effective_total,
                 "file_size_mb": file_size_mb,
                 "target_lang": target_lang,
                 "is_ocr_used": is_ocr_used,
@@ -264,12 +269,14 @@ def _execute_pdf_background_job(
 async def create_processing_job(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
+    pages: Optional[str] = Form(None),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
     Khởi tạo Background Job xử lý PDF (PDFL-111.4).
     Trả về ngay Job ID mà không giữ kết nối HTTP chờ toàn bộ quá trình OCR.
     Thực thi kiểm tra tính hợp lệ và hạn mức số trang trước khi cấp Job ID (PDFL-178.3).
+    Hỗ trợ lựa chọn dải trang pages (PDFL-255.1).
     """
     max_upload_mb, _ = get_user_limits(current_user)
     max_allowed_pages = get_max_pages_by_role(current_user)
@@ -323,7 +330,20 @@ async def create_processing_job(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        if page_count > max_allowed_pages:
+        # PDFL-255.1: Parse và validate dải trang nếu được truyền vào
+        selected_pages: Optional[list[int]] = None
+        if pages is not None and pages.strip() and pages.strip().lower() != "all":
+            try:
+                selected_pages = pdf_service.parse_page_selection(pages, total_pages=page_count)
+            except ValueError as pe:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Dải trang không hợp lệ: {pe}",
+                )
+
+        effective_page_count = len(selected_pages) if selected_pages is not None else page_count
+
+        if effective_page_count > max_allowed_pages:
             role_label = (
                 "Guest"
                 if current_user is None
@@ -332,7 +352,7 @@ async def create_processing_job(
             raise HTTPException(
                 status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=(
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                    f"Tài liệu có {effective_page_count} trang cần xử lý, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
             )
     except HTTPException:
@@ -371,6 +391,7 @@ async def create_processing_job(
             file_size_mb,
             authenticated_user_id,
             file_size_bytes,
+            selected_pages,
         ),
         daemon=True,
     )
@@ -432,6 +453,7 @@ async def stream_job_events(job_id: str):
 async def upload_and_translate(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
+    pages: Optional[str] = Form(None),
     current_user: Optional[User] = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ):
@@ -486,8 +508,21 @@ async def upload_and_translate(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
+        # PDFL-255.1: Parse và validate dải trang nếu được truyền vào
+        selected_pages: Optional[list[int]] = None
+        if pages is not None and pages.strip() and pages.strip().lower() != "all":
+            try:
+                selected_pages = pdf_service.parse_page_selection(pages, total_pages=page_count)
+            except ValueError as pe:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Dải trang không hợp lệ: {pe}",
+                )
+
+        effective_page_count = len(selected_pages) if selected_pages is not None else page_count
+
         max_allowed_pages = get_max_pages_by_role(current_user)
-        if page_count > max_allowed_pages:
+        if effective_page_count > max_allowed_pages:
             role_label = (
                 "Guest"
                 if current_user is None
@@ -496,25 +531,29 @@ async def upload_and_translate(
             raise HTTPException(
                 status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=(
-                    f"Tài liệu có {page_count} trang, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
+                    f"Tài liệu có {effective_page_count} trang cần xử lý, vượt quá giới hạn {max_allowed_pages} trang của gói {role_label}."
                 ),
             )
 
-        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
+        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
         is_ocr_used = False
         original_text = ""
 
         if not is_scanned:
-            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
+            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
 
         if not original_text.strip():
-            is_ocr_used = True
-            logger.info(f"[Process] Fallback to OCR for scanned document (max_pages={max_allowed_pages})...")
-            ocr_res = ocr_service.extract_text_from_scanned_pdf(
+            logger.info(f"[Process] Fallback to OCR / Hybrid for scanned document (max_pages={max_allowed_pages}, selected_pages={selected_pages})...")
+            hybrid_res = pdf_service.extract_hybrid_fast_path(
                 tmp_path,
+                ocr_service=ocr_service,
                 max_pages=max_allowed_pages,
+                selected_pages=selected_pages,
             )
-            original_text = ocr_res.get("text", "")
+            original_text = hybrid_res.get("text", "")
+            is_ocr_used = bool(
+                hybrid_res.get("ocr_pages_count", 0) > 0 or hybrid_res.get("fast_path_used") is False
+            )
 
         if not original_text.strip():
             raise HTTPException(
@@ -524,7 +563,7 @@ async def upload_and_translate(
 
         logger.info(
             f"[Upload-and-Translate Request] file={file.filename!r}, target_lang={target_lang!r}, "
-            f"text_len={len(original_text)}, text_preview={original_text[:80]!r}"
+            f"pages={pages!r}, text_len={len(original_text)}, text_preview={original_text[:80]!r}"
         )
 
         translation_result = translation_service.translate_text(
@@ -553,7 +592,7 @@ async def upload_and_translate(
                     stored_filename=stored_filename,
                     stored_path=rel_path,
                     file_size_bytes=len(content),
-                    page_count=page_count,
+                    page_count=effective_page_count,
                     target_lang=target_lang,
                     is_ocr_used=is_ocr_used,
                 )
@@ -589,7 +628,7 @@ async def upload_and_translate(
                         result_data={
                             "document_id": document_id,
                             "filename": file.filename,
-                            "page_count": page_count,
+                            "page_count": effective_page_count,
                             "file_size_mb": round(len(content) / (1024 * 1024), 2),
                             "target_lang": target_lang,
                             "is_ocr_used": is_ocr_used,
@@ -610,7 +649,7 @@ async def upload_and_translate(
             document_id=document_id,
             history_id=history_id,
             filename=file.filename,
-            page_count=page_count,
+            page_count=effective_page_count,
             file_size_mb=round(len(content) / (1024 * 1024), 2),
             target_lang=target_lang,
             is_ocr_used=is_ocr_used,
@@ -635,6 +674,30 @@ async def upload_and_translate(
                 os.remove(tmp_path)
             except Exception:
                 pass
+
+
+compat_router = APIRouter(tags=["Document Processing Compat"])
+
+
+@compat_router.post("/process", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+@router.post("", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+@router.post("/", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+@router.post("/process", response_model=ApiResponse[ProcessResponseData], include_in_schema=False)
+async def process_compatibility_endpoint(
+    file: UploadFile = File(...),
+    target_lang: str = Form("vi"),
+    pages: Optional[str] = Form(None),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    db: Session = Depends(get_db),
+):
+    """PDFL-255.1: Compatibility endpoint for /process and /api/process."""
+    return await upload_and_translate(
+        file=file,
+        target_lang=target_lang,
+        pages=pages,
+        current_user=current_user,
+        db=db,
+    )
 
 
 @router.post("/retranslate", response_model=ApiResponse[dict])
