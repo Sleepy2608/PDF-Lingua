@@ -567,12 +567,12 @@
         targetBtn.disabled = true;
         prevHtml = targetBtn.innerHTML;
         targetBtn.innerHTML = `
-            < svg class="spinner-svg" width = "15" height = "15" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2.5" >
+          <svg class="spinner-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
             <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
-          </svg >
+          </svg>
           <span>Đang tạo ZIP...</span>
-          `;
+        `;
       }
 
       try {
@@ -582,7 +582,7 @@
           ...authHeaders,
         };
 
-        const response = await fetch(`${ BATCH_API_BASE_URL } /process/batch - download`, {
+        const response = await fetch(`${BATCH_API_BASE_URL}/process/batch-download`, {
           method: 'POST',
           headers: fetchHeaders,
           body: JSON.stringify({

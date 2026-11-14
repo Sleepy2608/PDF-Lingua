@@ -675,6 +675,7 @@
 
 .batch-zip-btn-group {
   display: flex;
+  align-items: stretch;
   gap: 0.5rem;
   width: 100%;
 }
@@ -685,6 +686,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  min-height: 40px;
   padding: 0.5rem 0.65rem;
   font-size: 0.78125rem;
   font-weight: 600;
@@ -692,30 +694,40 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
-  .btn-batch-zip-docx {
-    flex: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    padding: 0.5rem 0.65rem;
-    font-size: 0.78125rem;
-    font-weight: 600;
-    border-radius: var(--radius-sm, 8px);
-    cursor: pointer;
-    background-color: #ffffff;
-    color: var(--text-title, #1e293b);
-    border: 1px solid rgba(79, 70, 229, 0.35);
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
+.btn-batch-zip-docx {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  background-color: #ffffff;
+  color: var(--text-title, #1e293b);
+  border: 1px solid rgba(79, 70, 229, 0.35);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
 
-  .btn-batch-zip-docx:hover {
-    background-color: rgba(79, 70, 229, 0.06);
-    border-color: var(--color-primary, #4f46e5);
-  }
+.btn-batch-zip-docx:hover {
+  background-color: rgba(79, 70, 229, 0.06);
+  border-color: var(--color-primary, #4f46e5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.btn-batch-zip-docx:active {
+  transform: translateY(0) scale(0.98);
+}
 
   .btn-batch-zip-docx .fmt-pill.docx {
     padding: 0.1rem 0.35rem;

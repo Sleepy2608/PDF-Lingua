@@ -683,4 +683,4 @@ runTest('1.2: index.html contains #batchOverallProgressWrap, #batchOverallProgre
       console.error(`✗ CÓ ${totalTests - passedTests} BÀI TEST THẤT BÀI.\n`);
       process.exit(1);
     }
-  }, 50);
+  }, 250);
