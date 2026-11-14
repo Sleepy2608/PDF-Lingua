@@ -185,6 +185,229 @@ async function fetchDocumentPreview(documentId, filename) {
   }
 }
 
+/* ==========================================================================
+   Page Selection UI & Quick Chips (PDFL-255.2)
+   ========================================================================== */
+function initPageSelection() {
+  const radioAll = document.getElementById('radioPageModeAll');
+  const radioCustom = document.getElementById('radioPageModeCustom');
+  const labelAll = document.getElementById('labelPageModeAll');
+  const labelCustom = document.getElementById('labelPageModeCustom');
+  const wrap = document.getElementById('pageRangeCustomWrap');
+  const input = document.getElementById('inputPageRange');
+  const chips = document.querySelectorAll ? document.querySelectorAll('.quick-chip') : [];
+
+  if (!radioAll && !radioCustom && !input) {
+    return;
+  }
+
+  const handleModeChange = (mode) => {
+    if (mode === 'all') {
+      if (radioAll) radioAll.checked = true;
+      if (radioCustom) radioCustom.checked = false;
+      if (labelAll) labelAll.classList.add('active');
+      if (labelCustom) labelCustom.classList.remove('active');
+      if (wrap) wrap.style.display = 'none';
+      if (input) input.classList.remove('input-error');
+    } else {
+      if (radioCustom) radioCustom.checked = true;
+      if (radioAll) radioAll.checked = false;
+      if (labelCustom) labelCustom.classList.add('active');
+      if (labelAll) labelAll.classList.remove('active');
+      if (wrap) wrap.style.display = 'block';
+      if (input) {
+        input.focus();
+      }
+    }
+  };
+
+  if (radioAll) {
+    radioAll.addEventListener('change', () => {
+      if (radioAll.checked) handleModeChange('all');
+    });
+  }
+  if (labelAll) {
+    labelAll.addEventListener('click', (e) => {
+      if (e.target !== radioAll) {
+        handleModeChange('all');
+      }
+    });
+  }
+
+  if (radioCustom) {
+    radioCustom.addEventListener('change', () => {
+      if (radioCustom.checked) handleModeChange('custom');
+    });
+  }
+  if (labelCustom) {
+    labelCustom.addEventListener('click', (e) => {
+      if (e.target !== radioCustom) {
+        handleModeChange('custom');
+      }
+    });
+  }
+
+  const updateChipsActiveState = (currentVal) => {
+    const trimmed = (currentVal || '').trim();
+    if (chips && typeof chips.forEach === 'function') {
+      chips.forEach((chip) => {
+        const range = chip.getAttribute('data-range') || '';
+        if (trimmed && range === trimmed) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    }
+  };
+
+  if (chips && typeof chips.forEach === 'function') {
+    chips.forEach((chip) => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const range = chip.getAttribute('data-range') || '';
+        if (input) {
+          input.value = range;
+          input.classList.remove('input-error');
+          input.focus();
+        }
+        updateChipsActiveState(range);
+      });
+    });
+  }
+
+  if (input) {
+    input.addEventListener('input', () => {
+      input.classList.remove('input-error');
+      updateChipsActiveState(input.value);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btnProcessPdf = document.getElementById('btnProcessPdf');
+        if (btnProcessPdf && !btnProcessPdf.disabled) {
+          btnProcessPdf.click();
+        }
+      }
+    });
+  }
+}
+
+function getSelectedPageMode() {
+  const radioCustom = document.getElementById('radioPageModeCustom');
+  if (radioCustom && radioCustom.checked) {
+    return 'custom';
+  }
+  return 'all';
+}
+
+function setPageSelectionMode(mode) {
+  const radioAll = document.getElementById('radioPageModeAll');
+  const radioCustom = document.getElementById('radioPageModeCustom');
+  const labelAll = document.getElementById('labelPageModeAll');
+  const labelCustom = document.getElementById('labelPageModeCustom');
+  const wrap = document.getElementById('pageRangeCustomWrap');
+  const input = document.getElementById('inputPageRange');
+
+  if (mode === 'custom') {
+    if (radioCustom) radioCustom.checked = true;
+    if (radioAll) radioAll.checked = false;
+    if (labelCustom) labelCustom.classList.add('active');
+    if (labelAll) labelAll.classList.remove('active');
+    if (wrap) wrap.style.display = 'block';
+  } else {
+    if (radioAll) radioAll.checked = true;
+    if (radioCustom) radioCustom.checked = false;
+    if (labelAll) labelAll.classList.add('active');
+    if (labelCustom) labelCustom.classList.remove('active');
+    if (wrap) wrap.style.display = 'none';
+    if (input) input.classList.remove('input-error');
+  }
+}
+
+function getPageSelectionValue() {
+  const mode = getSelectedPageMode();
+  if (mode === 'all') {
+    return { mode: 'all', pages: null };
+  }
+  const input = document.getElementById('inputPageRange');
+  const pages = input ? input.value.trim() : '';
+  return { mode: 'custom', pages: pages || null };
+}
+
+function setPageRangeInput(val) {
+  const input = document.getElementById('inputPageRange');
+  if (input) {
+    input.value = val || '';
+    input.classList.remove('input-error');
+  }
+  const chips = document.querySelectorAll ? document.querySelectorAll('.quick-chip') : [];
+  const trimmed = (val || '').trim();
+  if (chips && typeof chips.forEach === 'function') {
+    chips.forEach((chip) => {
+      if (trimmed && chip.getAttribute('data-range') === trimmed) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+}
+
+function validatePageSelection() {
+  const mode = getSelectedPageMode();
+  if (mode === 'all') {
+    return { valid: true, mode: 'all', pages: null };
+  }
+
+  const input = document.getElementById('inputPageRange');
+  const raw = input ? input.value : '';
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return {
+      valid: false,
+      mode: 'custom',
+      error: 'Vui lòng nhập số trang hoặc khoảng trang cần xử lý (ví dụ: 1-5, 8).',
+    };
+  }
+
+  if (!/\d/.test(trimmed)) {
+    return {
+      valid: false,
+      mode: 'custom',
+      error: 'Dải trang không hợp lệ. Vui lòng nhập số trang (ví dụ: 1-5, 8).',
+    };
+  }
+
+  if (!/^[\d\s,-]+$/.test(trimmed)) {
+    return {
+      valid: false,
+      mode: 'custom',
+      error: 'Dải trang chứa ký tự không hợp lệ. Chỉ chấp nhận số, dấu phẩy và dấu gạch ngang.',
+    };
+  }
+
+  return {
+    valid: true,
+    mode: 'custom',
+    pages: trimmed,
+  };
+}
+
+function resetPageSelection() {
+  setPageSelectionMode('all');
+  const input = document.getElementById('inputPageRange');
+  if (input) {
+    input.value = '';
+    input.classList.remove('input-error');
+  }
+  const chips = document.querySelectorAll ? document.querySelectorAll('.quick-chip') : [];
+  if (chips && typeof chips.forEach === 'function') {
+    chips.forEach((c) => c.classList.remove('active'));
+  }
+}
+
 function getWorkspaceSessionStorage() {
   try {
     if (typeof sessionStorage !== 'undefined' && sessionStorage) return sessionStorage;
@@ -322,6 +545,9 @@ function initWorkspace() {
   if (btnSplitTabTranslated) {
     btnSplitTabTranslated.addEventListener('click', () => setSplitMobileTab('translated'));
   }
+
+  // Page Selection UI & Quick Chips (PDFL-255.2)
+  initPageSelection();
 
   updateExportUIState();
 
@@ -633,6 +859,18 @@ async function handleProcessPdf() {
     return;
   }
 
+  // Validate Page Selection (PDFL-255.2)
+  const pageValidation = validatePageSelection();
+  if (!pageValidation.valid) {
+    showToast(pageValidation.error || 'Dải trang không hợp lệ!', 'warning');
+    const inputPageRange = document.getElementById('inputPageRange');
+    if (inputPageRange) {
+      inputPageRange.classList.add('input-error');
+      inputPageRange.focus();
+    }
+    return;
+  }
+
   const btnProcessPdf = document.getElementById('btnProcessPdf');
   if (btnProcessPdf) btnProcessPdf.disabled = true;
 
@@ -640,6 +878,9 @@ async function handleProcessPdf() {
   const formData = new FormData();
   formData.append('file', selectedFile);
   formData.append('target_lang', targetLang);
+  if (pageValidation.mode === 'custom' && pageValidation.pages) {
+    formData.append('pages', pageValidation.pages);
+  }
 
   showProgressModal(true);
   updateProgress(15, 'Đang tải tệp PDF lên máy chủ...', 1);
@@ -664,6 +905,19 @@ async function handleProcessPdf() {
 
     if (response.status === 401) {
       handleAuthError(result);
+      if (btnProcessPdf) btnProcessPdf.disabled = false;
+      return;
+    }
+
+    if (response.status === 400) {
+      showProgressModal(false);
+      const msg = (result && (result.detail || result.message)) || 'Dải trang được chọn không hợp lệ.';
+      showToast(msg, 'error');
+      const inputPageRange = document.getElementById('inputPageRange');
+      if (inputPageRange) {
+        inputPageRange.classList.add('input-error');
+        inputPageRange.focus();
+      }
       if (btnProcessPdf) btnProcessPdf.disabled = false;
       return;
     }
@@ -1330,6 +1584,7 @@ function resetToUpload() {
   clearActiveJobFromStorage();
   currentDocData = null;
   saveWorkspaceDocToStorage(null);
+  resetPageSelection();
   const store = getWorkspaceSessionStorage();
   if (store) {
     try {
@@ -1488,8 +1743,18 @@ function getLangName(code) {
   return names[code] || code;
 }
 
-// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4 & PDFL-156.3)
+// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4 & PDFL-156.3 & PDFL-255.2)
 if (typeof window !== 'undefined') {
+  window.pdfLinguaPageSelection = Object.assign(window.pdfLinguaPageSelection || {}, {
+    initPageSelection,
+    getSelectedPageMode,
+    setPageSelectionMode,
+    getPageSelectionValue,
+    setPageRangeInput,
+    validatePageSelection,
+    resetPageSelection,
+  });
+
   window.pdfLinguaWorkspace = Object.assign(window.pdfLinguaWorkspace || {}, {
     getAuthHeaders,
     handleAuthError,
@@ -1518,6 +1783,13 @@ if (typeof window !== 'undefined') {
       saveWorkspaceDocToStorage(d);
       updateExportUIState();
     },
+    initPageSelection,
+    getSelectedPageMode,
+    setPageSelectionMode,
+    getPageSelectionValue,
+    setPageRangeInput,
+    validatePageSelection,
+    resetPageSelection,
   });
   window.showToast = showToast;
 }

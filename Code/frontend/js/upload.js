@@ -124,6 +124,9 @@ function initDropzone() {
     if (fileInput) fileInput.value = '';
     if (dropzonePrompt) dropzonePrompt.style.display = 'flex';
     if (dropzoneSelected) dropzoneSelected.classList.remove('active');
+    if (typeof window !== 'undefined' && window.pdfLinguaPageSelection && typeof window.pdfLinguaPageSelection.resetPageSelection === 'function') {
+      window.pdfLinguaPageSelection.resetPageSelection();
+    }
   };
 
   if (!dropzone || !fileInput) return;
@@ -211,6 +214,10 @@ function initDropzone() {
 
     if (previewFileName) previewFileName.textContent = file.name;
     if (previewFileSize) previewFileSize.textContent = formatFileSize(file.size);
+
+    if (typeof window !== 'undefined' && window.pdfLinguaPageSelection && typeof window.pdfLinguaPageSelection.resetPageSelection === 'function') {
+      window.pdfLinguaPageSelection.resetPageSelection();
+    }
 
     if (dropzonePrompt) dropzonePrompt.style.display = 'none';
     if (dropzoneSelected) dropzoneSelected.classList.add('active');
