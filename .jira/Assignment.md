@@ -46,7 +46,7 @@ Chiến lược phát triển được tổ chức theo mô hình Agile/Scrum g�
 * **Tuần 3 (Sprint 3: 29/10 - 05/11/2026) - Quản lý tài liệu người dùng, Dịch thuật cốt lõi & Chính sách:**
   - Quản lý kho tài liệu cá nhân: Danh sách file đã tải lên, xem chi tiết metadata, chức năng xóa file an toàn và cô lập dữ liệu riêng tư.
   - Xử lý các trường hợp tài liệu biên: Trang trống, trang bị xoay, hình ảnh scan chất lượng thấp.
-  - Tích hợp dịch thuật đa ngôn ngữ cốt lõi (Google GTX, fallback MyMemory), chia đoạn tài liệu dài chống timeout và xuất file kết quả (TXT UTF-8 BOM / PDF Unicode).
+  - Tích hợp dịch thuật đa ngôn ngữ cốt lõi ('deep-translator', Google GTX, fallback MyMemory - `PDFL-266`), chia đoạn tài liệu dài chống timeout và xuất file kết quả (TXT UTF-8 BOM / PDF Unicode).
   - Hoàn thiện giao diện Modal Điều khoản dịch vụ, Chính sách bảo mật và Kênh liên hệ nhóm phát triển (`PDFL-267`).
 
 ---

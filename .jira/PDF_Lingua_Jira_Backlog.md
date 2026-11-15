@@ -177,7 +177,7 @@ Bảng dưới đây tổng hợp 17 Epic chính trong lộ trình phát triển
 - PDFL-123: Kiểm thử các trường hợp dịch tiếng Việt, tiếng Anh và các ngôn ngữ được lựa chọn.
 - PDFL-124: Đánh giá khả năng giữ nguyên đoạn văn, danh sách và nội dung quan trọng khi dịch.
 - PDFL-125: Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài.
-- PDFL-268: Tích hợp thư viện dịch thuật deep-translator.
+- PDFL-266: Tích hợp thư viện dịch thuật 'deep-translator'.
 
 ## EPIC 09 - AI tóm tắt văn bản
 
