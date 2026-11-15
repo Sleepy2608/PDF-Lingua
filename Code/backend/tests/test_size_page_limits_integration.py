@@ -80,8 +80,8 @@ def test_integration_page_limits_sync_endpoint(
     })
     monkeypatch.setattr(ocr_service, "extract_text_from_scanned_pdf", mock_ocr)
     monkeypatch.setattr(translation_service, "translate_text", mock_translate)
-    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, max_pages=None: False)
-    monkeypatch.setattr(pdf_service, "extract_text", lambda path, max_pages=None: "Sample digital PDF text.")
+    monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *args, **kwargs: False)
+    monkeypatch.setattr(pdf_service, "extract_text", lambda path, *args, **kwargs: "Sample digital PDF text.")
 
     headers = {}
     if role_fixture_name == "free_user":
