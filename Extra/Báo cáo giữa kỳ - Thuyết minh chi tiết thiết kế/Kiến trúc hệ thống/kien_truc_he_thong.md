@@ -18,9 +18,9 @@
 
 | Phiên bản | Ngày cập nhật | Người thực hiện | Trạng thái | Tóm tắt nội dung thay đổi |
 | :---: | :---: | :--- | :---: | :--- |
-| `v1.0.0` | 20/10/2026 | Nguyễn Lê Huy Tâm | Bản thảo | Khởi tạo cấu trúc kiến trúc phân tầng 3-Tier sơ bộ (Client, FastAPI Backend, SQLite). |
-| `v1.1.0` | 05/11/2026 | Nguyễn Lê Huy Tâm | Xem xét | Bổ sung kiến trúc phân hệ Quản trị Admin, Billing VietQR Napas247, Background Jobs SSE streaming. |
-| `v1.2.0` | 15/11/2026 | Nhóm phát triển | Chính thức | Đồng bộ toàn diện kiến trúc 8 phân hệ cốt lõi, tích hợp bộ AI Intelligence (Map-Reduce Summarizer, Copilot RAG), chuẩn hóa luồng dữ liệu, bảo mật OWASP và chính sách phân quyền vai trò. |
+| `v1.0.0` | 20/10/2026 | Nguyễn Lê Huy Tâm, Huỳnh Đình Chấn | Bản thảo | Khởi tạo cấu trúc kiến trúc phân tầng 3-Tier sơ bộ (Client, FastAPI Backend, SQLite). |
+| `v1.1.0` | 05/11/2026 | Nguyễn Lê Huy Tâm, Huỳnh Đình Chấn | Xem xét | Bổ sung kiến trúc phân hệ Quản trị Admin, Billing VietQR Napas247, Background Jobs SSE streaming. |
+| `v1.2.0` | 15/11/2026 | Nguyễn Lê Huy Tâm, Huỳnh Đình Chấn | Chính thức | Đồng bộ toàn diện kiến trúc 8 phân hệ cốt lõi, tích hợp bộ AI Intelligence (Map-Reduce Summarizer, Copilot RAG), chuẩn hóa luồng dữ liệu, bảo mật OWASP và chính sách phân quyền vai trò. |
 
 ---
 
