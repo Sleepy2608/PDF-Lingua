@@ -1,15 +1,13 @@
-# Tài liệu mô tả Sơ đồ lớp (Class Diagram) tổng quát — PDF Lingua
+# Tài liệu mô tả Sơ đồ lớp (Class Diagram) tổng quát: PDF Lingua
 
 > **THÔNG TIN TÀI LIỆU (DOCUMENT METADATA)**
-> - **Tên dự án**: **PDF Lingua** – Nền tảng Web Trích xuất PDF, OCR, Dịch thuật Đa ngôn ngữ & Trợ lý AI
+> - **Tên dự án**: **PDF Lingua** - Nền tảng Web Trích xuất PDF, OCR, Dịch thuật Đa ngôn ngữ & Trợ lý AI
 > - **Mã tài liệu**: `DOC-CD-OVERVIEW`
 > - **Phiên bản (Version)**: `v1.2.0`
 > - **Trạng thái (Status)**: `Chính thức (Approved)`
 > - **Ngày tạo (Created Date)**: `24/10/2026`
-> - **Ngày cập nhật gần nhất (Last Modified)**: `13/11/2026`
-> - **Tham chiếu Jira Task**: `PDFL-271` (Xây dựng Sơ đồ lớp / Class Diagram chi tiết hệ thống)
-> - **Thuộc phân hệ**: `EPIC 01` (Phân tích thiết kế hệ thống) & `EPIC 04` (Backend API và kiến trúc xử lý)
-> - **Tài liệu tham chiếu trực quan**: [Class Diagram.png](file:///c:/Users/ADMIN/PDF-Lingua/Docs/class-diagram/Class%20Diagram.png) / [class_diagram.png](file:///c:/Users/ADMIN/PDF-Lingua/class_diagram.png)
+> - **Ngày cập nhật gần nhất (Last Modified)**: `15/11/2026`
+> - **Tài liệu tham chiếu trực quan**: [Class Diagram.png](Class%20Diagram.png)
 
 ---
 
@@ -29,7 +27,7 @@
 
 Sơ đồ lớp (**Class Diagram**) của PDF Lingua mô tả cấu trúc tĩnh toàn diện của hệ thống phần mềm: phân định ranh giới trách nhiệm giữa các tầng điều khiển API (*Routers*), tầng xử lý nghiệp vụ & hàng đợi bất đồng bộ (*Services & Job Queue*), cùng tầng lưu trữ dữ liệu thực thể (*ORM Entities & Enums*), đồng thời xác lập chặt chẽ các mối quan hệ kế thừa, quan hệ 1-N, quan hệ sở hữu và quan hệ phụ thuộc.
 
-Tài liệu này chuẩn hóa và mô tả chi tiết toàn bộ các lớp, thuộc tính, phương thức và các mối quan hệ trong sơ đồ [Class Diagram.png](file:///c:/Users/ADMIN/PDF-Lingua/Docs/class-diagram/Class%20Diagram.png).
+Tài liệu này chuẩn hóa và mô tả chi tiết toàn bộ các lớp, thuộc tính, phương thức và các mối quan hệ trong sơ đồ [Class Diagram.png](Class%20Diagram.png).
 
 ---
 

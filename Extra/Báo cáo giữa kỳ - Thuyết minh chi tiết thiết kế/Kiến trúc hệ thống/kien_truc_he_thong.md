@@ -10,6 +10,7 @@
 > - **Nhóm thực hiện**: Nhóm 19 (Học phần: Đồ án Thực tế Công nghệ Phần mềm)  
 >   1. Nguyễn Lê Huy Tâm - MSSV: `056206011188` (Trưởng nhóm - Kiến trúc Backend, Core PDF, OCR, AI & Bảo mật)  
 >   2. Huỳnh Đình Chấn - MSSV: `077206002307` (Thành viên - Thiết kế UI/UX Frontend, Workspace, Client Routing & Testing)  
+> - **Tài liệu tham chiếu trực quan**: [kien-truc-he-thong.png](kien-truc-he-thong.png)  
 
 ---
 
@@ -65,45 +66,136 @@ Hệ thống **PDF Lingua** áp dụng mô hình kiến trúc phân tầng kết
 
 ## 2.1. Sơ đồ kiến trúc phân tầng tổng thể
 
+![Sơ đồ kiến trúc phân tầng tổng thể](kien-truc-he-thong.png)
+
 ```mermaid
-graph TD
-    subgraph ClientTier ["TẦNG 1: PRESENTATION LAYER (Client Browser)"]
-        SPA["Single Page Application (SPA)<br/>index.html | CSS Tokens | ES6+ Vanilla JS"]
-        UI_Components["UI Modules<br/>- Dual-Pane Workspace<br/>- Responsive Collapsible Sidebar<br/>- Modal & Toast Notification (z-index: 99999)<br/>- Document & History Tables"]
-        Client_Controllers["Client Controllers<br/>app.js | auth.js | workspace.js<br/>ai_summary.js | ai_copilot.js | admin.js | pricing.js"]
-        API_Client["API Transport Layer<br/>Fetch API | SSE EventSource | Bearer JWT Header"]
-        
-        SPA --> UI_Components --> Client_Controllers --> API_Client
+flowchart TD
+    %% ==========================================
+    %% TẦNG 1: PRESENTATION LAYER (CLIENT BROWSER)
+    %% ==========================================
+    subgraph TIER1 ["TẦNG 1: PRESENTATION LAYER (Client Browser - SPA)"]
+        direction TB
+
+        subgraph C8_UI ["C8: Giao Diện Người Dùng (UI Modules)"]
+            direction LR
+            WORKSPACE["Dual-Pane Workspace<br/>(Cột Văn bản gốc & Bản dịch/Tóm tắt)"]
+            SIDEBAR["Responsive Sidebar<br/>(Điều hướng thu phóng Ctrl+B)"]
+            TOAST["Toast Container<br/>(Ưu tiên hiển thị z-index: 99999)"]
+            MODALS["Auth & Pricing Modals<br/>(Hộp thoại Đăng nhập/Đăng ký & VietQR)"]
+            TABLES["Document & History Tables<br/>(Quản lý tệp tải lên & Lịch sử)"]
+        end
+
+        subgraph FE_CTRL ["Frontend Controllers (Vanilla ES6+)"]
+            direction LR
+            CTRL_APP["app.js / router.js<br/>(Điều hướng SPA)"]
+            CTRL_AUTH["auth.js<br/>(Quản lý phiên JWT)"]
+            CTRL_WORK["workspace.js<br/>(Xử lý kéo thả & dịch)"]
+            CTRL_AI["ai_summary.js & ai_copilot.js<br/>(Tóm tắt & Chat RAG)"]
+            CTRL_ADMIN["admin.js & pricing.js<br/>(Quản trị & Thanh toán)"]
+        end
+
+        subgraph FE_COMM ["Giao Tiếp Mạng Phía Client"]
+            direction LR
+            FETCH_CLIENT["Fetch API Client<br/>(Gắn Header Authorization: Bearer JWT)"]
+            SSE_CLIENT["EventSource (SSE Client)<br/>(Lắng nghe luồng tiến trình thời gian thực)"]
+        end
+
+        C8_UI --> FE_CTRL
+        FE_CTRL --> FE_COMM
     end
 
-    subgraph BackendTier ["TẦNG 2: APPLICATION & SERVICE LAYER (FastAPI Backend)"]
-        APIGateway["FastAPI Core Engine<br/>CORS Middleware | Global Exception Handler | Rate Limiter"]
-        
-        Routers["RESTful API Routers<br/>- /api/auth (AuthRouter)<br/>- /api/process (ProcessRouter)<br/>- /api/documents (DocumentsRouter)<br/>- /api/history (HistoryRouter)<br/>- /api/ai (AIRouter)<br/>- /api/pricing (PricingRouter)<br/>- /api/admin (AdminRouter)"]
-        
-        JobQueue["Async Job Engine<br/>JobManager | BackgroundTasks | SSE Streamer"]
-        
-        Services["Business Service Layer<br/>- AuthService (Bcrypt + JWT HS256)<br/>- PDFService (PyMuPDF + pdfplumber)<br/>- OCRService (Tesseract vie+eng + Pillow)<br/>- TranslationService (Google GTX + Deep-Translator)<br/>- AIService (Map-Reduce Summarizer + Copilot RAG)<br/>- ExportService (UTF-8 BOM TXT + Unicode PDF)<br/>- SubscriptionService (VietQR Napas247 + Plans)<br/>- AdminService (System Metrics + User Moderation)"]
-        
-        APIGateway --> Routers
-        Routers --> Services
-        Routers --> JobQueue
-        JobQueue --> Services
+    %% ==========================================
+    %% TẦNG 2: APPLICATION & SERVICE LAYER (BACKEND)
+    %% ==========================================
+    subgraph TIER2 ["TẦNG 2: APPLICATION & SERVICE LAYER (FastAPI Backend)"]
+        direction TB
+
+        subgraph GATEWAY ["API Gateway & Middleware Bảo Vệ"]
+            direction LR
+            CORS["CORSMiddleware<br/>(Kiểm soát Trusted Origins)"]
+            EXC_HANDLER["Global Exception Handler<br/>(Bắt AppException, trả về JSON chuẩn)"]
+            AUTH_GUARD["Security Auth Guard & RBAC<br/>(Kiểm tra JWT & Phân quyền Free/Pro/Admin)"]
+        end
+
+        subgraph ROUTERS ["7 RESTful API Routers"]
+            direction TB
+            R_AUTH["AuthRouter<br/>/api/auth"]
+            R_PROCESS["ProcessRouter<br/>/api/process"]
+            R_DOCS["DocumentsRouter<br/>/api/documents"]
+            R_HIST["HistoryRouter<br/>/api/history"]
+            R_AI["AIRouter<br/>/api/ai"]
+            R_PRICE["PricingRouter<br/>/api/pricing"]
+            R_ADMIN["AdminRouter<br/>/api/admin"]
+        end
+
+        subgraph ASYNC_ENGINE ["Async Job Engine (Xử Lý Nền Thời Gian Thực)"]
+            direction LR
+            JOB_MGR["JobManager Engine<br/>(Trạng thái: PENDING/PROCESSING/COMPLETED/FAILED)"]
+            SSE_STREAM["SSE Event Streamer<br/>(/api/process/jobs/{id}/progress)"]
+            BG_WORKER["Background Task Workers<br/>(FastAPI BackgroundTasks Pool)"]
+        end
+
+        subgraph SERVICES ["8 Dịch Vụ Nghiệp Vụ Cốt Lõi (Core Business Services)"]
+            direction TB
+            S_AUTH["C1: AuthService<br/>(Bcrypt 12 rounds, cấp phát & giải mã JWT HS256)"]
+            S_PDF["C2: PDFService<br/>(Magic Bytes, bóc tách văn bản số PyMuPDF)"]
+            S_DOCS["C2: StorageService<br/>(Quản lý lưu trữ an toàn & cô lập tệp theo User ID)"]
+            S_OCR["C3: OCRService<br/>(Render 300 DPI, Pillow deskew, Tesseract vie+eng)"]
+            S_TRANS["C4: TranslationService<br/>(Phân đoạn chunk_text <= 4500 ký tự, Fallback đa tầng)"]
+            S_AI["C5: AIService<br/>(Map-Reduce Summarizer, Copilot RAG Grounding Prompt)"]
+            S_EXPORT["C6: ExportService<br/>(Xuất tệp TXT UTF-8 BOM, PDF Unicode & Anti-Path Traversal)"]
+            S_SUB["C7: SubscriptionService<br/>(Tạo mã VietQR Napas247, chu kỳ cước & kiểm tra đơn)"]
+            S_ADMIN["C7: AdminService & HistoryService<br/>(Thống kê số liệu hệ thống, quản lý người dùng, audit log)"]
+        end
+
+        GATEWAY --> ROUTERS
+        ROUTERS --> SERVICES
+        R_PROCESS --> ASYNC_ENGINE
+        ASYNC_ENGINE --> S_PDF
+        ASYNC_ENGINE --> S_OCR
+        ASYNC_ENGINE --> S_TRANS
     end
 
-    subgraph InfrastructureTier ["TẦNG 3: DATA & INFRASTRUCTURE LAYER"]
-        ORM[("SQLAlchemy 2.0 ORM<br/>SQLite (Local Dev) / PostgreSQL (Prod)")]
-        FileStorage["File Storage System<br/>storage/documents/{user_id}/<br/>storage/results/"]
-        TesseractBinary["Tesseract OCR Engine<br/>Native Binary (vie + eng traineddata)"]
-        ExternalLLM["External Cloud Services<br/>- Google Gemini API / B.AI Multi-Model Gateway<br/>- Deep-Translator / MyMemory Translation<br/>- VietQR Napas247 Banking Gateway"]
-        
-        Services --> ORM
-        Services --> FileStorage
-        Services --> TesseractBinary
-        Services --> ExternalLLM
+    %% ==========================================
+    %% TẦNG 3: DATA & INFRASTRUCTURE LAYER
+    %% ==========================================
+    subgraph TIER3 ["TẦNG 3: DATA & INFRASTRUCTURE LAYER"]
+        direction TB
+
+        subgraph STORAGE_LAYER ["Lưu Trữ Cơ Sở Dữ Liệu & Tệp Tin"]
+            direction LR
+            ORM["SQLAlchemy 2.0 ORM<br/>(Entities: User, Document, History, PricingPlan, Subscription)"]
+            DB[("Database Engine<br/>SQLite WAL Mode (Dev) / PostgreSQL 16 (Prod)")]
+            FILES[("Physical File Storage<br/>storage/documents/{user_id}/<br/>storage/results/")]
+        end
+
+        subgraph INFRA_SERVICES ["Động Cơ Cục Bộ & Cổng Tích Hợp Đám Mây Ngoài"]
+            direction LR
+            TESS_BIN["Tesseract OCR Binary<br/>(Bộ dữ liệu ngôn ngữ vie + eng)"]
+            LLM_GW["B.AI / Google Gemini API<br/>(Mô hình LLM thông minh)"]
+            TRANS_GW["Cloud Translation Services<br/>(Google Translate GTX / MyMemory / Deep-Translator)"]
+            VIETQR_GW["Cổng Thanh Toán Ngân Hàng<br/>(VietQR Napas247 EMVCo chuẩn)"]
+        end
+
+        ORM --> DB
     end
 
-    API_Client -->|HTTPS / REST API & SSE Streaming| APIGateway
+    %% ==========================================
+    %% CÁC KẾT NỐI LIÊN TẦNG (INTER-TIER CONNECTIONS)
+    %% ==========================================
+    FETCH_CLIENT ==>|HTTPS / REST API Requests| GATEWAY
+    SSE_STREAM -.->|Server-Sent Events Stream (0% - 100%)| SSE_CLIENT
+
+    S_AUTH --> ORM
+    S_DOCS --> FILES
+    S_PDF --> FILES
+    S_EXPORT --> FILES
+    S_OCR --> TESS_BIN
+    S_TRANS --> TRANS_GW
+    S_AI --> LLM_GW
+    S_SUB --> VIETQR_GW
+    S_SUB --> ORM
+    S_ADMIN --> ORM
 ```
 
 ## 2.2. Chi tiết các tầng kiến trúc

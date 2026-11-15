@@ -1,8 +1,16 @@
-# Thiết Kế Use Case và Lược Đồ Use Case
+# Thiết Kế Use Case và Lược Đồ Use Case (Use Case Specification)
 
-> **Dự án**: PDF Lingua - Nền tảng Web Trích xuất PDF, OCR, Dịch thuật Đa ngôn ngữ và Trợ lý AI  
-> **Nhóm thực hiện**: Nhóm 19 (Nguyễn Lê Huy Tâm, Huỳnh Đình Chấn)  
-> **Mã tài liệu**: `DOC-UC-OVERVIEW` (Đồng bộ chuẩn hóa 100% với `use-case-tong-quat.png`)  
+> **THÔNG TIN TÀI LIỆU (DOCUMENT METADATA)**  
+> - **Tên dự án**: **PDF Lingua** - Nền tảng Web Trích xuất PDF, Nhận dạng ký tự quang học OCR, Dịch thuật Đa ngôn ngữ và Trợ lý AI Thông minh  
+> - **Mã tài liệu**: `DOC-UC-OVERVIEW`  
+> - **Phiên bản (Version)**: `v1.2.0`  
+> - **Trạng thái (Status)**: `Chính thức (Approved)`  
+> - **Ngày tạo**: `20/10/2026`  
+> - **Ngày cập nhật gần nhất**: `15/11/2026`  
+> - **Nhóm thực hiện**: Nhóm 19 (Học phần: Đồ án Thực tế Công nghệ Phần mềm)  
+>   1. Nguyễn Lê Huy Tâm - MSSV: `056206011188` (Trưởng nhóm)  
+>   2. Huỳnh Đình Chấn - MSSV: `077206002307` (Thành viên)  
+> - **Tài liệu tham chiếu trực quan**: [use-case-tong-quat.png](use-case-tong-quat.png)  
 
 ---
 
@@ -42,7 +50,7 @@ Hệ thống **PDF Lingua** phân định 4 nhóm tác nhân tương tác:
 
 ## 2. Sơ đồ Use Case tổng quát
 
-Sơ đồ Use Case tổng quát của hệ thống (đồng bộ với file `Docs/use-case/use-case-tong-quat.png`):
+Sơ đồ Use Case tổng quát của hệ thống (đồng bộ trực quan 100% với sơ đồ chuẩn UML):
 
 ![Sơ đồ Use Case tổng quát](use-case-tong-quat.png)
 
