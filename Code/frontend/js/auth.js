@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua: Authentication & Registration Module (PDFL-73.4 + PDFL-76.4)
+ * PDF-Lingua: Authentication & Registration Module
  * --------------------------------------------------------------------------
  * Handles registration and login modal interaction, client-side input validation,
  * password toggle visibility, asynchronous API submission, and UI error states.
@@ -627,7 +627,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  LOGIN (PDFL-76.4)
+  //  LOGIN
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
@@ -1020,7 +1020,7 @@
     return div.innerHTML;
   }
 
-  // ── Session & Auth State Management (PDFL-78.4) ──
+  // ── Session & Auth State Management ──
 
   let inMemoryToken = null;
   let inMemoryUser = null;
@@ -1214,7 +1214,7 @@
       }
     }
 
-    // PDFL-81.4: Notify upload module to update role-based file limits
+    // Notify upload module to update role-based file limits
     if (typeof updateUploadLimitsUI === 'function') {
       try {
         updateUploadLimitsUI(user);
@@ -1320,7 +1320,7 @@
     }
   }
 
-  // ── Account Info Modal (PDFL-79.2) ──
+  // ── Account Info Modal ──
 
   function initAccountModal() {
     const accountModal = document.getElementById('accountModal');
@@ -1521,7 +1521,7 @@
     }
   }
 
-  // ── Change Password Logic (PDFL-80.4) ──
+  // ── Change Password Logic ──
 
   let isSubmittingPassword = false;
 
@@ -1957,7 +1957,7 @@
   }
 
   /**
-   * PDFL-254.2: Kích hoạt modal / giao diện nâng cấp tài khoản Pro VIP.
+   * Kích hoạt modal / giao diện nâng cấp tài khoản Pro VIP.
    */
   function showUpgradeModal() {
     if (typeof window !== 'undefined' && window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {

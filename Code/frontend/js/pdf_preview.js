@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua - PDF.js Canvas Preview & Page Navigation Controls (PDFL-256.1)
+ * PDF-Lingua - PDF.js Canvas Preview & Page Navigation Controls
  * --------------------------------------------------------------------------
  * Provides interactive client-side PDF document rendering on an HTML5 Canvas:
  * - PDF document loading from File, Blob, ArrayBuffer, or Blob/HTTP URL.

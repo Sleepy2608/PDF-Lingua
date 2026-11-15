@@ -527,7 +527,7 @@
   text-decoration: underline;
 }
 
-/* Auth Header User State (PDFL-78.4) */
+/* Auth Header User State */
 .auth-guest-group {
   display: flex;
   align-items: center;
@@ -604,7 +604,7 @@
   border-color: #FCA5A5;
 }
 
-/* Account Info Modal (PDFL-79.2) */
+/* Account Info Modal */
 .account-modal-dialog {
   max-width: 500px;
 }
@@ -823,7 +823,7 @@
   padding: 1.5rem 0 0;
 }
 
-/* ── Change Password Section (PDFL-80.4) ─────────────────────────────────── */
+/* ── Change Password Section ─────────────────────────────────── */
 .account-security-section {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
@@ -1502,7 +1502,7 @@
 }
 
 /* ==========================================================================
-   ADMIN CONSOLE COMPONENT STYLES (EPIC 14: PDFL-188, PDFL-189, PDFL-194, PDFL-197)
+   ADMIN CONSOLE COMPONENT STYLES
    Anti-Slop Design Taste: Linear/Vercel inspired Control Plane
    ========================================================================== */
 
@@ -1676,7 +1676,7 @@
 }
 
 /* ==========================================================================
-   Admin Overview Bento Grid (PDFL-188)
+   Admin Overview Bento Grid
    ========================================================================== */
 .admin-bento-grid {
   display: grid;
@@ -1888,7 +1888,7 @@
 }
 
 /* ==========================================================================
-   User Management Table Card (PDFL-189)
+   User Management Table Card
    ========================================================================== */
 .admin-table-card {
   background: #FFFFFF;
@@ -2410,7 +2410,7 @@
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
 }
 
-/* High-Impact Action Confirmation Modal (PDFL-197) */
+/* High-Impact Action Confirmation Modal */
 .admin-confirm-card {
   background: #FFFFFF;
   border-radius: var(--radius-lg);
@@ -2945,7 +2945,7 @@
   }
 }
 
-/* Multi-target Export Dropdown Component (PDFL-150.4 & PDFL-254.2) */
+/* Multi-target Export Dropdown Component */
 .dropdown-menu-export {
   min-width: 330px;
   max-width: 380px;

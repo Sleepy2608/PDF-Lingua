@@ -2,7 +2,7 @@
 Storage Service
 ---------------
 Handles physical file persistence, folder structure isolation by user,
-safe filename sanitization, and path-traversal prevention (PDFL-90, PDFL-95, PDFL-98).
+safe filename sanitization, and path-traversal prevention.
 """
 
 import json
@@ -36,7 +36,7 @@ class StorageService:
 
     def is_safe_path(self, path: Path | str, base: Optional[Path] = None) -> bool:
         """
-        Kiểm tra đường dẫn có an toàn và nằm trọn trong thư mục gốc cho phép hay không (PDFL-214.2).
+        Kiểm tra đường dẫn có an toàn và nằm trọn trong thư mục gốc cho phép hay không.
         Ngăn chặn toàn bộ nguy cơ Path Traversal hoặc thoát ra khỏi base directory.
         """
         try:
@@ -52,7 +52,6 @@ class StorageService:
         Sanitize uploaded filename to eliminate directory traversal sequences,
         absolute path indicators, control characters, and special characters,
         while preserving valid alphanumeric and Unicode (e.g. Vietnamese) characters.
-        (PDFL-214.2)
         """
         if not filename or not isinstance(filename, str):
             return "document.pdf"
@@ -115,7 +114,6 @@ class StorageService:
     ) -> tuple[str, str, Path]:
         """
         Saves a document file into the user's isolated storage directory with strict containment validation.
-        (PDFL-214.2)
 
         Returns:
             tuple of (stored_filename, relative_path, absolute_path)
@@ -153,7 +151,6 @@ class StorageService:
     def get_document_path(self, user_id: int | str, stored_filename: str) -> Optional[Path]:
         """
         Resolves physical file path with strict path-traversal validation.
-        (PDFL-214.2)
         - Prevents directory traversal sequences (../, ..\\, encoded variants).
         - Blocks absolute paths (POSIX and Windows).
         - Enforces that the resolved path is strictly contained within the user's storage directory.
@@ -248,7 +245,6 @@ class StorageService:
     def delete_document_file(self, user_id: int | str, stored_filename: str) -> bool:
         """
         Deletes a stored document file from disk with strict containment validation.
-        (PDFL-214.2)
         """
         target_path = self.get_document_path(user_id, stored_filename)
         if not target_path or not target_path.exists():
@@ -274,7 +270,6 @@ class StorageService:
     ) -> tuple[str, Path]:
         """
         Saves a processing history result dictionary as a JSON file in user's isolated results folder.
-        (PDFL-214.2)
 
         Returns:
             tuple of (relative_path, absolute_path)
@@ -314,7 +309,6 @@ class StorageService:
         Resolves physical path of a result JSON file with strict containment check against user_dir.
         Accepts either full relative path ('1/results/123_result.json') or filename ('123_result.json').
         Returns None if missing or if traversal attempt detected.
-        (PDFL-214.2)
         """
         if not result_path_or_filename or not isinstance(result_path_or_filename, str):
             return None
@@ -389,7 +383,6 @@ class StorageService:
     def read_result_file(self, user_id: int | str, result_path_or_filename: str) -> Optional[dict]:
         """
         Reads and parses stored result JSON file with strict containment validation.
-        (PDFL-214.2)
         """
         target_path = self.get_result_path(user_id, result_path_or_filename)
         if not target_path:
@@ -407,7 +400,6 @@ class StorageService:
     def delete_result_file(self, user_id: int | str, result_path_or_filename: str) -> bool:
         """
         Deletes a stored result JSON file from disk with strict containment validation.
-        (PDFL-214.2)
         """
         target_path = self.get_result_path(user_id, result_path_or_filename)
         if target_path and target_path.exists():

@@ -2,8 +2,7 @@
 Document ORM Model
 ------------------
 Defines the `documents` table schema for the PDF-Lingua database.
-Supports persistent file storage, user ownership, and document metadata tracking
-(PDFL-90, PDFL-91, PDFL-95, PDFL-98).
+Supports persistent file storage, user ownership, and document metadata tracking.
 
 Columns
 -------

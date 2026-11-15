@@ -140,7 +140,7 @@ def require_roles(
 
 def get_max_pages_by_role(role_or_user: Optional[Union[User, UserRole, str]] = None) -> int:
     """
-    Chuẩn hóa chính sách giới hạn số trang PDF theo Role (PDFL-178.1).
+    Chuẩn hóa chính sách giới hạn số trang PDF theo Role.
 
     Chính sách hạn mức:
     - Guest (None hoặc 'guest'): 100 trang (settings.MAX_PAGES_FREE)

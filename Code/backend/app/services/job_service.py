@@ -114,7 +114,7 @@ class JobManager:
         job_id: str,
         message: str = "Hệ thống đang bận. Đang xếp hàng chờ đến lượt xử lý...",
     ) -> Optional[Job]:
-        """Cập nhật thông điệp hàng đợi chờ, giữ nguyên trạng thái PENDING (PDFL-71.1)"""
+        """Cập nhật thông điệp hàng đợi chờ, giữ nguyên trạng thái PENDING"""
         with self._lock:
             job = self._jobs.get(job_id)
             if not job or job.is_cancelled:
@@ -246,7 +246,7 @@ class JobManager:
         reason: str = "Tác vụ đã bị hủy.",
     ) -> tuple[bool, str, Optional[Job]]:
         """
-        Hủy tác vụ một cách an toàn và dứt khoát (PDFL-71.1).
+        Hủy tác vụ một cách an toàn và dứt khoát.
         Phân biệt rõ ràng với ngừng theo dõi SSE (unsubscribe):
         - Hủy job: Thay đổi trạng thái Job sang CANCELLED, phát sự kiện hủy qua _cancel_event.
         - Ngừng theo dõi: Chỉ ngắt kết nối subscriber queue của client mà job vẫn tiếp tục chạy.
@@ -284,7 +284,7 @@ class JobManager:
         except RuntimeError:
             curr_loop = None
 
-        # Giới hạn kích thước queue để tránh phình bộ nhớ khi client chậm (PDFL-111.4)
+        # Giới hạn kích thước queue để tránh phình bộ nhớ khi client chậm
         q: asyncio.Queue = asyncio.Queue(maxsize=100)
         with self._lock:
             job = self._jobs.get(job_id)
@@ -343,7 +343,7 @@ class JobManager:
                 del self._subscribers[jid]
 
         # Giới hạn số lượng job tối đa trong RAM:
-        # TUYỆT ĐỐI KHÔNG XÓA các Job đang hoạt động (PENDING hoặc PROCESSING) (PDFL-111.4)
+        # TUYỆT ĐỐI KHÔNG XÓA các Job đang hoạt động (PENDING hoặc PROCESSING)
         finished_jobs = [
             j
             for j in self._jobs.values()

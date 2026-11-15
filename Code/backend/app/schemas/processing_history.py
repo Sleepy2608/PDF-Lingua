@@ -2,7 +2,7 @@
 Processing History Pydantic Schemas
 -----------------------------------
 Defines request, update, and response data validation schemas for
-document processing history records (PDFL-159.3, PDFL-162.1).
+document processing history records.
 
 Schema hierarchy
 ----------------
@@ -175,7 +175,7 @@ class ProcessingHistoryUpdate(BaseModel):
 
 
 class ProcessingHistoryResponse(ProcessingHistoryBase):
-    """Read-safe response schema for ProcessingHistory records (PDFL-162.1)."""
+    """Read-safe response schema for ProcessingHistory records."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -207,7 +207,7 @@ class ProcessingHistoryResponse(ProcessingHistoryBase):
 
 
 class ProcessingResultResponse(BaseModel):
-    """Schema for retrieved document processing result (PDFL-165.1)."""
+    """Schema for retrieved document processing result."""
 
     history_id: int = Field(..., gt=0, description="ID bản ghi lịch sử xử lý.")
     document_id: int = Field(..., gt=0, description="ID tài liệu gốc.")
@@ -234,14 +234,14 @@ class ProcessingResultResponse(BaseModel):
 
 
 class HistoryDeleteResponse(BaseModel):
-    """Schema for single history record deletion (PDFL-166.1)."""
+    """Schema for single history record deletion."""
 
     id: int = Field(..., gt=0, description="ID bản ghi lịch sử đã xóa.")
     deleted: bool = Field(default=True, description="Trạng thái xóa thành công.")
 
 
 class HistoryCleanupResponse(BaseModel):
-    """Schema for retention cleanup summary (PDFL-166.1)."""
+    """Schema for retention cleanup summary."""
 
     deleted_count: int = Field(..., ge=0, description="Số lượng bản ghi lịch sử đã được dọn dẹp.")
     older_than_days: int = Field(..., ge=1, description="Số ngày chính sách lưu trữ áp dụng.")

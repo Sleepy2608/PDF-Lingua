@@ -272,7 +272,7 @@
       }
     });
 
-    // Listen to global job completion events (PDFL-71.4)
+    // Listen to global job completion events
     window.addEventListener('pdfl:job-completed', () => {
       fetchRecentDocuments();
       const historySection = document.getElementById('historySection');
@@ -348,7 +348,7 @@
   }
 
   function openDocumentsView() {
-    // PDFL-71.3: If processing modal is open when switching views, auto-minimize to floating mini-widget
+    // If processing modal is open when switching views, auto-minimize to floating mini-widget
     const processingModal = document.getElementById('processingModal');
     if (processingModal && (processingModal.style.display === 'flex' || processingModal.style.display === 'block')) {
       if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.minimizeProgressModal === 'function') {
@@ -399,7 +399,7 @@
   }
 
   function openHistoryView() {
-    // PDFL-71.3: If processing modal is open when switching views, auto-minimize to floating mini-widget
+    // If processing modal is open when switching views, auto-minimize to floating mini-widget
     const processingModal = document.getElementById('processingModal');
     if (processingModal && (processingModal.style.display === 'flex' || processingModal.style.display === 'block')) {
       if (window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.minimizeProgressModal === 'function') {
@@ -2440,7 +2440,7 @@
         return num + ' ms';
       }
     }
-    // Fallback if record has timestamps and status SUCCESS (PDFL-169)
+    // Fallback if record has timestamps and status SUCCESS
     if (record && record.created_at && record.updated_at && record.status === 'SUCCESS') {
       try {
         const start = new Date(record.created_at).getTime();
@@ -2458,7 +2458,7 @@
   }
 
       /**
-       * Fetch paginated processing histories from GET /api/history (PDFL-164.2)
+       * Fetch paginated processing histories from GET /api/history
        */
       async function fetchProcessingHistories() {
         const token = getStoredAuthToken();
@@ -2682,7 +2682,7 @@
           actionBtnHtml = '<span class="history-running-indicator font-mono">Đang chạy...</span>';
         }
 
-        // Delete Button (PDFL-166.2)
+        // Delete Button
         let deleteBtnHtml = '';
         if (status === 'PENDING') {
           deleteBtnHtml = `
@@ -2742,7 +2742,7 @@
           });
         }
 
-        // Click handler for Reopening Result (PDFL-165.2)
+        // Click handler for Reopening Result
         const btnReopen = tr.querySelector('.history-btn-reopen');
         if (btnReopen) {
           btnReopen.addEventListener('click', (e) => {
@@ -2751,7 +2751,7 @@
           });
         }
 
-        // Click handler for Deleting History (PDFL-166.2)
+        // Click handler for Deleting History
         const btnDelete = tr.querySelector('.history-btn-delete');
         if (btnDelete && status !== 'PENDING') {
           btnDelete.addEventListener('click', (e) => {
@@ -2768,7 +2768,7 @@
       }
 
       /**
-       * Open #historyErrorModal to display diagnostics for a failed processing history (PDFL-164.2)
+       * Open #historyErrorModal to display diagnostics for a failed processing history
        */
       async function openHistoryErrorModal(historyId) {
         const historyErrorModal = document.getElementById('historyErrorModal');
@@ -2813,7 +2813,7 @@
       }
 
       /**
-       * Reopen stored processing result and display in Workspace (PDFL-165.2)
+       * Reopen stored processing result and display in Workspace
        */
       async function reopenHistoryResult(historyId, buttonEl) {
         if (!historyId) return;
@@ -3057,7 +3057,7 @@
       }
 
       /**
-       * Initialize History Delete Confirmation Modal events (PDFL-166.2)
+       * Initialize History Delete Confirmation Modal events
        */
       function initHistoryDeleteConfirmModal() {
         const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
@@ -3107,7 +3107,7 @@
       }
 
       /**
-       * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks (PDFL-166.2)
+       * Toggle loading state in #historyDeleteConfirmModal and prevent double-clicks
        */
       function setHistoryDeleteLoadingState(loading) {
         isHistoryDeleting = Boolean(loading);
@@ -3131,7 +3131,7 @@
       }
 
       /**
-       * Open #historyDeleteConfirmModal for single record or expired histories cleanup (PDFL-166.2)
+       * Open #historyDeleteConfirmModal for single record or expired histories cleanup
        */
       function openHistoryDeleteConfirmModal(payload) {
         const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
@@ -3182,7 +3182,7 @@
       }
 
       /**
-       * Close History Delete Confirmation Modal (PDFL-166.2)
+       * Close History Delete Confirmation Modal
        */
       function closeHistoryDeleteConfirmModal() {
         const confirmModalEl = document.getElementById('historyDeleteConfirmModal');
@@ -3203,7 +3203,7 @@
       }
 
       /**
-       * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation (PDFL-166.2)
+       * Execute DELETE /api/history/{id} or POST /api/history/cleanup on confirmation
        */
       async function confirmHistoryDelete() {
         if (!isHistoryDeleteConfirmOpen || isHistoryDeleting || !pendingHistoryDelete) {

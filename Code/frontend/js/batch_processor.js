@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua - Batch Processor & Orchestrator (PDFL-252.2)
+ * PDF-Lingua - Batch Processor & Orchestrator
  * --------------------------------------------------------------------------
  * Controls concurrent execution of PDF processing jobs from the Batch Queue:
  * - Strict concurrency limit = 2 (maximum 2 active processing jobs simultaneously).
@@ -235,7 +235,7 @@
       formData.append('file', item.file);
       formData.append('target_lang', targetLang);
 
-      // PDFL-255.2 & PDFL-252.2 Page Selection Safety:
+      // Page Selection Safety:
       // Do NOT apply file A's custom page selection to all other files in batch.
       // Each file must have its own valid page selection or default to all (null).
       const queue = (window.pdfLinguaBatchQueue && window.pdfLinguaBatchQueue.getQueue()) || [];
@@ -459,7 +459,7 @@
         execution_time_ms: execTimeMs,
       });
 
-      // Notify other modules (e.g. History, Recent Documents) that document is processed (PDFL-169)
+      // Notify other modules (e.g. History, Recent Documents) that document is processed
       if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
         try {
           window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { document: result } }));
@@ -669,7 +669,7 @@
     }
   }
 
-  // Singleton instance exposed on window (PDFL-252.2)
+  // Singleton instance exposed on window
   if (typeof window !== 'undefined') {
     window.pdfLinguaBatchOrchestrator = new BatchOrchestrator();
     window.BatchOrchestrator = BatchOrchestrator;

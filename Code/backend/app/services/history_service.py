@@ -2,7 +2,7 @@
 Processing History Service Layer
 --------------------------------
 Encapsulates business operations for tracking, querying, and managing
-document processing histories (PDFL-159.3):
+document processing histories:
 - Persistence and state transitions (PENDING -> SUCCESS | FAILED).
 - Execution timing and sanitized error logging.
 - Strict multi-tenant data ownership verification (Anti-IDOR).
@@ -223,7 +223,7 @@ class HistoryService:
             current_user_id=current_user_id,
         )
 
-    # ── Result Persistence & Retrieval (PDFL-165.1) ──────────────────────────
+    # ── Result Persistence & Retrieval ──────────────────────────
 
     @classmethod
     def save_history_result(
@@ -235,7 +235,7 @@ class HistoryService:
         execution_time_ms: Optional[int] = None,
     ) -> ProcessingHistory:
         """
-        Persist result data as a JSON file and link it to the ProcessingHistory record (PDFL-165.1).
+        Persist result data as a JSON file and link it to the ProcessingHistory record.
         Transitions status to SUCCESS and updates execution_time_ms if provided.
         Ensures consistency by cleaning up the written file if the DB transaction fails.
         """
@@ -313,7 +313,7 @@ class HistoryService:
         is_admin: bool = False,
     ) -> dict:
         """
-        Retrieve persisted result data for a specific ProcessingHistory record (PDFL-165.1).
+        Retrieve persisted result data for a specific ProcessingHistory record.
         Enforces strict multi-tenant ownership verification (Anti-IDOR).
         Validates status, file existence, and JSON format integrity.
         """
@@ -401,7 +401,7 @@ class HistoryService:
         is_admin: bool = False,
     ) -> bool:
         """
-        Delete a single processing history record and its associated result JSON file (PDFL-166.1).
+        Delete a single processing history record and its associated result JSON file.
         Enforces strict multi-tenant ownership check (Anti-IDOR).
         Does NOT delete the original PDF document or modify other records.
         Handles missing result file gracefully without raising.
@@ -484,7 +484,7 @@ class HistoryService:
         is_admin: bool = False,
     ) -> dict:
         """
-        Cleanup expired processing history records and associated result files for a user (PDFL-166.1).
+        Cleanup expired processing history records and associated result files for a user.
         Uses retention policy (defaulting to settings.HISTORY_RETENTION_DAYS).
         Skips PENDING records currently in processing.
         Does NOT delete original PDF documents.
@@ -752,7 +752,7 @@ class HistoryService:
             logger.error(f"[HistoryService] DB error counting histories for user_id={effective_user_id}: {exc}")
             raise
 
-    # ── Workflow Automation & Fault Isolation (PDFL-160.1) ───────────────────
+    # ── Workflow Automation & Fault Isolation ───────────────────
 
     @classmethod
     def safe_start_action(

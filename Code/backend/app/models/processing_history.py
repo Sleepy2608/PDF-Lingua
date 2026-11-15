@@ -3,7 +3,7 @@ Processing History ORM Model
 ----------------------------
 Defines the `processing_histories` table schema for the PDF-Lingua database.
 Supports tracking of document operations (EXTRACT, TRANSLATE, SUMMARIZE),
-execution statuses, performance metrics, and error diagnostics (PDFL-159.1).
+execution statuses, performance metrics, and error diagnostics.
 
 Columns
 -------

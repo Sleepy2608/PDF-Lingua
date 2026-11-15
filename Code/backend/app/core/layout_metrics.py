@@ -177,7 +177,7 @@ def calculate_column_order_score(reference: str, hypothesis: str) -> float:
 @dataclass
 class LayoutEvaluationResult:
     """
-    Kết quả đánh giá Layout độc lập, chuẩn hóa điểm số dễ tái sử dụng cho PDFL-110.5.
+    Kết quả đánh giá Layout độc lập, chuẩn hóa điểm số dễ tái sử dụng.
     """
     reading_order_score: float
     paragraph_structure_score: float

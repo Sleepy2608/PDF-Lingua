@@ -1,4 +1,4 @@
-﻿"""Create processing_histories table and enums (PDFL-159.2)
+﻿"""Create processing_histories table and enums
 
 Revision ID: create_processing_histories
 Revises:

@@ -14,7 +14,7 @@ from PIL import Image
 
 def parse_page_selection(pages_str: Optional[str], total_pages: int) -> list[int]:
     """
-    Parse chuỗi lựa chọn trang PDF thành danh sách các index trang (0-based) đã sắp xếp và không trùng lặp (PDFL-255.1).
+    Parse chuỗi lựa chọn trang PDF thành danh sách các index trang (0-based) đã sắp xếp và không trùng lặp.
 
     Cú pháp hỗ trợ:
     - Trang đơn: '1', '5'
@@ -99,7 +99,7 @@ class PDFService:
 
     @staticmethod
     def parse_page_selection(pages_str: Optional[str], total_pages: int) -> list[int]:
-        """PDFL-255.1: Phân tích cú pháp lựa chọn dải trang."""
+        """Phân tích cú pháp lựa chọn dải trang."""
         return parse_page_selection(pages_str, total_pages)
 
     def is_blank_page(
@@ -141,7 +141,7 @@ class PDFService:
 
     def validate_filename(self, filename: Optional[str]) -> tuple[bool, Optional[str]]:
         """
-        Kiểm tra tính hợp lệ của tên tệp PDF (PDFL-214.1):
+        Kiểm tra tính hợp lệ của tên tệp PDF:
         - Bắt buộc phải có tên tệp và có phần mở rộng .pdf (không phân biệt hoa thường).
         - Chặn null byte (\x00, \0) và các ký tự điều khiển.
         - Chặn double extension (ví dụ: file.php.pdf, malicious.exe.pdf, test.txt.pdf, doc.pdf.pdf).
@@ -185,7 +185,7 @@ class PDFService:
 
     def validate_content_type(self, content_type: Optional[str]) -> tuple[bool, Optional[str]]:
         """
-        Kiểm tra Content-Type của tệp tải lên (PDFL-214.1):
+        Kiểm tra Content-Type của tệp tải lên:
         Bắt buộc phải là application/pdf (không phân biệt hoa thường).
         """
         if not content_type or not isinstance(content_type, str):
@@ -200,7 +200,7 @@ class PDFService:
 
     def validate_raw_pdf_content(self, content: bytes) -> tuple[bool, Optional[str]]:
         """
-        Kiểm tra dữ liệu nhị phân thô của tệp PDF (PDFL-214.1):
+        Kiểm tra dữ liệu nhị phân thô của tệp PDF:
         - Không được là tệp rỗng (0 bytes).
         - Bắt buộc phải có Magic Bytes bắt đầu bằng %PDF-1.
         """
@@ -219,7 +219,7 @@ class PDFService:
         content: bytes,
     ) -> tuple[bool, Optional[str]]:
         """
-        Harden PDF upload validation toàn diện (PDFL-214.1).
+        Harden PDF upload validation toàn diện.
         Kiểm tra đồng thời filename, content-type, magic bytes và dung lượng thô.
         """
         valid_name, err_name = self.validate_filename(filename)
@@ -929,7 +929,7 @@ class PDFService:
         selected_pages: Optional[list[int]] = None,
     ) -> dict[str, Any]:
         """
-        PDFL-255.1: Trích xuất văn bản hybrid kết hợp layout extraction và OCR.
+        Trích xuất văn bản hybrid kết hợp layout extraction và OCR.
         Hỗ trợ selective extraction thông qua `selected_pages`.
         """
         return self.extract_hybrid_fast_path(

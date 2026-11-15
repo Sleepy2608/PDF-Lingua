@@ -55,7 +55,7 @@ translation_service = TranslationService()
 export_service = ExportService()
 storage_service = StorageService()
 
-# Giới hạn số lượng Background Jobs xử lý đồng thời để kiểm soát RAM và CPU (PDFL-111.4.5)
+# Giới hạn số lượng Background Jobs xử lý đồng thời để kiểm soát RAM và CPU
 MAX_CONCURRENT_BACKGROUND_JOBS = 4
 _job_semaphore = threading.Semaphore(MAX_CONCURRENT_BACKGROUND_JOBS)
 
@@ -75,7 +75,7 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
 
 
 class JobCancelledException(Exception):
-    """Ngoại lệ khi tác vụ nền bị hủy bởi người dùng (PDFL-71.1)"""
+    """Ngoại lệ khi tác vụ nền bị hủy bởi người dùng"""
     pass
 
 
@@ -93,11 +93,11 @@ def _execute_pdf_background_job(
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
-    Được kiểm soát giới hạn tài nguyên bởi Semaphore (PDFL-111.4.5, PDFL-71.1).
+    Được kiểm soát giới hạn tài nguyên bởi Semaphore.
     Hỗ trợ xếp hàng PENDING khi vượt quá giới hạn và hủy tác vụ an toàn.
     Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
-    và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công (PDFL-90, PDFL-91).
-    Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages (PDFL-255.1).
+    và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công.
+    Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages.
     """
     semaphore_acquired = False
     start_time = time.time()
@@ -262,7 +262,7 @@ def _execute_pdf_background_job(
                 "execution_time_ms": execution_time_ms,
             }
 
-            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập (PDFL-165.1, PDFL-169)
+            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập
             history_id: Optional[int] = None
             if user_id is not None and document_id is not None:
                 hist_session = SessionLocal()
@@ -369,16 +369,16 @@ async def create_processing_job(
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
-    Khởi tạo Background Job xử lý PDF (PDFL-111.4).
+    Khởi tạo Background Job xử lý PDF.
     Trả về ngay Job ID mà không giữ kết nối HTTP chờ toàn bộ quá trình OCR.
-    Thực thi kiểm tra tính hợp lệ và hạn mức số trang trước khi cấp Job ID (PDFL-178.3).
-    Hỗ trợ lựa chọn dải trang pages (PDFL-255.1).
+    Thực thi kiểm tra tính hợp lệ và hạn mức số trang trước khi cấp Job ID.
+    Hỗ trợ lựa chọn dải trang pages.
     """
     max_upload_mb, _ = get_user_limits(current_user)
     max_allowed_pages = get_max_pages_by_role(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
-    # 1. Kiểm tra filename (PDFL-214.1)
+    # 1. Kiểm tra filename
     valid_name, name_err = pdf_service.validate_filename(file.filename)
     if not valid_name:
         raise HTTPException(
@@ -386,7 +386,7 @@ async def create_processing_job(
             detail=name_err or "Tệp tải lên phải có định dạng .pdf.",
         )
 
-    # 2. Kiểm tra Content-Type (PDFL-214.1)
+    # 2. Kiểm tra Content-Type
     valid_ct, ct_err = pdf_service.validate_content_type(file.content_type)
     if not valid_ct:
         raise HTTPException(
@@ -401,7 +401,7 @@ async def create_processing_job(
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
-    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1. (PDFL-214.1)
+    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1.
     valid_raw, raw_err = pdf_service.validate_raw_pdf_content(content)
     if not valid_raw:
         raise HTTPException(
@@ -426,7 +426,7 @@ async def create_processing_job(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        # PDFL-255.1: Parse và validate dải trang nếu được truyền vào
+        # Parse và validate dải trang nếu được truyền vào
         selected_pages: Optional[list[int]] = None
         if pages is not None and pages.strip() and pages.strip().lower() != "all":
             try:
@@ -518,7 +518,7 @@ async def cancel_processing_job(
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
-    Hủy một Background Job đang xếp hàng (PENDING) hoặc đang chạy (PROCESSING) (PDFL-71.1).
+    Hủy một Background Job đang xếp hàng (PENDING) hoặc đang chạy (PROCESSING).
     Phân biệt rõ ràng với hành động ngắt kết nối theo dõi SSE (unsubscribe):
     - Khi hủy: Trạng thái Job chuyển thành CANCELLED, giải phóng worker slot và file tạm.
     - Người dùng chỉ có quyền hủy job của chính họ hoặc nếu là admin.
@@ -560,7 +560,7 @@ async def cancel_processing_job(
 @router.get("/jobs/{job_id}/events")
 async def stream_job_events(job_id: str):
     """
-    Server-Sent Events (SSE) stream tiến độ xử lý tài liệu theo thời gian thực (PDFL-111.4).
+    Server-Sent Events (SSE) stream tiến độ xử lý tài liệu theo thời gian thực.
     Hỗ trợ ngắt kết nối và kết nối lại mà không làm mất trạng thái của Job.
     """
     job = job_manager.get_job(job_id)
@@ -610,7 +610,7 @@ async def upload_and_translate(
     max_upload_mb, max_ocr_pages = get_user_limits(current_user)
     max_bytes = max_upload_mb * 1024 * 1024
 
-    # 1. Kiểm tra filename (PDFL-214.1)
+    # 1. Kiểm tra filename
     valid_name, name_err = pdf_service.validate_filename(file.filename)
     if not valid_name:
         raise HTTPException(
@@ -618,7 +618,7 @@ async def upload_and_translate(
             detail=name_err or "Tệp tải lên phải có định dạng .pdf.",
         )
 
-    # 2. Kiểm tra Content-Type (PDFL-214.1)
+    # 2. Kiểm tra Content-Type
     valid_ct, ct_err = pdf_service.validate_content_type(file.content_type)
     if not valid_ct:
         raise HTTPException(
@@ -633,7 +633,7 @@ async def upload_and_translate(
             detail=f"Dung lượng tệp vượt quá giới hạn {max_upload_mb}MB.",
         )
 
-    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1. (PDFL-214.1)
+    # 3. Kiểm tra dữ liệu thô: không rỗng và đúng Magic Bytes %PDF-1.
     valid_raw, raw_err = pdf_service.validate_raw_pdf_content(content)
     if not valid_raw:
         raise HTTPException(
@@ -658,7 +658,7 @@ async def upload_and_translate(
                 detail="Tài liệu PDF không có trang nào hợp lệ để xử lý.",
             )
 
-        # PDFL-255.1: Parse và validate dải trang nếu được truyền vào
+        # Parse và validate dải trang nếu được truyền vào
         selected_pages: Optional[list[int]] = None
         if pages is not None and pages.strip() and pages.strip().lower() != "all":
             try:
@@ -755,7 +755,7 @@ async def upload_and_translate(
                     f"[Process] Saved document id={document_id} for user_id={current_user.id}"
                 )
 
-                # Persist processing history & result (PDFL-165.1, PDFL-169)
+                # Persist processing history & result
                 try:
                     from app.models.processing_history import ActionType, ProcessingStatus
                     from app.schemas.processing_history import ProcessingHistoryCreate
@@ -845,7 +845,7 @@ async def process_compatibility_endpoint(
     current_user: Optional[User] = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
 ):
-    """PDFL-255.1: Compatibility endpoint for /process and /api/process."""
+    """Compatibility endpoint for /process and /api/process."""
     return await upload_and_translate(
         file=file,
         target_lang=target_lang,
@@ -894,7 +894,7 @@ def get_download_current_user(
     db: Session = Depends(get_db),
 ) -> Optional[User]:
     """
-    PDFL-254.1: Xác định người dùng cho endpoint tải tài liệu (/download):
+    Xác định người dùng cho endpoint tải tài liệu (/download):
     - Tương thích ngược: Nếu app.dependency_overrides chứa get_current_user hoặc
       get_download_current_user (mock auth trong các test suite), sử dụng override đó.
     - Nếu request có Bearer token: xác thực chặt chẽ qua get_current_user (401 INVALID/EXPIRED, 403 INACTIVE).
@@ -926,7 +926,7 @@ async def download_result(
     content_str = (request.content or "").strip()
     original_str = (request.original_content or "").strip()
 
-    # PDFL-156.1: Kiểm tra nội dung không rỗng theo export_type
+    # Kiểm tra nội dung không rỗng theo export_type
     # Xét đầy đủ các trường hợp: None, chuỗi rỗng và chuỗi chỉ chứa whitespace.
     if export_type == ExportTargetType.ORIGINAL:
         original_text = content_str or original_str
@@ -1019,7 +1019,7 @@ async def download_result(
     else:
         ext = "txt"
 
-    # PDFL-254.1: Kiểm tra quyền tải file DOCX (chỉ dành riêng cho tài khoản Pro/Admin; Free/Guest trả về HTTP 403)
+    # Kiểm tra quyền tải file DOCX (chỉ dành riêng cho tài khoản Pro/Admin; Free/Guest trả về HTTP 403)
     if ext == "docx":
         user_role = current_user.role if current_user else None
         is_pro_or_admin = (
@@ -1121,7 +1121,7 @@ async def batch_download_results(
     db: Session = Depends(get_db),
 ):
     """
-    PDFL-252.2: Tải về trọn bộ file kết quả dịch dưới dạng tệp ZIP nén.
+    Tải về trọn bộ file kết quả dịch dưới dạng tệp ZIP nén.
     - Yêu cầu xác thực tài khoản (Bearer Token).
     - Kiểm tra danh sách Job ID / History ID hợp lệ, không rỗng và không trùng lặp (400 Bad Request).
     - Kiểm tra quyền sở hữu (Anti-IDOR): Chỉ cho phép tải file của chính mình hoặc Admin (403/404).
@@ -1132,7 +1132,7 @@ async def batch_download_results(
     raw_job_ids = request.job_ids
     raw_hist_ids = request.history_ids
 
-    # 1. Kiểm tra danh sách không được rỗng (PDFL-252.2)
+    # 1. Kiểm tra danh sách không được rỗng
     has_job_ids = raw_job_ids is not None and len(raw_job_ids) > 0
     has_hist_ids = raw_hist_ids is not None and len(raw_hist_ids) > 0
 

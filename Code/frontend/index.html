@@ -504,7 +504,7 @@
                                         </button>
                                     </div>
 
-                                    <!-- Batch Queue UI (PDFL-252.1) -->
+                                    <!-- Batch Queue UI -->
                                     <div class="batch-queue-card" id="batchQueueCard">
                                         <div class="batch-queue-header">
                                             <div class="batch-queue-title-wrap">
@@ -566,7 +566,7 @@
                                             <span>Hàng đợi trống. Kéo thả hoặc chọn tệp PDF để thêm vào.</span>
                                         </div>
 
-                                        <!-- Batch Overall Progress (PDFL-252.2) -->
+                                        <!-- Batch Overall Progress -->
                                         <div class="batch-overall-progress-wrap" id="batchOverallProgressWrap"
                                             style="display: none;">
                                             <div class="batch-overall-progress-header">
@@ -581,7 +581,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Batch Footer Actions & Download ZIP (PDFL-252.2) -->
+                                        <!-- Batch Footer Actions & Download ZIP -->
                                         <div class="batch-queue-footer" id="batchQueueFooter" style="display: none;">
                                             <div class="batch-footer-info" id="batchFooterNotice"
                                                 style="display: none;"></div>
@@ -609,7 +609,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Page Selection UI & Quick Chips (PDFL-255.2) -->
+                                    <!-- Page Selection UI & Quick Chips -->
                                     <div class="page-selection-card" id="pageSelectionCard">
                                         <div class="page-selection-header">
                                             <span class="page-selection-title">
@@ -708,7 +708,7 @@
                             </div>
 
                             <div class="toolbar-actions">
-                                <!-- View Mode Switcher (PDFL-256.2) -->
+                                <!-- View Mode Switcher -->
                                 <div class="view-mode-switcher" id="viewModeSwitcher" role="group"
                                     aria-label="Chế độ hiển thị">
                                     <button type="button" class="view-mode-btn" id="btnViewModeText" data-mode="text"
@@ -936,15 +936,11 @@
                                             <span class="summary-badge" id="summaryExportStatus">(chưa có)</span>
                                         </div>
                                         <div class="dropdown-format-row">
-                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryTxt"
-                                                data-export-type="summary" data-format="txt" title="Chưa có bản tóm tắt"
-                                                disabled>
+                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryTxt" data-export-type="summary" data-format="txt" title="Chưa có bản tóm tắt" disabled>
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span>File TXT</span>
                                             </button>
-                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryPdf"
-                                                data-export-type="summary" data-format="pdf" title="Chưa có bản tóm tắt"
-                                                disabled>
+                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryPdf" data-export-type="summary" data-format="pdf" title="Chưa có bản tóm tắt" disabled>
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span>File PDF</span>
                                             </button>
@@ -1148,7 +1144,7 @@
                             </div>
                         </div>
 
-                        <!-- Workspace Dynamic Views Wrapper (PDFL-256.2) -->
+                        <!-- Workspace Dynamic Views Wrapper -->
                         <div class="workspace-views-wrapper view-mode-split" id="workspaceViewsWrapper"
                             data-view-mode="split" data-split-tab="pdf">
                             <!-- Mobile Tab Bar for Split Mode (Visible on <= 1024px) -->
@@ -1173,7 +1169,7 @@
                                 </button>
                             </div>
 
-                            <!-- PDF.js Canvas Preview & Page Navigation Controls (PDFL-256.1) -->
+                            <!-- PDF.js Canvas Preview & Page Navigation Controls -->
                             <div class="pdf-preview-card" id="pdfPreviewContainer" style="display: none;">
                                 <div class="pdf-preview-header">
                                     <div class="preview-title-group">
@@ -2430,7 +2426,7 @@
 
             </main>
 
-            <!-- Progress Processing Modal (PDFL-71.2) -->
+            <!-- Progress Processing Modal -->
             <div class="modal-overlay" id="processingModal" style="display: none;">
                 <div class="progress-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle">
                     <div class="progress-card-header">
@@ -2492,7 +2488,7 @@
                 </div>
             </div>
 
-            <!-- Floating Mini-Widget for Background Job (PDFL-71.2) -->
+            <!-- Floating Mini-Widget for Background Job -->
             <div class="bg-job-widget" id="bgJobWidget" style="display: none;" role="region" aria-live="polite" aria-label="Tiến trình xử lý nền">
                 <div class="bg-widget-glow"></div>
                 <div class="bg-widget-content">
@@ -4185,7 +4181,7 @@
     <script src="js/upload.js"></script>
     <script src="js/batch_processor.js"></script>
     <script src="js/auth.js?v=2.0.0"></script>
-    <!-- PDF.js Library CDN & Canvas Preview Module (PDFL-256.1) -->
+    <!-- PDF.js Library CDN & Canvas Preview Module -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="js/pdf_preview.js?v=1.0.0"></script>
     <script src="js/workspace.js?v=2.1.0"></script>

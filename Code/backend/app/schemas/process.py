@@ -70,7 +70,7 @@ class DownloadRequest(BaseModel):
     @field_validator("format", mode="before")
     @classmethod
     def validate_format(cls, v: Any) -> Any:
-        """PDFL-254.1: Kiểm tra định dạng tệp xuất chỉ chấp nhận: txt, pdf, docx."""
+        """Kiểm tra định dạng tệp xuất chỉ chấp nhận: txt, pdf, docx."""
         if not v or not isinstance(v, (str, ExportFormat)):
             raise ValueError("Định dạng tệp không được để trống và phải là chuỗi ký tự hợp lệ.")
         if isinstance(v, str):
@@ -93,7 +93,7 @@ class FeedbackRequest(BaseModel):
 
 class BatchDownloadRequest(BaseModel):
     """
-    PDFL-252.2: Yêu cầu tải về trọn bộ kết quả dịch dưới dạng tệp ZIP.
+    Yêu cầu tải về trọn bộ kết quả dịch dưới dạng tệp ZIP.
     Hỗ trợ danh sách job_ids hoặc history_ids, định dạng tệp và loại nội dung.
     """
     job_ids: Optional[list[str]] = Field(default=None, description="Danh sách Job ID hoàn thành cần tải về")

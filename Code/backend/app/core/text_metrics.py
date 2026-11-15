@@ -140,7 +140,7 @@ def calculate_text_similarity(reference: str | None, hypothesis: str | None, nor
 @dataclass
 class EvaluationResult:
     """
-    Kết quả đánh giá độ chính xác toàn diện, có thể tái sử dụng cho PDFL-110.5.
+    Kết quả đánh giá độ chính xác toàn diện, có thể tái sử dụng.
     """
     reference: str
     hypothesis: str

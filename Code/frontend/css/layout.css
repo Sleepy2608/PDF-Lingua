@@ -340,7 +340,7 @@
 }
 
 /* ==========================================================================
-   Batch Queue UI (PDFL-252.1)
+   Batch Queue UI
    ========================================================================== */
 .batch-queue-card {
   width: 100%;
@@ -579,7 +579,7 @@
   opacity: 0.6;
 }
 
-/* Batch Queue Status Badges & Item Progress (PDFL-252.2) */
+/* Batch Queue Status Badges & Item Progress */
 .queue-item-status.status-waiting {
   background-color: #fef3c7;
   color: #d97706;
@@ -631,7 +631,7 @@
   background-color: #dc2626;
 }
 
-/* Batch Overall Progress UI (PDFL-252.2) */
+/* Batch Overall Progress UI */
 .batch-overall-progress-wrap {
   margin-top: 0.75rem;
   padding: 0.625rem 0.75rem;
@@ -673,7 +673,7 @@
   transition: width 0.3s ease;
 }
 
-/* Batch Footer & ZIP Download (PDFL-252.2) */
+/* Batch Footer & ZIP Download */
 .batch-queue-footer {
   margin-top: 0.75rem;
   padding-top: 0.625rem;
@@ -780,7 +780,7 @@
     }
 
     /* ==========================================================================
-   Page Selection UI & Quick Chips (PDFL-255.2)
+   Page Selection UI & Quick Chips
    ========================================================================== */
 
     .page-selection-card {

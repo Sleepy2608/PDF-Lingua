@@ -161,7 +161,7 @@ img, svg {
 }
 
 /* ========================================================================== */
-/* PDFL-71.2: Processing Modal Actions & Floating Mini-Widget               */
+/* Processing Modal Actions & Floating Mini-Widget */
 /* ========================================================================== */
 
 .progress-card {
@@ -280,7 +280,7 @@ img, svg {
   pointer-events: none;
 }
 
-/* Floating Mini-Widget (PDFL-71.2) */
+/* Floating Mini-Widget */
 .bg-job-widget {
   position: fixed;
   bottom: 24px;
@@ -452,7 +452,7 @@ img, svg {
 }
 
 /* ========================================================================== */
-/* Global Completion Toast & Action Navigation (PDFL-71.4)                     */
+/* Global Completion Toast & Action Navigation */
 /* ========================================================================== */
 
 .toast.has-action {

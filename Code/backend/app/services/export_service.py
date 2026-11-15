@@ -58,7 +58,7 @@ class ExportService:
         target_type: ExportTargetType,
     ) -> tuple[str, str | None]:
         """
-        PDFL-156.2: Kiểm tra nội dung đầu vào cho ExportService.
+        Kiểm tra nội dung đầu vào cho ExportService.
         Từ chối None, chuỗi rỗng và chuỗi chỉ chứa whitespace.
         Ném ValueError cho từng loại xuất khi nội dung không hợp lệ.
         """
@@ -288,7 +288,7 @@ class ExportService:
         export_type: str | ExportTargetType | None = None,
     ) -> bytes:
         """
-        PDFL-254.1: Xuất tài liệu ra định dạng Microsoft Word (.docx).
+        Xuất tài liệu ra định dạng Microsoft Word (.docx).
         Hỗ trợ:
         - Khổ giấy A4, font tiếng Việt Unicode chuẩn (Arial).
         - Các chế độ xuất: TRANSLATED, ORIGINAL, SUMMARY, BILINGUAL.

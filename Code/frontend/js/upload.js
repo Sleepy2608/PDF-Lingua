@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua - Upload & Dropzone Module (PDFL-81.4)
+ * PDF-Lingua - Upload & Dropzone Module
  * --------------------------------------------------------------------------
  * Handles PDF file selection via dropzone and file input, enforces role-based
  * client-side size limits (Guest/Free: 20MB, Pro/Admin: 100MB), and updates
@@ -454,7 +454,7 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Expose globals for integration & testing (PDFL-81.4 & PDFL-252.1)
+// Expose globals for integration & testing
 if (typeof window !== 'undefined') {
   window.pdfLinguaBatchQueue = {
     getQueue: () => [...batchQueue],

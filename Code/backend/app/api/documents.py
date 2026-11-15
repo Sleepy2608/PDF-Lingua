@@ -1,5 +1,5 @@
 """
-Document Management & Secure File Access Endpoints (PDFL-95, PDFL-98)
+Document Management & Secure File Access Endpoints
 ----------------------------------------------------------------------
 Enforces:
 - Strict authentication: only logged-in users can access saved documents.
@@ -63,7 +63,7 @@ async def get_document_details(
 ):
     """
     Retrieve document metadata by document ID.
-    Enforces multi-tenant ownership check to prevent IDOR attacks (PDFL-98).
+    Enforces multi-tenant ownership check to prevent IDOR attacks.
     """
     query = db.query(Document).filter(Document.id == document_id)
     if current_user.role != UserRole.ADMIN:
@@ -90,8 +90,8 @@ async def download_document_file(
     db: Session = Depends(get_db),
 ):
     """
-    Securely download physical PDF document file (PDFL-95).
-    Verifies ownership (PDFL-98) and guarantees path-traversal prevention.
+    Securely download physical PDF document file.
+    Verifies ownership and guarantees path-traversal prevention.
     """
     query = db.query(Document).filter(Document.id == document_id)
     if current_user.role != UserRole.ADMIN:
@@ -139,7 +139,7 @@ async def preview_document_file(
     db: Session = Depends(get_db),
 ):
     """
-    Securely stream inline PDF document for browser Canvas Preview & Dual/Split View (PDFL-256.2).
+    Securely stream inline PDF document for browser Canvas Preview & Dual/Split View.
     - Returns Content-Type: application/pdf and Content-Disposition: inline.
     - Strict multi-tenant access control: only Owner or Admin can access.
     - Anti-IDOR: Returns 403 Forbidden if user attempts to access another user's document.
@@ -219,7 +219,7 @@ async def delete_document(
     db: Session = Depends(get_db),
 ):
     """
-    Delete a document record and its corresponding physical PDF file (PDFL-94.1).
+    Delete a document record and its corresponding physical PDF file.
     Enforces ownership / ADMIN permission (Anti-IDOR) and transactional safety
     between database and filesystem storage.
     """

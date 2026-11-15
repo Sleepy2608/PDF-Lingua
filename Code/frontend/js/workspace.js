@@ -11,7 +11,7 @@ let currentViewMode = 'split';
 let currentSplitMobileTab = 'pdf';
 
 /**
- * PDFL-256.2: Switch workspace view modes:
+ * Switch workspace view modes:
  * - 'text': Text only (original text pane & translated text pane side-by-side)
  * - 'pdf': Full-width PDF canvas preview only
  * - 'split': Dual view (PDF preview on left, translated text pane on right; tabbed on mobile)
@@ -60,7 +60,7 @@ function setViewMode(mode) {
 }
 
 /**
- * PDFL-256.2: Switch mobile/tablet tab in split mode (<= 1024px):
+ * Switch mobile/tablet tab in split mode (<= 1024px):
  * - 'pdf': Displays PDF Preview
  * - 'translated': Displays Translated text pane
  */
@@ -98,7 +98,7 @@ function setSplitMobileTab(tab) {
 }
 
 /**
- * PDFL-256.2: Display error message inside PDF Preview container
+ * Display error message inside PDF Preview container
  */
 function showPreviewErrorState(msg) {
   const errorEl = document.getElementById('pdfPreviewError');
@@ -110,7 +110,7 @@ function showPreviewErrorState(msg) {
 }
 
 /**
- * PDFL-256.2: Authenticated PDF stream fetch for History records
+ * Authenticated PDF stream fetch for History records
  * Requests GET /api/documents/{document_id}/file with Authorization Bearer header.
  */
 async function fetchDocumentPreview(documentId, filename) {
@@ -187,7 +187,7 @@ async function fetchDocumentPreview(documentId, filename) {
 }
 
 /* ==========================================================================
-   Page Selection UI & Quick Chips (PDFL-255.2)
+   Page Selection UI & Quick Chips
    ========================================================================== */
 function initPageSelection() {
   const radioAll = document.getElementById('radioPageModeAll');
@@ -600,7 +600,7 @@ function initWorkspace() {
     }
   });
 
-  // Multi-target Export Listeners (PDFL-150.4, PDFL-156.3 & PDFL-254.2)
+  // Multi-target Export Listeners
   const exportBtnConfigs = [
     { id: 'btnDownloadTxt', format: 'txt', type: 'translated' },
     { id: 'btnDownloadPdf', format: 'pdf', type: 'translated' },
@@ -626,7 +626,7 @@ function initWorkspace() {
     }
   });
 
-  // View Mode Switcher Listeners (PDFL-256.2)
+  // View Mode Switcher Listeners
   const btnViewModeText = document.getElementById('btnViewModeText');
   const btnViewModePdf = document.getElementById('btnViewModePdf');
   const btnViewModeSplit = document.getElementById('btnViewModeSplit');
@@ -650,9 +650,9 @@ function initWorkspace() {
     btnSplitTabTranslated.addEventListener('click', () => setSplitMobileTab('translated'));
   }
 
-  // Page Selection UI & Quick Chips (PDFL-255.2)
+  // Page Selection UI & Quick Chips
   initPageSelection();
-  // Background Job Controls & Floating Mini-Widget (PDFL-71.2)
+  // Background Job Controls & Floating Mini-Widget
   initBackgroundJobControls();
 
   updateExportUIState();
@@ -742,7 +742,7 @@ function initWorkspace() {
 }
 
 /**
- * Helper to construct authentication headers safely (PDFL-81.4).
+ * Helper to construct authentication headers safely.
  * Returns { 'Authorization': 'Bearer <token>' } if a valid non-empty token exists;
  * otherwise returns an empty object {} for Guests. Never sends 'Bearer null' or 'Bearer undefined'.
  */
@@ -792,7 +792,7 @@ function cleanupProgressTracking() {
 }
 
 /**
- * Handle HTTP 401 Unauthorized errors from process endpoints (PDFL-81.4).
+ * Handle HTTP 401 Unauthorized errors from process endpoints.
  * Clears stored token/session, resets header to Guest state and updates upload limits,
  * but NEVER silently retries the request without authentication.
  */
@@ -818,11 +818,11 @@ function handleAuthError(result) {
   showToast(msg, 'error');
 }
 
-// Tập hợp lưu trữ các Job ID đã hoàn tất để ngăn chặn kích hoạt Toast và Event trùng lặp (PDFL-71.4)
+// Tập hợp lưu trữ các Job ID đã hoàn tất để ngăn chặn kích hoạt Toast và Event trùng lặp
 const completedJobIds = new Set();
 
 /**
- * Kiểm tra xem người dùng hiện tại có đang xem một phân hệ khác ngoài Workspace/Home không (PDFL-71.4).
+ * Kiểm tra xem người dùng hiện tại có đang xem một phân hệ khác ngoài Workspace/Home không.
  * Ví dụ: Lịch sử xử lý (History), Danh sách tài liệu (Documents), Quản trị (Admin), Bảng giá (Pricing).
  */
 function checkIsOtherViewActive() {
@@ -852,14 +852,14 @@ function checkIsOtherViewActive() {
 }
 
 /**
- * Phát sự kiện toàn cục pdfl:job-completed và hiển thị Toast hoàn tất kèm hành động "Xem ngay" (PDFL-71.4).
+ * Phát sự kiện toàn cục pdfl:job-completed và hiển thị Toast hoàn tất kèm hành động "Xem ngay".
  * Ngăn chặn kích hoạt sự kiện và Toast trùng lặp cho cùng một job.
  */
 function notifyJobCompleted(jobData) {
   if (!jobData) return;
   const jobId = jobData.job_id || currentActiveJobId;
 
-  // Ngăn chặn thông báo trùng lặp cho cùng một job (PDFL-71.4)
+  // Ngăn chặn thông báo trùng lặp cho cùng một job
   if (jobId && completedJobIds.has(jobId)) {
     return;
   }
@@ -875,7 +875,7 @@ function notifyJobCompleted(jobData) {
   const docResult = jobData.result || currentDocData;
   const docId = (docResult && docResult.document_id) || jobData.document_id || null;
 
-  // 1. Kích hoạt sự kiện toàn cục pdfl:job-completed (PDFL-71.4)
+  // 1. Kích hoạt sự kiện toàn cục pdfl:job-completed
   if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
     try {
       window.dispatchEvent(new CustomEvent('pdfl:job-completed', {
@@ -932,7 +932,7 @@ function notifyJobCompleted(jobData) {
 }
 
 /**
- * Khôi phục trạng thái Background Job sau khi reload F5 hoặc mở lại ứng dụng (PDFL-71.3).
+ * Khôi phục trạng thái Background Job sau khi reload F5 hoặc mở lại ứng dụng.
  * Xác thực trạng thái thực tế từ Backend làm nguồn chân lý duy nhất (Single Source of Truth).
  */
 async function recoverActiveJob(savedJobId) {
@@ -1062,11 +1062,11 @@ async function recoverActiveJob(savedJobId) {
 }
 
 /**
- * Theo dõi tiến độ xử lý Background Job theo thời gian thực (PDFL-111.4).
+ * Theo dõi tiến độ xử lý Background Job theo thời gian thực.
  * Sử dụng SSE (Server-Sent Events) và tự động fallback sang polling nếu SSE ngắt kết nối.
  */
 function listenToJobProgress(jobId, btnProcessPdf) {
-  // Ngăn kết nối SSE trùng lặp cho cùng một job đang được theo dõi (PDFL-71.3)
+  // Ngăn kết nối SSE trùng lặp cho cùng một job đang được theo dõi
   if (activeEventSource && currentActiveJobId === jobId) {
     const isClosed = activeEventSource.closed || activeEventSource.readyState === 2;
     if (!isClosed) {
@@ -1216,7 +1216,7 @@ async function handleProcessPdf() {
     return;
   }
 
-  // PDFL-252.2: If multiple files are in the batch queue, delegate to BatchOrchestrator
+  // If multiple files are in the batch queue, delegate to BatchOrchestrator
   if (
     typeof window !== 'undefined' &&
     window.pdfLinguaBatchQueue &&
@@ -1228,7 +1228,7 @@ async function handleProcessPdf() {
     return;
   }
 
-  // Validate Page Selection (PDFL-255.2)
+  // Validate Page Selection
   const pageValidation = validatePageSelection();
   if (!pageValidation.valid) {
     showToast(pageValidation.error || 'Dải trang không hợp lệ!', 'warning');
@@ -1264,7 +1264,7 @@ async function handleProcessPdf() {
       fetchOptions.headers = authHeaders;
     }
 
-    // PDFL-111.4: Gửi yêu cầu khởi tạo Background Job (/jobs)
+    // Gửi yêu cầu khởi tạo Background Job (/jobs)
     const response = await fetch(`${API_BASE_URL}/jobs`, fetchOptions);
 
     let result = null;
@@ -1458,7 +1458,7 @@ async function handleRetranslate() {
 }
 
 /**
- * Lấy nội dung văn bản gốc từ DOM hoặc currentDocData (PDFL-156.3).
+ * Lấy nội dung văn bản gốc từ DOM hoặc currentDocData.
  * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
  */
 function getOriginalContent() {
@@ -1473,7 +1473,7 @@ function getOriginalContent() {
 }
 
 /**
- * Lấy nội dung bản dịch từ DOM hoặc currentDocData (PDFL-156.3).
+ * Lấy nội dung bản dịch từ DOM hoặc currentDocData.
  * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
  */
 function getTranslatedContent() {
@@ -1488,7 +1488,7 @@ function getTranslatedContent() {
 }
 
 /**
- * Lấy nội dung tóm tắt từ dữ liệu tài liệu hiện tại hoặc DOM (EPIC 09).
+ * Lấy nội dung tóm tắt từ dữ liệu tài liệu hiện tại hoặc DOM.
  * Trả về chuỗi nội dung nếu có, ngược lại trả về null.
  */
 function getSummaryContent() {
@@ -1508,7 +1508,7 @@ function getSummaryContent() {
 }
 
 /**
- * PDFL-254.2: Kiểm tra người dùng hiện tại có quyền Pro hoặc Admin không.
+ * Kiểm tra người dùng hiện tại có quyền Pro hoặc Admin không.
  * Bảo đảm:
  * - Bắt buộc phải có Bearer token hợp lệ (nếu không có token -> Guest).
  * - Tài khoản không bị khóa (is_active !== false).
@@ -1544,7 +1544,7 @@ function isProOrAdminUser() {
 }
 
 /**
- * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả các nút tải xuống (PDFL-156.3 & PDFL-254.2).
+ * Cập nhật trạng thái hiển thị và khả năng bấm của tất cả các nút tải xuống.
  */
 function updateExportUIState() {
   const originalText = getOriginalContent();
@@ -1655,7 +1655,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
 
   const cleanFormat = (format || 'txt').trim().toLowerCase();
 
-  // PDFL-254.2: Pro Guard cho định dạng DOCX (Chặn trước ở client cho Guest / Free)
+  // Pro Guard cho định dạng DOCX (Chặn trước ở client cho Guest / Free)
   if (cleanFormat === 'docx') {
     if (!isProOrAdminUser()) {
       showToast('Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!', 'warning');
@@ -1896,7 +1896,7 @@ function renderWorkspace(data) {
     targetLangSelect.value = data.target_lang;
   }
 
-  // Update currentDocData & persist to session storage so refresh preserves it (PDFL-165.2)
+  // Update currentDocData & persist to session storage so refresh preserves it
   currentDocData = {
     document_id: data.document_id,
     history_id: data.history_id,
@@ -1922,7 +1922,7 @@ function renderWorkspace(data) {
   updateCounters();
   updateExportUIState();
 
-  // Initialize or restore View Mode (PDFL-256.2)
+  // Initialize or restore View Mode
   const storeRef = getWorkspaceSessionStorage();
   let savedMode = 'split';
   if (storeRef) {
@@ -1933,7 +1933,7 @@ function renderWorkspace(data) {
   setViewMode(savedMode);
   setSplitMobileTab('pdf');
 
-  // Initialize PDF Preview (PDFL-256.1 & PDFL-256.2)
+  // Initialize PDF Preview
   try {
     let previewSource = null;
     if (typeof window !== 'undefined' && window.pdfLinguaUpload && typeof window.pdfLinguaUpload.getSelectedFile === 'function') {
@@ -1949,7 +1949,7 @@ function renderWorkspace(data) {
         window.pdfLinguaPreview.loadPdfPreview(previewSource);
       }
     } else if (data && data.document_id) {
-      // PDFL-256.2: When opened from History with document_id and no local File, fetch authenticated stream
+      // When opened from History with document_id and no local File, fetch authenticated stream
       fetchDocumentPreview(data.document_id, filename);
     } else {
       if (previewContainer) previewContainer.style.display = 'none';
@@ -2008,7 +2008,7 @@ function resetToUpload() {
   updateCounters();
   updateExportUIState();
 
-  // Cleanup PDF Canvas Preview & reset View Mode (PDFL-256.1 & PDFL-256.2)
+  // Cleanup PDF Canvas Preview & reset View Mode
   try {
     if (typeof window !== 'undefined' && window.pdfLinguaPreview && typeof window.pdfLinguaPreview.cleanupPdfPreview === 'function') {
       window.pdfLinguaPreview.cleanupPdfPreview();
@@ -2080,7 +2080,7 @@ function showProgressModal(show) {
 }
 
 /**
- * Thu nhỏ modal tiến trình thành Floating Mini-Widget (PDFL-71.2).
+ * Thu nhỏ modal tiến trình thành Floating Mini-Widget.
  * Tác vụ xử lý nền (SSE/Polling) vẫn tiếp tục chạy không bị gián đoạn.
  */
 function minimizeProgressModal() {
@@ -2111,7 +2111,7 @@ function minimizeProgressModal() {
 }
 
 /**
- * Phóng to lại modal chi tiết từ Floating Mini-Widget (PDFL-71.2).
+ * Phóng to lại modal chi tiết từ Floating Mini-Widget.
  */
 function maximizeProgressModal() {
   const store = getWorkspaceSessionStorage();
@@ -2132,7 +2132,7 @@ function maximizeProgressModal() {
 }
 
 /**
- * Đóng Floating Mini-Widget nhưng KHÔNG hủy background job (PDFL-71.2).
+ * Đóng Floating Mini-Widget nhưng KHÔNG hủy background job.
  */
 function closeBgWidget() {
   const widget = document.getElementById('bgJobWidget');
@@ -2142,7 +2142,7 @@ function closeBgWidget() {
 }
 
 /**
- * Hủy tác vụ xử lý đang chạy qua API backend POST /api/process/jobs/{job_id}/cancel (PDFL-71.1 & PDFL-71.2).
+ * Hủy tác vụ xử lý đang chạy qua API backend POST /api/process/jobs/{job_id}/cancel.
  */
 async function cancelActiveJob() {
   const btnCancel = document.getElementById('btnCancelJob');
@@ -2203,7 +2203,7 @@ async function cancelActiveJob() {
 }
 
 /**
- * Xử lý dọn dẹp giao diện và trạng thái khi tác vụ đã hủy (PDFL-71.2).
+ * Xử lý dọn dẹp giao diện và trạng thái khi tác vụ đã hủy.
  */
 function handleJobCancelled(message) {
   cleanupProgressTracking();
@@ -2223,7 +2223,7 @@ function handleJobCancelled(message) {
 }
 
 /**
- * Khởi tạo các sự kiện điều khiển cho modal xử lý và Floating Mini-Widget (PDFL-71.2).
+ * Khởi tạo các sự kiện điều khiển cho modal xử lý và Floating Mini-Widget.
  */
 function initBackgroundJobControls() {
   const btnMinimizeProgress = document.getElementById('btnMinimizeProgress');
@@ -2306,7 +2306,7 @@ function updateProgress(percentage, text, currentStep) {
     }
   }
 
-  // Đồng bộ tiến độ với Floating Mini-Widget (PDFL-71.2)
+  // Đồng bộ tiến độ với Floating Mini-Widget
   const bgBar = document.getElementById('bgJobProgressBarFill');
   const bgStatus = document.getElementById('bgJobStatusText');
   const bgPercent = document.getElementById('bgJobPercent');
@@ -2324,31 +2324,41 @@ function showToast(message, type = 'info', action = null) {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  if (action && typeof action.onClick === 'function') {
+  if (action && typeof action.onClick === 'function' && toast.classList) {
     toast.classList.add('has-action');
   }
 
   const textSpan = document.createElement('span');
   textSpan.textContent = message;
-  toast.appendChild(textSpan);
+  if (typeof toast.appendChild === 'function') {
+    toast.appendChild(textSpan);
+  } else {
+    toast.textContent = message;
+  }
 
   if (action && typeof action.onClick === 'function') {
     const actionBtn = document.createElement('button');
     actionBtn.type = 'button';
     actionBtn.className = 'toast-action-btn';
     actionBtn.textContent = action.text || 'Xem ngay';
-    actionBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      action.onClick();
-      toast.remove();
-    });
-    toast.appendChild(actionBtn);
+    if (typeof actionBtn.addEventListener === 'function') {
+      actionBtn.addEventListener('click', (e) => {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        action.onClick();
+        if (typeof toast.remove === 'function') toast.remove();
+      });
+    }
+    if (typeof toast.appendChild === 'function') {
+      toast.appendChild(actionBtn);
+    }
 
     toast.style.cursor = 'pointer';
-    toast.addEventListener('click', () => {
-      action.onClick();
-      toast.remove();
-    });
+    if (typeof toast.addEventListener === 'function') {
+      toast.addEventListener('click', () => {
+        action.onClick();
+        if (typeof toast.remove === 'function') toast.remove();
+      });
+    }
   }
 
   container.appendChild(toast);
@@ -2380,7 +2390,7 @@ function getLangName(code) {
   return names[code] || code;
 }
 
-// Expose globals for integration & testing (PDFL-81.4 & PDFL-111.4 & PDFL-150.4 & PDFL-156.3 & PDFL-255.2)
+// Expose globals for integration & testing
 if (typeof window !== 'undefined') {
   window.pdfLinguaPageSelection = Object.assign(window.pdfLinguaPageSelection || {}, {
     initPageSelection,

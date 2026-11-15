@@ -503,7 +503,7 @@
   color: #B91C1C;
 }
 
-/* Multi-target Export Dropdown (PDFL-150.4 & PDFL-254.2) */
+/* Multi-target Export Dropdown */
 .dropdown-menu-export {
   min-width: 330px;
   max-width: 380px;
@@ -2253,7 +2253,7 @@
 }
 
 /* ==========================================================================
-   AI Copilot Chat Suite Styles (PDFL-51, PDFL-142, PDFL-143, PDFL-144)
+   AI Copilot Chat Suite Styles
    ========================================================================== */
 
 /* Toolbar Button for Copilot */
@@ -2697,7 +2697,7 @@
 }
 
 /* ==========================================================================
-   PDF.js Canvas Preview & Navigation Controls (PDFL-256.1)
+   PDF.js Canvas Preview & Navigation Controls
    ========================================================================== */
 
 .pdf-preview-card {
@@ -3079,7 +3079,7 @@
 }
 
 /* ==========================================================================
-   Dual/Split View & View Mode Switcher (PDFL-256.2)
+   Dual/Split View & View Mode Switcher
    ========================================================================== */
 
 /* Segmented View Mode Switcher */
