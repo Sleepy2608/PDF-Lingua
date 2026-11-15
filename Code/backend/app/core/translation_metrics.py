@@ -145,7 +145,7 @@ def calculate_semantic_similarity(reference: str, hypothesis: str) -> float:
 @dataclass
 class TranslationEvaluationResult:
     """
-    Kết quả đánh giá chất lượng bản dịch độc lập, chuẩn hóa dễ tái sử dụng cho PDFL-110.5.
+    Kết quả đánh giá chất lượng bản dịch độc lập, chuẩn hóa dễ tái sử dụng.
     """
     bleu_score: float
     similarity_score: float

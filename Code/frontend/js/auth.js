@@ -1,5 +1,5 @@
 /**
- * PDF-Lingua: Authentication & Registration Module (PDFL-73.4 + PDFL-76.4)
+ * PDF-Lingua: Authentication & Registration Module
  * --------------------------------------------------------------------------
  * Handles registration and login modal interaction, client-side input validation,
  * password toggle visibility, asynchronous API submission, and UI error states.
@@ -160,6 +160,7 @@
       closeRegisterModal,
       openLoginModal,
       closeLoginModal,
+      showUpgradeModal,
     });
   }
 
@@ -626,7 +627,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  LOGIN (PDFL-76.4)
+  //  LOGIN
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
@@ -1019,7 +1020,7 @@
     return div.innerHTML;
   }
 
-  // ── Session & Auth State Management (PDFL-78.4) ──
+  // ── Session & Auth State Management ──
 
   let inMemoryToken = null;
   let inMemoryUser = null;
@@ -1213,7 +1214,7 @@
       }
     }
 
-    // PDFL-81.4: Notify upload module to update role-based file limits
+    // Notify upload module to update role-based file limits
     if (typeof updateUploadLimitsUI === 'function') {
       try {
         updateUploadLimitsUI(user);
@@ -1319,7 +1320,7 @@
     }
   }
 
-  // ── Account Info Modal (PDFL-79.2) ──
+  // ── Account Info Modal ──
 
   function initAccountModal() {
     const accountModal = document.getElementById('accountModal');
@@ -1520,7 +1521,7 @@
     }
   }
 
-  // ── Change Password Logic (PDFL-80.4) ──
+  // ── Change Password Logic ──
 
   let isSubmittingPassword = false;
 
@@ -1955,6 +1956,39 @@
     return fetch(url, Object.assign({}, options, { headers }));
   }
 
+  /**
+   * Kích hoạt modal / giao diện nâng cấp tài khoản Pro VIP.
+   */
+  function showUpgradeModal() {
+    if (typeof window !== 'undefined' && window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
+      window.PDFLinguaPricing.openPricingView();
+      return;
+    }
+    const quotaModal = document.getElementById('quotaExceededModal');
+    if (quotaModal) {
+      quotaModal.removeAttribute('hidden');
+      quotaModal.setAttribute('aria-hidden', 'false');
+      quotaModal.style.display = 'flex';
+      return;
+    }
+    const aiProModal = document.getElementById('aiProModal');
+    if (aiProModal) {
+      aiProModal.removeAttribute('hidden');
+      aiProModal.style.display = 'flex';
+      return;
+    }
+    const checkoutModal = document.getElementById('pricingCheckoutModal');
+    if (checkoutModal) {
+      checkoutModal.removeAttribute('hidden');
+      checkoutModal.setAttribute('aria-hidden', 'false');
+      checkoutModal.style.display = 'flex';
+      return;
+    }
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.hash = '#pricingSection';
+    }
+  }
+
   // Expose helpers globally for testing or integration
   window.pdfLinguaAuth = Object.assign(window.pdfLinguaAuth || {}, {
     validateRegistrationForm,
@@ -1978,6 +2012,7 @@
     updateHeaderAuthState,
     restoreSession,
     handleLogout,
+    showUpgradeModal,
     authFetch,
     openLoginModal,
     closeLoginModal,

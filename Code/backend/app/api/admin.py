@@ -1,12 +1,12 @@
 """
-System Administration API Endpoints (EPIC 14)
+System Administration API Endpoints
 ---------------------------------------------
 Exposes endpoints for system metrics, user directory management,
 and account security moderation:
-- GET   /api/admin/stats         : System overview statistics (PDFL-188)
-- GET   /api/admin/users         : Paginated & filtered user directory (PDFL-189)
-- PATCH /api/admin/users/{id}/status : Account lock/unlock moderation (PDFL-194)
-- PATCH /api/admin/users/{id}/role   : Privilege tier mutation (PDFL-197)
+- GET   /api/admin/stats         : System overview statistics
+- GET   /api/admin/users         : Paginated & filtered user directory
+- PATCH /api/admin/users/{id}/status : Account lock/unlock moderation
+- PATCH /api/admin/users/{id}/role   : Privilege tier mutation
 
 Protected by: require_roles(UserRole.ADMIN)
 """
@@ -36,7 +36,7 @@ router = APIRouter(
 )
 
 
-# ── System Overview Stats (PDFL-188) ─────────────────────────────────────────
+# ── System Overview Stats ─────────────────────────────────────────
 
 @router.get("/stats", response_model=ApiResponse[AdminStatsResponse])
 async def get_system_stats(
@@ -55,7 +55,7 @@ async def get_system_stats(
     )
 
 
-# ── User Directory & Filtering (PDFL-189) ─────────────────────────────────────
+# ── User Directory & Filtering ─────────────────────────────────────
 
 @router.get("/users", response_model=ApiResponse[AdminUserListResponse])
 async def list_users(
@@ -88,7 +88,7 @@ async def list_users(
     )
 
 
-# ── Account Lock / Unlock (PDFL-194) ──────────────────────────────────────────
+# ── Account Lock / Unlock ──────────────────────────────────────────
 
 @router.patch("/users/{user_id}/status", response_model=ApiResponse[AdminUserListItem])
 async def update_user_status(
@@ -128,7 +128,7 @@ async def update_user_status(
     )
 
 
-# ── User Role Elevation / Demotion (PDFL-197) ─────────────────────────────────
+# ── User Role Elevation / Demotion ─────────────────────────────────
 
 @router.patch("/users/{user_id}/role", response_model=ApiResponse[AdminUserListItem])
 async def update_user_role(

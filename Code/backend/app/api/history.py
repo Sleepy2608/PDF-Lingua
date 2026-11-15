@@ -1,5 +1,5 @@
 """
-Processing History API Endpoints (PDFL-160.2, PDFL-160.3, PDFL-162.2)
+Processing History API Endpoints
 ---------------------------------------------------------------------
 Exposes endpoints for querying document processing history:
 - GET /api/history               : List processing histories for the current user (paginated & filterable).
@@ -59,7 +59,7 @@ async def list_user_histories(
     db: Session = Depends(get_db),
 ):
     """
-    Lấy danh sách lịch sử xử lý tài liệu của người dùng đang đăng nhập (PDFL-162.2).
+    Lấy danh sách lịch sử xử lý tài liệu của người dùng đang đăng nhập.
     Hỗ trợ phân trang (`skip`, `limit`) và lọc theo `action_type`, `status`, `document_id`.
     ADMIN có thể xem tất cả hoặc lọc theo `user_id`. Người dùng thường chỉ xem lịch sử của chính mình (Anti-IDOR).
     """
@@ -175,7 +175,7 @@ async def get_history_result(
     db: Session = Depends(get_db),
 ):
     """
-    Truy xuất kết quả xử lý đã lưu của một bản ghi lịch sử theo ID (PDFL-165.1).
+    Truy xuất kết quả xử lý đã lưu của một bản ghi lịch sử theo ID.
     Chỉ cho phép chủ sở hữu hoặc ADMIN truy xuất (Anti-IDOR).
     Trả về chi tiết văn bản gốc, văn bản đã dịch, cấu hình OCR và thông tin tài liệu.
     """
@@ -211,7 +211,7 @@ async def delete_history_record(
     db: Session = Depends(get_db),
 ):
     """
-    Xóa một bản ghi lịch sử xử lý và file kết quả liên quan nếu có (PDFL-166.1).
+    Xóa một bản ghi lịch sử xử lý và file kết quả liên quan nếu có.
     Chỉ cho phép chủ sở hữu hoặc ADMIN xóa bản ghi (Anti-IDOR).
     Không làm ảnh hưởng hoặc xóa tài liệu gốc.
     """
@@ -265,7 +265,7 @@ async def cleanup_expired_histories(
     db: Session = Depends(get_db),
 ):
     """
-    Dọn dẹp các bản ghi lịch sử xử lý và file kết quả đã hết hạn theo chính sách lưu trữ (PDFL-166.1).
+    Dọn dẹp các bản ghi lịch sử xử lý và file kết quả đã hết hạn theo chính sách lưu trữ.
     Người dùng thông thường chỉ dọn dẹp lịch sử thuộc sở hữu của mình.
     ADMIN có thể dọn dẹp cho một user cụ thể thông qua `user_id`.
     Bỏ qua các bản ghi đang ở trạng thái PENDING.

@@ -1,4 +1,4 @@
-"""Add result_path column to processing_histories (PDFL-165.1)
+"""Add result_path column to processing_histories
 
 Revision ID: add_result_path_histories
 Revises: add_composite_index_histories

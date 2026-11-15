@@ -1,11 +1,11 @@
 /**
- * PDF-Lingua Admin Console Controller (EPIC 14)
+ * PDF-Lingua Admin Console Controller
  * --------------------------------------------
  * Handles:
- * - PDFL-188: System Overview Statistics loading & card rendering
- * - PDFL-189: User directory listing, real-time search, filtering, and pagination
- * - PDFL-194: Account locking and unlocking lifecycle with immediate feedback
- * - PDFL-197: High-impact action confirmation modal before dangerous operations
+ * - System Overview Statistics loading & card rendering
+ * - User directory listing, real-time search, filtering, and pagination
+ * - Account locking and unlocking lifecycle with immediate feedback
+ * - High-impact action confirmation modal before dangerous operations
  */
 
 (function () {
@@ -146,7 +146,7 @@
     }
   }
 
-  // ── API Fetch: Statistics (PDFL-188) ─────────────────────────────────────────
+  // ── API Fetch: Statistics ─────────────────────────────────────────
   async function fetchAdminStats() {
     const token = getStoredToken();
     if (!token) return;
@@ -255,7 +255,7 @@
     `).join('');
   }
 
-  // ── API Fetch: User Directory (PDFL-189) ─────────────────────────────────────
+  // ── API Fetch: User Directory ─────────────────────────────────────
   async function fetchAdminUsers(targetPage = 1) {
     if (isFetching) return;
     const token = getStoredToken();
@@ -424,7 +424,7 @@
     }
   }
 
-  // ── High-Impact Action Confirmation Modal (PDFL-197) ────────────────────────
+  // ── High-Impact Action Confirmation Modal ────────────────────────
   function openConfirmModal(config) {
     const modal = document.getElementById('adminConfirmModal');
     const titleEl = document.getElementById('confirmModalTitle');
@@ -482,7 +482,7 @@
     pendingConfirmAction = null;
   }
 
-  // ── Action Handlers: Status & Role (PDFL-194, PDFL-197) ──────────────────────
+  // ── Action Handlers: Status & Role ──────────────────────
   async function executeStatusUpdate(userId, newActiveStatus, userEmail) {
     const token = getStoredToken();
     if (!token) return;

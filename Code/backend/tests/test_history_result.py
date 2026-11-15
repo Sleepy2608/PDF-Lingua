@@ -656,3 +656,53 @@ def test_storage_service_path_traversal_guards(temp_storage):
     assert storage.get_result_path(user_id, "") is None
     assert storage.get_result_path(user_id, None) is None
 
+
+def test_pdfl_169_save_history_result_auto_extracts_execution_time(in_memory_db, temp_storage, setup_users_and_doc):
+    """
+    PDFL-169: Verify save_history_result automatically extracts execution_time_ms
+    from result_data dict and stores it in the processing_histories database record.
+    """
+    storage, _ = temp_storage
+    orig_storage = HistoryService.storage_service
+    HistoryService.storage_service = storage
+
+    try:
+        user_a, _, doc_a = setup_users_and_doc
+        hist_rec = HistoryService.create_history(
+            in_memory_db,
+            ProcessingHistoryCreate(
+                user_id=user_a.id,
+                document_id=doc_a.id,
+                action_type=ActionType.TRANSLATE,
+                status=ProcessingStatus.PENDING,
+            ),
+        )
+
+        result_payload = {
+            "document_id": doc_a.id,
+            "filename": "pdfl_169_doc.pdf",
+            "original_text": "Sample text for timing test.",
+            "translated_text": "Văn bản thử nghiệm đo thời gian.",
+            "execution_time_ms": 2450,
+        }
+
+        saved_hist = HistoryService.save_history_result(
+            in_memory_db,
+            history_id=hist_rec.id,
+            user_id=user_a.id,
+            result_data=result_payload,
+        )
+
+        assert saved_hist.status == ProcessingStatus.SUCCESS
+        assert saved_hist.execution_time_ms == 2450
+
+        fetched = HistoryService.get_history_result(
+            in_memory_db,
+            history_id=hist_rec.id,
+            current_user_id=user_a.id,
+        )
+        assert fetched["execution_time_ms"] == 2450
+    finally:
+        HistoryService.storage_service = orig_storage
+
+

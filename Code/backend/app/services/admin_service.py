@@ -2,10 +2,10 @@
 Admin Service Layer
 -------------------
 Encapsulates all administrative business logic:
-- Metrics aggregation for system overview (PDFL-188)
-- Filtered and paginated user directory querying (PDFL-189)
-- Account locking / unlocking with safety guardrails (PDFL-194)
-- User role transitions with administrator retention guards (PDFL-197)
+- Metrics aggregation for system overview
+- Filtered and paginated user directory querying
+- Account locking / unlocking with safety guardrails
+- User role transitions with administrator retention guards
 """
 
 import math
@@ -151,7 +151,7 @@ class AdminService:
         is_active: bool,
     ) -> User:
         """
-        Suspend or reactivate a user account (PDFL-194).
+        Suspend or reactivate a user account.
 
         Enforces safety guardrails:
         - Admin cannot suspend/lock their own account.
@@ -183,7 +183,7 @@ class AdminService:
         new_role: UserRole,
     ) -> User:
         """
-        Promote or demote a user role (PDFL-197).
+        Promote or demote a user role.
 
         Enforces safety guardrails:
         - Admin cannot demote their own admin role to prevent system lockout.

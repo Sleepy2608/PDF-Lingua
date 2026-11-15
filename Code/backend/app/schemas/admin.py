@@ -2,9 +2,9 @@
 Admin Pydantic Schemas
 ----------------------
 Defines data transfer objects (DTOs) for system administration:
-- System overview metrics and statistics (PDFL-188)
-- User list query and paginated responses (PDFL-189)
-- User status update and role mutation payloads (PDFL-194, PDFL-197)
+- System overview metrics and statistics
+- User list query and paginated responses
+- User status update and role mutation payloads
 """
 
 from datetime import datetime
@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.user import UserRole
 
-# ── System Overview Stats (PDFL-188) ─────────────────────────────────────────
+# ── System Overview Stats ─────────────────────────────────────────
 
 class AdminStatsResponse(BaseModel):
     """Aggregated system metrics for the administrative dashboard."""
@@ -31,7 +31,7 @@ class AdminStatsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── User Management Table (PDFL-189) ──────────────────────────────────────────
+# ── User Management Table ──────────────────────────────────────────
 
 class AdminUserListItem(BaseModel):
     """User account summary item displayed in the admin management table."""
@@ -58,7 +58,7 @@ class AdminUserListResponse(BaseModel):
     total_pages: int = Field(..., description="Total number of pages available.")
 
 
-# ── Status & Role Mutations (PDFL-194, PDFL-197) ─────────────────────────────
+# ── Status & Role Mutations ─────────────────────────────
 
 class UserStatusUpdateRequest(BaseModel):
     """Payload to lock or unlock a user account."""

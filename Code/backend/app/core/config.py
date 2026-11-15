@@ -61,7 +61,7 @@ class Settings:
     TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "")
     DEFAULT_OCR_LANG: str = os.getenv("DEFAULT_OCR_LANG", "vie+eng")
 
-    # Processing History & Retention (PDFL-166.1)
+    # Processing History & Retention
     HISTORY_RETENTION_DAYS: int = int(os.getenv("HISTORY_RETENTION_DAYS", "30"))
 
     # Translation
