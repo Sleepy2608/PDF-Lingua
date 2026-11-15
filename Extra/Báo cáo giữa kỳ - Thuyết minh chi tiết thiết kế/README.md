@@ -38,79 +38,193 @@
 
 # 1. Kiến Trúc Hệ Thống
 
-## 1.1. Mô hình kiến trúc phân tầng (3-Tier Layered Architecture)
-Hệ thống **PDF Lingua** được thiết kế theo mô hình kiến trúc phân tầng kết hợp hướng dịch vụ (Service-Oriented Layered Architecture) nhằm đảm bảo tính phân tách trách nhiệm (Separation of Concerns), khả năng mở rộng độc lập (Scalability) và tính dễ bảo trì kiểm thử:
+> **Tài liệu đặc tả chuyên sâu**: Toàn văn thuyết minh kiến trúc phân tầng, phân rã 8 phân hệ, đặc tả chi tiết 7 luồng dữ liệu (Mermaid sequence), bảo mật OWASP Top 10 và sơ đồ triển khai vật lý được trình bày chi tiết tại [Kiến trúc hệ thống - kien_truc_he_thong.md](Kiến%20trúc%20hệ%20thống/kien_truc_he_thong.md).
 
-1. **Tầng 1 - Presentation Layer (Giao diện phía Client)**:
-   - Ứng dụng Single Page Application (SPA) phát triển trên nền HTML5, CSS Tokens và JavaScript ES6+ thuần.
-   - Bố cục màn hình làm việc kép (Dual-pane Workspace) cho phép đối chiếu song ngữ trực quan giữa văn bản gốc và bản dịch.
-   - Quản lý tương tác thông qua các module điều khiển phía giao diện và giao tiếp với máy chủ thông qua Fetch API kèm JWT Bearer Token.
+## 1.1. Mô hình kiến trúc phân tầng chuyên sâu (3-Tier Layered Architecture)
+Hệ thống **PDF Lingua** được xây dựng dựa trên mô hình kiến trúc phân tầng kết hợp hướng dịch vụ (3-Tier Service-Oriented Layered Architecture), tuân thủ 6 nguyên tắc cốt lõi: Phân tách trách nhiệm (SoC), Ghép nối lỏng (Loose Coupling), Kiến trúc phi trạng thái (Stateless Services), An toàn bảo mật từ thiết kế (Security by Design), Cơ chế chịu lỗi dự phòng đa tầng (Multi-Tier Fallback), và Tương tác phản hồi tức thì (Reactive SSE & Priority Toasts).
 
-2. **Tầng 2 - Application & Service Layer (Ứng dụng và Nghiệp vụ phía Backend)**:
-   - Xây dựng trên nền tảng framework **Python FastAPI** hiện đại, hỗ trợ cơ chế xử lý bất đồng bộ (Asynchronous Non-blocking I/O).
-   - Hệ thống định tuyến RESTful API phân nhiệm rõ ràng: xác thực (`/api/auth`), xử lý tài liệu (`/api/process`), quản trị (`/api/admin`), bảng giá và gói cước (`/api/pricing`).
-   - Tầng nghiệp vụ (Business Service Layer) điều phối toàn bộ luồng xử lý: `AuthService`, `PDFService`, `OCRService`, `TranslationService`, `AIService`, `AdminService`.
+1. **Tầng 1: Presentation Layer (Client Browser)**:
+   - Single Page Application (SPA) xây dựng trên chuẩn HTML5 Semantic, CSS3 Variables Tokens và JavaScript ES6+ thuần (tối ưu tải trang dưới 1 giây).
+   - Không gian làm việc đối chiếu song ngữ độc quyền (Dual-pane Workspace), Sidebar thu phóng linh hoạt (phím tắt `Ctrl+B`).
+   - Hệ thống thông báo popup Toast (`#toastContainer`, `z-index: 99999`) đảm bảo thông điệp cảnh báo luôn nổi bật trên nền làm mờ (Modal Backdrop).
+   - Giao tiếp máy chủ hai chiều qua Fetch API (kèm Bearer JWT Token) và kênh Server-Sent Events (SSE) theo dõi tiến trình nền thời gian thực (0% - 100%).
 
-3. **Tầng 3 - Data & Infrastructure Layer (Dữ liệu và Hạ tầng dịch vụ)**:
-   - Cơ sở dữ liệu quan hệ quản trị qua SQLAlchemy ORM: SQLite trong môi trường phát triển cục bộ và PostgreSQL khi triển khai sản xuất.
-   - Bộ công cụ bóc tách tệp: thư viện PyMuPDF (`fitz`) và `pdfplumber`.
-   - Động cơ nhận dạng quang học: **Tesseract OCR Engine** hỗ trợ song ngữ `vie + eng`.
-   - Tích hợp các dịch vụ trí tuệ nhân tạo bên ngoài: Google Gemini API (LLM) và các động cơ dịch thuật đám mây.
+2. **Tầng 2: Application & Service Layer (FastAPI Backend Engine)**:
+   - Nền tảng framework Python 3.12, FastAPI bất đồng bộ (Asynchronous Non-blocking I/O) và Pydantic v2 validation.
+   - Hệ thống 7 RESTful API Routers độc lập: `/api/auth`, `/api/process`, `/api/documents`, `/api/history`, `/api/ai`, `/api/pricing`, `/api/admin`.
+   - Bộ điều phối tác vụ nền `JobManager` quản lý hàng đợi tiến trình bất đồng bộ (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`).
+   - Tầng dịch vụ nghiệp vụ (Business Services) gồm 8 service chuyên biệt xử lý logic nghiệp vụ và bọc ngoại lệ chuẩn mực (`AppException`).
+
+3. **Tầng 3: Data & Infrastructure Layer (Dữ liệu & Tích hợp Hạ tầng)**:
+   - SQLAlchemy 2.0 ORM hỗ trợ SQLite Write-Ahead Logging (WAL mode) cho môi trường phát triển cục bộ và PostgreSQL 16 cho môi trường sản xuất.
+   - Hệ thống lưu trữ tệp tin cô lập theo định danh người dùng: `storage/documents/{user_id}/`.
+   - Động cơ nhận dạng ký tự quang học Tesseract OCR (bộ dữ liệu song ngữ `vie + eng`).
+   - Cổng tích hợp đám mây bên ngoài: B.AI Multi-Model Gateway (Google Gemini API LLM), động cơ dịch thuật Google GTX & MyMemory, và cổng thanh toán VietQR Napas247.
 
 ## 1.2. Sơ đồ kiến trúc tổng thể
 
+![Sơ đồ kiến trúc tổng thể](Kiến%20trúc%20hệ%20thống/kien-truc-he-thong.png)
+
 ```mermaid
-graph TD
-    subgraph PresentationLayer ["TẦNG 1: PRESENTATION LAYER (Client Browser)"]
-        UI_Pages["UI Pages & Modals<br/>(Workspace, History, Admin)"]
-        UI_Controllers["Frontend Controllers<br/>(upload.js, admin.js, pricing.js)"]
-        UI_Client["API Client Layer<br/>(Fetch API + JWT Bearer Token)"]
-        UI_Pages --> UI_Controllers --> UI_Client
+flowchart TD
+    %% ==========================================
+    %% TẦNG 1: PRESENTATION LAYER (CLIENT BROWSER)
+    %% ==========================================
+    subgraph TIER1 ["TẦNG 1: PRESENTATION LAYER (Client Browser - SPA)"]
+        direction TB
+
+        subgraph C8_UI ["C8: Giao Diện Người Dùng (UI Modules)"]
+            direction LR
+            WORKSPACE["Dual-Pane Workspace<br/>(Cột Văn bản gốc & Bản dịch/Tóm tắt)"]
+            SIDEBAR["Responsive Sidebar<br/>(Điều hướng thu phóng Ctrl+B)"]
+            TOAST["Toast Container<br/>(Ưu tiên hiển thị z-index: 99999)"]
+            MODALS["Auth & Pricing Modals<br/>(Hộp thoại Đăng nhập/Đăng ký & VietQR)"]
+            TABLES["Document & History Tables<br/>(Quản lý tệp tải lên & Lịch sử)"]
+        end
+
+        subgraph FE_CTRL ["Frontend Controllers (Vanilla ES6+)"]
+            direction LR
+            CTRL_APP["app.js / router.js<br/>(Điều hướng SPA)"]
+            CTRL_AUTH["auth.js<br/>(Quản lý phiên JWT)"]
+            CTRL_WORK["workspace.js<br/>(Xử lý kéo thả & dịch)"]
+            CTRL_AI["ai_summary.js & ai_copilot.js<br/>(Tóm tắt & Chat RAG)"]
+            CTRL_ADMIN["admin.js & pricing.js<br/>(Quản trị & Thanh toán)"]
+        end
+
+        subgraph FE_COMM ["Giao Tiếp Mạng Phía Client"]
+            direction LR
+            FETCH_CLIENT["Fetch API Client<br/>(Gắn Header Authorization: Bearer JWT)"]
+            SSE_CLIENT["EventSource (SSE Client)<br/>(Lắng nghe luồng tiến trình thời gian thực)"]
+        end
+
+        C8_UI --> FE_CTRL
+        FE_CTRL --> FE_COMM
     end
 
-    subgraph ServiceLayer ["TẦNG 2: APPLICATION & SERVICE LAYER (FastAPI Backend)"]
-        Routers["FastAPI Routers<br/>(/api/auth, /api/process, /api/admin, /api/pricing)"]
-        Services["Business Service Layer<br/>(AuthService, PDFService, OCRService,<br/>TranslationService, AIService, AdminService)"]
-        Routers --> Services
+    %% ==========================================
+    %% TẦNG 2: APPLICATION & SERVICE LAYER (BACKEND)
+    %% ==========================================
+    subgraph TIER2 ["TẦNG 2: APPLICATION & SERVICE LAYER (FastAPI Backend)"]
+        direction TB
+
+        subgraph GATEWAY ["API Gateway & Middleware Bảo Vệ"]
+            direction LR
+            CORS["CORSMiddleware<br/>(Kiểm soát Trusted Origins)"]
+            EXC_HANDLER["Global Exception Handler<br/>(Bắt AppException, trả về JSON chuẩn)"]
+            AUTH_GUARD["Security Auth Guard & RBAC<br/>(Kiểm tra JWT & Phân quyền Free/Pro/Admin)"]
+        end
+
+        subgraph ROUTERS ["7 RESTful API Routers"]
+            direction TB
+            R_AUTH["AuthRouter<br/>/api/auth"]
+            R_PROCESS["ProcessRouter<br/>/api/process"]
+            R_DOCS["DocumentsRouter<br/>/api/documents"]
+            R_HIST["HistoryRouter<br/>/api/history"]
+            R_AI["AIRouter<br/>/api/ai"]
+            R_PRICE["PricingRouter<br/>/api/pricing"]
+            R_ADMIN["AdminRouter<br/>/api/admin"]
+        end
+
+        subgraph ASYNC_ENGINE ["Async Job Engine (Xử Lý Nền Thời Gian Thực)"]
+            direction LR
+            JOB_MGR["JobManager Engine<br/>(Trạng thái: PENDING/PROCESSING/COMPLETED/FAILED)"]
+            SSE_STREAM["SSE Event Streamer<br/>(/api/process/jobs/{id}/progress)"]
+            BG_WORKER["Background Task Workers<br/>(FastAPI BackgroundTasks Pool)"]
+        end
+
+        subgraph SERVICES ["8 Dịch Vụ Nghiệp Vụ Cốt Lõi (Core Business Services)"]
+            direction TB
+            S_AUTH["C1: AuthService<br/>(Bcrypt 12 rounds, cấp phát & giải mã JWT HS256)"]
+            S_PDF["C2: PDFService<br/>(Magic Bytes, bóc tách văn bản số PyMuPDF)"]
+            S_DOCS["C2: StorageService<br/>(Quản lý lưu trữ an toàn & cô lập tệp theo User ID)"]
+            S_OCR["C3: OCRService<br/>(Render 300 DPI, Pillow deskew, Tesseract vie+eng)"]
+            S_TRANS["C4: TranslationService<br/>(Phân đoạn chunk_text <= 4500 ký tự, Fallback đa tầng)"]
+            S_AI["C5: AIService<br/>(Map-Reduce Summarizer, Copilot RAG Grounding Prompt)"]
+            S_EXPORT["C6: ExportService<br/>(Xuất tệp TXT UTF-8 BOM, PDF Unicode & Anti-Path Traversal)"]
+            S_SUB["C7: SubscriptionService<br/>(Tạo mã VietQR Napas247, chu kỳ cước & kiểm tra đơn)"]
+            S_ADMIN["C7: AdminService & HistoryService<br/>(Thống kê số liệu hệ thống, quản lý người dùng, audit log)"]
+        end
+
+        GATEWAY --> ROUTERS
+        ROUTERS --> SERVICES
+        R_PROCESS --> ASYNC_ENGINE
+        ASYNC_ENGINE --> S_PDF
+        ASYNC_ENGINE --> S_OCR
+        ASYNC_ENGINE --> S_TRANS
     end
 
-    subgraph DataLayer ["TẦNG 3: DATA & INFRASTRUCTURE LAYER"]
-        Database[("SQLAlchemy ORM<br/>SQLite / PostgreSQL")]
-        TesseractEngine["Tesseract OCR Engine<br/>(vie + eng tessdata)"]
-        ExternalAI["External Cloud Services<br/>(Gemini API / Deep-Translator)"]
+    %% ==========================================
+    %% TẦNG 3: DATA & INFRASTRUCTURE LAYER
+    %% ==========================================
+    subgraph TIER3 ["TẦNG 3: DATA & INFRASTRUCTURE LAYER"]
+        direction TB
+
+        subgraph STORAGE_LAYER ["Lưu Trữ Cơ Sở Dữ Liệu & Tệp Tin"]
+            direction LR
+            ORM["SQLAlchemy 2.0 ORM<br/>(Entities: User, Document, History, PricingPlan, Subscription)"]
+            DB[("Database Engine<br/>SQLite WAL Mode (Dev) / PostgreSQL 16 (Prod)")]
+            FILES[("Physical File Storage<br/>storage/documents/{user_id}/<br/>storage/results/")]
+        end
+
+        subgraph INFRA_SERVICES ["Động Cơ Cục Bộ & Cổng Tích Hợp Đám Mây Ngoài"]
+            direction LR
+            TESS_BIN["Tesseract OCR Binary<br/>(Bộ dữ liệu ngôn ngữ vie + eng)"]
+            LLM_GW["B.AI / Google Gemini API<br/>(Mô hình LLM thông minh)"]
+            TRANS_GW["Cloud Translation Services<br/>(Google Translate GTX / MyMemory / Deep-Translator)"]
+            VIETQR_GW["Cổng Thanh Toán Ngân Hàng<br/>(VietQR Napas247 EMVCo chuẩn)"]
+        end
+
+        ORM --> DB
     end
 
-    UI_Client -->|HTTPS / REST API| Routers
-    Services --> Database
-    Services --> TesseractEngine
-    Services --> ExternalAI
+    %% ==========================================
+    %% CÁC KẾT NỐI LIÊN TẦNG (INTER-TIER CONNECTIONS)
+    %% ==========================================
+    FETCH_CLIENT ==>|HTTPS / REST API Requests| GATEWAY
+    SSE_STREAM -.->|Server-Sent Events Stream (0% - 100%)| SSE_CLIENT
+
+    S_AUTH --> ORM
+    S_DOCS --> FILES
+    S_PDF --> FILES
+    S_EXPORT --> FILES
+    S_OCR --> TESS_BIN
+    S_TRANS --> TRANS_GW
+    S_AI --> LLM_GW
+    S_SUB --> VIETQR_GW
+    S_SUB --> ORM
+    S_ADMIN --> ORM
 ```
 
-## 1.3. Phân rã 8 phân hệ cốt lõi (Communities)
-1. **C1 - Auth & Identity**: Quản lý danh tính người dùng, mã hóa mật khẩu `bcrypt` (12 rounds salt), cấp phát và giải mã JWT token, kiểm soát quyền truy cập theo 3 vai trò (`free`, `pro`, `admin`).
-2. **C2 - PDF Processing Engine**: Tiếp nhận tệp tải lên qua luồng multipart, kiểm tra an toàn magic bytes `%PDF-`, trích xuất văn bản số bằng PyMuPDF theo thứ tự đọc tự nhiên.
-3. **C3 - OCR Pipeline**: Tự động nhận diện trang ảnh scan, chuyển đổi trang tài liệu sang ảnh bitmap 300 DPI, tăng cường tương phản bằng Pillow và nhận dạng ký tự quang học qua Tesseract OCR.
-4. **C4 - Translation Engine**: Chia nhỏ văn bản an toàn ($\le$ 4500 ký tự) không cắt ngang câu, chuyển dịch đa ngôn ngữ qua Google GTX với cơ chế chuyển đổi dự phòng đa tầng (MyMemory / Deep-Translator).
-5. **C5 - AI Feature Suite (Pro)**: Mô-đun tóm tắt tài liệu thông minh theo phương pháp Map-Reduce và Trợ lý AI Copilot hỏi đáp ngữ cảnh tài liệu theo kiến trúc RAG.
-6. **C6 - Export & Delivery**: Xuất tệp TXT chuẩn UTF-8 BOM hiển thị tiếng Việt chính xác trên Windows Notepad, xuất tệp PDF kết quả Unicode và hỗ trợ sao chép nhanh.
-7. **C7 - History & Subscription**: Quản lý lịch sử xử lý tài liệu trên đám mây cho tài khoản Pro, quy trình nâng cấp gói cước qua mã VietQR Napas247 và Admin Console.
-8. **C8 - Frontend UI Layer**: Bố cục Workspace song song, Sidebar thu phóng linh hoạt, hệ thống thông báo trạng thái Toast thời gian thực.
+## 1.3. Phân rã 8 phân hệ kiến trúc cốt lõi (Communities)
+
+| Mã | Tên phân hệ | Trách nhiệm chính | Thành phần kỹ thuật chủ chốt |
+| :---: | :--- | :--- | :--- |
+| **C1** | **Auth & Identity** | Quản lý danh tính người dùng, mã hóa mật khẩu `bcrypt` (12 rounds salt), cấp phát và giải mã JWT token, kiểm soát quyền truy cập theo 3 vai trò (`free`, `pro`, `admin`). | `app.api.auth`, `AuthService`, `User`, `security.py` |
+| **C2** | **PDF Processing Engine** | Tiếp nhận tệp tải lên qua luồng multipart, kiểm tra an toàn magic bytes `%PDF-`, trích xuất văn bản số bằng PyMuPDF theo thứ tự đọc tự nhiên. | `app.api.process`, `PDFService`, `Document`, `StorageService` |
+| **C3** | **OCR Pipeline** | Tự động nhận diện trang ảnh scan, chuyển đổi trang tài liệu sang ảnh bitmap 300 DPI, tăng cường tương phản bằng Pillow và nhận dạng ký tự quang học qua Tesseract OCR. | `OCRService`, `Tesseract Engine`, `Pillow`, `deskew/orientation` |
+| **C4** | **Translation Engine** | Chia nhỏ văn bản an toàn ($\le$ 4500 ký tự) không cắt ngang câu, chuyển dịch đa ngôn ngữ qua Google GTX với cơ chế chuyển đổi dự phòng đa tầng (MyMemory / Deep-Translator). | `TranslationService`, `chunk_text()`, `Deep-Translator` |
+| **C5** | **AI Intelligence Suite** | Mô-đun tóm tắt tài liệu thông minh theo phương pháp Map-Reduce và Trợ lý AI Copilot hỏi đáp ngữ cảnh tài liệu theo kiến trúc RAG kèm số trang trích dẫn. | `app.api.ai`, `AIService`, `Gemini API Gateway`, `ai_copilot.js` |
+| **C6** | **Export & Delivery** | Xuất tệp TXT chuẩn UTF-8 BOM hiển thị tiếng Việt chính xác trên Windows Notepad, xuất tệp PDF kết quả Unicode, kiểm soát an toàn Path Traversal. | `ExportService`, `ReportLab`, `download_result()` |
+| **C7** | **History, Billing & Admin** | Lưu trữ nhật ký kiểm toán trên đám mây cho tài khoản Pro, quy trình nâng cấp gói cước tự động qua mã VietQR Napas247 và Admin Console giám sát số liệu hệ thống. | `HistoryService`, `SubscriptionService`, `AdminService`, `VietQR` |
+| **C8** | **Frontend UI Layer** | Không gian làm việc kép Dual-pane, Sidebar thu phóng linh hoạt, hệ thống thông báo trạng thái Toast ưu tiên cao và Client Router. | `workspace.js`, `sidebar.js`, `workspace.css`, `sidebar.css` |
 
 ## 1.4. Các luồng dữ liệu chính của hệ thống
-- **Luồng xử lý tài liệu lai (Hybrid Extraction)**:
-  1. Người dùng tải tệp PDF lên Workspace $\rightarrow$ Client kiểm tra kích thước theo gói cước (Free $\le$ 20MB, Pro $\le$ 100MB).
-  2. Backend kiểm tra magic bytes `%PDF-` để ngăn chặn giả mạo định dạng.
-  3. Duyệt từng trang tài liệu bằng PyMuPDF: nếu trang có văn bản số thì trích xuất trực tiếp; nếu trang là ảnh scan hoặc có ít hơn 10 ký tự thì tự động kích hoạt Tesseract OCR để nhận diện chữ.
-  4. Hợp nhất nội dung hoàn chỉnh và trả về hiển thị tại cột văn bản gốc của Workspace.
-- **Luồng dịch thuật có cơ chế dự phòng (Translation Fallback)**:
-  1. Người dùng chọn ngôn ngữ nguồn và ngôn ngữ đích $\rightarrow$ Nhấn nút Dịch thuật.
-  2. Thuật toán `chunk_text()` chia nhỏ văn bản thành các đoạn $\le$ 4500 ký tự tại các điểm ngắt câu tự nhiên.
-  3. Gửi yêu cầu dịch qua động cơ Google GTX (Ưu tiên 1); nếu xảy ra lỗi kết nối hoặc mã lỗi HTTP 429 (Rate Limit), hệ thống tự động bắt ngoại lệ và kích hoạt động cơ dự phòng tầng 2 (MyMemory / Deep-Translator).
-  4. Ghép nối kết quả theo đúng vị trí ban đầu và trả về hiển thị song song với văn bản gốc.
+
+Hệ thống điều phối 7 luồng dữ liệu chuẩn hóa bảo đảm tính toàn vẹn và hiệu năng:
+
+1. **Luồng bóc tách tài liệu lai (Hybrid Extraction)**: Tải file $\rightarrow$ Kiểm định Magic Bytes `%PDF-` $\rightarrow$ Duyệt từng trang qua PyMuPDF (bóc tách trực tiếp nếu có văn bản số) $\rightarrow$ Tự động kích hoạt Tesseract OCR 300 DPI nếu là ảnh scan $\rightarrow$ Lưu metadata và trả về hiển thị cột gốc.
+2. **Luồng xử lý tệp lớn bất đồng bộ qua SSE Streaming (Background Jobs)**: Khởi tạo tiến trình tại `JobManager` $\rightarrow$ Trả về HTTP 202 Accepted $\rightarrow$ Mở luồng `EventSource` lắng nghe SSE $\rightarrow$ Background worker cập nhật 4 pha xử lý theo thời gian thực (0% - 100%) $\rightarrow$ Hoàn tất và tự động hiển thị kết quả.
+3. **Luồng dịch thuật có cơ chế dự phòng đa tầng (Multi-Tier Fallback)**: Thuật toán `chunk_text()` chia đoạn $\le$ 4500 ký tự tại vị trí ngắt câu $\rightarrow$ Gửi tầng 1 (Google GTX) $\rightarrow$ Nếu lỗi/Rate Limit chuyển mạch tầng 2 (MyMemory / Deep-Translator) $\rightarrow$ Ghép nối toàn vẹn bản dịch trả về.
+4. **Luồng tóm tắt tài liệu AI qua thuật toán Map-Reduce**: Văn bản ngắn ($\le$ 8000 ký tự) tóm tắt trực tiếp; Văn bản dài chia các đoạn (Map Phase) tóm tắt song song $\rightarrow$ Gom bản tóm tắt thành phần (Reduce Phase) $\rightarrow$ Gửi LLM tổng hợp báo cáo đa góc nhìn (Luận điểm chính, Bảng biểu số liệu, Khuyến nghị).
+5. **Luồng Trợ lý AI Copilot hỏi đáp tài liệu theo mô hình RAG**: Người dùng Pro đặt câu hỏi $\rightarrow$ Trích xuất phân đoạn tài liệu liên quan $\rightarrow$ Ghép ngữ cảnh vào Grounding System Prompt $\rightarrow$ Gọi Google Gemini API $\rightarrow$ Trả về câu trả lời định dạng Markdown kèm huy hiệu số trang trích dẫn.
+6. **Luồng nâng cấp gói Pro tự động qua cổng thanh toán VietQR Napas247**: Khởi tạo đơn hàng $\rightarrow$ Sinh mã VietQR chuẩn EMVCo $\rightarrow$ Giao diện đếm ngược 15 phút và Polling trạng thái mỗi 3 giây $\rightarrow$ Ngân hàng xác nhận thanh toán $\rightarrow$ Nâng cấp User Role lên `pro` tức thì.
+7. **Luồng xác thực bảo mật và phân quyền vai trò (Auth & RBAC Flow)**: Đăng nhập băm `bcrypt` $\rightarrow$ Cấp JWT Token (HS256) $\rightarrow$ Mọi API bảo vệ kiểm định tính hợp lệ và thời hạn qua Dependency Injection Guard $\rightarrow$ Chặn đứng truy cập trái phép bằng HTTP 401/403.
 
 ---
 
 # 2. Sơ Đồ Use Case
+
+> **Tài liệu đặc tả chuyên sâu**: Toàn văn thuyết minh 20 Use Case, phân tích các tác nhân, kịch bản chính và luồng ngoại lệ được trình bày chi tiết tại [Lược đồ usecase - luoc_do_usecase.md](Lược%20đồ%20usecase/luoc_do_usecase.md).
 
 ## 2.1. Xác định các Tác nhân (Actors) và quan hệ kế thừa
 Hệ thống **PDF Lingua** phân định 4 nhóm tác nhân tương tác theo mô hình kế thừa UML:
@@ -202,6 +316,8 @@ Hệ thống **PDF Lingua** phân định 4 nhóm tác nhân tương tác theo m
 ---
 
 # 3. Sơ Đồ Lớp (Class Diagram)
+
+> **Tài liệu đặc tả chuyên sâu**: Toàn văn thuyết minh chi tiết 26 lớp, danh mục thuộc tính, phương thức và các mối quan hệ cấu trúc tĩnh UML được trình bày chi tiết tại [Lược đồ lớp - README.md](Lược%20đồ%20lớp/README.md).
 
 ## 3.1. Kiến trúc phân tầng hệ thống (3-Tier Layering)
 
