@@ -16,8 +16,27 @@
   let isSubmitting = false;
   let isRestoringSession = false;
 
-  let openAccountModal = () => {};
-  let closeAccountModal = () => {};
+  function openAccountModal() {
+    const accountModal = document.getElementById('accountModal');
+    if (!accountModal) return;
+    closeLoginModal();
+    closeRegisterModal();
+    accountModal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    clearAccountAlert();
+    fetchAccountDetails();
+  }
+
+  function closeAccountModal() {
+    const accountModal = document.getElementById('accountModal');
+    if (!accountModal) return;
+    accountModal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    clearAccountAlert();
+    toggleAccountEditMode(false);
+    toggleChangePasswordMode(false);
+    toggleAccountAvatarDeleteConfirm(false);
+  }
 
   function openRegisterModal() {
     closeLoginModal();
@@ -1169,8 +1188,12 @@
         displayNameEl.textContent = name;
       }
       if (userAvatarEl) {
-        const initial = (user.full_name ? user.full_name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
-        userAvatarEl.textContent = initial;
+        if (user.avatar_url) {
+          userAvatarEl.innerHTML = `<img src="${user.avatar_url}" alt="Avatar" class="header-user-avatar-img">`;
+        } else {
+          const initial = (user.full_name ? user.full_name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
+          userAvatarEl.textContent = initial;
+        }
       }
 
       // Update Admin badge indicator visibility in header
@@ -1328,25 +1351,6 @@
     const btnCloseAccountModal = document.getElementById('btnCloseAccountModal');
     const btnCloseAccountModalBtn = document.getElementById('btnCloseAccountModalBtn');
 
-    openAccountModal = function () {
-      if (!accountModal) return;
-      closeLoginModal();
-      closeRegisterModal();
-      accountModal.removeAttribute('hidden');
-      document.body.style.overflow = 'hidden';
-      clearAccountAlert();
-      fetchAccountDetails();
-    };
-
-    closeAccountModal = function () {
-      if (!accountModal) return;
-      accountModal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-      clearAccountAlert();
-      toggleAccountEditMode(false);
-      toggleChangePasswordMode(false);
-    };
-
     if (btnOpenAccountModal) {
       btnOpenAccountModal.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1370,6 +1374,173 @@
 
     initAccountEditForm();
     initChangePasswordForm();
+    initAccountAvatar();
+  }
+
+  // ── Account Avatar Interactive Controls ──
+
+  function initAccountAvatar() {
+    const btnSelectAvatar = document.getElementById('btnSelectAvatar');
+    const btnTriggerAvatarUpload = document.getElementById('btnTriggerAvatarUpload');
+    const avatarFileInput = document.getElementById('avatarFileInput');
+    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
+    const avatarDeleteConfirmBox = document.getElementById('avatarDeleteConfirmBox');
+    const btnCancelDeleteAvatar = document.getElementById('btnCancelDeleteAvatar');
+    const btnConfirmDeleteAvatar = document.getElementById('btnConfirmDeleteAvatar');
+    const accountAvatarImg = document.getElementById('accountAvatarImg');
+
+    if (accountAvatarImg && !accountAvatarImg.src) {
+      accountAvatarImg.style.display = 'none';
+    }
+
+    if (btnSelectAvatar) {
+      btnSelectAvatar.addEventListener('click', () => {
+        if (avatarFileInput) avatarFileInput.click();
+      });
+      btnSelectAvatar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (avatarFileInput) avatarFileInput.click();
+        }
+      });
+    }
+
+    if (btnTriggerAvatarUpload) {
+      btnTriggerAvatarUpload.addEventListener('click', () => {
+        if (avatarFileInput) avatarFileInput.click();
+      });
+    }
+
+    if (avatarFileInput) {
+      avatarFileInput.addEventListener('change', handleAvatarFileSelection);
+    }
+
+    if (btnDeleteAvatar) {
+      btnDeleteAvatar.addEventListener('click', () => {
+        toggleAccountAvatarDeleteConfirm(true);
+      });
+    }
+
+    if (btnCancelDeleteAvatar) {
+      btnCancelDeleteAvatar.addEventListener('click', () => {
+        toggleAccountAvatarDeleteConfirm(false);
+      });
+    }
+
+    if (btnConfirmDeleteAvatar) {
+      btnConfirmDeleteAvatar.addEventListener('click', handleConfirmDeleteAvatar);
+    }
+
+    if (avatarDeleteConfirmBox) {
+      avatarDeleteConfirmBox.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          toggleAccountAvatarDeleteConfirm(false);
+          if (btnDeleteAvatar && typeof btnDeleteAvatar.focus === 'function') {
+            btnDeleteAvatar.focus();
+          }
+        }
+      });
+    }
+  }
+
+  function toggleAccountAvatarDeleteConfirm(isOpen) {
+    const confirmBox = document.getElementById('avatarDeleteConfirmBox');
+    if (!confirmBox) return;
+    confirmBox.style.display = isOpen ? 'flex' : 'none';
+    if (isOpen) {
+      const cancelBtn = document.getElementById('btnCancelDeleteAvatar');
+      if (cancelBtn && typeof cancelBtn.focus === 'function') {
+        cancelBtn.focus();
+      }
+    }
+  }
+
+  function handleAvatarFileSelection(e) {
+    const input = (e && e.target) ? e.target : document.getElementById('avatarFileInput');
+    if (!input || !input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    const fileName = (file.name || '').toLowerCase();
+    const hasValidExt = /\.(jpe?g|png|webp)$/i.test(fileName);
+    const hasValidMime = allowedMimes.includes((file.type || '').toLowerCase());
+
+    if (!hasValidMime && !hasValidExt) {
+      showAccountAlert('Định dạng tệp không được hỗ trợ. Vui lòng chọn ảnh JPEG, PNG hoặc WebP.', 'error');
+      input.value = '';
+      return;
+    }
+
+    const maxSizeBytes = 2 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      showAccountAlert('Kích thước tệp ảnh vượt quá giới hạn tối đa cho phép (2 MB).', 'error');
+      input.value = '';
+      return;
+    }
+
+    clearAccountAlert();
+
+    let previewUrl = '';
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      try {
+        previewUrl = URL.createObjectURL(file);
+      } catch (_err) {}
+    }
+
+    if (previewUrl) {
+      applyAvatarPreview(previewUrl);
+    } else if (typeof FileReader !== 'undefined') {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        applyAvatarPreview(loadEvent.target && loadEvent.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      applyAvatarPreview('');
+    }
+  }
+
+  function applyAvatarPreview(srcUrl) {
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const btnDelete = document.getElementById('btnDeleteAvatar');
+    const confirmBox = document.getElementById('avatarDeleteConfirmBox');
+
+    if (avatarImg) {
+      avatarImg.src = srcUrl || '';
+      avatarImg.style.display = 'block';
+    }
+    if (avatarInitial) {
+      avatarInitial.style.display = 'none';
+    }
+    if (btnDelete) {
+      btnDelete.style.display = 'inline-flex';
+    }
+    if (confirmBox) {
+      confirmBox.style.display = 'none';
+    }
+  }
+
+  function handleConfirmDeleteAvatar() {
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const btnDelete = document.getElementById('btnDeleteAvatar');
+    const input = document.getElementById('avatarFileInput');
+
+    if (avatarImg) {
+      avatarImg.src = '';
+      avatarImg.style.display = 'none';
+    }
+    if (avatarInitial) {
+      avatarInitial.style.display = 'inline-block';
+    }
+    if (btnDelete) {
+      btnDelete.style.display = 'none';
+    }
+    if (input) {
+      input.value = '';
+    }
+    toggleAccountAvatarDeleteConfirm(false);
   }
 
   function toggleAccountEditMode(isEditing) {
@@ -1826,6 +1997,10 @@
     const fullNameDisplay = document.getElementById('accountFullNameDisplay');
     const emailSubDisplay = document.getElementById('accountEmailSubDisplay');
     const avatarLarge = document.getElementById('accountAvatarLarge');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
+    const confirmBox = document.getElementById('avatarDeleteConfirmBox');
     const detailFullName = document.getElementById('accountDetailFullName');
     const detailEmail = document.getElementById('accountDetailEmail');
     const detailRole = document.getElementById('accountDetailRole');
@@ -1837,7 +2012,40 @@
 
     if (fullNameDisplay) fullNameDisplay.textContent = name;
     if (emailSubDisplay) emailSubDisplay.textContent = email;
-    if (avatarLarge) avatarLarge.textContent = initial;
+
+    if (confirmBox) confirmBox.style.display = 'none';
+
+    if (user.avatar_url) {
+      if (avatarImg) {
+        avatarImg.src = user.avatar_url;
+        avatarImg.style.display = 'block';
+      }
+      if (avatarInitial) {
+        avatarInitial.textContent = initial;
+        avatarInitial.style.display = 'none';
+      }
+      if (btnDeleteAvatar) {
+        btnDeleteAvatar.style.display = 'inline-flex';
+      }
+      if (avatarLarge && !avatarInitial) {
+        avatarLarge.textContent = '';
+      }
+    } else {
+      if (avatarImg) {
+        avatarImg.src = '';
+        avatarImg.style.display = 'none';
+      }
+      if (avatarInitial) {
+        avatarInitial.textContent = initial;
+        avatarInitial.style.display = 'inline-block';
+      }
+      if (btnDeleteAvatar) {
+        btnDeleteAvatar.style.display = 'none';
+      }
+      if (avatarLarge && !avatarInitial) {
+        avatarLarge.textContent = initial;
+      }
+    }
     if (detailFullName) detailFullName.textContent = name;
     if (detailEmail) detailEmail.textContent = email;
 
@@ -2020,6 +2228,7 @@
     closeRegisterModal,
     openAccountModal,
     closeAccountModal,
+    initAccountModal,
     fetchAccountDetails,
     renderAccountDetails,
     toggleAccountEditMode,
@@ -2030,5 +2239,10 @@
     validateChangePasswordForm,
     toggleChangePasswordMode,
     handleChangePasswordSubmit,
+    initAccountAvatar,
+    toggleAccountAvatarDeleteConfirm,
+    handleAvatarFileSelection,
+    applyAvatarPreview,
+    handleConfirmDeleteAvatar,
   });
 })();

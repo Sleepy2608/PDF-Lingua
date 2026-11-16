@@ -2972,10 +2972,54 @@
                 <!-- Account Info Content -->
                 <div class="account-info-card" id="accountInfoContent">
                     <div class="account-header-hero">
-                        <div class="account-avatar-large" id="accountAvatarLarge">U</div>
+                        <div class="account-avatar-preview-area">
+                            <div class="account-avatar-large" id="accountAvatarLarge" role="img" aria-label="Ảnh đại diện tài khoản">
+                                <span class="account-avatar-initial" id="accountAvatarInitial">U</span>
+                                <img src="" alt="Ảnh đại diện người dùng" class="account-avatar-img" id="accountAvatarImg" style="display: none;">
+                            </div>
+                            <button type="button" class="account-avatar-camera-btn" id="btnSelectAvatar"
+                                aria-label="Đổi ảnh đại diện" title="Chọn ảnh đại diện mới">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </button>
+                            <input type="file" id="avatarFileInput" class="account-avatar-file-input"
+                                accept="image/jpeg,image/png,image/webp" style="display: none;"
+                                aria-label="Chọn tệp ảnh đại diện (JPEG, PNG, WebP)">
+                        </div>
                         <div class="account-hero-meta">
                             <h3 class="account-hero-name" id="accountFullNameDisplay">---</h3>
                             <p class="account-hero-email" id="accountEmailSubDisplay">---</p>
+                            <div class="account-avatar-actions" id="accountAvatarActions">
+                                <button type="button" class="btn-avatar-action btn-avatar-upload" id="btnTriggerAvatarUpload"
+                                    title="Chọn tệp ảnh từ thiết bị" aria-label="Tải ảnh đại diện mới">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <span>Đổi ảnh</span>
+                                </button>
+                                <button type="button" class="btn-avatar-action btn-avatar-delete" id="btnDeleteAvatar"
+                                    title="Xóa ảnh đại diện" aria-label="Xóa ảnh đại diện" style="display: none;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                    <span>Xóa ảnh</span>
+                                </button>
+                            </div>
+                            <div class="account-avatar-confirm-box" id="avatarDeleteConfirmBox" style="display: none;"
+                                role="alertdialog" aria-labelledby="avatarConfirmDesc">
+                                <span class="avatar-confirm-text" id="avatarConfirmDesc">Xác nhận gỡ ảnh đại diện?</span>
+                                <div class="avatar-confirm-btns">
+                                    <button type="button" class="btn btn-secondary btn-xs" id="btnCancelDeleteAvatar">Hủy</button>
+                                    <button type="button" class="btn btn-danger btn-xs" id="btnConfirmDeleteAvatar">Gỡ ảnh</button>
+                                </div>
+                            </div>
+                            <p class="account-avatar-hint">Định dạng JPG, PNG, WebP (Tối đa 2 MB)</p>
                         </div>
                     </div>
 
