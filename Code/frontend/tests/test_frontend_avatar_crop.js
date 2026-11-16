@@ -171,6 +171,11 @@ function createCropEnv() {
 
   const localStorage = new MockLocalStorage();
   const sessionStorage = new MockLocalStorage();
+  localStorage.setItem('pdfl_token', 'mock_jwt_token');
+  localStorage.setItem(
+    'pdfl_user',
+    JSON.stringify({ id: 1, full_name: 'Test', email: 'test@example.com', avatar_url: null })
+  );
   let createdCanvas = null;
 
   const mockDocument = {
@@ -197,13 +202,33 @@ function createCropEnv() {
     addEventListener: () => {},
   };
 
+  class MockFormData {
+    constructor() {
+      this.entries = [];
+    }
+    append(key, value, filename) {
+      this.entries.push({ key, value, filename });
+    }
+  }
+
   const context = {
     document: mockDocument,
     window: mockWindow,
     localStorage: localStorage,
     sessionStorage: sessionStorage,
     console: console,
-    fetch: () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) }),
+    FormData: MockFormData,
+    fetch: () =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            message: 'Cập nhật ảnh đại diện thành công.',
+            data: { avatar_url: '/api/storage/avatars/1/avatar.png?v=1' },
+          }),
+      }),
     setTimeout: (fn) => fn(),
     clearTimeout: () => {},
     URL: mockWindow.URL,
@@ -470,8 +495,8 @@ async function runSuite() {
     assert.ok(state.croppedFile, 'Cropped file must be stored');
     assert.ok(state.croppedFile.name.includes('my_face_cropped.png'));
 
-    // Verify Account Modal preview was updated with blob URL
-    assert.ok(elements.accountAvatarImg.src.includes('blob:mock-crop/'));
+    // Verify Account Modal preview was updated with server avatar URL
+    assert.strictEqual(elements.accountAvatarImg.src, '/api/storage/avatars/1/avatar.png?v=1');
     assert.strictEqual(elements.accountAvatarImg.style.display, 'block');
     assert.strictEqual(elements.accountAvatarInitial.style.display, 'none');
     assert.strictEqual(elements.btnDeleteAvatar.style.display, 'inline-flex');

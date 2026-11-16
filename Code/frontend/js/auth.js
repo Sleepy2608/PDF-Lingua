@@ -1114,6 +1114,7 @@
       email: user.email,
       full_name: user.full_name,
       role: user.role,
+      avatar_url: user.avatar_url !== undefined ? user.avatar_url : null,
     } : null;
 
     const storage = getLocalStorage();
@@ -1506,7 +1507,40 @@
     }
   }
 
+  let isUploadingAvatar = false;
+  let isDeletingAvatar = false;
+  let activeAvatarPreviewObjectUrl = null;
+
+  function revokeActiveAvatarPreview() {
+    if (activeAvatarPreviewObjectUrl) {
+      if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        try {
+          URL.revokeObjectURL(activeAvatarPreviewObjectUrl);
+        } catch (_e) {}
+      }
+      activeAvatarPreviewObjectUrl = null;
+    }
+  }
+
+  function revokeTempCropUrl() {
+    if (cropState.tempObjectUrl) {
+      if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        try {
+          URL.revokeObjectURL(cropState.tempObjectUrl);
+        } catch (_e) {}
+      }
+      cropState.tempObjectUrl = null;
+    }
+  }
+
   function applyAvatarPreview(srcUrl) {
+    if (srcUrl && srcUrl !== activeAvatarPreviewObjectUrl) {
+      revokeActiveAvatarPreview();
+      if (typeof srcUrl === 'string' && srcUrl.startsWith('blob:')) {
+        activeAvatarPreviewObjectUrl = srcUrl;
+      }
+    }
+
     const avatarImg = document.getElementById('accountAvatarImg');
     const avatarInitial = document.getElementById('accountAvatarInitial');
     const btnDelete = document.getElementById('btnDeleteAvatar');
@@ -1527,26 +1561,112 @@
     }
   }
 
-  function handleConfirmDeleteAvatar() {
-    const avatarImg = document.getElementById('accountAvatarImg');
-    const avatarInitial = document.getElementById('accountAvatarInitial');
-    const btnDelete = document.getElementById('btnDeleteAvatar');
-    const input = document.getElementById('avatarFileInput');
+  async function handleConfirmDeleteAvatar() {
+    if (isDeletingAvatar) return false;
 
-    if (avatarImg) {
-      avatarImg.src = '';
-      avatarImg.style.display = 'none';
+    const token = getStoredToken();
+    if (!token) {
+      showAccountAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      toggleAccountAvatarDeleteConfirm(false);
+      return false;
     }
-    if (avatarInitial) {
-      avatarInitial.style.display = 'inline-block';
+
+    const confirmBtn = document.getElementById('btnConfirmDeleteAvatar');
+    const cancelBtn = document.getElementById('btnCancelDeleteAvatar');
+    const originalBtnText = (confirmBtn && confirmBtn.textContent && confirmBtn.textContent.trim())
+      ? confirmBtn.textContent
+      : 'Gỡ ảnh';
+
+    try {
+      isDeletingAvatar = true;
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Đang xóa...';
+      }
+      if (cancelBtn) {
+        cancelBtn.disabled = true;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/me/avatar`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (_e) {}
+
+      if (response.status === 200) {
+        revokeActiveAvatarPreview();
+
+        const avatarImg = document.getElementById('accountAvatarImg');
+        const avatarInitial = document.getElementById('accountAvatarInitial');
+        const btnDelete = document.getElementById('btnDeleteAvatar');
+        const input = document.getElementById('avatarFileInput');
+
+        if (avatarImg) {
+          avatarImg.src = '';
+          avatarImg.style.display = 'none';
+        }
+        if (avatarInitial) {
+          avatarInitial.style.display = 'inline-block';
+        }
+        if (btnDelete) {
+          btnDelete.style.display = 'none';
+        }
+        if (input) {
+          input.value = '';
+        }
+        toggleAccountAvatarDeleteConfirm(false);
+
+        const user = getStoredUser();
+        if (user) {
+          user.avatar_url = null;
+          setStoredSession(token, user);
+        }
+
+        showAccountAlert('Đã xóa ảnh đại diện thành công.', 'success');
+        return true;
+      } else if (response.status === 400) {
+        const msg = (resData && resData.message) || 'Tài khoản chưa thiết lập ảnh đại diện để xóa.';
+        showAccountAlert(msg, 'error');
+        toggleAccountAvatarDeleteConfirm(false);
+        return false;
+      } else if (response.status === 401) {
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        toggleAccountAvatarDeleteConfirm(false);
+        showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        return false;
+      } else if (response.status === 403) {
+        toggleAccountAvatarDeleteConfirm(false);
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Bạn không có quyền xóa ảnh đại diện này.';
+        showAccountAlert(msg, 'error');
+        return false;
+      } else {
+        const msg = (resData && resData.message) || 'Máy chủ gặp sự cố khi xóa ảnh đại diện. Vui lòng thử lại sau.';
+        showAccountAlert(msg, 'error');
+        return false;
+      }
+    } catch (networkError) {
+      console.warn('[PDF-Lingua Delete Avatar Error]', networkError);
+      showAccountAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.', 'error');
+      return false;
+    } finally {
+      isDeletingAvatar = false;
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalBtnText;
+      }
+      if (cancelBtn) {
+        cancelBtn.disabled = false;
+      }
     }
-    if (btnDelete) {
-      btnDelete.style.display = 'none';
-    }
-    if (input) {
-      input.value = '';
-    }
-    toggleAccountAvatarDeleteConfirm(false);
   }
 
   // ── Avatar Image Cropping & Canvas Processing ──
@@ -1665,6 +1785,9 @@
         objectUrl = URL.createObjectURL(file);
       } catch (_e) {}
     }
+
+    revokeTempCropUrl();
+    cropState.tempObjectUrl = objectUrl;
 
     if (objectUrl) {
       cropImg.src = objectUrl;
@@ -1859,6 +1982,8 @@
       cropImg.src = '';
     }
 
+    revokeTempCropUrl();
+
     if (!isConfirmed) {
       cropState.originalFile = null;
       cropState.croppedBlob = null;
@@ -1870,21 +1995,29 @@
   }
 
   async function confirmAvatarCrop() {
+    if (isUploadingAvatar) return false;
     if (!cropState.naturalWidth || !cropState.naturalHeight) {
       showCropAlert('Chưa có ảnh hợp lệ để áp dụng.', 'error');
-      return;
+      return false;
     }
 
     const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const cancelBtn = document.getElementById('btnCancelAvatarCrop');
+    const closeBtn = document.getElementById('btnCloseAvatarCropModal');
     const spinner = document.getElementById('cropConfirmSpinner');
     const btnText = document.getElementById('cropConfirmBtnText');
+
+    let croppedBlob = null;
+    let croppedFile = null;
 
     try {
       if (spinner) spinner.style.display = 'inline-block';
       if (confirmBtn) confirmBtn.disabled = true;
-      if (btnText) btnText.textContent = 'Đang xử lý...';
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (closeBtn) closeBtn.disabled = true;
+      if (btnText) btnText.textContent = 'Đang xử lý ảnh...';
 
-      const croppedBlob = await generateCroppedBlob();
+      croppedBlob = await generateCroppedBlob();
       if (!croppedBlob) {
         throw new Error('Canvas không tạo được dữ liệu ảnh.');
       }
@@ -1894,7 +2027,6 @@
       const baseName = originalName.replace(/\.[^/.]+$/, '');
       const croppedFileName = `${baseName}_cropped${ext}`;
 
-      let croppedFile;
       if (typeof File !== 'undefined') {
         try {
           croppedFile = new File([croppedBlob], croppedFileName, { type: croppedBlob.type });
@@ -1908,23 +2040,177 @@
 
       cropState.croppedBlob = croppedBlob;
       cropState.croppedFile = croppedFile;
-
-      let previewUrl = '';
-      if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-        try {
-          previewUrl = URL.createObjectURL(croppedBlob);
-        } catch (_e) {}
-      }
-
-      applyAvatarPreview(previewUrl);
-      closeAvatarCropModal(true);
-    } catch (err) {
-      console.warn('[PDF-Lingua Crop Error]', err);
+    } catch (cropErr) {
+      console.warn('[PDF-Lingua Crop Error]', cropErr);
       showCropAlert('Không thể xử lý cắt ảnh. Vui lòng thử lại.', 'error');
-    } finally {
       if (spinner) spinner.style.display = 'none';
       if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+      if (closeBtn) closeBtn.disabled = false;
       if (btnText) btnText.textContent = 'Áp dụng ảnh';
+      return false;
+    }
+
+    return await uploadCroppedAvatar(croppedFile);
+  }
+
+  async function uploadCroppedAvatar(file) {
+    if (isUploadingAvatar) return false;
+
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const cancelBtn = document.getElementById('btnCancelAvatarCrop');
+    const closeBtn = document.getElementById('btnCloseAvatarCropModal');
+    const spinner = document.getElementById('cropConfirmSpinner');
+    const btnText = document.getElementById('cropConfirmBtnText');
+
+    const restoreButtons = () => {
+      isUploadingAvatar = false;
+      if (spinner) spinner.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+      if (closeBtn) closeBtn.disabled = false;
+      if (btnText) btnText.textContent = 'Áp dụng ảnh';
+    };
+
+    const targetFile = file || cropState.croppedFile;
+    if (!targetFile) {
+      restoreButtons();
+      showCropAlert('Không tìm thấy tệp ảnh để tải lên.', 'error');
+      return false;
+    }
+
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    let fileType = (targetFile.type || '').toLowerCase();
+    if (!fileType && targetFile.name) {
+      const ext = targetFile.name.split('.').pop().toLowerCase();
+      if (ext === 'jpg' || ext === 'jpeg') fileType = 'image/jpeg';
+      else if (ext === 'png') fileType = 'image/png';
+      else if (ext === 'webp') fileType = 'image/webp';
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(fileType)) {
+      restoreButtons();
+      showCropAlert('Định dạng tệp không được hỗ trợ. Chỉ chấp nhận JPEG, PNG hoặc WebP.', 'error');
+      return false;
+    }
+
+    const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+    if (typeof targetFile.size === 'number') {
+      if (targetFile.size <= 0) {
+        restoreButtons();
+        showCropAlert('Tệp ảnh không hợp lệ hoặc rỗng.', 'error');
+        return false;
+      }
+      if (targetFile.size > MAX_AVATAR_SIZE) {
+        restoreButtons();
+        showCropAlert('Kích thước ảnh đại diện vượt quá giới hạn tối đa 2 MB.', 'error');
+        return false;
+      }
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      restoreButtons();
+      clearStoredSession();
+      updateHeaderAuthState(null);
+      showCropAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+      return false;
+    }
+
+    try {
+      isUploadingAvatar = true;
+      if (spinner) spinner.style.display = 'inline-block';
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (closeBtn) closeBtn.disabled = true;
+      if (btnText) btnText.textContent = 'Đang tải lên...';
+
+      let formData;
+      if (typeof FormData !== 'undefined') {
+        formData = new FormData();
+        formData.append('file', targetFile, targetFile.name || 'avatar.png');
+      } else {
+        formData = {
+          file: targetFile,
+        };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/me/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: formData,
+      });
+
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (_e) {}
+
+      if (response.status === 200 && resData && resData.data && resData.data.avatar_url) {
+        const serverAvatarUrl = resData.data.avatar_url;
+
+        revokeActiveAvatarPreview();
+        applyAvatarPreview(serverAvatarUrl);
+
+        const user = getStoredUser();
+        if (user) {
+          user.avatar_url = serverAvatarUrl;
+          setStoredSession(token, user);
+        }
+
+        closeAvatarCropModal(true);
+
+        const fileInput = document.getElementById('avatarFileInput');
+        if (fileInput) {
+          fileInput.value = '';
+        }
+
+        showAccountAlert('Cập nhật ảnh đại diện thành công.', 'success');
+        return true;
+      } else if (response.status === 401) {
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        showCropAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        return false;
+      } else if (response.status === 403) {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Bạn không có quyền cập nhật ảnh đại diện này.';
+        showCropAlert(msg, 'error');
+        return false;
+      } else if (response.status === 413) {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Kích thước tệp ảnh vượt quá giới hạn tối đa cho phép (2 MB).';
+        showCropAlert(msg, 'error');
+        return false;
+      } else if (response.status === 415) {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Định dạng tệp không được hỗ trợ. Chỉ chấp nhận các định dạng JPEG, PNG và WebP.';
+        showCropAlert(msg, 'error');
+        return false;
+      } else if (response.status === 400 || response.status === 422) {
+        let msg = resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null));
+        if (!msg && resData && Array.isArray(resData.detail) && resData.detail.length > 0) {
+          msg = resData.detail.map((d) => d.msg || d.message).join('; ');
+        }
+        showCropAlert(msg || 'Dữ liệu ảnh không hợp lệ. Vui lòng kiểm tra lại.', 'error');
+        return false;
+      } else {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Máy chủ gặp sự cố khi lưu ảnh đại diện. Vui lòng thử lại sau.';
+        showCropAlert(msg, 'error');
+        return false;
+      }
+    } catch (networkError) {
+      console.warn('[PDF-Lingua Avatar Upload Error]', networkError);
+      showCropAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.', 'error');
+      return false;
+    } finally {
+      restoreButtons();
     }
   }
 
@@ -2712,6 +2998,11 @@
     setCropZoom,
     confirmAvatarCrop,
     generateCroppedBlob,
+    uploadCroppedAvatar,
+    revokeActiveAvatarPreview,
+    revokeTempCropUrl,
+    getIsUploadingAvatar: () => isUploadingAvatar,
+    getIsDeletingAvatar: () => isDeletingAvatar,
     getCropState: () => cropState,
   });
 })();

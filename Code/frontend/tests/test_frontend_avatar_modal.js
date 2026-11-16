@@ -164,9 +164,9 @@ function createEnv() {
 let passCount = 0;
 let failCount = 0;
 
-function runTest(name, fn) {
+async function runTest(name, fn) {
   try {
-    fn();
+    await fn();
     console.log(`[PASS] ${name}`);
     passCount++;
   } catch (err) {
@@ -175,12 +175,13 @@ function runTest(name, fn) {
   }
 }
 
-console.log('================================================================');
-console.log('Account Modal Avatar UI & Interaction Test Suite');
-console.log('================================================================');
+async function runSuite() {
+  console.log('================================================================');
+  console.log('Account Modal Avatar UI & Interaction Test Suite');
+  console.log('================================================================');
 
 // 1. Initial State & Render Details without Avatar
-runTest('Account Details without Avatar: Renders initial letter and hides image & delete button', () => {
+await runTest('Account Details without Avatar: Renders initial letter and hides image & delete button', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -201,7 +202,7 @@ runTest('Account Details without Avatar: Renders initial letter and hides image 
 });
 
 // 2. Render Details with Existing Avatar
-runTest('Account Details with Avatar: Displays image, hides initial, and enables delete button', () => {
+await runTest('Account Details with Avatar: Displays image, hides initial, and enables delete button', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -221,7 +222,7 @@ runTest('Account Details with Avatar: Displays image, hides initial, and enables
 });
 
 // 3. Camera Button & Quick Action Trigger File Input
-runTest('Camera button and change button trigger file input click', () => {
+await runTest('Camera button and change button trigger file input click', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -249,7 +250,7 @@ runTest('Camera button and change button trigger file input click', () => {
 });
 
 // 4. File Selection: Unsupported Media Type Rejection
-runTest('File Selection Validation: Rejects disallowed format and clears input', () => {
+await runTest('File Selection Validation: Rejects disallowed format and clears input', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -268,7 +269,7 @@ runTest('File Selection Validation: Rejects disallowed format and clears input',
 });
 
 // 5. File Selection: Oversized File Rejection (> 2 MB)
-runTest('File Selection Validation: Rejects files exceeding 2 MB', () => {
+await runTest('File Selection Validation: Rejects files exceeding 2 MB', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -287,7 +288,7 @@ runTest('File Selection Validation: Rejects files exceeding 2 MB', () => {
 });
 
 // 6. File Selection: Valid Image Sets Preview (JPEG, PNG, WebP)
-runTest('File Selection: Valid images create preview and show delete button', () => {
+await runTest('File Selection: Valid images create preview and show delete button', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -313,7 +314,7 @@ runTest('File Selection: Valid images create preview and show delete button', ()
 });
 
 // 7. Delete Avatar Confirmation Interaction: Open & Cancel
-runTest('Delete Avatar Confirmation: Open confirm box and cancel preserves state', () => {
+await runTest('Delete Avatar Confirmation: Open confirm box and cancel preserves state', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -335,7 +336,7 @@ runTest('Delete Avatar Confirmation: Open confirm box and cancel preserves state
 });
 
 // 8. Delete Avatar Confirmation Interaction: Escape Key Dismissal
-runTest('Delete Avatar Confirmation: Escape key closes confirmation box', () => {
+await runTest('Delete Avatar Confirmation: Escape key closes confirmation box', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -349,8 +350,13 @@ runTest('Delete Avatar Confirmation: Escape key closes confirmation box', () => 
 });
 
 // 9. Delete Avatar Confirmation Interaction: Confirm Deletion
-runTest('Delete Avatar Confirmation: Confirming reset removes preview, hides delete button, and clears input', () => {
-  const { context, elements } = createEnv();
+await runTest('Delete Avatar Confirmation: Confirming reset removes preview, hides delete button, and clears input', async () => {
+  const { context, elements, localStorage } = createEnv();
+  localStorage.setItem('pdfl_token', 'mock_jwt_token');
+  localStorage.setItem(
+    'pdfl_user',
+    JSON.stringify({ id: 1, full_name: 'Test', email: 'test@example.com', avatar_url: 'blob:mock-url/photo.jpg' })
+  );
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
 
@@ -358,7 +364,7 @@ runTest('Delete Avatar Confirmation: Confirming reset removes preview, hides del
   elements.avatarFileInput.value = 'C:\\fakepath\\photo.jpg';
 
   elements.btnDeleteAvatar.trigger('click', {});
-  elements.btnConfirmDeleteAvatar.trigger('click', {});
+  await auth.handleConfirmDeleteAvatar();
 
   assert.strictEqual(elements.accountAvatarImg.style.display, 'none');
   assert.strictEqual(elements.accountAvatarImg.src, '');
@@ -369,7 +375,7 @@ runTest('Delete Avatar Confirmation: Confirming reset removes preview, hides del
 });
 
 // 10. Close Modal Cleans Up Confirmation Box
-runTest('Modal Lifecycle: Closing account modal closes any active delete confirmation', () => {
+await runTest('Modal Lifecycle: Closing account modal closes any active delete confirmation', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
   auth.initAccountModal();
@@ -384,7 +390,7 @@ runTest('Modal Lifecycle: Closing account modal closes any active delete confirm
 });
 
 // 11. Header Avatar Synchronization
-runTest('Header Auth State: Synchronizes avatar image when avatar_url is provided and text initial when null', () => {
+await runTest('Header Auth State: Synchronizes avatar image when avatar_url is provided and text initial when null', () => {
   const { context, elements } = createEnv();
   const auth = context.window.pdfLinguaAuth;
 
@@ -408,10 +414,13 @@ runTest('Header Auth State: Synchronizes avatar image when avatar_url is provide
   assert.strictEqual(elements.userAvatar.textContent, 'L');
 });
 
-console.log('================================================================');
-console.log(`SUMMARY: ${passCount}/${passCount + failCount} avatar modal tests passed (${failCount} failed).`);
-console.log('================================================================');
+  console.log('================================================================');
+  console.log(`SUMMARY: ${passCount}/${passCount + failCount} avatar modal tests passed (${failCount} failed).`);
+  console.log('================================================================');
 
-if (failCount > 0) {
-  process.exit(1);
+  if (failCount > 0) {
+    process.exit(1);
+  }
 }
+
+runSuite();
