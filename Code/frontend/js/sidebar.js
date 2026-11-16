@@ -1165,7 +1165,24 @@
       const initial = (currentUser.full_name || currentUser.email || 'U').charAt(0).toUpperCase();
 
       if (avatarEl) {
-        avatarEl.textContent = initial;
+        if (currentUser.avatar_url) {
+          avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" alt="${displayName}" class="sidebar-avatar-img">`;
+          const sImg = avatarEl.querySelector ? avatarEl.querySelector('img') : null;
+          if (sImg) {
+            const handleSidebarImgError = () => {
+              sImg.onerror = null;
+              avatarEl.innerHTML = '';
+              avatarEl.textContent = initial;
+            };
+            sImg.onerror = handleSidebarImgError;
+            if (typeof sImg.addEventListener === 'function') {
+              sImg.addEventListener('error', handleSidebarImgError);
+            }
+          }
+        } else {
+          avatarEl.innerHTML = '';
+          avatarEl.textContent = initial;
+        }
         if (role === 'admin') {
           avatarEl.style.background = '#FFF1F0';
           avatarEl.style.color = '#C9201C';

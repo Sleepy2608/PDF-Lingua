@@ -1190,10 +1190,23 @@
         displayNameEl.textContent = name;
       }
       if (userAvatarEl) {
+        const initial = (user.full_name ? user.full_name.trim().charAt(0) : (user.email ? user.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
         if (user.avatar_url) {
           userAvatarEl.innerHTML = `<img src="${user.avatar_url}" alt="Avatar" class="header-user-avatar-img">`;
+          const avatarImg = userAvatarEl.querySelector ? userAvatarEl.querySelector('img') : null;
+          if (avatarImg) {
+            const handleHeaderImgError = () => {
+              avatarImg.onerror = null;
+              userAvatarEl.innerHTML = '';
+              userAvatarEl.textContent = initial;
+            };
+            avatarImg.onerror = handleHeaderImgError;
+            if (typeof avatarImg.addEventListener === 'function') {
+              avatarImg.addEventListener('error', handleHeaderImgError);
+            }
+          }
         } else {
-          const initial = (user.full_name ? user.full_name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
+          userAvatarEl.innerHTML = '';
           userAvatarEl.textContent = initial;
         }
       }
@@ -1294,6 +1307,10 @@
         if (freshUser) {
           setStoredSession(token, freshUser);
           updateHeaderAuthState(freshUser);
+          const accountModal = document.getElementById('accountModal');
+          if (accountModal && !accountModal.hasAttribute('hidden') && accountModal.style.display !== 'none') {
+            renderAccountDetails(freshUser);
+          }
         }
       } else if (response.status === 401 || response.status === 403) {
         // Token expired, invalid or account inactive -> clear session
@@ -1381,7 +1398,33 @@
 
   // ── Account Avatar Interactive Controls ──
 
+  let isAccountAvatarInitialized = false;
+
+  function handleAccountAvatarImgError() {
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const btnDelete = document.getElementById('btnDeleteAvatar');
+
+    if (avatarImg) {
+      if (avatarImg.style.display === 'none' && (!avatarImg.src || avatarImg.getAttribute('src') === '')) {
+        return;
+      }
+      avatarImg.onerror = null;
+      avatarImg.removeAttribute('src');
+      avatarImg.src = '';
+      avatarImg.style.display = 'none';
+    }
+    if (avatarInitial) {
+      avatarInitial.style.display = 'inline-block';
+    }
+    if (btnDelete) {
+      btnDelete.style.display = 'none';
+    }
+  }
+
   function initAccountAvatar() {
+    if (isAccountAvatarInitialized) return;
+
     const btnSelectAvatar = document.getElementById('btnSelectAvatar');
     const btnTriggerAvatarUpload = document.getElementById('btnTriggerAvatarUpload');
     const avatarFileInput = document.getElementById('avatarFileInput');
@@ -1391,8 +1434,11 @@
     const btnConfirmDeleteAvatar = document.getElementById('btnConfirmDeleteAvatar');
     const accountAvatarImg = document.getElementById('accountAvatarImg');
 
-    if (accountAvatarImg && !accountAvatarImg.src) {
-      accountAvatarImg.style.display = 'none';
+    if (accountAvatarImg) {
+      if (!accountAvatarImg.src) {
+        accountAvatarImg.style.display = 'none';
+      }
+      accountAvatarImg.addEventListener('error', handleAccountAvatarImgError);
     }
 
     if (btnSelectAvatar) {
@@ -1443,6 +1489,8 @@
         }
       });
     }
+
+    isAccountAvatarInitialized = true;
   }
 
   function toggleAccountAvatarDeleteConfirm(isOpen) {
@@ -1539,6 +1587,8 @@
       if (typeof srcUrl === 'string' && srcUrl.startsWith('blob:')) {
         activeAvatarPreviewObjectUrl = srcUrl;
       }
+    } else if (!srcUrl) {
+      revokeActiveAvatarPreview();
     }
 
     const avatarImg = document.getElementById('accountAvatarImg');
@@ -1546,15 +1596,28 @@
     const btnDelete = document.getElementById('btnDeleteAvatar');
     const confirmBox = document.getElementById('avatarDeleteConfirmBox');
 
-    if (avatarImg) {
-      avatarImg.src = srcUrl || '';
-      avatarImg.style.display = 'block';
-    }
-    if (avatarInitial) {
-      avatarInitial.style.display = 'none';
-    }
-    if (btnDelete) {
-      btnDelete.style.display = 'inline-flex';
+    if (srcUrl) {
+      if (avatarImg) {
+        avatarImg.src = srcUrl;
+        avatarImg.style.display = 'block';
+      }
+      if (avatarInitial) {
+        avatarInitial.style.display = 'none';
+      }
+      if (btnDelete) {
+        btnDelete.style.display = 'inline-flex';
+      }
+    } else {
+      if (avatarImg) {
+        avatarImg.src = '';
+        avatarImg.style.display = 'none';
+      }
+      if (avatarInitial) {
+        avatarInitial.style.display = 'inline-block';
+      }
+      if (btnDelete) {
+        btnDelete.style.display = 'none';
+      }
     }
     if (confirmBox) {
       confirmBox.style.display = 'none';
@@ -1623,11 +1686,12 @@
         }
         toggleAccountAvatarDeleteConfirm(false);
 
-        const user = getStoredUser();
-        if (user) {
-          user.avatar_url = null;
-          setStoredSession(token, user);
-        }
+        const user = getStoredUser() || {};
+        user.avatar_url = null;
+        setStoredSession(token, user);
+
+        updateHeaderAuthState(user);
+        renderAccountDetails(user);
 
         showAccountAlert('Đã xóa ảnh đại diện thành công.', 'success');
         return true;
@@ -2156,11 +2220,12 @@
         revokeActiveAvatarPreview();
         applyAvatarPreview(serverAvatarUrl);
 
-        const user = getStoredUser();
-        if (user) {
-          user.avatar_url = serverAvatarUrl;
-          setStoredSession(token, user);
-        }
+        const user = getStoredUser() || {};
+        user.avatar_url = serverAvatarUrl;
+        setStoredSession(token, user);
+
+        updateHeaderAuthState(user);
+        renderAccountDetails(user);
 
         closeAvatarCropModal(true);
 
@@ -3001,6 +3066,7 @@
     uploadCroppedAvatar,
     revokeActiveAvatarPreview,
     revokeTempCropUrl,
+    handleAccountAvatarImgError,
     getIsUploadingAvatar: () => isUploadingAvatar,
     getIsDeletingAvatar: () => isDeletingAvatar,
     getCropState: () => cropState,
