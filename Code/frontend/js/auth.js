@@ -88,6 +88,7 @@
     initLoginForm();
     initAuthHeader();
     initAccountModal();
+    initAvatarCropModal();
     restoreSession();
   });
 
@@ -1480,23 +1481,28 @@
 
     clearAccountAlert();
 
-    let previewUrl = '';
-    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-      try {
-        previewUrl = URL.createObjectURL(file);
-      } catch (_err) {}
-    }
-
-    if (previewUrl) {
-      applyAvatarPreview(previewUrl);
-    } else if (typeof FileReader !== 'undefined') {
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        applyAvatarPreview(loadEvent.target && loadEvent.target.result);
-      };
-      reader.readAsDataURL(file);
+    const cropModal = document.getElementById('avatarCropModal');
+    if (cropModal) {
+      openAvatarCropModal(file);
     } else {
-      applyAvatarPreview('');
+      let previewUrl = '';
+      if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        try {
+          previewUrl = URL.createObjectURL(file);
+        } catch (_err) {}
+      }
+
+      if (previewUrl) {
+        applyAvatarPreview(previewUrl);
+      } else if (typeof FileReader !== 'undefined') {
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          applyAvatarPreview(loadEvent.target && loadEvent.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        applyAvatarPreview('');
+      }
     }
   }
 
@@ -1541,6 +1547,461 @@
       input.value = '';
     }
     toggleAccountAvatarDeleteConfirm(false);
+  }
+
+  // ── Avatar Image Cropping & Canvas Processing ──
+
+  let cropState = {
+    isOpen: false,
+    originalFile: null,
+    naturalWidth: 0,
+    naturalHeight: 0,
+    scaleBase: 1,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    startOffsetX: 0,
+    startOffsetY: 0,
+    viewportSize: 320,
+    cropDiameter: 240,
+    croppedBlob: null,
+    croppedFile: null,
+  };
+
+  function initAvatarCropModal() {
+    const modal = document.getElementById('avatarCropModal');
+    const closeBtn = document.getElementById('btnCloseAvatarCropModal');
+    const cancelBtn = document.getElementById('btnCancelAvatarCrop');
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const viewport = document.getElementById('avatarCropViewport');
+    const zoomRange = document.getElementById('cropZoomRange');
+    const zoomInBtn = document.getElementById('btnCropZoomIn');
+    const zoomOutBtn = document.getElementById('btnCropZoomOut');
+    const cropImg = document.getElementById('avatarCropImg');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => closeAvatarCropModal(false));
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => closeAvatarCropModal(false));
+    }
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', confirmAvatarCrop);
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeAvatarCropModal(false);
+      });
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAvatarCropModal(false);
+      });
+    }
+
+    if (zoomRange) {
+      zoomRange.addEventListener('input', (e) => {
+        setCropZoom(parseFloat(e.target.value));
+      });
+    }
+
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', () => {
+        setCropZoom(cropState.zoom + 0.1);
+      });
+    }
+
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', () => {
+        setCropZoom(cropState.zoom - 0.1);
+      });
+    }
+
+    if (viewport) {
+      viewport.addEventListener('pointerdown', handleCropPointerDown);
+      viewport.addEventListener('pointermove', handleCropPointerMove);
+      viewport.addEventListener('pointerup', handleCropPointerUp);
+      viewport.addEventListener('pointercancel', handleCropPointerUp);
+      viewport.addEventListener('wheel', handleCropWheel, { passive: false });
+      viewport.addEventListener('keydown', handleCropKeydown);
+    }
+
+    if (cropImg) {
+      cropImg.addEventListener('load', handleCropImageLoad);
+      cropImg.addEventListener('error', handleCropImageError);
+    }
+  }
+
+  function openAvatarCropModal(file) {
+    const modal = document.getElementById('avatarCropModal');
+    const cropImg = document.getElementById('avatarCropImg');
+    const zoomRange = document.getElementById('cropZoomRange');
+    const zoomVal = document.getElementById('cropZoomValue');
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+
+    if (!modal || !cropImg) return;
+
+    clearCropAlert();
+    cropState.isOpen = true;
+    cropState.originalFile = file;
+    cropState.zoom = 1;
+    cropState.offsetX = 0;
+    cropState.offsetY = 0;
+    cropState.isDragging = false;
+    cropState.croppedBlob = null;
+    cropState.croppedFile = null;
+
+    if (zoomRange) zoomRange.value = '1';
+    if (zoomVal) zoomVal.textContent = '100%';
+    if (confirmBtn) confirmBtn.disabled = false;
+
+    let objectUrl = '';
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      try {
+        objectUrl = URL.createObjectURL(file);
+      } catch (_e) {}
+    }
+
+    if (objectUrl) {
+      cropImg.src = objectUrl;
+    } else if (typeof FileReader !== 'undefined') {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        cropImg.src = (loadEvent.target && loadEvent.target.result) || '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    modal.removeAttribute('hidden');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    syncViewportDimensions();
+
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport && typeof viewport.focus === 'function') {
+      setTimeout(() => viewport.focus(), 50);
+    }
+  }
+
+  function syncViewportDimensions() {
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport && viewport.clientWidth) {
+      cropState.viewportSize = viewport.clientWidth;
+      const mask = viewport.querySelector ? viewport.querySelector('.avatar-crop-mask') : null;
+      if (mask && mask.clientWidth) {
+        cropState.cropDiameter = mask.clientWidth;
+      } else {
+        cropState.cropDiameter = Math.round(cropState.viewportSize * 0.75);
+      }
+    } else {
+      cropState.viewportSize = 320;
+      cropState.cropDiameter = 240;
+    }
+  }
+
+  function handleCropImageLoad() {
+    const cropImg = document.getElementById('avatarCropImg');
+    if (!cropImg) return;
+
+    const natW = (cropImg.naturalWidth !== undefined) ? cropImg.naturalWidth : (cropImg.width || 0);
+    const natH = (cropImg.naturalHeight !== undefined) ? cropImg.naturalHeight : (cropImg.height || 0);
+
+    if (natW <= 0 || natH <= 0) {
+      showCropAlert('Không thể đọc kích thước tệp ảnh đã chọn.', 'error');
+      const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+      if (confirmBtn) confirmBtn.disabled = true;
+      return;
+    }
+
+    cropState.naturalWidth = natW;
+    cropState.naturalHeight = natH;
+
+    syncViewportDimensions();
+
+    cropState.scaleBase = Math.max(
+      cropState.cropDiameter / natW,
+      cropState.cropDiameter / natH
+    );
+    cropState.zoom = 1;
+    cropState.offsetX = 0;
+    cropState.offsetY = 0;
+
+    updateCropDisplay();
+  }
+
+  function handleCropImageError() {
+    showCropAlert('Không thể tải hoặc xử lý tệp ảnh này. Vui lòng chọn tệp khác.', 'error');
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+
+  function updateCropDisplay() {
+    const cropImg = document.getElementById('avatarCropImg');
+    const zoomVal = document.getElementById('cropZoomValue');
+    const zoomRange = document.getElementById('cropZoomRange');
+
+    if (!cropImg || !cropState.naturalWidth || !cropState.naturalHeight) return;
+
+    const currentW = cropState.naturalWidth * cropState.scaleBase * cropState.zoom;
+    const currentH = cropState.naturalHeight * cropState.scaleBase * cropState.zoom;
+
+    const maxOffsetX = Math.max(0, (currentW - cropState.cropDiameter) / 2);
+    const maxOffsetY = Math.max(0, (currentH - cropState.cropDiameter) / 2);
+
+    cropState.offsetX = Math.min(maxOffsetX, Math.max(-maxOffsetX, cropState.offsetX));
+    cropState.offsetY = Math.min(maxOffsetY, Math.max(-maxOffsetY, cropState.offsetY));
+
+    cropImg.style.width = `${Math.round(currentW)}px`;
+    cropImg.style.height = `${Math.round(currentH)}px`;
+    cropImg.style.transform = `translate(${Math.round(cropState.offsetX)}px, ${Math.round(cropState.offsetY)}px)`;
+
+    const pct = Math.round(cropState.zoom * 100);
+    if (zoomVal) zoomVal.textContent = `${pct}%`;
+    if (zoomRange && Math.abs(parseFloat(zoomRange.value) - cropState.zoom) > 0.01) {
+      zoomRange.value = String(cropState.zoom);
+    }
+  }
+
+  function setCropZoom(val) {
+    const clamped = Math.min(3.0, Math.max(1.0, Math.round(val * 100) / 100));
+    cropState.zoom = clamped;
+    updateCropDisplay();
+  }
+
+  function handleCropPointerDown(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    cropState.isDragging = true;
+    cropState.dragStartX = e.clientX || 0;
+    cropState.dragStartY = e.clientY || 0;
+    cropState.startOffsetX = cropState.offsetX;
+    cropState.startOffsetY = cropState.offsetY;
+
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport) {
+      viewport.style.cursor = 'grabbing';
+      if (typeof viewport.setPointerCapture === 'function' && e.pointerId !== undefined) {
+        try { viewport.setPointerCapture(e.pointerId); } catch (_e) {}
+      }
+    }
+  }
+
+  function handleCropPointerMove(e) {
+    if (!cropState.isDragging) return;
+    const dx = (e.clientX || 0) - cropState.dragStartX;
+    const dy = (e.clientY || 0) - cropState.dragStartY;
+    cropState.offsetX = cropState.startOffsetX + dx;
+    cropState.offsetY = cropState.startOffsetY + dy;
+    updateCropDisplay();
+  }
+
+  function handleCropPointerUp(e) {
+    cropState.isDragging = false;
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport) {
+      viewport.style.cursor = 'grab';
+      if (typeof viewport.releasePointerCapture === 'function' && e && e.pointerId !== undefined) {
+        try { viewport.releasePointerCapture(e.pointerId); } catch (_e) {}
+      }
+    }
+  }
+
+  function handleCropWheel(e) {
+    e.preventDefault();
+    const delta = (e.deltaY || 0) < 0 ? 0.08 : -0.08;
+    setCropZoom(cropState.zoom + delta);
+  }
+
+  function handleCropKeydown(e) {
+    if (e.key === 'ArrowLeft') {
+      cropState.offsetX -= 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      cropState.offsetX += 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      cropState.offsetY -= 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      cropState.offsetY += 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === '+' || e.key === '=') {
+      setCropZoom(cropState.zoom + 0.1);
+      e.preventDefault();
+    } else if (e.key === '-') {
+      setCropZoom(cropState.zoom - 0.1);
+      e.preventDefault();
+    }
+  }
+
+  function closeAvatarCropModal(isConfirmed = false) {
+    const modal = document.getElementById('avatarCropModal');
+    const cropImg = document.getElementById('avatarCropImg');
+    const fileInput = document.getElementById('avatarFileInput');
+
+    cropState.isOpen = false;
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      modal.style.display = 'none';
+    }
+    document.body.style.overflow = '';
+    clearCropAlert();
+
+    if (cropImg) {
+      cropImg.src = '';
+    }
+
+    if (!isConfirmed) {
+      cropState.originalFile = null;
+      cropState.croppedBlob = null;
+      cropState.croppedFile = null;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    }
+  }
+
+  async function confirmAvatarCrop() {
+    if (!cropState.naturalWidth || !cropState.naturalHeight) {
+      showCropAlert('Chưa có ảnh hợp lệ để áp dụng.', 'error');
+      return;
+    }
+
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const spinner = document.getElementById('cropConfirmSpinner');
+    const btnText = document.getElementById('cropConfirmBtnText');
+
+    try {
+      if (spinner) spinner.style.display = 'inline-block';
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (btnText) btnText.textContent = 'Đang xử lý...';
+
+      const croppedBlob = await generateCroppedBlob();
+      if (!croppedBlob) {
+        throw new Error('Canvas không tạo được dữ liệu ảnh.');
+      }
+
+      const originalName = (cropState.originalFile && cropState.originalFile.name) || 'avatar.png';
+      const ext = croppedBlob.type === 'image/jpeg' ? '.jpg' : (croppedBlob.type === 'image/webp' ? '.webp' : '.png');
+      const baseName = originalName.replace(/\.[^/.]+$/, '');
+      const croppedFileName = `${baseName}_cropped${ext}`;
+
+      let croppedFile;
+      if (typeof File !== 'undefined') {
+        try {
+          croppedFile = new File([croppedBlob], croppedFileName, { type: croppedBlob.type });
+        } catch (_fileErr) {
+          croppedFile = croppedBlob;
+          croppedFile.name = croppedFileName;
+        }
+      } else {
+        croppedFile = croppedBlob;
+      }
+
+      cropState.croppedBlob = croppedBlob;
+      cropState.croppedFile = croppedFile;
+
+      let previewUrl = '';
+      if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        try {
+          previewUrl = URL.createObjectURL(croppedBlob);
+        } catch (_e) {}
+      }
+
+      applyAvatarPreview(previewUrl);
+      closeAvatarCropModal(true);
+    } catch (err) {
+      console.warn('[PDF-Lingua Crop Error]', err);
+      showCropAlert('Không thể xử lý cắt ảnh. Vui lòng thử lại.', 'error');
+    } finally {
+      if (spinner) spinner.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (btnText) btnText.textContent = 'Áp dụng ảnh';
+    }
+  }
+
+  function generateCroppedBlob(targetSize = 400) {
+    return new Promise((resolve, reject) => {
+      try {
+        const currentW = cropState.naturalWidth * cropState.scaleBase * cropState.zoom;
+        const currentH = cropState.naturalHeight * cropState.scaleBase * cropState.zoom;
+        const ratio = cropState.naturalWidth / currentW;
+
+        const relX = (currentW - cropState.cropDiameter) / 2 - cropState.offsetX;
+        const relY = (currentH - cropState.cropDiameter) / 2 - cropState.offsetY;
+
+        const sx = Math.max(0, relX * ratio);
+        const sy = Math.max(0, relY * ratio);
+        const sSize = Math.min(
+          cropState.cropDiameter * ratio,
+          cropState.naturalWidth - sx,
+          cropState.naturalHeight - sy
+        );
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Không thể khởi tạo Canvas 2D context.'));
+          return;
+        }
+
+        const img = document.getElementById('avatarCropImg');
+        ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, targetSize, targetSize);
+
+        const mimeType = (cropState.originalFile && cropState.originalFile.type) || 'image/png';
+        const outputMime = ['image/jpeg', 'image/png', 'image/webp'].includes(mimeType) ? mimeType : 'image/png';
+
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Canvas toBlob trả về null.'));
+            }
+          }, outputMime, 0.92);
+        } else if (typeof canvas.toDataURL === 'function') {
+          const dataUrl = canvas.toDataURL(outputMime, 0.92);
+          const parts = dataUrl.split(',');
+          const binStr = atob(parts[1]);
+          const len = binStr.length;
+          const u8 = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            u8[i] = binStr.charCodeAt(i);
+          }
+          resolve(new Blob([u8], { type: outputMime }));
+        } else {
+          reject(new Error('Trình duyệt không hỗ trợ xuất dữ liệu Canvas.'));
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function showCropAlert(msg, type = 'error') {
+    const alertBox = document.getElementById('avatarCropAlert');
+    if (!alertBox) return;
+    alertBox.className = `form-alert alert-${type}`;
+    alertBox.textContent = msg;
+    alertBox.style.display = 'block';
+  }
+
+  function clearCropAlert() {
+    const alertBox = document.getElementById('avatarCropAlert');
+    if (!alertBox) return;
+    alertBox.className = 'form-alert';
+    alertBox.textContent = '';
+    alertBox.style.display = 'none';
   }
 
   function toggleAccountEditMode(isEditing) {
@@ -2244,5 +2705,13 @@
     handleAvatarFileSelection,
     applyAvatarPreview,
     handleConfirmDeleteAvatar,
+    openAvatarCropModal,
+    closeAvatarCropModal,
+    initAvatarCropModal,
+    updateCropDisplay,
+    setCropZoom,
+    confirmAvatarCrop,
+    generateCroppedBlob,
+    getCropState: () => cropState,
   });
 })();

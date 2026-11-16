@@ -829,6 +829,219 @@
   }
 }
 
+/* ── Interactive Avatar Cropping Modal & Canvas Controls ── */
+
+.avatar-crop-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.avatar-crop-dialog {
+  background-color: var(--bg-page, #FFFFFF);
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--border-light, #E2E8F0);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  animation: modalFadeIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.avatar-crop-body {
+  padding: 1.5rem;
+}
+
+.avatar-crop-viewport {
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: #0F172A;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.avatar-crop-viewport:focus-visible {
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px var(--color-primary-indigo, #4F46E5);
+}
+
+.avatar-crop-viewport:active {
+  cursor: grabbing;
+}
+
+.avatar-crop-img {
+  position: absolute;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.avatar-crop-mask {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.avatar-crop-grid-lines {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.crop-grid-line {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.crop-grid-h1 {
+  top: 33.33%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.crop-grid-h2 {
+  top: 66.66%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.crop-grid-v1 {
+  left: 33.33%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.crop-grid-v2 {
+  left: 66.66%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.avatar-crop-controls {
+  margin-top: 1.25rem;
+}
+
+.avatar-crop-zoom-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.btn-crop-zoom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-light, #E2E8F0);
+  background-color: var(--bg-page, #FFFFFF);
+  color: var(--text-body, #334155);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-crop-zoom:hover {
+  background-color: var(--bg-subtle, #F8FAFC);
+  color: var(--color-primary-indigo, #4F46E5);
+  border-color: #CBD5E1;
+}
+
+.btn-crop-zoom:focus-visible {
+  outline: 2px solid var(--color-primary-indigo, #4F46E5);
+  outline-offset: 1px;
+}
+
+.crop-zoom-range {
+  flex: 1;
+  max-width: 220px;
+  height: 6px;
+  accent-color: var(--color-primary-indigo, #4F46E5);
+  cursor: pointer;
+}
+
+.crop-zoom-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #64748B);
+  min-width: 44px;
+  text-align: right;
+}
+
+.avatar-crop-helper-text {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748B);
+  text-align: center;
+  margin-top: 0.75rem;
+  line-height: 1.35;
+}
+
+.avatar-crop-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-light, #E2E8F0);
+  background-color: var(--bg-subtle, #F8FAFC);
+}
+
+@media (max-width: 420px) {
+  .avatar-crop-viewport {
+    width: 260px;
+    height: 260px;
+  }
+  .avatar-crop-mask {
+    width: 200px;
+    height: 200px;
+  }
+  .crop-zoom-range {
+    max-width: 140px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-crop-dialog,
+  .btn-crop-zoom {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 .account-hero-name {
   font-size: 1.125rem;
   font-weight: 700;
