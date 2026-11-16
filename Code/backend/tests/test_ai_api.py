@@ -12,6 +12,7 @@ Verifies:
 
 from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 from app.core.database import Base
 from app.core.dependencies import get_db
@@ -368,3 +369,26 @@ class TestAISummarizeServiceErrorHandling:
             )
             assert failed_entry is not None
             assert "AI service pipeline crashed" in failed_entry.error_message
+
+    def test_external_api_timeout_triggers_fallback_response_gracefully(self, ai_test_env):
+        """PDFL-136: When external AI provider times out or fails, returns graceful fallback response with HTTP 200."""
+        token = ai_test_env["pro_token"]
+        payload = {
+            "text": "Van ban can duoc tom tat an toan khi API ngoai gap su co.",
+            "style": "brief",
+        }
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.side_effect = httpx.TimeoutException("External B.AI API gateway timeout")
+
+            res = client.post(
+                "/api/ai/summarize",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            assert res.status_code == 200
+            data = res.json()
+            assert data["success"] is True
+            assert data["data"]["fallback_used"] is True
+            assert "timeout" in data["data"]["fallback_reason"].lower()
+            assert len(data["data"]["summary"]) > 0
