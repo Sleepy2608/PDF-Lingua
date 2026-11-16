@@ -1364,7 +1364,12 @@
 
   // ── Account Info Modal ──
 
+  let isAccountModalInitialized = false;
+
   function initAccountModal() {
+    if (isAccountModalInitialized) return;
+    isAccountModalInitialized = true;
+
     const accountModal = document.getElementById('accountModal');
     const btnOpenAccountModal = document.getElementById('btnOpenAccountModal');
     const btnCloseAccountModal = document.getElementById('btnCloseAccountModal');
@@ -1517,6 +1522,12 @@
 
     if (!hasValidMime && !hasValidExt) {
       showAccountAlert('Định dạng tệp không được hỗ trợ. Vui lòng chọn ảnh JPEG, PNG hoặc WebP.', 'error');
+      input.value = '';
+      return;
+    }
+
+    if (!file.size || file.size <= 0) {
+      showAccountAlert('Tệp ảnh không hợp lệ hoặc rỗng (0 bytes).', 'error');
       input.value = '';
       return;
     }
@@ -2820,7 +2831,7 @@
 
     const name = user.full_name || 'Chưa đặt tên';
     const email = user.email || '';
-    const initial = (user.full_name ? user.full_name.charAt(0) : email.charAt(0) || 'U').toUpperCase();
+    const initial = (user.full_name ? user.full_name.trim().charAt(0) : (email ? email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
     if (fullNameDisplay) fullNameDisplay.textContent = name;
     if (emailSubDisplay) emailSubDisplay.textContent = email;

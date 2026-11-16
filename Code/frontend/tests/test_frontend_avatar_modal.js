@@ -287,6 +287,25 @@ await runTest('File Selection Validation: Rejects files exceeding 2 MB', () => {
   assert.strictEqual(elements.accountAvatarImg.style.display, 'none');
 });
 
+// 5b. File Selection: Empty File Rejection (0 bytes)
+await runTest('File Selection Validation: Rejects 0-byte empty file', () => {
+  const { context, elements } = createEnv();
+  const auth = context.window.pdfLinguaAuth;
+  auth.initAccountModal();
+
+  elements.avatarFileInput.files = [
+    { name: 'empty_file.png', type: 'image/png', size: 0 },
+  ];
+  elements.avatarFileInput.value = 'C:\\fakepath\\empty_file.png';
+
+  elements.avatarFileInput.trigger('change', { target: elements.avatarFileInput });
+
+  assert.strictEqual(elements.accountAlert.style.display, 'block');
+  assert.ok(elements.accountAlert.textContent.includes('0 bytes'));
+  assert.strictEqual(elements.avatarFileInput.value, '');
+  assert.strictEqual(elements.accountAvatarImg.style.display, 'none');
+});
+
 // 6. File Selection: Valid Image Sets Preview (JPEG, PNG, WebP)
 await runTest('File Selection: Valid images create preview and show delete button', () => {
   const { context, elements } = createEnv();

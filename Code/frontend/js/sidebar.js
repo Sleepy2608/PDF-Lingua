@@ -1162,7 +1162,7 @@
 
     if (currentUser && (currentUser.email || currentUser.id)) {
       const displayName = currentUser.full_name || currentUser.email || 'Người dùng';
-      const initial = (currentUser.full_name || currentUser.email || 'U').charAt(0).toUpperCase();
+      const initial = (currentUser.full_name ? currentUser.full_name.trim().charAt(0) : (currentUser.email ? currentUser.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
       if (avatarEl) {
         if (currentUser.avatar_url) {
