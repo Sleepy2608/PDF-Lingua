@@ -39,6 +39,26 @@ def check_db_connection() -> bool:
         return False
 
 
+def _migrate_db_schema(bind_engine=None) -> None:
+    """
+    Kiểm tra và tự động bổ sung các cột mới vào bảng nếu chưa tồn tại.
+    Đảm bảo tương thích ngược và giữ nguyên dữ liệu tài khoản hiện có trong SQLite/PostgreSQL.
+    """
+    from sqlalchemy import inspect
+
+    target = bind_engine or engine
+    inspector = inspect(target)
+    existing_tables = inspector.get_table_names()
+
+    if "users" in existing_tables:
+        columns = [col["name"] for col in inspector.get_columns("users")]
+        if "avatar_url" not in columns:
+            logger.info("[DB Migration] Bổ sung cột avatar_url vào bảng users...")
+            with target.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) DEFAULT NULL"))
+            logger.info("[DB Migration] Đã bổ sung cột avatar_url thành công.")
+
+
 def init_db() -> None:
     """
     Create all database tables defined in ORM models.
@@ -52,6 +72,7 @@ def init_db() -> None:
     """
     import app.models  # noqa: F401 — registers User (and future models) with Base.metadata
     Base.metadata.create_all(bind=engine)
+    _migrate_db_schema(engine)
     db = SessionLocal()
     try:
         app.models.seed_pricing_plans(db)

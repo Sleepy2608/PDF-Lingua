@@ -12,6 +12,7 @@ from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.common import ApiResponse
 from app.schemas.user import (
+    AvatarUploadResponse,
     PasswordChangeRequest,
     TokenResponse,
     UserCreate,

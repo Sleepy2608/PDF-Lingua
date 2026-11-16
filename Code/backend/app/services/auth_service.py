@@ -115,13 +115,18 @@ class AuthService:
     ) -> User:
         """
         Update the current user's profile details.
-        Currently permits updating `full_name`.
+        Permits updating `full_name` and `avatar_url`.
         Ignores and prevents any modifications to email, role, is_active, or id.
         """
         # If full_name is provided in payload (even if empty/whitespace)
         if user_update.full_name is not None:
             clean_name = user_update.full_name.strip() if user_update.full_name.strip() else None
             user.full_name = clean_name
+
+        # If avatar_url is provided in payload
+        if user_update.avatar_url is not None:
+            clean_avatar = user_update.avatar_url.strip() if user_update.avatar_url.strip() else None
+            user.avatar_url = clean_avatar
 
         try:
             db.add(user)

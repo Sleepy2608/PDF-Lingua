@@ -9,6 +9,7 @@ id              : Integer primary key (auto-increment).
 email           : Unique, case-folded email - used as login identifier.
 hashed_password : bcrypt/argon2 hash - never store plaintext.
 full_name       : Optional display name shown in the UI.
+avatar_url      : Optional public URL or relative path to user's avatar image.
 role            : Enum(free | pro | admin) - drives feature access gates.
 is_active       : Soft-disable without deleting the account.
 created_at      : Timestamp set automatically on INSERT.
@@ -59,6 +60,12 @@ class User(Base):
         nullable=True,
         default=None,
         comment="Display name shown in the UI.",
+    )
+    avatar_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        default=None,
+        comment="Public URL or relative path to the user's avatar image.",
     )
 
     # ── Authorisation ─────────────────────────────────────────────────────────

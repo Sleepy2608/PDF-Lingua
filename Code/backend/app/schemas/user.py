@@ -35,6 +35,12 @@ class UserBase(BaseModel):
         description="Display name shown in the UI.",
         examples=["Nguyễn Văn A"],
     )
+    avatar_url: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Public URL or relative path to user's avatar image.",
+        examples=["/static/avatars/avatar_123.webp"],
+    )
 
 
 # ── Create (Registration) ─────────────────────────────────────────────────────
@@ -111,6 +117,11 @@ class UserUpdate(BaseModel):
         default=None,
         max_length=150,
         description="New display name.",
+    )
+    avatar_url: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="New avatar image URL or relative path.",
     )
     current_password: Optional[str] = Field(
         default=None,
@@ -199,6 +210,18 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="Signed JWT bearer access token.")
     token_type: str = Field(default="bearer", description="Token authorization type (e.g. bearer).")
     user: UserResponse = Field(..., description="Safe user profile data.")
+
+
+# ── Avatar Upload Response ───────────────────────────────────────────────────
+
+class AvatarUploadResponse(BaseModel):
+    """Payload returned upon successful avatar image upload."""
+
+    avatar_url: str = Field(
+        ...,
+        description="Public URL or relative path to the uploaded avatar image.",
+        examples=["/static/avatars/avatar_123.webp"],
+    )
 
 
 # ── Internal DB Model ─────────────────────────────────────────────────────────
