@@ -9,10 +9,16 @@ from typing import Optional
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import BadRequestException, ForbiddenException, UnauthorizedException
+from app.core.exceptions import (
+    AppException,
+    BadRequestException,
+    ForbiddenException,
+    UnauthorizedException,
+)
 from app.core.security import hash_password, verify_password
 from app.models.user import User, UserRole
 from app.schemas.user import PasswordChangeRequest, UserCreate, UserLogin, UserUpdate
+from app.services.storage_service import StorageService
 
 
 class AuthService:
@@ -115,18 +121,21 @@ class AuthService:
     ) -> User:
         """
         Update the current user's profile details.
-        Permits updating `full_name` and `avatar_url`.
+        Permits updating `full_name`.
+        Prevents direct modification of `avatar_url` via generic profile updates.
         Ignores and prevents any modifications to email, role, is_active, or id.
         """
+        # Block direct update of avatar_url via generic profile endpoint
+        if user_update.avatar_url is not None:
+            raise BadRequestException(
+                message="Không được phép cập nhật avatar_url trực tiếp qua API cập nhật thông tin. Vui lòng sử dụng API tải lên ảnh đại diện.",
+                error_code="AVATAR_UPDATE_FORBIDDEN",
+            )
+
         # If full_name is provided in payload (even if empty/whitespace)
         if user_update.full_name is not None:
             clean_name = user_update.full_name.strip() if user_update.full_name.strip() else None
             user.full_name = clean_name
-
-        # If avatar_url is provided in payload
-        if user_update.avatar_url is not None:
-            clean_avatar = user_update.avatar_url.strip() if user_update.avatar_url.strip() else None
-            user.avatar_url = clean_avatar
 
         try:
             db.add(user)
@@ -137,6 +146,97 @@ class AuthService:
             raise
 
         return user
+
+    @classmethod
+    def update_user_avatar(
+        cls,
+        db: Session,
+        user: User,
+        content: bytes,
+        storage_service: StorageService,
+    ) -> tuple[str, User]:
+        """
+        Cập nhật ảnh đại diện mới cho người dùng hiện tại với cơ chế đảm bảo tính nhất quán (2-phase commit):
+        1. Lưu tệp ảnh đại diện mới vào hệ thống tệp đĩa.
+        2. Cập nhật đường dẫn avatar_url mới trong cơ sở dữ liệu.
+        3. Nếu ghi cơ sở dữ liệu thất bại: xóa ngay tệp mới trên đĩa để tránh tệp mồ côi (rollback filesystem).
+        4. Nếu cơ sở dữ liệu cập nhật thành công: xóa tệp ảnh đại diện cũ (nếu có).
+        """
+        # 1. Lưu tệp mới (chưa xóa tệp cũ ngay để bảo toàn dữ liệu nếu DB lỗi)
+        stored_filename, rel_path, _target_path = storage_service.save_avatar_file(
+            user_id=user.id,
+            content=content,
+            old_filename_or_path=None,
+        )
+
+        previous_avatar = user.avatar_url
+        new_avatar_url = f"/api/storage/{rel_path}"
+
+        # 2. Cập nhật database
+        user.avatar_url = new_avatar_url
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except Exception as db_err:
+            db.rollback()
+            # Xóa tệp mới vừa tạo để duy trì tính nhất quán giữa filesystem và database
+            storage_service.delete_avatar_file(user_id=user.id, filename_or_path=stored_filename)
+            raise AppException(
+                message="Lỗi cơ sở dữ liệu khi cập nhật ảnh đại diện.",
+                status_code=500,
+                error_code="DB_PERSISTENCE_ERROR",
+            ) from db_err
+
+        # 3. Dọn dẹp an toàn tệp cũ sau khi database commit thành công
+        if previous_avatar:
+            try:
+                storage_service.delete_avatar_file(user_id=user.id, filename_or_path=previous_avatar)
+            except Exception:
+                pass
+
+        return new_avatar_url, user
+
+    @classmethod
+    def delete_user_avatar(
+        cls,
+        db: Session,
+        user: User,
+        storage_service: StorageService,
+    ) -> None:
+        """
+        Xóa ảnh đại diện của người dùng hiện tại:
+        1. Kiểm tra người dùng đã có ảnh đại diện hay chưa (nếu chưa có thì báo lỗi 400).
+        2. Cập nhật avatar_url = None trong cơ sở dữ liệu trước.
+        3. Nếu commit DB thành công thì xóa tệp vật lý khỏi đĩa lưu trữ.
+        """
+        if not user.avatar_url:
+            raise BadRequestException(
+                message="Tài khoản hiện tại chưa thiết lập ảnh đại diện để xóa.",
+                error_code="NO_AVATAR_TO_DELETE",
+            )
+
+        previous_avatar = user.avatar_url
+        user.avatar_url = None
+
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        except Exception as db_err:
+            db.rollback()
+            raise AppException(
+                message="Lỗi cơ sở dữ liệu khi xóa ảnh đại diện.",
+                status_code=500,
+                error_code="DB_PERSISTENCE_ERROR",
+            ) from db_err
+
+        # Xóa tệp vật lý sau khi DB đã commit thành công
+        if previous_avatar:
+            try:
+                storage_service.delete_avatar_file(user_id=user.id, filename_or_path=previous_avatar)
+            except Exception:
+                pass
 
     @classmethod
     def change_password(

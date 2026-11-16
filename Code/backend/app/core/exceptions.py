@@ -94,6 +94,28 @@ class QuotaExceededException(AppException):
         )
 
 
+class PayloadTooLargeException(AppException):
+    """Exception raised when uploaded payload exceeds the maximum allowed file size."""
+    def __init__(self, message: str = "File size exceeds limit", details: Optional[Any] = None):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            error_code="PAYLOAD_TOO_LARGE",
+            details=details,
+        )
+
+
+class UnsupportedMediaTypeException(AppException):
+    """Exception raised when an unsupported file format or MIME type is submitted."""
+    def __init__(self, message: str = "Unsupported media type", details: Optional[Any] = None):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            error_code="UNSUPPORTED_MEDIA_TYPE",
+            details=details,
+        )
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
     """Registers unified error handlers to ensure all errors return a standardized JSON format."""
 

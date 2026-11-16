@@ -4,10 +4,16 @@ Authentication API Router
 Endpoints for user registration, login, logout, and token refresh.
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.dependencies import get_current_user, get_db
+from app.core.exceptions import (
+    BadRequestException,
+    PayloadTooLargeException,
+    UnsupportedMediaTypeException,
+)
 from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.common import ApiResponse
@@ -21,8 +27,10 @@ from app.schemas.user import (
     UserUpdate,
 )
 from app.services.auth_service import AuthService
+from app.services.storage_service import StorageService
 
 router = APIRouter()
+storage_service = StorageService()
 
 
 @router.post(
@@ -179,5 +187,109 @@ def logout(
     return ApiResponse(
         success=True,
         message="Đăng xuất thành công.",
+        data=None,
+    )
+
+
+# ── User Profile Avatar Operations ────────────────────────────────────────────
+
+@router.post(
+    "/me/avatar",
+    response_model=ApiResponse[AvatarUploadResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Upload user avatar image",
+    description="Uploads and updates avatar image for current user. Validates magic bytes, max size (2 MB), and format (JPEG, PNG, WebP).",
+)
+def upload_avatar(
+    file: UploadFile = File(..., description="Image file (JPEG, PNG, WebP up to 2 MB)"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse[AvatarUploadResponse]:
+    """
+    Tải lên và cập nhật ảnh đại diện của người dùng hiện tại.
+    - Yêu cầu xác thực JWT Bearer token.
+    - Nhận tệp qua multipart/form-data.
+    - Kiểm tra tệp rỗng, dung lượng vượt quá 2 MB (HTTP 413).
+    - Kiểm tra Magic Bytes thực tế, chỉ chấp nhận JPEG, PNG, WebP (HTTP 415).
+    - Cập nhật avatar_url trong cơ sở dữ liệu và dọn dẹp ảnh cũ an toàn.
+    """
+    if not file or not file.filename:
+        raise BadRequestException(
+            message="Vui lòng chọn một tệp hình ảnh hợp lệ để tải lên.",
+            error_code="FILE_MISSING",
+        )
+
+    try:
+        if hasattr(file, "file") and hasattr(file.file, "read"):
+            content = file.file.read()
+        else:
+            content = file.read()
+    except Exception as read_err:
+        raise BadRequestException(
+            message=f"Không thể đọc nội dung tệp tải lên: {read_err}",
+            error_code="FILE_READ_ERROR",
+        )
+
+    if not content or len(content) == 0:
+        raise BadRequestException(
+            message="Tệp ảnh tải lên không được để rỗng.",
+            error_code="EMPTY_FILE",
+        )
+
+    max_size = getattr(settings, "MAX_AVATAR_SIZE_BYTES", 2 * 1024 * 1024)
+    if len(content) > max_size:
+        raise PayloadTooLargeException(
+            message="Kích thước tệp ảnh vượt quá giới hạn tối đa cho phép (2 MB).",
+            details={"max_size": max_size, "actual_size": len(content)},
+        )
+
+    detected_format = StorageService.detect_image_format(content)
+    if not detected_format:
+        raise UnsupportedMediaTypeException(
+            message="Định dạng tệp không được hỗ trợ. Chỉ chấp nhận các định dạng JPEG, PNG và WebP.",
+            details={"allowed_formats": ["jpeg", "png", "webp"]},
+        )
+
+    avatar_url, _user = AuthService.update_user_avatar(
+        db=db,
+        user=current_user,
+        content=content,
+        storage_service=storage_service,
+    )
+
+    return ApiResponse(
+        success=True,
+        message="Cập nhật ảnh đại diện thành công.",
+        data=AvatarUploadResponse(avatar_url=avatar_url),
+    )
+
+
+@router.delete(
+    "/me/avatar",
+    response_model=ApiResponse[None],
+    status_code=status.HTTP_200_OK,
+    summary="Delete user avatar",
+    description="Deletes profile avatar image for the authenticated user and resets avatar_url to null.",
+)
+def delete_avatar(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ApiResponse[None]:
+    """
+    Xóa ảnh đại diện của người dùng hiện tại.
+    - Yêu cầu xác thực JWT Bearer token.
+    - Xóa tệp vật lý tương ứng khỏi hệ thống lưu trữ đĩa.
+    - Đặt lại avatar_url = None trong cơ sở dữ liệu.
+    - Trả về HTTP 400 nếu tài khoản chưa thiết lập ảnh đại diện để xóa.
+    """
+    AuthService.delete_user_avatar(
+        db=db,
+        user=current_user,
+        storage_service=storage_service,
+    )
+
+    return ApiResponse(
+        success=True,
+        message="Xóa ảnh đại diện thành công.",
         data=None,
     )

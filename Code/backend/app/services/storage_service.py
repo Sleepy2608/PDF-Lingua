@@ -617,8 +617,12 @@ class StorageService:
             logger.warning(f"[StorageService] Directory traversal sequence rejected in avatar: {filename_or_path}")
             return None
 
-        # Bóc tách tiền tố nếu client truyền đường dẫn đầy đủ dạng avatars/{user_id}/{filename}
-        if parts and parts[0] == "avatars":
+        # Bóc tách tiền tố nếu client truyền đường dẫn dạng /api/storage/avatars hoặc avatars/{user_id}/{filename}
+        if len(parts) >= 3 and parts[:3] == ["api", "storage", "avatars"]:
+            parts = parts[3:]
+        elif len(parts) >= 2 and parts[:2] == ["storage", "avatars"]:
+            parts = parts[2:]
+        elif parts and parts[0] == "avatars":
             parts = parts[1:]
 
         if len(parts) == 2:

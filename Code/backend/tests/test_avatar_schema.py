@@ -17,6 +17,7 @@ from sqlalchemy.pool import StaticPool
 from app.api.auth import get_me, register, update_me
 from app.core.database import Base, _migrate_db_schema
 from app.core.dependencies import get_current_user
+from app.core.exceptions import BadRequestException
 from app.core.security import create_access_token, hash_password
 from app.models.user import User, UserRole
 from app.schemas.user import AvatarUploadResponse, UserBase, UserCreate, UserResponse, UserUpdate
@@ -217,8 +218,8 @@ def test_get_me_returns_custom_avatar_url(db_session: Session):
     assert api_response.data.avatar_url == "/static/avatars/user_custom_abc.webp"
 
 
-def test_update_me_updates_avatar_url(db_session: Session):
-    """Kiểm tra API update_me cho phép cập nhật avatar_url cùng với full_name."""
+def test_update_me_rejects_direct_avatar_url_update(db_session: Session):
+    """Kiểm tra API update_me từ chối việc trực tiếp sửa đổi avatar_url qua cập nhật thông tin thông thường."""
     user = User(
         email="update_me@example.com",
         hashed_password=hash_password("Password123"),
@@ -234,39 +235,33 @@ def test_update_me_updates_avatar_url(db_session: Session):
         full_name="New Name",
         avatar_url="/static/avatars/new_profile.webp",
     )
-    api_response = update_me(user_update=update_payload, current_user=user, db=db_session)
-    assert api_response.success is True
-    assert api_response.data.full_name == "New Name"
-    assert api_response.data.avatar_url == "/static/avatars/new_profile.webp"
-
-    # Kiểm tra cơ sở dữ liệu
-    db_session.refresh(user)
-    assert user.full_name == "New Name"
-    assert user.avatar_url == "/static/avatars/new_profile.webp"
+    with pytest.raises(BadRequestException, match="Không được phép cập nhật avatar_url trực tiếp"):
+        update_me(user_update=update_payload, current_user=user, db=db_session)
 
 
-def test_update_me_clears_avatar_url(db_session: Session):
-    """Kiểm tra API update_me cho phép xóa avatar_url về None khi truyền chuỗi rỗng."""
+def test_update_me_updates_full_name_preserves_avatar_url(db_session: Session):
+    """Kiểm tra API update_me cho phép cập nhật full_name mà vẫn bảo toàn avatar_url hiện có."""
     user = User(
         email="clear_me@example.com",
         hashed_password=hash_password("Password123"),
-        full_name="Has Avatar",
+        full_name="Old Name",
         role=UserRole.FREE,
         is_active=True,
-        avatar_url="/static/avatars/existing.webp",
+        avatar_url="/api/storage/avatars/1/existing.webp",
     )
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
 
-    clear_payload = UserUpdate(avatar_url="")
-    api_response = update_me(user_update=clear_payload, current_user=user, db=db_session)
+    payload = UserUpdate(full_name="Brand New Name")
+    api_response = update_me(user_update=payload, current_user=user, db=db_session)
     assert api_response.success is True
-    assert api_response.data.avatar_url is None
+    assert api_response.data.full_name == "Brand New Name"
+    assert api_response.data.avatar_url == "/api/storage/avatars/1/existing.webp"
 
-    # Kiểm tra cơ sở dữ liệu
     db_session.refresh(user)
-    assert user.avatar_url is None
+    assert user.full_name == "Brand New Name"
+    assert user.avatar_url == "/api/storage/avatars/1/existing.webp"
 
 
 def test_get_current_user_resolves_avatar_url(db_session: Session):
