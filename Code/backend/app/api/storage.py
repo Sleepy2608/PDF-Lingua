@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse
 
 from app.core.exceptions import NotFoundException
 from app.core.logger import logger
+from app.schemas.common import ErrorResponse
 from app.services.storage_service import StorageService
 
 router = APIRouter(prefix="/api/storage", tags=["Storage"])
@@ -32,7 +33,25 @@ VALID_AVATAR_FILENAME_PATTERN = re.compile(
     "/avatars/{user_id}/{filename}",
     status_code=status.HTTP_200_OK,
     summary="Get user profile avatar image",
-    description="Serves publicly viewable avatar images with strict path containment, format validation, and cache headers.",
+    description=(
+        "Serves publicly viewable avatar images with strict path containment, "
+        "format validation, and cache headers (Cache-Control: public, max-age=86400, "
+        "X-Content-Type-Options: nosniff)."
+    ),
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Binary avatar image file (JPEG, PNG, or WebP).",
+            "content": {
+                "image/jpeg": {},
+                "image/png": {},
+                "image/webp": {},
+            },
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorResponse,
+            "description": "Avatar image not found or unauthorized directory escape attempt.",
+        },
+    },
 )
 def get_user_avatar(user_id: str, filename: str) -> FileResponse:
     """

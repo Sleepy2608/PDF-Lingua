@@ -16,7 +16,7 @@ from app.core.exceptions import (
 )
 from app.core.security import create_access_token
 from app.models.user import User
-from app.schemas.common import ApiResponse
+from app.schemas.common import ApiResponse, ErrorResponse
 from app.schemas.user import (
     AvatarUploadResponse,
     PasswordChangeRequest,
@@ -198,7 +198,37 @@ def logout(
     response_model=ApiResponse[AvatarUploadResponse],
     status_code=status.HTTP_200_OK,
     summary="Upload user avatar image",
-    description="Uploads and updates avatar image for current user. Validates magic bytes, max size (2 MB), and format (JPEG, PNG, WebP).",
+    description=(
+        "Uploads and updates the avatar image for the authenticated user via multipart/form-data. "
+        "Validates actual binary magic bytes (JPEG, PNG, WebP) and restricts maximum file size to 2 MB. "
+        "Safely handles old avatar cleanup upon successful database update."
+    ),
+    responses={
+        status.HTTP_200_OK: {
+            "model": ApiResponse[AvatarUploadResponse],
+            "description": "Avatar uploaded and profile updated successfully.",
+        },
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ErrorResponse,
+            "description": "Invalid input payload: empty file, missing upload file, or unreadable stream.",
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorResponse,
+            "description": "Missing, invalid, or expired JWT Bearer token.",
+        },
+        status.HTTP_413_CONTENT_TOO_LARGE: {
+            "model": ErrorResponse,
+            "description": "Uploaded image file size exceeds the 2 MB limit.",
+        },
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
+            "model": ErrorResponse,
+            "description": "Unsupported media format. Only valid JPEG, PNG, and WebP images are allowed.",
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "model": ErrorResponse,
+            "description": "Database or filesystem persistence failure.",
+        },
+    },
 )
 def upload_avatar(
     file: UploadFile = File(..., description="Image file (JPEG, PNG, WebP up to 2 MB)"),
@@ -269,7 +299,28 @@ def upload_avatar(
     response_model=ApiResponse[None],
     status_code=status.HTTP_200_OK,
     summary="Delete user avatar",
-    description="Deletes profile avatar image for the authenticated user and resets avatar_url to null.",
+    description=(
+        "Deletes the authenticated user's current avatar file from storage "
+        "and resets the database avatar_url to null."
+    ),
+    responses={
+        status.HTTP_200_OK: {
+            "model": ApiResponse[None],
+            "description": "Avatar deleted and profile updated successfully.",
+        },
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ErrorResponse,
+            "description": "User account does not currently have an avatar configured to delete.",
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorResponse,
+            "description": "Missing, invalid, or expired JWT Bearer token.",
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "model": ErrorResponse,
+            "description": "Database persistence failure during avatar deletion.",
+        },
+    },
 )
 def delete_avatar(
     current_user: User = Depends(get_current_user),
