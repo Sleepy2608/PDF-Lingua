@@ -24,7 +24,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
    - Xây dựng hệ thống tài khoản, mã hóa mật khẩu bcrypt, xác thực, phân quyền (Guest, User, Admin).
    - Tải lên tài liệu PDF (Free 20MB, Pro 100MB, tối đa 100 trang), kiểm tra an toàn tệp, trích xuất văn bản số (`pypdf`, `pdfplumber`) và nhận dạng chữ từ PDF scan thông qua OCR (`Tesseract`).
 2. **Sprint 3 & Sprint 4 (Tuần 3 & 4 - Quản Lý File, OCR Nâng Cao, Dịch Thuật & Hoàn Thiện Gói Free)**:
-   - Sprint 3 (31/10 - 06/11/2026): Tăng tốc hoàn thành 38 tasks gồm hoàn thiện UI Auth/Profile/Workspace, Quản lý tài liệu người dùng, Tối ưu OCR scan nâng cao, Tích hợp dịch thuật đa ngôn ngữ (Google GTX, fallback MyMemory), Chia đoạn văn bản chống timeout, Xuất file kết quả (.txt UTF-8 BOM, .pdf Unicode), Kéo thả file và Chính sách điều khoản.
+   - Sprint 3 (31/10 - 06/11/2026): Tăng tốc hoàn thành 39 tasks gồm hoàn thiện UI Auth/Profile/Workspace, Quản lý tài liệu người dùng, Tối ưu OCR scan nâng cao, Tích hợp động cơ dịch thuật đa ngôn ngữ ('deep-translator', Google GTX, fallback MyMemory), Chia đoạn văn bản chống timeout, Xuất file kết quả (.txt UTF-8 BOM, .pdf Unicode), Kéo thả file và Chính sách điều khoản.
    - Sprint 4 (07/11 - 13/11/2026): Tinh chỉnh xử lý lỗi mạng, giới hạn API và đa tầng fallback, kiểm thử toàn diện đa ngôn ngữ, kiểm thử định dạng xuất file và hoàn thiện trải nghiệm Gói Free trước khi bước sang giai đoạn AI Pro.
 3. **Sprint 5 & Sprint 6 (Tuần 5 & 6 - AI Nâng Cao, Gói Pro, Admin & Đóng Gói Bàn Giao)**:
    - Tích hợp AI tóm tắt văn bản và Trợ lý AI hỏi đáp theo ngữ cảnh tài liệu (RAG/QA) dành riêng cho gói Pro.
@@ -41,7 +41,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | :---: | :---: | :--- | :--- | :---: | :---: |
 | **Sprint 1** | 15/10 - 22/10/2026 | Phân tích yêu cầu, thiết kế hệ thống & khởi tạo khung dự án | **EPIC 01, EPIC 02**, một phần EPIC 03 & 04 | 31 tasks | ✅ Đã hoàn thành (31/31 Done) |
 | **Sprint 2** | 23/10 - 30/10/2026 | Hệ thống tài khoản, xác thực & Cốt lõi xử lý PDF, OCR | **EPIC 05, EPIC 06, EPIC 07**, EPIC 03 & 04 | 32 tasks | ✅ **Đã hoàn thành** (32/32 Done) |
-| **Sprint 3** | 31/10 - 06/11/2026 | Quản lý tài liệu, OCR nâng cao, Dịch thuật cốt lõi, Xuất file & UI hoàn thiện | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, EPIC 17** | 38 tasks | ✅ **Đã hoàn thành** (38/38 Done) |
+| **Sprint 3** | 31/10 - 06/11/2026 | Quản lý tài liệu, OCR nâng cao, Dịch thuật cốt lõi, Xuất file & UI hoàn thiện | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, EPIC 17** | 39 tasks | ✅ **Đã hoàn thành** (39/39 Done) |
 | **Sprint 4** | 07/11 - 13/11/2026 | Dịch thuật fallback, xuất file, lịch sử, admin cơ bản & quyền lợi Free/Pro | **EPIC 08, EPIC 11, EPIC 12, EPIC 13, EPIC 14, EPIC 15, EPIC 16, EPIC 17** | 31 tasks | ✅ **Đã hoàn thành** (31/31 Done) |
 | **Sprint 5** | 13/11 - 20/11/2026 | Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng & Thiết kế | **EPIC 03, EPIC 04, EPIC 12, EPIC 13, EPIC 14, EPIC 16, EPIC 17** | 34 tasks | 🚀 **Đang triển khai** |
 | **Sprint 6** | 21/11 - 28/11/2026 | AI tóm tắt văn bản & Trợ lý AI hỏi đáp tài liệu theo ngữ cảnh | **EPIC 03, EPIC 09, EPIC 10** | 26 tasks | 📋 Kế hoạch |
@@ -140,7 +140,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 ### 🔹 Sprint 3: Quản Lý Tài Liệu Người Dùng, Tối Ưu Hóa OCR Nâng Cao, Dịch Thuật & Hoàn Thiện Giao Diện
 - **Thời gian**: 31/10/2026 - 06/11/2026 (Tuần 3)
 - **Mục tiêu**: Hoàn thiện toàn diện giao diện Auth & Profile, quản lý tài liệu cá nhân, tối ưu OCR nâng cao cho tài liệu xoay/lỗi/nhiều trang, tích hợp động cơ dịch thuật đa ngôn ngữ và xuất tệp kết quả TXT/PDF, hỗ trợ kéo thả file và chính sách điều khoản người dùng.
-- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)**: **38 Work Items** (38 Done / 0 In Progress / 0 To Do)
+- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)**: **39 Work Items** (39 Done / 0 In Progress / 0 To Do)
 
 | Mã Task | Tên nhiệm vụ | Epic | Trạng thái Jira |
 | :--- | :--- | :---: | :---: |
@@ -175,6 +175,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-119` | Giữ thứ tự các đoạn khi ghép kết quả dịch | EPIC 08 | **Done** |
 | `PDFL-121` | Hiển thị bản dịch kèm thông tin ngôn ngữ | EPIC 08 | **Done** |
 | `PDFL-122` | Cho phép sao chép bản dịch | EPIC 08 | **Done** |
+| `PDFL-266` | Tích hợp thư viện dịch thuật 'deep-translator' | EPIC 08 | **Done** |
 | `PDFL-151` | Xây dựng chức năng xuất văn bản thành file TXT | EPIC 11 | **Done** |
 | `PDFL-152` | Xây dựng chức năng xuất nội dung thành file PDF | EPIC 11 | **Done** |
 | `PDFL-153` | Xây dựng chức năng tải file kết quả về thiết bị người dùng | EPIC 11 | **Done** |
