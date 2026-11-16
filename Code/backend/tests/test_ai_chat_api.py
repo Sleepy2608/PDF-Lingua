@@ -486,6 +486,39 @@ class TestAIChatValidationAndErrorHandling:
             assert body["data"]["fallback_used"] is True
             assert "Simulated connection timeout" in body["data"]["fallback_reason"]
 
+    def test_pdfl_144_simulated_retry_flow_after_transient_error(self, ai_chat_env):
+        """
+        PDFL-144: Test transient AI failure followed by a successful retry request.
+        1. First call fails with a transient network exception and returns fallback.
+        2. Second call (retry) succeeds with valid answer.
+        """
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        payload = {
+            "query": "Cau hoi can thu lai sau khi gap su co mang?",
+            "document_text": "Tai lieu huong dan giai quyet su co va thu lai giao dich.",
+        }
+
+        # Step 1: Transient error activates fallback
+        with patch.object(
+            ai_service,
+            "_call_bai_api",
+            side_effect=Exception("Temporary network timeout"),
+        ):
+            res1 = client.post("/api/ai/chat", json=payload, headers=headers)
+            assert res1.status_code == 200
+            data1 = res1.json()
+            assert data1["success"] is True
+            assert data1["data"]["fallback_used"] is True
+            assert "Temporary network timeout" in data1["data"]["fallback_reason"]
+
+        # Step 2: Retry request succeeds normally without error
+        res2 = client.post("/api/ai/chat", json=payload, headers=headers)
+        assert res2.status_code == 200
+        data2 = res2.json()
+        assert data2["success"] is True
+        assert data2["data"]["answer"] is not None
+        assert len(data2["data"]["answer"]) > 0
+
 
 class TestAIChatLanguageSynchronization:
     """Test suite ensuring AI uses the same language as the user asking."""
