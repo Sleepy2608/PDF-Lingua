@@ -15,6 +15,7 @@ from app.core.exceptions import (
     ForbiddenException,
     UnauthorizedException,
 )
+from app.core.logger import logger
 from app.core.security import hash_password, verify_password
 from app.models.user import User, UserRole
 from app.schemas.user import PasswordChangeRequest, UserCreate, UserLogin, UserUpdate
@@ -192,8 +193,11 @@ class AuthService:
         if previous_avatar:
             try:
                 storage_service.delete_avatar_file(user_id=user.id, filename_or_path=previous_avatar)
-            except Exception:
-                pass
+            except Exception as clean_err:
+                logger.warning(
+                    f"[AuthService] Không thể dọn dẹp tệp ảnh đại diện cũ "
+                    f"user_id={user.id}, path={previous_avatar}: {clean_err}"
+                )
 
         return new_avatar_url, user
 
@@ -235,8 +239,11 @@ class AuthService:
         if previous_avatar:
             try:
                 storage_service.delete_avatar_file(user_id=user.id, filename_or_path=previous_avatar)
-            except Exception:
-                pass
+            except Exception as del_err:
+                logger.warning(
+                    f"[AuthService] Không thể xóa tệp vật lý ảnh đại diện "
+                    f"user_id={user.id}, path={previous_avatar}: {del_err}"
+                )
 
     @classmethod
     def change_password(

@@ -250,6 +250,12 @@ def upload_avatar(
         )
 
     try:
+        # Đưa con trỏ tệp về vị trí đầu trước khi đọc nhằm đảm bảo tính toàn vẹn dữ liệu
+        if hasattr(file, "file") and hasattr(file.file, "seek"):
+            file.file.seek(0)
+        elif hasattr(file, "seek"):
+            file.seek(0)
+
         if hasattr(file, "file") and hasattr(file.file, "read"):
             content = file.file.read()
         else:

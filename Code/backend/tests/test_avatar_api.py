@@ -440,3 +440,85 @@ def test_manual_avatar_url_update_via_profile_rejected(setup_test_db):
 
     session.refresh(user)
     assert user.avatar_url == "/api/storage/avatars/1/valid.png"
+
+
+# ── File Stream Rewind & Cleanup Logging Tests ─────────────────────────────────
+
+def test_upload_avatar_rewinds_file_pointer_if_already_read(setup_test_db):
+    """Verifies that upload_avatar rewinds the file stream pointer using seek(0) if already read."""
+    session, _ = setup_test_db
+    user = User(
+        email="rewind_test@example.com",
+        hashed_password=hash_password("Password123"),
+        role=UserRole.FREE,
+        is_active=True,
+    )
+    session.add(user)
+    session.commit()
+
+    upload_file = create_image_upload("PNG")
+    # Giả lập trường hợp stream đã bị đọc trước đó bởi middleware hoặc bộ kiểm tra khác
+    upload_file.file.read()
+    assert upload_file.file.tell() > 0
+
+    # Hàm upload cần đưa con trỏ về 0 và xử lý tệp ảnh bình thường
+    res = upload_avatar(file=upload_file, current_user=user, db=session)
+    assert res.data.avatar_url is not None
+    assert "/api/storage/avatars/" in res.data.avatar_url
+
+
+def test_replace_avatar_old_file_deletion_failure_logged(setup_test_db):
+    """Verifies that failure when deleting old avatar file logs a warning and does not abort the update."""
+    session, storage = setup_test_db
+    user = User(
+        email="cleanup_log_test@example.com",
+        hashed_password=hash_password("Password123"),
+        role=UserRole.FREE,
+        is_active=True,
+    )
+    session.add(user)
+    session.commit()
+
+    # Tải lên ảnh ban đầu
+    upload_avatar(file=create_image_upload("PNG"), current_user=user, db=session)
+    session.refresh(user)
+    old_avatar = user.avatar_url
+
+    # Giả lập lỗi IO khi xóa tệp ảnh cũ lúc thay thế ảnh mới
+    with patch.object(storage, "delete_avatar_file", side_effect=OSError("Disk permission denied")):
+        with patch("app.services.auth_service.logger.warning") as mock_warning:
+            res = upload_avatar(file=create_image_upload("JPEG"), current_user=user, db=session)
+
+    # Đảm bảo database vẫn cập nhật ảnh mới thành công và ghi nhận cảnh báo
+    session.refresh(user)
+    assert user.avatar_url == res.data.avatar_url
+    assert user.avatar_url != old_avatar
+    mock_warning.assert_called_once()
+    assert "Không thể dọn dẹp tệp ảnh đại diện cũ" in mock_warning.call_args[0][0]
+
+
+def test_delete_avatar_physical_file_failure_logged(setup_test_db):
+    """Verifies that failure when deleting avatar physical file logs a warning and completes deletion."""
+    session, storage = setup_test_db
+    user = User(
+        email="delete_log_test@example.com",
+        hashed_password=hash_password("Password123"),
+        role=UserRole.FREE,
+        is_active=True,
+    )
+    session.add(user)
+    session.commit()
+
+    upload_avatar(file=create_image_upload("PNG"), current_user=user, db=session)
+    session.refresh(user)
+
+    # Giả lập lỗi khi xóa tệp vật lý
+    with patch.object(storage, "delete_avatar_file", side_effect=OSError("File locked")):
+        with patch("app.services.auth_service.logger.warning") as mock_warning:
+            res = delete_avatar(current_user=user, db=session)
+
+    assert res.success is True
+    session.refresh(user)
+    assert user.avatar_url is None
+    mock_warning.assert_called_once()
+    assert "Không thể xóa tệp vật lý ảnh đại diện" in mock_warning.call_args[0][0]

@@ -5,7 +5,6 @@ Endpoints for serving user avatars and public assets with strict containment
 and secure cache headers.
 """
 
-import os
 import re
 from pathlib import Path
 
