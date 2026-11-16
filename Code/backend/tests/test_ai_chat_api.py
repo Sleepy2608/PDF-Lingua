@@ -296,6 +296,68 @@ class TestAIChatAntiHallucinationAndGroundedness:
         assert body["data"]["answer"] is not None
 
 
+class TestAIChatQueryScopingPDFL138:
+    """Test suite for PDFL-138: Defining query scopes handled by AI Copilot."""
+
+    def test_in_scope_queries_answered_successfully(self, ai_chat_env):
+        """In-scope questions about facts, figures, and definitions in document are answered."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        document_text = (
+            "Dieu khoan dich vu: Thoi gian ho tro ky thuat 24/7. "
+            "Muc boi thuong toi da la 10.000.000 VND khi xay ra su co mat du lieu. "
+            "Dinh nghia SLA la cam ket muc do dich vu giua he thong va khach hang."
+        )
+
+        in_scope_queries = [
+            ("Thoi gian ho tro ky thuat la nhu the nao?", "24/7"),
+            ("Muc boi thuong toi da khi mat du lieu la bao nhieu?", "10.000.000"),
+            ("SLA duoc dinh nghia nhu the nao?", "cam ket"),
+        ]
+
+        for query, expected_keyword in in_scope_queries:
+            res = client.post(
+                "/api/ai/chat",
+                json={"query": query, "document_text": document_text},
+                headers=headers,
+            )
+            assert res.status_code == 200
+            body = res.json()
+            assert body["success"] is True
+            answer = body["data"]["answer"]
+            assert answer != ai_service.NO_INFO_RESPONSE
+            assert expected_keyword.lower() in answer.lower()
+
+    def test_out_of_scope_queries_rejected_cleanly(self, ai_chat_env):
+        """Out-of-scope questions unrelated to document are rejected with standard refusal message."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        document_text = "Chinh sach noi bo: Gio lam viec tu 8h00 den 17h00 tu thu Hai den thu Sau."
+
+        out_of_scope_queries = [
+            "Gia xang ngay hom nay la bao nhieu tien mot lit?",
+            "Ngon nui cao nhat the gioi ten la gi?",
+            "Viet giup toi mot doan code Python sap xep mang?",
+        ]
+
+        for query in out_of_scope_queries:
+            res = client.post(
+                "/api/ai/chat",
+                json={"query": query, "document_text": document_text},
+                headers=headers,
+            )
+            assert res.status_code == 200
+            body = res.json()
+            assert body["success"] is True
+            assert body["data"]["answer"] == ai_service.NO_INFO_RESPONSE
+
+    def test_copilot_system_prompt_defines_explicit_scope(self):
+        """Verify COPILOT_SYSTEM_PROMPT contains explicit scoping, language sync, and truthful refusal rules."""
+        prompt = ai_service.COPILOT_SYSTEM_PROMPT
+        assert "NGU CANH TAI LIEU" in prompt
+        assert "TU CHOI KHI THIEU THONG TIN" in prompt
+        assert ai_service.NO_INFO_RESPONSE in prompt
+        assert ai_service.NO_INFO_RESPONSE_EN in prompt
+
+
 class TestAIChatDailyQuota:
     """Test suite for PDFL-145 daily question limit (15 questions/day)."""
 
