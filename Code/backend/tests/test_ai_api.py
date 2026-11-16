@@ -10,7 +10,7 @@ Verifies:
 - Error handling and diagnostics.
 """
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
@@ -392,3 +392,145 @@ class TestAISummarizeServiceErrorHandling:
             assert data["data"]["fallback_used"] is True
             assert "timeout" in data["data"]["fallback_reason"].lower()
             assert len(data["data"]["summary"]) > 0
+
+
+class TestAISummarizeStyleAndLengthOptions:
+    """Test flexible style and length summarization combinations (PDFL-130)."""
+
+    @pytest.mark.parametrize("style", ["brief", "bullets", "detailed"])
+    def test_summarize_all_supported_styles(self, ai_test_env, style):
+        token = ai_test_env["pro_token"]
+        payload = {
+            "text": "Tri tue nhan tao dang phat trien manh me trong nhieu linh vuc cong nghe hien dai.",
+            "style": style,
+            "length": "medium",
+        }
+        mock_response_data = {
+            "choices": [{"message": {"content": f"Ban tom tat kieu {style}."}}]
+        }
+        mock_http_response = MagicMock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = mock_response_data
+        mock_http_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.return_value = mock_http_response
+            res = client.post(
+                "/api/ai/summarize",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            assert res.status_code == 200
+            data = res.json()["data"]
+            assert data["style"] == style
+            assert len(data["summary"]) > 0
+
+    @pytest.mark.parametrize("length", ["short", "medium", "long"])
+    def test_summarize_all_supported_lengths(self, ai_test_env, length):
+        token = ai_test_env["pro_token"]
+        payload = {
+            "text": "Tri tue nhan tao dang phat trien manh me trong nhieu linh vuc cong nghe hien dai.",
+            "style": "brief",
+            "length": length,
+        }
+        mock_response_data = {
+            "choices": [{"message": {"content": f"Ban tom tat do dai {length}."}}]
+        }
+        mock_http_response = MagicMock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = mock_response_data
+        mock_http_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.return_value = mock_http_response
+            res = client.post(
+                "/api/ai/summarize",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            assert res.status_code == 200
+            data = res.json()["data"]
+            assert data["length"] == length
+            assert len(data["summary"]) > 0
+
+    def test_summarize_with_custom_instruction_and_style(self, ai_test_env):
+        token = ai_test_env["pro_token"]
+        payload = {
+            "text": "Mo hinh hoc sau giup toi uu hoa viec trich xuat van ban tu file PDF.",
+            "style": "bullets",
+            "length": "short",
+            "custom_instruction": "Nhan manh vao tinh chinh xac cua OCR",
+        }
+        mock_response_data = {
+            "choices": [{"message": {"content": "• Tinh chinh xac cua OCR duoc toi uu hoa."}}]
+        }
+        mock_http_response = MagicMock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = mock_response_data
+        mock_http_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.return_value = mock_http_response
+            res = client.post(
+                "/api/ai/summarize",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            assert res.status_code == 200
+            data = res.json()["data"]
+            assert data["style"] == "bullets"
+            assert data["length"] == "short"
+            assert len(data["summary"]) > 0
+
+
+class TestAISummarizeLongDocumentMultiStep:
+    """Test multi-step Map-Reduce summarization for long texts (PDFL-131)."""
+
+    def test_long_document_multi_step_summarize_endpoint(self, ai_test_env):
+        token = ai_test_env["pro_token"]
+        paragraph = (
+            "He thong xu ly tai lieu PDF-Lingua ho tro trich xuat van ban, "
+            "dich thuat da ngon ngu va tich hop tri tue nhan tao de ho tro tom tat. "
+        )
+        long_text = "\n\n".join([f"Doan {i}: " + (paragraph * 3) for i in range(1, 4)])
+
+        payload = {
+            "text": long_text,
+            "style": "detailed",
+            "length": "long",
+        }
+
+        mock_response_data = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "Ban tom tat tong hop sau qua trinh Map-Reduce thanh cong tren tai lieu dai."
+                    }
+                }
+            ]
+        }
+        mock_http_response = MagicMock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = mock_response_data
+        mock_http_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post, \
+             patch("app.api.ai.ai_service.MAP_REDUCE_THRESHOLD_WORDS", 30), \
+             patch("app.api.ai.ai_service.CHUNK_SIZE_WORDS", 20):
+            mock_post.return_value = mock_http_response
+
+            res = client.post(
+                "/api/ai/summarize",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            assert res.status_code == 200
+            data = res.json()
+            assert data["success"] is True
+            assert "data" in data
+            assert len(data["data"]["summary"]) > 0
+            assert "Map-Reduce" in data["data"]["summary"]
+            assert data["data"]["style"] == "detailed"
+            assert data["data"]["length"] == "long"
+            assert mock_post.call_count >= 2
+
