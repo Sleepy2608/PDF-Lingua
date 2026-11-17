@@ -52,10 +52,12 @@ class Settings:
     # File Upload Constraints
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "temp_uploads/")
     STORAGE_DIR: str = os.getenv("STORAGE_DIR", "storage/documents")
+    AVATAR_STORAGE_DIR: str = os.getenv("AVATAR_STORAGE_DIR", "storage/avatars")
     MAX_UPLOAD_SIZE_FREE_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_FREE_MB", "20"))
     MAX_UPLOAD_SIZE_PRO_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_PRO_MB", "100"))
     MAX_PAGES_FREE: int = int(os.getenv("MAX_PAGES_FREE", "100"))
     MAX_PAGES_PRO: int = int(os.getenv("MAX_PAGES_PRO", "500"))
+    MAX_AVATAR_SIZE_BYTES: int = int(os.getenv("MAX_AVATAR_SIZE_BYTES", str(2 * 1024 * 1024)))
 
     # OCR
     TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "")

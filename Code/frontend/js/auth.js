@@ -13,11 +13,55 @@
     ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${(window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1'}:8000`
     : '';
 
+  /**
+   * Phân giải đường dẫn ảnh đại diện thành URL truy cập được cho trình duyệt.
+   * Nếu URL là Blob, Data URL hoặc URL tuyệt đối (http/https), giữ nguyên.
+   * Nếu là đường dẫn tương đối (ví dụ /api/storage/...), tự động gắn tiền tố API_BASE_URL
+   * để trình duyệt ở nguồn gốc khác (như Live Server cổng 5500) tải ảnh từ backend.
+   */
+  function resolveAvatarUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('blob:') || trimmed.startsWith('data:') || /^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    const base = (typeof API_BASE_URL === 'string' && API_BASE_URL)
+      ? API_BASE_URL.replace(/\/+$/, '')
+      : '';
+    if (!base) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return `${base}${trimmed}`;
+    }
+    return `${base}/${trimmed}`;
+  }
+
   let isSubmitting = false;
   let isRestoringSession = false;
 
-  let openAccountModal = () => {};
-  let closeAccountModal = () => {};
+  function openAccountModal() {
+    const accountModal = document.getElementById('accountModal');
+    if (!accountModal) return;
+    closeLoginModal();
+    closeRegisterModal();
+    accountModal.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    clearAccountAlert();
+    fetchAccountDetails();
+  }
+
+  function closeAccountModal() {
+    const accountModal = document.getElementById('accountModal');
+    if (!accountModal) return;
+    accountModal.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    clearAccountAlert();
+    toggleAccountEditMode(false);
+    toggleChangePasswordMode(false);
+    toggleAccountAvatarDeleteConfirm(false);
+  }
 
   function openRegisterModal() {
     closeLoginModal();
@@ -69,6 +113,7 @@
     initLoginForm();
     initAuthHeader();
     initAccountModal();
+    initAvatarCropModal();
     restoreSession();
   });
 
@@ -1094,6 +1139,7 @@
       email: user.email,
       full_name: user.full_name,
       role: user.role,
+      avatar_url: user.avatar_url !== undefined ? user.avatar_url : null,
     } : null;
 
     const storage = getLocalStorage();
@@ -1169,8 +1215,25 @@
         displayNameEl.textContent = name;
       }
       if (userAvatarEl) {
-        const initial = (user.full_name ? user.full_name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
-        userAvatarEl.textContent = initial;
+        const initial = (user.full_name ? user.full_name.trim().charAt(0) : (user.email ? user.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
+        if (user.avatar_url) {
+          userAvatarEl.innerHTML = `<img src="${resolveAvatarUrl(user.avatar_url)}" alt="Avatar" class="header-user-avatar-img">`;
+          const avatarImg = userAvatarEl.querySelector ? userAvatarEl.querySelector('img') : null;
+          if (avatarImg) {
+            const handleHeaderImgError = () => {
+              avatarImg.onerror = null;
+              userAvatarEl.innerHTML = '';
+              userAvatarEl.textContent = initial;
+            };
+            avatarImg.onerror = handleHeaderImgError;
+            if (typeof avatarImg.addEventListener === 'function') {
+              avatarImg.addEventListener('error', handleHeaderImgError);
+            }
+          }
+        } else {
+          userAvatarEl.innerHTML = '';
+          userAvatarEl.textContent = initial;
+        }
       }
 
       // Update Admin badge indicator visibility in header
@@ -1269,6 +1332,10 @@
         if (freshUser) {
           setStoredSession(token, freshUser);
           updateHeaderAuthState(freshUser);
+          const accountModal = document.getElementById('accountModal');
+          if (accountModal && !accountModal.hasAttribute('hidden') && accountModal.style.display !== 'none') {
+            renderAccountDetails(freshUser);
+          }
         }
       } else if (response.status === 401 || response.status === 403) {
         // Token expired, invalid or account inactive -> clear session
@@ -1322,30 +1389,16 @@
 
   // ── Account Info Modal ──
 
+  let isAccountModalInitialized = false;
+
   function initAccountModal() {
+    if (isAccountModalInitialized) return;
+    isAccountModalInitialized = true;
+
     const accountModal = document.getElementById('accountModal');
     const btnOpenAccountModal = document.getElementById('btnOpenAccountModal');
     const btnCloseAccountModal = document.getElementById('btnCloseAccountModal');
     const btnCloseAccountModalBtn = document.getElementById('btnCloseAccountModalBtn');
-
-    openAccountModal = function () {
-      if (!accountModal) return;
-      closeLoginModal();
-      closeRegisterModal();
-      accountModal.removeAttribute('hidden');
-      document.body.style.overflow = 'hidden';
-      clearAccountAlert();
-      fetchAccountDetails();
-    };
-
-    closeAccountModal = function () {
-      if (!accountModal) return;
-      accountModal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-      clearAccountAlert();
-      toggleAccountEditMode(false);
-      toggleChangePasswordMode(false);
-    };
 
     if (btnOpenAccountModal) {
       btnOpenAccountModal.addEventListener('click', (e) => {
@@ -1370,6 +1423,972 @@
 
     initAccountEditForm();
     initChangePasswordForm();
+    initAccountAvatar();
+  }
+
+  // ── Account Avatar Interactive Controls ──
+
+  let isAccountAvatarInitialized = false;
+
+  function handleAccountAvatarImgError() {
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const btnDelete = document.getElementById('btnDeleteAvatar');
+
+    if (avatarImg) {
+      if (avatarImg.style.display === 'none' && (!avatarImg.src || avatarImg.getAttribute('src') === '')) {
+        return;
+      }
+      avatarImg.onerror = null;
+      avatarImg.removeAttribute('src');
+      avatarImg.src = '';
+      avatarImg.style.display = 'none';
+    }
+    if (avatarInitial) {
+      avatarInitial.style.display = 'inline-block';
+    }
+    if (btnDelete) {
+      btnDelete.style.display = 'none';
+    }
+  }
+
+  function initAccountAvatar() {
+    if (isAccountAvatarInitialized) return;
+
+    const btnSelectAvatar = document.getElementById('btnSelectAvatar');
+    const btnTriggerAvatarUpload = document.getElementById('btnTriggerAvatarUpload');
+    const avatarFileInput = document.getElementById('avatarFileInput');
+    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
+    const avatarDeleteConfirmBox = document.getElementById('avatarDeleteConfirmBox');
+    const btnCancelDeleteAvatar = document.getElementById('btnCancelDeleteAvatar');
+    const btnConfirmDeleteAvatar = document.getElementById('btnConfirmDeleteAvatar');
+    const accountAvatarImg = document.getElementById('accountAvatarImg');
+
+    if (accountAvatarImg) {
+      if (!accountAvatarImg.src) {
+        accountAvatarImg.style.display = 'none';
+      }
+      accountAvatarImg.addEventListener('error', handleAccountAvatarImgError);
+    }
+
+    if (btnSelectAvatar) {
+      btnSelectAvatar.addEventListener('click', () => {
+        if (avatarFileInput) avatarFileInput.click();
+      });
+      btnSelectAvatar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (avatarFileInput) avatarFileInput.click();
+        }
+      });
+    }
+
+    if (btnTriggerAvatarUpload) {
+      btnTriggerAvatarUpload.addEventListener('click', () => {
+        if (avatarFileInput) avatarFileInput.click();
+      });
+    }
+
+    if (avatarFileInput) {
+      avatarFileInput.addEventListener('change', handleAvatarFileSelection);
+    }
+
+    if (btnDeleteAvatar) {
+      btnDeleteAvatar.addEventListener('click', () => {
+        toggleAccountAvatarDeleteConfirm(true);
+      });
+    }
+
+    if (btnCancelDeleteAvatar) {
+      btnCancelDeleteAvatar.addEventListener('click', () => {
+        toggleAccountAvatarDeleteConfirm(false);
+      });
+    }
+
+    if (btnConfirmDeleteAvatar) {
+      btnConfirmDeleteAvatar.addEventListener('click', handleConfirmDeleteAvatar);
+    }
+
+    if (avatarDeleteConfirmBox) {
+      avatarDeleteConfirmBox.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          toggleAccountAvatarDeleteConfirm(false);
+          if (btnDeleteAvatar && typeof btnDeleteAvatar.focus === 'function') {
+            btnDeleteAvatar.focus();
+          }
+        }
+      });
+    }
+
+    isAccountAvatarInitialized = true;
+  }
+
+  function toggleAccountAvatarDeleteConfirm(isOpen) {
+    const confirmBox = document.getElementById('avatarDeleteConfirmBox');
+    if (!confirmBox) return;
+    confirmBox.style.display = isOpen ? 'flex' : 'none';
+    if (isOpen) {
+      const cancelBtn = document.getElementById('btnCancelDeleteAvatar');
+      if (cancelBtn && typeof cancelBtn.focus === 'function') {
+        cancelBtn.focus();
+      }
+    }
+  }
+
+  function handleAvatarFileSelection(e) {
+    const input = (e && e.target) ? e.target : document.getElementById('avatarFileInput');
+    if (!input || !input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    const fileName = (file.name || '').toLowerCase();
+    const hasValidExt = /\.(jpe?g|png|webp)$/i.test(fileName);
+    const hasValidMime = allowedMimes.includes((file.type || '').toLowerCase());
+
+    if (!hasValidMime && !hasValidExt) {
+      showAccountAlert('Định dạng tệp không được hỗ trợ. Vui lòng chọn ảnh JPEG, PNG hoặc WebP.', 'error');
+      input.value = '';
+      return;
+    }
+
+    if (!file.size || file.size <= 0) {
+      showAccountAlert('Tệp ảnh không hợp lệ hoặc rỗng (0 bytes).', 'error');
+      input.value = '';
+      return;
+    }
+
+    const maxSizeBytes = 2 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      showAccountAlert('Kích thước tệp ảnh vượt quá giới hạn tối đa cho phép (2 MB).', 'error');
+      input.value = '';
+      return;
+    }
+
+    clearAccountAlert();
+
+    const cropModal = document.getElementById('avatarCropModal');
+    if (cropModal) {
+      openAvatarCropModal(file);
+    } else {
+      let previewUrl = '';
+      if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        try {
+          previewUrl = URL.createObjectURL(file);
+        } catch (_err) {}
+      }
+
+      if (previewUrl) {
+        applyAvatarPreview(previewUrl);
+      } else if (typeof FileReader !== 'undefined') {
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          applyAvatarPreview(loadEvent.target && loadEvent.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        applyAvatarPreview('');
+      }
+    }
+  }
+
+  let isUploadingAvatar = false;
+  let isDeletingAvatar = false;
+  let activeAvatarPreviewObjectUrl = null;
+
+  function revokeActiveAvatarPreview() {
+    if (activeAvatarPreviewObjectUrl) {
+      if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        try {
+          URL.revokeObjectURL(activeAvatarPreviewObjectUrl);
+        } catch (_e) {}
+      }
+      activeAvatarPreviewObjectUrl = null;
+    }
+  }
+
+  function revokeTempCropUrl() {
+    if (cropState.tempObjectUrl) {
+      if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+        try {
+          URL.revokeObjectURL(cropState.tempObjectUrl);
+        } catch (_e) {}
+      }
+      cropState.tempObjectUrl = null;
+    }
+  }
+
+  function applyAvatarPreview(srcUrl) {
+    if (srcUrl && srcUrl !== activeAvatarPreviewObjectUrl) {
+      revokeActiveAvatarPreview();
+      if (typeof srcUrl === 'string' && srcUrl.startsWith('blob:')) {
+        activeAvatarPreviewObjectUrl = srcUrl;
+      }
+    } else if (!srcUrl) {
+      revokeActiveAvatarPreview();
+    }
+
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const btnDelete = document.getElementById('btnDeleteAvatar');
+    const confirmBox = document.getElementById('avatarDeleteConfirmBox');
+
+    if (srcUrl) {
+      if (avatarImg) {
+        avatarImg.src = resolveAvatarUrl(srcUrl);
+        avatarImg.style.display = 'block';
+      }
+      if (avatarInitial) {
+        avatarInitial.style.display = 'none';
+      }
+      if (btnDelete) {
+        btnDelete.style.display = 'inline-flex';
+      }
+    } else {
+      if (avatarImg) {
+        avatarImg.src = '';
+        avatarImg.style.display = 'none';
+      }
+      if (avatarInitial) {
+        avatarInitial.style.display = 'inline-block';
+      }
+      if (btnDelete) {
+        btnDelete.style.display = 'none';
+      }
+    }
+    if (confirmBox) {
+      confirmBox.style.display = 'none';
+    }
+  }
+
+  async function handleConfirmDeleteAvatar() {
+    if (isDeletingAvatar) return false;
+
+    const token = getStoredToken();
+    if (!token) {
+      showAccountAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      toggleAccountAvatarDeleteConfirm(false);
+      return false;
+    }
+
+    const confirmBtn = document.getElementById('btnConfirmDeleteAvatar');
+    const cancelBtn = document.getElementById('btnCancelDeleteAvatar');
+    const originalBtnText = (confirmBtn && confirmBtn.textContent && confirmBtn.textContent.trim())
+      ? confirmBtn.textContent
+      : 'Gỡ ảnh';
+
+    try {
+      isDeletingAvatar = true;
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Đang xóa...';
+      }
+      if (cancelBtn) {
+        cancelBtn.disabled = true;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/me/avatar`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (_e) {}
+
+      if (response.status === 200) {
+        revokeActiveAvatarPreview();
+
+        const avatarImg = document.getElementById('accountAvatarImg');
+        const avatarInitial = document.getElementById('accountAvatarInitial');
+        const btnDelete = document.getElementById('btnDeleteAvatar');
+        const input = document.getElementById('avatarFileInput');
+
+        if (avatarImg) {
+          avatarImg.src = '';
+          avatarImg.style.display = 'none';
+        }
+        if (avatarInitial) {
+          avatarInitial.style.display = 'inline-block';
+        }
+        if (btnDelete) {
+          btnDelete.style.display = 'none';
+        }
+        if (input) {
+          input.value = '';
+        }
+        toggleAccountAvatarDeleteConfirm(false);
+
+        const user = getStoredUser() || {};
+        user.avatar_url = null;
+        setStoredSession(token, user);
+
+        updateHeaderAuthState(user);
+        renderAccountDetails(user);
+
+        showAccountAlert('Đã xóa ảnh đại diện thành công.', 'success');
+        return true;
+      } else if (response.status === 400) {
+        const msg = (resData && resData.message) || 'Tài khoản chưa thiết lập ảnh đại diện để xóa.';
+        showAccountAlert(msg, 'error');
+        toggleAccountAvatarDeleteConfirm(false);
+        return false;
+      } else if (response.status === 401) {
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        toggleAccountAvatarDeleteConfirm(false);
+        showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        return false;
+      } else if (response.status === 403) {
+        toggleAccountAvatarDeleteConfirm(false);
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Bạn không có quyền xóa ảnh đại diện này.';
+        showAccountAlert(msg, 'error');
+        return false;
+      } else {
+        const msg = (resData && resData.message) || 'Máy chủ gặp sự cố khi xóa ảnh đại diện. Vui lòng thử lại sau.';
+        showAccountAlert(msg, 'error');
+        return false;
+      }
+    } catch (networkError) {
+      console.warn('[PDF-Lingua Delete Avatar Error]', networkError);
+      showAccountAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.', 'error');
+      return false;
+    } finally {
+      isDeletingAvatar = false;
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalBtnText;
+      }
+      if (cancelBtn) {
+        cancelBtn.disabled = false;
+      }
+    }
+  }
+
+  // ── Avatar Image Cropping & Canvas Processing ──
+
+  let cropState = {
+    isOpen: false,
+    originalFile: null,
+    naturalWidth: 0,
+    naturalHeight: 0,
+    scaleBase: 1,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    startOffsetX: 0,
+    startOffsetY: 0,
+    viewportSize: 320,
+    cropDiameter: 240,
+    croppedBlob: null,
+    croppedFile: null,
+  };
+
+  function initAvatarCropModal() {
+    const modal = document.getElementById('avatarCropModal');
+    const closeBtn = document.getElementById('btnCloseAvatarCropModal');
+    const cancelBtn = document.getElementById('btnCancelAvatarCrop');
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const viewport = document.getElementById('avatarCropViewport');
+    const zoomRange = document.getElementById('cropZoomRange');
+    const zoomInBtn = document.getElementById('btnCropZoomIn');
+    const zoomOutBtn = document.getElementById('btnCropZoomOut');
+    const cropImg = document.getElementById('avatarCropImg');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => closeAvatarCropModal(false));
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => closeAvatarCropModal(false));
+    }
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', confirmAvatarCrop);
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeAvatarCropModal(false);
+      });
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAvatarCropModal(false);
+      });
+    }
+
+    if (zoomRange) {
+      zoomRange.addEventListener('input', (e) => {
+        setCropZoom(parseFloat(e.target.value));
+      });
+    }
+
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', () => {
+        setCropZoom(cropState.zoom + 0.1);
+      });
+    }
+
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', () => {
+        setCropZoom(cropState.zoom - 0.1);
+      });
+    }
+
+    if (viewport) {
+      viewport.addEventListener('pointerdown', handleCropPointerDown);
+      viewport.addEventListener('pointermove', handleCropPointerMove);
+      viewport.addEventListener('pointerup', handleCropPointerUp);
+      viewport.addEventListener('pointercancel', handleCropPointerUp);
+      viewport.addEventListener('wheel', handleCropWheel, { passive: false });
+      viewport.addEventListener('keydown', handleCropKeydown);
+    }
+
+    if (cropImg) {
+      cropImg.addEventListener('load', handleCropImageLoad);
+      cropImg.addEventListener('error', handleCropImageError);
+    }
+  }
+
+  function openAvatarCropModal(file) {
+    const modal = document.getElementById('avatarCropModal');
+    const cropImg = document.getElementById('avatarCropImg');
+    const zoomRange = document.getElementById('cropZoomRange');
+    const zoomVal = document.getElementById('cropZoomValue');
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+
+    if (!modal || !cropImg) return;
+
+    clearCropAlert();
+    cropState.isOpen = true;
+    cropState.originalFile = file;
+    cropState.zoom = 1;
+    cropState.offsetX = 0;
+    cropState.offsetY = 0;
+    cropState.isDragging = false;
+    cropState.croppedBlob = null;
+    cropState.croppedFile = null;
+
+    if (zoomRange) zoomRange.value = '1';
+    if (zoomVal) zoomVal.textContent = '100%';
+    if (confirmBtn) confirmBtn.disabled = false;
+
+    let objectUrl = '';
+    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+      try {
+        objectUrl = URL.createObjectURL(file);
+      } catch (_e) {}
+    }
+
+    revokeTempCropUrl();
+    cropState.tempObjectUrl = objectUrl;
+
+    if (objectUrl) {
+      cropImg.src = objectUrl;
+    } else if (typeof FileReader !== 'undefined') {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        cropImg.src = (loadEvent.target && loadEvent.target.result) || '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    modal.removeAttribute('hidden');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    syncViewportDimensions();
+
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport && typeof viewport.focus === 'function') {
+      setTimeout(() => viewport.focus(), 50);
+    }
+  }
+
+  function syncViewportDimensions() {
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport && viewport.clientWidth) {
+      cropState.viewportSize = viewport.clientWidth;
+      const mask = viewport.querySelector ? viewport.querySelector('.avatar-crop-mask') : null;
+      if (mask && mask.clientWidth) {
+        cropState.cropDiameter = mask.clientWidth;
+      } else {
+        cropState.cropDiameter = Math.round(cropState.viewportSize * 0.75);
+      }
+    } else {
+      cropState.viewportSize = 320;
+      cropState.cropDiameter = 240;
+    }
+  }
+
+  function handleCropImageLoad() {
+    const cropImg = document.getElementById('avatarCropImg');
+    if (!cropImg) return;
+
+    const natW = (cropImg.naturalWidth !== undefined) ? cropImg.naturalWidth : (cropImg.width || 0);
+    const natH = (cropImg.naturalHeight !== undefined) ? cropImg.naturalHeight : (cropImg.height || 0);
+
+    if (natW <= 0 || natH <= 0) {
+      showCropAlert('Không thể đọc kích thước tệp ảnh đã chọn.', 'error');
+      const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+      if (confirmBtn) confirmBtn.disabled = true;
+      return;
+    }
+
+    cropState.naturalWidth = natW;
+    cropState.naturalHeight = natH;
+
+    syncViewportDimensions();
+
+    cropState.scaleBase = Math.max(
+      cropState.cropDiameter / natW,
+      cropState.cropDiameter / natH
+    );
+    cropState.zoom = 1;
+    cropState.offsetX = 0;
+    cropState.offsetY = 0;
+
+    updateCropDisplay();
+  }
+
+  function handleCropImageError() {
+    showCropAlert('Không thể tải hoặc xử lý tệp ảnh này. Vui lòng chọn tệp khác.', 'error');
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+
+  function updateCropDisplay() {
+    const cropImg = document.getElementById('avatarCropImg');
+    const zoomVal = document.getElementById('cropZoomValue');
+    const zoomRange = document.getElementById('cropZoomRange');
+
+    if (!cropImg || !cropState.naturalWidth || !cropState.naturalHeight) return;
+
+    const currentW = cropState.naturalWidth * cropState.scaleBase * cropState.zoom;
+    const currentH = cropState.naturalHeight * cropState.scaleBase * cropState.zoom;
+
+    const maxOffsetX = Math.max(0, (currentW - cropState.cropDiameter) / 2);
+    const maxOffsetY = Math.max(0, (currentH - cropState.cropDiameter) / 2);
+
+    cropState.offsetX = Math.min(maxOffsetX, Math.max(-maxOffsetX, cropState.offsetX));
+    cropState.offsetY = Math.min(maxOffsetY, Math.max(-maxOffsetY, cropState.offsetY));
+
+    cropImg.style.width = `${Math.round(currentW)}px`;
+    cropImg.style.height = `${Math.round(currentH)}px`;
+    cropImg.style.transform = `translate(${Math.round(cropState.offsetX)}px, ${Math.round(cropState.offsetY)}px)`;
+
+    const pct = Math.round(cropState.zoom * 100);
+    if (zoomVal) zoomVal.textContent = `${pct}%`;
+    if (zoomRange && Math.abs(parseFloat(zoomRange.value) - cropState.zoom) > 0.01) {
+      zoomRange.value = String(cropState.zoom);
+    }
+  }
+
+  function setCropZoom(val) {
+    const clamped = Math.min(3.0, Math.max(1.0, Math.round(val * 100) / 100));
+    cropState.zoom = clamped;
+    updateCropDisplay();
+  }
+
+  function handleCropPointerDown(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    cropState.isDragging = true;
+    cropState.dragStartX = e.clientX || 0;
+    cropState.dragStartY = e.clientY || 0;
+    cropState.startOffsetX = cropState.offsetX;
+    cropState.startOffsetY = cropState.offsetY;
+
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport) {
+      viewport.style.cursor = 'grabbing';
+      if (typeof viewport.setPointerCapture === 'function' && e.pointerId !== undefined) {
+        try { viewport.setPointerCapture(e.pointerId); } catch (_e) {}
+      }
+    }
+  }
+
+  function handleCropPointerMove(e) {
+    if (!cropState.isDragging) return;
+    const dx = (e.clientX || 0) - cropState.dragStartX;
+    const dy = (e.clientY || 0) - cropState.dragStartY;
+    cropState.offsetX = cropState.startOffsetX + dx;
+    cropState.offsetY = cropState.startOffsetY + dy;
+    updateCropDisplay();
+  }
+
+  function handleCropPointerUp(e) {
+    cropState.isDragging = false;
+    const viewport = document.getElementById('avatarCropViewport');
+    if (viewport) {
+      viewport.style.cursor = 'grab';
+      if (typeof viewport.releasePointerCapture === 'function' && e && e.pointerId !== undefined) {
+        try { viewport.releasePointerCapture(e.pointerId); } catch (_e) {}
+      }
+    }
+  }
+
+  function handleCropWheel(e) {
+    e.preventDefault();
+    const delta = (e.deltaY || 0) < 0 ? 0.08 : -0.08;
+    setCropZoom(cropState.zoom + delta);
+  }
+
+  function handleCropKeydown(e) {
+    if (e.key === 'ArrowLeft') {
+      cropState.offsetX -= 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      cropState.offsetX += 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      cropState.offsetY -= 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      cropState.offsetY += 6;
+      updateCropDisplay();
+      e.preventDefault();
+    } else if (e.key === '+' || e.key === '=') {
+      setCropZoom(cropState.zoom + 0.1);
+      e.preventDefault();
+    } else if (e.key === '-') {
+      setCropZoom(cropState.zoom - 0.1);
+      e.preventDefault();
+    }
+  }
+
+  function closeAvatarCropModal(isConfirmed = false) {
+    const modal = document.getElementById('avatarCropModal');
+    const cropImg = document.getElementById('avatarCropImg');
+    const fileInput = document.getElementById('avatarFileInput');
+
+    cropState.isOpen = false;
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      modal.style.display = 'none';
+    }
+    document.body.style.overflow = '';
+    clearCropAlert();
+
+    if (cropImg) {
+      cropImg.src = '';
+    }
+
+    revokeTempCropUrl();
+
+    if (!isConfirmed) {
+      cropState.originalFile = null;
+      cropState.croppedBlob = null;
+      cropState.croppedFile = null;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    }
+  }
+
+  async function confirmAvatarCrop() {
+    if (isUploadingAvatar) return false;
+    if (!cropState.naturalWidth || !cropState.naturalHeight) {
+      showCropAlert('Chưa có ảnh hợp lệ để áp dụng.', 'error');
+      return false;
+    }
+
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const cancelBtn = document.getElementById('btnCancelAvatarCrop');
+    const closeBtn = document.getElementById('btnCloseAvatarCropModal');
+    const spinner = document.getElementById('cropConfirmSpinner');
+    const btnText = document.getElementById('cropConfirmBtnText');
+
+    let croppedBlob = null;
+    let croppedFile = null;
+
+    try {
+      if (spinner) spinner.style.display = 'inline-block';
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (closeBtn) closeBtn.disabled = true;
+      if (btnText) btnText.textContent = 'Đang xử lý ảnh...';
+
+      croppedBlob = await generateCroppedBlob();
+      if (!croppedBlob) {
+        throw new Error('Canvas không tạo được dữ liệu ảnh.');
+      }
+
+      const originalName = (cropState.originalFile && cropState.originalFile.name) || 'avatar.png';
+      const ext = croppedBlob.type === 'image/jpeg' ? '.jpg' : (croppedBlob.type === 'image/webp' ? '.webp' : '.png');
+      const baseName = originalName.replace(/\.[^/.]+$/, '');
+      const croppedFileName = `${baseName}_cropped${ext}`;
+
+      if (typeof File !== 'undefined') {
+        try {
+          croppedFile = new File([croppedBlob], croppedFileName, { type: croppedBlob.type });
+        } catch (_fileErr) {
+          croppedFile = croppedBlob;
+          croppedFile.name = croppedFileName;
+        }
+      } else {
+        croppedFile = croppedBlob;
+      }
+
+      cropState.croppedBlob = croppedBlob;
+      cropState.croppedFile = croppedFile;
+    } catch (cropErr) {
+      console.warn('[PDF-Lingua Crop Error]', cropErr);
+      showCropAlert('Không thể xử lý cắt ảnh. Vui lòng thử lại.', 'error');
+      if (spinner) spinner.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+      if (closeBtn) closeBtn.disabled = false;
+      if (btnText) btnText.textContent = 'Áp dụng ảnh';
+      return false;
+    }
+
+    return await uploadCroppedAvatar(croppedFile);
+  }
+
+  async function uploadCroppedAvatar(file) {
+    if (isUploadingAvatar) return false;
+
+    const confirmBtn = document.getElementById('btnConfirmAvatarCrop');
+    const cancelBtn = document.getElementById('btnCancelAvatarCrop');
+    const closeBtn = document.getElementById('btnCloseAvatarCropModal');
+    const spinner = document.getElementById('cropConfirmSpinner');
+    const btnText = document.getElementById('cropConfirmBtnText');
+
+    const restoreButtons = () => {
+      isUploadingAvatar = false;
+      if (spinner) spinner.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+      if (closeBtn) closeBtn.disabled = false;
+      if (btnText) btnText.textContent = 'Áp dụng ảnh';
+    };
+
+    const targetFile = file || cropState.croppedFile;
+    if (!targetFile) {
+      restoreButtons();
+      showCropAlert('Không tìm thấy tệp ảnh để tải lên.', 'error');
+      return false;
+    }
+
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    let fileType = (targetFile.type || '').toLowerCase();
+    if (!fileType && targetFile.name) {
+      const ext = targetFile.name.split('.').pop().toLowerCase();
+      if (ext === 'jpg' || ext === 'jpeg') fileType = 'image/jpeg';
+      else if (ext === 'png') fileType = 'image/png';
+      else if (ext === 'webp') fileType = 'image/webp';
+    }
+
+    if (!ALLOWED_MIME_TYPES.includes(fileType)) {
+      restoreButtons();
+      showCropAlert('Định dạng tệp không được hỗ trợ. Chỉ chấp nhận JPEG, PNG hoặc WebP.', 'error');
+      return false;
+    }
+
+    const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+    if (typeof targetFile.size === 'number') {
+      if (targetFile.size <= 0) {
+        restoreButtons();
+        showCropAlert('Tệp ảnh không hợp lệ hoặc rỗng.', 'error');
+        return false;
+      }
+      if (targetFile.size > MAX_AVATAR_SIZE) {
+        restoreButtons();
+        showCropAlert('Kích thước ảnh đại diện vượt quá giới hạn tối đa 2 MB.', 'error');
+        return false;
+      }
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      restoreButtons();
+      clearStoredSession();
+      updateHeaderAuthState(null);
+      showCropAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+      showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+      return false;
+    }
+
+    try {
+      isUploadingAvatar = true;
+      if (spinner) spinner.style.display = 'inline-block';
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (closeBtn) closeBtn.disabled = true;
+      if (btnText) btnText.textContent = 'Đang tải lên...';
+
+      let formData;
+      if (typeof FormData !== 'undefined') {
+        formData = new FormData();
+        formData.append('file', targetFile, targetFile.name || 'avatar.png');
+      } else {
+        formData = {
+          file: targetFile,
+        };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/me/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+        body: formData,
+      });
+
+      let resData = null;
+      try {
+        resData = await response.json();
+      } catch (_e) {}
+
+      if (response.status === 200 && resData && resData.data && resData.data.avatar_url) {
+        const serverAvatarUrl = resData.data.avatar_url;
+
+        revokeActiveAvatarPreview();
+        applyAvatarPreview(serverAvatarUrl);
+
+        const user = getStoredUser() || {};
+        user.avatar_url = serverAvatarUrl;
+        setStoredSession(token, user);
+
+        updateHeaderAuthState(user);
+        renderAccountDetails(user);
+
+        closeAvatarCropModal(true);
+
+        const fileInput = document.getElementById('avatarFileInput');
+        if (fileInput) {
+          fileInput.value = '';
+        }
+
+        showAccountAlert('Cập nhật ảnh đại diện thành công.', 'success');
+        return true;
+      } else if (response.status === 401) {
+        clearStoredSession();
+        updateHeaderAuthState(null);
+        showCropAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        showAccountAlert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        return false;
+      } else if (response.status === 403) {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Bạn không có quyền cập nhật ảnh đại diện này.';
+        showCropAlert(msg, 'error');
+        return false;
+      } else if (response.status === 413) {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Kích thước tệp ảnh vượt quá giới hạn tối đa cho phép (2 MB).';
+        showCropAlert(msg, 'error');
+        return false;
+      } else if (response.status === 415) {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Định dạng tệp không được hỗ trợ. Chỉ chấp nhận các định dạng JPEG, PNG và WebP.';
+        showCropAlert(msg, 'error');
+        return false;
+      } else if (response.status === 400 || response.status === 422) {
+        let msg = resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null));
+        if (!msg && resData && Array.isArray(resData.detail) && resData.detail.length > 0) {
+          msg = resData.detail.map((d) => d.msg || d.message).join('; ');
+        }
+        showCropAlert(msg || 'Dữ liệu ảnh không hợp lệ. Vui lòng kiểm tra lại.', 'error');
+        return false;
+      } else {
+        const msg = (resData && (resData.message || (typeof resData.detail === 'string' ? resData.detail : null)))
+          || 'Máy chủ gặp sự cố khi lưu ảnh đại diện. Vui lòng thử lại sau.';
+        showCropAlert(msg, 'error');
+        return false;
+      }
+    } catch (networkError) {
+      console.warn('[PDF-Lingua Avatar Upload Error]', networkError);
+      showCropAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.', 'error');
+      return false;
+    } finally {
+      restoreButtons();
+    }
+  }
+
+  function generateCroppedBlob(targetSize = 400) {
+    return new Promise((resolve, reject) => {
+      try {
+        const currentW = cropState.naturalWidth * cropState.scaleBase * cropState.zoom;
+        const currentH = cropState.naturalHeight * cropState.scaleBase * cropState.zoom;
+        const ratio = cropState.naturalWidth / currentW;
+
+        const relX = (currentW - cropState.cropDiameter) / 2 - cropState.offsetX;
+        const relY = (currentH - cropState.cropDiameter) / 2 - cropState.offsetY;
+
+        const sx = Math.max(0, relX * ratio);
+        const sy = Math.max(0, relY * ratio);
+        const sSize = Math.min(
+          cropState.cropDiameter * ratio,
+          cropState.naturalWidth - sx,
+          cropState.naturalHeight - sy
+        );
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Không thể khởi tạo Canvas 2D context.'));
+          return;
+        }
+
+        const img = document.getElementById('avatarCropImg');
+        ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, targetSize, targetSize);
+
+        const mimeType = (cropState.originalFile && cropState.originalFile.type) || 'image/png';
+        const outputMime = ['image/jpeg', 'image/png', 'image/webp'].includes(mimeType) ? mimeType : 'image/png';
+
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Canvas toBlob trả về null.'));
+            }
+          }, outputMime, 0.92);
+        } else if (typeof canvas.toDataURL === 'function') {
+          const dataUrl = canvas.toDataURL(outputMime, 0.92);
+          const parts = dataUrl.split(',');
+          const binStr = atob(parts[1]);
+          const len = binStr.length;
+          const u8 = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            u8[i] = binStr.charCodeAt(i);
+          }
+          resolve(new Blob([u8], { type: outputMime }));
+        } else {
+          reject(new Error('Trình duyệt không hỗ trợ xuất dữ liệu Canvas.'));
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function showCropAlert(msg, type = 'error') {
+    const alertBox = document.getElementById('avatarCropAlert');
+    if (!alertBox) return;
+    alertBox.className = `form-alert alert-${type}`;
+    alertBox.textContent = msg;
+    alertBox.style.display = 'block';
+  }
+
+  function clearCropAlert() {
+    const alertBox = document.getElementById('avatarCropAlert');
+    if (!alertBox) return;
+    alertBox.className = 'form-alert';
+    alertBox.textContent = '';
+    alertBox.style.display = 'none';
   }
 
   function toggleAccountEditMode(isEditing) {
@@ -1826,6 +2845,10 @@
     const fullNameDisplay = document.getElementById('accountFullNameDisplay');
     const emailSubDisplay = document.getElementById('accountEmailSubDisplay');
     const avatarLarge = document.getElementById('accountAvatarLarge');
+    const avatarInitial = document.getElementById('accountAvatarInitial');
+    const avatarImg = document.getElementById('accountAvatarImg');
+    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
+    const confirmBox = document.getElementById('avatarDeleteConfirmBox');
     const detailFullName = document.getElementById('accountDetailFullName');
     const detailEmail = document.getElementById('accountDetailEmail');
     const detailRole = document.getElementById('accountDetailRole');
@@ -1833,11 +2856,44 @@
 
     const name = user.full_name || 'Chưa đặt tên';
     const email = user.email || '';
-    const initial = (user.full_name ? user.full_name.charAt(0) : email.charAt(0) || 'U').toUpperCase();
+    const initial = (user.full_name ? user.full_name.trim().charAt(0) : (email ? email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
     if (fullNameDisplay) fullNameDisplay.textContent = name;
     if (emailSubDisplay) emailSubDisplay.textContent = email;
-    if (avatarLarge) avatarLarge.textContent = initial;
+
+    if (confirmBox) confirmBox.style.display = 'none';
+
+    if (user.avatar_url) {
+      if (avatarImg) {
+        avatarImg.src = resolveAvatarUrl(user.avatar_url);
+        avatarImg.style.display = 'block';
+      }
+      if (avatarInitial) {
+        avatarInitial.textContent = initial;
+        avatarInitial.style.display = 'none';
+      }
+      if (btnDeleteAvatar) {
+        btnDeleteAvatar.style.display = 'inline-flex';
+      }
+      if (avatarLarge && !avatarInitial) {
+        avatarLarge.textContent = '';
+      }
+    } else {
+      if (avatarImg) {
+        avatarImg.src = '';
+        avatarImg.style.display = 'none';
+      }
+      if (avatarInitial) {
+        avatarInitial.textContent = initial;
+        avatarInitial.style.display = 'inline-block';
+      }
+      if (btnDeleteAvatar) {
+        btnDeleteAvatar.style.display = 'none';
+      }
+      if (avatarLarge && !avatarInitial) {
+        avatarLarge.textContent = initial;
+      }
+    }
     if (detailFullName) detailFullName.textContent = name;
     if (detailEmail) detailEmail.textContent = email;
 
@@ -2005,6 +3061,7 @@
     showLoginAlert,
     clearLoginAlert,
     escapeHtml,
+    resolveAvatarUrl,
     getStoredToken,
     getStoredUser,
     setStoredSession,
@@ -2020,6 +3077,9 @@
     closeRegisterModal,
     openAccountModal,
     closeAccountModal,
+    initAccountModal,
+    showAccountAlert,
+    clearAccountAlert,
     fetchAccountDetails,
     renderAccountDetails,
     toggleAccountEditMode,
@@ -2030,5 +3090,24 @@
     validateChangePasswordForm,
     toggleChangePasswordMode,
     handleChangePasswordSubmit,
+    initAccountAvatar,
+    toggleAccountAvatarDeleteConfirm,
+    handleAvatarFileSelection,
+    applyAvatarPreview,
+    handleConfirmDeleteAvatar,
+    openAvatarCropModal,
+    closeAvatarCropModal,
+    initAvatarCropModal,
+    updateCropDisplay,
+    setCropZoom,
+    confirmAvatarCrop,
+    generateCroppedBlob,
+    uploadCroppedAvatar,
+    revokeActiveAvatarPreview,
+    revokeTempCropUrl,
+    handleAccountAvatarImgError,
+    getIsUploadingAvatar: () => isUploadingAvatar,
+    getIsDeletingAvatar: () => isDeletingAvatar,
+    getCropState: () => cropState,
   });
 })();

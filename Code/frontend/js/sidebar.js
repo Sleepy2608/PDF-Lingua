@@ -1162,10 +1162,30 @@
 
     if (currentUser && (currentUser.email || currentUser.id)) {
       const displayName = currentUser.full_name || currentUser.email || 'Người dùng';
-      const initial = (currentUser.full_name || currentUser.email || 'U').charAt(0).toUpperCase();
+      const initial = (currentUser.full_name ? currentUser.full_name.trim().charAt(0) : (currentUser.email ? currentUser.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
       if (avatarEl) {
-        avatarEl.textContent = initial;
+        if (currentUser.avatar_url) {
+          const resolvedSidebarSrc = (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.resolveAvatarUrl === 'function')
+            ? window.pdfLinguaAuth.resolveAvatarUrl(currentUser.avatar_url)
+            : ((currentUser.avatar_url && currentUser.avatar_url.startsWith('/')) ? `${API_BASE_URL}${currentUser.avatar_url}` : currentUser.avatar_url);
+          avatarEl.innerHTML = `<img src="${resolvedSidebarSrc}" alt="${displayName}" class="sidebar-avatar-img">`;
+          const sImg = avatarEl.querySelector ? avatarEl.querySelector('img') : null;
+          if (sImg) {
+            const handleSidebarImgError = () => {
+              sImg.onerror = null;
+              avatarEl.innerHTML = '';
+              avatarEl.textContent = initial;
+            };
+            sImg.onerror = handleSidebarImgError;
+            if (typeof sImg.addEventListener === 'function') {
+              sImg.addEventListener('error', handleSidebarImgError);
+            }
+          }
+        } else {
+          avatarEl.innerHTML = '';
+          avatarEl.textContent = initial;
+        }
         if (role === 'admin') {
           avatarEl.style.background = '#FFF1F0';
           avatarEl.style.color = '#C9201C';

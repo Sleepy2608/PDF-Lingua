@@ -11,6 +11,7 @@ from app.api.documents import compat_router as documents_compat_router, router a
 from app.api.history import router as history_router
 from app.api.pricing import router as pricing_router
 from app.api.process import compat_router as process_compat_router, router as process_router
+from app.api.storage import router as storage_router
 from app.core.config import settings
 from app.core.database import check_db_connection, init_db
 from app.core.exceptions import setup_exception_handlers
@@ -76,6 +77,7 @@ app.include_router(admin_router)
 app.include_router(history_router)
 app.include_router(pricing_router)
 app.include_router(ai_router)
+app.include_router(storage_router)
 
 
 @app.get("/")

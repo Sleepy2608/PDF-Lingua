@@ -39,6 +39,7 @@
   --text-inverse: #FFFFFF;
 
   /* Borders */
+  --border-light: #E2E8F0;
   --border-subtle: #E2E8F0;
   --border-dashed: #CBD5E1;
   --border-active: #4F46E5;
