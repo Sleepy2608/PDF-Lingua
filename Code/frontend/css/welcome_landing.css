@@ -1836,8 +1836,82 @@
   color: #FFFFFF;
 }
 
+/* ── 8. Optical Alignment & Focus Polish ─────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--wl-accent-blue-light);
+  outline-offset: 3px;
+}
+
+.wl-btn-primary:focus-visible,
+.wl-btn-hero-main:focus-visible,
+.wl-btn-hero-demo:focus-visible,
+.wl-nav-link:focus-visible,
+.wl-billing-btn:focus-visible,
+.wl-bento-action-btn:focus-visible,
+.wl-mini-citation-pill:focus-visible,
+.wl-step-action-btn:focus-visible,
+.wl-btn-plan:focus-visible,
+.wl-footer-links a:focus-visible,
+.wl-footer-social-link:focus-visible {
+  outline: 2px solid var(--wl-accent-blue-light);
+  outline-offset: 2px;
+}
+
+/* Standardized Tabular Figures */
+.wl-metric-val,
+.wl-metric-benchmark,
+.wl-step-num,
+.wl-step-badge,
+.wl-plan-price,
+.wl-plan-note,
+.wl-billing-save-badge,
+.wl-deskew-val,
+.wl-compress-val,
+.wl-compress-stat,
+.wl-compress-ratio,
+.wl-citation-confidence,
+.wl-batch-status,
+.wl-testimonial-meta-tag {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 9. Dynamic Scroll Reveal Transitions ────────────────────────────── */
+.wl-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1), transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.wl-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.wl-reveal-delay-1 {
+  transition-delay: 60ms;
+}
+
+.wl-reveal-delay-2 {
+  transition-delay: 120ms;
+}
+
+.wl-reveal-delay-3 {
+  transition-delay: 180ms;
+}
+
+.wl-reveal-delay-4 {
+  transition-delay: 240ms;
+}
+
 /* ── Accessibility & Motion Safety ──────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  .wl-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
