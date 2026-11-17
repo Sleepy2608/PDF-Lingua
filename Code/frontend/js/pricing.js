@@ -1917,14 +1917,18 @@
     } catch (_err) {
       if (reqId !== billingRequestId) return;
       if (loadingState) loadingState.style.display = 'none';
+      const errMsg =
+        _err && _err.message && _err.message !== 'Failed to fetch'
+          ? _err.message
+          : 'Lỗi kết nối mạng đến máy chủ. Vui lòng thử lại.';
       if (errorState) {
         errorState.style.display = 'flex';
         const msgEl = document.getElementById('billingHistoryErrorMessage');
         if (msgEl) {
-          msgEl.textContent = 'Lỗi kết nối mạng đến máy chủ. Vui lòng thử lại.';
+          msgEl.textContent = errMsg;
         }
       }
-      notifyUser('Lỗi kết nối mạng đến máy chủ. Vui lòng thử lại.', 'error');
+      notifyUser(errMsg, 'error');
     } finally {
       if (reqId === billingRequestId) {
         billingLoading = false;
@@ -2349,7 +2353,11 @@
     } catch (_err) {
       if (reqId !== currentInvoiceRequestId) return null;
       closeInvoiceModal();
-      notifyUser('Lỗi kết nối khi tải chi tiết hóa đơn. Vui lòng thử lại.', 'error');
+      const errMsg =
+        _err && _err.message && _err.message !== 'Failed to fetch'
+          ? _err.message
+          : 'Lỗi kết nối khi tải chi tiết hóa đơn. Vui lòng thử lại.';
+      notifyUser(errMsg, 'error');
       return null;
     }
   }
@@ -2495,6 +2503,12 @@
   }
 
   function downloadInvoiceReceipt() {
+    const loadingState = document.getElementById('invoiceModalLoadingState');
+    if (loadingState && loadingState.style.display !== 'none') {
+      notifyUser('Đang tải chi tiết hóa đơn, vui lòng chờ trong giây lát.', 'warning');
+      return;
+    }
+
     if (!currentInvoiceTransaction) {
       notifyUser('Không có thông tin giao dịch để tải biên lai.', 'warning');
       return;

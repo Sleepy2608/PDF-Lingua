@@ -10,14 +10,21 @@
  * 4. API-driven Status Filtering: Passes status query parameter to API (completed, pending, failed, expired, all).
  * 5. API-driven Pagination: Slices server pages with page and page_size query parameters,
  *    updates button states, and deduplicates redundant page requests.
- * 6. Empty State Handling: Displays clean empty state when server returns 0 records.
- * 7. Billing API Error Handling: Captures 401 Unauthorized, network failures, and race condition / out-of-order responses.
- * 8. Real Invoice Detail API: GET /api/pricing/billing/invoices/{code} with Bearer token,
+ * 6. Empty State & Malformed Payload: Displays clean empty state on 0 records,
+ *    and handles invalid JSON or success=false without silent mock fallback.
+ * 7. Billing API Error Handling: Captures 401 Unauthorized, 403 Forbidden, 422 Validation Error,
+ *    500 Internal Server Error, network failures, and verifies recovery via retry button.
+ * 8. Billing History Out-of-Order Race Condition: Ensures older delayed responses do not overwrite
+ *    newer filter responses when multiple requests are in-flight.
+ * 9. Real Invoice Detail API: GET /api/pricing/billing/invoices/{code} with Bearer token,
  *    clears stale data, displays loading state, binds purchaser and financial breakdown, and enables action buttons.
- * 9. Invoice Detail Edge Cases: Missing QR hides QR box, missing note renders fallback.
- * 10. Invoice Detail Error Handling: Captures 401 Unauthorized, 403 Forbidden, 404 Not Found, and network connection failures.
- * 11. Modal Closing Mechanisms: Header close button, footer close button, backdrop click, Escape key.
- * 12. Print & Download Receipt: Blocks printing while loading, triggers window.print() when ready,
+ * 10. Invoice Detail Edge Cases: Missing QR hides QR box, missing memo renders fallback, handles optional buyer fields.
+ * 11. Invoice Detail Error Handling: Captures 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Server Error,
+ *     and network failures by closing modal and notifying user.
+ * 12. Invoice Detail Out-of-Order Race Condition: Ensures opening invoice A then immediately invoice B
+ *     discards invoice A's delayed response and prevents stale data leakage.
+ * 13. Modal Closing Mechanisms: Header close button, footer close button, backdrop click, Escape key.
+ * 14. Print & Download Receipt: Blocks printing and downloading while loading, triggers window.print() when ready,
  *     and generates standalone HTML receipt blob with correct file download.
  */
 
@@ -644,7 +651,7 @@ function createBillingApiTestEnv(options = {}) {
         this.detail = init.detail || {};
       }
     },
-    setTimeout: (fn) => fn(),
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
     setInterval: () => 1,
     clearInterval: () => {},
     clearTimeout: () => {},
@@ -698,14 +705,24 @@ async function runAllTests() {
   assert.ok(pricingCssSource.includes('#invoiceModalLoadingState'), 'CSS must include #invoiceModalLoadingState in print styles');
   console.log('[PASS] 1. Static Architecture: Markup, modal loading state, and print CSS rules verified.');
 
-  // 2. Unauthenticated User State
+  // 2. Unauthenticated Guard & Security Isolation
   const unauthEnv = createBillingApiTestEnv({ token: null });
   unauthEnv.fetchCalls.length = 0;
   await unauthEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
   assert.strictEqual(unauthEnv.elements.billingHistoryErrorState.style.display, 'flex');
   assert.ok(unauthEnv.elements.billingHistoryErrorMessage.textContent.includes('Vui lòng đăng nhập'));
-  assert.strictEqual(unauthEnv.fetchCalls.length, 0, 'Must NOT make network calls when unauthenticated');
-  console.log('[PASS] 2. Unauthenticated Guard: Rejects fetch when token is missing and guides user to login.');
+  assert.strictEqual(unauthEnv.fetchCalls.length, 0, 'Must NOT make network calls when unauthenticated for billing history');
+
+  // Unauthenticated Invoice Detail Modal check
+  unauthEnv.fetchCalls.length = 0;
+  unauthEnv.toasts.length = 0;
+  const unauthInvoiceRes = await unauthEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+  assert.strictEqual(unauthInvoiceRes, null, 'Must return null when unauthenticated');
+  assert.strictEqual(unauthEnv.fetchCalls.length, 0, 'Must NOT make network calls when unauthenticated for invoice detail');
+  assert.strictEqual(unauthEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.ok(unauthEnv.toasts.some((t) => t.msg.includes('Vui lòng đăng nhập')));
+  assert.ok(unauthEnv.dispatchedEvents.some((e) => e.type === 'auth:open-login'));
+  console.log('[PASS] 2. Unauthenticated Guard: Protected both History and Invoice APIs against unauthorized access.');
 
   // 3. Authenticated Billing History API Fetch
   const authEnv = createBillingApiTestEnv();
@@ -744,10 +761,20 @@ async function runAllTests() {
   assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '1 giao dịch');
 
   authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.filterBillingHistory('failed');
+  assert.ok(authEnv.fetchCalls[0].url.includes('status=failed'));
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '2 giao dịch');
+
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.filterBillingHistory('expired');
+  assert.ok(authEnv.fetchCalls[0].url.includes('status=expired'));
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '2 giao dịch');
+
+  authEnv.fetchCalls.length = 0;
   await authEnv.window.PDFLinguaPricing.filterBillingHistory('all');
   assert.ok(!authEnv.fetchCalls[0].url.includes('status=completed'));
   assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '12 giao dịch');
-  console.log('[PASS] 4. API Status Filtering: Query params passed to server and table dynamically synced.');
+  console.log('[PASS] 4. API Status Filtering: Query params passed to server across all statuses and table dynamically synced.');
 
   // 5. API-Driven Pagination Controls
   authEnv.fetchCalls.length = 0;
@@ -765,8 +792,8 @@ async function runAllTests() {
   assert.strictEqual(authEnv.fetchCalls.length, 0, 'Must NOT trigger duplicate request for current page');
   console.log('[PASS] 5. API Pagination: Correct page sliced, next/prev button states verified, duplicate requests blocked.');
 
-  // 6. Empty State Handling via API
-  authEnv.setCustomFetch(async (url) => ({
+  // 6. Empty State & Malformed JSON Handling
+  authEnv.setCustomFetch(async () => ({
     status: 200,
     ok: true,
     json: async () => ({
@@ -779,9 +806,32 @@ async function runAllTests() {
   assert.strictEqual(authEnv.tableWrap.style.display, 'none');
   assert.strictEqual(authEnv.elements.billingPaginationFooter.style.display, 'none');
   assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '0 giao dịch');
-  console.log('[PASS] 6. Empty State: Displays empty view when backend returns 0 records.');
 
-  // 7. Error Handling on Billing History API
+  // Malformed Payload: success=false
+  authEnv.setCustomFetch(async () => ({
+    status: 200,
+    ok: true,
+    json: async () => ({ success: false, message: 'Máy chủ phản hồi bất thường' }),
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.strictEqual(authEnv.tableWrap.style.display, 'none');
+  assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('không hợp lệ'));
+
+  // Malformed Payload: Syntax Error during json parse
+  authEnv.setCustomFetch(async () => ({
+    status: 200,
+    ok: true,
+    json: async () => {
+      throw new Error('Unexpected token < in JSON at position 0');
+    },
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.strictEqual(authEnv.tableWrap.style.display, 'none');
+  console.log('[PASS] 6. Empty & Malformed State: Cleanly handled empty lists and rejected malformed JSON without mock fallback.');
+
+  // 7. Error Handling on Billing History API (401, 403, 422, 500, Network Failure & Retry)
   // 401 Session Expiry
   authEnv.setCustomFetch(async () => ({
     status: 401,
@@ -793,7 +843,39 @@ async function runAllTests() {
   assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('Phiên đăng nhập đã hết hạn'));
   assert.ok(authEnv.dispatchedEvents.some((e) => e.type === 'auth:open-login'));
 
-  // Network Failure & Retry
+  // 403 Forbidden
+  authEnv.setCustomFetch(async () => ({
+    status: 403,
+    ok: false,
+    json: async () => ({ detail: 'Không có quyền truy cập lịch sử giao dịch.' }),
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('Không có quyền truy cập'));
+
+  // 422 Validation Error
+  authEnv.setCustomFetch(async () => ({
+    status: 422,
+    ok: false,
+    json: async () => ({
+      detail: [{ loc: ['query', 'page_size'], msg: 'Input should be less than or equal to 50' }],
+    }),
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('page_size'));
+
+  // 500 Internal Server Error
+  authEnv.setCustomFetch(async () => ({
+    status: 500,
+    ok: false,
+    json: async () => ({ detail: 'Máy chủ cơ sở dữ liệu tạm thời gián đoạn.' }),
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('Máy chủ cơ sở dữ liệu'));
+
+  // Network Failure
   authEnv.setCustomFetch(async () => {
     throw new Error('Failed to fetch');
   });
@@ -804,13 +886,73 @@ async function runAllTests() {
   // Test Retry button recovery
   authEnv.setCustomFetch(null); // restore default mock fetch
   authEnv.elements.btnRetryBillingHistory.click();
-  // await promise
   await new Promise((r) => setTimeout(r, 10));
   assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'none');
   assert.strictEqual(authEnv.tableWrap.style.display, 'block');
-  console.log('[PASS] 7. Error & Retry Resilience: Handled 401 token expiry and recovered from network errors.');
+  console.log('[PASS] 7. Billing API Error Handling: Handled 401, 403, 422, 500, network loss, and recovered via retry.');
 
-  // 8. Real Invoice Detail API (GET /api/pricing/billing/invoices/{code})
+  // 8. Billing History Out-of-Order Race Condition Protection
+  let resolveSlowReq, resolveFastReq;
+  const slowPromise = new Promise((resolve) => { resolveSlowReq = resolve; });
+  const fastPromise = new Promise((resolve) => { resolveFastReq = resolve; });
+
+  authEnv.setCustomFetch(async (url) => {
+    if (url.includes('status=completed')) {
+      await slowPromise;
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            items: SAMPLE_TRANSACTIONS.filter((x) => x.payment_status === 'completed'),
+            total_count: 7,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+          },
+        }),
+      };
+    }
+    if (url.includes('status=failed')) {
+      await fastPromise;
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            items: SAMPLE_TRANSACTIONS.filter((x) => x.payment_status === 'failed'),
+            total_count: 2,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+          },
+        }),
+      };
+    }
+  });
+
+  const slowReqCall = authEnv.window.PDFLinguaPricing.filterBillingHistory('completed');
+  const fastReqCall = authEnv.window.PDFLinguaPricing.filterBillingHistory('failed');
+
+  // Resolve Fast request (Request 2: failed) FIRST
+  resolveFastReq();
+  await fastReqCall;
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '2 giao dịch');
+  const fastRows = authEnv.elements.billingHistoryTableBody.innerHTML.match(/<tr/g);
+  assert.strictEqual(fastRows.length, 2, 'Failed filter should display 2 rows');
+
+  // Resolve Slow request (Request 1: completed) LATER
+  resolveSlowReq();
+  await slowReqCall;
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '2 giao dịch', 'Stale completed request must be ignored');
+  const preservedRows = authEnv.elements.billingHistoryTableBody.innerHTML.match(/<tr/g);
+  assert.strictEqual(preservedRows.length, 2, 'Preserved 2 rows without stale overwrite');
+  authEnv.setCustomFetch(null); // Restore default mock
+  console.log('[PASS] 8. History Out-of-Order Race Condition: Stale in-flight responses discarded safely.');
+
+  // 9. Real Invoice Detail API (GET /api/pricing/billing/invoices/{code})
   const invoiceEnv = createBillingApiTestEnv();
   invoiceEnv.fetchCalls.length = 0;
   const invoicePromise = invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
@@ -822,6 +964,7 @@ async function runAllTests() {
   assert.strictEqual(invoiceEnv.elements.btnPrintInvoice.disabled, true);
   assert.strictEqual(invoiceEnv.elements.btnDownloadInvoice.disabled, true);
   assert.strictEqual(invoiceEnv.elements.invoiceBuyerName.textContent, '...', 'Stale buyer name must be cleared');
+  assert.strictEqual(invoiceEnv.elements.invoiceTotalAmount.textContent, '...', 'Stale amount must be cleared');
 
   // Await invoice fetch completion
   const txResult = await invoicePromise;
@@ -830,7 +973,7 @@ async function runAllTests() {
   assert.ok(invoiceEnv.fetchCalls[0].url.includes('/api/pricing/billing/invoices/TXN-20261117-001'));
   assert.strictEqual(invoiceEnv.fetchCalls[0].options.headers.Authorization, 'Bearer test-bearer-jwt-token-xyz');
 
-  // Verify Loaded State
+  // Verify Loaded State & Complete DOM Data Binding
   assert.strictEqual(invoiceEnv.elements.invoiceModalLoadingState.style.display, 'none');
   assert.strictEqual(invoiceEnv.elements.invoicePrintableArea.style.display, 'flex');
   assert.strictEqual(invoiceEnv.elements.btnPrintInvoice.disabled, false);
@@ -846,27 +989,44 @@ async function runAllTests() {
   assert.strictEqual(invoiceEnv.elements.invoiceQrWrap.style.display, 'flex');
   assert.ok(invoiceEnv.elements.invoiceQrImage.src.includes('vietqr.io'));
   assert.ok(invoiceEnv.dispatchedEvents.some((e) => e.type === 'pdfl:view-invoice'));
-  console.log('[PASS] 8. Real Invoice Detail API: Cleared stale data, loaded full details, revealed receipt.');
+  console.log('[PASS] 9. Real Invoice Detail API: Cleared stale data, loaded full details, revealed receipt.');
 
-  // 9. Invoice Detail Edge Cases (Null QR and Fallback Note)
+  // 10. Invoice Detail Edge Cases (Null QR, Fallback Note, Optional Fields)
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261116-002');
   assert.strictEqual(invoiceEnv.elements.invoiceQrWrap.style.display, 'none');
   assert.strictEqual(invoiceEnv.elements.invoiceQrImage.src, '');
 
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261110-006');
   assert.strictEqual(invoiceEnv.elements.invoicePaymentNote.textContent, 'Tự động đối soát hệ thống');
-  console.log('[PASS] 9. Invoice Edge Cases: Missing QR hides QR box and null memo uses fallback.');
 
-  // 10. Invoice Detail Error Handling
+  // Unpaid pending transaction check
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261115-003');
+  assert.strictEqual(invoiceEnv.elements.invoicePaidAt.textContent, 'Chưa thanh toán');
+  console.log('[PASS] 10. Invoice Edge Cases: Missing QR hides QR box, null memo uses fallback, unpaid state preserved.');
+
+  // 11. Invoice Detail Error Handling (401, 403, 404, 500, Network Loss)
+  // 401 Session Expiry
+  invoiceEnv.setCustomFetch(async () => ({
+    status: 401,
+    ok: false,
+    json: async () => ({ detail: 'Token has expired.' }),
+  }));
+  invoiceEnv.toasts.length = 0;
+  const res401 = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-EXPIRED');
+  assert.strictEqual(res401, null);
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Phiên đăng nhập đã hết hạn')));
+
   // 403 Forbidden
   invoiceEnv.setCustomFetch(async () => ({
     status: 403,
     ok: false,
     json: async () => ({ detail: 'Không có quyền truy cập.' }),
   }));
+  invoiceEnv.toasts.length = 0;
   const res403 = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-OTHER-001');
   assert.strictEqual(res403, null);
-  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none', 'Modal must close on 403');
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
   assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('không có quyền truy cập')));
 
   // 404 Not Found
@@ -875,14 +1035,102 @@ async function runAllTests() {
     ok: false,
     json: async () => ({ detail: 'Không tìm thấy.' }),
   }));
+  invoiceEnv.toasts.length = 0;
   const res404 = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-NONEXISTENT');
   assert.strictEqual(res404, null);
-  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none', 'Modal must close on 404');
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
   assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Không tìm thấy')));
-  console.log('[PASS] 10. Invoice Error Handling: Closes modal and notifies on 403 Forbidden and 404 Not Found.');
 
-  // 11. Modal Closing Mechanisms
-  invoiceEnv.setCustomFetch(null);
+  // 500 Server Error
+  invoiceEnv.setCustomFetch(async () => ({
+    status: 500,
+    ok: false,
+    json: async () => ({ detail: 'Lỗi hệ thống.' }),
+  }));
+  invoiceEnv.toasts.length = 0;
+  const res500 = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-SERVER-ERR');
+  assert.strictEqual(res500, null);
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Không thể tải chi tiết hóa đơn')));
+
+  // Network Failure
+  invoiceEnv.setCustomFetch(async () => {
+    throw new Error('Failed to fetch');
+  });
+  invoiceEnv.toasts.length = 0;
+  const resNet = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-NET-ERR');
+  assert.strictEqual(resNet, null);
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Lỗi kết nối khi tải chi tiết hóa đơn')));
+  console.log('[PASS] 11. Invoice Error Handling: Closes modal and notifies on 401, 403, 404, 500, and network failure.');
+
+  // 12. Invoice Detail Out-of-Order Race Condition & Stale Data Isolation
+  let resolveSlowInv, resolveFastInv;
+  const slowInvPromise = new Promise((resolve) => { resolveSlowInv = resolve; });
+  const fastInvPromise = new Promise((resolve) => { resolveFastInv = resolve; });
+
+  invoiceEnv.setCustomFetch(async (url) => {
+    if (url.includes('TXN-SLOW-INVOICE')) {
+      await slowInvPromise;
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            transaction_code: 'TXN-SLOW-INVOICE',
+            invoice_number: 'INV-TXN-SLOW-INVOICE',
+            buyer_name: 'Nguyễn Văn Chậm',
+            plan_name: 'Gói Chậm',
+            total_amount_display: '999.000 VNĐ',
+            payment_status: 'failed',
+          },
+        }),
+      };
+    }
+    if (url.includes('TXN-FAST-INVOICE')) {
+      await fastInvPromise;
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            transaction_code: 'TXN-FAST-INVOICE',
+            invoice_number: 'INV-TXN-FAST-INVOICE',
+            buyer_name: 'Trần Thị Nhanh',
+            plan_name: 'Gói Nhanh Pro',
+            total_amount_display: '49.000 VNĐ',
+            payment_status: 'completed',
+          },
+        }),
+      };
+    }
+  });
+
+  const callSlowInvoice = invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-SLOW-INVOICE');
+  assert.strictEqual(invoiceEnv.elements.invoiceBuyerName.textContent, '...', 'Stale buyer name reset immediately');
+  const callFastInvoice = invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-FAST-INVOICE');
+
+  // Resolve Fast invoice FIRST
+  resolveFastInv();
+  const fastInvRes = await callFastInvoice;
+  assert.strictEqual(fastInvRes.transaction_code, 'TXN-FAST-INVOICE');
+  assert.strictEqual(invoiceEnv.elements.invoiceNumber.textContent, 'INV-TXN-FAST-INVOICE');
+  assert.strictEqual(invoiceEnv.elements.invoiceBuyerName.textContent, 'Trần Thị Nhanh');
+  assert.strictEqual(invoiceEnv.elements.invoiceTotalAmount.textContent, '49.000 VNĐ');
+
+  // Resolve Slow invoice LATER
+  resolveSlowInv();
+  const slowInvRes = await callSlowInvoice;
+  assert.strictEqual(slowInvRes, null, 'Stale invoice response must resolve to null');
+  assert.strictEqual(invoiceEnv.elements.invoiceNumber.textContent, 'INV-TXN-FAST-INVOICE', 'Stale invoice must NOT overwrite modal');
+  assert.strictEqual(invoiceEnv.elements.invoiceBuyerName.textContent, 'Trần Thị Nhanh');
+  assert.strictEqual(invoiceEnv.window.PDFLinguaPricing.getCurrentInvoiceTransaction().transaction_code, 'TXN-FAST-INVOICE');
+  invoiceEnv.setCustomFetch(null); // restore default mock
+  console.log('[PASS] 12. Invoice Out-of-Order Race Condition: Stale invoice discarded and no data leakage observed.');
+
+  // 13. Modal Closing Mechanisms
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'flex');
 
@@ -905,15 +1153,50 @@ async function runAllTests() {
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
   invoiceEnv.dispatchKeydown('Escape');
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
-  console.log('[PASS] 11. Modal Closing: Closed via header button, footer button, backdrop click, and Escape key.');
+  console.log('[PASS] 13. Modal Closing: Closed via header button, footer button, backdrop click, and Escape key.');
 
-  // 12. Print & Download Receipt
-  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
-  assert.strictEqual(invoiceEnv.getPrintCallCount(), 0);
+  // 14. Print & Download Receipt (Loading Lockout & Loaded Actions)
+  // Part A: Lockout during loading
+  let resolveModalLoad;
+  const modalLoadPromise = new Promise((resolve) => { resolveModalLoad = resolve; });
+  invoiceEnv.setCustomFetch(async () => {
+    await modalLoadPromise;
+    return {
+      status: 200,
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: SAMPLE_TRANSACTIONS[0],
+      }),
+    };
+  });
+
+  invoiceEnv.toasts.length = 0;
+  const inFlightInvoice = invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-LOADING-TEST');
+  assert.strictEqual(invoiceEnv.elements.invoiceModalLoadingState.style.display, 'flex');
+
+  const printCountBefore = invoiceEnv.getPrintCallCount();
+  invoiceEnv.window.PDFLinguaPricing.printInvoiceReceipt();
+  assert.strictEqual(invoiceEnv.getPrintCallCount(), printCountBefore, 'Must NOT trigger window.print() while loading');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Đang tải chi tiết hóa đơn')));
+
+  invoiceEnv.toasts.length = 0;
+  const blobsBefore = invoiceEnv.getCreatedBlobs().length;
+  invoiceEnv.window.PDFLinguaPricing.downloadInvoiceReceipt();
+  assert.strictEqual(invoiceEnv.getCreatedBlobs().length, blobsBefore, 'Must NOT create receipt Blob while loading');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Đang tải chi tiết hóa đơn')));
+
+  // Resolve loading
+  resolveModalLoad();
+  await inFlightInvoice;
+  assert.strictEqual(invoiceEnv.elements.invoiceModalLoadingState.style.display, 'none');
+  invoiceEnv.setCustomFetch(null); // restore default mock
+
+  // Part B: Loaded state actions
   invoiceEnv.elements.btnPrintInvoice.click();
-  assert.strictEqual(invoiceEnv.getPrintCallCount(), 1);
+  assert.strictEqual(invoiceEnv.getPrintCallCount(), printCountBefore + 1, 'window.print() executed');
 
-  // Download receipt
+  // Download receipt action
   invoiceEnv.elements.btnDownloadInvoice.click();
   const currentTx = invoiceEnv.window.PDFLinguaPricing.getCurrentInvoiceTransaction();
   const receiptHtml = invoiceEnv.window.PDFLinguaPricing.generateReceiptHtml(currentTx);
@@ -921,10 +1204,10 @@ async function runAllTests() {
   assert.ok(receiptHtml.includes('Nguyễn Văn Mua'));
   assert.ok(receiptHtml.includes('49.000 VNĐ'));
   assert.ok(receiptHtml.includes('@media print'));
-  console.log('[PASS] 12. Print & Download: window.print() executed and clean HTML receipt blob generated.');
+  console.log('[PASS] 14. Print & Download: Verified loading state lockout, window.print() and clean HTML receipt blob generation.');
 
   console.log('\n================================================================');
-  console.log('SUMMARY: All 12/12 real API integration tests passed (0 failed).');
+  console.log('SUMMARY: All 14/14 real API integration tests passed (0 failed).');
   console.log('================================================================');
 }
 
