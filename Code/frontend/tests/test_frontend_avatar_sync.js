@@ -178,7 +178,7 @@ class MockCanvas {
   }
 }
 
-function createSyncEnv(fetchHandler) {
+function createSyncEnv(fetchHandler, locationOverride = {}) {
   const ids = [
     'loginForm', 'loginEmail', 'loginEmailError', 'loginPassword', 'loginPasswordError',
     'loginAlert', 'btnSubmitLogin', 'loginSpinner', 'loginBtnText', 'registerAlert',
@@ -248,7 +248,7 @@ function createSyncEnv(fetchHandler) {
   };
 
   const mockWindow = {
-    location: { reload: () => {} },
+    location: Object.assign({ reload: () => {} }, locationOverride),
     localStorage: localStorage,
     sessionStorage: sessionStorage,
     URL: {
@@ -794,6 +794,77 @@ async function runSuite() {
     assert.strictEqual(elements.userAvatar.textContent, 'T');
     assert.strictEqual(elements.userAvatar.innerHTML, '');
     assert.strictEqual(headerImg.onerror, null);
+  });
+
+  // 13. Cross-origin / Live Server Port Sync (Resolves relative storage URL to backend origin on port 5500)
+  await runTest('Regression: Resolves relative avatar URL to backend API base URL on port 5500 and prevents error fallback', async () => {
+    // Simulate frontend running on port 5500 (Live Server) with backend on port 8000
+    const env = createSyncEnv((url, opts) => {
+      if (url.includes('/api/auth/me/avatar') && opts.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: { avatar_url: '/api/storage/avatars/88/live_server_avatar.png' },
+            }),
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+    }, { protocol: 'http:', hostname: 'localhost', port: '5500' });
+
+    const { elements, auth, localStorage } = env;
+
+    localStorage.setItem('pdfl_token', 'jwt_token_regression');
+    localStorage.setItem(
+      'pdfl_user',
+      JSON.stringify({ id: 88, full_name: 'Nguyen Van A', email: 'vana@example.com', avatar_url: null })
+    );
+
+    auth.initAccountModal();
+    auth.initAvatarCropModal();
+
+    // Verify resolveAvatarUrl correctly resolves relative backend route to backend origin
+    const resolved = auth.resolveAvatarUrl('/api/storage/avatars/88/live_server_avatar.png');
+    assert.strictEqual(resolved, 'http://localhost:8000/api/storage/avatars/88/live_server_avatar.png');
+
+    // Simulate avatar file selection and confirm upload
+    auth.openAvatarCropModal({ name: 'my_avatar.png', type: 'image/png' });
+    elements.avatarCropImg.trigger('load');
+
+    const uploadOk = await auth.confirmAvatarCrop();
+    assert.strictEqual(uploadOk, true);
+
+    // Verify Account modal preview img src points to port 8000 backend (not port 5500 relative path)
+    assert.strictEqual(
+      elements.accountAvatarImg.src,
+      'http://localhost:8000/api/storage/avatars/88/live_server_avatar.png'
+    );
+    assert.strictEqual(elements.accountAvatarImg.style.display, 'block');
+    assert.strictEqual(elements.accountAvatarInitial.style.display, 'none');
+
+    // Verify Header userAvatar img src points to port 8000 backend
+    assert.ok(
+      elements.userAvatar.innerHTML.includes('http://localhost:8000/api/storage/avatars/88/live_server_avatar.png')
+    );
+
+    // Verify Sidebar userAvatar img src points to port 8000 backend
+    assert.ok(
+      elements.sidebarUserAvatar.innerHTML.includes('http://localhost:8000/api/storage/avatars/88/live_server_avatar.png')
+    );
+
+    // Verify session restoration on page reload retains port 8000 backend URL across UI
+    auth.updateHeaderAuthState(JSON.parse(localStorage.getItem('pdfl_user')));
+    auth.renderAccountDetails(JSON.parse(localStorage.getItem('pdfl_user')));
+
+    assert.strictEqual(
+      elements.accountAvatarImg.src,
+      'http://localhost:8000/api/storage/avatars/88/live_server_avatar.png'
+    );
+    assert.ok(
+      elements.userAvatar.innerHTML.includes('http://localhost:8000/api/storage/avatars/88/live_server_avatar.png')
+    );
   });
 
   console.log('================================================================');

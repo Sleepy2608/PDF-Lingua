@@ -1166,7 +1166,10 @@
 
       if (avatarEl) {
         if (currentUser.avatar_url) {
-          avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" alt="${displayName}" class="sidebar-avatar-img">`;
+          const resolvedSidebarSrc = (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.resolveAvatarUrl === 'function')
+            ? window.pdfLinguaAuth.resolveAvatarUrl(currentUser.avatar_url)
+            : ((currentUser.avatar_url && currentUser.avatar_url.startsWith('/')) ? `${API_BASE_URL}${currentUser.avatar_url}` : currentUser.avatar_url);
+          avatarEl.innerHTML = `<img src="${resolvedSidebarSrc}" alt="${displayName}" class="sidebar-avatar-img">`;
           const sImg = avatarEl.querySelector ? avatarEl.querySelector('img') : null;
           if (sImg) {
             const handleSidebarImgError = () => {

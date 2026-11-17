@@ -13,6 +13,31 @@
     ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${(window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1'}:8000`
     : '';
 
+  /**
+   * Phân giải đường dẫn ảnh đại diện thành URL truy cập được cho trình duyệt.
+   * Nếu URL là Blob, Data URL hoặc URL tuyệt đối (http/https), giữ nguyên.
+   * Nếu là đường dẫn tương đối (ví dụ /api/storage/...), tự động gắn tiền tố API_BASE_URL
+   * để trình duyệt ở nguồn gốc khác (như Live Server cổng 5500) tải ảnh từ backend.
+   */
+  function resolveAvatarUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('blob:') || trimmed.startsWith('data:') || /^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    const base = (typeof API_BASE_URL === 'string' && API_BASE_URL)
+      ? API_BASE_URL.replace(/\/+$/, '')
+      : '';
+    if (!base) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return `${base}${trimmed}`;
+    }
+    return `${base}/${trimmed}`;
+  }
+
   let isSubmitting = false;
   let isRestoringSession = false;
 
@@ -1192,7 +1217,7 @@
       if (userAvatarEl) {
         const initial = (user.full_name ? user.full_name.trim().charAt(0) : (user.email ? user.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
         if (user.avatar_url) {
-          userAvatarEl.innerHTML = `<img src="${user.avatar_url}" alt="Avatar" class="header-user-avatar-img">`;
+          userAvatarEl.innerHTML = `<img src="${resolveAvatarUrl(user.avatar_url)}" alt="Avatar" class="header-user-avatar-img">`;
           const avatarImg = userAvatarEl.querySelector ? userAvatarEl.querySelector('img') : null;
           if (avatarImg) {
             const handleHeaderImgError = () => {
@@ -1609,7 +1634,7 @@
 
     if (srcUrl) {
       if (avatarImg) {
-        avatarImg.src = srcUrl;
+        avatarImg.src = resolveAvatarUrl(srcUrl);
         avatarImg.style.display = 'block';
       }
       if (avatarInitial) {
@@ -2840,7 +2865,7 @@
 
     if (user.avatar_url) {
       if (avatarImg) {
-        avatarImg.src = user.avatar_url;
+        avatarImg.src = resolveAvatarUrl(user.avatar_url);
         avatarImg.style.display = 'block';
       }
       if (avatarInitial) {
@@ -3036,6 +3061,7 @@
     showLoginAlert,
     clearLoginAlert,
     escapeHtml,
+    resolveAvatarUrl,
     getStoredToken,
     getStoredUser,
     setStoredSession,
