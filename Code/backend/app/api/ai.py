@@ -325,6 +325,7 @@ async def chat_copilot(
     response_data = ChatResponseData(
         answer=result["answer"],
         relevant_chunks=result.get("relevant_chunks", []),
+        citations=result.get("citations", []),
         model_used=result["model_used"],
         provider=result["provider"],
         fallback_used=result["fallback_used"],

@@ -63,13 +63,14 @@ class AIService:
         "1. DONG BO NGON NGU: Luon tra loi bang chinh ngon ngu ma nguoi dung dang dung de dat cau hoi. "
         "Neu nguoi dung dat cau hoi bang tieng Viet (ke ca khi go tieng Viet khong dau), ban BAT BUOC PHAI TRA LOI BANG TIENG VIET CO DAU DAY DU, dung chinh ta va ngu phap. "
         "Neu nguoi dung hoi bang tieng Anh hoac bat ky ngon ngu nao khac, ban phai tra loi hoan toan bang ngon ngu do.\n"
-        "2. NGU CANH TAI LIEU: Chi su dung cac thong tin va du kien xuat hien trong phan 'NGU CANH TAI LIEU'.\n"
-        "3. TU CHOI KHI THIEU THONG TIN: Neu thong tin trong tai lieu khong du hoac khong de cap den cau tra loi, hay tu choi ro rang, trung thuc tuyet doi (chong ao giac):\n"
+        "2. THAM CHIEU NGUON GOC CHINH XAC (CITATIONS): Luon dan chung ro rang so trang va doan van lien quan duoc cung cap trong ngu canh (vi du: '[Trang 1, Doan 2]' hoac '[Doan 3]', trong tieng Anh: '[Page 1, Section 2]' hoac '[Section 3]') de nguoi dung co the kiem chung thong tin.\n"
+        "3. NGU CANH TAI LIEU: Chi su dung cac thong tin va du kien xuat hien trong phan 'NGU CANH TAI LIEU'.\n"
+        "4. TU CHOI KHI THIEU THONG TIN HOAC CAU HOI KHONG CO TRONG TAI LIEU: Neu thong tin trong tai lieu khong du, khong de cap, hoac nguoi dung hoi ve cac chu de khong ton tai trong tai lieu, hay tu choi ro rang, trung thuc tuyet doi (chong ao giac, khong duoc 'bip'):\n"
         "- Tieng Viet: 'Tài liệu hiện tại không đề cập đến thông tin này.'\n"
         "- Tieng Anh: 'The document currently does not mention this information.'\n"
         "- Ngon ngu khac: Tra loi cau tu choi tuong duong bang ngon ngu cua nguoi dung.\n"
         "Tuyet doi khong tu y bia dat, suy dien hoac tra loi ngoai ngu canh tai lieu.\n"
-        "4. Phong cach tra loi: Ngan gon, suc tich, trung thuc, de hieu va chuyen nghiep."
+        "5. Phong cach tra loi: Ngan gon, suc tich, trung thuc, co dan chung nguon, de hieu va chuyen nghiep."
     )
 
     NO_INFO_RESPONSE = "Tài liệu hiện tại không đề cập đến thông tin này."
@@ -160,6 +161,109 @@ class AIService:
 
         if current_chunk_words:
             chunks.append(" ".join(current_chunk_words))
+
+        return chunks
+
+    def _split_into_paged_chunks(
+        self,
+        text: str,
+        max_words: int = 300,
+    ) -> list[dict[str, Any]]:
+        """Split document text into semantic chunks while tracking page numbers.
+
+        Detects page boundary indicators such as:
+        - Form-feed character: \\x0c
+        - Explicit headers: '--- Trang 1 ---', '=== Page 2 ===', '[Trang 3]', 'Page 4:'
+        Returns list of dicts:
+          {
+            "page_number": int | None,
+            "chunk_index": int,
+            "text": str,
+          }
+        """
+        if not text or not text.strip():
+            return []
+
+        # 1. Detect pages
+        pages: list[tuple[int | None, str]] = []
+        if "\x0c" in text:
+            raw_pages = text.split("\x0c")
+            for idx, p in enumerate(raw_pages, start=1):
+                if p.strip():
+                    pages.append((idx, p.strip()))
+        else:
+            page_pattern = r"(?:^|\n)\s*(?:---|===|\[)?\s*(?:Trang|Page)\s+(\d+)\s*(?:---|===|\]|:)?\s*(?:\n|$)"
+            parts = re.split(page_pattern, text, flags=re.IGNORECASE)
+            if len(parts) > 1:
+                if parts[0].strip():
+                    pages.append((1, parts[0].strip()))
+                for i in range(1, len(parts), 2):
+                    p_num = int(parts[i])
+                    p_text = parts[i + 1].strip() if i + 1 < len(parts) else ""
+                    if p_text:
+                        pages.append((p_num, p_text))
+            else:
+                pages = [(None, text.strip())]
+
+        chunks: list[dict[str, Any]] = []
+        chunk_counter = 1
+
+        for p_num, p_text in pages:
+            raw_paras = [p.strip() for p in re.split(r"\n\s*\n", p_text) if p.strip()]
+            if not raw_paras:
+                raw_paras = [p_text.strip()]
+
+            # Combine very short initial headers (<= 8 words) with subsequent paragraph
+            paras: list[str] = []
+            header_buf: list[str] = []
+            for p in raw_paras:
+                words = p.split()
+                if len(words) <= 8 and not paras and not header_buf:
+                    header_buf.append(p)
+                else:
+                    if header_buf:
+                        paras.append(" ".join(header_buf) + " " + p)
+                        header_buf = []
+                    else:
+                        paras.append(p)
+            if header_buf:
+                paras.append(" ".join(header_buf))
+
+            for para in paras:
+                p_words = para.split()
+                if not p_words:
+                    continue
+
+                if len(p_words) <= max_words:
+                    chunks.append({
+                        "page_number": p_num,
+                        "chunk_index": chunk_counter,
+                        "text": para,
+                    })
+                    chunk_counter += 1
+                else:
+                    # Oversized paragraph: split by sentences
+                    sentences = re.split(r"(?<=[.!?。！？])\s+", para)
+                    current_words: list[str] = []
+                    for sent in sentences:
+                        s_words = sent.split()
+                        if len(current_words) + len(s_words) > max_words and current_words:
+                            chunks.append({
+                                "page_number": p_num,
+                                "chunk_index": chunk_counter,
+                                "text": " ".join(current_words),
+                            })
+                            chunk_counter += 1
+                            current_words = []
+                        current_words.extend(s_words)
+
+                    if current_words:
+                        chunks.append({
+                            "page_number": p_num,
+                            "chunk_index": chunk_counter,
+                            "text": " ".join(current_words),
+                        })
+                        chunk_counter += 1
 
         return chunks
 
@@ -437,12 +541,13 @@ class AIService:
     ) -> list[dict[str, Any]]:
         """
         Split document text into semantic chunks and score by query keyword relevance (RAG context).
+        Respects page boundaries and attaches page_number and chunk_index.
         """
         if not document_text or not document_text.strip():
             return []
 
-        raw_chunks = self._split_into_chunks(document_text, max_words=max_chunk_words)
-        if not raw_chunks:
+        paged_chunks = self._split_into_paged_chunks(document_text, max_words=max_chunk_words)
+        if not paged_chunks:
             return []
 
         # Extract search keywords from query (ignore filler and stop words)
@@ -480,7 +585,8 @@ class AIService:
         ]
 
         scored_chunks = []
-        for idx, chunk in enumerate(raw_chunks):
+        for chunk_meta in paged_chunks:
+            chunk = chunk_meta["text"]
             chunk_lower = chunk.lower()
             score = 0
             matched_terms = []
@@ -516,7 +622,8 @@ class AIService:
                     score = 0
 
             scored_chunks.append({
-                "chunk_index": idx + 1,
+                "chunk_index": chunk_meta["chunk_index"],
+                "page_number": chunk_meta["page_number"],
                 "text": chunk,
                 "score": score,
                 "matched_terms": list(unique_matches),
@@ -618,7 +725,8 @@ class AIService:
     ) -> str:
         """
         Generate intelligent offline fallback answer based on query and relevant context.
-        Enforces anti-hallucination and matches query language (accented Vietnamese or target language).
+        Enforces anti-hallucination, includes page/paragraph citations,
+        and matches query language (accented Vietnamese or target language).
         """
         no_info = self.NO_INFO_RESPONSE_EN if lang == "en" else self.NO_INFO_RESPONSE
 
@@ -629,6 +737,8 @@ class AIService:
         best_chunk = relevant_chunks[0]
         chunk_text = best_chunk["text"]
         matched_terms = set(best_chunk.get("matched_terms", []))
+        page_num = best_chunk.get("page_number")
+        chunk_idx = best_chunk.get("chunk_index", 1)
 
         sentences = [
             s.strip()
@@ -645,11 +755,17 @@ class AIService:
                 sentence_scores.append((cnt, sent))
 
         sentence_scores.sort(key=lambda x: x[0], reverse=True)
-        prefix = (
-            f"Based on the document (Section {best_chunk['chunk_index']}): "
-            if lang == "en"
-            else f"Dựa trên tài liệu (Đoạn {best_chunk['chunk_index']}): "
-        )
+
+        if lang == "en":
+            if page_num is not None:
+                prefix = f"Based on the document [Page {page_num}, Section {chunk_idx}]: "
+            else:
+                prefix = f"Based on the document (Section {chunk_idx}): "
+        else:
+            if page_num is not None:
+                prefix = f"Dựa trên tài liệu [Trang {page_num}, Đoạn {chunk_idx}]: "
+            else:
+                prefix = f"Dựa trên tài liệu (Đoạn {chunk_idx}): "
 
         if sentence_scores:
             top_sentences = [s for _, s in sentence_scores[:2]]
@@ -685,6 +801,7 @@ class AIService:
             return {
                 "answer": empty_msg,
                 "relevant_chunks": [],
+                "citations": [],
                 "model_used": model_name,
                 "provider": "b.ai",
                 "fallback_used": False,
@@ -698,6 +815,7 @@ class AIService:
             return {
                 "answer": no_info_msg,
                 "relevant_chunks": [],
+                "citations": [],
                 "model_used": model_name,
                 "provider": "b.ai",
                 "fallback_used": False,
@@ -712,10 +830,29 @@ class AIService:
             top_k=3,
         )
 
-        formatted_context = "\n\n".join([
-            f"[Doan {c['chunk_index']}]: {c['text']}"
-            for c in relevant_chunks
-        ])
+        # Build structured citation references for verifiable transparency
+        citations: list[dict[str, Any]] = []
+        for c in relevant_chunks:
+            if c.get("score", 0) > 0:
+                snippet = c["text"]
+                if len(snippet) > 220:
+                    snippet = snippet[:217] + "..."
+                citations.append({
+                    "page_number": c.get("page_number"),
+                    "chunk_index": c["chunk_index"],
+                    "snippet": snippet,
+                    "score": round(float(c.get("score", 0)), 2),
+                })
+
+        formatted_context_items = []
+        for c in relevant_chunks:
+            if c.get("page_number") is not None:
+                tag = f"Trang {c['page_number']}, Doan {c['chunk_index']}"
+            else:
+                tag = f"Doan {c['chunk_index']}"
+            formatted_context_items.append(f"[{tag}]: {c['text']}")
+
+        formatted_context = "\n\n".join(formatted_context_items)
 
         if lang == "vi":
             lang_instruction = "BAT BUOC TRA LOI BANG TIENG VIET CO DAU DAY DU."
@@ -773,6 +910,7 @@ class AIService:
         return {
             "answer": answer_text,
             "relevant_chunks": [c["text"] for c in relevant_chunks],
+            "citations": citations,
             "model_used": model_name,
             "provider": "b.ai",
             "fallback_used": fallback_used,
