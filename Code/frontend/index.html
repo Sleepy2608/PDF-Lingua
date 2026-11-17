@@ -1748,7 +1748,29 @@
                             </div>
                         </div>
 
-                        <!-- Billing Cycle Segmented Switch Bar -->
+                        <!-- Sub-view Navigation Tabs: Gói cước vs Lịch sử thanh toán -->
+                        <div class="pricing-tabs-bar" role="tablist" aria-label="Chuyển đổi khu vực Bảng giá và Lịch sử thanh toán">
+                            <button type="button" class="pricing-tab-btn active" id="tabPricingPlans" data-pricing-tab="plans" role="tab" aria-selected="true">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                                <span>Bảng giá gói cước</span>
+                            </button>
+                            <button type="button" class="pricing-tab-btn" id="tabBillingHistory" data-pricing-tab="history" role="tab" aria-selected="false">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                                <span>Lịch sử thanh toán & Hóa đơn</span>
+                                <span class="billing-history-tab-badge font-mono" id="billingHistoryTabBadge">0</span>
+                            </button>
+                        </div>
+
+                        <!-- 1. Pricing Plans Sub-view Container -->
+                        <div class="pricing-plans-container" id="pricingPlansContainer">
+                            <!-- Billing Cycle Segmented Switch Bar -->
                         <div class="pricing-billing-bar">
                             <div class="billing-toggle-wrap" role="tablist" aria-label="Chọn chu kỳ thanh toán">
                                 <button type="button" class="billing-toggle-btn active" id="btnBillingMonthly"
@@ -2156,6 +2178,130 @@
                                         </div>
                                     </div>
 
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End of #pricingPlansContainer -->
+
+                        <!-- 2. Billing History Sub-view Container -->
+                        <div class="billing-history-container" id="billingHistoryContainer" style="display: none;">
+                            <!-- Header & Description -->
+                            <div class="billing-history-header">
+                                <div class="billing-history-header-text">
+                                    <div class="pricing-eyebrow-wrapper">
+                                        <span class="pricing-eyebrow">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            Sổ cái thanh toán
+                                        </span>
+                                    </div>
+                                    <h3 class="billing-history-title">Lịch sử giao dịch thanh toán</h3>
+                                    <p class="billing-history-subtitle">
+                                        Theo dõi tất cả giao dịch nạp tiền, nâng cấp gói Pro và kiểm tra trạng thái thanh toán, biên lai hóa đơn điện tử.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Data Card -->
+                            <div class="documents-card billing-history-card" id="billingHistoryCard">
+                                <!-- Card Toolbar -->
+                                <div class="documents-card-toolbar billing-history-toolbar">
+                                    <div class="billing-toolbar-left">
+                                        <div class="documents-count-chip font-mono" id="billingHistoryCountChip">
+                                            0 giao dịch
+                                        </div>
+                                    </div>
+                                    <div class="billing-toolbar-right">
+                                        <div class="billing-filter-wrap">
+                                            <label for="billingStatusFilter" class="billing-filter-label">Trạng thái:</label>
+                                            <select id="billingStatusFilter" class="billing-status-select" aria-label="Lọc theo trạng thái thanh toán">
+                                                <option value="all">Tất cả trạng thái</option>
+                                                <option value="completed">Hoàn tất (Completed)</option>
+                                                <option value="pending">Đang chờ xử lý (Pending)</option>
+                                                <option value="failed">Thất bại (Failed)</option>
+                                                <option value="expired">Đã hết hạn (Expired)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Table Wrap -->
+                                <div class="billing-table-responsive">
+                                    <table class="billing-table" id="billingHistoryTable">
+                                        <thead>
+                                            <tr>
+                                                <th class="billing-th-stt">STT</th>
+                                                <th>MÃ GIAO DỊCH</th>
+                                                <th>GÓI DỊCH VỤ</th>
+                                                <th>NGÀY THANH TOÁN</th>
+                                                <th class="text-right">SỐ TIỀN</th>
+                                                <th>PHƯƠNG THỨC</th>
+                                                <th>TRẠNG THÁI</th>
+                                                <th class="text-center">HÓA ĐƠN</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="billingHistoryTableBody">
+                                            <!-- Rendered dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Loading State -->
+                                <div class="billing-card-state" id="billingHistoryLoadingState" style="display: none;">
+                                    <div class="billing-state-spinner"></div>
+                                    <div class="billing-state-title">Đang tải lịch sử giao dịch...</div>
+                                    <div class="billing-state-desc">Vui lòng chờ trong giây lát</div>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div class="billing-card-state" id="billingHistoryEmptyState" style="display: none;">
+                                    <div class="billing-state-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="billing-state-title">Chưa có giao dịch thanh toán nào</div>
+                                    <div class="billing-state-desc">Các giao dịch đăng ký gói Pro và biên lai hóa đơn sẽ xuất hiện tại đây.</div>
+                                </div>
+
+                                <!-- Error State -->
+                                <div class="billing-card-state" id="billingHistoryErrorState" style="display: none;">
+                                    <div class="billing-state-icon error-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="billing-state-title">Không thể tải lịch sử giao dịch</div>
+                                    <div class="billing-state-desc" id="billingHistoryErrorMessage">Đã có lỗi xảy ra trong quá trình tải dữ liệu.</div>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnRetryBillingHistory">Thử lại</button>
+                                </div>
+
+                                <!-- Pagination Footer -->
+                                <div class="billing-pagination-footer" id="billingPaginationFooter">
+                                    <div class="pagination-info" id="billingPaginationInfo">
+                                        Hiển thị 0 / 0 giao dịch
+                                    </div>
+                                    <div class="pagination-controls" id="billingPaginationControls">
+                                        <button type="button" class="btn-pagination" id="btnBillingPrevPage" aria-label="Trang trước" disabled>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="15 18 9 12 15 6"></polyline>
+                                            </svg>
+                                        </button>
+                                        <div class="pagination-page-numbers" id="billingPageNumbers">
+                                            <!-- Dynamic page numbers -->
+                                        </div>
+                                        <button type="button" class="btn-pagination" id="btnBillingNextPage" aria-label="Trang sau">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="9 18 15 12 9 6"></polyline>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

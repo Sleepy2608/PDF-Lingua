@@ -91,6 +91,7 @@
     initPricingModule();
     initCheckoutModal();
     initMultiTouchpointsAndQuotaModal();
+    initBillingHistory();
   });
 
   function getStoredToken() {
@@ -1639,6 +1640,500 @@
     }
   }
 
+  // ── User Billing Transaction History & Invoice UI ──────────────────
+
+  const MOCK_BILLING_TRANSACTIONS = [
+    {
+      id: 12,
+      transaction_code: 'TXN-20261117-001',
+      invoice_number: 'INV-TXN-20261117-001',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'PDFL PRO MONTHLY NOV',
+      paid_at: '2026-11-17T09:30:00Z',
+      created_at: '2026-11-17T09:28:15Z',
+    },
+    {
+      id: 11,
+      transaction_code: 'TXN-20261116-002',
+      invoice_number: 'INV-TXN-20261116-002',
+      plan_code: 'pro_yearly',
+      plan_name: 'Gói Pro Hàng Năm',
+      billing_cycle: 'yearly',
+      amount_vnd: 399000,
+      amount_display: '399.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'PDFL PRO YEARLY NOV',
+      paid_at: '2026-11-16T14:15:00Z',
+      created_at: '2026-11-16T14:10:00Z',
+    },
+    {
+      id: 10,
+      transaction_code: 'TXN-20261115-003',
+      invoice_number: 'INV-TXN-20261115-003',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'pending',
+      payment_note: 'PDFL PRO MONTHLY PENDING',
+      paid_at: null,
+      created_at: '2026-11-15T10:00:00Z',
+    },
+    {
+      id: 9,
+      transaction_code: 'TXN-20261114-004',
+      invoice_number: 'INV-TXN-20261114-004',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'failed',
+      payment_note: 'TRANSFER REJECTED',
+      paid_at: null,
+      created_at: '2026-11-14T16:45:00Z',
+    },
+    {
+      id: 8,
+      transaction_code: 'TXN-20261112-005',
+      invoice_number: 'INV-TXN-20261112-005',
+      plan_code: 'pro_yearly',
+      plan_name: 'Gói Pro Hàng Năm',
+      billing_cycle: 'yearly',
+      amount_vnd: 399000,
+      amount_display: '399.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'expired',
+      payment_note: 'TIMEOUT AFTER 15M',
+      paid_at: null,
+      created_at: '2026-11-12T11:20:00Z',
+    },
+    {
+      id: 7,
+      transaction_code: 'TXN-20261110-006',
+      invoice_number: 'INV-TXN-20261110-006',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'PDFL PRO RENEWAL',
+      paid_at: '2026-11-10T08:05:00Z',
+      created_at: '2026-11-10T08:00:00Z',
+    },
+    {
+      id: 6,
+      transaction_code: 'TXN-20261108-007',
+      invoice_number: 'INV-TXN-20261108-007',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'PDFL MONTHLY TEST',
+      paid_at: '2026-11-08T15:20:00Z',
+      created_at: '2026-11-08T15:15:00Z',
+    },
+    {
+      id: 5,
+      transaction_code: 'TXN-20261105-008',
+      invoice_number: 'INV-TXN-20261105-008',
+      plan_code: 'pro_yearly',
+      plan_name: 'Gói Pro Hàng Năm',
+      billing_cycle: 'yearly',
+      amount_vnd: 399000,
+      amount_display: '399.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'PDFL PRO ANNUAL',
+      paid_at: '2026-11-05T09:10:00Z',
+      created_at: '2026-11-05T09:05:00Z',
+    },
+    {
+      id: 4,
+      transaction_code: 'TXN-20261101-009',
+      invoice_number: 'INV-TXN-20261101-009',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'expired',
+      payment_note: 'EXPIRED QR CODE',
+      paid_at: null,
+      created_at: '2026-11-01T12:00:00Z',
+    },
+    {
+      id: 3,
+      transaction_code: 'TXN-20261028-010',
+      invoice_number: 'INV-TXN-20261028-010',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'failed',
+      payment_note: 'INSUFFICIENT FUNDS',
+      paid_at: null,
+      created_at: '2026-10-28T17:30:00Z',
+    },
+    {
+      id: 2,
+      transaction_code: 'TXN-20261025-011',
+      invoice_number: 'INV-TXN-20261025-011',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'FIRST SUBSCRIPTION',
+      paid_at: '2026-10-25T11:45:00Z',
+      created_at: '2026-10-25T11:40:00Z',
+    },
+    {
+      id: 1,
+      transaction_code: 'TXN-20261020-012',
+      invoice_number: 'INV-TXN-20261020-012',
+      plan_code: 'pro_monthly',
+      plan_name: 'Gói Pro Hàng Tháng',
+      billing_cycle: 'monthly',
+      amount_vnd: 49000,
+      amount_display: '49.000 VNĐ',
+      payment_method: 'vietqr',
+      payment_status: 'completed',
+      payment_note: 'INITIAL SIGNUP',
+      paid_at: '2026-10-20T10:15:00Z',
+      created_at: '2026-10-20T10:10:00Z',
+    },
+  ];
+
+  let billingTab = 'plans';
+  let billingStatusFilter = 'all';
+  let billingCurrentPage = 1;
+  const billingPageSize = 10;
+  let billingTransactions = [...MOCK_BILLING_TRANSACTIONS];
+
+  function initBillingHistory() {
+    const tabPlans = document.getElementById('tabPricingPlans');
+    const tabHistory = document.getElementById('tabBillingHistory');
+    const statusSelect = document.getElementById('billingStatusFilter');
+    const btnPrev = document.getElementById('btnBillingPrevPage');
+    const btnNext = document.getElementById('btnBillingNextPage');
+    const btnRetry = document.getElementById('btnRetryBillingHistory');
+
+    if (tabPlans) {
+      tabPlans.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('plans');
+      });
+    }
+
+    if (tabHistory) {
+      tabHistory.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('history');
+      });
+    }
+
+    if (statusSelect) {
+      statusSelect.addEventListener('change', (e) => {
+        filterBillingHistory(e.target.value);
+      });
+    }
+
+    if (btnPrev) {
+      btnPrev.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (billingCurrentPage > 1) {
+          goToBillingHistoryPage(billingCurrentPage - 1);
+        }
+      });
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToBillingHistoryPage(billingCurrentPage + 1);
+      });
+    }
+
+    if (btnRetry) {
+      btnRetry.addEventListener('click', (e) => {
+        e.preventDefault();
+        renderBillingHistory();
+      });
+    }
+
+    updateBillingTabBadge();
+  }
+
+  function updateBillingTabBadge() {
+    const badge = document.getElementById('billingHistoryTabBadge');
+    if (badge) {
+      badge.textContent = String(billingTransactions.length);
+    }
+  }
+
+  function switchPricingTab(tab) {
+    billingTab = tab === 'history' ? 'history' : 'plans';
+
+    const tabPlans = document.getElementById('tabPricingPlans');
+    const tabHistory = document.getElementById('tabBillingHistory');
+    const plansContainer = document.getElementById('pricingPlansContainer');
+    const historyContainer = document.getElementById('billingHistoryContainer');
+
+    if (tabPlans) {
+      if (billingTab === 'plans') {
+        tabPlans.classList.add('active');
+        tabPlans.setAttribute('aria-selected', 'true');
+      } else {
+        tabPlans.classList.remove('active');
+        tabPlans.setAttribute('aria-selected', 'false');
+      }
+    }
+
+    if (tabHistory) {
+      if (billingTab === 'history') {
+        tabHistory.classList.add('active');
+        tabHistory.setAttribute('aria-selected', 'true');
+      } else {
+        tabHistory.classList.remove('active');
+        tabHistory.setAttribute('aria-selected', 'false');
+      }
+    }
+
+    if (plansContainer) {
+      plansContainer.style.display = billingTab === 'plans' ? 'block' : 'none';
+    }
+
+    if (historyContainer) {
+      historyContainer.style.display = billingTab === 'history' ? 'block' : 'none';
+    }
+
+    if (billingTab === 'history') {
+      renderBillingHistory();
+    }
+  }
+
+  function filterBillingHistory(status) {
+    billingStatusFilter = (status || 'all').toLowerCase();
+    billingCurrentPage = 1;
+    renderBillingHistory();
+  }
+
+  function goToBillingHistoryPage(page) {
+    billingCurrentPage = Math.max(1, page);
+    renderBillingHistory();
+  }
+
+  function formatDisplayDate(dateStr) {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes} ${day}/${month}/${year}`;
+    } catch (_e) {
+      return dateStr;
+    }
+  }
+
+  function renderStatusBadge(status) {
+    const s = String(status || '').toLowerCase();
+    switch (s) {
+      case 'completed':
+        return '<span class="billing-status-badge status-badge-completed"><span class="billing-status-dot"></span>Hoàn tất</span>';
+      case 'pending':
+        return '<span class="billing-status-badge status-badge-pending"><span class="billing-status-dot"></span>Đang xử lý</span>';
+      case 'failed':
+        return '<span class="billing-status-badge status-badge-failed"><span class="billing-status-dot"></span>Thất bại</span>';
+      case 'expired':
+        return '<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>Hết hạn</span>';
+      default:
+        return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${status}</span>`;
+    }
+  }
+
+  function renderBillingHistory() {
+    const tbody = document.getElementById('billingHistoryTableBody');
+    const tableWrap = document.querySelector('.billing-table-responsive');
+    const emptyState = document.getElementById('billingHistoryEmptyState');
+    const loadingState = document.getElementById('billingHistoryLoadingState');
+    const errorState = document.getElementById('billingHistoryErrorState');
+    const countChip = document.getElementById('billingHistoryCountChip');
+    const paginationFooter = document.getElementById('billingPaginationFooter');
+    const paginationInfo = document.getElementById('billingPaginationInfo');
+    const pageNumbersContainer = document.getElementById('billingPageNumbers');
+    const btnPrev = document.getElementById('btnBillingPrevPage');
+    const btnNext = document.getElementById('btnBillingNextPage');
+
+    if (loadingState) loadingState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+
+    let filtered = billingTransactions;
+    if (billingStatusFilter && billingStatusFilter !== 'all') {
+      filtered = billingTransactions.filter(
+        (tx) => String(tx.payment_status).toLowerCase() === billingStatusFilter
+      );
+    }
+
+    const totalCount = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / billingPageSize));
+
+    if (billingCurrentPage > totalPages) {
+      billingCurrentPage = totalPages;
+    }
+
+    if (countChip) {
+      countChip.textContent = `${totalCount} giao dịch`;
+    }
+
+    updateBillingTabBadge();
+
+    if (totalCount === 0) {
+      if (tableWrap) tableWrap.style.display = 'none';
+      if (paginationFooter) paginationFooter.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'flex';
+      if (tbody) tbody.innerHTML = '';
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'block';
+    if (paginationFooter) paginationFooter.style.display = 'flex';
+
+    const startIndex = (billingCurrentPage - 1) * billingPageSize;
+    const endIndex = Math.min(startIndex + billingPageSize, totalCount);
+    const pageItems = filtered.slice(startIndex, endIndex);
+
+    if (tbody) {
+      tbody.innerHTML = pageItems
+        .map((tx, idx) => {
+          const stt = startIndex + idx + 1;
+          const displayDate = formatDisplayDate(tx.paid_at || tx.created_at);
+          const methodDisplay =
+            tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR');
+          const cycleLabel =
+            tx.billing_cycle === 'yearly' ? 'Chu kỳ 1 năm (365 ngày)' : 'Chu kỳ 1 tháng (30 ngày)';
+
+          return `
+            <tr>
+              <td class="billing-cell-stt font-mono">${stt}</td>
+              <td class="billing-cell-code font-mono">${tx.transaction_code}</td>
+              <td>
+                <span class="billing-cell-plan">${tx.plan_name}</span>
+                <span class="billing-cell-cycle">${cycleLabel}</span>
+              </td>
+              <td class="billing-cell-date font-mono">${displayDate}</td>
+              <td class="billing-cell-amount font-mono text-right">${tx.amount_display}</td>
+              <td class="billing-cell-method">${methodDisplay}</td>
+              <td>${renderStatusBadge(tx.payment_status)}</td>
+              <td class="text-center">
+                <button type="button" class="btn-view-invoice" data-tx="${tx.transaction_code}" title="Xem hóa đơn điện tử">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span>Xem hóa đơn</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const viewInvoiceButtons = tbody.querySelectorAll('.btn-view-invoice');
+      viewInvoiceButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const txCode = btn.getAttribute('data-tx');
+          handleViewInvoiceClick(txCode);
+        });
+      });
+    }
+
+    if (paginationInfo) {
+      paginationInfo.textContent = `Hiển thị ${startIndex + 1} - ${endIndex} / ${totalCount} giao dịch`;
+    }
+
+    if (btnPrev) {
+      btnPrev.disabled = billingCurrentPage <= 1;
+    }
+
+    if (btnNext) {
+      btnNext.disabled = billingCurrentPage >= totalPages;
+    }
+
+    if (pageNumbersContainer) {
+      let pageButtonsHtml = '';
+      for (let p = 1; p <= totalPages; p++) {
+        if (p === billingCurrentPage) {
+          pageButtonsHtml += `<span class="pagination-current-page font-mono">${p}</span>`;
+        } else {
+          pageButtonsHtml += `<button type="button" class="btn-pagination font-mono" data-page="${p}">${p}</button>`;
+        }
+      }
+      pageNumbersContainer.innerHTML = pageButtonsHtml;
+
+      const numberButtons = pageNumbersContainer.querySelectorAll('.btn-pagination');
+      numberButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const page = parseInt(btn.getAttribute('data-page'), 10);
+          if (!isNaN(page)) {
+            goToBillingHistoryPage(page);
+          }
+        });
+      });
+    }
+  }
+
+  function handleViewInvoiceClick(transactionCode) {
+    const tx = billingTransactions.find((item) => item.transaction_code === transactionCode);
+    if (!tx) return;
+
+    if (typeof document !== 'undefined') {
+      const event = new CustomEvent('pdfl:view-invoice', {
+        detail: {
+          transactionCode: tx.transaction_code,
+          transaction: tx,
+        },
+      });
+      document.dispatchEvent(event);
+    }
+
+    if (typeof showToast === 'function') {
+      showToast(
+        `Biên lai hóa đơn [${tx.invoice_number}]: ${tx.amount_display} (${tx.plan_name}).`,
+        'info'
+      );
+    }
+  }
+
   if (typeof window !== 'undefined') {
     window.PDFLinguaCheckout = {
       openCheckout: openCheckoutModal,
@@ -1669,6 +2164,24 @@
       closeQuotaExceededModal,
       simulatePaymentSuccess,
       pollTransactionStatus,
+      switchPricingTab,
+      filterBillingHistory,
+      goToBillingHistoryPage,
+      renderBillingHistory,
+      getBillingHistoryState: () => ({
+        tab: billingTab,
+        statusFilter: billingStatusFilter,
+        page: billingCurrentPage,
+        pageSize: billingPageSize,
+        totalItems: billingTransactions.length,
+      }),
+      getMockBillingTransactions: () => billingTransactions,
+      setMockBillingTransactions: (txs) => {
+        billingTransactions = Array.isArray(txs) ? [...txs] : [...MOCK_BILLING_TRANSACTIONS];
+        billingCurrentPage = 1;
+        renderBillingHistory();
+      },
+      handleViewInvoiceClick,
     };
   }
 })();
