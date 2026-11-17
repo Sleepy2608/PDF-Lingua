@@ -177,6 +177,24 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
         showToast('Đã nạp tài liệu nghiên cứu mẫu thành công! Bạn có thể xem bản dịch song ngữ và hỏi đáp với AI Copilot ngay bây giờ.', 'success');
       }
 
+      // Populate prompt chips with the 3 sample questions
+      const quickPromptsContainer = document.getElementById('copilotQuickPrompts');
+      if (quickPromptsContainer) {
+        quickPromptsContainer.innerHTML = `
+          <button type="button" class="copilot-prompt-chip" data-prompt="Tài liệu này nói về chủ đề gì?">Tài liệu này nói về chủ đề gì?</button>
+          <button type="button" class="copilot-prompt-chip" data-prompt="Các giải pháp kỹ thuật chính được đề cập là gì?">Các giải pháp kỹ thuật chính?</button>
+          <button type="button" class="copilot-prompt-chip" data-prompt="Tác giả kết luận như thế nào ở trang cuối?">Kết luận ở trang cuối?</button>
+        `;
+        quickPromptsContainer.querySelectorAll('.copilot-prompt-chip').forEach((chip) => {
+          chip.addEventListener('click', function () {
+            const promptText = chip.getAttribute('data-prompt') || chip.textContent.trim();
+            if (window.pdfLinguaCopilot && typeof window.pdfLinguaCopilot.sendQuery === 'function') {
+              window.pdfLinguaCopilot.sendQuery(promptText);
+            }
+          });
+        });
+      }
+
       // Pre-fill Copilot greeting if available
       const copilotDrawer = document.getElementById('aiCopilotDrawer');
       const btnToggleCopilot = document.getElementById('btnToggleCopilot');

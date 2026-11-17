@@ -467,10 +467,96 @@
     return text;
   }
 
+  // Built-in intelligent response generator for 1-Click Interactive Sample Demo
+  function getSampleDocAnswer(query) {
+    const q = (query || '').toLowerCase();
+
+    if (q.includes('chủ đề') || q.includes('giới thiệu') || q.includes('gì') || q.includes('tổng quan')) {
+      return {
+        answer: 'Tài liệu nghiên cứu này tập trung vào kiến trúc **Dịch máy thần kinh (Neural Machine Translation)** kết hợp với kỹ thuật **RAG tăng cường ngữ cảnh**.\n\nMục tiêu chính là giải quyết thách thức dịch thuật các tài liệu học thuật và hợp đồng pháp lý dạng nhiều cột phức tạp trong khi vẫn bảo tồn nghiêm ngặt bố cục phân tầng và tính toàn vẹn của văn bản.',
+        relevantChunks: [
+          {
+            chunk_id: 'sample_c1',
+            page: 1,
+            text: '1. Introduction: Neural Machine Translation and Contextual RAG. Translating complex multi-column academic and legal documents while strictly preserving hierarchical layout remains a critical challenge.'
+          }
+        ]
+      };
+    }
+
+    if (q.includes('giải pháp') || q.includes('kỹ thuật') || q.includes('đóng góp') || q.includes('contribution')) {
+      return {
+        answer: 'Các giải pháp và đóng góp kỹ thuật trọng tâm của công trình bao gồm:\n\n1. **Đồng bộ song ngữ hai cột (Bidirectional dual-pane synchronization)**: Cho phép đối chiếu song song tức thì giữa tài liệu gốc và bản dịch.\n2. **Khôi phục dấu tiếng Việt chính xác cao**: Đạt độ chuẩn xác ký tự lên đến **99.2%**.\n3. **Hàng rào kiểm soát chống ảo giác (Zero-hallucination citation guardrails)**: Đảm bảo mọi câu khẳng định sinh ra đều được ánh xạ trực tiếp đến số trang gốc đã xác minh.',
+        relevantChunks: [
+          {
+            chunk_id: 'sample_c2',
+            page: 1,
+            text: 'Key Contributions: A bidirectional dual-pane synchronization pipeline for instantaneous bilingual cross-reference. High-precision Vietnamese diacritics restoration reaching 99.2%. Zero-hallucination citation guardrails.'
+          }
+        ]
+      };
+    }
+
+    if (q.includes('kết luận') || q.includes('trang cuối') || q.includes('kết quả') || q.includes('hiệu năng') || q.includes('benchmark') || q.includes('tốc độ')) {
+      return {
+        answer: 'Tại phần đánh giá thực nghiệm và kết luận ở trang cuối trên 500 tài liệu quét đa dạng:\n\n- **Tốc độ xử lý OCR**: Đạt **2.74 giây/trang** (nhanh gấp 4.2 lần so với quy trình truyền thống).\n- **Bảo tồn cấu trúc bảng**: Đạt **94.5%** tỷ lệ giữ nguyên định dạng phân cột.\n- **Độ trung thực câu trả lời AI**: Đạt **98.8%** dựa hoàn toàn trên các đoạn văn gốc đã kiểm chứng.\n\nTác giả kết luận việc kết hợp bảo tồn bố cục với truy xuất neo trang trao quyền cho các nhà nghiên cứu kiểm chứng các bản dịch và tóm tắt do AI tạo ra với độ tin cậy tuyệt đối.',
+        relevantChunks: [
+          {
+            chunk_id: 'sample_c3',
+            page: 2,
+            text: '2. Performance Benchmarks and Experimental Results... Table 1. Processing Speed: 2.74s/page, Layout Preservation: 94.5%, AI Answer Faithfulness: 98.8%... 3. Conclusion and Future Directions.'
+          }
+        ]
+      };
+    }
+
+    return {
+      answer: 'Dựa trên nội dung tài liệu mẫu "Báo cáo Nghiên cứu AI Song Ngữ", hệ thống áp dụng kỹ thuật RAG kết hợp OCR chuyên sâu để bóc tách và dịch thuật tài liệu giữ nguyên định dạng, đạt độ chính xác 99.2% và tốc độ xử lý 2.74 giây mỗi trang. Mọi câu trả lời đều có trích dẫn số trang cụ thể.',
+      relevantChunks: [
+        {
+          chunk_id: 'sample_c1',
+          page: 1,
+          text: 'Báo cáo Nghiên cứu AI Song Ngữ: Neural Machine Translation and Contextual RAG.'
+        }
+      ]
+    };
+  }
+
   // Send Query to AI Copilot API
   async function sendUserQuery(queryText) {
     const trimmed = (queryText || '').trim();
     if (!trimmed || state.isProcessing) return;
+
+    // Check if currently viewing the 1-Click Interactive Sample Demo document
+    const isSampleDoc = (function () {
+      if (typeof window !== 'undefined' && window.pdfLinguaWorkspace && typeof window.pdfLinguaWorkspace.getCurrentDocData === 'function') {
+        const cur = window.pdfLinguaWorkspace.getCurrentDocData();
+        return cur && (cur.document_id === 'sample-academic-rag-2026' || cur.id === 'sample-academic-rag-2026');
+      }
+      return false;
+    })();
+
+    if (isSampleDoc) {
+      appendUserMessage(trimmed);
+      state.conversationHistory.push({ role: 'user', content: trimmed });
+
+      const input = document.getElementById('copilotInput');
+      if (input) {
+        input.value = '';
+        input.style.height = 'auto';
+      }
+
+      setTyping(true);
+
+      setTimeout(() => {
+        setTyping(false);
+        const sampleResult = getSampleDocAnswer(trimmed);
+        appendAssistantMessage(sampleResult.answer, sampleResult.relevantChunks);
+        state.conversationHistory.push({ role: 'assistant', content: sampleResult.answer });
+      }, 400);
+
+      return;
+    }
 
     const token = getAuthToken();
     if (!token) {
