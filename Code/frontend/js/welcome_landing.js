@@ -256,6 +256,46 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
         }
       });
     }
+
+    // 8. Dynamic Scroll Reveal Entrance
+    initScrollReveal();
+  }
+
+  /**
+   * Initializes lightweight Scroll Reveal using IntersectionObserver
+   * Automatically disables animations if user prefers reduced motion.
+   */
+  function initScrollReveal() {
+    const reveals = document.querySelectorAll('.wl-reveal');
+    if (!reveals || reveals.length === 0) return;
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion || typeof IntersectionObserver === 'undefined') {
+      reveals.forEach((el) => el.classList.add('is-revealed'));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '0px 0px -40px 0px',
+        threshold: 0.08
+      }
+    );
+
+    reveals.forEach((el) => observer.observe(el));
   }
 
   /**
@@ -356,6 +396,7 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
     loadSampleDocument,
     focusOrScrollDropzone,
     initBentoSpotlight,
+    initScrollReveal,
     initWelcomeLanding
   };
 })();
