@@ -133,7 +133,48 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
       });
     });
 
-    // 5. Plan action buttons
+    // 5. Billing Cycle Toggle & Pricing Plans Integration
+    let landingBillingCycle = 'monthly';
+    const btnCycleMonthly = document.getElementById('btnLandingCycleMonthly');
+    const btnCycleYearly = document.getElementById('btnLandingCycleYearly');
+    const priceProEl = document.getElementById('priceLandingPro');
+    const periodProEl = document.getElementById('periodLandingPro');
+    const noteProEl = document.getElementById('noteLandingPro');
+
+    function setLandingBillingCycle(cycle) {
+      landingBillingCycle = cycle === 'yearly' ? 'yearly' : 'monthly';
+      if (btnCycleMonthly && btnCycleYearly) {
+        if (landingBillingCycle === 'yearly') {
+          btnCycleMonthly.classList.remove('active');
+          btnCycleYearly.classList.add('active');
+          if (priceProEl) priceProEl.textContent = '399.000 đ';
+          if (periodProEl) periodProEl.textContent = '/ năm';
+          if (noteProEl) noteProEl.textContent = 'Tương đương ~33.250 đ/tháng (Tiết kiệm 32%)';
+        } else {
+          btnCycleYearly.classList.remove('active');
+          btnCycleMonthly.classList.add('active');
+          if (priceProEl) priceProEl.textContent = '49.000 đ';
+          if (periodProEl) periodProEl.textContent = '/ tháng';
+          if (noteProEl) noteProEl.textContent = 'Thanh toán linh hoạt theo từng tháng';
+        }
+      }
+    }
+
+    if (btnCycleMonthly) {
+      btnCycleMonthly.addEventListener('click', (e) => {
+        e.preventDefault();
+        setLandingBillingCycle('monthly');
+      });
+    }
+
+    if (btnCycleYearly) {
+      btnCycleYearly.addEventListener('click', (e) => {
+        e.preventDefault();
+        setLandingBillingCycle('yearly');
+      });
+    }
+
+    // Plan action buttons
     const btnPlanFree = document.getElementById('btnPlanFree');
     const btnPlanPro = document.getElementById('btnPlanPro');
 
@@ -147,13 +188,17 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
     if (btnPlanPro) {
       btnPlanPro.addEventListener('click', (e) => {
         e.preventDefault();
-        // If sidebar pricing exists, open full pricing view or checkout
-        const sideNavPricing = document.getElementById('sideNavPricing');
-        if (sideNavPricing && typeof sideNavPricing.click === 'function') {
-          sideNavPricing.click();
+        const planCode = landingBillingCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+        if (window.pdfLinguaPricing && typeof window.pdfLinguaPricing.openCheckoutModal === 'function') {
+          window.pdfLinguaPricing.openCheckoutModal(planCode);
         } else {
-          const mainRegisterBtn = document.getElementById('btnOpenRegister');
-          if (mainRegisterBtn) mainRegisterBtn.click();
+          const sideNavPricing = document.getElementById('sideNavPricing');
+          if (sideNavPricing && typeof sideNavPricing.click === 'function') {
+            sideNavPricing.click();
+          } else {
+            const mainRegisterBtn = document.getElementById('btnOpenRegister');
+            if (mainRegisterBtn) mainRegisterBtn.click();
+          }
         }
       });
     }
@@ -310,7 +355,8 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
   window.PDFLinguaLanding = {
     loadSampleDocument,
     focusOrScrollDropzone,
-    initBentoSpotlight
+    initBentoSpotlight,
+    initWelcomeLanding
   };
 })();
 
