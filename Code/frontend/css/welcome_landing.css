@@ -1,13 +1,12 @@
 /**
  * PDF-Lingua: Welcome Landing Page Styles
  * ----------------------------------------------------
- * High-craft, anti-AI-slop design adhering to:
- * - /design-taste-frontend: Dial variance 7, motion intensity 6, visual density 4.
- * - /gpt-taste: Strict AIDA funnel, 2-line max H1, gapless bento grid, no cheap meta-labels.
- * - charles-unslop: Subtract first, no purple gradient mesh, high-contrast typography.
- * - charles-accent-heroes: Bold Electric Blue accent, clear in 1 second, real interface preview.
- * - charles-polish: Tabular numbers, optical alignment, min 44x44px touch targets, zero CLS.
- * - charles-ux-animation: Fast Doherty threshold transitions, prefers-reduced-motion safe.
+ * High-performance, accessible landing page design system:
+ * - Clean dark obsidian theme with electric blue focal accents.
+ * - Gapless asymmetric bento grid layout and responsive preview card.
+ * - Strict typography hierarchy, tabular numerals for technical metrics.
+ * - Accessible focus rings, zero cumulative layout shift (CLS = 0).
+ * - Smooth scroll reveal transitions with reduced-motion safety.
  */
 
 :root {
