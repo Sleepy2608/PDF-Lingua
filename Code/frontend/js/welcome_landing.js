@@ -157,6 +157,80 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
         }
       });
     }
+
+    // 6. Interactive Bento Spotlight & Micro-triggers
+    initBentoSpotlight();
+
+    const btnBentoTrySync = document.getElementById('btnBentoTrySync');
+    if (btnBentoTrySync) {
+      btnBentoTrySync.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadSampleDocument();
+      });
+    }
+
+    const btnBentoCitation = document.getElementById('btnBentoCitationPreview');
+    if (btnBentoCitation) {
+      btnBentoCitation.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadSampleDocument();
+        setTimeout(() => {
+          if (window.pdfLinguaCopilot && typeof window.pdfLinguaCopilot.sendQuery === 'function') {
+            window.pdfLinguaCopilot.sendQuery('Tốc độ xử lý thực tế trên tài liệu học thuật là bao nhiêu?');
+          }
+        }, 800);
+      });
+    }
+
+    // 7. How-It-Works Sequential Step Triggers
+    const btnStepUpload = document.getElementById('btnStepUploadTrigger');
+    if (btnStepUpload) {
+      btnStepUpload.addEventListener('click', (e) => {
+        e.preventDefault();
+        focusOrScrollDropzone();
+      });
+    }
+
+    const btnStepDemo = document.getElementById('btnStepDemoTrigger');
+    if (btnStepDemo) {
+      btnStepDemo.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadSampleDocument();
+      });
+    }
+
+    const btnStepWorkspace = document.getElementById('btnStepWorkspaceTrigger');
+    if (btnStepWorkspace) {
+      btnStepWorkspace.addEventListener('click', (e) => {
+        e.preventDefault();
+        const workspaceSection = document.getElementById('workspaceSection');
+        if (workspaceSection) {
+          workspaceSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          focusOrScrollDropzone();
+        }
+      });
+    }
+  }
+
+  /**
+   * Initializes mouse spotlight gradient coordinates on bento cards
+   */
+  function initBentoSpotlight() {
+    const bentoCards = document.querySelectorAll('.wl-bento-card');
+    bentoCards.forEach((card) => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.removeProperty('--mouse-x');
+        card.style.removeProperty('--mouse-y');
+      });
+    });
   }
 
   /**
@@ -235,7 +309,8 @@ Sự kết hợp giữa bảo toàn bố cục và truy xuất neo trang trao qu
   // Export public API
   window.PDFLinguaLanding = {
     loadSampleDocument,
-    focusOrScrollDropzone
+    focusOrScrollDropzone,
+    initBentoSpotlight
   };
 })();
 
