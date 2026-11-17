@@ -433,6 +433,42 @@ await runTest('Header Auth State: Synchronizes avatar image when avatar_url is p
   assert.strictEqual(elements.userAvatar.textContent, 'L');
 });
 
+// 12. Account Modal Alert & Format Hint Removal
+await runTest('Account Modal UI: Format hint is removed from HTML and alert box handles states cleanly', () => {
+  const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  assert.strictEqual(
+    indexHtml.includes('account-avatar-hint'),
+    false,
+    'Format hint class account-avatar-hint must be removed from HTML'
+  );
+  assert.strictEqual(
+    indexHtml.includes('Định dạng JPG, PNG, WebP (Tối đa 2 MB)'),
+    false,
+    'Format hint text must be removed from HTML'
+  );
+
+  const { context, elements } = createEnv();
+  const auth = context.window.pdfLinguaAuth;
+
+  // Test error alert display
+  auth.showAccountAlert('Định dạng tệp không được hỗ trợ.', 'error');
+  assert.strictEqual(elements.accountAlert.className, 'form-alert alert-error');
+  assert.strictEqual(elements.accountAlert.textContent, 'Định dạng tệp không được hỗ trợ.');
+  assert.strictEqual(elements.accountAlert.style.display, 'block');
+
+  // Test success alert display
+  auth.showAccountAlert('Cập nhật ảnh đại diện thành công.', 'success');
+  assert.strictEqual(elements.accountAlert.className, 'form-alert alert-success');
+  assert.strictEqual(elements.accountAlert.textContent, 'Cập nhật ảnh đại diện thành công.');
+  assert.strictEqual(elements.accountAlert.style.display, 'block');
+
+  // Test clear alert
+  auth.clearAccountAlert();
+  assert.strictEqual(elements.accountAlert.style.display, 'none');
+  assert.strictEqual(elements.accountAlert.textContent, '');
+  assert.strictEqual(elements.accountAlert.className, 'form-alert');
+});
+
   console.log('================================================================');
   console.log(`SUMMARY: ${passCount}/${passCount + failCount} avatar modal tests passed (${failCount} failed).`);
   console.log('================================================================');

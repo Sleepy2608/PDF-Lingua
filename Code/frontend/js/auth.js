@@ -3078,6 +3078,8 @@
     openAccountModal,
     closeAccountModal,
     initAccountModal,
+    showAccountAlert,
+    clearAccountAlert,
     fetchAccountDetails,
     renderAccountDetails,
     toggleAccountEditMode,
