@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>PDF-Lingua — Smart PDF Text Extraction & Multilingual AI Translation</h1>
+  <h1>PDF-Lingua - Smart PDF Text Extraction & Multilingual AI Translation</h1>
   <img src="Code/frontend/assets/images/logo-app-transparent.png" alt="PDF-Lingua Logo" width="120" />
   <br><br>
   <p><em>
@@ -77,7 +77,7 @@ Dự án được xây dựng và phát triển bởi nhóm sinh viên:
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-* **Mô hình phát triển**: Scrum/Agile với chu kỳ **1 tuần / 1 Sprint** trong tổng thời gian 7 tuần (15/10/2026 – 03/12/2026).
+* **Mô hình phát triển**: Scrum/Agile với chu kỳ **1 tuần / 1 Sprint** trong tổng thời gian 7 tuần (15/10/2026 - 03/12/2026).
 * **Quản trị tiến độ trên Jira**: [Jira Board PDF-Lingua](https://pdflingua.atlassian.net/jira/software/projects/PDFL/summary)
 * **Kế hoạch chi tiết 7 Sprint**: [Sprint_Plan.md](.jira/Sprint_Plan.md) | **Phân công nhiệm vụ**: [Assignment.md](.jira/Assignment.md)
 * **Tình trạng hiện tại (Tuần 2 - Sprint 2)**:
@@ -167,6 +167,7 @@ pip install -r requirements.txt
 
 # 5. Khởi tạo file cấu hình môi trường:
 cp .env.example .env
+# (Mở file .env và điền API key cho AI nếu muốn dùng LLM thật, xem mục 3.1 bên dưới)
 
 # 6. Khởi chạy máy chủ Backend (FastAPI):
 uvicorn app.main:app --reload --port 8000
@@ -174,6 +175,24 @@ uvicorn app.main:app --reload --port 8000
 
 > Sau khi chạy thành công, máy chủ Backend sẽ hoạt động tại: `http://localhost:8000`<br>
 > Bạn có thể kiểm tra tài liệu API tự động (Swagger UI) tại: **`http://localhost:8000/docs`**
+
+### 3.1. Hướng dẫn cấu hình dịch vụ Trí tuệ nhân tạo (AI Services Setup)
+
+Hệ thống PDF-Lingua tích hợp 2 tính năng AI nâng cao (dành cho tài khoản Pro VIP):
+1. **Tóm tắt văn bản thông minh (AI Summary)**: Hỗ trợ 3 phong cách (ngắn gọn, gạch đầu dòng, phân tích chuyên sâu) và thuật toán Map-Reduce chia đoạn cho tài liệu dài.
+2. **Trợ lý hỏi đáp tài liệu (AI Copilot Document QA)**: Trả lời câu hỏi bám sát nội dung tài liệu kèm trích dẫn số trang/đoạn văn (Grounding Citations) và rào chắn chống ảo giác (Anti-hallucination).
+
+Dự án sử dụng chuẩn kết nối tương thích **OpenAI `/v1/chat/completions`**, cho phép bạn linh hoạt sử dụng bất kỳ nhà cung cấp mô hình ngôn ngữ lớn (LLM) nào bằng cách cấu hình file `.env`:
+
+| Nhà cung cấp | Biến cấu hình trong `.env` | Hướng dẫn lấy API Key |
+| :--- | :--- | :--- |
+| **B.AI Gateway** *(Mặc định)* | `BAI_BASE_URL=https://api.b.ai/v1`<br>`BAI_API_KEY=your_key`<br>`BAI_MODEL_SUMMARIZE=gpt-5-mini` | Đăng ký tài khoản tại cổng B.AI API |
+| **OpenAI** | `BAI_BASE_URL=https://api.openai.com/v1`<br>`BAI_API_KEY=sk-...`<br>`BAI_MODEL_SUMMARIZE=gpt-4o-mini` | Lấy key tại [OpenAI Platform](https://platform.openai.com/api-keys) |
+| **OpenRouter** *(Nhiều model miễn phí)* | `BAI_BASE_URL=https://openrouter.ai/api/v1`<br>`BAI_API_KEY=sk-or-v1-...`<br>`BAI_MODEL_SUMMARIZE=google/gemini-2.0-flash-exp:free` | Lấy key miễn phí tại [OpenRouter](https://openrouter.ai/) |
+| **Google Gemini** *(OpenAI Endpoint)* | `BAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/`<br>`BAI_API_KEY=AIzaSy...`<br>`BAI_MODEL_SUMMARIZE=gemini-2.0-flash` | Lấy key miễn phí tại [Google AI Studio](https://aistudio.google.com/) |
+| **Ollama** *(100% Offline trên máy)* | `BAI_BASE_URL=http://localhost:11434/v1`<br>`BAI_API_KEY=ollama`<br>`BAI_MODEL_SUMMARIZE=llama3.2` | Cài đặt Ollama từ [ollama.com](https://ollama.com/) và chạy lệnh `ollama run llama3.2` |
+
+> 💡 **Cơ chế Offline Fallback tự động (Bảo vệ kiểm thử)**: Nếu bạn clone mã nguồn về và **chưa điền API Key**, hệ thống sẽ tự động kích hoạt cơ chế **Offline Fallback** (tự động phân tích và trích xuất cấu trúc văn bản mẫu cục bộ). Do đó, toàn bộ giao diện và bộ kiểm thử tự động `pytest` vẫn chạy thành công 100% mà không bị gián đoạn hay báo lỗi hệ thống.
 
 ### 4. Khởi chạy Giao diện Frontend
 
