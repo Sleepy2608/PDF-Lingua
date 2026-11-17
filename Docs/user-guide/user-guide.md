@@ -226,6 +226,14 @@ Sau khi hoàn tất việc đọc và biên dịch tài liệu, bạn có thể 
 ### ❓ 4. Làm cách nào để báo cáo một đoạn dịch thuật chưa chuẩn hoặc đóng góp ý kiến?
 - **Khắc phục**: Cuộn xuống chân trang, nhấn vào liên kết **"Liên hệ"** để mở form phản hồi. Nhập ý kiến của bạn và bấm gửi, thông tin sẽ được chuyển thẳng đến nhóm phát triển để ghi nhận và cải tiến mô hình.
 
+### ❓ 5. Tôi muốn trải nghiệm tính năng AI Tóm tắt và Trợ lý AI Copilot khi chạy trên máy cá nhân thì cần cấu hình thế nào?
+- **Giải thích**: Do chính sách bảo mật, các API key dịch vụ AI không được lưu công khai trên mã nguồn GitHub.
+- **Cách cấu hình**:
+  1. Mở file `.env` tại thư mục gốc dự án (sao chép từ `.env.example`).
+  2. Cấu hình biến `BAI_API_KEY` với API key của bạn (hỗ trợ bất kỳ dịch vụ nào theo chuẩn OpenAI `/v1/chat/completions` như B.AI, OpenAI `gpt-4o-mini`, OpenRouter, Google Gemini hoặc Ollama chạy offline trên máy).
+  3. Khởi động lại Backend để áp dụng.
+  4. Nếu bạn chưa cấu hình key, hệ thống vẫn tự động chạy ở chế độ **Offline Fallback** (phân tích trích xuất nội dung mẫu) để bạn tự do kiểm thử giao diện mà không gặp bất kỳ lỗi gián đoạn nào.
+
 ---
 
 *Tài liệu này được biên soạn bởi Nhóm phát triển dự án **PDF-Lingua**. Mọi thắc mắc và đóng góp xin gửi về qua mục Liên hệ trên website hoặc qua kho mã nguồn GitHub chính thức.*

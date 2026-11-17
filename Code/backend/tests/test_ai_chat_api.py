@@ -296,6 +296,68 @@ class TestAIChatAntiHallucinationAndGroundedness:
         assert body["data"]["answer"] is not None
 
 
+class TestAIChatQueryScopingPDFL138:
+    """Test suite for PDFL-138: Defining query scopes handled by AI Copilot."""
+
+    def test_in_scope_queries_answered_successfully(self, ai_chat_env):
+        """In-scope questions about facts, figures, and definitions in document are answered."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        document_text = (
+            "Dieu khoan dich vu: Thoi gian ho tro ky thuat 24/7. "
+            "Muc boi thuong toi da la 10.000.000 VND khi xay ra su co mat du lieu. "
+            "Dinh nghia SLA la cam ket muc do dich vu giua he thong va khach hang."
+        )
+
+        in_scope_queries = [
+            ("Thoi gian ho tro ky thuat la nhu the nao?", "24/7"),
+            ("Muc boi thuong toi da khi mat du lieu la bao nhieu?", "10.000.000"),
+            ("SLA duoc dinh nghia nhu the nao?", "cam ket"),
+        ]
+
+        for query, expected_keyword in in_scope_queries:
+            res = client.post(
+                "/api/ai/chat",
+                json={"query": query, "document_text": document_text},
+                headers=headers,
+            )
+            assert res.status_code == 200
+            body = res.json()
+            assert body["success"] is True
+            answer = body["data"]["answer"]
+            assert answer != ai_service.NO_INFO_RESPONSE
+            assert expected_keyword.lower() in answer.lower()
+
+    def test_out_of_scope_queries_rejected_cleanly(self, ai_chat_env):
+        """Out-of-scope questions unrelated to document are rejected with standard refusal message."""
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        document_text = "Chinh sach noi bo: Gio lam viec tu 8h00 den 17h00 tu thu Hai den thu Sau."
+
+        out_of_scope_queries = [
+            "Gia xang ngay hom nay la bao nhieu tien mot lit?",
+            "Ngon nui cao nhat the gioi ten la gi?",
+            "Viet giup toi mot doan code Python sap xep mang?",
+        ]
+
+        for query in out_of_scope_queries:
+            res = client.post(
+                "/api/ai/chat",
+                json={"query": query, "document_text": document_text},
+                headers=headers,
+            )
+            assert res.status_code == 200
+            body = res.json()
+            assert body["success"] is True
+            assert body["data"]["answer"] == ai_service.NO_INFO_RESPONSE
+
+    def test_copilot_system_prompt_defines_explicit_scope(self):
+        """Verify COPILOT_SYSTEM_PROMPT contains explicit scoping, language sync, and truthful refusal rules."""
+        prompt = ai_service.COPILOT_SYSTEM_PROMPT
+        assert "NGU CANH TAI LIEU" in prompt
+        assert "TU CHOI KHI THIEU THONG TIN" in prompt
+        assert ai_service.NO_INFO_RESPONSE in prompt
+        assert ai_service.NO_INFO_RESPONSE_EN in prompt
+
+
 class TestAIChatDailyQuota:
     """Test suite for PDFL-145 daily question limit (15 questions/day)."""
 
@@ -367,6 +429,84 @@ class TestAIChatDailyQuota:
         )
         assert new_count == init_count + 1
 
+    def test_sequential_15_ai_calls_quota_enforcement(self, ai_chat_env, monkeypatch):
+        """
+        Test calling AI 15 times sequentially for Pro User:
+        - Calls 1 to 15: All succeed with HTTP 200.
+        - Call 16: Denied with HTTP 403 DAILY_QUOTA_EXCEEDED.
+        - Database records exactly 15 CHAT logs.
+        """
+        mock_chat_response = {
+            "answer": "Mock grounded answer for quota test.",
+            "relevant_chunks": ["Sample relevant chunk."],
+            "model_used": "mock-model",
+            "provider": "mock",
+            "fallback_used": False,
+            "fallback_reason": None,
+            "execution_time_ms": 15,
+        }
+        async def mock_chat(*args, **kwargs):
+            return mock_chat_response
+
+        monkeypatch.setattr(
+            "app.api.ai.ai_service.chat_with_document",
+            mock_chat,
+        )
+
+        session = ai_chat_env["session"]
+        user_id = ai_chat_env["pro_user"].id
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+
+        # Clean any existing chat history for today to start fresh
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        session.query(ProcessingHistory).filter(
+            ProcessingHistory.user_id == user_id,
+            ProcessingHistory.action_type == ActionType.CHAT,
+            ProcessingHistory.created_at >= today_start,
+        ).delete()
+        session.commit()
+
+        # 1. Execute calls 1 through 15 sequentially - must all succeed
+        for i in range(1, 16):
+            payload = {
+                "query": f"Cau hoi thuc te so {i} trong han muc 15 lan?",
+                "document_text": "Tai lieu nghien cuu AI Lingua phuc vu kiem thu han ngach.",
+            }
+            res = client.post("/api/ai/chat", json=payload, headers=headers)
+            assert res.status_code == 200, (
+                f"Luot goi thu {i} phai thanh cong (HTTP 200) nhung tra ve {res.status_code}: {res.text}"
+            )
+            body = res.json()
+            assert body["success"] is True
+            assert "answer" in body["data"]
+
+        # 2. Call 16 must be rejected with HTTP 403 DAILY_QUOTA_EXCEEDED
+        payload_16 = {
+            "query": "Cau hoi thu 16 vuot qua han muc cho phep?",
+            "document_text": "Tai lieu nghien cuu AI Lingua phuc vu kiem thu han ngach.",
+        }
+        res_16 = client.post("/api/ai/chat", json=payload_16, headers=headers)
+        assert res_16.status_code == 403
+        body_16 = res_16.json()
+        assert body_16["success"] is False
+        assert body_16["error_code"] == "DAILY_QUOTA_EXCEEDED"
+        assert body_16["details"]["daily_limit"] == 15
+        assert body_16["details"]["used_today"] == 15
+
+        # 3. Verify exactly 15 records in ProcessingHistory
+        final_count = (
+            session.query(ProcessingHistory)
+            .filter(
+                ProcessingHistory.user_id == user_id,
+                ProcessingHistory.action_type == ActionType.CHAT,
+                ProcessingHistory.created_at >= today_start,
+            )
+            .count()
+        )
+        assert final_count == 15
+
 
 class TestAIChatValidationAndErrorHandling:
     """Test suite for input validation and fallback handling."""
@@ -407,6 +547,39 @@ class TestAIChatValidationAndErrorHandling:
             assert body["success"] is True
             assert body["data"]["fallback_used"] is True
             assert "Simulated connection timeout" in body["data"]["fallback_reason"]
+
+    def test_pdfl_144_simulated_retry_flow_after_transient_error(self, ai_chat_env):
+        """
+        PDFL-144: Test transient AI failure followed by a successful retry request.
+        1. First call fails with a transient network exception and returns fallback.
+        2. Second call (retry) succeeds with valid answer.
+        """
+        headers = {"Authorization": f"Bearer {ai_chat_env['pro_token']}"}
+        payload = {
+            "query": "Cau hoi can thu lai sau khi gap su co mang?",
+            "document_text": "Tai lieu huong dan giai quyet su co va thu lai giao dich.",
+        }
+
+        # Step 1: Transient error activates fallback
+        with patch.object(
+            ai_service,
+            "_call_bai_api",
+            side_effect=Exception("Temporary network timeout"),
+        ):
+            res1 = client.post("/api/ai/chat", json=payload, headers=headers)
+            assert res1.status_code == 200
+            data1 = res1.json()
+            assert data1["success"] is True
+            assert data1["data"]["fallback_used"] is True
+            assert "Temporary network timeout" in data1["data"]["fallback_reason"]
+
+        # Step 2: Retry request succeeds normally without error
+        res2 = client.post("/api/ai/chat", json=payload, headers=headers)
+        assert res2.status_code == 200
+        data2 = res2.json()
+        assert data2["success"] is True
+        assert data2["data"]["answer"] is not None
+        assert len(data2["data"]["answer"]) > 0
 
 
 class TestAIChatLanguageSynchronization:

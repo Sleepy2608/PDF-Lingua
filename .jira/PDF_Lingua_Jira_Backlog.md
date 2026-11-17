@@ -96,6 +96,9 @@ Bảng dưới đây tổng hợp 17 Epic chính trong lộ trình phát triển
 - PDFL-58: Đảm bảo giao diện responsive trên máy tính, máy tính bảng và điện thoại.
 - PDFL-59: Kiểm tra tính nhất quán về thiết kế và khả năng sử dụng.
 - PDFL-267: Xây dựng nội dung và giao diện Điều khoản và bảo mật cho người dùng.
+- PDFL-273: Xây dựng giao diện tải lên, cắt ảnh và hiển thị avatar người dùng.
+- PDFL-275: Xây dựng giao diện xem Lịch sử giao dịch, hóa đơn và trạng thái thanh toán Pro (Billing).
+- PDFL-276: Xây dựng giao diện hiển thị mức độ sử dụng, trạng thái gói cho Pro.
 
 ## EPIC 04 - Backend API và kiến trúc xử lý
 
@@ -177,7 +180,7 @@ Bảng dưới đây tổng hợp 17 Epic chính trong lộ trình phát triển
 - PDFL-123: Kiểm thử các trường hợp dịch tiếng Việt, tiếng Anh và các ngôn ngữ được lựa chọn.
 - PDFL-124: Đánh giá khả năng giữ nguyên đoạn văn, danh sách và nội dung quan trọng khi dịch.
 - PDFL-125: Đảm bảo hệ thống không làm mất hoặc đảo thứ tự đoạn khi dịch tài liệu dài.
-- PDFL-268: Tích hợp thư viện dịch thuật deep-translator.
+- PDFL-266: Tích hợp thư viện dịch thuật 'deep-translator'.
 
 ## EPIC 09 - AI tóm tắt văn bản
 
@@ -253,6 +256,7 @@ Bảng dưới đây tổng hợp 17 Epic chính trong lộ trình phát triển
 - PDFL-183: Cập nhật quyền sử dụng khi tài khoản được nâng cấp hoặc hạ cấp.
 - PDFL-184: Hiển thị thông báo nâng cấp khi người dùng truy cập tính năng dành cho Pro.
 - PDFL-185: Kiểm thử việc áp dụng hạn mức ở Backend, kể cả khi người dùng gọi API trực tiếp.
+- PDFL-274: Xây dựng API lấy danh sách lịch sử giao dịch thanh toán của người dùng (Billing).
 
 Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản trị. Người dùng Pro không được tự động có quyền Admin.
 
@@ -346,6 +350,7 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-269: Kiến trúc hệ thống (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
 - PDFL-270: Lược đồ usecase (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
 - PDFL-271: Lược đồ lớp (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
+- PDFL-279: Hướng dẫn sử dụng web.
 
 ## EPIC 17 - Tính năng mở rộng & Nâng cao trải nghiệm người dùng
 
@@ -363,3 +368,4 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-263: Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan.
 - PDFL-264: Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối.
 - PDFL-265: Xem xét sử dụng hàng đợi tác vụ cho các file lớn và quy trình OCR/AI kéo dài.
+- PDFL-272: Thiết kế tính năng tải lên ảnh đại diện cho người dùng.
