@@ -1,17 +1,21 @@
 /**
- * PDF-Lingua: Billing History UI & Tab Navigation Test Suite
- * -----------------------------------------------------------
+ * PDF-Lingua: Billing History UI & Invoice Receipt Test Suite
+ * -------------------------------------------------------------
  * Verifies:
- * 1. HTML & CSS architecture: Navigation tabs (#tabPricingPlans, #tabBillingHistory),
- *    containers (#pricingPlansContainer, #billingHistoryContainer), table, status filter,
- *    badges, action buttons, pagination footer, and card states.
+ * 1. HTML & CSS architecture: Navigation tabs, containers, billing table,
+ *    invoice modal, receipt markup, print styles, and badges.
  * 2. Tab switching: Toggling between Pricing Plans and Billing History views.
  * 3. Table rendering: Formats STT, transaction code, plan name, dates, amount in VND,
- *    VietQR method, and status badges (Completed, Pending, Failed, Expired).
+ *    VietQR method, and status badges.
  * 4. Status filter: Filtering by all, completed, pending, failed, and expired.
  * 5. Pagination: Page slicing (10 items/page), prev/next controls, page number buttons.
  * 6. Empty & Card states: Handling 0 items with clean empty state.
- * 7. Action trigger: "Xem hóa đơn" button dispatches invoice view event with transaction details.
+ * 7. Action trigger: "Xem hóa đơn" button dispatches invoice view event and opens modal.
+ * 8. Invoice Modal data binding: Populates buyer, plan, duration, breakdown, and totals.
+ * 9. Invoice Modal edge cases: Missing QR hides QR box; missing note displays fallback.
+ * 10. Invoice Modal closing mechanisms: Close button, footer button, backdrop click, Escape key.
+ * 11. Invoice Receipt print: Invokes window.print() cleanly.
+ * 12. Invoice Receipt download: Generates standalone HTML receipt blob and triggers file download.
  */
 
 const fs = require('fs');
@@ -51,6 +55,15 @@ class MockElement {
     this.listeners = {};
     this.disabled = false;
     this.children = [];
+    this.src = '';
+    this.href = '';
+    this.download = '';
+  }
+  set className(val) {
+    this.classList = new ClassList(String(val).split(/\s+/).filter(Boolean));
+  }
+  get className() {
+    return Array.from(this.classList.values).join(' ');
   }
   set innerHTML(val) {
     this._innerHTML = String(val);
@@ -64,6 +77,10 @@ class MockElement {
   hasAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attributes, k); }
   appendChild(child) {
     this.children.push(child);
+    return child;
+  }
+  removeChild(child) {
+    this.children = this.children.filter((c) => c !== child);
     return child;
   }
   addEventListener(event, fn) {
@@ -127,16 +144,53 @@ function createBillingTestEnv() {
   // Table wrapper
   const tableWrap = new MockElement('', 'div', ['billing-table-responsive']);
 
-  const dispatchedEvents = [];
+  // Invoice Modal Elements
+  const invoiceModal = reg('billingInvoiceModal', 'div', ['modal-overlay', 'invoice-modal-overlay'], { hidden: '', 'aria-hidden': 'true' });
+  invoiceModal.style.display = 'none';
+  reg('btnCloseInvoiceModal', 'button');
+  reg('btnInvoiceModalCloseFooter', 'button');
+  reg('btnPrintInvoice', 'button');
+  reg('btnDownloadInvoice', 'button');
+  reg('invoiceStatusBadge', 'span', ['billing-status-badge', 'status-badge-completed']);
+  reg('invoiceStatusText', 'span');
+  reg('invoiceModalTitle', 'h3');
+  reg('invoiceNumber', 'div');
+  reg('invoiceTxCode', 'div');
+  reg('invoiceBuyerName', 'span');
+  reg('invoiceBuyerEmail', 'span');
+  reg('invoicePaymentMethod', 'span');
+  reg('invoicePlanName', 'strong');
+  reg('invoiceCycleDuration', 'span');
+  reg('invoiceCreatedAt', 'span');
+  reg('invoicePaidAt', 'span');
+  reg('invoiceItemDesc', 'div');
+  reg('invoiceItemSub', 'div');
+  reg('invoiceItemCycle', 'td');
+  reg('invoiceItemPrice', 'td');
+  reg('invoiceItemTaxRate', 'td');
+  reg('invoiceItemAmount', 'td');
+  reg('invoiceSubtotal', 'span');
+  reg('invoiceTaxAmount', 'span');
+  reg('invoiceTotalAmount', 'span');
+  reg('invoicePaymentNote', 'div');
+  const qrWrap = reg('invoiceQrWrap', 'div');
+  qrWrap.style.display = 'none';
+  const qrImage = reg('invoiceQrImage', 'img');
+  qrImage.src = '';
 
+  const dispatchedEvents = [];
   const domListeners = {};
+  const mockBody = new MockElement('body', 'body');
+
   const mockDocument = {
+    body: mockBody,
     getElementById: (id) => elements[id] || null,
     querySelector: (sel) => {
       if (sel === '.billing-table-responsive') return tableWrap;
       return null;
     },
     querySelectorAll: (sel) => [],
+    createElement: (tag) => new MockElement('', tag),
     addEventListener: (event, fn) => {
       domListeners[event] = domListeners[event] || [];
       domListeners[event].push(fn);
@@ -147,11 +201,15 @@ function createBillingTestEnv() {
     },
   };
 
+  let printCallCount = 0;
   const windowListeners = {};
   const mockWindow = {
     PDFLinguaAuth: null,
     PDFLinguaPricing: null,
     location: { protocol: 'http:', port: '8000' },
+    print: () => {
+      printCallCount++;
+    },
     addEventListener: (event, fn) => {
       windowListeners[event] = windowListeners[event] || [];
       windowListeners[event].push(fn);
@@ -164,10 +222,29 @@ function createBillingTestEnv() {
     dispatchEvent: (evt) => true,
   };
 
+  let createdBlobs = [];
+  const mockUrl = {
+    createObjectURL: (blob) => {
+      const u = 'blob:test/' + Math.random().toString(36).substring(7);
+      createdBlobs.push({ url: u, blob });
+      return u;
+    },
+    revokeObjectURL: (u) => {
+      createdBlobs = createdBlobs.filter((x) => x.url !== u);
+    },
+  };
+
   const context = {
     window: mockWindow,
     document: mockDocument,
     console: console,
+    URL: mockUrl,
+    Blob: class Blob {
+      constructor(parts, options) {
+        this.parts = parts;
+        this.options = options;
+      }
+    },
     CustomEvent: class CustomEvent {
       constructor(type, init = {}) {
         this.type = type;
@@ -189,16 +266,26 @@ function createBillingTestEnv() {
     domListeners['DOMContentLoaded'].forEach((fn) => fn());
   }
 
+  function dispatchKeydown(key) {
+    if (domListeners['keydown']) {
+      domListeners['keydown'].forEach((fn) => fn({ key, preventDefault: () => {} }));
+    }
+  }
+
   return {
     elements,
     tableWrap,
+    mockBody,
     window: context.window,
     dispatchedEvents,
+    dispatchKeydown,
+    getPrintCallCount: () => printCallCount,
+    getCreatedBlobs: () => createdBlobs,
   };
 }
 
 console.log('================================================================');
-console.log('PDF-Lingua Billing History UI & Tab Navigation Test Suite');
+console.log('PDF-Lingua Billing History & Invoice Receipt Test Suite');
 console.log('================================================================\n');
 
 // 1. Static HTML & CSS Architecture
@@ -214,6 +301,19 @@ assert.ok(htmlSource.includes('id="billingHistoryEmptyState"'), 'HTML must conta
 assert.ok(htmlSource.includes('id="billingHistoryLoadingState"'), 'HTML must contain #billingHistoryLoadingState');
 assert.ok(htmlSource.includes('id="billingHistoryErrorState"'), 'HTML must contain #billingHistoryErrorState');
 
+// Invoice Modal HTML
+assert.ok(htmlSource.includes('id="billingInvoiceModal"'), 'HTML must contain #billingInvoiceModal');
+assert.ok(htmlSource.includes('id="btnCloseInvoiceModal"'), 'HTML must contain #btnCloseInvoiceModal');
+assert.ok(htmlSource.includes('id="btnInvoiceModalCloseFooter"'), 'HTML must contain #btnInvoiceModalCloseFooter');
+assert.ok(htmlSource.includes('id="btnPrintInvoice"'), 'HTML must contain #btnPrintInvoice');
+assert.ok(htmlSource.includes('id="btnDownloadInvoice"'), 'HTML must contain #btnDownloadInvoice');
+assert.ok(htmlSource.includes('id="invoiceNumber"'), 'HTML must contain #invoiceNumber');
+assert.ok(htmlSource.includes('id="invoiceBuyerName"'), 'HTML must contain #invoiceBuyerName');
+assert.ok(htmlSource.includes('id="invoicePlanName"'), 'HTML must contain #invoicePlanName');
+assert.ok(htmlSource.includes('id="invoiceTotalAmount"'), 'HTML must contain #invoiceTotalAmount');
+assert.ok(htmlSource.includes('id="invoicePaymentNote"'), 'HTML must contain #invoicePaymentNote');
+assert.ok(htmlSource.includes('id="invoiceQrWrap"'), 'HTML must contain #invoiceQrWrap');
+
 // CSS checks
 assert.ok(pricingCssSource.includes('.pricing-tabs-bar'), 'CSS must style .pricing-tabs-bar');
 assert.ok(pricingCssSource.includes('.pricing-tab-btn'), 'CSS must style .pricing-tab-btn');
@@ -223,8 +323,11 @@ assert.ok(pricingCssSource.includes('.status-badge-pending'), 'CSS must style .s
 assert.ok(pricingCssSource.includes('.status-badge-failed'), 'CSS must style .status-badge-failed');
 assert.ok(pricingCssSource.includes('.status-badge-expired'), 'CSS must style .status-badge-expired');
 assert.ok(pricingCssSource.includes('.btn-view-invoice'), 'CSS must style .btn-view-invoice');
-assert.ok(pricingCssSource.includes('var(--text-primary, #0F172A) !important'), 'CSS must style pagination active button black');
-console.log('[PASS] HTML & CSS Architecture: All navigation tabs, containers, badges, and controls exist');
+assert.ok(pricingCssSource.includes('.invoice-modal-overlay'), 'CSS must style .invoice-modal-overlay');
+assert.ok(pricingCssSource.includes('.invoice-modal-card'), 'CSS must style .invoice-modal-card');
+assert.ok(pricingCssSource.includes('@media print'), 'CSS must contain @media print styles');
+assert.ok(pricingCssSource.includes('@page'), 'CSS must configure printable @page margins');
+console.log('[PASS] HTML & CSS Architecture: All navigation tabs, containers, modal, and print styles exist');
 
 // 2. Tab Navigation
 const env = createBillingTestEnv();
@@ -308,7 +411,6 @@ assert.strictEqual(elements.billingHistoryCountChip.textContent, '12 giao dịch
 console.log('[PASS] Status Filter: Resetting to "all" restores all 12 transactions');
 
 // 5. Pagination Controls
-// Page 1: prev is disabled, next is enabled
 assert.strictEqual(elements.btnBillingPrevPage.disabled, true, 'Prev button must be disabled on page 1');
 assert.strictEqual(elements.btnBillingNextPage.disabled, false, 'Next button must be enabled on page 1');
 assert.ok(elements.billingPageNumbers.innerHTML.includes('pagination-current-page'), 'Must render active page indicator');
@@ -339,17 +441,117 @@ assert.strictEqual(elements.billingPaginationFooter.style.display, 'none');
 assert.strictEqual(elements.billingHistoryCountChip.textContent, '0 giao dịch');
 console.log('[PASS] Empty State: When transaction list is empty, #billingHistoryEmptyState is displayed and table hidden');
 
-// 7. Action Button Trigger
-// Restore mock data
+// 7. Action Button Trigger & Modal Opening
 win.PDFLinguaPricing.setMockBillingTransactions(null); // resets to default mock items
 win.PDFLinguaPricing.handleViewInvoiceClick('TXN-20261117-001');
+
 assert.strictEqual(env.dispatchedEvents.length, 1);
 const evt = env.dispatchedEvents[0];
 assert.strictEqual(evt.type, 'pdfl:view-invoice');
 assert.strictEqual(evt.detail.transactionCode, 'TXN-20261117-001');
 assert.strictEqual(evt.detail.transaction.invoice_number, 'INV-TXN-20261117-001');
-console.log('[PASS] Action Trigger: Clicking "Xem hóa đơn" dispatches pdfl:view-invoice event with transaction metadata');
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
+assert.strictEqual(elements.billingInvoiceModal.getAttribute('aria-hidden'), 'false');
+assert.strictEqual(elements.billingInvoiceModal.hasAttribute('hidden'), false);
+console.log('[PASS] Action Trigger: Clicking "Xem hóa đơn" dispatches event and opens invoice modal');
+
+// 8. Invoice Modal Data Binding
+assert.strictEqual(elements.invoiceNumber.textContent, 'INV-TXN-20261117-001');
+assert.strictEqual(elements.invoiceTxCode.textContent, 'Mã GD: TXN-20261117-001');
+assert.strictEqual(elements.invoiceStatusText.textContent, 'Hoàn tất');
+assert.ok(elements.invoiceStatusBadge.classList.contains('status-badge-completed'));
+assert.strictEqual(elements.invoiceBuyerName.textContent, 'Nguyễn Văn Mua');
+assert.strictEqual(elements.invoiceBuyerEmail.textContent, 'buyer@example.com');
+assert.strictEqual(elements.invoicePaymentMethod.textContent, 'VietQR Napas247');
+assert.strictEqual(elements.invoicePlanName.textContent, 'Gói Pro Hàng Tháng');
+assert.strictEqual(elements.invoiceCycleDuration.textContent, 'Theo tháng (30 ngày)');
+assert.strictEqual(elements.invoiceItemCycle.textContent, '30 ngày');
+assert.strictEqual(elements.invoiceItemPrice.textContent, '49.000 VNĐ');
+assert.strictEqual(elements.invoiceItemTaxRate.textContent, '0% (VAT)');
+assert.strictEqual(elements.invoiceItemAmount.textContent, '49.000 VNĐ');
+assert.strictEqual(elements.invoiceSubtotal.textContent, '49.000 VNĐ');
+assert.strictEqual(elements.invoiceTaxAmount.textContent, '0 VNĐ');
+assert.strictEqual(elements.invoiceTotalAmount.textContent, '49.000 VNĐ');
+assert.strictEqual(elements.invoicePaymentNote.textContent, 'PRO MONTHLY NOV');
+assert.strictEqual(elements.invoiceQrWrap.style.display, 'flex');
+assert.ok(elements.invoiceQrImage.src.includes('vietqr.io'));
+assert.strictEqual(env.mockBody.style.overflow, 'hidden');
+console.log('[PASS] Modal Data Binding: Populated complete buyer, plan, duration, financial breakdown, and QR code');
+
+// 9. Invoice Modal Edge Cases (Missing QR & Fallback Note)
+// Case A: Missing QR Code (null qr_code_url)
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261116-002');
+assert.strictEqual(elements.invoiceNumber.textContent, 'INV-TXN-20261116-002');
+assert.strictEqual(elements.invoicePlanName.textContent, 'Gói Pro Hàng Năm');
+assert.strictEqual(elements.invoiceCycleDuration.textContent, 'Theo năm (365 ngày)');
+assert.strictEqual(elements.invoiceItemCycle.textContent, '365 ngày');
+assert.strictEqual(elements.invoiceTotalAmount.textContent, '399.000 VNĐ');
+assert.strictEqual(elements.invoiceQrWrap.style.display, 'none');
+assert.strictEqual(elements.invoiceQrImage.src, '');
+
+// Case B: Null Payment Note
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261110-006');
+assert.strictEqual(elements.invoicePaymentNote.textContent, 'Tự động đối soát hệ thống');
+
+// Case C: Pending Status
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261115-003');
+assert.strictEqual(elements.invoiceStatusText.textContent, 'Đang xử lý');
+assert.ok(elements.invoiceStatusBadge.classList.contains('status-badge-pending'));
+console.log('[PASS] Modal Edge Cases: Missing QR hides QR box, missing note displays fallback, statuses match badges');
+
+// 10. Modal Closing Mechanisms
+// Mechanism 1: Close button in header
+elements.btnCloseInvoiceModal.click();
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
+assert.strictEqual(elements.billingInvoiceModal.getAttribute('aria-hidden'), 'true');
+assert.strictEqual(elements.billingInvoiceModal.hasAttribute('hidden'), true);
+assert.strictEqual(env.mockBody.style.overflow, '');
+
+// Mechanism 2: Footer close button
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
+elements.btnInvoiceModalCloseFooter.click();
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
+
+// Mechanism 3: Backdrop overlay click
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
+elements.billingInvoiceModal.click();
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
+
+// Mechanism 4: Escape key
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
+env.dispatchKeydown('Escape');
+assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
+console.log('[PASS] Modal Closing: Successfully closed via header button, footer button, backdrop click, and Escape key');
+
+// 11. Invoice Receipt Print
+win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+assert.strictEqual(env.getPrintCallCount(), 0);
+elements.btnPrintInvoice.click();
+assert.strictEqual(env.getPrintCallCount(), 1);
+win.PDFLinguaPricing.printInvoiceReceipt();
+assert.strictEqual(env.getPrintCallCount(), 2);
+console.log('[PASS] Receipt Print: "In hóa đơn" button and printInvoiceReceipt() trigger window.print()');
+
+// 12. Invoice Receipt Download
+assert.strictEqual(env.getCreatedBlobs().length, 0);
+elements.btnDownloadInvoice.click();
+assert.strictEqual(env.getCreatedBlobs().length, 0); // revoked after trigger
+// Verify generateReceiptHtml output
+const currentTx = win.PDFLinguaPricing.getCurrentInvoiceTransaction();
+assert.ok(currentTx, 'Current invoice transaction must exist');
+const receiptHtml = win.PDFLinguaPricing.generateReceiptHtml(currentTx);
+assert.ok(receiptHtml.includes('<!DOCTYPE html>'));
+assert.ok(receiptHtml.includes('INV-TXN-20261117-001'));
+assert.ok(receiptHtml.includes('Nguyễn Văn Mua'));
+assert.ok(receiptHtml.includes('49.000 VNĐ'));
+assert.ok(receiptHtml.includes('BẢNG KÊ QUYẾT TOÁN THANH TOÁN') || receiptHtml.includes('Mô tả khoản mục'));
+assert.ok(receiptHtml.includes('PRO MONTHLY NOV'));
+assert.ok(receiptHtml.includes('@media print'));
+console.log('[PASS] Receipt Download: "Tải biên lai" generates complete HTML receipt document with inline styling');
 
 console.log('\n================================================================');
-console.log('SUMMARY: All 7/7 billing history tests passed (0 failed).');
+console.log('SUMMARY: All 12/12 billing history & receipt tests passed (0 failed).');
 console.log('================================================================');

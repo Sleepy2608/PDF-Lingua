@@ -3786,6 +3786,184 @@
         </div>
     </div>
 
+    <!-- Electronic Billing Invoice Receipt Modal -->
+    <div class="modal-overlay invoice-modal-overlay" id="billingInvoiceModal" hidden aria-hidden="true" style="display: none;">
+        <div class="invoice-modal-card" role="dialog" aria-modal="true" aria-labelledby="invoiceModalTitle">
+            <!-- Modal Header -->
+            <div class="invoice-modal-header">
+                <div class="invoice-header-title-wrap">
+                    <div class="invoice-header-badge-row">
+                        <span class="invoice-eyebrow font-mono">BIÊN LAI ĐIỆN TỬ</span>
+                        <span class="billing-status-badge status-badge-completed" id="invoiceStatusBadge">
+                            <span class="billing-status-dot"></span>
+                            <span id="invoiceStatusText">Hoàn tất</span>
+                        </span>
+                    </div>
+                    <h3 class="invoice-modal-title" id="invoiceModalTitle">Hóa Đơn Thanh Toán Dịch Vụ</h3>
+                    <p class="invoice-modal-subtitle">Biên lai xác nhận giao dịch thanh toán gói Pro dịch vụ PDF-Lingua</p>
+                </div>
+                <button type="button" class="modal-close invoice-modal-close" id="btnCloseInvoiceModal"
+                    aria-label="Đóng hóa đơn" title="Đóng">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (Printable Receipt Area) -->
+            <div class="invoice-modal-body" id="invoicePrintableArea">
+                <!-- Receipt Brand Header -->
+                <div class="invoice-receipt-brand">
+                    <div class="invoice-brand-left">
+                        <div class="invoice-brand-logo">
+                            <span class="brand-badge">PDF</span>-Lingua
+                        </div>
+                        <div class="invoice-brand-meta">Nền tảng OCR & Dịch thuật PDF Song Ngữ Chuyên Sâu</div>
+                    </div>
+                    <div class="invoice-brand-right">
+                        <div class="invoice-number-label">SỐ HÓA ĐƠN</div>
+                        <div class="invoice-number-val font-mono" id="invoiceNumber">INV-TXN-20261117-001</div>
+                        <div class="invoice-code-val font-mono" id="invoiceTxCode">Mã GD: TXN-20261117-001</div>
+                    </div>
+                </div>
+
+                <!-- Buyer & Service Meta Information Grid -->
+                <div class="invoice-meta-grid">
+                    <div class="invoice-meta-card">
+                        <div class="invoice-meta-title">THÔNG TIN KHÁCH HÀNG</div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Người mua:</span>
+                            <span class="invoice-meta-val" id="invoiceBuyerName">Nguyễn Văn Mua</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Email:</span>
+                            <span class="invoice-meta-val font-mono" id="invoiceBuyerEmail">buyer@example.com</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Phương thức:</span>
+                            <span class="invoice-meta-val" id="invoicePaymentMethod">VietQR Napas247</span>
+                        </div>
+                    </div>
+
+                    <div class="invoice-meta-card">
+                        <div class="invoice-meta-title">CHI TIẾT DỊCH VỤ</div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Gói đăng ký:</span>
+                            <strong class="invoice-meta-val" id="invoicePlanName">Gói Pro Hàng Tháng</strong>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Chu kỳ & Thời hạn:</span>
+                            <span class="invoice-meta-val" id="invoiceCycleDuration">Theo tháng (30 ngày)</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Ngày tạo:</span>
+                            <span class="invoice-meta-val font-mono" id="invoiceCreatedAt">16:28 17/11/2026</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label">Ngày thanh toán:</span>
+                            <span class="invoice-meta-val font-mono" id="invoicePaidAt">16:30 17/11/2026</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Settlement Breakdown Table -->
+                <div class="invoice-breakdown-card">
+                    <div class="invoice-breakdown-title">BẢNG KÊ QUYẾT TOÁN THANH TOÁN</div>
+                    <table class="invoice-items-table">
+                        <thead>
+                            <tr>
+                                <th>MÔ TẢ KHOẢN MỤC</th>
+                                <th class="text-center">THỜI HẠN</th>
+                                <th class="text-right">ĐƠN GIÁ</th>
+                                <th class="text-right">THUẾ SUẤT</th>
+                                <th class="text-right">THÀNH TIỀN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="invoice-item-name" id="invoiceItemDesc">Đặc quyền Gói Pro (100 MB / 500 trang OCR / AI Copilot)</div>
+                                    <div class="invoice-item-sub font-mono" id="invoiceItemSub">Mã gói: pro_monthly</div>
+                                </td>
+                                <td class="text-center" id="invoiceItemCycle">30 ngày</td>
+                                <td class="text-right font-mono" id="invoiceItemPrice">49.000 VNĐ</td>
+                                <td class="text-right font-mono" id="invoiceItemTaxRate">0% (VAT)</td>
+                                <td class="text-right font-mono invoice-item-total" id="invoiceItemAmount">49.000 VNĐ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="invoice-summary-rows">
+                        <div class="invoice-sum-row">
+                            <span class="invoice-sum-label">Giá trị dịch vụ (Tạm tính):</span>
+                            <span class="invoice-sum-val font-mono" id="invoiceSubtotal">49.000 VNĐ</span>
+                        </div>
+                        <div class="invoice-sum-row">
+                            <span class="invoice-sum-label">Thuế suất GTGT (0%):</span>
+                            <span class="invoice-sum-val font-mono" id="invoiceTaxAmount">0 VNĐ</span>
+                        </div>
+                        <div class="invoice-sum-row invoice-grand-total">
+                            <span class="invoice-sum-label">Tổng thanh toán:</span>
+                            <span class="invoice-sum-val font-mono" id="invoiceTotalAmount">49.000 VNĐ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reconciliation & QR Verification Section -->
+                <div class="invoice-reconcile-card" id="invoiceReconcileSection">
+                    <div class="invoice-reconcile-left">
+                        <div class="invoice-reconcile-label">NỘI DUNG CHUYỂN KHOẢN ĐỐI SOÁT:</div>
+                        <div class="invoice-reconcile-memo font-mono" id="invoicePaymentNote">PDFL PRO MONTHLY NOV</div>
+                        <div class="invoice-reconcile-hint">
+                            Giao dịch điện tử được bảo vệ và tự động đối soát qua Napas247 / VietQR.
+                        </div>
+                    </div>
+                    <div class="invoice-reconcile-right" id="invoiceQrWrap" style="display: none;">
+                        <img id="invoiceQrImage" class="invoice-qr-img" src="" alt="VietQR Thanh toán">
+                        <span class="invoice-qr-caption font-mono">Quét để kiểm tra</span>
+                    </div>
+                </div>
+
+                <!-- Receipt Legal Note -->
+                <div class="invoice-receipt-footer">
+                    <p>Hóa đơn điện tử khởi tạo tự động từ hệ thống PDF-Lingua. Miễn thuế GTGT theo Thông tư 219/2013/TT-BTC.</p>
+                    <p>Mọi thắc mắc về biên lai thanh toán, vui lòng liên hệ bộ phận hỗ trợ khách hàng: support@pdf-lingua.vn</p>
+                </div>
+            </div>
+
+            <!-- Modal Action Footer -->
+            <div class="invoice-modal-footer">
+                <div class="invoice-footer-left">
+                    <button type="button" class="btn btn-secondary btn-print-invoice" id="btnPrintInvoice">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                        <span>In hóa đơn</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-download-invoice" id="btnDownloadInvoice">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Tải biên lai</span>
+                    </button>
+                </div>
+                <div class="invoice-footer-right">
+                    <button type="button" class="btn btn-primary" id="btnInvoiceModalCloseFooter">
+                        <span>Đóng</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Legal & Contact Modal (Terms, Privacy, Contact) -->
     <div class="legal-modal-overlay" id="legalModalOverlay" aria-hidden="true" style="display: none;">
         <div class="legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">

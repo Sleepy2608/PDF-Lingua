@@ -92,6 +92,7 @@
     initCheckoutModal();
     initMultiTouchpointsAndQuotaModal();
     initBillingHistory();
+    initInvoiceModal();
   });
 
   function getStoredToken() {
@@ -1647,14 +1648,22 @@
       id: 12,
       transaction_code: 'TXN-20261117-001',
       invoice_number: 'INV-TXN-20261117-001',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
-      payment_note: 'PDFL PRO MONTHLY NOV',
+      payment_note: 'PRO MONTHLY NOV',
+      qr_code_url: 'https://img.vietqr.io/image/970422-123456-compact.png?amount=49000',
       paid_at: '2026-11-17T09:30:00Z',
       created_at: '2026-11-17T09:28:15Z',
     },
@@ -1662,14 +1671,22 @@
       id: 11,
       transaction_code: 'TXN-20261116-002',
       invoice_number: 'INV-TXN-20261116-002',
+      buyer_name: 'Trần Thị Khác',
+      buyer_email: 'other@example.com',
       plan_code: 'pro_yearly',
       plan_name: 'Gói Pro Hàng Năm',
       billing_cycle: 'yearly',
+      duration_days: 365,
       amount_vnd: 399000,
       amount_display: '399.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 399000,
+      total_amount_display: '399.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
-      payment_note: 'PDFL PRO YEARLY NOV',
+      payment_note: 'PRO YEARLY NOV',
+      qr_code_url: null,
       paid_at: '2026-11-16T14:15:00Z',
       created_at: '2026-11-16T14:10:00Z',
     },
@@ -1677,14 +1694,22 @@
       id: 10,
       transaction_code: 'TXN-20261115-003',
       invoice_number: 'INV-TXN-20261115-003',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'pending',
-      payment_note: 'PDFL PRO MONTHLY PENDING',
+      payment_note: 'PRO MONTHLY PENDING',
+      qr_code_url: 'https://img.vietqr.io/image/970422-123456-compact.png?amount=49000',
       paid_at: null,
       created_at: '2026-11-15T10:00:00Z',
     },
@@ -1692,14 +1717,22 @@
       id: 9,
       transaction_code: 'TXN-20261114-004',
       invoice_number: 'INV-TXN-20261114-004',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'failed',
       payment_note: 'TRANSFER REJECTED',
+      qr_code_url: null,
       paid_at: null,
       created_at: '2026-11-14T16:45:00Z',
     },
@@ -1707,14 +1740,22 @@
       id: 8,
       transaction_code: 'TXN-20261112-005',
       invoice_number: 'INV-TXN-20261112-005',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_yearly',
       plan_name: 'Gói Pro Hàng Năm',
       billing_cycle: 'yearly',
+      duration_days: 365,
       amount_vnd: 399000,
       amount_display: '399.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 399000,
+      total_amount_display: '399.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'expired',
-      payment_note: 'TIMEOUT AFTER 15M',
+      payment_note: 'TIMEOUT 15M',
+      qr_code_url: null,
       paid_at: null,
       created_at: '2026-11-12T11:20:00Z',
     },
@@ -1722,14 +1763,22 @@
       id: 7,
       transaction_code: 'TXN-20261110-006',
       invoice_number: 'INV-TXN-20261110-006',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
-      payment_note: 'PDFL PRO RENEWAL',
+      payment_note: null,
+      qr_code_url: null,
       paid_at: '2026-11-10T08:05:00Z',
       created_at: '2026-11-10T08:00:00Z',
     },
@@ -1737,14 +1786,22 @@
       id: 6,
       transaction_code: 'TXN-20261108-007',
       invoice_number: 'INV-TXN-20261108-007',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
-      payment_note: 'PDFL MONTHLY TEST',
+      payment_note: 'PRO MONTHLY TEST',
+      qr_code_url: null,
       paid_at: '2026-11-08T15:20:00Z',
       created_at: '2026-11-08T15:15:00Z',
     },
@@ -1752,14 +1809,22 @@
       id: 5,
       transaction_code: 'TXN-20261105-008',
       invoice_number: 'INV-TXN-20261105-008',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_yearly',
       plan_name: 'Gói Pro Hàng Năm',
       billing_cycle: 'yearly',
+      duration_days: 365,
       amount_vnd: 399000,
       amount_display: '399.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 399000,
+      total_amount_display: '399.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
-      payment_note: 'PDFL PRO ANNUAL',
+      payment_note: 'PRO ANNUAL SUB',
+      qr_code_url: null,
       paid_at: '2026-11-05T09:10:00Z',
       created_at: '2026-11-05T09:05:00Z',
     },
@@ -1767,14 +1832,22 @@
       id: 4,
       transaction_code: 'TXN-20261101-009',
       invoice_number: 'INV-TXN-20261101-009',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'expired',
       payment_note: 'EXPIRED QR CODE',
+      qr_code_url: null,
       paid_at: null,
       created_at: '2026-11-01T12:00:00Z',
     },
@@ -1782,14 +1855,22 @@
       id: 3,
       transaction_code: 'TXN-20261028-010',
       invoice_number: 'INV-TXN-20261028-010',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'failed',
       payment_note: 'INSUFFICIENT FUNDS',
+      qr_code_url: null,
       paid_at: null,
       created_at: '2026-10-28T17:30:00Z',
     },
@@ -1797,14 +1878,22 @@
       id: 2,
       transaction_code: 'TXN-20261025-011',
       invoice_number: 'INV-TXN-20261025-011',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
       payment_note: 'FIRST SUBSCRIPTION',
+      qr_code_url: null,
       paid_at: '2026-10-25T11:45:00Z',
       created_at: '2026-10-25T11:40:00Z',
     },
@@ -1812,14 +1901,22 @@
       id: 1,
       transaction_code: 'TXN-20261020-012',
       invoice_number: 'INV-TXN-20261020-012',
+      buyer_name: 'Nguyễn Văn Mua',
+      buyer_email: 'buyer@example.com',
       plan_code: 'pro_monthly',
       plan_name: 'Gói Pro Hàng Tháng',
       billing_cycle: 'monthly',
+      duration_days: 30,
       amount_vnd: 49000,
       amount_display: '49.000 VNĐ',
+      tax_rate_percent: 0,
+      tax_amount_vnd: 0,
+      total_amount_vnd: 49000,
+      total_amount_display: '49.000 VNĐ',
       payment_method: 'vietqr',
       payment_status: 'completed',
       payment_note: 'INITIAL SIGNUP',
+      qr_code_url: null,
       paid_at: '2026-10-20T10:15:00Z',
       created_at: '2026-10-20T10:10:00Z',
     },
@@ -2112,6 +2209,362 @@
     }
   }
 
+  let currentInvoiceTransaction = null;
+
+  function initInvoiceModal() {
+    const modal = document.getElementById('billingInvoiceModal');
+    const btnClose = document.getElementById('btnCloseInvoiceModal');
+    const btnCloseFooter = document.getElementById('btnInvoiceModalCloseFooter');
+    const btnPrint = document.getElementById('btnPrintInvoice');
+    const btnDownload = document.getElementById('btnDownloadInvoice');
+
+    if (btnClose) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeInvoiceModal();
+      });
+    }
+
+    if (btnCloseFooter) {
+      btnCloseFooter.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeInvoiceModal();
+      });
+    }
+
+    if (btnPrint) {
+      btnPrint.addEventListener('click', (e) => {
+        e.preventDefault();
+        printInvoiceReceipt();
+      });
+    }
+
+    if (btnDownload) {
+      btnDownload.addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadInvoiceReceipt();
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeInvoiceModal();
+        }
+      });
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+          if (modal && !modal.hasAttribute('hidden') && modal.style.display !== 'none') {
+            closeInvoiceModal();
+          }
+        }
+      });
+    }
+  }
+
+  function openInvoiceModal(transactionCode) {
+    const tx =
+      billingTransactions.find((item) => item.transaction_code === transactionCode) ||
+      (currentInvoiceTransaction && currentInvoiceTransaction.transaction_code === transactionCode
+        ? currentInvoiceTransaction
+        : null);
+
+    if (!tx) {
+      notifyUser('Không tìm thấy thông tin giao dịch này.', 'warning');
+      return;
+    }
+
+    currentInvoiceTransaction = tx;
+
+    const modal = document.getElementById('billingInvoiceModal');
+    if (!modal) return;
+
+    const statusBadge = document.getElementById('invoiceStatusBadge');
+    const statusText = document.getElementById('invoiceStatusText');
+    const invoiceNumberEl = document.getElementById('invoiceNumber');
+    const invoiceTxCodeEl = document.getElementById('invoiceTxCode');
+    const buyerNameEl = document.getElementById('invoiceBuyerName');
+    const buyerEmailEl = document.getElementById('invoiceBuyerEmail');
+    const paymentMethodEl = document.getElementById('invoicePaymentMethod');
+    const planNameEl = document.getElementById('invoicePlanName');
+    const cycleDurationEl = document.getElementById('invoiceCycleDuration');
+    const createdAtEl = document.getElementById('invoiceCreatedAt');
+    const paidAtEl = document.getElementById('invoicePaidAt');
+    const itemDescEl = document.getElementById('invoiceItemDesc');
+    const itemSubEl = document.getElementById('invoiceItemSub');
+    const itemCycleEl = document.getElementById('invoiceItemCycle');
+    const itemPriceEl = document.getElementById('invoiceItemPrice');
+    const itemTaxRateEl = document.getElementById('invoiceItemTaxRate');
+    const itemAmountEl = document.getElementById('invoiceItemAmount');
+    const subtotalEl = document.getElementById('invoiceSubtotal');
+    const taxAmountEl = document.getElementById('invoiceTaxAmount');
+    const totalAmountEl = document.getElementById('invoiceTotalAmount');
+    const paymentNoteEl = document.getElementById('invoicePaymentNote');
+    const qrWrap = document.getElementById('invoiceQrWrap');
+    const qrImage = document.getElementById('invoiceQrImage');
+
+    const invoiceNum = tx.invoice_number || `INV-${tx.transaction_code}`;
+    const status = String(tx.payment_status || 'completed').toLowerCase();
+
+    if (invoiceNumberEl) invoiceNumberEl.textContent = invoiceNum;
+    if (invoiceTxCodeEl) invoiceTxCodeEl.textContent = `Mã GD: ${tx.transaction_code}`;
+
+    if (statusBadge) {
+      statusBadge.className = `billing-status-badge status-badge-${status}`;
+    }
+    if (statusText) {
+      switch (status) {
+        case 'completed':
+          statusText.textContent = 'Hoàn tất';
+          break;
+        case 'pending':
+          statusText.textContent = 'Đang xử lý';
+          break;
+        case 'failed':
+          statusText.textContent = 'Thất bại';
+          break;
+        case 'expired':
+          statusText.textContent = 'Hết hạn';
+          break;
+        default:
+          statusText.textContent = tx.payment_status;
+      }
+    }
+
+    if (buyerNameEl) buyerNameEl.textContent = tx.buyer_name || 'Khách hàng PDF-Lingua';
+    if (buyerEmailEl) buyerEmailEl.textContent = tx.buyer_email || 'Chưa cung cấp';
+    if (paymentMethodEl) {
+      paymentMethodEl.textContent =
+        tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR Napas247');
+    }
+
+    if (planNameEl) planNameEl.textContent = tx.plan_name || 'Gói Dịch Vụ Pro';
+    if (cycleDurationEl) {
+      cycleDurationEl.textContent =
+        tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
+    }
+
+    if (createdAtEl) createdAtEl.textContent = formatDisplayDate(tx.created_at);
+    if (paidAtEl) {
+      paidAtEl.textContent = tx.paid_at
+        ? formatDisplayDate(tx.paid_at)
+        : (status === 'completed' ? formatDisplayDate(tx.created_at) : 'Chưa thanh toán');
+    }
+
+    if (itemDescEl) {
+      itemDescEl.textContent =
+        tx.billing_cycle === 'yearly'
+          ? 'Đặc quyền Gói Pro Hàng Năm (100 MB / 500 trang OCR / AI Copilot)'
+          : 'Đặc quyền Gói Pro Hàng Tháng (100 MB / 500 trang OCR / AI Copilot)';
+    }
+    if (itemSubEl) {
+      itemSubEl.textContent = `Mã gói: ${tx.plan_code || 'pro'}`;
+    }
+    if (itemCycleEl) {
+      itemCycleEl.textContent = tx.duration_days
+        ? `${tx.duration_days} ngày`
+        : (tx.billing_cycle === 'yearly' ? '365 ngày' : '30 ngày');
+    }
+    if (itemPriceEl) itemPriceEl.textContent = tx.amount_display;
+    if (itemTaxRateEl) itemTaxRateEl.textContent = `${tx.tax_rate_percent !== undefined ? tx.tax_rate_percent : 0}% (VAT)`;
+    if (itemAmountEl) itemAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+
+    if (subtotalEl) subtotalEl.textContent = tx.amount_display;
+    if (taxAmountEl) taxAmountEl.textContent = '0 VNĐ';
+    if (totalAmountEl) totalAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+
+    if (paymentNoteEl) {
+      paymentNoteEl.textContent = tx.payment_note || 'Tự động đối soát hệ thống';
+    }
+
+    if (qrWrap && qrImage) {
+      if (tx.qr_code_url) {
+        qrImage.src = tx.qr_code_url;
+        qrWrap.style.display = 'flex';
+      } else {
+        qrImage.src = '';
+        qrWrap.style.display = 'none';
+      }
+    }
+
+    modal.removeAttribute('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.style.display = 'flex';
+
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeInvoiceModal() {
+    const modal = document.getElementById('billingInvoiceModal');
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.style.display = 'none';
+    }
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.style.overflow = '';
+    }
+  }
+
+  function printInvoiceReceipt() {
+    if (typeof window !== 'undefined' && typeof window.print === 'function') {
+      window.print();
+    } else {
+      notifyUser('Trình duyệt không hỗ trợ in ấn trực tiếp.', 'warning');
+    }
+  }
+
+  function generateReceiptHtml(tx) {
+    const displayDate = formatDisplayDate(tx.paid_at || tx.created_at);
+    const cycleLabel = tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
+    const itemDesc =
+      tx.billing_cycle === 'yearly'
+        ? 'Đặc quyền Gói Pro Hàng Năm (100 MB / 500 trang OCR / AI Copilot)'
+        : 'Đặc quyền Gói Pro Hàng Tháng (100 MB / 500 trang OCR / AI Copilot)';
+    const methodDisplay =
+      tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR Napas247');
+    const noteDisplay = tx.payment_note || 'Tự động đối soát hệ thống';
+    const invoiceNumber = tx.invoice_number || `INV-${tx.transaction_code}`;
+
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hóa đơn thanh toán - ${escapeHtml(invoiceNumber)}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 40px 20px; }
+  .receipt-box { max-width: 680px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 36px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 24px; margin-bottom: 24px; }
+  .logo { font-size: 24px; font-weight: 800; color: #0f172a; }
+  .logo span { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; }
+  .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .inv-num { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  .inv-num-label { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.05em; }
+  .inv-num-val { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .meta-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+  .meta-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
+  .meta-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+  .meta-label { color: #64748b; }
+  .meta-val { font-weight: 600; color: #0f172a; text-align: right; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f1f5f9; color: #475569; font-size: 11px; text-transform: uppercase; }
+  td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .totals { margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+  .tot-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .tot-row.grand { font-size: 16px; font-weight: 800; color: #2563eb; border-top: 2px solid #e2e8f0; padding-top: 10px; margin-top: 6px; }
+  .reconcile { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 14px; margin-top: 24px; font-size: 12px; }
+  .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .receipt-box { border: none; box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="receipt-box">
+  <div class="header">
+    <div>
+      <div class="logo"><span>PDF</span>-Lingua</div>
+      <div class="subtitle">Nền tảng OCR & Dịch thuật PDF Song Ngữ Chuyên Sâu</div>
+    </div>
+    <div class="inv-num">
+      <div class="inv-num-label">SỐ HÓA ĐƠN</div>
+      <div class="inv-num-val">${escapeHtml(invoiceNumber)}</div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Mã GD: ${escapeHtml(tx.transaction_code)}</div>
+    </div>
+  </div>
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="meta-title">Thông tin khách hàng</div>
+      <div class="meta-row"><span class="meta-label">Người mua:</span><span class="meta-val">${escapeHtml(tx.buyer_name || 'Khách hàng')}</span></div>
+      <div class="meta-row"><span class="meta-label">Email:</span><span class="meta-val">${escapeHtml(tx.buyer_email || 'Chưa cung cấp')}</span></div>
+      <div class="meta-row"><span class="meta-label">Phương thức:</span><span class="meta-val">${escapeHtml(methodDisplay)}</span></div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-title">Chi tiết dịch vụ</div>
+      <div class="meta-row"><span class="meta-label">Gói đăng ký:</span><span class="meta-val">${escapeHtml(tx.plan_name)}</span></div>
+      <div class="meta-row"><span class="meta-label">Chu kỳ:</span><span class="meta-val">${escapeHtml(cycleLabel)}</span></div>
+      <div class="meta-row"><span class="meta-label">Thời điểm thanh toán:</span><span class="meta-val">${escapeHtml(displayDate)}</span></div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Mô tả khoản mục</th>
+        <th class="text-center">Thời hạn</th>
+        <th class="text-right">Đơn giá</th>
+        <th class="text-right">Thuế suất</th>
+        <th class="text-right">Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>${escapeHtml(itemDesc)}</strong><br><small style="color: #64748b;">Mã gói: ${escapeHtml(tx.plan_code || 'pro')}</small></td>
+        <td class="text-center">${tx.duration_days ? `${tx.duration_days} ngày` : cycleLabel}</td>
+        <td class="text-right">${escapeHtml(tx.amount_display)}</td>
+        <td class="text-right">${tx.tax_rate_percent !== undefined ? tx.tax_rate_percent : 0}% (VAT)</td>
+        <td class="text-right"><strong>${escapeHtml(tx.total_amount_display || tx.amount_display)}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="totals">
+    <div class="tot-row"><span>Tạm tính:</span><span>${escapeHtml(tx.amount_display)}</span></div>
+    <div class="tot-row"><span>Thuế GTGT (0%):</span><span>0 VNĐ</span></div>
+    <div class="tot-row grand"><span>Tổng thanh toán:</span><span>${escapeHtml(tx.total_amount_display || tx.amount_display)}</span></div>
+  </div>
+  <div class="reconcile">
+    <strong>NỘI DUNG CHUYỂN KHOẢN ĐỐI SOÁT:</strong> <code style="font-weight: 700; color: #2563eb;">${escapeHtml(noteDisplay)}</code>
+    <div style="margin-top: 4px; color: #64748b;">Giao dịch điện tử được bảo vệ và tự động đối soát qua Napas247 / VietQR.</div>
+  </div>
+  <div class="footer">
+    <p>Hóa đơn điện tử khởi tạo tự động từ hệ thống PDF-Lingua. Miễn thuế GTGT theo Thông tư 219/2013/TT-BTC.</p>
+    <p>Hỗ trợ khách hàng: support@pdf-lingua.vn</p>
+  </div>
+</div>
+</body>
+</html>`;
+  }
+
+  function downloadInvoiceReceipt() {
+    if (!currentInvoiceTransaction) {
+      notifyUser('Không có thông tin giao dịch để tải biên lai.', 'warning');
+      return;
+    }
+
+    const tx = currentInvoiceTransaction;
+    const htmlContent = generateReceiptHtml(tx);
+    const invoiceNumber = tx.invoice_number || `INV-${tx.transaction_code}`;
+    const filename = `Bien-lai-${invoiceNumber}.html`;
+
+    try {
+      if (typeof Blob !== 'undefined' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        if (typeof document !== 'undefined' && document.body) {
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(url);
+      }
+      notifyUser(`Đã tải xuống biên lai hóa đơn ${invoiceNumber}`, 'success');
+    } catch (_err) {
+      notifyUser('Không thể tải biên lai trên trình duyệt này.', 'error');
+    }
+  }
+
   function handleViewInvoiceClick(transactionCode) {
     const tx = billingTransactions.find((item) => item.transaction_code === transactionCode);
     if (!tx) return;
@@ -2126,12 +2579,7 @@
       document.dispatchEvent(event);
     }
 
-    if (typeof showToast === 'function') {
-      showToast(
-        `Biên lai hóa đơn [${tx.invoice_number}]: ${tx.amount_display} (${tx.plan_name}).`,
-        'info'
-      );
-    }
+    openInvoiceModal(transactionCode);
   }
 
   if (typeof window !== 'undefined') {
@@ -2182,6 +2630,15 @@
         renderBillingHistory();
       },
       handleViewInvoiceClick,
+      openInvoiceModal,
+      closeInvoiceModal,
+      printInvoiceReceipt,
+      downloadInvoiceReceipt,
+      getCurrentInvoiceTransaction: () => currentInvoiceTransaction,
+      setCurrentInvoiceTransaction: (tx) => {
+        currentInvoiceTransaction = tx;
+      },
+      generateReceiptHtml,
     };
   }
 })();
