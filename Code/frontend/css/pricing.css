@@ -2647,7 +2647,8 @@
   }
 
   .invoice-modal-header .modal-close,
-  .invoice-modal-footer {
+  .invoice-modal-footer,
+  #invoiceModalLoadingState {
     display: none !important;
   }
 

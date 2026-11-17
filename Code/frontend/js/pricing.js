@@ -1641,292 +1641,19 @@
     }
   }
 
-  // ── User Billing Transaction History & Invoice UI ──────────────────
-
-  const MOCK_BILLING_TRANSACTIONS = [
-    {
-      id: 12,
-      transaction_code: 'TXN-20261117-001',
-      invoice_number: 'INV-TXN-20261117-001',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: 'PRO MONTHLY NOV',
-      qr_code_url: 'https://img.vietqr.io/image/970422-123456-compact.png?amount=49000',
-      paid_at: '2026-11-17T09:30:00Z',
-      created_at: '2026-11-17T09:28:15Z',
-    },
-    {
-      id: 11,
-      transaction_code: 'TXN-20261116-002',
-      invoice_number: 'INV-TXN-20261116-002',
-      buyer_name: 'Trần Thị Khác',
-      buyer_email: 'other@example.com',
-      plan_code: 'pro_yearly',
-      plan_name: 'Gói Pro Hàng Năm',
-      billing_cycle: 'yearly',
-      duration_days: 365,
-      amount_vnd: 399000,
-      amount_display: '399.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 399000,
-      total_amount_display: '399.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: 'PRO YEARLY NOV',
-      qr_code_url: null,
-      paid_at: '2026-11-16T14:15:00Z',
-      created_at: '2026-11-16T14:10:00Z',
-    },
-    {
-      id: 10,
-      transaction_code: 'TXN-20261115-003',
-      invoice_number: 'INV-TXN-20261115-003',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'pending',
-      payment_note: 'PRO MONTHLY PENDING',
-      qr_code_url: 'https://img.vietqr.io/image/970422-123456-compact.png?amount=49000',
-      paid_at: null,
-      created_at: '2026-11-15T10:00:00Z',
-    },
-    {
-      id: 9,
-      transaction_code: 'TXN-20261114-004',
-      invoice_number: 'INV-TXN-20261114-004',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'failed',
-      payment_note: 'TRANSFER REJECTED',
-      qr_code_url: null,
-      paid_at: null,
-      created_at: '2026-11-14T16:45:00Z',
-    },
-    {
-      id: 8,
-      transaction_code: 'TXN-20261112-005',
-      invoice_number: 'INV-TXN-20261112-005',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_yearly',
-      plan_name: 'Gói Pro Hàng Năm',
-      billing_cycle: 'yearly',
-      duration_days: 365,
-      amount_vnd: 399000,
-      amount_display: '399.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 399000,
-      total_amount_display: '399.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'expired',
-      payment_note: 'TIMEOUT 15M',
-      qr_code_url: null,
-      paid_at: null,
-      created_at: '2026-11-12T11:20:00Z',
-    },
-    {
-      id: 7,
-      transaction_code: 'TXN-20261110-006',
-      invoice_number: 'INV-TXN-20261110-006',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: null,
-      qr_code_url: null,
-      paid_at: '2026-11-10T08:05:00Z',
-      created_at: '2026-11-10T08:00:00Z',
-    },
-    {
-      id: 6,
-      transaction_code: 'TXN-20261108-007',
-      invoice_number: 'INV-TXN-20261108-007',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: 'PRO MONTHLY TEST',
-      qr_code_url: null,
-      paid_at: '2026-11-08T15:20:00Z',
-      created_at: '2026-11-08T15:15:00Z',
-    },
-    {
-      id: 5,
-      transaction_code: 'TXN-20261105-008',
-      invoice_number: 'INV-TXN-20261105-008',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_yearly',
-      plan_name: 'Gói Pro Hàng Năm',
-      billing_cycle: 'yearly',
-      duration_days: 365,
-      amount_vnd: 399000,
-      amount_display: '399.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 399000,
-      total_amount_display: '399.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: 'PRO ANNUAL SUB',
-      qr_code_url: null,
-      paid_at: '2026-11-05T09:10:00Z',
-      created_at: '2026-11-05T09:05:00Z',
-    },
-    {
-      id: 4,
-      transaction_code: 'TXN-20261101-009',
-      invoice_number: 'INV-TXN-20261101-009',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'expired',
-      payment_note: 'EXPIRED QR CODE',
-      qr_code_url: null,
-      paid_at: null,
-      created_at: '2026-11-01T12:00:00Z',
-    },
-    {
-      id: 3,
-      transaction_code: 'TXN-20261028-010',
-      invoice_number: 'INV-TXN-20261028-010',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'failed',
-      payment_note: 'INSUFFICIENT FUNDS',
-      qr_code_url: null,
-      paid_at: null,
-      created_at: '2026-10-28T17:30:00Z',
-    },
-    {
-      id: 2,
-      transaction_code: 'TXN-20261025-011',
-      invoice_number: 'INV-TXN-20261025-011',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: 'FIRST SUBSCRIPTION',
-      qr_code_url: null,
-      paid_at: '2026-10-25T11:45:00Z',
-      created_at: '2026-10-25T11:40:00Z',
-    },
-    {
-      id: 1,
-      transaction_code: 'TXN-20261020-012',
-      invoice_number: 'INV-TXN-20261020-012',
-      buyer_name: 'Nguyễn Văn Mua',
-      buyer_email: 'buyer@example.com',
-      plan_code: 'pro_monthly',
-      plan_name: 'Gói Pro Hàng Tháng',
-      billing_cycle: 'monthly',
-      duration_days: 30,
-      amount_vnd: 49000,
-      amount_display: '49.000 VNĐ',
-      tax_rate_percent: 0,
-      tax_amount_vnd: 0,
-      total_amount_vnd: 49000,
-      total_amount_display: '49.000 VNĐ',
-      payment_method: 'vietqr',
-      payment_status: 'completed',
-      payment_note: 'INITIAL SIGNUP',
-      qr_code_url: null,
-      paid_at: '2026-10-20T10:15:00Z',
-      created_at: '2026-10-20T10:10:00Z',
-    },
-  ];
+  // ── User Billing Transaction History & Invoice API Integration ───────
 
   let billingTab = 'plans';
   let billingStatusFilter = 'all';
   let billingCurrentPage = 1;
   const billingPageSize = 10;
-  let billingTransactions = [...MOCK_BILLING_TRANSACTIONS];
+  let billingTotalCount = 0;
+  let billingTotalPages = 1;
+  let billingTransactions = [];
+  let billingLoading = false;
+  let billingRequestId = 0;
+  let currentInvoiceRequestId = 0;
+  let currentInvoiceTransaction = null;
 
   function initBillingHistory() {
     const tabPlans = document.getElementById('tabPricingPlans');
@@ -1959,7 +1686,7 @@
     if (btnPrev) {
       btnPrev.addEventListener('click', (e) => {
         e.preventDefault();
-        if (billingCurrentPage > 1) {
+        if (billingCurrentPage > 1 && !billingLoading) {
           goToBillingHistoryPage(billingCurrentPage - 1);
         }
       });
@@ -1968,24 +1695,26 @@
     if (btnNext) {
       btnNext.addEventListener('click', (e) => {
         e.preventDefault();
-        goToBillingHistoryPage(billingCurrentPage + 1);
+        if (billingCurrentPage < billingTotalPages && !billingLoading) {
+          goToBillingHistoryPage(billingCurrentPage + 1);
+        }
       });
     }
 
     if (btnRetry) {
       btnRetry.addEventListener('click', (e) => {
         e.preventDefault();
-        renderBillingHistory();
+        fetchBillingHistory(billingCurrentPage, billingStatusFilter);
       });
     }
 
     updateBillingTabBadge();
   }
 
-  function updateBillingTabBadge() {
+  function updateBillingTabBadge(count) {
     const badge = document.getElementById('billingHistoryTabBadge');
     if (badge) {
-      badge.textContent = String(billingTransactions.length);
+      badge.textContent = String(typeof count === 'number' ? count : billingTotalCount);
     }
   }
 
@@ -2026,19 +1755,21 @@
     }
 
     if (billingTab === 'history') {
-      renderBillingHistory();
+      return fetchBillingHistory(1, billingStatusFilter);
     }
   }
 
   function filterBillingHistory(status) {
     billingStatusFilter = (status || 'all').toLowerCase();
     billingCurrentPage = 1;
-    renderBillingHistory();
+    return fetchBillingHistory(billingCurrentPage, billingStatusFilter);
   }
 
   function goToBillingHistoryPage(page) {
-    billingCurrentPage = Math.max(1, page);
-    renderBillingHistory();
+    const targetPage = Math.max(1, Math.min(page, billingTotalPages || 1));
+    if (targetPage === billingCurrentPage && billingTransactions.length > 0) return Promise.resolve();
+    billingCurrentPage = targetPage;
+    return fetchBillingHistory(billingCurrentPage, billingStatusFilter);
   }
 
   function formatDisplayDate(dateStr) {
@@ -2069,11 +1800,139 @@
       case 'expired':
         return '<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>Hết hạn</span>';
       default:
-        return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${status}</span>`;
+        return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${escapeHtml(status)}</span>`;
     }
   }
 
-  function renderBillingHistory() {
+  async function fetchBillingHistory(page = 1, status = 'all') {
+    const reqId = ++billingRequestId;
+    billingLoading = true;
+    billingCurrentPage = Math.max(1, page);
+    billingStatusFilter = (status || 'all').toLowerCase();
+
+    const tbody = document.getElementById('billingHistoryTableBody');
+    const tableWrap = document.querySelector('.billing-table-responsive');
+    const emptyState = document.getElementById('billingHistoryEmptyState');
+    const loadingState = document.getElementById('billingHistoryLoadingState');
+    const errorState = document.getElementById('billingHistoryErrorState');
+    const countChip = document.getElementById('billingHistoryCountChip');
+    const paginationFooter = document.getElementById('billingPaginationFooter');
+    const statusSelect = document.getElementById('billingStatusFilter');
+
+    if (statusSelect && statusSelect.value !== billingStatusFilter) {
+      statusSelect.value = billingStatusFilter;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'none';
+    if (paginationFooter) paginationFooter.style.display = 'none';
+    if (loadingState) loadingState.style.display = 'flex';
+
+    const token = getStoredToken();
+    if (!token) {
+      if (loadingState) loadingState.style.display = 'none';
+      if (errorState) {
+        errorState.style.display = 'flex';
+        const msgEl = document.getElementById('billingHistoryErrorMessage');
+        if (msgEl) {
+          msgEl.textContent = 'Vui lòng đăng nhập để xem lịch sử giao dịch thanh toán.';
+        }
+      }
+      if (countChip) countChip.textContent = '0 giao dịch';
+      updateBillingTabBadge(0);
+      billingLoading = false;
+      return;
+    }
+
+    try {
+      let url = `${API_BASE_URL}/api/pricing/billing/history?page=${billingCurrentPage}&page_size=${billingPageSize}`;
+      if (billingStatusFilter && billingStatusFilter !== 'all') {
+        url += `&status=${encodeURIComponent(billingStatusFilter)}`;
+      }
+
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (reqId !== billingRequestId) return;
+
+      if (res.status === 401) {
+        if (loadingState) loadingState.style.display = 'none';
+        if (errorState) {
+          errorState.style.display = 'flex';
+          const msgEl = document.getElementById('billingHistoryErrorMessage');
+          if (msgEl) {
+            msgEl.textContent = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          }
+        }
+        notifyUser('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+          window.pdfLinguaAuth.openLoginModal();
+        }
+        billingLoading = false;
+        return;
+      }
+
+      if (!res.ok) {
+        let errMsg = 'Không thể tải lịch sử giao dịch từ máy chủ.';
+        try {
+          const errBody = await res.json();
+          if (errBody && errBody.detail) {
+            errMsg = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+          } else if (errBody && errBody.message) {
+            errMsg = errBody.message;
+          }
+        } catch (_e) {}
+
+        if (loadingState) loadingState.style.display = 'none';
+        if (errorState) {
+          errorState.style.display = 'flex';
+          const msgEl = document.getElementById('billingHistoryErrorMessage');
+          if (msgEl) msgEl.textContent = errMsg;
+        }
+        notifyUser(errMsg, 'error');
+        billingLoading = false;
+        return;
+      }
+
+      const body = await res.json();
+      if (reqId !== billingRequestId) return;
+
+      if (body && body.success && body.data) {
+        const data = body.data;
+        billingTransactions = Array.isArray(data.items) ? data.items : [];
+        billingTotalCount = typeof data.total_count === 'number' ? data.total_count : billingTransactions.length;
+        billingTotalPages = Math.max(1, typeof data.total_pages === 'number' ? data.total_pages : 1);
+        billingCurrentPage = typeof data.page === 'number' ? data.page : billingCurrentPage;
+
+        renderBillingHistoryData();
+      } else {
+        throw new Error('Dữ liệu trả về không hợp lệ.');
+      }
+    } catch (_err) {
+      if (reqId !== billingRequestId) return;
+      if (loadingState) loadingState.style.display = 'none';
+      if (errorState) {
+        errorState.style.display = 'flex';
+        const msgEl = document.getElementById('billingHistoryErrorMessage');
+        if (msgEl) {
+          msgEl.textContent = 'Lỗi kết nối mạng đến máy chủ. Vui lòng thử lại.';
+        }
+      }
+      notifyUser('Lỗi kết nối mạng đến máy chủ. Vui lòng thử lại.', 'error');
+    } finally {
+      if (reqId === billingRequestId) {
+        billingLoading = false;
+      }
+    }
+  }
+
+  function renderBillingHistoryData() {
     const tbody = document.getElementById('billingHistoryTableBody');
     const tableWrap = document.querySelector('.billing-table-responsive');
     const emptyState = document.getElementById('billingHistoryEmptyState');
@@ -2089,27 +1948,13 @@
     if (loadingState) loadingState.style.display = 'none';
     if (errorState) errorState.style.display = 'none';
 
-    let filtered = billingTransactions;
-    if (billingStatusFilter && billingStatusFilter !== 'all') {
-      filtered = billingTransactions.filter(
-        (tx) => String(tx.payment_status).toLowerCase() === billingStatusFilter
-      );
-    }
-
-    const totalCount = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / billingPageSize));
-
-    if (billingCurrentPage > totalPages) {
-      billingCurrentPage = totalPages;
-    }
-
     if (countChip) {
-      countChip.textContent = `${totalCount} giao dịch`;
+      countChip.textContent = `${billingTotalCount} giao dịch`;
     }
 
-    updateBillingTabBadge();
+    updateBillingTabBadge(billingTotalCount);
 
-    if (totalCount === 0) {
+    if (billingTotalCount === 0 || billingTransactions.length === 0) {
       if (tableWrap) tableWrap.style.display = 'none';
       if (paginationFooter) paginationFooter.style.display = 'none';
       if (emptyState) emptyState.style.display = 'flex';
@@ -2122,11 +1967,9 @@
     if (paginationFooter) paginationFooter.style.display = 'flex';
 
     const startIndex = (billingCurrentPage - 1) * billingPageSize;
-    const endIndex = Math.min(startIndex + billingPageSize, totalCount);
-    const pageItems = filtered.slice(startIndex, endIndex);
 
     if (tbody) {
-      tbody.innerHTML = pageItems
+      tbody.innerHTML = billingTransactions
         .map((tx, idx) => {
           const stt = startIndex + idx + 1;
           const displayDate = formatDisplayDate(tx.paid_at || tx.created_at);
@@ -2138,17 +1981,17 @@
           return `
             <tr>
               <td class="billing-cell-stt font-mono">${stt}</td>
-              <td class="billing-cell-code font-mono">${tx.transaction_code}</td>
+              <td class="billing-cell-code font-mono">${escapeHtml(tx.transaction_code)}</td>
               <td>
-                <span class="billing-cell-plan">${tx.plan_name}</span>
+                <span class="billing-cell-plan">${escapeHtml(tx.plan_name)}</span>
                 <span class="billing-cell-cycle">${cycleLabel}</span>
               </td>
               <td class="billing-cell-date font-mono">${displayDate}</td>
-              <td class="billing-cell-amount font-mono text-right">${tx.amount_display}</td>
-              <td class="billing-cell-method">${methodDisplay}</td>
+              <td class="billing-cell-amount font-mono text-right">${escapeHtml(tx.amount_display)}</td>
+              <td class="billing-cell-method">${escapeHtml(methodDisplay)}</td>
               <td>${renderStatusBadge(tx.payment_status)}</td>
               <td class="text-center">
-                <button type="button" class="btn-view-invoice" data-tx="${tx.transaction_code}" title="Xem hóa đơn điện tử">
+                <button type="button" class="btn-view-invoice" data-tx="${escapeHtml(tx.transaction_code)}" title="Xem hóa đơn điện tử">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -2174,7 +2017,9 @@
     }
 
     if (paginationInfo) {
-      paginationInfo.textContent = `Hiển thị ${startIndex + 1} - ${endIndex} / ${totalCount} giao dịch`;
+      const fromItem = startIndex + 1;
+      const toItem = Math.min(startIndex + billingTransactions.length, billingTotalCount);
+      paginationInfo.textContent = `Hiển thị ${fromItem} - ${toItem} / ${billingTotalCount} giao dịch`;
     }
 
     if (btnPrev) {
@@ -2182,12 +2027,12 @@
     }
 
     if (btnNext) {
-      btnNext.disabled = billingCurrentPage >= totalPages;
+      btnNext.disabled = billingCurrentPage >= billingTotalPages;
     }
 
     if (pageNumbersContainer) {
       let pageButtonsHtml = '';
-      for (let p = 1; p <= totalPages; p++) {
+      for (let p = 1; p <= billingTotalPages; p++) {
         if (p === billingCurrentPage) {
           pageButtonsHtml += `<span class="pagination-current-page font-mono">${p}</span>`;
         } else {
@@ -2208,8 +2053,6 @@
       });
     }
   }
-
-  let currentInvoiceTransaction = null;
 
   function initInvoiceModal() {
     const modal = document.getElementById('billingInvoiceModal');
@@ -2265,23 +2108,16 @@
     }
   }
 
-  function openInvoiceModal(transactionCode) {
-    const tx =
-      billingTransactions.find((item) => item.transaction_code === transactionCode) ||
-      (currentInvoiceTransaction && currentInvoiceTransaction.transaction_code === transactionCode
-        ? currentInvoiceTransaction
-        : null);
-
-    if (!tx) {
-      notifyUser('Không tìm thấy thông tin giao dịch này.', 'warning');
-      return;
-    }
-
-    currentInvoiceTransaction = tx;
+  async function openInvoiceModal(transactionCode) {
+    if (!transactionCode) return null;
 
     const modal = document.getElementById('billingInvoiceModal');
-    if (!modal) return;
+    if (!modal) return null;
 
+    const loadingState = document.getElementById('invoiceModalLoadingState');
+    const printableArea = document.getElementById('invoicePrintableArea');
+    const btnPrint = document.getElementById('btnPrintInvoice');
+    const btnDownload = document.getElementById('btnDownloadInvoice');
     const statusBadge = document.getElementById('invoiceStatusBadge');
     const statusText = document.getElementById('invoiceStatusText');
     const invoiceNumberEl = document.getElementById('invoiceNumber');
@@ -2306,89 +2142,37 @@
     const qrWrap = document.getElementById('invoiceQrWrap');
     const qrImage = document.getElementById('invoiceQrImage');
 
-    const invoiceNum = tx.invoice_number || `INV-${tx.transaction_code}`;
-    const status = String(tx.payment_status || 'completed').toLowerCase();
-
-    if (invoiceNumberEl) invoiceNumberEl.textContent = invoiceNum;
-    if (invoiceTxCodeEl) invoiceTxCodeEl.textContent = `Mã GD: ${tx.transaction_code}`;
-
-    if (statusBadge) {
-      statusBadge.className = `billing-status-badge status-badge-${status}`;
-    }
-    if (statusText) {
-      switch (status) {
-        case 'completed':
-          statusText.textContent = 'Hoàn tất';
-          break;
-        case 'pending':
-          statusText.textContent = 'Đang xử lý';
-          break;
-        case 'failed':
-          statusText.textContent = 'Thất bại';
-          break;
-        case 'expired':
-          statusText.textContent = 'Hết hạn';
-          break;
-        default:
-          statusText.textContent = tx.payment_status;
-      }
-    }
-
-    if (buyerNameEl) buyerNameEl.textContent = tx.buyer_name || 'Khách hàng PDF-Lingua';
-    if (buyerEmailEl) buyerEmailEl.textContent = tx.buyer_email || 'Chưa cung cấp';
-    if (paymentMethodEl) {
-      paymentMethodEl.textContent =
-        tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR Napas247');
-    }
-
-    if (planNameEl) planNameEl.textContent = tx.plan_name || 'Gói Dịch Vụ Pro';
-    if (cycleDurationEl) {
-      cycleDurationEl.textContent =
-        tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
-    }
-
-    if (createdAtEl) createdAtEl.textContent = formatDisplayDate(tx.created_at);
-    if (paidAtEl) {
-      paidAtEl.textContent = tx.paid_at
-        ? formatDisplayDate(tx.paid_at)
-        : (status === 'completed' ? formatDisplayDate(tx.created_at) : 'Chưa thanh toán');
-    }
-
-    if (itemDescEl) {
-      itemDescEl.textContent =
-        tx.billing_cycle === 'yearly'
-          ? 'Đặc quyền Gói Pro Hàng Năm (100 MB / 500 trang OCR / AI Copilot)'
-          : 'Đặc quyền Gói Pro Hàng Tháng (100 MB / 500 trang OCR / AI Copilot)';
-    }
-    if (itemSubEl) {
-      itemSubEl.textContent = `Mã gói: ${tx.plan_code || 'pro'}`;
-    }
-    if (itemCycleEl) {
-      itemCycleEl.textContent = tx.duration_days
-        ? `${tx.duration_days} ngày`
-        : (tx.billing_cycle === 'yearly' ? '365 ngày' : '30 ngày');
-    }
-    if (itemPriceEl) itemPriceEl.textContent = tx.amount_display;
-    if (itemTaxRateEl) itemTaxRateEl.textContent = `${tx.tax_rate_percent !== undefined ? tx.tax_rate_percent : 0}% (VAT)`;
-    if (itemAmountEl) itemAmountEl.textContent = tx.total_amount_display || tx.amount_display;
-
-    if (subtotalEl) subtotalEl.textContent = tx.amount_display;
+    // 1. Reset stale data immediately so previous invoice is never visible
+    currentInvoiceTransaction = null;
+    if (invoiceNumberEl) invoiceNumberEl.textContent = '...';
+    if (invoiceTxCodeEl) invoiceTxCodeEl.textContent = `Mã GD: ${transactionCode}`;
+    if (statusText) statusText.textContent = 'Đang tải...';
+    if (statusBadge) statusBadge.className = 'billing-status-badge status-badge-pending';
+    if (buyerNameEl) buyerNameEl.textContent = '...';
+    if (buyerEmailEl) buyerEmailEl.textContent = '...';
+    if (paymentMethodEl) paymentMethodEl.textContent = '...';
+    if (planNameEl) planNameEl.textContent = '...';
+    if (cycleDurationEl) cycleDurationEl.textContent = '...';
+    if (createdAtEl) createdAtEl.textContent = '...';
+    if (paidAtEl) paidAtEl.textContent = '...';
+    if (itemDescEl) itemDescEl.textContent = '...';
+    if (itemSubEl) itemSubEl.textContent = '...';
+    if (itemCycleEl) itemCycleEl.textContent = '...';
+    if (itemPriceEl) itemPriceEl.textContent = '...';
+    if (itemTaxRateEl) itemTaxRateEl.textContent = '0% (VAT)';
+    if (itemAmountEl) itemAmountEl.textContent = '...';
+    if (subtotalEl) subtotalEl.textContent = '...';
     if (taxAmountEl) taxAmountEl.textContent = '0 VNĐ';
-    if (totalAmountEl) totalAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+    if (totalAmountEl) totalAmountEl.textContent = '...';
+    if (paymentNoteEl) paymentNoteEl.textContent = '...';
+    if (qrWrap) qrWrap.style.display = 'none';
+    if (qrImage) qrImage.src = '';
 
-    if (paymentNoteEl) {
-      paymentNoteEl.textContent = tx.payment_note || 'Tự động đối soát hệ thống';
-    }
-
-    if (qrWrap && qrImage) {
-      if (tx.qr_code_url) {
-        qrImage.src = tx.qr_code_url;
-        qrWrap.style.display = 'flex';
-      } else {
-        qrImage.src = '';
-        qrWrap.style.display = 'none';
-      }
-    }
+    // 2. Show modal with loading state
+    if (loadingState) loadingState.style.display = 'flex';
+    if (printableArea) printableArea.style.display = 'none';
+    if (btnPrint) btnPrint.disabled = true;
+    if (btnDownload) btnDownload.disabled = true;
 
     modal.removeAttribute('hidden');
     modal.setAttribute('aria-hidden', 'false');
@@ -2396,6 +2180,177 @@
 
     if (typeof document !== 'undefined' && document.body) {
       document.body.style.overflow = 'hidden';
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      closeInvoiceModal();
+      notifyUser('Vui lòng đăng nhập để xem chi tiết hóa đơn.', 'warning');
+      if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+        window.pdfLinguaAuth.openLoginModal();
+      }
+      return null;
+    }
+
+    const reqId = ++currentInvoiceRequestId;
+
+    try {
+      const url = `${API_BASE_URL}/api/pricing/billing/invoices/${encodeURIComponent(transactionCode)}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (reqId !== currentInvoiceRequestId) return null;
+
+      if (res.status === 401) {
+        closeInvoiceModal();
+        notifyUser('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+          window.pdfLinguaAuth.openLoginModal();
+        }
+        return null;
+      }
+
+      if (res.status === 403) {
+        closeInvoiceModal();
+        notifyUser('Bạn không có quyền truy cập hóa đơn giao dịch này (403 Forbidden).', 'error');
+        return null;
+      }
+
+      if (res.status === 404) {
+        closeInvoiceModal();
+        notifyUser('Không tìm thấy thông tin hóa đơn cho giao dịch này (404 Not Found).', 'error');
+        return null;
+      }
+
+      if (!res.ok) {
+        closeInvoiceModal();
+        notifyUser('Không thể tải chi tiết hóa đơn từ máy chủ.', 'error');
+        return null;
+      }
+
+      const body = await res.json();
+      if (reqId !== currentInvoiceRequestId) return null;
+
+      if (body && body.success && body.data) {
+        const tx = body.data;
+        currentInvoiceTransaction = tx;
+
+        const invoiceNum = tx.invoice_number || `INV-${tx.transaction_code}`;
+        const status = String(tx.payment_status || 'completed').toLowerCase();
+
+        if (invoiceNumberEl) invoiceNumberEl.textContent = invoiceNum;
+        if (invoiceTxCodeEl) invoiceTxCodeEl.textContent = `Mã GD: ${tx.transaction_code}`;
+
+        if (statusBadge) {
+          statusBadge.className = `billing-status-badge status-badge-${status}`;
+        }
+        if (statusText) {
+          switch (status) {
+            case 'completed':
+              statusText.textContent = 'Hoàn tất';
+              break;
+            case 'pending':
+              statusText.textContent = 'Đang xử lý';
+              break;
+            case 'failed':
+              statusText.textContent = 'Thất bại';
+              break;
+            case 'expired':
+              statusText.textContent = 'Hết hạn';
+              break;
+            default:
+              statusText.textContent = tx.payment_status;
+          }
+        }
+
+        if (buyerNameEl) buyerNameEl.textContent = tx.buyer_name || 'Khách hàng PDF-Lingua';
+        if (buyerEmailEl) buyerEmailEl.textContent = tx.buyer_email || 'Chưa cung cấp';
+        if (paymentMethodEl) {
+          paymentMethodEl.textContent =
+            tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR Napas247');
+        }
+
+        if (planNameEl) planNameEl.textContent = tx.plan_name || 'Gói Dịch Vụ Pro';
+        if (cycleDurationEl) {
+          cycleDurationEl.textContent =
+            tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
+        }
+
+        if (createdAtEl) createdAtEl.textContent = formatDisplayDate(tx.issued_at || tx.created_at);
+        if (paidAtEl) {
+          paidAtEl.textContent = tx.paid_at
+            ? formatDisplayDate(tx.paid_at)
+            : (status === 'completed' ? formatDisplayDate(tx.issued_at || tx.created_at) : 'Chưa thanh toán');
+        }
+
+        if (itemDescEl) {
+          itemDescEl.textContent =
+            tx.billing_cycle === 'yearly'
+              ? 'Đặc quyền Gói Pro Hàng Năm (100 MB / 500 trang OCR / AI Copilot)'
+              : 'Đặc quyền Gói Pro Hàng Tháng (100 MB / 500 trang OCR / AI Copilot)';
+        }
+        if (itemSubEl) {
+          itemSubEl.textContent = `Mã gói: ${tx.plan_code || 'pro'}`;
+        }
+        if (itemCycleEl) {
+          itemCycleEl.textContent = tx.duration_days
+            ? `${tx.duration_days} ngày`
+            : (tx.billing_cycle === 'yearly' ? '365 ngày' : '30 ngày');
+        }
+        if (itemPriceEl) itemPriceEl.textContent = tx.amount_display;
+        if (itemTaxRateEl) itemTaxRateEl.textContent = `${tx.tax_rate_percent !== undefined ? tx.tax_rate_percent : 0}% (VAT)`;
+        if (itemAmountEl) itemAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+
+        if (subtotalEl) subtotalEl.textContent = tx.amount_display;
+        if (taxAmountEl) {
+          const taxAmt = typeof tx.tax_amount_vnd === 'number' ? tx.tax_amount_vnd : 0;
+          taxAmountEl.textContent = `${taxAmt.toLocaleString('vi-VN').replace(/,/g, '.')} VNĐ`;
+        }
+        if (totalAmountEl) totalAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+
+        if (paymentNoteEl) {
+          paymentNoteEl.textContent = tx.payment_note || 'Tự động đối soát hệ thống';
+        }
+
+        if (qrWrap && qrImage) {
+          if (tx.qr_code_url) {
+            qrImage.src = tx.qr_code_url;
+            qrWrap.style.display = 'flex';
+          } else {
+            qrImage.src = '';
+            qrWrap.style.display = 'none';
+          }
+        }
+
+        if (loadingState) loadingState.style.display = 'none';
+        if (printableArea) printableArea.style.display = 'flex';
+        if (btnPrint) btnPrint.disabled = false;
+        if (btnDownload) btnDownload.disabled = false;
+
+        if (typeof document !== 'undefined') {
+          const event = new CustomEvent('pdfl:view-invoice', {
+            detail: {
+              transactionCode: tx.transaction_code,
+              transaction: tx,
+            },
+          });
+          document.dispatchEvent(event);
+        }
+
+        return tx;
+      } else {
+        throw new Error('Dữ liệu chi tiết hóa đơn không hợp lệ.');
+      }
+    } catch (_err) {
+      if (reqId !== currentInvoiceRequestId) return null;
+      closeInvoiceModal();
+      notifyUser('Lỗi kết nối khi tải chi tiết hóa đơn. Vui lòng thử lại.', 'error');
+      return null;
     }
   }
 
@@ -2412,6 +2367,11 @@
   }
 
   function printInvoiceReceipt() {
+    const loadingState = document.getElementById('invoiceModalLoadingState');
+    if (loadingState && loadingState.style.display !== 'none') {
+      notifyUser('Đang tải chi tiết hóa đơn, vui lòng chờ trong giây lát.', 'warning');
+      return;
+    }
     if (typeof window !== 'undefined' && typeof window.print === 'function') {
       window.print();
     } else {
@@ -2420,7 +2380,7 @@
   }
 
   function generateReceiptHtml(tx) {
-    const displayDate = formatDisplayDate(tx.paid_at || tx.created_at);
+    const displayDate = formatDisplayDate(tx.paid_at || tx.issued_at || tx.created_at);
     const cycleLabel = tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
     const itemDesc =
       tx.billing_cycle === 'yearly'
@@ -2566,20 +2526,8 @@
   }
 
   function handleViewInvoiceClick(transactionCode) {
-    const tx = billingTransactions.find((item) => item.transaction_code === transactionCode);
-    if (!tx) return;
-
-    if (typeof document !== 'undefined') {
-      const event = new CustomEvent('pdfl:view-invoice', {
-        detail: {
-          transactionCode: tx.transaction_code,
-          transaction: tx,
-        },
-      });
-      document.dispatchEvent(event);
-    }
-
-    openInvoiceModal(transactionCode);
+    if (!transactionCode) return Promise.resolve(null);
+    return openInvoiceModal(transactionCode);
   }
 
   if (typeof window !== 'undefined') {
@@ -2615,19 +2563,25 @@
       switchPricingTab,
       filterBillingHistory,
       goToBillingHistoryPage,
-      renderBillingHistory,
+      fetchBillingHistory,
+      renderBillingHistoryData,
       getBillingHistoryState: () => ({
         tab: billingTab,
         statusFilter: billingStatusFilter,
         page: billingCurrentPage,
         pageSize: billingPageSize,
-        totalItems: billingTransactions.length,
+        totalCount: billingTotalCount,
+        totalPages: billingTotalPages,
+        isLoading: billingLoading,
+        items: billingTransactions,
       }),
-      getMockBillingTransactions: () => billingTransactions,
+      getBillingTransactions: () => billingTransactions,
       setMockBillingTransactions: (txs) => {
-        billingTransactions = Array.isArray(txs) ? [...txs] : [...MOCK_BILLING_TRANSACTIONS];
+        billingTransactions = Array.isArray(txs) ? [...txs] : [];
+        billingTotalCount = billingTransactions.length;
+        billingTotalPages = Math.max(1, Math.ceil(billingTotalCount / billingPageSize));
         billingCurrentPage = 1;
-        renderBillingHistory();
+        renderBillingHistoryData();
       },
       handleViewInvoiceClick,
       openInvoiceModal,
@@ -2642,4 +2596,3 @@
     };
   }
 })();
-

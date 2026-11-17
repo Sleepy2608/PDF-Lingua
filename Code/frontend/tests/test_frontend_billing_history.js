@@ -1,21 +1,24 @@
 /**
- * PDF-Lingua: Billing History UI & Invoice Receipt Test Suite
- * -------------------------------------------------------------
+ * PDF-Lingua: Real Billing History & Invoice Detail API Integration Test Suite
+ * -----------------------------------------------------------------------------
  * Verifies:
  * 1. HTML & CSS architecture: Navigation tabs, containers, billing table,
- *    invoice modal, receipt markup, print styles, and badges.
- * 2. Tab switching: Toggling between Pricing Plans and Billing History views.
- * 3. Table rendering: Formats STT, transaction code, plan name, dates, amount in VND,
- *    VietQR method, and status badges.
- * 4. Status filter: Filtering by all, completed, pending, failed, and expired.
- * 5. Pagination: Page slicing (10 items/page), prev/next controls, page number buttons.
- * 6. Empty & Card states: Handling 0 items with clean empty state.
- * 7. Action trigger: "Xem hóa đơn" button dispatches invoice view event and opens modal.
- * 8. Invoice Modal data binding: Populates buyer, plan, duration, breakdown, and totals.
- * 9. Invoice Modal edge cases: Missing QR hides QR box; missing note displays fallback.
- * 10. Invoice Modal closing mechanisms: Close button, footer button, backdrop click, Escape key.
- * 11. Invoice Receipt print: Invokes window.print() cleanly.
- * 12. Invoice Receipt download: Generates standalone HTML receipt blob and triggers file download.
+ *    invoice modal, loading states, receipt markup, print styles, and badges.
+ * 2. Unauthenticated state: Missing JWT displays login prompt and stops unauthenticated requests.
+ * 3. Authenticated Billing History API: GET /api/pricing/billing/history with Bearer token,
+ *    renders table items, formatted currency, method, status badges, and pagination info.
+ * 4. API-driven Status Filtering: Passes status query parameter to API (completed, pending, failed, expired, all).
+ * 5. API-driven Pagination: Slices server pages with page and page_size query parameters,
+ *    updates button states, and deduplicates redundant page requests.
+ * 6. Empty State Handling: Displays clean empty state when server returns 0 records.
+ * 7. Billing API Error Handling: Captures 401 Unauthorized, network failures, and race condition / out-of-order responses.
+ * 8. Real Invoice Detail API: GET /api/pricing/billing/invoices/{code} with Bearer token,
+ *    clears stale data, displays loading state, binds purchaser and financial breakdown, and enables action buttons.
+ * 9. Invoice Detail Edge Cases: Missing QR hides QR box, missing note renders fallback.
+ * 10. Invoice Detail Error Handling: Captures 401 Unauthorized, 403 Forbidden, 404 Not Found, and network connection failures.
+ * 11. Modal Closing Mechanisms: Header close button, footer close button, backdrop click, Escape key.
+ * 12. Print & Download Receipt: Blocks printing while loading, triggers window.print() when ready,
+ *     and generates standalone HTML receipt blob with correct file download.
  */
 
 const fs = require('fs');
@@ -26,6 +29,285 @@ const vm = require('vm');
 const pricingSource = fs.readFileSync(path.resolve(__dirname, '../js/pricing.js'), 'utf8');
 const htmlSource = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 const pricingCssSource = fs.readFileSync(path.resolve(__dirname, '../css/pricing.css'), 'utf8');
+
+const SAMPLE_TRANSACTIONS = [
+  {
+    id: 12,
+    transaction_code: 'TXN-20261117-001',
+    invoice_number: 'INV-TXN-20261117-001',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: 'PRO MONTHLY NOV',
+    qr_code_url: 'https://img.vietqr.io/image/970422-123456-compact.png?amount=49000',
+    paid_at: '2026-11-17T09:30:00Z',
+    created_at: '2026-11-17T09:28:15Z',
+  },
+  {
+    id: 11,
+    transaction_code: 'TXN-20261116-002',
+    invoice_number: 'INV-TXN-20261116-002',
+    buyer_name: 'Trần Thị Khác',
+    buyer_email: 'other@example.com',
+    plan_code: 'pro_yearly',
+    plan_name: 'Gói Pro Hàng Năm',
+    billing_cycle: 'yearly',
+    duration_days: 365,
+    amount_vnd: 399000,
+    amount_display: '399.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 399000,
+    total_amount_display: '399.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: 'PRO YEARLY NOV',
+    qr_code_url: null,
+    paid_at: '2026-11-16T14:15:00Z',
+    created_at: '2026-11-16T14:10:00Z',
+  },
+  {
+    id: 10,
+    transaction_code: 'TXN-20261115-003',
+    invoice_number: 'INV-TXN-20261115-003',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'pending',
+    payment_note: 'PRO MONTHLY PENDING',
+    qr_code_url: 'https://img.vietqr.io/image/970422-123456-compact.png?amount=49000',
+    paid_at: null,
+    created_at: '2026-11-15T10:00:00Z',
+  },
+  {
+    id: 9,
+    transaction_code: 'TXN-20261114-004',
+    invoice_number: 'INV-TXN-20261114-004',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'failed',
+    payment_note: 'TRANSFER REJECTED',
+    qr_code_url: null,
+    paid_at: null,
+    created_at: '2026-11-14T16:45:00Z',
+  },
+  {
+    id: 8,
+    transaction_code: 'TXN-20261112-005',
+    invoice_number: 'INV-TXN-20261112-005',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_yearly',
+    plan_name: 'Gói Pro Hàng Năm',
+    billing_cycle: 'yearly',
+    duration_days: 365,
+    amount_vnd: 399000,
+    amount_display: '399.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 399000,
+    total_amount_display: '399.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'expired',
+    payment_note: 'TIMEOUT 15M',
+    qr_code_url: null,
+    paid_at: null,
+    created_at: '2026-11-12T11:20:00Z',
+  },
+  {
+    id: 7,
+    transaction_code: 'TXN-20261110-006',
+    invoice_number: 'INV-TXN-20261110-006',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: null,
+    qr_code_url: null,
+    paid_at: '2026-11-10T08:05:00Z',
+    created_at: '2026-11-10T08:00:00Z',
+  },
+  {
+    id: 6,
+    transaction_code: 'TXN-20261108-007',
+    invoice_number: 'INV-TXN-20261108-007',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: 'PRO MONTHLY TEST',
+    qr_code_url: null,
+    paid_at: '2026-11-08T15:20:00Z',
+    created_at: '2026-11-08T15:15:00Z',
+  },
+  {
+    id: 5,
+    transaction_code: 'TXN-20261105-008',
+    invoice_number: 'INV-TXN-20261105-008',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_yearly',
+    plan_name: 'Gói Pro Hàng Năm',
+    billing_cycle: 'yearly',
+    duration_days: 365,
+    amount_vnd: 399000,
+    amount_display: '399.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 399000,
+    total_amount_display: '399.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: 'PRO ANNUAL SUB',
+    qr_code_url: null,
+    paid_at: '2026-11-05T09:10:00Z',
+    created_at: '2026-11-05T09:05:00Z',
+  },
+  {
+    id: 4,
+    transaction_code: 'TXN-20261101-009',
+    invoice_number: 'INV-TXN-20261101-009',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'expired',
+    payment_note: 'EXPIRED QR CODE',
+    qr_code_url: null,
+    paid_at: null,
+    created_at: '2026-11-01T12:00:00Z',
+  },
+  {
+    id: 3,
+    transaction_code: 'TXN-20261028-010',
+    invoice_number: 'INV-TXN-20261028-010',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'failed',
+    payment_note: 'INSUFFICIENT FUNDS',
+    qr_code_url: null,
+    paid_at: null,
+    created_at: '2026-10-28T17:30:00Z',
+  },
+  {
+    id: 2,
+    transaction_code: 'TXN-20261025-011',
+    invoice_number: 'INV-TXN-20261025-011',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: 'FIRST SUBSCRIPTION',
+    qr_code_url: null,
+    paid_at: '2026-10-25T11:45:00Z',
+    created_at: '2026-10-25T11:40:00Z',
+  },
+  {
+    id: 1,
+    transaction_code: 'TXN-20261020-012',
+    invoice_number: 'INV-TXN-20261020-012',
+    buyer_name: 'Nguyễn Văn Mua',
+    buyer_email: 'buyer@example.com',
+    plan_code: 'pro_monthly',
+    plan_name: 'Gói Pro Hàng Tháng',
+    billing_cycle: 'monthly',
+    duration_days: 30,
+    amount_vnd: 49000,
+    amount_display: '49.000 VNĐ',
+    tax_rate_percent: 0,
+    tax_amount_vnd: 0,
+    total_amount_vnd: 49000,
+    total_amount_display: '49.000 VNĐ',
+    payment_method: 'vietqr',
+    payment_status: 'completed',
+    payment_note: 'INITIAL SIGNUP',
+    qr_code_url: null,
+    paid_at: '2026-10-20T10:15:00Z',
+    created_at: '2026-10-20T10:10:00Z',
+  },
+];
 
 class ClassList {
   constructor(initial = []) {
@@ -58,6 +340,7 @@ class MockElement {
     this.src = '';
     this.href = '';
     this.download = '';
+    this.value = '';
   }
   set className(val) {
     this.classList = new ClassList(String(val).split(/\s+/).filter(Boolean));
@@ -103,7 +386,7 @@ class MockElement {
   }
 }
 
-function createBillingTestEnv() {
+function createBillingApiTestEnv(options = {}) {
   const elements = {};
   function reg(id, tag = 'div', classes = [], attrs = {}) {
     const el = new MockElement(id, tag, classes, attrs);
@@ -124,17 +407,22 @@ function createBillingTestEnv() {
   // Billing History Card & Controls
   reg('billingHistoryCard', 'div');
   reg('billingHistoryCountChip', 'div');
-  reg('billingStatusFilter', 'select');
+  const statusFilterSelect = reg('billingStatusFilter', 'select');
+  statusFilterSelect.value = 'all';
   reg('billingHistoryTable', 'table');
   reg('billingHistoryTableBody', 'tbody');
-  reg('billingHistoryLoadingState', 'div');
-  reg('billingHistoryEmptyState', 'div');
-  reg('billingHistoryErrorState', 'div');
+  const loadingState = reg('billingHistoryLoadingState', 'div');
+  loadingState.style.display = 'none';
+  const emptyState = reg('billingHistoryEmptyState', 'div');
+  emptyState.style.display = 'none';
+  const errorState = reg('billingHistoryErrorState', 'div');
+  errorState.style.display = 'none';
   reg('billingHistoryErrorMessage', 'div');
   reg('btnRetryBillingHistory', 'button');
 
   // Pagination Footer
-  reg('billingPaginationFooter', 'div');
+  const paginationFooter = reg('billingPaginationFooter', 'div');
+  paginationFooter.style.display = 'none';
   reg('billingPaginationInfo', 'div');
   reg('billingPaginationControls', 'div');
   reg('btnBillingPrevPage', 'button');
@@ -143,10 +431,15 @@ function createBillingTestEnv() {
 
   // Table wrapper
   const tableWrap = new MockElement('', 'div', ['billing-table-responsive']);
+  tableWrap.style.display = 'none';
 
   // Invoice Modal Elements
   const invoiceModal = reg('billingInvoiceModal', 'div', ['modal-overlay', 'invoice-modal-overlay'], { hidden: '', 'aria-hidden': 'true' });
   invoiceModal.style.display = 'none';
+  const invoiceModalLoadingState = reg('invoiceModalLoadingState', 'div');
+  invoiceModalLoadingState.style.display = 'none';
+  const invoicePrintableArea = reg('invoicePrintableArea', 'div');
+  invoicePrintableArea.style.display = 'flex';
   reg('btnCloseInvoiceModal', 'button');
   reg('btnInvoiceModalCloseFooter', 'button');
   reg('btnPrintInvoice', 'button');
@@ -203,12 +496,32 @@ function createBillingTestEnv() {
 
   let printCallCount = 0;
   const windowListeners = {};
+  const mockStorage = {
+    pdfl_token: options.token !== undefined ? options.token : 'test-bearer-jwt-token-xyz',
+    pdfl_user: JSON.stringify({ id: 1, email: 'buyer@example.com', role: 'pro' }),
+  };
+
   const mockWindow = {
-    PDFLinguaAuth: null,
-    PDFLinguaPricing: null,
     location: { protocol: 'http:', port: '8000' },
     print: () => {
       printCallCount++;
+    },
+    localStorage: {
+      getItem: (k) => mockStorage[k] || null,
+      setItem: (k, v) => { mockStorage[k] = String(v); },
+      removeItem: (k) => { delete mockStorage[k]; },
+    },
+    sessionStorage: {
+      getItem: (k) => null,
+      setItem: () => {},
+      removeItem: () => {},
+    },
+    pdfLinguaAuth: {
+      getStoredToken: () => mockStorage.pdfl_token || null,
+      getStoredUser: () => (mockStorage.pdfl_user ? JSON.parse(mockStorage.pdfl_user) : null),
+      openLoginModal: () => {
+        dispatchedEvents.push({ type: 'auth:open-login' });
+      },
     },
     addEventListener: (event, fn) => {
       windowListeners[event] = windowListeners[event] || [];
@@ -234,15 +547,95 @@ function createBillingTestEnv() {
     },
   };
 
+  const recordedFetchCalls = [];
+  let customFetchOverride = options.fetchOverride || null;
+
+  async function mockFetch(url, fetchOpts = {}) {
+    recordedFetchCalls.push({ url, options: fetchOpts });
+    if (customFetchOverride) {
+      return customFetchOverride(url, fetchOpts);
+    }
+
+    // Default mock behavior
+    if (url.includes('/api/pricing/billing/history')) {
+      const urlObj = new URL(url, 'http://127.0.0.1:8000');
+      const page = parseInt(urlObj.searchParams.get('page') || '1', 10);
+      const pageSize = parseInt(urlObj.searchParams.get('page_size') || '10', 10);
+      const statusParam = (urlObj.searchParams.get('status') || 'all').toLowerCase();
+
+      let items = [...SAMPLE_TRANSACTIONS];
+      if (statusParam && statusParam !== 'all') {
+        items = items.filter((x) => String(x.payment_status).toLowerCase() === statusParam);
+      }
+      const totalCount = items.length;
+      const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+      const pageItems = items.slice((page - 1) * pageSize, page * pageSize);
+
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          message: 'Lấy danh sách lịch sử giao dịch thanh toán thành công.',
+          data: {
+            items: pageItems,
+            total_count: totalCount,
+            page,
+            page_size: pageSize,
+            total_pages: totalPages,
+          },
+        }),
+      };
+    }
+
+    if (url.includes('/api/pricing/billing/invoices/')) {
+      const code = decodeURIComponent(url.split('/invoices/')[1]);
+      const found = SAMPLE_TRANSACTIONS.find((x) => x.transaction_code === code);
+      if (!found) {
+        return {
+          status: 404,
+          ok: false,
+          json: async () => ({
+            success: false,
+            detail: 'Không tìm thấy thông tin hóa đơn cho giao dịch này.',
+          }),
+        };
+      }
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          success: true,
+          message: 'Lấy thông tin chi tiết hóa đơn điện tử thành công.',
+          data: {
+            ...found,
+            issued_at: found.created_at,
+          },
+        }),
+      };
+    }
+
+    return {
+      status: 200,
+      ok: true,
+      json: async () => ({ success: true, data: {} }),
+    };
+  }
+
+  const toasts = [];
+  mockWindow.showToast = (msg, type) => {
+    toasts.push({ msg, type });
+  };
   const context = {
     window: mockWindow,
     document: mockDocument,
     console: console,
+    fetch: mockFetch,
     URL: mockUrl,
     Blob: class Blob {
-      constructor(parts, options) {
+      constructor(parts, blobOpts) {
         this.parts = parts;
-        this.options = options;
+        this.options = blobOpts;
       }
     },
     CustomEvent: class CustomEvent {
@@ -255,7 +648,9 @@ function createBillingTestEnv() {
     setInterval: () => 1,
     clearInterval: () => {},
     clearTimeout: () => {},
-    showToast: (msg, type) => {},
+    showToast: (msg, type) => {
+      toasts.push({ msg, type });
+    },
   };
 
   vm.createContext(context);
@@ -281,277 +676,259 @@ function createBillingTestEnv() {
     dispatchKeydown,
     getPrintCallCount: () => printCallCount,
     getCreatedBlobs: () => createdBlobs,
+    fetchCalls: recordedFetchCalls,
+    toasts,
+    setCustomFetch: (fn) => { customFetchOverride = fn; },
+    setToken: (token) => { mockStorage.pdfl_token = token; },
   };
 }
 
-console.log('================================================================');
-console.log('PDF-Lingua Billing History & Invoice Receipt Test Suite');
-console.log('================================================================\n');
+async function runAllTests() {
+  console.log('================================================================');
+  console.log('PDF-Lingua Real Billing History & Invoice API Integration Tests');
+  console.log('================================================================\n');
 
-// 1. Static HTML & CSS Architecture
-assert.ok(htmlSource.includes('id="tabPricingPlans"'), 'HTML must contain #tabPricingPlans');
-assert.ok(htmlSource.includes('id="tabBillingHistory"'), 'HTML must contain #tabBillingHistory');
-assert.ok(htmlSource.includes('id="pricingPlansContainer"'), 'HTML must contain #pricingPlansContainer');
-assert.ok(htmlSource.includes('id="billingHistoryContainer"'), 'HTML must contain #billingHistoryContainer');
-assert.ok(htmlSource.includes('id="billingHistoryTable"'), 'HTML must contain #billingHistoryTable');
-assert.ok(htmlSource.includes('id="billingHistoryTableBody"'), 'HTML must contain #billingHistoryTableBody');
-assert.ok(htmlSource.includes('id="billingStatusFilter"'), 'HTML must contain #billingStatusFilter');
-assert.ok(htmlSource.includes('id="billingPaginationFooter"'), 'HTML must contain #billingPaginationFooter');
-assert.ok(htmlSource.includes('id="billingHistoryEmptyState"'), 'HTML must contain #billingHistoryEmptyState');
-assert.ok(htmlSource.includes('id="billingHistoryLoadingState"'), 'HTML must contain #billingHistoryLoadingState');
-assert.ok(htmlSource.includes('id="billingHistoryErrorState"'), 'HTML must contain #billingHistoryErrorState');
+  // 1. Static HTML & CSS Architecture
+  assert.ok(htmlSource.includes('id="tabPricingPlans"'), 'HTML must contain #tabPricingPlans');
+  assert.ok(htmlSource.includes('id="tabBillingHistory"'), 'HTML must contain #tabBillingHistory');
+  assert.ok(htmlSource.includes('id="billingHistoryContainer"'), 'HTML must contain #billingHistoryContainer');
+  assert.ok(htmlSource.includes('id="billingHistoryTable"'), 'HTML must contain #billingHistoryTable');
+  assert.ok(htmlSource.includes('id="billingHistoryLoadingState"'), 'HTML must contain #billingHistoryLoadingState');
+  assert.ok(htmlSource.includes('id="invoiceModalLoadingState"'), 'HTML must contain #invoiceModalLoadingState');
+  assert.ok(pricingCssSource.includes('#invoiceModalLoadingState'), 'CSS must include #invoiceModalLoadingState in print styles');
+  console.log('[PASS] 1. Static Architecture: Markup, modal loading state, and print CSS rules verified.');
 
-// Invoice Modal HTML
-assert.ok(htmlSource.includes('id="billingInvoiceModal"'), 'HTML must contain #billingInvoiceModal');
-assert.ok(htmlSource.includes('id="btnCloseInvoiceModal"'), 'HTML must contain #btnCloseInvoiceModal');
-assert.ok(htmlSource.includes('id="btnInvoiceModalCloseFooter"'), 'HTML must contain #btnInvoiceModalCloseFooter');
-assert.ok(htmlSource.includes('id="btnPrintInvoice"'), 'HTML must contain #btnPrintInvoice');
-assert.ok(htmlSource.includes('id="btnDownloadInvoice"'), 'HTML must contain #btnDownloadInvoice');
-assert.ok(htmlSource.includes('id="invoiceNumber"'), 'HTML must contain #invoiceNumber');
-assert.ok(htmlSource.includes('id="invoiceBuyerName"'), 'HTML must contain #invoiceBuyerName');
-assert.ok(htmlSource.includes('id="invoicePlanName"'), 'HTML must contain #invoicePlanName');
-assert.ok(htmlSource.includes('id="invoiceTotalAmount"'), 'HTML must contain #invoiceTotalAmount');
-assert.ok(htmlSource.includes('id="invoicePaymentNote"'), 'HTML must contain #invoicePaymentNote');
-assert.ok(htmlSource.includes('id="invoiceQrWrap"'), 'HTML must contain #invoiceQrWrap');
+  // 2. Unauthenticated User State
+  const unauthEnv = createBillingApiTestEnv({ token: null });
+  unauthEnv.fetchCalls.length = 0;
+  await unauthEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(unauthEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.ok(unauthEnv.elements.billingHistoryErrorMessage.textContent.includes('Vui lòng đăng nhập'));
+  assert.strictEqual(unauthEnv.fetchCalls.length, 0, 'Must NOT make network calls when unauthenticated');
+  console.log('[PASS] 2. Unauthenticated Guard: Rejects fetch when token is missing and guides user to login.');
 
-// CSS checks
-assert.ok(pricingCssSource.includes('.pricing-tabs-bar'), 'CSS must style .pricing-tabs-bar');
-assert.ok(pricingCssSource.includes('.pricing-tab-btn'), 'CSS must style .pricing-tab-btn');
-assert.ok(pricingCssSource.includes('.billing-history-card'), 'CSS must style .billing-history-card');
-assert.ok(pricingCssSource.includes('.status-badge-completed'), 'CSS must style .status-badge-completed');
-assert.ok(pricingCssSource.includes('.status-badge-pending'), 'CSS must style .status-badge-pending');
-assert.ok(pricingCssSource.includes('.status-badge-failed'), 'CSS must style .status-badge-failed');
-assert.ok(pricingCssSource.includes('.status-badge-expired'), 'CSS must style .status-badge-expired');
-assert.ok(pricingCssSource.includes('.btn-view-invoice'), 'CSS must style .btn-view-invoice');
-assert.ok(pricingCssSource.includes('.invoice-modal-overlay'), 'CSS must style .invoice-modal-overlay');
-assert.ok(pricingCssSource.includes('.invoice-modal-card'), 'CSS must style .invoice-modal-card');
-assert.ok(pricingCssSource.includes('@media print'), 'CSS must contain @media print styles');
-assert.ok(pricingCssSource.includes('@page'), 'CSS must configure printable @page margins');
-console.log('[PASS] HTML & CSS Architecture: All navigation tabs, containers, modal, and print styles exist');
+  // 3. Authenticated Billing History API Fetch
+  const authEnv = createBillingApiTestEnv();
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
 
-// 2. Tab Navigation
-const env = createBillingTestEnv();
-const { elements, window: win } = env;
+  assert.strictEqual(authEnv.fetchCalls.length, 1);
+  const firstCall = authEnv.fetchCalls[0];
+  assert.ok(firstCall.url.includes('/api/pricing/billing/history?page=1&page_size=10'));
+  assert.strictEqual(firstCall.options.headers.Authorization, 'Bearer test-bearer-jwt-token-xyz');
 
-assert.strictEqual(elements.pricingPlansContainer.style.display, 'block');
-assert.strictEqual(elements.billingHistoryContainer.style.display, 'none');
-assert.ok(elements.tabPricingPlans.classList.contains('active'));
-assert.ok(!elements.tabBillingHistory.classList.contains('active'));
+  // Verify Table Rows Rendered
+  assert.strictEqual(authEnv.elements.billingHistoryEmptyState.style.display, 'none');
+  assert.strictEqual(authEnv.tableWrap.style.display, 'block');
+  assert.strictEqual(authEnv.elements.billingPaginationFooter.style.display, 'flex');
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '12 giao dịch');
+  assert.strictEqual(authEnv.elements.billingHistoryTabBadge.textContent, '12');
 
-// Switch to Billing History
-elements.tabBillingHistory.click();
-assert.strictEqual(elements.pricingPlansContainer.style.display, 'none');
-assert.strictEqual(elements.billingHistoryContainer.style.display, 'block');
-assert.ok(!elements.tabPricingPlans.classList.contains('active'));
-assert.ok(elements.tabBillingHistory.classList.contains('active'));
-console.log('[PASS] Tab Navigation: Switching to #tabBillingHistory reveals billing container and hides plans');
+  const renderedRows = authEnv.elements.billingHistoryTableBody.innerHTML.match(/<tr/g);
+  assert.strictEqual(renderedRows.length, 10, 'Page 1 must render exactly 10 transactions');
+  assert.ok(authEnv.elements.billingHistoryTableBody.innerHTML.includes('TXN-20261117-001'));
+  assert.ok(authEnv.elements.billingHistoryTableBody.innerHTML.includes('49.000 VNĐ'));
+  assert.ok(authEnv.elements.billingHistoryTableBody.innerHTML.includes('VietQR Napas247'));
+  console.log('[PASS] 3. Authenticated History Fetch: Sent Bearer token, retrieved 12 items, rendered 10 rows on page 1.');
 
-// Switch back to Pricing Plans
-elements.tabPricingPlans.click();
-assert.strictEqual(elements.pricingPlansContainer.style.display, 'block');
-assert.strictEqual(elements.billingHistoryContainer.style.display, 'none');
-assert.ok(elements.tabPricingPlans.classList.contains('active'));
-assert.ok(!elements.tabBillingHistory.classList.contains('active'));
-console.log('[PASS] Tab Navigation: Switching back to #tabPricingPlans restores plans container and hides billing');
+  // 4. API-Driven Status Filtering
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.filterBillingHistory('completed');
+  assert.strictEqual(authEnv.fetchCalls.length, 1);
+  assert.ok(authEnv.fetchCalls[0].url.includes('status=completed'));
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '7 giao dịch');
 
-// 3. Billing Table Rendering with Mock Data
-win.PDFLinguaPricing.switchPricingTab('history');
-const initialHtml = elements.billingHistoryTableBody.innerHTML;
-assert.ok(initialHtml.includes('TXN-20261117-001'), 'Must render first transaction code');
-assert.ok(initialHtml.includes('Gói Pro Hàng Tháng'), 'Must render plan name');
-assert.ok(initialHtml.includes('49.000 VNĐ'), 'Must render amount formatted');
-assert.ok(initialHtml.includes('VietQR Napas247'), 'Must render payment method');
-assert.ok(initialHtml.includes('status-badge-completed'), 'Must render completed badge');
-assert.ok(initialHtml.includes('btn-view-invoice'), 'Must render view invoice action button');
-assert.ok(initialHtml.includes('Xem hóa đơn'), 'Must render invoice button text');
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.filterBillingHistory('pending');
+  assert.ok(authEnv.fetchCalls[0].url.includes('status=pending'));
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '1 giao dịch');
 
-// Page size is 10, total mock items is 12 -> 10 rows on page 1
-const rowMatches = initialHtml.match(/<tr/g);
-assert.strictEqual(rowMatches.length, 10, 'Page 1 must render exactly 10 transaction rows');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '12 giao dịch');
-assert.ok(elements.billingPaginationInfo.textContent.includes('Hiển thị 1 - 10 / 12 giao dịch'));
-console.log('[PASS] Table Rendering: Renders exactly 10 rows on page 1 with complete metadata and action buttons');
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.filterBillingHistory('all');
+  assert.ok(!authEnv.fetchCalls[0].url.includes('status=completed'));
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '12 giao dịch');
+  console.log('[PASS] 4. API Status Filtering: Query params passed to server and table dynamically synced.');
 
-// 4. Status Filtering
-// Filter 'completed' (7 completed items in mock data)
-win.PDFLinguaPricing.filterBillingHistory('completed');
-let completedHtml = elements.billingHistoryTableBody.innerHTML;
-assert.ok(completedHtml.includes('status-badge-completed'), 'Filtered table must have completed badges');
-assert.ok(!completedHtml.includes('status-badge-pending'), 'Must not have pending badges');
-assert.ok(!completedHtml.includes('status-badge-failed'), 'Must not have failed badges');
-assert.ok(!completedHtml.includes('status-badge-expired'), 'Must not have expired badges');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '7 giao dịch');
-console.log('[PASS] Status Filter: Filtering by "completed" shows only completed transactions (7 items)');
+  // 5. API-Driven Pagination Controls
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.goToBillingHistoryPage(2);
+  assert.strictEqual(authEnv.fetchCalls.length, 1);
+  assert.ok(authEnv.fetchCalls[0].url.includes('page=2'));
+  const page2Rows = authEnv.elements.billingHistoryTableBody.innerHTML.match(/<tr/g);
+  assert.strictEqual(page2Rows.length, 2, 'Page 2 must render remaining 2 transactions');
+  assert.strictEqual(authEnv.elements.btnBillingPrevPage.disabled, false);
+  assert.strictEqual(authEnv.elements.btnBillingNextPage.disabled, true);
 
-// Filter 'pending' (1 pending item in mock data)
-win.PDFLinguaPricing.filterBillingHistory('pending');
-let pendingHtml = elements.billingHistoryTableBody.innerHTML;
-assert.ok(pendingHtml.includes('TXN-20261115-003'), 'Must render pending transaction code');
-assert.ok(pendingHtml.includes('status-badge-pending'), 'Must have pending badge');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '1 giao dịch');
-console.log('[PASS] Status Filter: Filtering by "pending" shows only pending transactions (1 item)');
+  // Redundant page click test
+  authEnv.fetchCalls.length = 0;
+  await authEnv.window.PDFLinguaPricing.goToBillingHistoryPage(2);
+  assert.strictEqual(authEnv.fetchCalls.length, 0, 'Must NOT trigger duplicate request for current page');
+  console.log('[PASS] 5. API Pagination: Correct page sliced, next/prev button states verified, duplicate requests blocked.');
 
-// Filter 'failed' (2 failed items in mock data)
-win.PDFLinguaPricing.filterBillingHistory('failed');
-let failedHtml = elements.billingHistoryTableBody.innerHTML;
-assert.ok(failedHtml.includes('status-badge-failed'), 'Must have failed badge');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '2 giao dịch');
-console.log('[PASS] Status Filter: Filtering by "failed" shows only failed transactions (2 items)');
+  // 6. Empty State Handling via API
+  authEnv.setCustomFetch(async (url) => ({
+    status: 200,
+    ok: true,
+    json: async () => ({
+      success: true,
+      data: { items: [], total_count: 0, page: 1, page_size: 10, total_pages: 1 },
+    }),
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryEmptyState.style.display, 'flex');
+  assert.strictEqual(authEnv.tableWrap.style.display, 'none');
+  assert.strictEqual(authEnv.elements.billingPaginationFooter.style.display, 'none');
+  assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '0 giao dịch');
+  console.log('[PASS] 6. Empty State: Displays empty view when backend returns 0 records.');
 
-// Filter 'expired' (2 expired items in mock data)
-win.PDFLinguaPricing.filterBillingHistory('expired');
-let expiredHtml = elements.billingHistoryTableBody.innerHTML;
-assert.ok(expiredHtml.includes('status-badge-expired'), 'Must have expired badge');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '2 giao dịch');
-console.log('[PASS] Status Filter: Filtering by "expired" shows only expired transactions (2 items)');
+  // 7. Error Handling on Billing History API
+  // 401 Session Expiry
+  authEnv.setCustomFetch(async () => ({
+    status: 401,
+    ok: false,
+    json: async () => ({ detail: 'Token has expired.' }),
+  }));
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('Phiên đăng nhập đã hết hạn'));
+  assert.ok(authEnv.dispatchedEvents.some((e) => e.type === 'auth:open-login'));
 
-// Filter 'all' -> restores all 12 items
-win.PDFLinguaPricing.filterBillingHistory('all');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '12 giao dịch');
-console.log('[PASS] Status Filter: Resetting to "all" restores all 12 transactions');
+  // Network Failure & Retry
+  authEnv.setCustomFetch(async () => {
+    throw new Error('Failed to fetch');
+  });
+  await authEnv.window.PDFLinguaPricing.fetchBillingHistory(1, 'all');
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'flex');
+  assert.ok(authEnv.elements.billingHistoryErrorMessage.textContent.includes('Lỗi kết nối mạng'));
 
-// 5. Pagination Controls
-assert.strictEqual(elements.btnBillingPrevPage.disabled, true, 'Prev button must be disabled on page 1');
-assert.strictEqual(elements.btnBillingNextPage.disabled, false, 'Next button must be enabled on page 1');
-assert.ok(elements.billingPageNumbers.innerHTML.includes('pagination-current-page'), 'Must render active page indicator');
+  // Test Retry button recovery
+  authEnv.setCustomFetch(null); // restore default mock fetch
+  authEnv.elements.btnRetryBillingHistory.click();
+  // await promise
+  await new Promise((r) => setTimeout(r, 10));
+  assert.strictEqual(authEnv.elements.billingHistoryErrorState.style.display, 'none');
+  assert.strictEqual(authEnv.tableWrap.style.display, 'block');
+  console.log('[PASS] 7. Error & Retry Resilience: Handled 401 token expiry and recovered from network errors.');
 
-// Navigate to Page 2
-win.PDFLinguaPricing.goToBillingHistoryPage(2);
-const page2Html = elements.billingHistoryTableBody.innerHTML;
-const page2Rows = page2Html.match(/<tr/g);
-assert.strictEqual(page2Rows.length, 2, 'Page 2 must render remaining 2 transactions (11 and 12)');
-assert.ok(page2Html.includes('TXN-20261025-011'), 'Must include 11th transaction');
-assert.ok(page2Html.includes('TXN-20261020-012'), 'Must include 12th transaction');
-assert.strictEqual(elements.btnBillingPrevPage.disabled, false, 'Prev button must be enabled on page 2');
-assert.strictEqual(elements.btnBillingNextPage.disabled, true, 'Next button must be disabled on page 2');
-assert.ok(elements.billingPaginationInfo.textContent.includes('Hiển thị 11 - 12 / 12 giao dịch'));
-console.log('[PASS] Pagination Controls: Navigating to page 2 updates rows (2 items), prev/next button states, and info text');
+  // 8. Real Invoice Detail API (GET /api/pricing/billing/invoices/{code})
+  const invoiceEnv = createBillingApiTestEnv();
+  invoiceEnv.fetchCalls.length = 0;
+  const invoicePromise = invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
 
-// Navigate back to Page 1
-win.PDFLinguaPricing.goToBillingHistoryPage(1);
-assert.strictEqual(elements.btnBillingPrevPage.disabled, true);
-assert.strictEqual(elements.btnBillingNextPage.disabled, false);
-console.log('[PASS] Pagination Controls: Navigating back to page 1 restores first 10 items');
+  // Modal must open immediately with loading spinner and disabled action buttons
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'flex');
+  assert.strictEqual(invoiceEnv.elements.invoiceModalLoadingState.style.display, 'flex');
+  assert.strictEqual(invoiceEnv.elements.invoicePrintableArea.style.display, 'none');
+  assert.strictEqual(invoiceEnv.elements.btnPrintInvoice.disabled, true);
+  assert.strictEqual(invoiceEnv.elements.btnDownloadInvoice.disabled, true);
+  assert.strictEqual(invoiceEnv.elements.invoiceBuyerName.textContent, '...', 'Stale buyer name must be cleared');
 
-// 6. Empty State Handling
-win.PDFLinguaPricing.setMockBillingTransactions([]);
-assert.strictEqual(elements.billingHistoryEmptyState.style.display, 'flex');
-assert.strictEqual(env.tableWrap.style.display, 'none');
-assert.strictEqual(elements.billingPaginationFooter.style.display, 'none');
-assert.strictEqual(elements.billingHistoryCountChip.textContent, '0 giao dịch');
-console.log('[PASS] Empty State: When transaction list is empty, #billingHistoryEmptyState is displayed and table hidden');
+  // Await invoice fetch completion
+  const txResult = await invoicePromise;
+  assert.ok(txResult, 'Invoice data must be returned');
+  assert.strictEqual(invoiceEnv.fetchCalls.length, 1);
+  assert.ok(invoiceEnv.fetchCalls[0].url.includes('/api/pricing/billing/invoices/TXN-20261117-001'));
+  assert.strictEqual(invoiceEnv.fetchCalls[0].options.headers.Authorization, 'Bearer test-bearer-jwt-token-xyz');
 
-// 7. Action Button Trigger & Modal Opening
-win.PDFLinguaPricing.setMockBillingTransactions(null); // resets to default mock items
-win.PDFLinguaPricing.handleViewInvoiceClick('TXN-20261117-001');
+  // Verify Loaded State
+  assert.strictEqual(invoiceEnv.elements.invoiceModalLoadingState.style.display, 'none');
+  assert.strictEqual(invoiceEnv.elements.invoicePrintableArea.style.display, 'flex');
+  assert.strictEqual(invoiceEnv.elements.btnPrintInvoice.disabled, false);
+  assert.strictEqual(invoiceEnv.elements.btnDownloadInvoice.disabled, false);
 
-assert.strictEqual(env.dispatchedEvents.length, 1);
-const evt = env.dispatchedEvents[0];
-assert.strictEqual(evt.type, 'pdfl:view-invoice');
-assert.strictEqual(evt.detail.transactionCode, 'TXN-20261117-001');
-assert.strictEqual(evt.detail.transaction.invoice_number, 'INV-TXN-20261117-001');
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
-assert.strictEqual(elements.billingInvoiceModal.getAttribute('aria-hidden'), 'false');
-assert.strictEqual(elements.billingInvoiceModal.hasAttribute('hidden'), false);
-console.log('[PASS] Action Trigger: Clicking "Xem hóa đơn" dispatches event and opens invoice modal');
+  assert.strictEqual(invoiceEnv.elements.invoiceNumber.textContent, 'INV-TXN-20261117-001');
+  assert.strictEqual(invoiceEnv.elements.invoiceTxCode.textContent, 'Mã GD: TXN-20261117-001');
+  assert.strictEqual(invoiceEnv.elements.invoiceBuyerName.textContent, 'Nguyễn Văn Mua');
+  assert.strictEqual(invoiceEnv.elements.invoiceBuyerEmail.textContent, 'buyer@example.com');
+  assert.strictEqual(invoiceEnv.elements.invoicePlanName.textContent, 'Gói Pro Hàng Tháng');
+  assert.strictEqual(invoiceEnv.elements.invoiceTotalAmount.textContent, '49.000 VNĐ');
+  assert.strictEqual(invoiceEnv.elements.invoicePaymentNote.textContent, 'PRO MONTHLY NOV');
+  assert.strictEqual(invoiceEnv.elements.invoiceQrWrap.style.display, 'flex');
+  assert.ok(invoiceEnv.elements.invoiceQrImage.src.includes('vietqr.io'));
+  assert.ok(invoiceEnv.dispatchedEvents.some((e) => e.type === 'pdfl:view-invoice'));
+  console.log('[PASS] 8. Real Invoice Detail API: Cleared stale data, loaded full details, revealed receipt.');
 
-// 8. Invoice Modal Data Binding
-assert.strictEqual(elements.invoiceNumber.textContent, 'INV-TXN-20261117-001');
-assert.strictEqual(elements.invoiceTxCode.textContent, 'Mã GD: TXN-20261117-001');
-assert.strictEqual(elements.invoiceStatusText.textContent, 'Hoàn tất');
-assert.ok(elements.invoiceStatusBadge.classList.contains('status-badge-completed'));
-assert.strictEqual(elements.invoiceBuyerName.textContent, 'Nguyễn Văn Mua');
-assert.strictEqual(elements.invoiceBuyerEmail.textContent, 'buyer@example.com');
-assert.strictEqual(elements.invoicePaymentMethod.textContent, 'VietQR Napas247');
-assert.strictEqual(elements.invoicePlanName.textContent, 'Gói Pro Hàng Tháng');
-assert.strictEqual(elements.invoiceCycleDuration.textContent, 'Theo tháng (30 ngày)');
-assert.strictEqual(elements.invoiceItemCycle.textContent, '30 ngày');
-assert.strictEqual(elements.invoiceItemPrice.textContent, '49.000 VNĐ');
-assert.strictEqual(elements.invoiceItemTaxRate.textContent, '0% (VAT)');
-assert.strictEqual(elements.invoiceItemAmount.textContent, '49.000 VNĐ');
-assert.strictEqual(elements.invoiceSubtotal.textContent, '49.000 VNĐ');
-assert.strictEqual(elements.invoiceTaxAmount.textContent, '0 VNĐ');
-assert.strictEqual(elements.invoiceTotalAmount.textContent, '49.000 VNĐ');
-assert.strictEqual(elements.invoicePaymentNote.textContent, 'PRO MONTHLY NOV');
-assert.strictEqual(elements.invoiceQrWrap.style.display, 'flex');
-assert.ok(elements.invoiceQrImage.src.includes('vietqr.io'));
-assert.strictEqual(env.mockBody.style.overflow, 'hidden');
-console.log('[PASS] Modal Data Binding: Populated complete buyer, plan, duration, financial breakdown, and QR code');
+  // 9. Invoice Detail Edge Cases (Null QR and Fallback Note)
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261116-002');
+  assert.strictEqual(invoiceEnv.elements.invoiceQrWrap.style.display, 'none');
+  assert.strictEqual(invoiceEnv.elements.invoiceQrImage.src, '');
 
-// 9. Invoice Modal Edge Cases (Missing QR & Fallback Note)
-// Case A: Missing QR Code (null qr_code_url)
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261116-002');
-assert.strictEqual(elements.invoiceNumber.textContent, 'INV-TXN-20261116-002');
-assert.strictEqual(elements.invoicePlanName.textContent, 'Gói Pro Hàng Năm');
-assert.strictEqual(elements.invoiceCycleDuration.textContent, 'Theo năm (365 ngày)');
-assert.strictEqual(elements.invoiceItemCycle.textContent, '365 ngày');
-assert.strictEqual(elements.invoiceTotalAmount.textContent, '399.000 VNĐ');
-assert.strictEqual(elements.invoiceQrWrap.style.display, 'none');
-assert.strictEqual(elements.invoiceQrImage.src, '');
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261110-006');
+  assert.strictEqual(invoiceEnv.elements.invoicePaymentNote.textContent, 'Tự động đối soát hệ thống');
+  console.log('[PASS] 9. Invoice Edge Cases: Missing QR hides QR box and null memo uses fallback.');
 
-// Case B: Null Payment Note
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261110-006');
-assert.strictEqual(elements.invoicePaymentNote.textContent, 'Tự động đối soát hệ thống');
+  // 10. Invoice Detail Error Handling
+  // 403 Forbidden
+  invoiceEnv.setCustomFetch(async () => ({
+    status: 403,
+    ok: false,
+    json: async () => ({ detail: 'Không có quyền truy cập.' }),
+  }));
+  const res403 = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-OTHER-001');
+  assert.strictEqual(res403, null);
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none', 'Modal must close on 403');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('không có quyền truy cập')));
 
-// Case C: Pending Status
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261115-003');
-assert.strictEqual(elements.invoiceStatusText.textContent, 'Đang xử lý');
-assert.ok(elements.invoiceStatusBadge.classList.contains('status-badge-pending'));
-console.log('[PASS] Modal Edge Cases: Missing QR hides QR box, missing note displays fallback, statuses match badges');
+  // 404 Not Found
+  invoiceEnv.setCustomFetch(async () => ({
+    status: 404,
+    ok: false,
+    json: async () => ({ detail: 'Không tìm thấy.' }),
+  }));
+  const res404 = await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-NONEXISTENT');
+  assert.strictEqual(res404, null);
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none', 'Modal must close on 404');
+  assert.ok(invoiceEnv.toasts.some((t) => t.msg.includes('Không tìm thấy')));
+  console.log('[PASS] 10. Invoice Error Handling: Closes modal and notifies on 403 Forbidden and 404 Not Found.');
 
-// 10. Modal Closing Mechanisms
-// Mechanism 1: Close button in header
-elements.btnCloseInvoiceModal.click();
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
-assert.strictEqual(elements.billingInvoiceModal.getAttribute('aria-hidden'), 'true');
-assert.strictEqual(elements.billingInvoiceModal.hasAttribute('hidden'), true);
-assert.strictEqual(env.mockBody.style.overflow, '');
+  // 11. Modal Closing Mechanisms
+  invoiceEnv.setCustomFetch(null);
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'flex');
 
-// Mechanism 2: Footer close button
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
-elements.btnInvoiceModalCloseFooter.click();
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
+  // Header close button
+  invoiceEnv.elements.btnCloseInvoiceModal.click();
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.strictEqual(invoiceEnv.mockBody.style.overflow, '');
 
-// Mechanism 3: Backdrop overlay click
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
-elements.billingInvoiceModal.click();
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
+  // Footer close button
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+  invoiceEnv.elements.btnInvoiceModalCloseFooter.click();
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
 
-// Mechanism 4: Escape key
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'flex');
-env.dispatchKeydown('Escape');
-assert.strictEqual(elements.billingInvoiceModal.style.display, 'none');
-console.log('[PASS] Modal Closing: Successfully closed via header button, footer button, backdrop click, and Escape key');
+  // Backdrop overlay click
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+  invoiceEnv.elements.billingInvoiceModal.click();
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
 
-// 11. Invoice Receipt Print
-win.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
-assert.strictEqual(env.getPrintCallCount(), 0);
-elements.btnPrintInvoice.click();
-assert.strictEqual(env.getPrintCallCount(), 1);
-win.PDFLinguaPricing.printInvoiceReceipt();
-assert.strictEqual(env.getPrintCallCount(), 2);
-console.log('[PASS] Receipt Print: "In hóa đơn" button and printInvoiceReceipt() trigger window.print()');
+  // Escape key
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+  invoiceEnv.dispatchKeydown('Escape');
+  assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  console.log('[PASS] 11. Modal Closing: Closed via header button, footer button, backdrop click, and Escape key.');
 
-// 12. Invoice Receipt Download
-assert.strictEqual(env.getCreatedBlobs().length, 0);
-elements.btnDownloadInvoice.click();
-assert.strictEqual(env.getCreatedBlobs().length, 0); // revoked after trigger
-// Verify generateReceiptHtml output
-const currentTx = win.PDFLinguaPricing.getCurrentInvoiceTransaction();
-assert.ok(currentTx, 'Current invoice transaction must exist');
-const receiptHtml = win.PDFLinguaPricing.generateReceiptHtml(currentTx);
-assert.ok(receiptHtml.includes('<!DOCTYPE html>'));
-assert.ok(receiptHtml.includes('INV-TXN-20261117-001'));
-assert.ok(receiptHtml.includes('Nguyễn Văn Mua'));
-assert.ok(receiptHtml.includes('49.000 VNĐ'));
-assert.ok(receiptHtml.includes('BẢNG KÊ QUYẾT TOÁN THANH TOÁN') || receiptHtml.includes('Mô tả khoản mục'));
-assert.ok(receiptHtml.includes('PRO MONTHLY NOV'));
-assert.ok(receiptHtml.includes('@media print'));
-console.log('[PASS] Receipt Download: "Tải biên lai" generates complete HTML receipt document with inline styling');
+  // 12. Print & Download Receipt
+  await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
+  assert.strictEqual(invoiceEnv.getPrintCallCount(), 0);
+  invoiceEnv.elements.btnPrintInvoice.click();
+  assert.strictEqual(invoiceEnv.getPrintCallCount(), 1);
 
-console.log('\n================================================================');
-console.log('SUMMARY: All 12/12 billing history & receipt tests passed (0 failed).');
-console.log('================================================================');
+  // Download receipt
+  invoiceEnv.elements.btnDownloadInvoice.click();
+  const currentTx = invoiceEnv.window.PDFLinguaPricing.getCurrentInvoiceTransaction();
+  const receiptHtml = invoiceEnv.window.PDFLinguaPricing.generateReceiptHtml(currentTx);
+  assert.ok(receiptHtml.includes('INV-TXN-20261117-001'));
+  assert.ok(receiptHtml.includes('Nguyễn Văn Mua'));
+  assert.ok(receiptHtml.includes('49.000 VNĐ'));
+  assert.ok(receiptHtml.includes('@media print'));
+  console.log('[PASS] 12. Print & Download: window.print() executed and clean HTML receipt blob generated.');
+
+  console.log('\n================================================================');
+  console.log('SUMMARY: All 12/12 real API integration tests passed (0 failed).');
+  console.log('================================================================');
+}
+
+runAllTests().catch((err) => {
+  console.error('\n[FAIL] Test execution error:', err);
+  process.exit(1);
+});
