@@ -162,6 +162,14 @@ it('Controller: PDFLinguaLanding exposes loadSampleDocument and focusOrScrollDro
   assert(renderedData.translated_text.includes('Dịch máy thần kinh'), 'Translated text must be populated');
 });
 
+// 11. Interactive Demo Copilot Integration
+it('Interactive Demo: ai_copilot.js supports instant sample answers without requiring login', () => {
+  const copilotJs = fs.readFileSync(path.join(__dirname, '..', 'js', 'ai_copilot.js'), 'utf8');
+  assert(copilotJs.includes('getSampleDocAnswer'), 'ai_copilot.js must include getSampleDocAnswer');
+  assert(copilotJs.includes('sample-academic-rag-2026'), 'ai_copilot.js must recognize sample demo document ID');
+  assert(copilotJs.includes('Zero-hallucination citation guardrails'), 'ai_copilot.js must have grounded technical answers');
+});
+
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passCount}/${passCount + failCount} tests passed (${failCount} failed).`);
 console.log('================================================================');
