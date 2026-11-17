@@ -772,118 +772,293 @@
                     <!-- Gapless Asymmetric Bento Grid -->
                     <div class="wl-bento-grid">
                         <!-- Card 1 (Span 2): Dịch thuật Song ngữ Đối chiếu -->
-                        <div class="wl-bento-card wl-bento-span-2">
-                            <div class="wl-bento-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                                    <line x1="12" y1="3" x2="12" y2="21"></line>
-                                </svg>
+                        <div class="wl-bento-card wl-bento-span-2" data-bento="sync">
+                            <div class="wl-bento-header-row">
+                                <div class="wl-bento-icon-wrap">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                        <line x1="12" y1="3" x2="12" y2="21"></line>
+                                    </svg>
+                                </div>
+                                <div class="wl-bento-micro-badge">
+                                    <span class="wl-status-pulse"></span>
+                                    <span>Đồng bộ 2 cột tức thì</span>
+                                </div>
                             </div>
                             <h3 class="wl-bento-title">Dịch Thuật Song Ngữ Đối Chiếu Giữ Nguyên Bố Cục</h3>
                             <p class="wl-bento-desc">
                                 Hiển thị song song văn bản gốc tiếng Anh và bản dịch tiếng Việt tương ứng theo từng trang. Bảo tồn cấu trúc phân đoạn, tiêu đề phân cấp và các bảng biểu kỹ thuật phức tạp.
                             </p>
-                            <div class="wl-bento-visual">
-                                <strong>Đồng bộ cuộn trang thông minh:</strong> Di chuyển chuột ở cột tiếng Việt, tài liệu gốc tự động cuộn đến đoạn văn tương ứng mà không bị lệch vị trí.
+                            
+                            <!-- Micro-visual: Live bilingual sentence sync -->
+                            <div class="wl-bento-visual wl-bento-sync-visual">
+                                <div class="wl-sync-preview-grid">
+                                    <div class="wl-sync-col wl-sync-col-en">
+                                        <span class="wl-sync-col-label">English (Original)</span>
+                                        <p class="wl-sync-line active">Neural Machine Translation with hierarchical layout preservation.</p>
+                                        <p class="wl-sync-line">Real-time dual-pane synchronized scrolling across pages.</p>
+                                    </div>
+                                    <div class="wl-sync-col wl-sync-col-vi">
+                                        <span class="wl-sync-col-label">Tiếng Việt (Bản dịch)</span>
+                                        <p class="wl-sync-line active">Dịch máy thần kinh với cơ chế bảo tồn cấu trúc phân tầng.</p>
+                                        <p class="wl-sync-line">Đồng bộ cuộn trang thông minh thời gian thực giữa hai cột.</p>
+                                    </div>
+                                </div>
+                                <div class="wl-sync-footer">
+                                    <span class="wl-sync-caption">Khớp ngữ nghĩa câu 100% không lệch dòng</span>
+                                    <button type="button" class="wl-bento-action-btn" id="btnBentoTrySync">Thử đối chiếu ngay &rarr;</button>
+                                </div>
                             </div>
+
                             <div class="wl-bento-tags">
                                 <span class="wl-bento-tag">Bảo tồn Layout</span>
                                 <span class="wl-bento-tag">Song song 2 cột</span>
                                 <span class="wl-bento-tag">Đa ngôn ngữ</span>
+                                <span class="wl-bento-tag">Cuộn đồng bộ</span>
                             </div>
                         </div>
 
                         <!-- Card 2 (Span 1): OCR Tiếng Việt Nâng cao -->
-                        <div class="wl-bento-card">
-                            <div class="wl-bento-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 7V4h16v3"></path>
-                                    <path d="M9 20h6"></path>
-                                    <path d="M12 4v16"></path>
-                                </svg>
+                        <div class="wl-bento-card" data-bento="ocr">
+                            <div class="wl-bento-header-row">
+                                <div class="wl-bento-icon-wrap">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 7V4h16v3"></path>
+                                        <path d="M9 20h6"></path>
+                                        <path d="M12 4v16"></path>
+                                    </svg>
+                                </div>
+                                <div class="wl-bento-micro-badge">
+                                    <span>Tesseract v5</span>
+                                </div>
                             </div>
                             <h3 class="wl-bento-title">OCR Tiếng Việt Chuyên Sâu</h3>
                             <p class="wl-bento-desc">
-                                Tự động khử nghiêng (Deskew), xoay đúng chiều đọc và khôi phục văn bản từ các trang quét (scan) chất lượng thấp với động cơ Tesseract tối ưu riêng cho tiếng Việt.
+                                Tự động khử nghiêng (Deskew), xoay đúng chiều đọc và khôi phục văn bản từ các trang quét (scan) chất lượng thấp với động cơ tối ưu riêng cho tiếng Việt.
                             </p>
+                            
+                            <!-- Micro-visual: Deskew Angle Gauge Mockup -->
+                            <div class="wl-bento-visual wl-bento-ocr-visual">
+                                <div class="wl-deskew-gauge">
+                                    <div class="wl-deskew-row">
+                                        <span class="wl-deskew-label">Độ nghiêng quét:</span>
+                                        <span class="wl-deskew-val raw-angle">-3.8°</span>
+                                    </div>
+                                    <div class="wl-deskew-meter-track">
+                                        <div class="wl-deskew-meter-indicator"></div>
+                                        <div class="wl-deskew-center-line"></div>
+                                    </div>
+                                    <div class="wl-deskew-row">
+                                        <span class="wl-deskew-label">Tự động cân chỉnh:</span>
+                                        <span class="wl-deskew-val corrected-angle">0.0° [Đã nắn thẳng]</span>
+                                    </div>
+                                </div>
+                                <div class="wl-deskew-metric">
+                                    <span>Độ chính xác dấu tiếng Việt: <strong>99.2%</strong></span>
+                                </div>
+                            </div>
+
                             <div class="wl-bento-tags">
                                 <span class="wl-bento-tag">Khử nghiêng tự động</span>
                                 <span class="wl-bento-tag">99.2% Chuẩn xác</span>
+                                <span class="wl-bento-tag">Đa cột &amp; Bảng biểu</span>
                             </div>
                         </div>
 
                         <!-- Card 3 (Span 2): Trợ lý AI Copilot Trích Dẫn Nguồn -->
-                        <div class="wl-bento-card wl-bento-span-2">
-                            <div class="wl-bento-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                </svg>
+                        <div class="wl-bento-card wl-bento-span-2" data-bento="copilot">
+                            <div class="wl-bento-header-row">
+                                <div class="wl-bento-icon-wrap">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="wl-bento-micro-badge wl-badge-verified">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span>Anti-Hallucination Guardrail</span>
+                                </div>
                             </div>
                             <h3 class="wl-bento-title">Trợ Lý AI Copilot Trích Dẫn Số Trang Chuẩn Xác</h3>
                             <p class="wl-bento-desc">
-                                Tương tác hỏi đáp thông minh trực tiếp trên nội dung tài liệu. Hàng rào kiểm soát chống ảo giác (Anti-hallucination guardrail) đảm bảo mọi câu trả lời đều đính kèm vị trí trang và đoạn văn gốc rõ ràng.
+                                Tương tác hỏi đáp thông minh trực tiếp trên nội dung tài liệu. Hàng rào kiểm soát chống ảo giác đảm bảo mọi khẳng định của AI đều đính kèm vị trí trang và đoạn văn gốc rõ ràng.
                             </p>
-                            <div class="wl-bento-visual">
-                                <strong>Minh chứng kiểm chứng:</strong> "Hệ thống bóc tách đạt tốc độ 2.74 giây mỗi trang." ➔ <em>[Tham chiếu: Trang 2, Bảng 1]</em>
+                            
+                            <!-- Micro-visual: Interactive Mini Citation Card -->
+                            <div class="wl-bento-visual wl-bento-citation-visual">
+                                <div class="wl-mini-qa-box">
+                                    <div class="wl-mini-q">
+                                        <span class="wl-q-icon">?</span>
+                                        <span class="wl-q-text">Tốc độ xử lý thực tế trên tài liệu học thuật là bao nhiêu?</span>
+                                    </div>
+                                    <div class="wl-mini-a">
+                                        <span class="wl-a-icon">AI</span>
+                                        <div class="wl-a-content">
+                                            <p class="wl-a-text">
+                                                "Hệ thống bóc tách đạt tốc độ xử lý trung bình <strong>2.74 giây mỗi trang</strong>, nhanh gấp 4.2 lần so với quy trình OCR truyền thống."
+                                            </p>
+                                            <div class="wl-mini-cite-bar">
+                                                <button type="button" class="wl-mini-citation-pill" id="btnBentoCitationPreview" title="Nhấp để xem đoạn trích dẫn gốc">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                    <span>Tham chiếu: Trang 2, Bảng 1</span>
+                                                </button>
+                                                <span class="wl-citation-confidence">Độ tin cậy: 98.8%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
                             <div class="wl-bento-tags">
                                 <span class="wl-bento-tag">Chống ảo giác AI</span>
                                 <span class="wl-bento-tag">Trích dẫn số trang</span>
                                 <span class="wl-bento-tag">Phản hồi tức thì</span>
+                                <span class="wl-bento-tag">RAG đa trang</span>
                             </div>
                         </div>
 
                         <!-- Card 4 (Span 1): Tóm tắt Tài liệu Lớn Map-Reduce -->
-                        <div class="wl-bento-card">
-                            <div class="wl-bento-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                </svg>
+                        <div class="wl-bento-card" data-bento="compress">
+                            <div class="wl-bento-header-row">
+                                <div class="wl-bento-icon-wrap">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </div>
+                                <div class="wl-bento-micro-badge">
+                                    <span>Map-Reduce Pipeline</span>
+                                </div>
                             </div>
                             <h3 class="wl-bento-title">Tóm Tắt Map-Reduce</h3>
                             <p class="wl-bento-desc">
                                 Xử lý tài liệu dài hàng chục trang thành bản tóm tắt điều hành súc tích và trích xuất bảng thuật ngữ chuyên ngành chỉ trong 30 giây.
                             </p>
+                            
+                            <!-- Micro-visual: Compression Metric -->
+                            <div class="wl-bento-visual wl-bento-compress-visual">
+                                <div class="wl-compress-pipeline">
+                                    <div class="wl-compress-step">
+                                        <span class="wl-compress-label">Đầu vào</span>
+                                        <span class="wl-compress-val">36 trang (18.400 từ)</span>
+                                    </div>
+                                    <div class="wl-compress-arrow">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                    </div>
+                                    <div class="wl-compress-step">
+                                        <span class="wl-compress-label">Đầu ra</span>
+                                        <span class="wl-compress-val highlight">1 trang (450 từ)</span>
+                                    </div>
+                                </div>
+                                <div class="wl-compress-progress-track">
+                                    <div class="wl-compress-progress-bar"></div>
+                                </div>
+                                <div class="wl-compress-footer">
+                                    <span class="wl-compress-stat">Thời gian xử lý: ~30 giây</span>
+                                    <span class="wl-compress-ratio">Thu gọn 97.5%</span>
+                                </div>
+                            </div>
+
                             <div class="wl-bento-tags">
                                 <span class="wl-bento-tag">Map-Reduce</span>
                                 <span class="wl-bento-tag">Tài liệu lớn</span>
+                                <span class="wl-bento-tag">Bảng thuật ngữ</span>
                             </div>
                         </div>
 
                         <!-- Card 5 (Span 1): Xử lý Hàng loạt & Xuất DOCX -->
-                        <div class="wl-bento-card">
-                            <div class="wl-bento-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
+                        <div class="wl-bento-card" data-bento="batch">
+                            <div class="wl-bento-header-row">
+                                <div class="wl-bento-icon-wrap">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                                <div class="wl-bento-micro-badge">
+                                    <span>ZIP & DOCX</span>
+                                </div>
                             </div>
                             <h3 class="wl-bento-title">Xử Lý Lô & Xuất Đa Định Dạng</h3>
                             <p class="wl-bento-desc">
-                                Tải lên nhiều tệp PDF cùng lúc, xếp hàng xử lý tự động và tải về toàn bộ kết quả dưới dạng tệp nén ZIP hoặc tệp Microsoft Word (.DOCX) cao cấp.
+                                Tải lên nhiều tệp PDF cùng lúc, xếp hàng xử lý tự động và tải về toàn bộ kết quả dưới dạng tệp nén ZIP hoặc tệp Microsoft Word (.DOCX) chuẩn chỉnh.
                             </p>
+                            
+                            <!-- Micro-visual: Batch file queue simulation -->
+                            <div class="wl-bento-visual wl-bento-batch-visual">
+                                <div class="wl-batch-queue">
+                                    <div class="wl-batch-item done">
+                                        <span class="wl-batch-name">Bao_cao_AI_2026.pdf</span>
+                                        <span class="wl-batch-status done">100% Xong</span>
+                                    </div>
+                                    <div class="wl-batch-item done">
+                                        <span class="wl-batch-name">Nghien_cuu_NMT.pdf</span>
+                                        <span class="wl-batch-status done">100% Xong</span>
+                                    </div>
+                                </div>
+                                <div class="wl-batch-export-chips">
+                                    <span class="wl-format-badge format-docx">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                                        Word .DOCX
+                                    </span>
+                                    <span class="wl-format-badge format-zip">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+                                        Gói ZIP lưu trữ
+                                    </span>
+                                </div>
+                            </div>
+
                             <div class="wl-bento-tags">
                                 <span class="wl-bento-tag">Tải ZIP</span>
                                 <span class="wl-bento-tag">Xuất Word DOCX</span>
+                                <span class="wl-bento-tag">Xử lý hàng loạt</span>
                             </div>
                         </div>
 
-                        <!-- Card 6 (Span 1): Bảo mật Phân vùng Dữ liệu -->
-                        <div class="wl-bento-card">
-                            <div class="wl-bento-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                </svg>
+                        <!-- Card 6 (Span 2): Bảo mật Phân vùng Dữ liệu -->
+                        <div class="wl-bento-card wl-bento-span-2" data-bento="security">
+                            <div class="wl-bento-header-row">
+                                <div class="wl-bento-icon-wrap">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <div class="wl-bento-micro-badge wl-badge-security">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                    <span>User ID Isolation</span>
+                                </div>
                             </div>
                             <h3 class="wl-bento-title">Bảo Mật & Riêng Tư Tuyệt Đối</h3>
                             <p class="wl-bento-desc">
-                                Toàn bộ tài liệu được phân vùng cô lập theo mã định danh người dùng (User ID isolation), kiểm soát quyền truy cập chặt chẽ và không chia sẻ dữ liệu ra bên ngoài.
+                                Toàn bộ tài liệu được phân vùng cô lập theo mã định danh người dùng (User ID isolation), kiểm soát quyền truy cập chặt chẽ và không lưu vết ra bên ngoài.
                             </p>
+                            
+                            <!-- Micro-visual: User ID Isolation & Encryption -->
+                            <div class="wl-bento-visual wl-bento-security-visual">
+                                <div class="wl-security-grid">
+                                    <div class="wl-sec-item">
+                                        <span class="wl-sec-label">Phân vùng Sandbox:</span>
+                                        <span class="wl-sec-code">usr_sandbox_9f4b-secure</span>
+                                    </div>
+                                    <div class="wl-sec-item">
+                                        <span class="wl-sec-label">Mã hóa lưu trữ:</span>
+                                        <span class="wl-sec-code highlight">AES-256 GCM</span>
+                                    </div>
+                                    <div class="wl-sec-item">
+                                        <span class="wl-sec-label">Đường truyền mạng:</span>
+                                        <span class="wl-sec-code highlight">TLS 1.3 / SSL</span>
+                                    </div>
+                                </div>
+                                <div class="wl-security-promise">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                    <span>Không sử dụng dữ liệu khách hàng để huấn luyện mô hình công cộng.</span>
+                                </div>
+                            </div>
+
                             <div class="wl-bento-tags">
                                 <span class="wl-bento-tag">Cô lập User ID</span>
-                                <span class="wl-bento-tag">Mã hóa an toàn</span>
+                                <span class="wl-bento-tag">Mã hóa AES-256</span>
+                                <span class="wl-bento-tag">Tuân thủ riêng tư</span>
                             </div>
                         </div>
                     </div>
@@ -901,32 +1076,69 @@
                         </p>
                     </div>
 
+                    <!-- SVG Progress Connector Line for Desktop -->
+                    <div class="wl-steps-connector-wrap" aria-hidden="true">
+                        <svg class="wl-steps-connector-svg" viewBox="0 0 900 24" fill="none" preserveAspectRatio="none">
+                            <line x1="150" y1="12" x2="750" y2="12" stroke="rgba(59, 130, 246, 0.3)" stroke-width="2" stroke-dasharray="6 6"></line>
+                            <circle cx="150" cy="12" r="5" fill="#3B82F6"></circle>
+                            <circle cx="450" cy="12" r="5" fill="#3B82F6"></circle>
+                            <circle cx="750" cy="12" r="5" fill="#3B82F6"></circle>
+                        </svg>
+                    </div>
+
                     <div class="wl-steps-grid">
                         <!-- Step 1 -->
-                        <div class="wl-step-card">
-                            <div class="wl-step-num">01</div>
+                        <div class="wl-step-card" data-step="1">
+                            <div class="wl-step-header">
+                                <div class="wl-step-num">01</div>
+                                <span class="wl-step-badge">Tức thì</span>
+                            </div>
                             <h3 class="wl-step-title">Tải Lên Tài Liệu</h3>
                             <p class="wl-step-desc">
                                 Kéo thả tệp PDF số hoặc ảnh tài liệu scan vào khung xử lý. Bạn có thể chọn toàn bộ tài liệu hoặc chỉ định dải trang cụ thể cần dịch.
                             </p>
+                            <div class="wl-step-action-wrap">
+                                <button type="button" class="wl-step-action-btn" id="btnStepUploadTrigger">
+                                    <span>Kéo thả file ngay</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Step 2 -->
-                        <div class="wl-step-card">
-                            <div class="wl-step-num">02</div>
+                        <div class="wl-step-card" data-step="2">
+                            <div class="wl-step-header">
+                                <div class="wl-step-num">02</div>
+                                <span class="wl-step-badge">&lt; 3s / trang</span>
+                            </div>
                             <h3 class="wl-step-title">AI Bóc Tách & Dịch Thuật</h3>
                             <p class="wl-step-desc">
                                 Động cơ AI tự động phát hiện định dạng nhiều cột, thực hiện OCR khử nghiêng trang và dịch thuật song ngữ bảo tồn nguyên vẹn cấu trúc văn bản.
                             </p>
+                            <div class="wl-step-action-wrap">
+                                <button type="button" class="wl-step-action-btn" id="btnStepDemoTrigger">
+                                    <span>Dùng thử bài mẫu</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Step 3 -->
-                        <div class="wl-step-card">
-                            <div class="wl-step-num">03</div>
+                        <div class="wl-step-card" data-step="3">
+                            <div class="wl-step-header">
+                                <div class="wl-step-num">03</div>
+                                <span class="wl-step-badge">Thời gian thực</span>
+                            </div>
                             <h3 class="wl-step-title">Đối Chiếu, Hỏi Đáp & Xuất Tệp</h3>
                             <p class="wl-step-desc">
                                 Xem đối chiếu bản dịch song ngữ trên không gian làm việc kép, tương tác hỏi đáp với Trợ lý AI Copilot và tải kết quả dạng PDF hoặc Word.
                             </p>
+                            <div class="wl-step-action-wrap">
+                                <button type="button" class="wl-step-action-btn" id="btnStepWorkspaceTrigger">
+                                    <span>Khám phá Workspace</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
