@@ -385,6 +385,11 @@ class MockElement {
       );
     }
   }
+  focus() {
+    if (this._doc) {
+      this._doc.activeElement = this;
+    }
+  }
   querySelectorAll(sel) {
     return [];
   }
@@ -395,8 +400,42 @@ class MockElement {
 
 function createBillingApiTestEnv(options = {}) {
   const elements = {};
+  const mockBody = new MockElement('body', 'body');
+  const domListeners = {};
+  const dispatchedEvents = [];
+
+  const tableWrap = new MockElement('', 'div', ['billing-table-responsive']);
+  tableWrap.style.display = 'none';
+
+  const mockDocument = {
+    body: mockBody,
+    activeElement: null,
+    getElementById: (id) => elements[id] || null,
+    querySelector: (sel) => {
+      if (sel === '.billing-table-responsive') return tableWrap;
+      return null;
+    },
+    querySelectorAll: (sel) => [],
+    createElement: (tag) => {
+      const el = new MockElement('', tag);
+      el._doc = mockDocument;
+      return el;
+    },
+    addEventListener: (event, fn) => {
+      domListeners[event] = domListeners[event] || [];
+      domListeners[event].push(fn);
+    },
+    dispatchEvent: (evt) => {
+      dispatchedEvents.push(evt);
+      return true;
+    },
+  };
+  mockBody._doc = mockDocument;
+  tableWrap._doc = mockDocument;
+
   function reg(id, tag = 'div', classes = [], attrs = {}) {
     const el = new MockElement(id, tag, classes, attrs);
+    el._doc = mockDocument;
     elements[id] = el;
     return el;
   }
@@ -436,10 +475,6 @@ function createBillingApiTestEnv(options = {}) {
   reg('btnBillingNextPage', 'button');
   reg('billingPageNumbers', 'div');
 
-  // Table wrapper
-  const tableWrap = new MockElement('', 'div', ['billing-table-responsive']);
-  tableWrap.style.display = 'none';
-
   // Invoice Modal Elements
   const invoiceModal = reg('billingInvoiceModal', 'div', ['modal-overlay', 'invoice-modal-overlay'], { hidden: '', 'aria-hidden': 'true' });
   invoiceModal.style.display = 'none';
@@ -477,29 +512,6 @@ function createBillingApiTestEnv(options = {}) {
   qrWrap.style.display = 'none';
   const qrImage = reg('invoiceQrImage', 'img');
   qrImage.src = '';
-
-  const dispatchedEvents = [];
-  const domListeners = {};
-  const mockBody = new MockElement('body', 'body');
-
-  const mockDocument = {
-    body: mockBody,
-    getElementById: (id) => elements[id] || null,
-    querySelector: (sel) => {
-      if (sel === '.billing-table-responsive') return tableWrap;
-      return null;
-    },
-    querySelectorAll: (sel) => [],
-    createElement: (tag) => new MockElement('', tag),
-    addEventListener: (event, fn) => {
-      domListeners[event] = domListeners[event] || [];
-      domListeners[event].push(fn);
-    },
-    dispatchEvent: (evt) => {
-      dispatchedEvents.push(evt);
-      return true;
-    },
-  };
 
   let printCallCount = 0;
   const windowListeners = {};
@@ -678,6 +690,7 @@ function createBillingApiTestEnv(options = {}) {
     elements,
     tableWrap,
     mockBody,
+    mockDocument,
     window: context.window,
     dispatchedEvents,
     dispatchKeydown,
@@ -1130,30 +1143,42 @@ async function runAllTests() {
   invoiceEnv.setCustomFetch(null); // restore default mock
   console.log('[PASS] 12. Invoice Out-of-Order Race Condition: Stale invoice discarded and no data leakage observed.');
 
-  // 13. Modal Closing Mechanisms
+  // 13. Modal Closing Mechanisms & Focus Management
+  const triggerBtn = invoiceEnv.elements.tabBillingHistory;
+  triggerBtn.focus();
+  assert.strictEqual(invoiceEnv.mockDocument.activeElement, triggerBtn);
+
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'flex');
+  assert.strictEqual(invoiceEnv.mockDocument.activeElement, invoiceEnv.elements.btnCloseInvoiceModal, 'Focus must move to close button upon opening modal');
 
   // Header close button
   invoiceEnv.elements.btnCloseInvoiceModal.click();
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
   assert.strictEqual(invoiceEnv.mockBody.style.overflow, '');
+  assert.strictEqual(invoiceEnv.mockDocument.activeElement, triggerBtn, 'Focus must restore to trigger element upon closing');
 
   // Footer close button
+  triggerBtn.focus();
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
   invoiceEnv.elements.btnInvoiceModalCloseFooter.click();
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.strictEqual(invoiceEnv.mockDocument.activeElement, triggerBtn, 'Focus must restore upon footer close');
 
   // Backdrop overlay click
+  triggerBtn.focus();
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
   invoiceEnv.elements.billingInvoiceModal.click();
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
+  assert.strictEqual(invoiceEnv.mockDocument.activeElement, triggerBtn, 'Focus must restore upon backdrop click');
 
   // Escape key
+  triggerBtn.focus();
   await invoiceEnv.window.PDFLinguaPricing.openInvoiceModal('TXN-20261117-001');
   invoiceEnv.dispatchKeydown('Escape');
   assert.strictEqual(invoiceEnv.elements.billingInvoiceModal.style.display, 'none');
-  console.log('[PASS] 13. Modal Closing: Closed via header button, footer button, backdrop click, and Escape key.');
+  assert.strictEqual(invoiceEnv.mockDocument.activeElement, triggerBtn, 'Focus must restore upon Escape key');
+  console.log('[PASS] 13. Modal Closing & Focus: Focus trapped/restored and closed via header button, footer button, backdrop click, and Escape key.');
 
   // 14. Print & Download Receipt (Loading Lockout & Loaded Actions)
   // Part A: Lockout during loading

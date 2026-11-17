@@ -1654,6 +1654,7 @@
   let billingRequestId = 0;
   let currentInvoiceRequestId = 0;
   let currentInvoiceTransaction = null;
+  let lastActiveElementBeforeInvoiceModal = null;
 
   function initBillingHistory() {
     const tabPlans = document.getElementById('tabPricingPlans');
@@ -2182,8 +2183,20 @@
     modal.setAttribute('aria-hidden', 'false');
     modal.style.display = 'flex';
 
-    if (typeof document !== 'undefined' && document.body) {
-      document.body.style.overflow = 'hidden';
+    if (typeof document !== 'undefined') {
+      if (document.activeElement) {
+        lastActiveElementBeforeInvoiceModal = document.activeElement;
+      }
+      if (document.body) {
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    const closeBtn = document.getElementById('btnCloseInvoiceModal');
+    if (closeBtn && typeof closeBtn.focus === 'function') {
+      try {
+        closeBtn.focus();
+      } catch (_e) {}
     }
 
     const token = getStoredToken();
@@ -2371,6 +2384,12 @@
     }
     if (typeof document !== 'undefined' && document.body) {
       document.body.style.overflow = '';
+    }
+    if (lastActiveElementBeforeInvoiceModal && typeof lastActiveElementBeforeInvoiceModal.focus === 'function') {
+      try {
+        lastActiveElementBeforeInvoiceModal.focus();
+      } catch (_e) {}
+      lastActiveElementBeforeInvoiceModal = null;
     }
   }
 
