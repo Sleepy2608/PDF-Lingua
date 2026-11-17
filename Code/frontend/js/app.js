@@ -22,6 +22,9 @@ function initLegalModal() {
     const linkTerms = document.getElementById('linkTerms');
     const linkPrivacy = document.getElementById('linkPrivacy');
     const linkContact = document.getElementById('linkContact');
+    const linkTermsLanding = document.getElementById('linkTermsLanding');
+    const linkPrivacyLanding = document.getElementById('linkPrivacyLanding');
+    const linkContactLanding = document.getElementById('linkContactLanding');
 
     if (!overlay) return;
 
@@ -94,6 +97,27 @@ function initLegalModal() {
 
     if (linkContact) {
         linkContact.onclick = (e) => {
+            e.preventDefault();
+            openModal('tabContact');
+        };
+    }
+
+    if (linkTermsLanding) {
+        linkTermsLanding.onclick = (e) => {
+            e.preventDefault();
+            openModal('tabTerms');
+        };
+    }
+
+    if (linkPrivacyLanding) {
+        linkPrivacyLanding.onclick = (e) => {
+            e.preventDefault();
+            openModal('tabPrivacy');
+        };
+    }
+
+    if (linkContactLanding) {
+        linkContactLanding.onclick = (e) => {
             e.preventDefault();
             openModal('tabContact');
         };
