@@ -216,6 +216,42 @@ it('Controller: exposes initBentoSpotlight and binds step buttons', () => {
   assert(jsContent.includes('btnBentoCitationPreview'), 'welcome_landing.js must handle btnBentoCitationPreview');
 });
 
+// 15. Hard Metrics Benchmarks & Verified Testimonials
+it('Block 5: displays technical benchmark highlights and verified testimonial badges', () => {
+  assert(htmlContent.includes('wl-metric-benchmark'), 'Metrics must display benchmark comparisons');
+  assert(htmlContent.includes('Nhanh gấp 4.2x OCR thường'), 'OCR speedup benchmark must exist');
+  assert(htmlContent.includes('wl-testimonial-verified'), 'Testimonials must have verified badge');
+  assert(htmlContent.includes('wl-testimonial-meta-tag'), 'Testimonials must include measurement meta tags');
+  assert(htmlContent.includes('Chuyên gia Hiệu Đính'), 'Third translation expert testimonial must exist');
+});
+
+// 16. Segmented Billing Cycle Toggle & Dynamic Pricing
+it('Block 6: includes segmented billing cycle toggle and synchronized price targets', () => {
+  assert(htmlContent.includes('wl-billing-toggle'), 'Billing toggle container must exist');
+  assert(htmlContent.includes('id="btnLandingCycleMonthly"'), 'Monthly toggle button must exist');
+  assert(htmlContent.includes('id="btnLandingCycleYearly"'), 'Yearly toggle button must exist');
+  assert(htmlContent.includes('id="priceLandingPro"'), 'Pro price element #priceLandingPro must exist');
+  assert(htmlContent.includes('id="periodLandingPro"'), 'Pro period element #periodLandingPro must exist');
+  assert(htmlContent.includes('id="noteLandingPro"'), 'Pro savings note element #noteLandingPro must exist');
+  assert(htmlContent.includes('wl-billing-save-badge'), 'Yearly discount badge must exist');
+});
+
+// 17. Comprehensive Footer Brand Badge & System Status
+it('Block 7: Footer displays security assurance badge and real-time status indicator', () => {
+  assert(htmlContent.includes('wl-footer-badge'), 'Security assurance badge must exist in footer brand column');
+  assert(htmlContent.includes('Mã hóa AES-256'), 'AES-256 privacy badge must be displayed');
+  assert(htmlContent.includes('wl-status-indicator'), 'System status indicator must exist');
+  assert(htmlContent.includes('99.98% Uptime'), 'System uptime stat must be displayed');
+});
+
+// 18. Billing Cycle Toggle Logic in Controller
+it('Controller: binds billing cycle switcher to update pricing preview', () => {
+  assert(jsContent.includes('btnLandingCycleMonthly'), 'Controller must bind monthly toggle');
+  assert(jsContent.includes('btnLandingCycleYearly'), 'Controller must bind yearly toggle');
+  assert(jsContent.includes('399.000 đ'), 'Controller must know yearly price rate');
+  assert(jsContent.includes('49.000 đ'), 'Controller must know monthly price rate');
+});
+
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passCount}/${passCount + failCount} tests passed (${failCount} failed).`);
 console.log('================================================================');
