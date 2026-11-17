@@ -170,6 +170,52 @@ it('Interactive Demo: ai_copilot.js supports instant sample answers without requ
   assert(copilotJs.includes('Zero-hallucination citation guardrails'), 'ai_copilot.js must have grounded technical answers');
 });
 
+// 12. Bento Grid Interactive Micro-Visuals & Mouse Spotlight
+it('Bento Grid: all 6 cards have dedicated micro-visuals and spotlight styles', () => {
+  // Check 6 micro-visual containers
+  assert(htmlContent.includes('wl-bento-sync-visual'), 'Card 1 must include bilingual sync visual');
+  assert(htmlContent.includes('btnBentoTrySync'), 'Card 1 must include try sync action button');
+  assert(htmlContent.includes('wl-bento-ocr-visual'), 'Card 2 must include OCR deskew gauge visual');
+  assert(htmlContent.includes('wl-deskew-gauge'), 'Card 2 must include deskew meter track');
+  assert(htmlContent.includes('wl-bento-citation-visual'), 'Card 3 must include citation QA visual');
+  assert(htmlContent.includes('btnBentoCitationPreview'), 'Card 3 must include citation preview trigger');
+  assert(htmlContent.includes('wl-bento-compress-visual'), 'Card 4 must include compression pipeline visual');
+  assert(htmlContent.includes('wl-compress-pipeline'), 'Card 4 must include compression pipeline track');
+  assert(htmlContent.includes('wl-bento-batch-visual'), 'Card 5 must include batch queue visual');
+  assert(htmlContent.includes('wl-batch-queue'), 'Card 5 must include batch file queue');
+  assert(htmlContent.includes('wl-bento-security-visual'), 'Card 6 must include security isolation visual');
+  assert(htmlContent.includes('usr_sandbox_9f4b-secure'), 'Card 6 must include sandbox tenant preview');
+
+  // Check CSS spotlight glow and tabular numbers
+  assert(cssContent.includes('--mouse-x'), 'CSS must utilize dynamic --mouse-x variable for spotlight');
+  assert(cssContent.includes('--mouse-y'), 'CSS must utilize dynamic --mouse-y variable for spotlight');
+  assert(cssContent.includes('.wl-bento-card::before'), 'CSS must define border spotlight glow on bento cards');
+  assert(cssContent.includes('tabular-nums'), 'CSS must define tabular figures for alignment');
+});
+
+// 13. How It Works Progress Connector & Action Triggers
+it('How It Works: includes SVG progress connector line and action buttons for all 3 steps', () => {
+  assert(htmlContent.includes('wl-steps-connector-wrap'), 'SVG connector container must exist');
+  assert(htmlContent.includes('wl-steps-connector-svg'), 'SVG connector line must exist');
+  assert(htmlContent.includes('id="btnStepUploadTrigger"'), 'Step 1 must have action button #btnStepUploadTrigger');
+  assert(htmlContent.includes('id="btnStepDemoTrigger"'), 'Step 2 must have action button #btnStepDemoTrigger');
+  assert(htmlContent.includes('id="btnStepWorkspaceTrigger"'), 'Step 3 must have action button #btnStepWorkspaceTrigger');
+
+  // Check CSS connector responsiveness
+  assert(cssContent.includes('.wl-steps-connector-wrap'), 'CSS must define styling for connector line');
+  assert(cssContent.includes('.wl-step-action-btn'), 'CSS must define styling for step action buttons');
+});
+
+// 14. Bento & Workflow Controller Extensions
+it('Controller: exposes initBentoSpotlight and binds step buttons', () => {
+  assert(jsContent.includes('initBentoSpotlight'), 'welcome_landing.js must define initBentoSpotlight');
+  assert(jsContent.includes('btnStepUploadTrigger'), 'welcome_landing.js must handle btnStepUploadTrigger');
+  assert(jsContent.includes('btnStepDemoTrigger'), 'welcome_landing.js must handle btnStepDemoTrigger');
+  assert(jsContent.includes('btnStepWorkspaceTrigger'), 'welcome_landing.js must handle btnStepWorkspaceTrigger');
+  assert(jsContent.includes('btnBentoTrySync'), 'welcome_landing.js must handle btnBentoTrySync');
+  assert(jsContent.includes('btnBentoCitationPreview'), 'welcome_landing.js must handle btnBentoCitationPreview');
+});
+
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passCount}/${passCount + failCount} tests passed (${failCount} failed).`);
 console.log('================================================================');
