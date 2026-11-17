@@ -252,6 +252,27 @@ it('Controller: binds billing cycle switcher to update pricing preview', () => {
   assert(jsContent.includes('49.000 đ'), 'Controller must know monthly price rate');
 });
 
+// 19. Aesthetic Polish, Focus Accessibility, Tabular Numerals & Scroll Reveal
+it('Polish & Motion: validates scroll reveal classes, focus visibility, tabular numbers and motion preference safety', () => {
+  // Check HTML scroll reveal markers
+  const revealMatches = htmlContent.match(/wl-reveal/g) || [];
+  assert(revealMatches.length >= 10, 'HTML must include multiple .wl-reveal entrance elements');
+  assert(htmlContent.includes('wl-reveal-delay-1'), 'HTML must have staggered delay 1 classes');
+  assert(htmlContent.includes('wl-reveal-delay-2'), 'HTML must have staggered delay 2 classes');
+  assert(htmlContent.includes('wl-reveal-delay-3'), 'HTML must have staggered delay 3 classes');
+
+  // Check CSS accessibility & typography rules
+  assert(cssContent.includes(':focus-visible'), 'CSS must define :focus-visible rules for high-contrast accessibility');
+  assert(cssContent.includes('tabular-nums'), 'CSS must define tabular-nums normalization for metrics and prices');
+  assert(cssContent.includes('.wl-reveal.is-revealed'), 'CSS must define state when reveal is active');
+  assert(cssContent.includes('prefers-reduced-motion: reduce'), 'CSS must contain prefers-reduced-motion overrides');
+
+  // Check JS scroll reveal controller and reduced motion safety
+  assert(jsContent.includes('initScrollReveal'), 'JS must export and call initScrollReveal');
+  assert(jsContent.includes('prefers-reduced-motion'), 'JS must check prefers-reduced-motion media query');
+  assert(jsContent.includes('IntersectionObserver'), 'JS must use IntersectionObserver for performant viewport detection');
+});
+
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passCount}/${passCount + failCount} tests passed (${failCount} failed).`);
 console.log('================================================================');
