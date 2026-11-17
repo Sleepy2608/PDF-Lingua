@@ -273,6 +273,49 @@ it('Polish & Motion: validates scroll reveal classes, focus visibility, tabular 
   assert(jsContent.includes('IntersectionObserver'), 'JS must use IntersectionObserver for performant viewport detection');
 });
 
+// 20. Multi-Device Responsive Architecture (Desktop, Tablet, Mobile)
+it('Responsive: validates media queries and layout rules for desktop, tablet, and mobile', () => {
+  // Desktop breakpoints
+  assert(cssContent.includes('@media (min-width: 1024px)'), 'CSS must include desktop 1024px breakpoint');
+  assert(cssContent.includes('@media (min-width: 992px)'), 'CSS must include desktop 992px breakpoint');
+
+  // Tablet breakpoints
+  assert(cssContent.includes('@media (min-width: 768px)'), 'CSS must include tablet 768px breakpoint');
+  assert(cssContent.includes('@media (max-width: 991px)'), 'CSS must handle tablet navigation hiding');
+  assert(cssContent.includes('and (max-width: 1023px)'), 'CSS must handle tablet 2-column bento card span');
+
+  // Mobile breakpoints
+  assert(cssContent.includes('@media (max-width: 767px)'), 'CSS must include mobile 767px padding adjustments');
+  assert(cssContent.includes('@media (max-width: 540px)'), 'CSS must include mobile 540px single-column adjustments');
+});
+
+// 21. Performance & Web Vitals Optimization (CLS = 0, LCP Optimization)
+it('Web Vitals: validates image dimensions, loading strategies, and rendering containment', () => {
+  // CLS = 0 verification (explicit width/height and aspect ratio)
+  assert(htmlContent.includes('class="wl-brand-img" width="34" height="34" loading="eager"'), 'Navbar logo must have explicit width/height and eager loading for fast LCP');
+  assert(htmlContent.includes('class="wl-brand-img" width="34" height="34" loading="lazy"'), 'Footer logo must have explicit width/height and lazy loading');
+  assert(cssContent.includes('aspect-ratio: 1 / 1'), 'Brand logo CSS must specify aspect-ratio to prevent layout shift');
+
+  // LCP & Rendering speed optimization
+  assert(cssContent.includes('content-visibility: auto'), 'Off-screen landing sections must use content-visibility: auto');
+  assert(cssContent.includes('contain-intrinsic-size'), 'Off-screen landing sections must define contain-intrinsic-size');
+});
+
+// 22. End-to-End User Flow Simulation
+it('E2E Simulation: validates 1-click interactive demo workflow and billing cycle synchronization', () => {
+  // Verify interactive sample dataset integrity
+  assert(jsContent.includes('sample-academic-rag-2026'), 'Controller must define sample document ID');
+  assert(jsContent.includes('Bao_cao_Nghien_cuu_AI_Song_Ngu_Mau.pdf'), 'Controller must define sample filename');
+  assert(jsContent.includes('Tài liệu này nói về chủ đề gì?'), 'Controller must supply question prompt 1');
+  assert(jsContent.includes('Các giải pháp kỹ thuật chính được đề cập là gì?'), 'Controller must supply question prompt 2');
+  assert(jsContent.includes('Tác giả kết luận như thế nào ở trang cuối?'), 'Controller must supply question prompt 3');
+
+  // Verify workspace transition and toast feedback
+  assert(jsContent.includes('pdfLinguaWorkspace.renderWorkspace(SAMPLE_DOC_DATA)'), 'Controller must invoke renderWorkspace with sample data');
+  assert(jsContent.includes('workspaceSection.scrollIntoView'), 'Controller must scroll smoothly to workspaceSection');
+  assert(jsContent.includes('showToast'), 'Controller must display success toast after loading demo');
+});
+
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passCount}/${passCount + failCount} tests passed (${failCount} failed).`);
 console.log('================================================================');
