@@ -1920,3 +1920,120 @@
   }
 }
 
+/* ── 10. Multi-Device Responsive Polish (Desktop, Tablet, Mobile) ───────── */
+@media (max-width: 991px) {
+  .wl-nav-menu {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wl-bento-span-2 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .welcome-container {
+    padding: 0 16px;
+  }
+
+  .wl-hero-section {
+    padding: 40px 0 32px;
+  }
+
+  .wl-section {
+    padding: 48px 0;
+  }
+
+  .wl-section-title {
+    font-size: 1.75rem;
+  }
+
+  .wl-bento-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 540px) {
+  .wl-preview-panes {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .wl-preview-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--wl-border-subtle);
+    padding: 16px;
+  }
+
+  .wl-preview-pane:last-child {
+    border-bottom: none;
+  }
+
+  .wl-hero-cta-group {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .wl-btn-hero-main,
+  .wl-btn-hero-demo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .wl-btn-ghost {
+    display: none;
+  }
+
+  .wl-brand-badge {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+
+  .wl-brand-text {
+    font-size: 1.1rem;
+  }
+
+  .wl-metric-box {
+    padding: 16px 10px;
+  }
+
+  .wl-billing-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .wl-billing-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .wl-footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .wl-footer-socials {
+    justify-content: center;
+  }
+}
+
+/* ── 11. Performance & Web Vitals Optimization (CLS = 0, LCP Optimization) ─ */
+.wl-brand-img {
+  aspect-ratio: 1 / 1;
+}
+
+#welcomeHowItWorks,
+#welcomeTestimonials,
+#welcomePricing,
+.wl-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 450px;
+}
+
+
