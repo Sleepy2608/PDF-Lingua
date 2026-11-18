@@ -216,6 +216,12 @@ runTest('Compliance: No en-dash (\\u2013) or em-dash (\\u2014) in welcome.js', (
   assert.strictEqual(/\u2014/.test(jsContent), false, 'Found em-dash in welcome.js');
 });
 
+runTest('Compliance: No en-dash (\\u2013) or em-dash (\\u2014) in test_frontend_welcome_page.js', () => {
+  const selfContent = fs.readFileSync(__filename, 'utf8');
+  assert.strictEqual(/\u2013/.test(selfContent), false, 'Found en-dash in test suite');
+  assert.strictEqual(/\u2014/.test(selfContent), false, 'Found em-dash in test suite');
+});
+
 // -----------------------------------------------------------------------------
 // Part 7: Hero Section & Interactive Product Preview
 // -----------------------------------------------------------------------------
@@ -432,6 +438,68 @@ runTest('CSS: Footer grid, columns, and link hover styles defined', () => {
   assert.ok(cssContent.includes('.welcome-footer-grid'), 'Missing .welcome-footer-grid in CSS');
   assert.ok(cssContent.includes('grid-template-columns: 2fr 1fr 1fr 1.2fr;'), 'Footer grid must be 4 columns');
   assert.ok(cssContent.includes('.welcome-footer-links a:hover'), 'Missing link hover in footer');
+});
+
+// -----------------------------------------------------------------------------
+// Part 13: Aesthetic Refinements & Accessibility Standards
+// -----------------------------------------------------------------------------
+console.log('\n--- 13. Aesthetic Refinements & Accessibility Standards ---');
+
+runTest('Typography: Tabular numeric styling configured across metrics, prices, steps', () => {
+  assert.ok(cssContent.includes('font-variant-numeric: tabular-nums;'), 'Missing tabular-nums rule in CSS');
+  assert.ok(cssContent.includes('.welcome-stat-number'), 'Missing .welcome-stat-number selector for tabular-nums');
+  assert.ok(cssContent.includes('.welcome-price-value'), 'Missing .welcome-price-value selector for tabular-nums');
+  assert.ok(cssContent.includes('.welcome-step-number'), 'Missing .welcome-step-number selector for tabular-nums');
+  assert.ok(cssContent.includes('.welcome-metric-number'), 'Missing .welcome-metric-number selector for tabular-nums');
+  assert.ok(cssContent.includes('.mini-gauge-num'), 'Missing .mini-gauge-num selector for tabular-nums');
+  assert.ok(cssContent.includes('.reduction-val'), 'Missing .reduction-val selector for tabular-nums');
+  assert.ok(cssContent.includes('.welcome-doc-table td'), 'Missing .welcome-doc-table td selector for tabular-nums');
+});
+
+runTest('Accessibility: High-contrast keyboard focus outlines with offset and glow', () => {
+  assert.ok(cssContent.includes(':focus-visible'), 'Missing :focus-visible rules');
+  assert.ok(cssContent.includes('outline-offset: 2px;'), 'Missing outline-offset');
+  assert.ok(cssContent.includes('.welcome-btn:focus-visible'), 'Missing .welcome-btn:focus-visible');
+  assert.ok(cssContent.includes('.welcome-nav-link:focus-visible'), 'Missing .welcome-nav-link:focus-visible');
+  assert.ok(cssContent.includes('.billing-toggle-btn:focus-visible'), 'Missing .billing-toggle-btn:focus-visible');
+});
+
+runTest('Scroll Reveal: CSS animation classes and stagger delays defined', () => {
+  assert.ok(cssContent.includes('.welcome-reveal {'), 'Missing .welcome-reveal rule in CSS');
+  assert.ok(cssContent.includes('.welcome-reveal.is-revealed'), 'Missing .welcome-reveal.is-revealed in CSS');
+  assert.ok(cssContent.includes('.welcome-reveal-delay-1'), 'Missing delay 1 class');
+  assert.ok(cssContent.includes('.welcome-reveal-delay-2'), 'Missing delay 2 class');
+  assert.ok(cssContent.includes('.welcome-reveal-delay-3'), 'Missing delay 3 class');
+});
+
+runTest('Motion Safety: prefers-reduced-motion media query immediately reveals elements', () => {
+  assert.ok(cssContent.includes('@media (prefers-reduced-motion: reduce)'), 'Missing prefers-reduced-motion media query');
+  assert.ok(cssContent.includes('opacity: 1 !important;'), 'Reduced motion must force full opacity');
+  assert.ok(cssContent.includes('transition: none !important;'), 'Reduced motion must disable transitions');
+});
+
+runTest('HTML: Scroll reveal classes integrated into major landing sections', () => {
+  assert.ok(htmlContent.includes('welcome-section-header welcome-hero-header welcome-reveal'), 'Hero header missing reveal class');
+  assert.ok(htmlContent.includes('welcome-preview-card welcome-reveal'), 'Preview card missing reveal class');
+  assert.ok(htmlContent.includes('welcome-bento-card welcome-bento-span-2 welcome-reveal'), 'Bento card missing reveal class');
+  assert.ok(htmlContent.includes('welcome-step-card welcome-reveal'), 'Step card missing reveal class');
+  assert.ok(htmlContent.includes('welcome-metric-card welcome-reveal'), 'Metric card missing reveal class');
+  assert.ok(htmlContent.includes('welcome-testimonial-card welcome-reveal'), 'Testimonial card missing reveal class');
+  assert.ok(htmlContent.includes('welcome-pricing-card welcome-reveal'), 'Pricing card missing reveal class');
+});
+
+runTest('JS: Scroll reveal observer with reduced motion check implemented', () => {
+  assert.ok(jsContent.includes('.welcome-reveal'), 'JS must query .welcome-reveal');
+  assert.ok(jsContent.includes('prefers-reduced-motion: reduce'), 'JS must check prefers-reduced-motion');
+  assert.ok(jsContent.includes('is-revealed'), 'JS must add is-revealed class');
+  assert.ok(jsContent.includes('unobserve'), 'JS must unobserve after reveal');
+});
+
+runTest('JS: Smooth scroll with sticky navbar offset calculation implemented', () => {
+  assert.ok(jsContent.includes('a[href^="#welcome"]'), 'JS must query anchor links');
+  assert.ok(jsContent.includes('getBoundingClientRect().top'), 'JS must calculate element position');
+  assert.ok(jsContent.includes('window.scrollTo'), 'JS must call window.scrollTo');
+  assert.ok(jsContent.includes('behavior: prefersReduced ? \'auto\' : \'smooth\''), 'JS must respect reduced motion');
 });
 
 // -----------------------------------------------------------------------------
