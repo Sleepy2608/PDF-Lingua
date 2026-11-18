@@ -1881,6 +1881,61 @@ body {
 }
 
 /* ==========================================================================
+   5.1. Scroll Reveal Animation System
+   ========================================================================== */
+.welcome-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.welcome-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.welcome-reveal-delay-1 {
+  transition-delay: 60ms;
+}
+
+.welcome-reveal-delay-2 {
+  transition-delay: 120ms;
+}
+
+.welcome-reveal-delay-3 {
+  transition-delay: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   5.2. Web Vitals Optimization (CLS & LCP)
+   ========================================================================== */
+.welcome-brand-img {
+  width: 34px;
+  height: 34px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+.welcome-features-section,
+.welcome-how-section,
+.welcome-testimonials-section,
+.welcome-pricing-section,
+.welcome-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
+/* ==========================================================================
    6. Responsive Adaptations
    ========================================================================== */
 /* Tablet Tier (768px - 1023px) */
