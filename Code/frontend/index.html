@@ -1903,7 +1903,10 @@
                                             </div>
                                             <span class="quota-meter-title">Trang OCR Chuyên Sâu</span>
                                         </div>
-                                        <span class="quota-percent-pill font-mono" id="quotaOcrPercent">28%</span>
+                                        <div class="quota-meter-badge-group">
+                                            <span class="quota-threshold-badge" id="quotaOcrThresholdBadge" style="display: none;"></span>
+                                            <span class="quota-percent-pill font-mono" id="quotaOcrPercent">28%</span>
+                                        </div>
                                     </div>
                                     <div class="quota-meter-values">
                                         <div class="quota-value-numbers font-mono">
@@ -1916,6 +1919,9 @@
                                             style="width: 28%;"></div>
                                     </div>
                                     <div class="quota-meter-note" id="quotaOcrNote">Đã sử dụng trong chu kỳ hiện tại</div>
+                                    <div class="quota-meter-cta-wrap" id="quotaOcrCtaWrap" style="display: none;">
+                                        <button type="button" class="btn-quota-meter-cta" id="btnQuotaOcrCta">Gia hạn hạn mức</button>
+                                    </div>
                                 </div>
 
                                 <!-- Meter 2: PDF File Upload Limit -->
@@ -1931,7 +1937,10 @@
                                             </div>
                                             <span class="quota-meter-title">Dung Lượng Tệp Tối Đa</span>
                                         </div>
-                                        <span class="quota-percent-pill font-mono quota-pill-active" id="quotaFileSizePercent">100 MB</span>
+                                        <div class="quota-meter-badge-group">
+                                            <span class="quota-threshold-badge" id="quotaFileSizeThresholdBadge" style="display: none;"></span>
+                                            <span class="quota-percent-pill font-mono quota-pill-active" id="quotaFileSizePercent">100 MB</span>
+                                        </div>
                                     </div>
                                     <div class="quota-meter-values">
                                         <div class="quota-value-numbers font-mono">
@@ -1957,7 +1966,10 @@
                                             </div>
                                             <span class="quota-meter-title">Trợ Lý AI Copilot</span>
                                         </div>
-                                        <span class="quota-percent-pill font-mono" id="quotaCopilotPercent">27%</span>
+                                        <div class="quota-meter-badge-group">
+                                            <span class="quota-threshold-badge" id="quotaCopilotThresholdBadge" style="display: none;"></span>
+                                            <span class="quota-percent-pill font-mono" id="quotaCopilotPercent">27%</span>
+                                        </div>
                                     </div>
                                     <div class="quota-meter-values">
                                         <div class="quota-value-numbers font-mono">
@@ -1970,6 +1982,9 @@
                                             style="width: 27%;"></div>
                                     </div>
                                     <div class="quota-meter-note" id="quotaCopilotNote">Hồi phục 15 câu sau mỗi 24 giờ</div>
+                                    <div class="quota-meter-cta-wrap" id="quotaCopilotCtaWrap" style="display: none;">
+                                        <button type="button" class="btn-quota-meter-cta" id="btnQuotaCopilotCta">Nâng cấp để thêm câu hỏi</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -138,6 +138,7 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
 
     // Meter 1: OCR
     meterOcrPages: new MockElement('meterOcrPages', 'div'),
+    quotaOcrThresholdBadge: new MockElement('quotaOcrThresholdBadge', 'span', ['quota-threshold-badge']),
     quotaOcrPercent: new MockElement('quotaOcrPercent', 'span', ['quota-percent-pill']),
     quotaOcrUsed: new MockElement('quotaOcrUsed', 'strong'),
     quotaOcrLimit: new MockElement('quotaOcrLimit', 'span'),
@@ -148,9 +149,12 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
       'aria-valuemax': '100',
     }),
     quotaOcrNote: new MockElement('quotaOcrNote', 'div'),
+    quotaOcrCtaWrap: new MockElement('quotaOcrCtaWrap', 'div'),
+    btnQuotaOcrCta: new MockElement('btnQuotaOcrCta', 'button'),
 
     // Meter 2: File Size
     meterFileSize: new MockElement('meterFileSize', 'div'),
+    quotaFileSizeThresholdBadge: new MockElement('quotaFileSizeThresholdBadge', 'span', ['quota-threshold-badge']),
     quotaFileSizePercent: new MockElement('quotaFileSizePercent', 'span', ['quota-percent-pill']),
     quotaFileSizeUsed: new MockElement('quotaFileSizeUsed', 'strong'),
     quotaFileSizeProgressFill: new MockElement('quotaFileSizeProgressFill', 'div', ['quota-progress-fill'], {
@@ -163,6 +167,7 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
 
     // Meter 3: Copilot
     meterAiCopilot: new MockElement('meterAiCopilot', 'div'),
+    quotaCopilotThresholdBadge: new MockElement('quotaCopilotThresholdBadge', 'span', ['quota-threshold-badge']),
     quotaCopilotPercent: new MockElement('quotaCopilotPercent', 'span', ['quota-percent-pill']),
     quotaCopilotUsed: new MockElement('quotaCopilotUsed', 'strong'),
     quotaCopilotLimit: new MockElement('quotaCopilotLimit', 'span'),
@@ -173,6 +178,8 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
       'aria-valuemax': '100',
     }),
     quotaCopilotNote: new MockElement('quotaCopilotNote', 'div'),
+    quotaCopilotCtaWrap: new MockElement('quotaCopilotCtaWrap', 'div'),
+    btnQuotaCopilotCta: new MockElement('btnQuotaCopilotCta', 'button'),
 
     // Checkout modal elements for checkout reuse
     pricingCheckoutModal: new MockElement('pricingCheckoutModal', 'div', [], { hidden: '', 'aria-hidden': 'true' }),
@@ -526,6 +533,178 @@ runTest('User Subscription Integration: Syncs quota state when role changes betw
   assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
   assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex');
   assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'none');
+});
+
+// 9. Exact Thresholds & Arithmetic Safety
+runTest('Arithmetic Safety: 0%, 50%, 69%, 70%, 80%, 90%, 91%, 100%, limit=0, NaN, and Infinity', () => {
+  const env = createQuotaTestEnv();
+  const pricing = env.sandbox.window.PDFLinguaPricing;
+
+  // Threshold calculations
+  assert.strictEqual(pricing.calculateQuotaPercent(0, 500), 0, '0 / 500 => 0%');
+  assert.strictEqual(pricing.calculateQuotaPercent(250, 500), 50, '250 / 500 => 50%');
+  assert.strictEqual(pricing.calculateQuotaPercent(345, 500), 69, '345 / 500 => 69%');
+  assert.strictEqual(pricing.calculateQuotaPercent(350, 500), 70, '350 / 500 => 70%');
+  assert.strictEqual(pricing.calculateQuotaPercent(400, 500), 80, '400 / 500 => 80%');
+  assert.strictEqual(pricing.calculateQuotaPercent(450, 500), 90, '450 / 500 => 90%');
+  assert.strictEqual(pricing.calculateQuotaPercent(455, 500), 91, '455 / 500 => 91%');
+  assert.strictEqual(pricing.calculateQuotaPercent(500, 500), 100, '500 / 500 => 100%');
+  assert.strictEqual(pricing.calculateQuotaPercent(550, 500), 100, 'Clamped at 100%');
+
+  // Edge cases: 0 limit, negative, null, NaN, Infinity
+  assert.strictEqual(pricing.calculateQuotaPercent(0, 0), 0, '0 / 0 => safe 0%');
+  assert.strictEqual(pricing.calculateQuotaPercent(10, 0), 0, 'Limit 0 => safe 0%');
+  assert.strictEqual(pricing.calculateQuotaPercent(-5, 100), 0, 'Negative used => safe 0%');
+  assert.strictEqual(pricing.calculateQuotaPercent(null, undefined), 0, 'Missing values => safe 0%');
+  assert.strictEqual(pricing.calculateQuotaPercent(NaN, 100), 0, 'NaN used => safe 0%');
+  assert.strictEqual(pricing.calculateQuotaPercent(100, Infinity), 0, 'Infinity limit => safe 0%');
+});
+
+// 10. Threshold Badges & 100% State UI
+runTest('Threshold Badges: Shows warning badge for 70-90% and danger badge for >90% and 100%', () => {
+  const env = createQuotaTestEnv();
+  const pricing = env.sandbox.window.PDFLinguaPricing;
+
+  // 69% (Under 70%): Badge hidden
+  pricing.renderQuotaDashboard({
+    account_state: 'pro',
+    ocr: { used: 345, limit: 500 },
+    file_size: { used: 100, limit: 100 },
+    ai_copilot: { used: 2, limit: 15 },
+  });
+  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '69%');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'none');
+  assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+  assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+
+  // 70% (Warning threshold): Badge visible
+  pricing.renderQuotaDashboard({
+    account_state: 'pro',
+    ocr: { used: 350, limit: 500 },
+    file_size: { used: 100, limit: 100 },
+    ai_copilot: { used: 2, limit: 15 },
+  });
+  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '70%');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp đạt hạn mức');
+  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'));
+
+  // 90% (Warning upper bound): Badge visible
+  pricing.renderQuotaDashboard({
+    account_state: 'pro',
+    ocr: { used: 450, limit: 500 },
+    file_size: { used: 100, limit: 100 },
+    ai_copilot: { used: 2, limit: 15 },
+  });
+  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '90%');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp đạt hạn mức');
+
+  // 91% (Over 90% threshold): Danger badge & CTA visible
+  pricing.renderQuotaDashboard({
+    account_state: 'pro',
+    ocr: { used: 455, limit: 500 },
+    file_size: { used: 100, limit: 100 },
+    ai_copilot: { used: 2, limit: 15 },
+  });
+  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '91%');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp hết hạn mức');
+  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'));
+  assert.strictEqual(env.elements.quotaOcrCtaWrap.style.display, 'flex');
+
+  // 100% (Limit reached): Danger badge "Đã đạt giới hạn"
+  pricing.renderQuotaDashboard({
+    account_state: 'pro',
+    ocr: { used: 500, limit: 500 },
+    file_size: { used: 100, limit: 100 },
+    ai_copilot: { used: 2, limit: 15 },
+  });
+  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '100%');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Đã đạt giới hạn');
+  assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '100%');
+  assert.strictEqual(env.elements.quotaOcrProgressFill.getAttribute('aria-valuenow'), '100');
+});
+
+// 11. Responsive Layout Breakpoints
+runTest('Responsive Layout: Desktop 3 cols (>1024px), Tablet 2 cols (768-1024px), Mobile 1 col (<=768px)', () => {
+  // Desktop base grid: 3 columns
+  assert(pricingCssSource.includes('grid-template-columns: repeat(3, minmax(0, 1fr))'), 'Missing 3-col Desktop layout');
+
+  // Tablet media query (<= 1024px): 2 columns
+  assert(pricingCssSource.includes('@media (max-width: 1024px)'), 'Missing 1024px tablet media query');
+  const tabletIndex = pricingCssSource.lastIndexOf('@media (max-width: 1024px)');
+  const tabletBlock = pricingCssSource.substring(tabletIndex, tabletIndex + 200);
+  assert(tabletBlock.includes('repeat(2, minmax(0, 1fr))'), 'Tablet query should have 2 columns');
+
+  // Mobile media query (<= 768px): 1 column
+  assert(pricingCssSource.includes('@media (max-width: 768px)'), 'Missing 768px mobile media query');
+  const mobileIndex = pricingCssSource.lastIndexOf('@media (max-width: 768px)');
+  const mobileBlock = pricingCssSource.substring(mobileIndex, mobileIndex + 1200);
+  assert(mobileBlock.includes('grid-template-columns: 1fr'), 'Mobile query should have 1 column');
+  assert(mobileBlock.includes('flex-direction: column'), 'Mobile query should stack header row');
+
+  // Small mobile media query (<= 480px)
+  assert(pricingCssSource.includes('@media (max-width: 480px)'), 'Missing 480px extra small mobile media query');
+});
+
+// 12. Accessibility, Tabular Numbers & Progress Motion
+runTest('Accessibility & Motion: Tabular nums, smooth cubic-bezier easing, and reduced motion override', () => {
+  // Tabular nums font variant
+  assert(pricingCssSource.includes('font-variant-numeric: tabular-nums'), 'Missing font-variant-numeric: tabular-nums');
+
+  // Motion physics: smooth cubic-bezier easing
+  assert(pricingCssSource.includes('cubic-bezier(0.16, 1, 0.3, 1)'), 'Missing smooth cubic-bezier motion physics');
+
+  // Reduced motion overrides
+  const reducedMotionIndex = pricingCssSource.lastIndexOf('@media (prefers-reduced-motion: reduce)');
+  assert(reducedMotionIndex !== -1, 'Missing @media (prefers-reduced-motion: reduce)');
+  const reducedBlock = pricingCssSource.substring(reducedMotionIndex, reducedMotionIndex + 400);
+  assert(reducedBlock.includes('.quota-progress-fill'), 'Reduced motion must include .quota-progress-fill');
+  assert(reducedBlock.includes('.quota-dashboard-card'), 'Reduced motion must include .quota-dashboard-card');
+  assert(reducedBlock.includes('transition: none !important'), 'Reduced motion must disable transitions');
+});
+
+// 13. Inline Meter Action Triggers
+runTest('Inline Meter Actions: Clicking inline quota CTA buttons triggers checkout modal', () => {
+  const env = createQuotaTestEnv({
+    pdfl_token: 'fake_jwt_token',
+    pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
+  });
+
+  let initiatedPlan = null;
+  env.sandbox.fetch = async (url, opts) => {
+    if (url.includes('/api/pricing/subscribe')) {
+      const body = JSON.parse(opts.body);
+      initiatedPlan = body.plan_code;
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            transaction_code: 'TX_INLINE_CTA',
+            plan_code: body.plan_code,
+            amount: 49000,
+            qr_code_url: 'https://img.vietqr.io/image/MB-0987654321-compact2.png',
+            expires_at: new Date(Date.now() + 900000).toISOString(),
+          },
+        }),
+      };
+    }
+    return { ok: true, json: async () => ({}) };
+  };
+
+  // Click inline OCR CTA
+  env.elements.btnQuotaOcrCta.click();
+  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline OCR CTA should initiate checkout');
+
+  // Click inline Copilot CTA
+  initiatedPlan = null;
+  env.elements.btnQuotaCopilotCta.click();
+  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline Copilot CTA should initiate checkout');
 });
 
 console.log('\n================================================================');

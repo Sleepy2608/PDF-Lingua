@@ -1797,6 +1797,69 @@
   let currentQuotaData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK.pro));
   let isQuotaDashboardInitialized = false;
 
+  function calculateQuotaPercent(usedVal, limitVal) {
+    const used = Number(usedVal);
+    const limit = Number(limitVal);
+    if (isNaN(used) || isNaN(limit) || !isFinite(used) || !isFinite(limit)) {
+      return 0;
+    }
+    if (limit <= 0) {
+      return 0;
+    }
+    const ratio = (used / limit) * 100;
+    if (isNaN(ratio) || !isFinite(ratio)) {
+      return 0;
+    }
+    return Math.min(100, Math.max(0, Math.round(ratio)));
+  }
+
+  function applyQuotaThresholdStyles(percent, fillEl, pillEl, badgeEl, ctaWrapEl, isZeroLimit) {
+    if (fillEl && fillEl.classList) {
+      fillEl.classList.remove('quota-fill-warning', 'quota-fill-danger');
+    }
+    if (pillEl && pillEl.classList) {
+      pillEl.classList.remove('quota-pill-warning', 'quota-pill-danger', 'quota-pill-active');
+    }
+
+    if (isZeroLimit) {
+      if (badgeEl) badgeEl.style.display = 'none';
+      if (ctaWrapEl) ctaWrapEl.style.display = 'none';
+      return;
+    }
+
+    if (percent > 90) {
+      if (fillEl && fillEl.classList) fillEl.classList.add('quota-fill-danger');
+      if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-danger');
+      if (badgeEl) {
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.textContent = percent >= 100 ? 'Đã đạt giới hạn' : 'Sắp hết hạn mức';
+        badgeEl.className = 'quota-threshold-badge badge-threshold-danger';
+      }
+      if (ctaWrapEl) {
+        ctaWrapEl.style.display = 'flex';
+      }
+    } else if (percent >= 70) {
+      if (fillEl && fillEl.classList) fillEl.classList.add('quota-fill-warning');
+      if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-warning');
+      if (badgeEl) {
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.textContent = 'Sắp đạt hạn mức';
+        badgeEl.className = 'quota-threshold-badge badge-threshold-warning';
+      }
+      if (ctaWrapEl) {
+        ctaWrapEl.style.display = 'none';
+      }
+    } else {
+      if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-active');
+      if (badgeEl) {
+        badgeEl.style.display = 'none';
+      }
+      if (ctaWrapEl) {
+        ctaWrapEl.style.display = 'none';
+      }
+    }
+  }
+
   function renderQuotaUsageDashboard(stateOrData, overrides) {
     let targetData;
     if (typeof stateOrData === 'string' && DEFAULT_QUOTA_MOCK[stateOrData]) {
@@ -1910,40 +1973,25 @@
     const quotaOcrLimit = document.getElementById('quotaOcrLimit');
     const quotaOcrProgressFill = document.getElementById('quotaOcrProgressFill');
     const quotaOcrNote = document.getElementById('quotaOcrNote');
+    const quotaOcrThresholdBadge = document.getElementById('quotaOcrThresholdBadge');
+    const quotaOcrCtaWrap = document.getElementById('quotaOcrCtaWrap');
 
-    const ocrUsed = targetData.ocr && typeof targetData.ocr.used === 'number' ? targetData.ocr.used : 0;
-    const ocrLimit = targetData.ocr && typeof targetData.ocr.limit === 'number' ? targetData.ocr.limit : 500;
-    const ocrPercent = Math.min(100, Math.max(0, Math.round((ocrUsed / (ocrLimit || 1)) * 100)));
+    const rawOcrUsed = targetData.ocr ? targetData.ocr.used : 0;
+    const rawOcrLimit = targetData.ocr ? targetData.ocr.limit : 500;
+    const ocrUsed = (isNaN(Number(rawOcrUsed)) || !isFinite(Number(rawOcrUsed)) || Number(rawOcrUsed) < 0) ? 0 : Number(rawOcrUsed);
+    const ocrLimit = (isNaN(Number(rawOcrLimit)) || !isFinite(Number(rawOcrLimit)) || Number(rawOcrLimit) < 0) ? 0 : Number(rawOcrLimit);
+    const ocrPercent = calculateQuotaPercent(ocrUsed, ocrLimit);
 
     if (quotaOcrUsed) quotaOcrUsed.textContent = String(ocrUsed);
     if (quotaOcrLimit) quotaOcrLimit.textContent = String(ocrLimit);
-    if (quotaOcrPercent) {
-      quotaOcrPercent.textContent = `${ocrPercent}%`;
-      if (quotaOcrPercent.classList) {
-        quotaOcrPercent.classList.remove('quota-pill-warning', 'quota-pill-danger', 'quota-pill-active');
-        if (ocrPercent > 90) {
-          quotaOcrPercent.classList.add('quota-pill-danger');
-        } else if (ocrPercent >= 70) {
-          quotaOcrPercent.classList.add('quota-pill-warning');
-        } else {
-          quotaOcrPercent.classList.add('quota-pill-active');
-        }
-      }
-    }
+    if (quotaOcrPercent) quotaOcrPercent.textContent = `${ocrPercent}%`;
     if (quotaOcrProgressFill) {
       quotaOcrProgressFill.style.width = `${ocrPercent}%`;
       if (typeof quotaOcrProgressFill.setAttribute === 'function') {
         quotaOcrProgressFill.setAttribute('aria-valuenow', String(ocrPercent));
       }
-      if (quotaOcrProgressFill.classList) {
-        quotaOcrProgressFill.classList.remove('quota-fill-warning', 'quota-fill-danger');
-        if (ocrPercent > 90) {
-          quotaOcrProgressFill.classList.add('quota-fill-danger');
-        } else if (ocrPercent >= 70) {
-          quotaOcrProgressFill.classList.add('quota-fill-warning');
-        }
-      }
     }
+    applyQuotaThresholdStyles(ocrPercent, quotaOcrProgressFill, quotaOcrPercent, quotaOcrThresholdBadge, quotaOcrCtaWrap, ocrLimit <= 0);
     if (quotaOcrNote && targetData.ocr && targetData.ocr.note) {
       quotaOcrNote.textContent = targetData.ocr.note;
     }
@@ -1953,10 +2001,13 @@
     const quotaFileSizeUsed = document.getElementById('quotaFileSizeUsed');
     const quotaFileSizeProgressFill = document.getElementById('quotaFileSizeProgressFill');
     const quotaFileSizeNote = document.getElementById('quotaFileSizeNote');
+    const quotaFileSizeThresholdBadge = document.getElementById('quotaFileSizeThresholdBadge');
 
-    const fileUsed = targetData.file_size ? targetData.file_size.used : 100;
-    const fileLimit = targetData.file_size ? targetData.file_size.limit : 100;
-    const filePercent = Math.min(100, Math.max(0, Math.round((fileLimit / 100) * 100)));
+    const rawFileUsed = targetData.file_size ? targetData.file_size.used : 100;
+    const rawFileLimit = targetData.file_size ? targetData.file_size.limit : 100;
+    const fileUsed = (isNaN(Number(rawFileUsed)) || !isFinite(Number(rawFileUsed)) || Number(rawFileUsed) < 0) ? 0 : Number(rawFileUsed);
+    const fileLimit = (isNaN(Number(rawFileLimit)) || !isFinite(Number(rawFileLimit)) || Number(rawFileLimit) < 0) ? 0 : Number(rawFileLimit);
+    const filePercent = calculateQuotaPercent(fileLimit, 100);
 
     if (quotaFileSizeUsed) {
       quotaFileSizeUsed.textContent = (targetData.file_size && targetData.file_size.display_used)
@@ -1977,6 +2028,9 @@
     if (quotaFileSizeNote && targetData.file_size && targetData.file_size.note) {
       quotaFileSizeNote.textContent = targetData.file_size.note;
     }
+    if (quotaFileSizeThresholdBadge) {
+      quotaFileSizeThresholdBadge.style.display = 'none';
+    }
 
     // 5. Quota Meter 3: AI Copilot
     const quotaCopilotPercent = document.getElementById('quotaCopilotPercent');
@@ -1984,40 +2038,25 @@
     const quotaCopilotLimit = document.getElementById('quotaCopilotLimit');
     const quotaCopilotProgressFill = document.getElementById('quotaCopilotProgressFill');
     const quotaCopilotNote = document.getElementById('quotaCopilotNote');
+    const quotaCopilotThresholdBadge = document.getElementById('quotaCopilotThresholdBadge');
+    const quotaCopilotCtaWrap = document.getElementById('quotaCopilotCtaWrap');
 
-    const copilotUsed = targetData.ai_copilot && typeof targetData.ai_copilot.used === 'number' ? targetData.ai_copilot.used : 0;
-    const copilotLimit = targetData.ai_copilot && typeof targetData.ai_copilot.limit === 'number' ? targetData.ai_copilot.limit : 0;
-    const copilotPercent = copilotLimit > 0 ? Math.min(100, Math.max(0, Math.round((copilotUsed / copilotLimit) * 100))) : 0;
+    const rawCopilotUsed = targetData.ai_copilot ? targetData.ai_copilot.used : 0;
+    const rawCopilotLimit = targetData.ai_copilot ? targetData.ai_copilot.limit : 0;
+    const copilotUsed = (isNaN(Number(rawCopilotUsed)) || !isFinite(Number(rawCopilotUsed)) || Number(rawCopilotUsed) < 0) ? 0 : Number(rawCopilotUsed);
+    const copilotLimit = (isNaN(Number(rawCopilotLimit)) || !isFinite(Number(rawCopilotLimit)) || Number(rawCopilotLimit) < 0) ? 0 : Number(rawCopilotLimit);
+    const copilotPercent = calculateQuotaPercent(copilotUsed, copilotLimit);
 
     if (quotaCopilotUsed) quotaCopilotUsed.textContent = String(copilotUsed);
     if (quotaCopilotLimit) quotaCopilotLimit.textContent = String(copilotLimit);
-    if (quotaCopilotPercent) {
-      quotaCopilotPercent.textContent = `${copilotPercent}%`;
-      if (quotaCopilotPercent.classList) {
-        quotaCopilotPercent.classList.remove('quota-pill-warning', 'quota-pill-danger', 'quota-pill-active');
-        if (copilotPercent > 90) {
-          quotaCopilotPercent.classList.add('quota-pill-danger');
-        } else if (copilotPercent >= 70) {
-          quotaCopilotPercent.classList.add('quota-pill-warning');
-        } else if (copilotPercent > 0) {
-          quotaCopilotPercent.classList.add('quota-pill-active');
-        }
-      }
-    }
+    if (quotaCopilotPercent) quotaCopilotPercent.textContent = `${copilotPercent}%`;
     if (quotaCopilotProgressFill) {
       quotaCopilotProgressFill.style.width = `${copilotPercent}%`;
       if (typeof quotaCopilotProgressFill.setAttribute === 'function') {
         quotaCopilotProgressFill.setAttribute('aria-valuenow', String(copilotPercent));
       }
-      if (quotaCopilotProgressFill.classList) {
-        quotaCopilotProgressFill.classList.remove('quota-fill-warning', 'quota-fill-danger');
-        if (copilotPercent > 90) {
-          quotaCopilotProgressFill.classList.add('quota-fill-danger');
-        } else if (copilotPercent >= 70) {
-          quotaCopilotProgressFill.classList.add('quota-fill-warning');
-        }
-      }
     }
+    applyQuotaThresholdStyles(copilotPercent, quotaCopilotProgressFill, quotaCopilotPercent, quotaCopilotThresholdBadge, quotaCopilotCtaWrap, copilotLimit <= 0);
     if (quotaCopilotNote && targetData.ai_copilot && targetData.ai_copilot.note) {
       quotaCopilotNote.textContent = targetData.ai_copilot.note;
     }
@@ -2055,6 +2094,23 @@
 
     if (btnQuotaWarningRenew) {
       btnQuotaWarningRenew.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    const btnQuotaOcrCta = document.getElementById('btnQuotaOcrCta');
+    const btnQuotaCopilotCta = document.getElementById('btnQuotaCopilotCta');
+
+    if (btnQuotaOcrCta) {
+      btnQuotaOcrCta.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    if (btnQuotaCopilotCta) {
+      btnQuotaCopilotCta.addEventListener('click', (e) => {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
         openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
       });
@@ -3046,6 +3102,7 @@
         currentInvoiceTransaction = tx;
       },
       generateReceiptHtml,
+      calculateQuotaPercent,
       renderQuotaDashboard: renderQuotaUsageDashboard,
       getQuotaDashboardState: () => ({
         stateKey: currentQuotaStateKey,
