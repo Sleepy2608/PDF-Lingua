@@ -283,23 +283,263 @@
         </section>
 
         <!-- 3. FEATURES BENTO GRID -->
-        <section class="welcome-section welcome-features-section" id="welcomeFeatures" aria-label="Tinh nang noi bat">
+        <section class="welcome-section welcome-features-section" id="welcomeFeatures" aria-label="Tính năng nổi bật">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <span class="welcome-section-tag">Cong Nghe Dot Pha</span>
+                    <span class="welcome-section-tag">Công Nghệ Đột Phá</span>
                     <h2 class="welcome-section-title">6 Trụ Cột Đột Phá Nâng Tầm Xử Lý Tài Liệu PDF</h2>
-                    <p class="welcome-section-subtitle">Giai quyet triet de tinh trang lech dong, vo khung va ao giac du lieu khi dich PDF.</p>
+                    <p class="welcome-section-subtitle">Giải quyết triệt để tình trạng lệch dòng, vỡ khung bảng biểu và ảo giác dữ liệu khi dịch thuật tài liệu kỹ thuật.</p>
+                </div>
+
+                <div class="welcome-bento-grid">
+                    <!-- Bento Card 1: Span 2 - Dịch Thuật Song Ngữ Bảo Tồn Bố Cục -->
+                    <div class="welcome-bento-card welcome-bento-span-2" id="bentoCardLayout">
+                        <div class="bento-card-content">
+                            <div class="bento-badge-group">
+                                <span class="bento-badge bento-badge-red">Bảo Tồn Bố Cục</span>
+                                <span class="bento-badge bento-badge-slate">Độ chính xác 94.5%</span>
+                            </div>
+                            <h3 class="bento-card-title">Dịch Thuật Song Ngữ Bảo Tồn 100% Cấu Trúc</h3>
+                            <p class="bento-card-desc">Bóc tách đa giác bao quanh từng khối nội dung. Giữ nguyên toàn bộ bảng biểu, biểu đồ, tiêu đề phân cấp và đối chiếu song song hai ngôn ngữ mà không làm xô lệch trang.</p>
+                        </div>
+                        <div class="bento-card-visual bento-visual-dual-sync">
+                            <div class="mini-sync-box">
+                                <div class="mini-sync-header">
+                                    <span class="mini-sync-pill en">Original (EN)</span>
+                                    <span class="mini-sync-arrow">↔</span>
+                                    <span class="mini-sync-pill vi">Bản Dịch (VI)</span>
+                                </div>
+                                <div class="mini-sync-body">
+                                    <div class="mini-sync-row active">
+                                        <div class="mini-sync-col">Multi-head attention mechanisms</div>
+                                        <div class="mini-sync-col">Cơ chế tập trung đa đầu</div>
+                                    </div>
+                                    <div class="mini-sync-row">
+                                        <div class="mini-sync-col">Preserving tabular topology</div>
+                                        <div class="mini-sync-col">Bảo tồn hình thái bảng biểu</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 2: Span 1 - OCR Tiếng Việt Chuyên Sâu -->
+                    <div class="welcome-bento-card welcome-bento-span-1" id="bentoCardOcr">
+                        <div class="bento-card-content">
+                            <div class="bento-badge-group">
+                                <span class="bento-badge bento-badge-blue">OCR Tiếng Việt</span>
+                            </div>
+                            <h3 class="bento-card-title">OCR Tiếng Việt Chuyên Sâu</h3>
+                            <p class="bento-card-desc">Khử nghiêng Deskew tự động và nhận dạng chính xác 99.2% dấu thanh tiếng Việt trên tài liệu quét mờ.</p>
+                        </div>
+                        <div class="bento-card-visual bento-visual-deskew">
+                            <div class="mini-gauge-box">
+                                <div class="mini-gauge-metric">
+                                    <span class="mini-gauge-num">99.2%</span>
+                                    <span class="mini-gauge-lbl">Độ chính xác dấu thanh</span>
+                                </div>
+                                <div class="mini-gauge-bar">
+                                    <div class="mini-gauge-fill" style="width: 99.2%;"></div>
+                                </div>
+                                <div class="mini-deskew-status">
+                                    <span class="mini-deskew-dot"></span>
+                                    <span>Góc nghiêng: 0.0° (Đã cân bằng)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 3: Span 2 - Trợ Lý AI Copilot Trích Dẫn Số Trang -->
+                    <div class="welcome-bento-card welcome-bento-span-2" id="bentoCardCopilot">
+                        <div class="bento-card-content">
+                            <div class="bento-badge-group">
+                                <span class="bento-badge bento-badge-blue">Trợ Lý AI Copilot</span>
+                                <span class="bento-badge bento-badge-green">Không Ảo Giác</span>
+                            </div>
+                            <h3 class="bento-card-title">Trợ Lý AI Copilot Trích Dẫn Số Trang</h3>
+                            <p class="bento-card-desc">Hỏi đáp trực tiếp trên nội dung tài liệu. AI đối chiếu ngữ cảnh chặt chẽ và luôn ghi rõ số trang, đoạn văn hoặc bảng biểu làm căn cứ trả lời.</p>
+                        </div>
+                        <div class="bento-card-visual bento-visual-chat">
+                            <div class="mini-chat-preview">
+                                <div class="mini-chat-bubble user">
+                                    <span>Phương pháp đánh giá độ trễ trong bài báo là gì?</span>
+                                </div>
+                                <div class="mini-chat-bubble bot">
+                                    <div class="mini-chat-bot-header">
+                                        <span class="mini-bot-name">PDF-Lingua Copilot</span>
+                                        <span class="mini-bot-source">Trang 4, Mục 3.2</span>
+                                    </div>
+                                    <span>Đo lường thời gian xử lý trung bình qua 100 lần thử nghiệm trên tệp đa cột, đạt 2.8s/trang.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 4: Span 1 - Tóm Tắt Map-Reduce Tài Liệu Lớn -->
+                    <div class="welcome-bento-card welcome-bento-span-1" id="bentoCardSummary">
+                        <div class="bento-card-content">
+                            <div class="bento-badge-group">
+                                <span class="bento-badge bento-badge-gold">Tóm Tắt Map-Reduce</span>
+                            </div>
+                            <h3 class="bento-card-title">Tóm Tắt Tài Liệu Lớn Siêu Tốc</h3>
+                            <p class="bento-card-desc">Thuật toán phân tán Map-Reduce tổng hợp tài liệu 50 trang thành báo cáo cô đọng chỉ trong 30 giây.</p>
+                        </div>
+                        <div class="bento-card-visual bento-visual-compression">
+                            <div class="mini-reduction-box">
+                                <div class="mini-reduction-flow">
+                                    <div class="reduction-step">
+                                        <span class="reduction-val">50 trang</span>
+                                        <span class="reduction-sub">Tệp gốc</span>
+                                    </div>
+                                    <span class="reduction-arrow">→</span>
+                                    <div class="reduction-step highlight">
+                                        <span class="reduction-val">2 trang</span>
+                                        <span class="reduction-sub">Cô đọng</span>
+                                    </div>
+                                </div>
+                                <div class="reduction-badge">Tiết kiệm 96% thời gian đọc</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 5: Span 1 - Xử Lý Hàng Loạt & Xuất DOCX -->
+                    <div class="welcome-bento-card welcome-bento-span-1" id="bentoCardBatch">
+                        <div class="bento-card-content">
+                            <div class="bento-badge-group">
+                                <span class="bento-badge bento-badge-slate">Đa Định Dạng</span>
+                            </div>
+                            <h3 class="bento-card-title">Xử Lý Hàng Loạt & Xuất DOCX</h3>
+                            <p class="bento-card-desc">Tải lên nhiều tệp cùng lúc, xử lý nền thông minh và xuất kết quả song ngữ sang Microsoft Word (.DOCX) hoặc ZIP.</p>
+                        </div>
+                        <div class="bento-card-visual bento-visual-queue">
+                            <div class="mini-queue-list">
+                                <div class="mini-queue-item done">
+                                    <span class="queue-icon-done">✓</span>
+                                    <span class="queue-name">thesis_chapter_1.pdf</span>
+                                    <span class="queue-tag">DOCX</span>
+                                </div>
+                                <div class="mini-queue-item done">
+                                    <span class="queue-icon-done">✓</span>
+                                    <span class="queue-name">patent_claims_2026.pdf</span>
+                                    <span class="queue-tag">ZIP</span>
+                                </div>
+                                <div class="mini-queue-item processing">
+                                    <span class="queue-spinner"></span>
+                                    <span class="queue-name">dataset_table_v2.pdf</span>
+                                    <span class="queue-tag">Đang xử lý</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 6: Span 2 - An Toàn & Bảo Mật Tuyệt Đối -->
+                    <div class="welcome-bento-card welcome-bento-span-2" id="bentoCardSecurity">
+                        <div class="bento-card-content">
+                            <div class="bento-badge-group">
+                                <span class="bento-badge bento-badge-green">Bảo Mật Cấp Doanh Nghiệp</span>
+                                <span class="bento-badge bento-badge-slate">Mã Hóa AES-256</span>
+                            </div>
+                            <h3 class="bento-card-title">An Toàn & Cô Lập Dữ Liệu Tuyệt Đối</h3>
+                            <p class="bento-card-desc">Mỗi người dùng được bảo vệ trong phân vùng Sandbox cô lập. Tài liệu được mã hóa đường truyền SSL và mã hóa lưu trữ AES-256, tự động hủy an toàn theo yêu cầu.</p>
+                        </div>
+                        <div class="bento-card-visual bento-visual-security">
+                            <div class="mini-security-grid">
+                                <div class="sec-item">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <span class="sec-lbl">AES-256 Bit</span>
+                                </div>
+                                <div class="sec-item">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    </svg>
+                                    <span class="sec-lbl">User ID Sandbox</span>
+                                </div>
+                                <div class="sec-item">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                    <span class="sec-lbl">Tự Động Hủy Tệp</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- 4. HOW IT WORKS -->
-        <section class="welcome-section welcome-how-it-works-section" id="welcomeHowItWorks" aria-label="Quy trinh hoat dong">
+        <section class="welcome-section welcome-how-it-works-section" id="welcomeHowItWorks" aria-label="Quy trình hoạt động">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <span class="welcome-section-tag">Huong Dan Nhanh</span>
+                    <span class="welcome-section-tag">Hướng Dẫn Nhanh</span>
                     <h2 class="welcome-section-title">Quy Trình 3 Bước Tinh Gọn</h2>
-                    <p class="welcome-section-subtitle">Chuyen doi tai lieu hoc thuat va phuc tap sang ban dich song ngu chi trong vai giay.</p>
+                    <p class="welcome-section-subtitle">Chuyển đổi tài liệu học thuật phức tạp sang bản dịch song ngữ bảo tồn bố cục chỉ trong vài thao tác đơn giản.</p>
+                </div>
+
+                <div class="welcome-steps-container">
+                    <div class="welcome-steps-progress" aria-hidden="true">
+                        <div class="steps-progress-line"></div>
+                    </div>
+                    <div class="welcome-steps-grid">
+                        <!-- Step 01 -->
+                        <div class="welcome-step-card" id="stepUpload">
+                            <div class="welcome-step-header">
+                                <span class="welcome-step-number">01</span>
+                                <div class="welcome-step-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="welcome-step-title">Tải Lên Tài Liệu</h3>
+                            <p class="welcome-step-desc">Kéo và thả file PDF số hoặc tài liệu quét scan trực tiếp vào không gian làm việc. Hệ thống tự động phân loại và chuẩn bị bóc tách.</p>
+                            <div class="welcome-step-meta">
+                                <span class="step-meta-chip">Hỗ trợ PDF đến 100MB</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 02 -->
+                        <div class="welcome-step-card" id="stepProcess">
+                            <div class="welcome-step-header">
+                                <span class="welcome-step-number">02</span>
+                                <div class="welcome-step-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="welcome-step-title">AI Bóc Tách & Dịch Thuật</h3>
+                            <p class="welcome-step-desc">Động cơ OCR tiếng Việt nhận diện chính xác từng khối văn bản và bảng biểu, chuyển ngữ song song với độ bảo tồn cấu trúc 94.5%.</p>
+                            <div class="welcome-step-meta">
+                                <span class="step-meta-chip">Tốc độ &lt; 2.8s / trang</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 03 -->
+                        <div class="welcome-step-card" id="stepExport">
+                            <div class="welcome-step-header">
+                                <span class="welcome-step-number">03</span>
+                                <div class="welcome-step-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="welcome-step-title">Đối Chiếu & Xuất Kết Quả</h3>
+                            <p class="welcome-step-desc">Xem song song hai cột cuộn đồng bộ, tương tác hỏi đáp với Trợ lý AI Copilot có trích dẫn nguồn và tải về file Word .DOCX hoặc ZIP.</p>
+                            <div class="welcome-step-meta">
+                                <span class="step-meta-chip">Định dạng DOCX, TXT, ZIP</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

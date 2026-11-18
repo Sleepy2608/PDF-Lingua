@@ -128,6 +128,19 @@
         });
       });
     }
+
+    // 5. Interactive Bento Micro-Visual Row Switcher
+    var bentoRows = document.querySelectorAll('.mini-sync-row');
+    if (bentoRows.length > 0) {
+      bentoRows.forEach(function (row) {
+        row.addEventListener('mouseenter', function () {
+          bentoRows.forEach(function (r) {
+            r.classList.remove('active');
+          });
+          row.classList.add('active');
+        });
+      });
+    }
   }
 
   // Self-initialization
