@@ -77,7 +77,7 @@ class MockElement {
     if (this.disabled) return;
     if (this.listeners['click']) {
       this.listeners['click'].forEach((fn) =>
-        fn({ target: this, preventDefault: () => {}, stopPropagation: () => {} })
+        fn({ target: this, preventDefault: () => { }, stopPropagation: () => { } })
       );
     }
   }
@@ -98,7 +98,11 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     pricingSection: new MockElement('pricingSection', 'section'),
     documentsSection: new MockElement('documentsSection', 'section'),
     historySection: new MockElement('historySection', 'section'),
+    sideNavPricingGroup: new MockElement('sideNavPricingGroup', 'li'),
     sideNavPricing: new MockElement('sideNavPricing', 'a', ['sidebar-nav-item']),
+    sideNavPricingPlans: new MockElement('sideNavPricingPlans', 'a', ['sidebar-submenu-item']),
+    sideNavPricingBilling: new MockElement('sideNavPricingBilling', 'a', ['sidebar-submenu-item']),
+    sideNavPricingQuota: new MockElement('sideNavPricingQuota', 'a', ['sidebar-submenu-item']),
     sideNavHome: new MockElement('sideNavHome', 'a', ['sidebar-nav-item']),
     sideNavTranslate: new MockElement('sideNavTranslate', 'a', ['sidebar-nav-item']),
     btnBillingMonthly: new MockElement('btnBillingMonthly', 'button', ['billing-toggle-btn', 'active']),
@@ -229,10 +233,18 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     checkoutSuccessExpiresAt: new MockElement('checkoutSuccessExpiresAt', 'strong'),
     btnCheckoutDone: new MockElement('btnCheckoutDone', 'button'),
     btnRetryCheckout: new MockElement('btnRetryCheckout', 'button'),
+    pricingMainTitle: new MockElement('pricingMainTitle', 'h1'),
+    pricingMainSubtitle: new MockElement('pricingMainSubtitle', 'p'),
+    btnPricingBackToPlans: new MockElement('btnPricingBackToPlans', 'button'),
     tabPricingPlans: new MockElement('tabPricingPlans', 'button', ['active'], { 'aria-selected': 'true' }),
     tabBillingHistory: new MockElement('tabBillingHistory', 'button', [], { 'aria-selected': 'false' }),
+    tabQuotaDashboard: new MockElement('tabQuotaDashboard', 'button', [], { 'aria-selected': 'false' }),
     pricingPlansContainer: new MockElement('pricingPlansContainer', 'div'),
     billingHistoryContainer: new MockElement('billingHistoryContainer', 'div'),
+    quotaDashboardContainer: new MockElement('quotaDashboardContainer', 'div'),
+    quotaGuestState: new MockElement('quotaGuestState', 'div'),
+    btnQuotaGuestLogin: new MockElement('btnQuotaGuestLogin', 'button'),
+    btnQuotaGuestViewPlans: new MockElement('btnQuotaGuestViewPlans', 'button'),
   };
 
   const documentListeners = {};
@@ -241,6 +253,13 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     querySelectorAll: (selector) => {
       if (selector === '.sidebar-nav-item') {
         return [elements.sideNavHome, elements.sideNavTranslate, elements.sideNavPricing].filter(Boolean);
+      }
+      if (selector === '.sidebar-submenu-item') {
+        return [
+          elements.sideNavPricingPlans,
+          elements.sideNavPricingBilling,
+          elements.sideNavPricingQuota,
+        ].filter(Boolean);
       }
       return [];
     },
@@ -275,11 +294,11 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     localStorage: mockStorage,
     sessionStorage: mockStorage,
     fetch: customFetch || (async () => ({ ok: true, json: async () => ({}) })),
-    console: { log: () => {}, error: () => {}, warn: () => {} },
+    console: { log: () => { }, error: () => { }, warn: () => { } },
     setTimeout: (fn) => setTimeout(fn, 0),
-    clearTimeout: () => {},
+    clearTimeout: () => { },
     setInterval: () => 123,
-    clearInterval: () => {},
+    clearInterval: () => { },
     showToast: mockWindow.showToast,
     notifyUser: (msg, type) => { notifications.push({ msg, type }); },
   };
@@ -319,415 +338,415 @@ async function runAllTests() {
 
   // 1. Static HTML & CSS Validation
   await runTest('HTML & CSS: Quota Usage Dashboard structure, Pro VIP badge, and progress bars exist', () => {
-  assert(htmlSource.includes('id="quotaDashboardCard"'), 'Missing #quotaDashboardCard in index.html');
-  assert(htmlSource.includes('id="quotaWarningBanner"'), 'Missing #quotaWarningBanner in index.html');
-  assert(htmlSource.includes('id="quotaProHeader"'), 'Missing #quotaProHeader in index.html');
-  assert(htmlSource.includes('id="quotaFreeHeader"'), 'Missing #quotaFreeHeader in index.html');
-  assert(htmlSource.includes('class="badge-pro-vip"'), 'Missing .badge-pro-vip in index.html');
-  assert(htmlSource.includes('id="quotaMetersGrid"'), 'Missing #quotaMetersGrid in index.html');
-  assert(htmlSource.includes('id="meterOcrPages"'), 'Missing #meterOcrPages in index.html');
-  assert(htmlSource.includes('id="meterFileSize"'), 'Missing #meterFileSize in index.html');
-  assert(htmlSource.includes('id="meterAiCopilot"'), 'Missing #meterAiCopilot in index.html');
+    assert(htmlSource.includes('id="quotaDashboardCard"'), 'Missing #quotaDashboardCard in index.html');
+    assert(htmlSource.includes('id="quotaWarningBanner"'), 'Missing #quotaWarningBanner in index.html');
+    assert(htmlSource.includes('id="quotaProHeader"'), 'Missing #quotaProHeader in index.html');
+    assert(htmlSource.includes('id="quotaFreeHeader"'), 'Missing #quotaFreeHeader in index.html');
+    assert(htmlSource.includes('class="badge-pro-vip"'), 'Missing .badge-pro-vip in index.html');
+    assert(htmlSource.includes('id="quotaMetersGrid"'), 'Missing #quotaMetersGrid in index.html');
+    assert(htmlSource.includes('id="meterOcrPages"'), 'Missing #meterOcrPages in index.html');
+    assert(htmlSource.includes('id="meterFileSize"'), 'Missing #meterFileSize in index.html');
+    assert(htmlSource.includes('id="meterAiCopilot"'), 'Missing #meterAiCopilot in index.html');
 
-  // CSS classes
-  assert(pricingCssSource.includes('.quota-dashboard-card'), 'Missing .quota-dashboard-card CSS');
-  assert(pricingCssSource.includes('.badge-pro-vip'), 'Missing .badge-pro-vip CSS');
-  assert(pricingCssSource.includes('.quota-meters-grid'), 'Missing .quota-meters-grid CSS');
-  assert(pricingCssSource.includes('.quota-progress-track'), 'Missing .quota-progress-track CSS');
-  assert(pricingCssSource.includes('.quota-progress-fill'), 'Missing .quota-progress-fill CSS');
-  assert(pricingCssSource.includes('.quota-warning-banner'), 'Missing .quota-warning-banner CSS');
+    // CSS classes
+    assert(pricingCssSource.includes('.quota-dashboard-card'), 'Missing .quota-dashboard-card CSS');
+    assert(pricingCssSource.includes('.badge-pro-vip'), 'Missing .badge-pro-vip CSS');
+    assert(pricingCssSource.includes('.quota-meters-grid'), 'Missing .quota-meters-grid CSS');
+    assert(pricingCssSource.includes('.quota-progress-track'), 'Missing .quota-progress-track CSS');
+    assert(pricingCssSource.includes('.quota-progress-fill'), 'Missing .quota-progress-fill CSS');
+    assert(pricingCssSource.includes('.quota-warning-banner'), 'Missing .quota-warning-banner CSS');
 
-  // Accessible progress bar roles in HTML
-  assert(htmlSource.includes('role="progressbar"'), 'Missing role="progressbar" in quota progress bars');
-  assert(htmlSource.includes('aria-valuemin="0"'), 'Missing aria-valuemin="0"');
-  assert(htmlSource.includes('aria-valuemax="100"'), 'Missing aria-valuemax="100"');
-});
+    // Accessible progress bar roles in HTML
+    assert(htmlSource.includes('role="progressbar"'), 'Missing role="progressbar" in quota progress bars');
+    assert(htmlSource.includes('aria-valuemin="0"'), 'Missing aria-valuemin="0"');
+    assert(htmlSource.includes('aria-valuemax="100"'), 'Missing aria-valuemax="100"');
+  });
 
-// 2. Pro VIP State Rendering
+  // 2. Pro VIP State Rendering
   await runTest('Pro VIP State: Renders plan name, dates, countdown badge, and Pro quota meters', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  pricing.setQuotaMockState('pro');
-  const state = pricing.getQuotaDashboardState();
+    pricing.setQuotaMockState('pro');
+    const state = pricing.getQuotaDashboardState();
 
-  assert.strictEqual(state.stateKey, 'pro', 'State key should be pro');
-  assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex', 'Quota card should be visible');
-  assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex', 'Pro header should be visible');
-  assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'none', 'Free header should be hidden');
-  assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'none', 'Warning banner should be hidden');
+    assert.strictEqual(state.stateKey, 'pro', 'State key should be pro');
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex', 'Quota card should be visible');
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex', 'Pro header should be visible');
+    assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'none', 'Free header should be hidden');
+    assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'none', 'Warning banner should be hidden');
 
-  assert.strictEqual(env.elements.quotaPlanName.textContent, 'Gói Pro Hàng Tháng');
-  assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Còn 28 ngày');
-  assert(!env.elements.quotaDaysRemainingBadge.classList.contains('pill-expired'));
-  assert(!env.elements.quotaDaysRemainingBadge.classList.contains('pill-expiring'));
+    assert.strictEqual(env.elements.quotaPlanName.textContent, 'Gói Pro Hàng Tháng');
+    assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Còn 28 ngày');
+    assert(!env.elements.quotaDaysRemainingBadge.classList.contains('pill-expired'));
+    assert(!env.elements.quotaDaysRemainingBadge.classList.contains('pill-expiring'));
 
-  // Quota Meter 1: OCR (142 / 500 => 28%)
-  assert.strictEqual(env.elements.quotaOcrUsed.textContent, '142');
-  assert.strictEqual(env.elements.quotaOcrLimit.textContent, '500');
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '28%');
-  assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '28%');
-  assert.strictEqual(env.elements.quotaOcrProgressFill.getAttribute('aria-valuenow'), '28');
+    // Quota Meter 1: OCR (142 / 500 => 28%)
+    assert.strictEqual(env.elements.quotaOcrUsed.textContent, '142');
+    assert.strictEqual(env.elements.quotaOcrLimit.textContent, '500');
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '28%');
+    assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '28%');
+    assert.strictEqual(env.elements.quotaOcrProgressFill.getAttribute('aria-valuenow'), '28');
 
-  // Quota Meter 2: File Size (100 MB max)
-  assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '100 MB');
-  assert.strictEqual(env.elements.quotaFileSizeProgressFill.style.width, '100%');
+    // Quota Meter 2: File Size (100 MB max)
+    assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '100 MB');
+    assert.strictEqual(env.elements.quotaFileSizeProgressFill.style.width, '100%');
 
-  // Quota Meter 3: Copilot (4 / 15 => 27%)
-  assert.strictEqual(env.elements.quotaCopilotUsed.textContent, '4');
-  assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '15');
-  assert.strictEqual(env.elements.quotaCopilotPercent.textContent, '27%');
-  assert.strictEqual(env.elements.quotaCopilotProgressFill.style.width, '27%');
-});
+    // Quota Meter 3: Copilot (4 / 15 => 27%)
+    assert.strictEqual(env.elements.quotaCopilotUsed.textContent, '4');
+    assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '15');
+    assert.strictEqual(env.elements.quotaCopilotPercent.textContent, '27%');
+    assert.strictEqual(env.elements.quotaCopilotProgressFill.style.width, '27%');
+  });
 
-// 3. Free Tier State Rendering
+  // 3. Free Tier State Rendering
   await runTest('Free Tier State: Renders Free header, hides Pro header, displays Free limits', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  pricing.setQuotaMockState('free');
-  const state = pricing.getQuotaDashboardState();
+    pricing.setQuotaMockState('free');
+    const state = pricing.getQuotaDashboardState();
 
-  assert.strictEqual(state.stateKey, 'free', 'State key should be free');
-  assert.strictEqual(env.elements.quotaProHeader.style.display, 'none', 'Pro header should be hidden');
-  assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'flex', 'Free header should be visible');
-  assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'none', 'Warning banner should be hidden');
+    assert.strictEqual(state.stateKey, 'free', 'State key should be free');
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'none', 'Pro header should be hidden');
+    assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'flex', 'Free header should be visible');
+    assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'none', 'Warning banner should be hidden');
 
-  // Free limits: 25 / 100 OCR pages (25%), 20 MB file size (20%), 0 Copilot
-  assert.strictEqual(env.elements.quotaOcrUsed.textContent, '25');
-  assert.strictEqual(env.elements.quotaOcrLimit.textContent, '100');
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '25%');
-  assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '25%');
+    // Free limits: 25 / 100 OCR pages (25%), 20 MB file size (20%), 0 Copilot
+    assert.strictEqual(env.elements.quotaOcrUsed.textContent, '25');
+    assert.strictEqual(env.elements.quotaOcrLimit.textContent, '100');
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '25%');
+    assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '25%');
 
-  assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '20 MB');
-  assert.strictEqual(env.elements.quotaFileSizeProgressFill.style.width, '20%');
+    assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '20 MB');
+    assert.strictEqual(env.elements.quotaFileSizeProgressFill.style.width, '20%');
 
-  assert.strictEqual(env.elements.quotaCopilotUsed.textContent, '0');
-  assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '0');
-  assert.strictEqual(env.elements.quotaCopilotPercent.textContent, '0%');
-});
+    assert.strictEqual(env.elements.quotaCopilotUsed.textContent, '0');
+    assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '0');
+    assert.strictEqual(env.elements.quotaCopilotPercent.textContent, '0%');
+  });
 
-// 4. Expiring Soon State
+  // 4. Expiring Soon State
   await runTest('Expiring Soon State: Displays warning banner and pill-expiring countdown badge', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  pricing.setQuotaMockState('expiring');
-  const state = pricing.getQuotaDashboardState();
+    pricing.setQuotaMockState('expiring');
+    const state = pricing.getQuotaDashboardState();
 
-  assert.strictEqual(state.stateKey, 'expiring');
-  assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'flex', 'Warning banner should be displayed');
-  assert(!env.elements.quotaWarningBanner.classList.contains('banner-danger'), 'Should not be danger level');
-  assert.strictEqual(env.elements.quotaWarningTitle.textContent, 'Gói dịch vụ sắp hết hạn');
+    assert.strictEqual(state.stateKey, 'expiring');
+    assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'flex', 'Warning banner should be displayed');
+    assert(!env.elements.quotaWarningBanner.classList.contains('banner-danger'), 'Should not be danger level');
+    assert.strictEqual(env.elements.quotaWarningTitle.textContent, 'Gói dịch vụ sắp hết hạn');
 
-  assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Còn 3 ngày');
-  assert(env.elements.quotaDaysRemainingBadge.classList.contains('pill-expiring'), 'Should have pill-expiring class');
+    assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Còn 3 ngày');
+    assert(env.elements.quotaDaysRemainingBadge.classList.contains('pill-expiring'), 'Should have pill-expiring class');
 
-  // Meter warning threshold check: 410 / 500 = 82% (>= 70% threshold)
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '82%');
-  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'), 'Fill should have warning class');
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'), 'Pill should have warning class');
-});
+    // Meter warning threshold check: 410 / 500 = 82% (>= 70% threshold)
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '82%');
+    assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'), 'Fill should have warning class');
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'), 'Pill should have warning class');
+  });
 
-// 5. Expired State
+  // 5. Expired State
   await runTest('Expired State: Displays danger warning banner and pill-expired countdown badge', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  pricing.setQuotaMockState('expired');
-  const state = pricing.getQuotaDashboardState();
+    pricing.setQuotaMockState('expired');
+    const state = pricing.getQuotaDashboardState();
 
-  assert.strictEqual(state.stateKey, 'expired');
-  assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'flex');
-  assert(env.elements.quotaWarningBanner.classList.contains('banner-danger'), 'Banner should have danger class');
-  assert.strictEqual(env.elements.quotaWarningTitle.textContent, 'Gói dịch vụ đã hết hạn');
+    assert.strictEqual(state.stateKey, 'expired');
+    assert.strictEqual(env.elements.quotaWarningBanner.style.display, 'flex');
+    assert(env.elements.quotaWarningBanner.classList.contains('banner-danger'), 'Banner should have danger class');
+    assert.strictEqual(env.elements.quotaWarningTitle.textContent, 'Gói dịch vụ đã hết hạn');
 
-  assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Đã hết hạn');
-  assert(env.elements.quotaDaysRemainingBadge.classList.contains('pill-expired'), 'Badge should have pill-expired class');
+    assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Đã hết hạn');
+    assert(env.elements.quotaDaysRemainingBadge.classList.contains('pill-expired'), 'Badge should have pill-expired class');
 
-  // OCR at 500 / 500 = 100% (> 90% threshold => danger)
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '100%');
-  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'), 'Fill should have danger class');
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'), 'Pill should have danger class');
-});
+    // OCR at 500 / 500 = 100% (> 90% threshold => danger)
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '100%');
+    assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'), 'Fill should have danger class');
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'), 'Pill should have danger class');
+  });
 
-// 6. Color Thresholds Logic
+  // 6. Color Thresholds Logic
   await runTest('Meter Progress Bars: Correct color thresholds for <70%, 70-90%, >90%', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  // Custom data with 65% OCR (normal)
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 325, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
+    // Custom data with 65% OCR (normal)
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 325, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+    assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-active'));
+
+    // Custom data with 75% OCR (warning)
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 375, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'));
+
+    // Custom data with 95% OCR (danger)
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 475, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'));
   });
-  assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
-  assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-active'));
 
-  // Custom data with 75% OCR (warning)
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 375, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
-  });
-  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'));
-
-  // Custom data with 95% OCR (danger)
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 475, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
-  });
-  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'));
-});
-
-// 7. Action Buttons & Checkout Modal Triggers
+  // 7. Action Buttons & Checkout Modal Triggers
   await runTest('Action Buttons: Clicking Renew, Upgrade Yearly, Free CTA, and Warning Renew triggers checkout', () => {
-  const env = createQuotaTestEnv({
-    pdfl_token: 'fake_jwt_token',
-    pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
+    const env = createQuotaTestEnv({
+      pdfl_token: 'fake_jwt_token',
+      pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
+    });
+
+    let initiatedPlan = null;
+    env.sandbox.fetch = async (url, opts) => {
+      if (url.includes('/api/pricing/subscribe')) {
+        const body = JSON.parse(opts.body);
+        initiatedPlan = body.plan_code;
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              transaction_code: 'TX_QUOTA_TEST',
+              plan_code: body.plan_code,
+              amount: 49000,
+              qr_code_url: 'https://img.vietqr.io/image/MB-0987654321-compact2.png',
+              expires_at: new Date(Date.now() + 900000).toISOString(),
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    };
+
+    // Click Renew Plan (Monthly default)
+    env.elements.btnQuotaRenew.click();
+    assert.strictEqual(initiatedPlan, 'pro_monthly', 'Renew button should initiate pro_monthly transaction');
+
+    // Reset cycle to monthly for Free CTA test
+    env.sandbox.window.PDFLinguaPricing.setBillingCycle('monthly');
+    env.elements.btnQuotaUpgradeFreeCta.click();
+    assert.strictEqual(initiatedPlan, 'pro_monthly', 'Free CTA should initiate pro_monthly transaction');
+
+    // Click Warning Renew
+    env.elements.btnQuotaWarningRenew.click();
+    assert.strictEqual(initiatedPlan, 'pro_monthly', 'Warning Renew button should initiate pro_monthly transaction');
+
+    // Click Upgrade Yearly
+    env.elements.btnQuotaUpgradeYearly.click();
+    assert.strictEqual(initiatedPlan, 'pro_yearly', 'Upgrade Yearly button should initiate pro_yearly transaction');
   });
 
-  let initiatedPlan = null;
-  env.sandbox.fetch = async (url, opts) => {
-    if (url.includes('/api/pricing/subscribe')) {
-      const body = JSON.parse(opts.body);
-      initiatedPlan = body.plan_code;
-      return {
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: {
-            transaction_code: 'TX_QUOTA_TEST',
-            plan_code: body.plan_code,
-            amount: 49000,
-            qr_code_url: 'https://img.vietqr.io/image/MB-0987654321-compact2.png',
-            expires_at: new Date(Date.now() + 900000).toISOString(),
-          },
-        }),
-      };
-    }
-    return { ok: true, json: async () => ({}) };
-  };
-
-  // Click Renew Plan (Monthly default)
-  env.elements.btnQuotaRenew.click();
-  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Renew button should initiate pro_monthly transaction');
-
-  // Reset cycle to monthly for Free CTA test
-  env.sandbox.window.PDFLinguaPricing.setBillingCycle('monthly');
-  env.elements.btnQuotaUpgradeFreeCta.click();
-  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Free CTA should initiate pro_monthly transaction');
-
-  // Click Warning Renew
-  env.elements.btnQuotaWarningRenew.click();
-  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Warning Renew button should initiate pro_monthly transaction');
-
-  // Click Upgrade Yearly
-  env.elements.btnQuotaUpgradeYearly.click();
-  assert.strictEqual(initiatedPlan, 'pro_yearly', 'Upgrade Yearly button should initiate pro_yearly transaction');
-});
-
-// 8. Integration with Subscription Sync
+  // 8. Integration with Subscription Sync
   await runTest('User Subscription Integration: Syncs quota state when role changes between Guest, Free, and Pro', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  // Guest: Card is hidden
-  env.sandbox.window.dispatchEvent({ type: 'pdfl:auth-change', detail: { user: null } });
-  assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'none', 'Guest should have quota dashboard hidden');
+    // Guest: Card is hidden
+    env.sandbox.window.dispatchEvent({ type: 'pdfl:auth-change', detail: { user: null } });
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'none', 'Guest should have quota dashboard hidden');
 
-  // Free user: Card shows Free limits
-  pricing.renderQuotaDashboard('free');
-  assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
-  assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'flex');
-  assert.strictEqual(env.elements.quotaProHeader.style.display, 'none');
+    // Free user: Card shows Free limits
+    pricing.renderQuotaDashboard('free');
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'none');
 
-  // Pro user: Card shows Pro VIP status
-  pricing.renderQuotaDashboard('pro');
-  assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
-  assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex');
-  assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'none');
-});
+    // Pro user: Card shows Pro VIP status
+    pricing.renderQuotaDashboard('pro');
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'none');
+  });
 
-// 9. Exact Thresholds & Arithmetic Safety
+  // 9. Exact Thresholds & Arithmetic Safety
   await runTest('Arithmetic Safety: 0%, 50%, 69%, 70%, 80%, 90%, 91%, 100%, limit=0, NaN, and Infinity', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  // Threshold calculations
-  assert.strictEqual(pricing.calculateQuotaPercent(0, 500), 0, '0 / 500 => 0%');
-  assert.strictEqual(pricing.calculateQuotaPercent(250, 500), 50, '250 / 500 => 50%');
-  assert.strictEqual(pricing.calculateQuotaPercent(345, 500), 69, '345 / 500 => 69%');
-  assert.strictEqual(pricing.calculateQuotaPercent(350, 500), 70, '350 / 500 => 70%');
-  assert.strictEqual(pricing.calculateQuotaPercent(400, 500), 80, '400 / 500 => 80%');
-  assert.strictEqual(pricing.calculateQuotaPercent(450, 500), 90, '450 / 500 => 90%');
-  assert.strictEqual(pricing.calculateQuotaPercent(455, 500), 91, '455 / 500 => 91%');
-  assert.strictEqual(pricing.calculateQuotaPercent(500, 500), 100, '500 / 500 => 100%');
-  assert.strictEqual(pricing.calculateQuotaPercent(550, 500), 100, 'Clamped at 100%');
+    // Threshold calculations
+    assert.strictEqual(pricing.calculateQuotaPercent(0, 500), 0, '0 / 500 => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(250, 500), 50, '250 / 500 => 50%');
+    assert.strictEqual(pricing.calculateQuotaPercent(345, 500), 69, '345 / 500 => 69%');
+    assert.strictEqual(pricing.calculateQuotaPercent(350, 500), 70, '350 / 500 => 70%');
+    assert.strictEqual(pricing.calculateQuotaPercent(400, 500), 80, '400 / 500 => 80%');
+    assert.strictEqual(pricing.calculateQuotaPercent(450, 500), 90, '450 / 500 => 90%');
+    assert.strictEqual(pricing.calculateQuotaPercent(455, 500), 91, '455 / 500 => 91%');
+    assert.strictEqual(pricing.calculateQuotaPercent(500, 500), 100, '500 / 500 => 100%');
+    assert.strictEqual(pricing.calculateQuotaPercent(550, 500), 100, 'Clamped at 100%');
 
-  // Edge cases: 0 limit, negative, null, NaN, Infinity
-  assert.strictEqual(pricing.calculateQuotaPercent(0, 0), 0, '0 / 0 => safe 0%');
-  assert.strictEqual(pricing.calculateQuotaPercent(10, 0), 0, 'Limit 0 => safe 0%');
-  assert.strictEqual(pricing.calculateQuotaPercent(-5, 100), 0, 'Negative used => safe 0%');
-  assert.strictEqual(pricing.calculateQuotaPercent(null, undefined), 0, 'Missing values => safe 0%');
-  assert.strictEqual(pricing.calculateQuotaPercent(NaN, 100), 0, 'NaN used => safe 0%');
-  assert.strictEqual(pricing.calculateQuotaPercent(100, Infinity), 0, 'Infinity limit => safe 0%');
-});
+    // Edge cases: 0 limit, negative, null, NaN, Infinity
+    assert.strictEqual(pricing.calculateQuotaPercent(0, 0), 0, '0 / 0 => safe 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(10, 0), 0, 'Limit 0 => safe 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(-5, 100), 0, 'Negative used => safe 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(null, undefined), 0, 'Missing values => safe 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(NaN, 100), 0, 'NaN used => safe 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(100, Infinity), 0, 'Infinity limit => safe 0%');
+  });
 
-// 10. Threshold Badges & 100% State UI
+  // 10. Threshold Badges & 100% State UI
   await runTest('Threshold Badges: Shows warning badge for 70-90% and danger badge for >90% and 100%', () => {
-  const env = createQuotaTestEnv();
-  const pricing = env.sandbox.window.PDFLinguaPricing;
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
 
-  // 69% (Under 70%): Badge hidden
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 345, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
+    // 69% (Under 70%): Badge hidden
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 345, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '69%');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'none');
+    assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+    assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+
+    // 70% (Warning threshold): Badge visible
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 350, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '70%');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp đạt hạn mức');
+    assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'));
+
+    // 90% (Warning upper bound): Badge visible
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 450, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '90%');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp đạt hạn mức');
+
+    // 91% (Over 90% threshold): Danger badge & CTA visible
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 455, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '91%');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp hết hạn mức');
+    assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+    assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'));
+    assert.strictEqual(env.elements.quotaOcrCtaWrap.style.display, 'flex');
+
+    // 100% (Limit reached): Danger badge "Đã đạt giới hạn"
+    pricing.renderQuotaDashboard({
+      account_state: 'pro',
+      ocr: { used: 500, limit: 500 },
+      file_size: { used: 100, limit: 100 },
+      ai_copilot: { used: 2, limit: 15 },
+    });
+    assert.strictEqual(env.elements.quotaOcrPercent.textContent, '100%');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
+    assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Đã đạt giới hạn');
+    assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '100%');
+    assert.strictEqual(env.elements.quotaOcrProgressFill.getAttribute('aria-valuenow'), '100');
   });
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '69%');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'none');
-  assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
-  assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
 
-  // 70% (Warning threshold): Badge visible
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 350, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
-  });
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '70%');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp đạt hạn mức');
-  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'));
-
-  // 90% (Warning upper bound): Badge visible
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 450, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
-  });
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '90%');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp đạt hạn mức');
-
-  // 91% (Over 90% threshold): Danger badge & CTA visible
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 455, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
-  });
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '91%');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Sắp hết hạn mức');
-  assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
-  assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'));
-  assert.strictEqual(env.elements.quotaOcrCtaWrap.style.display, 'flex');
-
-  // 100% (Limit reached): Danger badge "Đã đạt giới hạn"
-  pricing.renderQuotaDashboard({
-    account_state: 'pro',
-    ocr: { used: 500, limit: 500 },
-    file_size: { used: 100, limit: 100 },
-    ai_copilot: { used: 2, limit: 15 },
-  });
-  assert.strictEqual(env.elements.quotaOcrPercent.textContent, '100%');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.style.display, 'inline-flex');
-  assert.strictEqual(env.elements.quotaOcrThresholdBadge.textContent, 'Đã đạt giới hạn');
-  assert.strictEqual(env.elements.quotaOcrProgressFill.style.width, '100%');
-  assert.strictEqual(env.elements.quotaOcrProgressFill.getAttribute('aria-valuenow'), '100');
-});
-
-// 11. Responsive Layout Breakpoints
+  // 11. Responsive Layout Breakpoints
   await runTest('Responsive Layout: Desktop 3 cols (>1024px), Tablet 2 cols (768-1024px), Mobile 1 col (<=768px)', () => {
-  // Desktop base grid: 3 columns
-  assert(pricingCssSource.includes('grid-template-columns: repeat(3, minmax(0, 1fr))'), 'Missing 3-col Desktop layout');
+    // Desktop base grid: 3 columns
+    assert(pricingCssSource.includes('grid-template-columns: repeat(3, minmax(0, 1fr))'), 'Missing 3-col Desktop layout');
 
-  // Tablet media query (<= 1024px): 2 columns
-  assert(pricingCssSource.includes('@media (max-width: 1024px)'), 'Missing 1024px tablet media query');
-  const tabletIndex = pricingCssSource.lastIndexOf('@media (max-width: 1024px)');
-  const tabletBlock = pricingCssSource.substring(tabletIndex, tabletIndex + 200);
-  assert(tabletBlock.includes('repeat(2, minmax(0, 1fr))'), 'Tablet query should have 2 columns');
+    // Tablet media query (<= 1024px): 2 columns
+    assert(pricingCssSource.includes('@media (max-width: 1024px)'), 'Missing 1024px tablet media query');
+    const tabletIndex = pricingCssSource.lastIndexOf('@media (max-width: 1024px)');
+    const tabletBlock = pricingCssSource.substring(tabletIndex, tabletIndex + 200);
+    assert(tabletBlock.includes('repeat(2, minmax(0, 1fr))'), 'Tablet query should have 2 columns');
 
-  // Mobile media query (<= 768px): 1 column
-  assert(pricingCssSource.includes('@media (max-width: 768px)'), 'Missing 768px mobile media query');
-  const mobileIndex = pricingCssSource.lastIndexOf('@media (max-width: 768px)');
-  const mobileBlock = pricingCssSource.substring(mobileIndex, mobileIndex + 1200);
-  assert(mobileBlock.includes('grid-template-columns: 1fr'), 'Mobile query should have 1 column');
-  assert(mobileBlock.includes('flex-direction: column'), 'Mobile query should stack header row');
+    // Mobile media query (<= 768px): 1 column
+    assert(pricingCssSource.includes('@media (max-width: 768px)'), 'Missing 768px mobile media query');
+    const mobileIndex = pricingCssSource.lastIndexOf('@media (max-width: 768px)');
+    const mobileBlock = pricingCssSource.substring(mobileIndex, mobileIndex + 1200);
+    assert(mobileBlock.includes('grid-template-columns: 1fr'), 'Mobile query should have 1 column');
+    assert(mobileBlock.includes('flex-direction: column'), 'Mobile query should stack header row');
 
-  // Small mobile media query (<= 480px)
-  assert(pricingCssSource.includes('@media (max-width: 480px)'), 'Missing 480px extra small mobile media query');
-});
-
-// 12. Accessibility, Tabular Numbers & Progress Motion
-  await runTest('Accessibility & Motion: Tabular nums, smooth cubic-bezier easing, and reduced motion override', () => {
-  // Tabular nums font variant
-  assert(pricingCssSource.includes('font-variant-numeric: tabular-nums'), 'Missing font-variant-numeric: tabular-nums');
-
-  // Motion physics: smooth cubic-bezier easing
-  assert(pricingCssSource.includes('cubic-bezier(0.16, 1, 0.3, 1)'), 'Missing smooth cubic-bezier motion physics');
-
-  // Reduced motion overrides
-  const reducedMotionIndex = pricingCssSource.lastIndexOf('@media (prefers-reduced-motion: reduce)');
-  assert(reducedMotionIndex !== -1, 'Missing @media (prefers-reduced-motion: reduce)');
-  const reducedBlock = pricingCssSource.substring(reducedMotionIndex, reducedMotionIndex + 400);
-  assert(reducedBlock.includes('.quota-progress-fill'), 'Reduced motion must include .quota-progress-fill');
-  assert(reducedBlock.includes('.quota-dashboard-card'), 'Reduced motion must include .quota-dashboard-card');
-  assert(reducedBlock.includes('transition: none !important'), 'Reduced motion must disable transitions');
-});
-
-// 13. Inline Meter Action Triggers
-  await runTest('Inline Meter Actions: Clicking inline quota CTA buttons triggers checkout modal', () => {
-  const env = createQuotaTestEnv({
-    pdfl_token: 'fake_jwt_token',
-    pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
+    // Small mobile media query (<= 480px)
+    assert(pricingCssSource.includes('@media (max-width: 480px)'), 'Missing 480px extra small mobile media query');
   });
 
-  let initiatedPlan = null;
-  env.sandbox.fetch = async (url, opts) => {
-    if (url.includes('/api/pricing/subscribe')) {
-      const body = JSON.parse(opts.body);
-      initiatedPlan = body.plan_code;
-      return {
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: {
-            transaction_code: 'TX_INLINE_CTA',
-            plan_code: body.plan_code,
-            amount: 49000,
-            qr_code_url: 'https://img.vietqr.io/image/MB-0987654321-compact2.png',
-            expires_at: new Date(Date.now() + 900000).toISOString(),
-          },
-        }),
-      };
-    }
-    return { ok: true, json: async () => ({}) };
-  };
+  // 12. Accessibility, Tabular Numbers & Progress Motion
+  await runTest('Accessibility & Motion: Tabular nums, smooth cubic-bezier easing, and reduced motion override', () => {
+    // Tabular nums font variant
+    assert(pricingCssSource.includes('font-variant-numeric: tabular-nums'), 'Missing font-variant-numeric: tabular-nums');
 
-  // Click inline OCR CTA
-  env.elements.btnQuotaOcrCta.click();
-  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline OCR CTA should initiate checkout');
+    // Motion physics: smooth cubic-bezier easing
+    assert(pricingCssSource.includes('cubic-bezier(0.16, 1, 0.3, 1)'), 'Missing smooth cubic-bezier motion physics');
 
-  // Click inline Copilot CTA
-  initiatedPlan = null;
-  env.elements.btnQuotaCopilotCta.click();
-  assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline Copilot CTA should initiate checkout');
-});
+    // Reduced motion overrides
+    const reducedMotionIndex = pricingCssSource.lastIndexOf('@media (prefers-reduced-motion: reduce)');
+    assert(reducedMotionIndex !== -1, 'Missing @media (prefers-reduced-motion: reduce)');
+    const reducedBlock = pricingCssSource.substring(reducedMotionIndex, reducedMotionIndex + 400);
+    assert(reducedBlock.includes('.quota-progress-fill'), 'Reduced motion must include .quota-progress-fill');
+    assert(reducedBlock.includes('.quota-dashboard-card'), 'Reduced motion must include .quota-dashboard-card');
+    assert(reducedBlock.includes('transition: none !important'), 'Reduced motion must disable transitions');
+  });
+
+  // 13. Inline Meter Action Triggers
+  await runTest('Inline Meter Actions: Clicking inline quota CTA buttons triggers checkout modal', () => {
+    const env = createQuotaTestEnv({
+      pdfl_token: 'fake_jwt_token',
+      pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
+    });
+
+    let initiatedPlan = null;
+    env.sandbox.fetch = async (url, opts) => {
+      if (url.includes('/api/pricing/subscribe')) {
+        const body = JSON.parse(opts.body);
+        initiatedPlan = body.plan_code;
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              transaction_code: 'TX_INLINE_CTA',
+              plan_code: body.plan_code,
+              amount: 49000,
+              qr_code_url: 'https://img.vietqr.io/image/MB-0987654321-compact2.png',
+              expires_at: new Date(Date.now() + 900000).toISOString(),
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    };
+
+    // Click inline OCR CTA
+    env.elements.btnQuotaOcrCta.click();
+    assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline OCR CTA should initiate checkout');
+
+    // Click inline Copilot CTA
+    initiatedPlan = null;
+    env.elements.btnQuotaCopilotCta.click();
+    assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline Copilot CTA should initiate checkout');
+  });
 
 
   // 14. Real Subscription API Integration - Free Account
@@ -1409,6 +1428,84 @@ async function runAllTests() {
       env.documentListeners['keydown'].forEach((fn) => fn({ key: 'Escape' }));
     }
     assert.strictEqual(env.elements.pricingCheckoutModal.hasAttribute('hidden'), true, 'Escape key must close checkout modal');
+  });
+
+  // 25. HTML & CSS Structure: 3 Isolated Sub-pages under Pricing Section
+  await runTest('Structure: Pricing plans, Billing history, and Quota dashboard occupy 3 sibling sub-view containers', () => {
+    const idxPlans = htmlSource.indexOf('id="pricingPlansContainer"');
+    const idxBilling = htmlSource.indexOf('id="billingHistoryContainer"');
+    const idxQuotaContainer = htmlSource.indexOf('id="quotaDashboardContainer"');
+    const idxQuotaCard = htmlSource.indexOf('id="quotaDashboardCard"');
+    const idxGuestState = htmlSource.indexOf('id="quotaGuestState"');
+
+    assert.ok(idxPlans !== -1, 'pricingPlansContainer must exist in index.html');
+    assert.ok(idxBilling !== -1, 'billingHistoryContainer must exist in index.html');
+    assert.ok(idxQuotaContainer !== -1, 'quotaDashboardContainer must exist in index.html');
+    assert.ok(idxQuotaCard !== -1, 'quotaDashboardCard must exist in index.html');
+    assert.ok(idxGuestState !== -1, 'quotaGuestState must exist in index.html');
+
+    assert.ok(idxPlans < idxBilling, 'pricingPlansContainer must close before billingHistoryContainer begins');
+    assert.ok(idxBilling < idxQuotaContainer, 'billingHistoryContainer must precede quotaDashboardContainer');
+    assert.ok(idxQuotaContainer < idxQuotaCard, 'quotaDashboardCard must reside inside quotaDashboardContainer, separate from Plans page');
+    assert.ok(idxQuotaContainer < idxGuestState, 'quotaGuestState must reside inside quotaDashboardContainer');
+
+    assert.ok(htmlSource.includes('id="tabQuotaDashboard"'), '3rd Pricing tab button tabQuotaDashboard must exist in index.html');
+    assert.ok(htmlSource.includes('id="btnPricingBackToPlans"'), 'Back-to-plans header CTA must exist in index.html');
+    assert.ok(pricingCssSource.includes('.quota-dashboard-container'), 'pricing.css must style .quota-dashboard-container');
+    assert.ok(pricingCssSource.includes('.quota-guest-state-card'), 'pricing.css must style .quota-guest-state-card');
+  });
+
+  // 26. Multi-page Navigation, Guest State & Sidebar Submenu Synchronization
+  await runTest('Navigation: Switching between Plans, Billing History, and Quota pages syncs header, guest state, and Sidebar submenu', () => {
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // Default openPricingView shows Plans page and activates sideNavPricingPlans
+    pricing.openPricingView();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block', 'Pricing section opens');
+    assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'block', 'Plans container visible on Plans page');
+    assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'none', 'Billing container hidden on Plans page');
+    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hidden on Plans page');
+    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'none', 'Back-to-plans button hidden while already on Plans page');
+    assert.strictEqual(env.elements.tabPricingPlans.classList.contains('active'), true, 'Plans tab active');
+    assert.strictEqual(env.elements.sideNavPricingGroup.classList.contains('is-expanded'), true, 'Sidebar pricing group expands');
+    assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), true, 'Sidebar Plans sub-item active');
+    assert.strictEqual(env.elements.sideNavPricingPlans.getAttribute('aria-current'), 'page', 'Sidebar Plans sub-item sets aria-current');
+
+    // Open Billing History view
+    pricing.openBillingHistoryView();
+    assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'none', 'Plans container hides on Billing page');
+    assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'block', 'Billing container visible on Billing page');
+    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hidden on Billing page');
+    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'inline-flex', 'Back-to-plans button shows on Billing page');
+    assert.strictEqual(env.elements.tabBillingHistory.classList.contains('active'), true, 'Billing tab active');
+    assert.strictEqual(env.elements.sideNavPricingBilling.classList.contains('active'), true, 'Sidebar Billing sub-item active');
+    assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), false, 'Sidebar Plans sub-item deactivated');
+    assert.ok(env.elements.pricingMainTitle.textContent.length > 0, 'Dynamic header title updates on Billing page');
+
+    // Open Quota Dashboard view as Guest -> shows quotaGuestState and hides quotaDashboardCard
+    pricing.openQuotaDashboardView();
+    assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'none', 'Plans container hides on Quota page');
+    assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'none', 'Billing container hides on Quota page');
+    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'block', 'Quota container visible on Quota page');
+    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'inline-flex', 'Back-to-plans button shows on Quota page');
+    assert.strictEqual(env.elements.tabQuotaDashboard.classList.contains('active'), true, 'Quota tab active');
+    assert.strictEqual(env.elements.sideNavPricingQuota.classList.contains('active'), true, 'Sidebar Quota sub-item active');
+    assert.strictEqual(env.elements.sideNavPricingQuota.getAttribute('aria-current'), 'page', 'Sidebar Quota sub-item sets aria-current');
+    assert.strictEqual(env.elements.quotaGuestState.style.display, 'flex', 'Guest sees login prompt card on Quota page');
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'none', 'Guest does not see authenticated quota card');
+
+    // Clicking Guest View Plans button or Back to Plans returns cleanly to Plans view
+    env.elements.btnQuotaGuestViewPlans.click();
+    assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'block', 'btnQuotaGuestViewPlans returns to Plans view');
+    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hides when returning to Plans');
+
+    // Switching via tabQuotaDashboard then clicking btnPricingBackToPlans returns to Plans view
+    env.elements.tabQuotaDashboard.click();
+    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'block', 'tabQuotaDashboard switches to Quota view');
+    env.elements.btnPricingBackToPlans.click();
+    assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'block', 'btnPricingBackToPlans returns to Plans view');
+    assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), true, 'Sidebar Plans sub-item re-activated');
   });
 
   console.log('\n================================================================');

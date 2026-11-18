@@ -19,6 +19,7 @@ const assert = require('assert');
 const vm = require('vm');
 
 const sidebarSource = fs.readFileSync(path.resolve(__dirname, '../js/sidebar.js'), 'utf8');
+const sidebarCssSource = fs.readFileSync(path.resolve(__dirname, '../css/sidebar.css'), 'utf8');
 const htmlSource = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 
 class ClassList {
@@ -132,7 +133,13 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     sideNavAiSummarize: new MockElement('sideNavAiSummarize', 'a'),
     sideNavDocuments: new MockElement('sideNavDocuments', 'a'),
     sideNavHistory: new MockElement('sideNavHistory', 'a'),
+    sideNavPricingGroup: new MockElement('sideNavPricingGroup', 'li'),
     sideNavPricing: new MockElement('sideNavPricing', 'a'),
+    sideNavPricingChevron: new MockElement('sideNavPricingChevron', 'button'),
+    sideNavPricingSubmenu: new MockElement('sideNavPricingSubmenu', 'ul'),
+    sideNavPricingPlans: new MockElement('sideNavPricingPlans', 'a'),
+    sideNavPricingBilling: new MockElement('sideNavPricingBilling', 'a'),
+    sideNavPricingQuota: new MockElement('sideNavPricingQuota', 'a'),
     sideNavAdmin: new MockElement('sideNavAdmin', 'a'),
     sideNavAdminItem: new MockElement('sideNavAdminItem', 'li'),
     btnOpenAccountModal: new MockElement('btnOpenAccountModal', 'button'),
@@ -187,6 +194,9 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     docDetailCreatedAt: new MockElement('docDetailCreatedAt', 'span'),
     btnOpenAdmin: new MockElement('btnOpenAdmin', 'button'),
     pricingSection: new MockElement('pricingSection', 'section'),
+    pricingPlansContainer: new MockElement('pricingPlansContainer', 'div'),
+    billingHistoryContainer: new MockElement('billingHistoryContainer', 'div'),
+    quotaDashboardContainer: new MockElement('quotaDashboardContainer', 'div'),
     historySection: new MockElement('historySection', 'section'),
     aiCopilotDrawer: new MockElement('aiCopilotDrawer', 'aside'),
     aiCopilotBackdrop: new MockElement('aiCopilotBackdrop', 'div'),
@@ -195,6 +205,7 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     aiProModal: new MockElement('aiProModal', 'div'),
   };
 
+  elements.pricingSection.style.display = 'none';
   elements.sidebarRecentDocs.appendChild(elements.sidebarEmptyDocsState);
   elements.sidebarRecentDocs.appendChild(elements.sidebarDocList);
 
@@ -215,6 +226,13 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
           elements.sideNavHistory,
           elements.sideNavPricing,
           elements.sideNavAdmin,
+        ];
+      }
+      if (sel === '.sidebar-submenu-item') {
+        return [
+          elements.sideNavPricingPlans,
+          elements.sideNavPricingBilling,
+          elements.sideNavPricingQuota,
         ];
       }
       return [];
@@ -2165,6 +2183,115 @@ async function main() {
       preventDefault: () => {},
     }));
     assert.strictEqual(accountOpenCount, 2, 'Pressing Space on #sidebarUserProfile should open Account modal for logged-in user');
+  });
+
+  await runTest('HTML & CSS: Expandable Pricing Sidebar group, chevron, and 3 submenu items exist with responsive styling', () => {
+    assert.ok(htmlSource.includes('id="sideNavPricingGroup"'), 'sideNavPricingGroup container must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavPricing"'), 'sideNavPricing parent nav link must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavPricingChevron"'), 'sideNavPricingChevron toggle button must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavPricingSubmenu"'), 'sideNavPricingSubmenu list must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavPricingPlans"'), 'sideNavPricingPlans submenu item must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavPricingBilling"'), 'sideNavPricingBilling submenu item must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavPricingQuota"'), 'sideNavPricingQuota submenu item must exist in HTML');
+
+    assert.ok(sidebarCssSource.includes('.sidebar-nav-group'), 'sidebar.css must style .sidebar-nav-group');
+    assert.ok(sidebarCssSource.includes('.nav-group-chevron'), 'sidebar.css must style .nav-group-chevron');
+    assert.ok(sidebarCssSource.includes('.sidebar-submenu'), 'sidebar.css must style .sidebar-submenu');
+    assert.ok(sidebarCssSource.includes('.sidebar-submenu-item'), 'sidebar.css must style .sidebar-submenu-item');
+    assert.ok(sidebarCssSource.includes('.app-sidebar.collapsed .sidebar-submenu'), 'sidebar.css must hide submenu when desktop sidebar is collapsed');
+    assert.ok(sidebarCssSource.includes('@media (max-width: 767px)'), 'sidebar.css must handle mobile responsive drawer rules');
+    assert.ok(sidebarCssSource.includes('@media (prefers-reduced-motion: reduce)'), 'sidebar.css must respect prefers-reduced-motion');
+  });
+
+  await runTest('Pricing Group Navigation: Clicking parent opens Plans & expands group; re-clicking toggles accordion; chevron toggles directly', () => {
+    const env = createTestEnvironment();
+    const { elements } = env;
+
+    // Initial state: Pricing section is hidden and group is collapsed
+    assert.strictEqual(elements.pricingSection.style.display, 'none', 'Pricing section starts hidden');
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), false, 'Pricing group starts collapsed');
+
+    // First click while Pricing section is hidden: opens Plans view and expands submenu
+    elements.sideNavPricing.click();
+    assert.strictEqual(elements.pricingSection.style.display, 'block', 'Clicking Pricing parent reveals #pricingSection');
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), true, 'Pricing group expands on first click');
+    assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'true', 'Parent aria-expanded should become true');
+    assert.strictEqual(elements.sideNavPricing.classList.contains('active'), true, 'Parent #sideNavPricing must be marked active');
+    assert.strictEqual(elements.sideNavPricingPlans.classList.contains('active'), true, 'Default Plans submenu item must be marked active');
+    assert.strictEqual(elements.pricingPlansContainer.style.display, 'block', 'Plans container must be visible');
+    assert.strictEqual(elements.billingHistoryContainer.style.display, 'none', 'Billing container must be hidden');
+    assert.strictEqual(elements.quotaDashboardContainer.style.display, 'none', 'Quota container must be hidden');
+
+    // Second click while already in Pricing view with expanded desktop sidebar: collapses accordion only
+    elements.sideNavPricing.click();
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), false, 'Re-clicking parent in Pricing view collapses submenu');
+    assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'false', 'Parent aria-expanded becomes false');
+    assert.strictEqual(elements.pricingSection.style.display, 'block', 'Collapsing accordion must keep Pricing section visible');
+
+    // Clicking chevron directly toggles accordion open and closed
+    elements.sideNavPricingChevron.click();
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), true, 'Clicking chevron expands submenu');
+    assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'true', 'Parent aria-expanded updates to true via chevron click');
+    elements.sideNavPricingChevron.click();
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), false, 'Clicking chevron again collapses submenu');
+    assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'false', 'Parent aria-expanded updates to false via chevron click');
+  });
+
+  await runTest('Pricing Submenu Navigation: Switching sub-pages syncs isolated containers, delegation API, and clears on exit', () => {
+    const delegatedCalls = [];
+    const env = createTestEnvironment();
+    const { elements, sandbox } = env;
+
+    // 1. Standalone mode (without window.PDFLinguaPricing loaded): fallback container switching
+    elements.sideNavPricingBilling.click();
+    assert.strictEqual(elements.pricingSection.style.display, 'block', 'Clicking Billing submenu shows Pricing section');
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), true, 'Clicking Billing submenu expands group');
+    assert.strictEqual(elements.sideNavPricing.classList.contains('active'), true, 'Parent remains active when Billing sub-item is active');
+    assert.strictEqual(elements.sideNavPricingBilling.classList.contains('active'), true, 'Billing sub-item becomes active');
+    assert.strictEqual(elements.sideNavPricingBilling.getAttribute('aria-current'), 'page', 'Billing sub-item sets aria-current="page"');
+    assert.strictEqual(elements.sideNavPricingPlans.classList.contains('active'), false, 'Plans sub-item is deactivated');
+    assert.strictEqual(elements.billingHistoryContainer.style.display, 'block', 'Billing container is visible in fallback mode');
+    assert.strictEqual(elements.pricingPlansContainer.style.display, 'none', 'Plans container is hidden in fallback mode');
+    assert.strictEqual(elements.quotaDashboardContainer.style.display, 'none', 'Quota container is hidden in fallback mode');
+
+    elements.sideNavPricingQuota.click();
+    assert.strictEqual(elements.sideNavPricingQuota.classList.contains('active'), true, 'Quota sub-item becomes active');
+    assert.strictEqual(elements.sideNavPricingQuota.getAttribute('aria-current'), 'page', 'Quota sub-item sets aria-current="page"');
+    assert.strictEqual(elements.sideNavPricingBilling.classList.contains('active'), false, 'Billing sub-item is deactivated');
+    assert.strictEqual(elements.quotaDashboardContainer.style.display, 'block', 'Quota container is visible in fallback mode');
+    assert.strictEqual(elements.pricingPlansContainer.style.display, 'none', 'Plans container stays hidden');
+    assert.strictEqual(elements.billingHistoryContainer.style.display, 'none', 'Billing container becomes hidden');
+
+    // 2. Delegated mode when window.PDFLinguaPricing is registered
+    sandbox.window.PDFLinguaPricing = {
+      openPricingView: (cycle, targetTab) => delegatedCalls.push({ method: 'openPricingView', cycle, targetTab }),
+      openBillingHistoryView: () => delegatedCalls.push({ method: 'openBillingHistoryView' }),
+      openQuotaDashboardView: () => delegatedCalls.push({ method: 'openQuotaDashboardView' }),
+    };
+
+    elements.sideNavPricingPlans.click();
+    elements.sideNavPricingBilling.click();
+    elements.sideNavPricingQuota.click();
+
+    assert.deepStrictEqual(
+      delegatedCalls,
+      [
+        { method: 'openPricingView', cycle: undefined, targetTab: 'plans' },
+        { method: 'openPricingView', cycle: undefined, targetTab: 'history' },
+        { method: 'openPricingView', cycle: undefined, targetTab: 'quota' },
+      ],
+      'Submenu items must delegate targetTab to window.PDFLinguaPricing.openPricingView'
+    );
+
+    // 3. Leaving Pricing section (e.g. clicking Documents) hides Pricing & clears all submenu active states
+    elements.sideNavDocuments.click();
+    assert.strictEqual(elements.pricingSection.style.display, 'none', 'Navigating to Documents hides Pricing section');
+    assert.strictEqual(elements.sideNavDocuments.classList.contains('active'), true, 'Documents item becomes active');
+    assert.strictEqual(elements.sideNavPricing.classList.contains('active'), false, 'Pricing parent active state clears on exit');
+    assert.strictEqual(elements.sideNavPricingPlans.classList.contains('active'), false, 'Plans submenu active state clears on exit');
+    assert.strictEqual(elements.sideNavPricingBilling.classList.contains('active'), false, 'Billing submenu active state clears on exit');
+    assert.strictEqual(elements.sideNavPricingQuota.classList.contains('active'), false, 'Quota submenu active state clears on exit');
+    assert.strictEqual(elements.sideNavPricingQuota.getAttribute('aria-current'), null, 'Quota submenu removes aria-current on exit');
   });
 
   console.log('\n================================================================');

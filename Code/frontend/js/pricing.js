@@ -393,6 +393,8 @@
       if (activeBanner) activeBanner.style.display = 'none';
       const quotaDashboardCard = document.getElementById('quotaDashboardCard');
       if (quotaDashboardCard) quotaDashboardCard.style.display = 'none';
+      const quotaGuestState = document.getElementById('quotaGuestState');
+      if (quotaGuestState) quotaGuestState.style.display = 'flex';
       if (btnAccountUpgradePro) btnAccountUpgradePro.style.display = 'none';
       if (dropzoneLimitText && dropzoneLimitText.classList) {
         dropzoneLimitText.classList.add('dropzone-upgrade-clickable');
@@ -1589,7 +1591,40 @@
     }
   }
 
-  function syncHeaderAndSidebarNav(activeKey) {
+  function syncPricingSidebarSubmenu(subTab) {
+    const group = document.getElementById('sideNavPricingGroup');
+    const toggle = document.getElementById('sideNavPricing');
+    const subPlans = document.getElementById('sideNavPricingPlans');
+    const subBilling = document.getElementById('sideNavPricingBilling');
+    const subQuota = document.getElementById('sideNavPricingQuota');
+
+    if (subTab) {
+      if (group && group.classList) group.classList.add('is-expanded');
+      if (toggle && typeof toggle.setAttribute === 'function') {
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    const map = {
+      plans: subPlans,
+      history: subBilling,
+      quota: subQuota,
+    };
+
+    [subPlans, subBilling, subQuota].forEach((el) => {
+      if (!el) return;
+      if (el.classList) el.classList.remove('active');
+      if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-current');
+    });
+
+    const target = subTab ? map[subTab] : null;
+    if (target) {
+      if (target.classList) target.classList.add('active');
+      if (typeof target.setAttribute === 'function') target.setAttribute('aria-current', 'page');
+    }
+  }
+
+  function syncHeaderAndSidebarNav(activeKey, activeSubTab) {
     const sideNavPricing = document.getElementById('sideNavPricing');
     const sideNavHome = document.getElementById('sideNavHome');
     const sideNavTranslate = document.getElementById('sideNavTranslate');
@@ -1599,12 +1634,17 @@
       allSideItems.forEach((item) => item.classList.remove('active'));
     }
 
-    if (activeKey === 'pricing' && sideNavPricing) {
-      sideNavPricing.classList.add('active');
+    if (activeKey === 'pricing') {
+      if (sideNavPricing) sideNavPricing.classList.add('active');
+      syncPricingSidebarSubmenu(activeSubTab || billingTab || 'plans');
     } else if (activeKey === 'translate' && sideNavTranslate) {
       sideNavTranslate.classList.add('active');
+      syncPricingSidebarSubmenu(null);
     } else if (sideNavHome) {
       sideNavHome.classList.add('active');
+      syncPricingSidebarSubmenu(null);
+    } else {
+      syncPricingSidebarSubmenu(null);
     }
 
     const topLinks = document.querySelectorAll('.nav-menu .nav-link');
@@ -1620,7 +1660,7 @@
     }
   }
 
-  function openPricingView(initialCycle) {
+  function openPricingView(initialCycle, targetTab) {
     if (initialCycle === 'monthly' || initialCycle === 'yearly') {
       setBillingCycle(initialCycle);
     }
@@ -1631,7 +1671,12 @@
     const historySection = document.getElementById('historySection');
     const adminSection = document.getElementById('adminSection');
     const pricingSection = document.getElementById('pricingSection');
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
 
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      if (copilotDrawer.classList) copilotDrawer.classList.remove('open');
+    }
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'none';
@@ -1641,15 +1686,27 @@
       pricingSection.style.display = 'block';
     }
 
-    syncHeaderAndSidebarNav('pricing');
+    try {
+      if (typeof sessionStorage !== 'undefined' && typeof sessionStorage.removeItem === 'function') {
+        sessionStorage.removeItem('pdfl_active_view');
+      }
+    } catch (_e) {}
 
-    if (getStoredToken()) {
-      fetchMySubscription();
-    }
+    const desiredTab =
+      targetTab === 'history' || targetTab === 'quota' ? targetTab : 'plans';
+    switchPricingTab(desiredTab);
 
     if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  function openBillingHistoryView() {
+    openPricingView(undefined, 'history');
+  }
+
+  function openQuotaDashboardView() {
+    openPricingView(undefined, 'quota');
   }
 
   function closePricingView() {
@@ -2046,6 +2103,10 @@
     if (quotaDashboardCard) {
       quotaDashboardCard.style.display = 'flex';
     }
+    const quotaGuestState = document.getElementById('quotaGuestState');
+    if (quotaGuestState) {
+      quotaGuestState.style.display = 'none';
+    }
 
     // 1. Warning Banner
     const quotaWarningBanner = document.getElementById('quotaWarningBanner');
@@ -2289,6 +2350,10 @@
   function initBillingHistory() {
     const tabPlans = document.getElementById('tabPricingPlans');
     const tabHistory = document.getElementById('tabBillingHistory');
+    const tabQuota = document.getElementById('tabQuotaDashboard');
+    const btnBackToPlans = document.getElementById('btnPricingBackToPlans');
+    const btnQuotaGuestLogin = document.getElementById('btnQuotaGuestLogin');
+    const btnQuotaGuestViewPlans = document.getElementById('btnQuotaGuestViewPlans');
     const statusSelect = document.getElementById('billingStatusFilter');
     const btnPrev = document.getElementById('btnBillingPrevPage');
     const btnNext = document.getElementById('btnBillingNextPage');
@@ -2305,6 +2370,45 @@
       tabHistory.addEventListener('click', (e) => {
         e.preventDefault();
         switchPricingTab('history');
+      });
+    }
+
+    if (tabQuota) {
+      tabQuota.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('quota');
+      });
+    }
+
+    if (btnBackToPlans) {
+      btnBackToPlans.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('plans');
+      });
+    }
+
+    if (btnQuotaGuestLogin) {
+      btnQuotaGuestLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (
+          typeof window !== 'undefined' &&
+          window.pdfLinguaAuth &&
+          typeof window.pdfLinguaAuth.openLoginModal === 'function'
+        ) {
+          window.pdfLinguaAuth.openLoginModal();
+        } else {
+          const btnLogin = document.getElementById('btnLogin');
+          if (btnLogin && typeof btnLogin.click === 'function') {
+            btnLogin.click();
+          }
+        }
+      });
+    }
+
+    if (btnQuotaGuestViewPlans) {
+      btnQuotaGuestViewPlans.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('plans');
       });
     }
 
@@ -2350,32 +2454,34 @@
   }
 
   function switchPricingTab(tab) {
-    billingTab = tab === 'history' ? 'history' : 'plans';
+    if (tab === 'history') {
+      billingTab = 'history';
+    } else if (tab === 'quota') {
+      billingTab = 'quota';
+    } else {
+      billingTab = 'plans';
+    }
 
     const tabPlans = document.getElementById('tabPricingPlans');
     const tabHistory = document.getElementById('tabBillingHistory');
+    const tabQuota = document.getElementById('tabQuotaDashboard');
     const plansContainer = document.getElementById('pricingPlansContainer');
     const historyContainer = document.getElementById('billingHistoryContainer');
+    const quotaContainer = document.getElementById('quotaDashboardContainer');
+    const mainTitle = document.getElementById('pricingMainTitle');
+    const mainSubtitle = document.getElementById('pricingMainSubtitle');
+    const btnBackToPlans = document.getElementById('btnPricingBackToPlans');
 
-    if (tabPlans) {
-      if (billingTab === 'plans') {
-        tabPlans.classList.add('active');
-        tabPlans.setAttribute('aria-selected', 'true');
-      } else {
-        tabPlans.classList.remove('active');
-        tabPlans.setAttribute('aria-selected', 'false');
-      }
-    }
-
-    if (tabHistory) {
-      if (billingTab === 'history') {
-        tabHistory.classList.add('active');
-        tabHistory.setAttribute('aria-selected', 'true');
-      } else {
-        tabHistory.classList.remove('active');
-        tabHistory.setAttribute('aria-selected', 'false');
-      }
-    }
+    [
+      { el: tabPlans, key: 'plans' },
+      { el: tabHistory, key: 'history' },
+      { el: tabQuota, key: 'quota' },
+    ].forEach(({ el, key }) => {
+      if (!el) return;
+      const isSelected = billingTab === key;
+      el.classList.toggle('active', isSelected);
+      el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+    });
 
     if (plansContainer) {
       plansContainer.style.display = billingTab === 'plans' ? 'block' : 'none';
@@ -2385,11 +2491,45 @@
       historyContainer.style.display = billingTab === 'history' ? 'block' : 'none';
     }
 
+    if (quotaContainer) {
+      quotaContainer.style.display = billingTab === 'quota' ? 'block' : 'none';
+    }
+
+    if (mainTitle && mainSubtitle) {
+      if (billingTab === 'history') {
+        mainTitle.textContent = 'Lịch sử thanh toán & Hóa đơn';
+        mainSubtitle.textContent =
+          'Theo dõi tất cả giao dịch nạp tiền, nâng cấp gói Pro và kiểm tra trạng thái thanh toán, biên lai hóa đơn điện tử.';
+      } else if (billingTab === 'quota') {
+        mainTitle.textContent = 'Quản lý gói & Hạn mức';
+        mainSubtitle.textContent =
+          'Theo dõi trạng thái gói Pro VIP, thời hạn hiệu lực, gia hạn gói cước và giám sát hạn mức OCR, dung lượng tệp PDF, Trợ lý AI Copilot.';
+      } else {
+        mainTitle.textContent = 'Bảng giá gói dịch vụ';
+        mainSubtitle.textContent =
+          'Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.';
+      }
+    }
+
+    if (btnBackToPlans) {
+      btnBackToPlans.style.display = billingTab === 'plans' ? 'none' : 'inline-flex';
+    }
+
+    const pricingSection = document.getElementById('pricingSection');
+    if (pricingSection && pricingSection.style.display !== 'none') {
+      syncHeaderAndSidebarNav('pricing', billingTab);
+    }
+
     if (billingTab === 'history') {
       return fetchBillingHistory(1, billingStatusFilter);
-    } else if (billingTab === 'plans') {
+    } else if (billingTab === 'quota' || billingTab === 'plans') {
       if (getStoredToken()) {
         fetchMySubscription();
+      } else {
+        const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+        const quotaGuestState = document.getElementById('quotaGuestState');
+        if (quotaDashboardCard) quotaDashboardCard.style.display = 'none';
+        if (quotaGuestState) quotaGuestState.style.display = 'flex';
       }
     }
   }
@@ -3213,6 +3353,8 @@
 
     window.PDFLinguaPricing = {
       openPricingView,
+      openBillingHistoryView,
+      openQuotaDashboardView,
       closePricingView,
       setBillingCycle,
       getBillingCycle: () => currentCycle,
