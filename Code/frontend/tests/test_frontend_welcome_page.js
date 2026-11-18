@@ -217,8 +217,72 @@ runTest('Compliance: No en-dash (\\u2013) or em-dash (\\u2014) in welcome.js', (
 });
 
 // -----------------------------------------------------------------------------
+// Part 7: Hero Section & Interactive Product Preview
+// -----------------------------------------------------------------------------
+console.log('\n--- 7. Hero Section & Interactive Product Preview ---');
+
+runTest('Hero: Eyebrow badge contains core AI OCR proposition', () => {
+  assert.ok(htmlContent.includes('welcome-eyebrow-badge'), 'Missing .welcome-eyebrow-badge');
+  assert.ok(htmlContent.includes('Công Nghệ AI OCR & Dịch Thuật Bố Cục Đa Cột'), 'Missing eyebrow text');
+});
+
+runTest('Hero: Headline H1 matches 2-line concise title', () => {
+  assert.ok(htmlContent.includes('welcome-hero-title'), 'Missing .welcome-hero-title class');
+  assert.ok(htmlContent.includes('Dịch Thuật PDF Song Ngữ Thông Minh & Trợ Lý AI Chuyên Sâu'), 'Missing exact H1 title');
+});
+
+runTest('Hero: Dual CTA group connects to workspace and preview scroll', () => {
+  assert.ok(htmlContent.includes('id="heroBtnStart"'), 'Missing #heroBtnStart');
+  assert.ok(htmlContent.includes('id="heroBtnSample"'), 'Missing #heroBtnSample');
+  assert.ok(htmlContent.includes('href="#welcomePreview"'), 'Secondary CTA must link to #welcomePreview');
+});
+
+runTest('Hero: Trust signals bar displays security and OCR badges', () => {
+  assert.ok(htmlContent.includes('welcome-hero-trust-bar'), 'Missing .welcome-hero-trust-bar');
+  assert.ok(htmlContent.includes('Không cần cài đặt'), 'Missing "Không cần cài đặt" trust badge');
+  assert.ok(htmlContent.includes('Bảo mật mã hóa AES-256'), 'Missing AES-256 trust badge');
+  assert.ok(htmlContent.includes('Hỗ trợ PDF quét scan & OCR Tiếng Việt'), 'Missing OCR scan trust badge');
+});
+
+runTest('Preview: macOS window chrome has colored dots and document name', () => {
+  assert.ok(htmlContent.includes('id="welcomePreview"'), 'Missing #welcomePreview container');
+  assert.ok(htmlContent.includes('welcome-preview-card'), 'Missing .welcome-preview-card');
+  assert.ok(htmlContent.includes('dot-close'), 'Missing .dot-close');
+  assert.ok(htmlContent.includes('dot-minimize'), 'Missing .dot-minimize');
+  assert.ok(htmlContent.includes('dot-maximize'), 'Missing .dot-maximize');
+  assert.ok(htmlContent.includes('academic_deep_learning_survey_2026.pdf'), 'Missing preview filename');
+});
+
+runTest('Preview: Split panes present original EN and translated VI columns', () => {
+  assert.ok(htmlContent.includes('id="paneOriginal"'), 'Missing #paneOriginal left column');
+  assert.ok(htmlContent.includes('id="paneTranslated"'), 'Missing #paneTranslated right column');
+  assert.ok(htmlContent.includes('data-sync-id="p1"'), 'Missing data-sync-id attributes for paragraph pairing');
+  assert.ok(htmlContent.includes('welcome-doc-table'), 'Missing benchmark table in preview');
+});
+
+runTest('Preview: Floating Copilot Highlight Card cites source page and table', () => {
+  assert.ok(htmlContent.includes('id="welcomeCopilotCard"'), 'Missing #welcomeCopilotCard');
+  assert.ok(htmlContent.includes('Trợ lý AI Copilot'), 'Missing Copilot title');
+  assert.ok(htmlContent.includes('Trang 2, Bảng 1'), 'Missing page and table source citation');
+  assert.ok(htmlContent.includes('Không ảo giác'), 'Missing non-hallucination tag');
+});
+
+runTest('CSS: Preview Card grid layout and Copilot card styles defined', () => {
+  assert.ok(cssContent.includes('.welcome-preview-panes'), 'Missing .welcome-preview-panes in CSS');
+  assert.ok(cssContent.includes('grid-template-columns: 1fr 1fr;'), 'Missing 2-column grid in preview');
+  assert.ok(cssContent.includes('.welcome-copilot-card'), 'Missing .welcome-copilot-card in CSS');
+  assert.ok(cssContent.includes('backdrop-filter: blur(16px);'), 'Missing blur in copilot card');
+});
+
+runTest('JS: Synchronization interaction attached to preview paragraphs', () => {
+  assert.ok(jsContent.includes('data-sync-id'), 'JS must reference data-sync-id for synchronized highlighting');
+  assert.ok(jsContent.includes('is-sync-active'), 'JS must toggle is-sync-active class');
+});
+
+// -----------------------------------------------------------------------------
 // Summary
 // -----------------------------------------------------------------------------
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passedTests}/${totalTests} tests passed (0 failed).`);
 console.log('================================================================\n');
+
