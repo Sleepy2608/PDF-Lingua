@@ -96,6 +96,11 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     workspaceSection: new MockElement('workspaceSection', 'section'),
     adminSection: new MockElement('adminSection', 'section'),
     pricingSection: new MockElement('pricingSection', 'section'),
+    documentsSection: new MockElement('documentsSection', 'section'),
+    historySection: new MockElement('historySection', 'section'),
+    sideNavPricing: new MockElement('sideNavPricing', 'a', ['sidebar-nav-item']),
+    sideNavHome: new MockElement('sideNavHome', 'a', ['sidebar-nav-item']),
+    sideNavTranslate: new MockElement('sideNavTranslate', 'a', ['sidebar-nav-item']),
     btnBillingMonthly: new MockElement('btnBillingMonthly', 'button', ['billing-toggle-btn', 'active']),
     btnBillingYearly: new MockElement('btnBillingYearly', 'button', ['billing-toggle-btn']),
     billingSavePill: new MockElement('billingSavePill', 'span'),
@@ -233,7 +238,12 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
   const documentListeners = {};
   const mockDocument = {
     getElementById: (id) => elements[id] || null,
-    querySelectorAll: () => [],
+    querySelectorAll: (selector) => {
+      if (selector === '.sidebar-nav-item') {
+        return [elements.sideNavHome, elements.sideNavTranslate, elements.sideNavPricing].filter(Boolean);
+      }
+      return [];
+    },
     querySelector: () => null,
     addEventListener: (ev, fn) => {
       documentListeners[ev] = documentListeners[ev] || [];
@@ -1037,6 +1047,360 @@ async function runAllTests() {
     assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex', 'Stale req 1 must not overwrite Pro state');
     assert.strictEqual(env.elements.quotaPlanName.textContent, 'Gói Pro Mới Nhất', 'Plan name must not be overwritten');
     assert.strictEqual(pricing.getMySubscriptionData().current_role, 'pro', 'Subscription data must remain Pro');
+  });
+
+
+  // 19. Extended Quota Arithmetic & Extreme Boundary Safety
+  await runTest('Arithmetic Safety: Negative limit, non-numeric strings, float rounding, and extreme clamping', () => {
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // Negative limits
+    assert.strictEqual(pricing.calculateQuotaPercent(50, -100), 0, 'Negative limit => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(-10, -50), 0, 'Negative used and limit => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(0, -1), 0, 'Zero used with negative limit => 0%');
+
+    // String coercion
+    assert.strictEqual(pricing.calculateQuotaPercent('50', '100'), 50, 'String numbers => 50%');
+    assert.strictEqual(pricing.calculateQuotaPercent('abc', '100'), 0, 'Invalid used string => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent('50', 'xyz'), 0, 'Invalid limit string => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent('', ''), 0, 'Empty string => 0%');
+
+    // Floating point rounding
+    assert.strictEqual(pricing.calculateQuotaPercent(347, 500), 69, '69.4% rounds down to 69%');
+    assert.strictEqual(pricing.calculateQuotaPercent(348, 500), 70, '69.6% rounds up to 70%');
+    assert.strictEqual(pricing.calculateQuotaPercent(454, 500), 91, '90.8% rounds up to 91%');
+
+    // Infinity and extreme values
+    assert.strictEqual(pricing.calculateQuotaPercent(-Infinity, 100), 0, '-Infinity used => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(50, Infinity), 0, 'Infinity limit => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(10000, 500), 100, 'Extreme usage clamped to 100%');
+    assert.strictEqual(pricing.calculateQuotaPercent(null, null), 0, 'Null values => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent(undefined, 100), 0, 'Undefined used => 0%');
+    assert.strictEqual(pricing.calculateQuotaPercent({}, []), 0, 'Object/array => 0%');
+  });
+
+  // 20. Malformed & Missing API Response Schemas
+  await runTest('API Error Handling: Malformed responses, missing data, and backend error messages', async () => {
+    const env = createQuotaTestEnv({
+      pdfl_token: 'fake_jwt_token',
+      pdfl_user: JSON.stringify({ id: 106, email: 'malformed@pdfl.vn', role: 'pro' }),
+    });
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // 1. success: false with custom backend message
+    env.sandbox.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: false,
+        message: 'Hệ thống bảo trì hạn mức tài khoản.',
+      }),
+    });
+    const res1 = await pricing.fetchMySubscription();
+    assert.strictEqual(res1, null, 'Should return null when success is false');
+    assert.strictEqual(
+      pricing.getSubscriptionRequestState().error,
+      'Hệ thống bảo trì hạn mức tài khoản.',
+      'Must record backend error message'
+    );
+
+    // 2. Missing data property
+    env.sandbox.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+      }),
+    });
+    const res2 = await pricing.fetchMySubscription();
+    assert.strictEqual(res2, null, 'Should return null when data is missing');
+    assert.strictEqual(
+      pricing.getSubscriptionRequestState().error,
+      'Dữ liệu phản hồi không hợp lệ.',
+      'Must record invalid response data error'
+    );
+
+    // 3. Null response body
+    env.sandbox.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => null,
+    });
+    const res3 = await pricing.fetchMySubscription();
+    assert.strictEqual(res3, null, 'Should return null on null body');
+
+    // 4. Empty object response body
+    env.sandbox.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    const res4 = await pricing.fetchMySubscription();
+    assert.strictEqual(res4, null, 'Should return null on empty object');
+  });
+
+  // 21. Subscription Contract Semantics - Per-Document vs Cumulative & Copilot Distinction
+  await runTest('Subscription Contract: Per-document limits, Copilot recovery, and active subscription metadata', async () => {
+    const env = createQuotaTestEnv(
+      {
+        pdfl_token: 'contract_token',
+        pdfl_user: JSON.stringify({ id: 107, email: 'pro_contract@pdfl.vn', role: 'pro' }),
+      },
+      async (url) => {
+        if (url.includes('/api/pricing/my-subscription')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                current_role: 'pro',
+                is_pro: true,
+                max_file_size_mb: 100,
+                max_ocr_pages: 500,
+                active_subscription: {
+                  id: 99,
+                  user_id: 107,
+                  plan_code: 'pro_monthly',
+                  plan_name: 'Gói Pro Hàng Tháng',
+                  billing_cycle: 'monthly',
+                  status: 'active',
+                  started_at: '2026-11-01T08:00:00Z',
+                  expires_at: '2026-12-01T08:00:00Z',
+                  days_remaining: 13,
+                  auto_renew: true,
+                  cancelled_at: null,
+                },
+              },
+            }),
+          };
+        }
+        return { ok: true, json: async () => ({}) };
+      }
+    );
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+    await pricing.fetchMySubscription();
+
+    // 1. max_ocr_pages is per-document limit, not cumulative
+    assert.strictEqual(env.elements.quotaOcrLimit.textContent, '500');
+    assert(
+      env.elements.quotaOcrNote.textContent.includes('Tối đa 500 trang OCR / tài liệu theo gói Pro'),
+      'OCR note must specify per-document limit semantics'
+    );
+
+    // 2. Copilot meter recovery note (does not claim server-side cumulative usage)
+    assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '15');
+    assert.strictEqual(
+      env.elements.quotaCopilotNote.textContent,
+      'Hồi phục 15 câu sau mỗi 24 giờ',
+      'Copilot note must reflect daily recovery without claiming cumulative server counters'
+    );
+
+    // 3. File size meter displays 100 MB
+    assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '100 MB');
+    assert.strictEqual(env.elements.quotaFileSizePercent.textContent, '100 MB');
+    assert(
+      env.elements.quotaFileSizeNote.textContent.includes('Tối đa 100 MB / tệp theo gói Pro'),
+      'File size note must reflect 100 MB limit'
+    );
+
+    // 4. Auto-renew control visibility
+    assert.strictEqual(env.elements.btnCancelAutoRenew.style.display, 'inline-flex', 'Auto renew button should be visible when auto_renew is true');
+
+    // 5. Test Free user contract semantics
+    env.sandbox.fetch = async (url) => {
+      if (url.includes('/api/pricing/my-subscription')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              current_role: 'free',
+              is_pro: false,
+              max_file_size_mb: 20,
+              max_ocr_pages: 100,
+              active_subscription: null,
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    };
+
+    await pricing.fetchMySubscription();
+    assert.strictEqual(env.elements.quotaOcrLimit.textContent, '100');
+    assert(
+      env.elements.quotaOcrNote.textContent.includes('Tối đa 100 trang OCR / tài liệu cho gói Miễn phí'),
+      'Free OCR note must specify per-document limit'
+    );
+    assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '0');
+    assert.strictEqual(
+      env.elements.quotaCopilotNote.textContent,
+      'Nâng cấp lên Pro để mở khóa AI Copilot 15 câu/ngày',
+      'Free Copilot note must prompt upgrade to Pro'
+    );
+  });
+
+  // 22. Concurrency & Duplicate Event Listener Guard
+  await runTest('Event Concurrency: Multiple bind calls do not create duplicate listeners or duplicate fetches', async () => {
+    let fetchCounter = 0;
+    const env = createQuotaTestEnv(
+      {
+        pdfl_token: 'guard_token',
+        pdfl_user: JSON.stringify({ id: 108, email: 'guard@pdfl.vn', role: 'pro' }),
+      },
+      async (url) => {
+        if (url.includes('/api/pricing/my-subscription')) {
+          fetchCounter++;
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                current_role: 'pro',
+                is_pro: true,
+                max_file_size_mb: 100,
+                max_ocr_pages: 500,
+                active_subscription: { plan_name: 'Gói Pro Guard', days_remaining: 25 },
+              },
+            }),
+          };
+        }
+        return { ok: true, json: async () => ({}) };
+      }
+    );
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // Call bindGlobalSyncEvents multiple times
+    pricing.bindGlobalSyncEvents();
+    pricing.bindGlobalSyncEvents();
+    pricing.bindGlobalSyncEvents();
+
+    const baselineFetches = fetchCounter;
+
+    // Dispatch job-completed once
+    env.sandbox.window.dispatchEvent({ type: 'pdfl:job-completed', detail: { jobId: 'job-1' } });
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(fetchCounter, baselineFetches + 1, 'job-completed must trigger exactly 1 fetch');
+
+    // Dispatch document-processed once
+    env.sandbox.window.dispatchEvent({ type: 'pdfl:document-processed', detail: { docId: 'doc-1' } });
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(fetchCounter, baselineFetches + 2, 'document-processed must trigger exactly 1 fetch');
+
+    // Logout via pdfl:auth-change with user null
+    env.sandbox.window.dispatchEvent({ type: 'pdfl:auth-change', detail: { user: null } });
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'none', 'Logging out must hide Quota Dashboard');
+    assert.strictEqual(pricing.getMySubscriptionData(), null, 'Subscription data must be cleared on logout');
+  });
+
+  // 23. Regression: Pricing View Navigation & Workspace Restoral
+  await runTest('Regression: Opening and closing pricing view preserves section states and restores workspace', () => {
+    const env = createQuotaTestEnv();
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // Initially open pricing view
+    pricing.openPricingView();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block', 'Pricing section should be visible');
+    assert.strictEqual(env.elements.heroSection.style.display, 'none', 'Hero section should be hidden');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'none', 'Workspace section should be hidden');
+    assert.strictEqual(env.elements.adminSection.style.display, 'none', 'Admin section should be hidden');
+    assert(env.elements.sideNavPricing.classList.contains('active'), 'sideNavPricing should have active class');
+
+    // Close pricing view without loaded doc -> restores hero and sideNavHome
+    pricing.closePricingView();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'none', 'Pricing section should be hidden after closing');
+    assert.strictEqual(env.elements.heroSection.style.display, 'block', 'Hero section should be restored');
+    assert(env.elements.sideNavHome.classList.contains('active'), 'sideNavHome should have active class');
+
+    // Close pricing view WITH loaded doc -> restores workspace and sideNavTranslate
+    env.sandbox.window.pdfLinguaWorkspace = {
+      getCurrentDocData: () => ({ id: 'doc-123', name: 'sample.pdf' }),
+    };
+    pricing.openPricingView();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block');
+    pricing.closePricingView();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'none');
+    assert.strictEqual(env.elements.workspaceSection.style.display, 'block', 'Workspace section should be restored');
+    assert(env.elements.sideNavTranslate.classList.contains('active'), 'sideNavTranslate should have active class when doc loaded');
+
+    // Clicking topNavPricing opens pricing view
+    env.elements.topNavPricing.click();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'block', 'Clicking topNavPricing should open pricing view');
+
+    // Clicking topNavTranslate closes pricing view and restores workspace
+    env.elements.topNavTranslate.click();
+    assert.strictEqual(env.elements.pricingSection.style.display, 'none', 'Clicking topNavTranslate should close pricing view');
+  });
+
+  // 24. Regression: Checkout Modal Activation from all Quota Touchpoints
+  await runTest('Regression: Quota touchpoints trigger checkout modal with correct cycle and plan code', () => {
+    const env = createQuotaTestEnv({
+      pdfl_token: 'fake_jwt_token',
+      pdfl_user: JSON.stringify({ id: 109, email: 'checkout_user@pdfl.vn', role: 'pro' }),
+    });
+
+    let requestedPlanCode = null;
+    env.sandbox.fetch = async (url, opts) => {
+      if (url.includes('/api/pricing/subscribe')) {
+        const body = JSON.parse(opts.body);
+        requestedPlanCode = body.plan_code;
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              transaction_code: 'TX_REGRESSION_TEST',
+              plan_code: body.plan_code,
+              amount: body.plan_code === 'pro_yearly' ? 399000 : 49000,
+              qr_code_url: 'https://img.vietqr.io/image/MB-0987654321-compact2.png',
+              expires_at: new Date(Date.now() + 900000).toISOString(),
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    };
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // 1. Pro Header: Renew Plan (Monthly default)
+    pricing.setBillingCycle('monthly');
+    requestedPlanCode = null;
+    env.elements.btnQuotaRenew.click();
+    assert.strictEqual(requestedPlanCode, 'pro_monthly', 'btnQuotaRenew initiates pro_monthly');
+    assert.strictEqual(env.elements.pricingCheckoutModal.hasAttribute('hidden'), false, 'Modal hidden must be removed');
+    assert.strictEqual(env.elements.pricingCheckoutModal.style.display, 'flex');
+    assert.strictEqual(env.elements.pricingCheckoutModal.getAttribute('aria-hidden'), 'false');
+
+    // 2. Pro Header: Upgrade to Yearly Plan
+    requestedPlanCode = null;
+    env.elements.btnQuotaUpgradeYearly.click();
+    assert.strictEqual(requestedPlanCode, 'pro_yearly', 'btnQuotaUpgradeYearly initiates pro_yearly');
+
+    // 3. Warning Banner: Warning Renew Button
+    pricing.setBillingCycle('monthly');
+    requestedPlanCode = null;
+    env.elements.btnQuotaWarningRenew.click();
+    assert.strictEqual(requestedPlanCode, 'pro_monthly', 'btnQuotaWarningRenew initiates pro_monthly');
+
+    // 4. Free Header: Free Upgrade CTA Button
+    pricing.setBillingCycle('yearly');
+    requestedPlanCode = null;
+    env.elements.btnQuotaUpgradeFreeCta.click();
+    assert.strictEqual(requestedPlanCode, 'pro_yearly', 'btnQuotaUpgradeFreeCta initiates pro_yearly when cycle is yearly');
+
+    // 5. Close Checkout Modal
+    pricing.closeCheckoutModal();
+    assert.strictEqual(env.elements.pricingCheckoutModal.hasAttribute('hidden'), true, 'Modal hidden must be true after closing');
+    assert.strictEqual(env.elements.pricingCheckoutModal.style.display, 'none');
+    assert.strictEqual(env.elements.pricingCheckoutModal.getAttribute('aria-hidden'), 'true');
   });
 
   console.log('\n================================================================');
