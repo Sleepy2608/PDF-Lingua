@@ -347,6 +347,94 @@ runTest('CSS: How It Works 3-column grid and step cards defined', () => {
 });
 
 // -----------------------------------------------------------------------------
+// Part 10: Testimonials & Hard Metrics (Section 5)
+// -----------------------------------------------------------------------------
+console.log('\n--- 10. Testimonials & Hard Metrics ---');
+
+runTest('Metrics: 4 technical benchmark cards exist with tabular numbers', () => {
+  assert.ok(htmlContent.includes('welcome-metrics-grid'), 'Missing .welcome-metrics-grid');
+  assert.ok(htmlContent.includes('&lt; 2.8s'), 'Missing < 2.8s metric');
+  assert.ok(htmlContent.includes('99.2%'), 'Missing 99.2% metric');
+  assert.ok(htmlContent.includes('94.5%'), 'Missing 94.5% metric');
+  assert.ok(htmlContent.includes('100%'), 'Missing 100% metric');
+});
+
+runTest('Testimonials: 3 real-world testimonial cards exist with verified badges', () => {
+  assert.ok(htmlContent.includes('welcome-testimonials-grid'), 'Missing .welcome-testimonials-grid');
+  assert.ok(htmlContent.includes('id="testiAcademic"'), 'Missing #testiAcademic card');
+  assert.ok(htmlContent.includes('id="testiTranslator"'), 'Missing #testiTranslator card');
+  assert.ok(htmlContent.includes('id="testiEngineer"'), 'Missing #testiEngineer card');
+  assert.ok(htmlContent.includes('TS. Nguyễn Văn Hưng'), 'Missing TS. Nguyễn Văn Hưng');
+  assert.ok(htmlContent.includes('ThS. Trần Thu Trang'), 'Missing ThS. Trần Thu Trang');
+  assert.ok(htmlContent.includes('Lê Hoàng Long'), 'Missing Lê Hoàng Long');
+  assert.ok(htmlContent.includes('welcome-verified-badge'), 'Missing verified badges');
+});
+
+runTest('CSS: Metrics and testimonials grid styling defined', () => {
+  assert.ok(cssContent.includes('.welcome-metrics-grid'), 'Missing .welcome-metrics-grid in CSS');
+  assert.ok(cssContent.includes('.welcome-testimonials-grid'), 'Missing .welcome-testimonials-grid in CSS');
+  assert.ok(cssContent.includes('.welcome-metric-number'), 'Missing .welcome-metric-number in CSS');
+});
+
+// -----------------------------------------------------------------------------
+// Part 11: Pricing Plans & Billing Toggle (Section 6)
+// -----------------------------------------------------------------------------
+console.log('\n--- 11. Pricing Plans & Billing Toggle ---');
+
+runTest('Pricing: Monthly / Yearly billing toggle configured with discount badge', () => {
+  assert.ok(htmlContent.includes('welcome-billing-toggle'), 'Missing .welcome-billing-toggle');
+  assert.ok(htmlContent.includes('id="btnBillingMonthly"'), 'Missing #btnBillingMonthly');
+  assert.ok(htmlContent.includes('id="btnBillingYearly"'), 'Missing #btnBillingYearly');
+  assert.ok(htmlContent.includes('Tiết kiệm 32%'), 'Missing discount badge');
+});
+
+runTest('Pricing: Free and Pro cards exist with feature comparison', () => {
+  assert.ok(htmlContent.includes('id="pricingCardFree"'), 'Missing #pricingCardFree');
+  assert.ok(htmlContent.includes('id="pricingCardPro"'), 'Missing #pricingCardPro');
+  assert.ok(htmlContent.includes('pricing-featured-badge'), 'Missing featured badge on Pro card');
+  assert.ok(htmlContent.includes('id="btnStartFree"'), 'Missing #btnStartFree');
+  assert.ok(htmlContent.includes('id="btnUpgradePro"'), 'Missing #btnUpgradePro');
+});
+
+runTest('CSS: Pricing grid, featured border, and price figures styled', () => {
+  assert.ok(cssContent.includes('.welcome-pricing-grid'), 'Missing .welcome-pricing-grid in CSS');
+  assert.ok(cssContent.includes('.pricing-card-featured'), 'Missing .pricing-card-featured in CSS');
+  assert.ok(cssContent.includes('--wl-accent-red'), 'Featured plan must use red border');
+});
+
+runTest('JS: Billing toggle interaction defined for price adjustments', () => {
+  assert.ok(jsContent.includes('btnBillingMonthly'), 'JS must reference btnBillingMonthly');
+  assert.ok(jsContent.includes('btnBillingYearly'), 'JS must reference btnBillingYearly');
+  assert.ok(jsContent.includes('399.000 đ'), 'JS must toggle yearly price');
+});
+
+// -----------------------------------------------------------------------------
+// Part 12: Comprehensive 4-Column Footer (Section 7)
+// -----------------------------------------------------------------------------
+console.log('\n--- 12. Comprehensive 4-Column Footer ---');
+
+runTest('Footer: 4-column semantic layout with brand, nav, tech and legal', () => {
+  assert.ok(htmlContent.includes('welcome-footer-grid'), 'Missing .welcome-footer-grid');
+  assert.ok(htmlContent.includes('col-brand'), 'Missing col-brand column');
+  assert.ok(htmlContent.includes('Điều Hướng Nhanh'), 'Missing Navigation column');
+  assert.ok(htmlContent.includes('Công Nghệ Cốt Lõi'), 'Missing Technology column');
+  assert.ok(htmlContent.includes('Hỗ Trợ &amp; Pháp Lý'), 'Missing Legal column');
+});
+
+runTest('Footer: Includes security badges, email support, and GitHub repo', () => {
+  assert.ok(htmlContent.includes('footer-cert-badge'), 'Missing .footer-cert-badge');
+  assert.ok(htmlContent.includes('support@pdf-lingua.vn'), 'Missing support email');
+  assert.ok(htmlContent.includes('github.com/Sleepy2608/PDF-Lingua'), 'Missing GitHub repo URL');
+  assert.ok(htmlContent.includes('99.98% Uptime'), 'Missing system uptime status');
+});
+
+runTest('CSS: Footer grid, columns, and link hover styles defined', () => {
+  assert.ok(cssContent.includes('.welcome-footer-grid'), 'Missing .welcome-footer-grid in CSS');
+  assert.ok(cssContent.includes('grid-template-columns: 2fr 1fr 1fr 1.2fr;'), 'Footer grid must be 4 columns');
+  assert.ok(cssContent.includes('.welcome-footer-links a:hover'), 'Missing link hover in footer');
+});
+
+// -----------------------------------------------------------------------------
 // Summary
 // -----------------------------------------------------------------------------
 console.log('\n================================================================');
