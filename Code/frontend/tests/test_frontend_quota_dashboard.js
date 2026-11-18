@@ -224,6 +224,10 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     checkoutSuccessExpiresAt: new MockElement('checkoutSuccessExpiresAt', 'strong'),
     btnCheckoutDone: new MockElement('btnCheckoutDone', 'button'),
     btnRetryCheckout: new MockElement('btnRetryCheckout', 'button'),
+    tabPricingPlans: new MockElement('tabPricingPlans', 'button', ['active'], { 'aria-selected': 'true' }),
+    tabBillingHistory: new MockElement('tabBillingHistory', 'button', [], { 'aria-selected': 'false' }),
+    pricingPlansContainer: new MockElement('pricingPlansContainer', 'div'),
+    billingHistoryContainer: new MockElement('billingHistoryContainer', 'div'),
   };
 
   const documentListeners = {};
@@ -238,6 +242,7 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     createElement: (tag) => new MockElement('gen_' + Math.random(), tag),
   };
 
+  const notifications = [];
   const windowListeners = {};
   const mockWindow = {
     addEventListener: (ev, fn) => {
@@ -251,6 +256,7 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     localStorage: mockStorage,
     sessionStorage: mockStorage,
     location: { origin: 'http://localhost:8000' },
+    showToast: (msg, type) => { notifications.push({ msg, type }); },
   };
 
   const sandbox = {
@@ -264,6 +270,8 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     clearTimeout: () => {},
     setInterval: () => 123,
     clearInterval: () => {},
+    showToast: mockWindow.showToast,
+    notifyUser: (msg, type) => { notifications.push({ msg, type }); },
   };
 
   vm.createContext(sandbox);
@@ -273,15 +281,18 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     documentListeners['DOMContentLoaded'].forEach((fn) => fn());
   }
 
-  return { sandbox, elements, documentListeners, windowListeners };
+  return { sandbox, elements, documentListeners, windowListeners, notifications };
 }
 
 let passedCount = 0;
 let failedCount = 0;
 
-function runTest(name, fn) {
+async function runTest(name, fn) {
   try {
-    fn();
+    const res = fn();
+    if (res && typeof res.then === 'function') {
+      await res;
+    }
     console.log(`[PASS] ${name}`);
     passedCount++;
   } catch (err) {
@@ -291,12 +302,13 @@ function runTest(name, fn) {
   }
 }
 
-console.log('================================================================');
-console.log('PDF-Lingua Quota Usage Dashboard & Pro VIP Status Test Suite');
-console.log('================================================================\n');
+async function runAllTests() {
+  console.log('================================================================');
+  console.log('PDF-Lingua Quota Usage Dashboard & Pro VIP Status Test Suite');
+  console.log('================================================================\n');
 
-// 1. Static HTML & CSS Validation
-runTest('HTML & CSS: Quota Usage Dashboard structure, Pro VIP badge, and progress bars exist', () => {
+  // 1. Static HTML & CSS Validation
+  await runTest('HTML & CSS: Quota Usage Dashboard structure, Pro VIP badge, and progress bars exist', () => {
   assert(htmlSource.includes('id="quotaDashboardCard"'), 'Missing #quotaDashboardCard in index.html');
   assert(htmlSource.includes('id="quotaWarningBanner"'), 'Missing #quotaWarningBanner in index.html');
   assert(htmlSource.includes('id="quotaProHeader"'), 'Missing #quotaProHeader in index.html');
@@ -322,7 +334,7 @@ runTest('HTML & CSS: Quota Usage Dashboard structure, Pro VIP badge, and progres
 });
 
 // 2. Pro VIP State Rendering
-runTest('Pro VIP State: Renders plan name, dates, countdown badge, and Pro quota meters', () => {
+  await runTest('Pro VIP State: Renders plan name, dates, countdown badge, and Pro quota meters', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -359,7 +371,7 @@ runTest('Pro VIP State: Renders plan name, dates, countdown badge, and Pro quota
 });
 
 // 3. Free Tier State Rendering
-runTest('Free Tier State: Renders Free header, hides Pro header, displays Free limits', () => {
+  await runTest('Free Tier State: Renders Free header, hides Pro header, displays Free limits', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -386,7 +398,7 @@ runTest('Free Tier State: Renders Free header, hides Pro header, displays Free l
 });
 
 // 4. Expiring Soon State
-runTest('Expiring Soon State: Displays warning banner and pill-expiring countdown badge', () => {
+  await runTest('Expiring Soon State: Displays warning banner and pill-expiring countdown badge', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -408,7 +420,7 @@ runTest('Expiring Soon State: Displays warning banner and pill-expiring countdow
 });
 
 // 5. Expired State
-runTest('Expired State: Displays danger warning banner and pill-expired countdown badge', () => {
+  await runTest('Expired State: Displays danger warning banner and pill-expired countdown badge', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -430,7 +442,7 @@ runTest('Expired State: Displays danger warning banner and pill-expired countdow
 });
 
 // 6. Color Thresholds Logic
-runTest('Meter Progress Bars: Correct color thresholds for <70%, 70-90%, >90%', () => {
+  await runTest('Meter Progress Bars: Correct color thresholds for <70%, 70-90%, >90%', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -467,7 +479,7 @@ runTest('Meter Progress Bars: Correct color thresholds for <70%, 70-90%, >90%', 
 });
 
 // 7. Action Buttons & Checkout Modal Triggers
-runTest('Action Buttons: Clicking Renew, Upgrade Yearly, Free CTA, and Warning Renew triggers checkout', () => {
+  await runTest('Action Buttons: Clicking Renew, Upgrade Yearly, Free CTA, and Warning Renew triggers checkout', () => {
   const env = createQuotaTestEnv({
     pdfl_token: 'fake_jwt_token',
     pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
@@ -514,7 +526,7 @@ runTest('Action Buttons: Clicking Renew, Upgrade Yearly, Free CTA, and Warning R
 });
 
 // 8. Integration with Subscription Sync
-runTest('User Subscription Integration: Syncs quota state when role changes between Guest, Free, and Pro', () => {
+  await runTest('User Subscription Integration: Syncs quota state when role changes between Guest, Free, and Pro', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -536,7 +548,7 @@ runTest('User Subscription Integration: Syncs quota state when role changes betw
 });
 
 // 9. Exact Thresholds & Arithmetic Safety
-runTest('Arithmetic Safety: 0%, 50%, 69%, 70%, 80%, 90%, 91%, 100%, limit=0, NaN, and Infinity', () => {
+  await runTest('Arithmetic Safety: 0%, 50%, 69%, 70%, 80%, 90%, 91%, 100%, limit=0, NaN, and Infinity', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -561,7 +573,7 @@ runTest('Arithmetic Safety: 0%, 50%, 69%, 70%, 80%, 90%, 91%, 100%, limit=0, NaN
 });
 
 // 10. Threshold Badges & 100% State UI
-runTest('Threshold Badges: Shows warning badge for 70-90% and danger badge for >90% and 100%', () => {
+  await runTest('Threshold Badges: Shows warning badge for 70-90% and danger badge for >90% and 100%', () => {
   const env = createQuotaTestEnv();
   const pricing = env.sandbox.window.PDFLinguaPricing;
 
@@ -630,7 +642,7 @@ runTest('Threshold Badges: Shows warning badge for 70-90% and danger badge for >
 });
 
 // 11. Responsive Layout Breakpoints
-runTest('Responsive Layout: Desktop 3 cols (>1024px), Tablet 2 cols (768-1024px), Mobile 1 col (<=768px)', () => {
+  await runTest('Responsive Layout: Desktop 3 cols (>1024px), Tablet 2 cols (768-1024px), Mobile 1 col (<=768px)', () => {
   // Desktop base grid: 3 columns
   assert(pricingCssSource.includes('grid-template-columns: repeat(3, minmax(0, 1fr))'), 'Missing 3-col Desktop layout');
 
@@ -652,7 +664,7 @@ runTest('Responsive Layout: Desktop 3 cols (>1024px), Tablet 2 cols (768-1024px)
 });
 
 // 12. Accessibility, Tabular Numbers & Progress Motion
-runTest('Accessibility & Motion: Tabular nums, smooth cubic-bezier easing, and reduced motion override', () => {
+  await runTest('Accessibility & Motion: Tabular nums, smooth cubic-bezier easing, and reduced motion override', () => {
   // Tabular nums font variant
   assert(pricingCssSource.includes('font-variant-numeric: tabular-nums'), 'Missing font-variant-numeric: tabular-nums');
 
@@ -669,7 +681,7 @@ runTest('Accessibility & Motion: Tabular nums, smooth cubic-bezier easing, and r
 });
 
 // 13. Inline Meter Action Triggers
-runTest('Inline Meter Actions: Clicking inline quota CTA buttons triggers checkout modal', () => {
+  await runTest('Inline Meter Actions: Clicking inline quota CTA buttons triggers checkout modal', () => {
   const env = createQuotaTestEnv({
     pdfl_token: 'fake_jwt_token',
     pdfl_user: JSON.stringify({ id: 10, email: 'pro@pdfl.vn', role: 'pro' }),
@@ -707,10 +719,333 @@ runTest('Inline Meter Actions: Clicking inline quota CTA buttons triggers checko
   assert.strictEqual(initiatedPlan, 'pro_monthly', 'Inline Copilot CTA should initiate checkout');
 });
 
-console.log('\n================================================================');
-console.log(`SUMMARY: ${passedCount}/${passedCount + failedCount} tests passed (${failedCount} failed).`);
-console.log('================================================================');
 
-if (failedCount > 0) {
-  process.exit(1);
+  // 14. Real Subscription API Integration - Free Account
+  await runTest('Subscription API: Free account mapping with real backend limits', async () => {
+    let capturedUrl = null;
+    let capturedHeaders = null;
+
+    const env = createQuotaTestEnv(
+      {
+        pdfl_token: 'fake_jwt_token_free',
+        pdfl_user: JSON.stringify({ id: 101, email: 'free_user@pdfl.vn', role: 'free' }),
+      },
+      async (url, opts) => {
+        capturedUrl = url;
+        capturedHeaders = opts && opts.headers;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              current_role: 'free',
+              is_pro: false,
+              max_file_size_mb: 20,
+              max_ocr_pages: 100,
+              active_subscription: null,
+            },
+          }),
+        };
+      }
+    );
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+    const res = await pricing.fetchMySubscription();
+
+    assert(capturedUrl && capturedUrl.includes('/api/pricing/my-subscription'), 'Must call /api/pricing/my-subscription');
+    assert.strictEqual(capturedHeaders['Authorization'], 'Bearer fake_jwt_token_free', 'Must send Bearer JWT');
+    assert.strictEqual(res.current_role, 'free');
+    assert.strictEqual(res.is_pro, false);
+
+    // Verify rendered state
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'none');
+    assert.strictEqual(env.elements.quotaOcrLimit.textContent, '100');
+    assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '20 MB');
+    assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '0');
+  });
+
+  // 15. Real Subscription API Integration - Pro Account with Active Subscription
+  await runTest('Subscription API: Pro account mapping with active subscription metadata', async () => {
+    const env = createQuotaTestEnv(
+      {
+        pdfl_token: 'fake_jwt_token_pro',
+        pdfl_user: JSON.stringify({ id: 102, email: 'pro_user@pdfl.vn', role: 'pro' }),
+      },
+      async () => {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              current_role: 'pro',
+              is_pro: true,
+              max_file_size_mb: 100,
+              max_ocr_pages: 500,
+              active_subscription: {
+                id: 88,
+                user_id: 102,
+                plan_code: 'pro_monthly',
+                plan_name: 'Gói Pro Hàng Tháng',
+                billing_cycle: 'monthly',
+                status: 'active',
+                started_at: '2026-11-01T00:00:00Z',
+                expires_at: '2026-12-01T00:00:00Z',
+                days_remaining: 14,
+                auto_renew: true,
+              },
+            },
+          }),
+        };
+      }
+    );
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+    const res = await pricing.fetchMySubscription();
+
+    assert.strictEqual(res.is_pro, true);
+    assert.strictEqual(res.active_subscription.plan_name, 'Gói Pro Hàng Tháng');
+
+    // UI elements assertion
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex');
+    assert.strictEqual(env.elements.quotaFreeHeader.style.display, 'none');
+    assert.strictEqual(env.elements.quotaPlanName.textContent, 'Gói Pro Hàng Tháng');
+    assert.strictEqual(env.elements.quotaDaysRemainingBadge.textContent, 'Còn 14 ngày');
+    assert.strictEqual(env.elements.quotaOcrLimit.textContent, '500');
+    assert.strictEqual(env.elements.quotaFileSizeUsed.textContent, '100 MB');
+    assert.strictEqual(env.elements.quotaCopilotLimit.textContent, '15');
+  });
+
+  // 16. Event Synchronization (pdfl:auth-change, tab switch, pdfl:job-completed, pdfl:document-processed)
+  await runTest('Event Synchronization: Auth changes, tab switches, and document processing trigger quota sync', async () => {
+    let fetchCalls = 0;
+    const env = createQuotaTestEnv(
+      {
+        pdfl_token: 'fake_jwt_token_sync',
+        pdfl_user: JSON.stringify({ id: 103, email: 'sync_user@pdfl.vn', role: 'pro' }),
+      },
+      async (url) => {
+        if (url.includes('/api/pricing/my-subscription')) {
+          fetchCalls++;
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                current_role: 'pro',
+                is_pro: true,
+                max_file_size_mb: 100,
+                max_ocr_pages: 500,
+                active_subscription: {
+                  plan_name: 'Gói Pro Sync',
+                  days_remaining: 20,
+                  expires_at: '2026-12-10T00:00:00Z',
+                },
+              },
+            }),
+          };
+        }
+        return { ok: true, json: async () => ({}) };
+      }
+    );
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+    const initialCalls = fetchCalls;
+
+    // 1. pdfl:auth-change event
+    env.sandbox.window.dispatchEvent({
+      type: 'pdfl:auth-change',
+      detail: { user: { id: 103, email: 'sync_user@pdfl.vn', role: 'pro' } },
+    });
+    await new Promise((r) => setTimeout(r, 10));
+    assert(fetchCalls > initialCalls, 'pdfl:auth-change must trigger subscription fetch');
+
+    const afterAuthCalls = fetchCalls;
+
+    // 2. Tab switch to plans
+    pricing.switchPricingTab('plans');
+    await new Promise((r) => setTimeout(r, 10));
+    assert(fetchCalls > afterAuthCalls, 'Switching to plans tab must trigger subscription fetch');
+
+    const afterTabCalls = fetchCalls;
+
+    // 3. pdfl:job-completed event
+    env.sandbox.window.dispatchEvent({
+      type: 'pdfl:job-completed',
+      detail: { jobId: 'job-999' },
+    });
+    await new Promise((r) => setTimeout(r, 10));
+    assert(fetchCalls > afterTabCalls, 'pdfl:job-completed must trigger subscription fetch');
+
+    const afterJobCalls = fetchCalls;
+
+    // 4. Duplicate binding guard
+    pricing.bindGlobalSyncEvents();
+    pricing.bindGlobalSyncEvents();
+    env.sandbox.window.dispatchEvent({
+      type: 'pdfl:document-processed',
+      detail: { docId: 'doc-888' },
+    });
+    await new Promise((r) => setTimeout(r, 10));
+    assert.strictEqual(fetchCalls, afterJobCalls + 1, 'Duplicate bindings must not cause multiple fetches');
+  });
+
+  // 17. Error Handling & Loading State (HTTP 401, 403, 500, Network Failure, Invalid JSON, Loading Skeleton)
+  await runTest('Error Handling & Loading: Skeleton states, HTTP 401, 403, 500, and network failures', async () => {
+    // 1. Loading Skeleton
+    const env = createQuotaTestEnv({
+      pdfl_token: 'fake_jwt_token',
+      pdfl_user: JSON.stringify({ id: 104, email: 'err_user@pdfl.vn', role: 'pro' }),
+    });
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    pricing.setQuotaDashboardLoading(true);
+    assert(env.elements.quotaDashboardCard.classList.contains('is-loading'), 'Card must have is-loading class');
+    assert.strictEqual(env.elements.quotaDashboardCard.getAttribute('aria-busy'), 'true', 'Card must have aria-busy="true"');
+
+    pricing.setQuotaDashboardLoading(false);
+    assert(!env.elements.quotaDashboardCard.classList.contains('is-loading'), 'is-loading must be removed');
+    assert.strictEqual(env.elements.quotaDashboardCard.getAttribute('aria-busy'), 'false', 'aria-busy must be false');
+
+    // 2. HTTP 401 Session Expiry
+    env.sandbox.fetch = async () => ({
+      ok: false,
+      status: 401,
+      json: async () => ({ detail: 'Token expired' }),
+    });
+
+    const res401 = await pricing.fetchMySubscription();
+    assert.strictEqual(res401, null, '401 should return null');
+    assert(env.notifications.some((n) => n.type === 'warning' && n.msg.includes('Phiên đăng nhập đã hết hạn')), '401 should notify user');
+    assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'none', '401 should reset quota card');
+
+    // 3. HTTP 403 Forbidden
+    env.sandbox.fetch = async () => ({
+      ok: false,
+      status: 403,
+      json: async () => ({ detail: 'Forbidden' }),
+    });
+    const res403 = await pricing.fetchMySubscription();
+    assert.strictEqual(res403, null, '403 should return null');
+    assert(env.notifications.some((n) => n.type === 'error' && n.msg.includes('quyền truy cập')), '403 should notify user');
+
+    // 4. HTTP 500 Internal Error
+    env.sandbox.fetch = async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({ detail: 'Server error' }),
+    });
+    const res500 = await pricing.fetchMySubscription();
+    assert.strictEqual(res500, null, '500 should return null');
+    assert(pricing.getSubscriptionRequestState().error.includes('500'), 'State should record 500 error');
+
+    // 5. Network Failure
+    env.sandbox.fetch = async () => {
+      throw new Error('Failed to fetch');
+    };
+    const resNetwork = await pricing.fetchMySubscription();
+    assert.strictEqual(resNetwork, null, 'Network error should return null without crashing');
+    assert(pricing.getSubscriptionRequestState().error.includes('Lỗi kết nối'), 'State should record network error');
+  });
+
+  // 18. Race Condition Prevention
+  await runTest('Race Condition Prevention: Slower stale request does not overwrite newer response', async () => {
+    let resolveFirstReq = null;
+    let resolveSecondReq = null;
+
+    let subReqCount = 0;
+    const env = createQuotaTestEnv({}, async (url) => {
+      if (!url.includes('/api/pricing/my-subscription')) {
+        return { ok: true, json: async () => ({ success: true, data: {} }) };
+      }
+      subReqCount++;
+      if (subReqCount === 1) {
+        // Slow first request (Free data)
+        return new Promise((resolve) => {
+          resolveFirstReq = () =>
+            resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({
+                success: true,
+                data: {
+                  current_role: 'free',
+                  is_pro: false,
+                  max_file_size_mb: 20,
+                  max_ocr_pages: 100,
+                  active_subscription: null,
+                },
+              }),
+            });
+        });
+      } else {
+        // Fast second request (Pro data)
+        return new Promise((resolve) => {
+          resolveSecondReq = () =>
+            resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({
+                success: true,
+                data: {
+                  current_role: 'pro',
+                  is_pro: true,
+                  max_file_size_mb: 100,
+                  max_ocr_pages: 500,
+                  active_subscription: {
+                    plan_name: 'Gói Pro Mới Nhất',
+                    days_remaining: 30,
+                  },
+                },
+              }),
+            });
+        });
+      }
+    });
+
+    env.sandbox.localStorage.setItem('pdfl_token', 'fake_jwt_token');
+    env.sandbox.localStorage.setItem(
+      'pdfl_user',
+      JSON.stringify({ id: 105, email: 'race@pdfl.vn', role: 'free' })
+    );
+
+    const pricing = env.sandbox.window.PDFLinguaPricing;
+
+    // Trigger Request 1 (Slow)
+    const p1 = pricing.fetchMySubscription();
+
+    // Trigger Request 2 (Fast newer request)
+    const p2 = pricing.fetchMySubscription();
+
+    // Resolve Request 2 FIRST
+    resolveSecondReq();
+    await p2;
+
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex', 'Pro header should be displayed from req 2');
+    assert.strictEqual(env.elements.quotaPlanName.textContent, 'Gói Pro Mới Nhất');
+
+    // Now resolve Request 1 (Stale)
+    resolveFirstReq();
+    await p1;
+
+    // Verify Request 1 did NOT overwrite Request 2
+    assert.strictEqual(env.elements.quotaProHeader.style.display, 'flex', 'Stale req 1 must not overwrite Pro state');
+    assert.strictEqual(env.elements.quotaPlanName.textContent, 'Gói Pro Mới Nhất', 'Plan name must not be overwritten');
+    assert.strictEqual(pricing.getMySubscriptionData().current_role, 'pro', 'Subscription data must remain Pro');
+  });
+
+  console.log('\n================================================================');
+  console.log(`SUMMARY: ${passedCount}/${passedCount + failedCount} tests passed (${failedCount} failed).`);
+  console.log('================================================================');
+
+  if (failedCount > 0) {
+    process.exit(1);
+  }
 }
+
+runAllTests();

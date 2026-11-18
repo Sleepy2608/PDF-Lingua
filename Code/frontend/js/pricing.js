@@ -220,20 +220,8 @@
       });
     }
 
-    // Listen to auth changes to refresh subscription & CTA state
-    if (typeof window !== 'undefined') {
-      window.addEventListener('pdfl:auth-change', (e) => {
-        const user = e && e.detail ? e.detail.user : null;
-        if (!user) {
-          mySubscriptionData = null;
-          renderUserSubscriptionState(null, null);
-        } else {
-          fetchMySubscription();
-        }
-      });
-    }
-
     // Initial render & background fetch
+    bindGlobalSyncEvents();
     initQuotaUsageDashboard();
     renderPricingCatalog();
     renderUserSubscriptionState(getStoredUser(), mySubscriptionData);
@@ -470,17 +458,35 @@
 
         const days = typeof activeSub.days_remaining === 'number' ? activeSub.days_remaining : 30;
         let qState = 'pro';
-        if (days <= 0) {
+        if (days <= 0 || activeSub.status === 'expired') {
           qState = 'expired';
         } else if (days <= 3) {
           qState = 'expiring';
         }
+
+        const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 500;
+        const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 100;
+
         renderQuotaUsageDashboard(qState, {
           plan_name: activeSub.plan_name || (currentCycle === 'yearly' ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng'),
           plan_code: activeSub.plan_code || (currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly'),
           days_remaining: days,
           started_at: activeSub.started_at || null,
           expires_at: activeSub.expires_at || null,
+          ocr: {
+            limit: maxOcr,
+            note: `Tối đa ${maxOcr} trang OCR / tài liệu theo gói Pro`,
+          },
+          file_size: {
+            limit: maxFile,
+            display_limit: `${maxFile} MB`,
+            display_used: `${maxFile} MB`,
+            note: `Tối đa ${maxFile} MB / tệp theo gói Pro`,
+          },
+          ai_copilot: {
+            limit: 15,
+            note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+          },
         });
       } else {
         if (activeBannerTitle) {
@@ -494,7 +500,24 @@
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = 'none';
         }
-        renderQuotaUsageDashboard('pro');
+        const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 500;
+        const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 100;
+        renderQuotaUsageDashboard('pro', {
+          ocr: {
+            limit: maxOcr,
+            note: `Tối đa ${maxOcr} trang OCR / tài liệu theo gói Pro`,
+          },
+          file_size: {
+            limit: maxFile,
+            display_limit: `${maxFile} MB`,
+            display_used: `${maxFile} MB`,
+            note: `Tối đa ${maxFile} MB / tệp theo gói Pro`,
+          },
+          ai_copilot: {
+            limit: 15,
+            note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+          },
+        });
       }
 
       if (btnSelectFree) {
@@ -556,7 +579,25 @@
         proPlanCtaHint.textContent =
           'Kích hoạt tức thì qua mã VietQR ngân hàng 24/7';
       }
-      renderQuotaUsageDashboard('free');
+      const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 100;
+      const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 20;
+      renderQuotaUsageDashboard('free', {
+        ocr: {
+          limit: maxOcr,
+          note: `Tối đa ${maxOcr} trang OCR / tài liệu cho gói Miễn phí`,
+        },
+        file_size: {
+          limit: maxFile,
+          display_limit: `${maxFile} MB`,
+          display_used: `${maxFile} MB`,
+          note: `Hạn mức tối đa ${maxFile} MB / tệp cho gói Miễn phí`,
+        },
+        ai_copilot: {
+          limit: 0,
+          used: 0,
+          note: 'Nâng cấp lên Pro để mở khóa AI Copilot 15 câu/ngày',
+        },
+      });
     }
   }
 
@@ -593,9 +634,62 @@
     return catalogData;
   }
 
+  let subscriptionRequestId = 0;
+  let subscriptionLoading = false;
+  let subscriptionError = null;
+  let pricingEventsBound = false;
+
+  function bindGlobalSyncEvents() {
+    if (pricingEventsBound || typeof window === 'undefined') return;
+    pricingEventsBound = true;
+
+    window.addEventListener('pdfl:auth-change', (e) => {
+      const user = e && e.detail ? e.detail.user : null;
+      if (!user) {
+        mySubscriptionData = null;
+        renderUserSubscriptionState(null, null);
+      } else {
+        fetchMySubscription();
+      }
+    });
+
+    window.addEventListener('pdfl:job-completed', () => {
+      if (getStoredToken()) {
+        fetchMySubscription();
+      }
+    });
+
+    window.addEventListener('pdfl:document-processed', () => {
+      if (getStoredToken()) {
+        fetchMySubscription();
+      }
+    });
+  }
+
+  function setQuotaDashboardLoading(isLoading) {
+    const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+    if (!quotaDashboardCard) return;
+    if (isLoading) {
+      quotaDashboardCard.setAttribute('aria-busy', 'true');
+      quotaDashboardCard.classList.add('is-loading');
+    } else {
+      quotaDashboardCard.setAttribute('aria-busy', 'false');
+      quotaDashboardCard.classList.remove('is-loading');
+    }
+  }
+
   async function fetchMySubscription() {
     const token = getStoredToken();
-    if (!token || typeof fetch !== 'function') return null;
+    if (!token || typeof fetch !== 'function') {
+      subscriptionLoading = false;
+      return null;
+    }
+
+    const currentReqId = ++subscriptionRequestId;
+    subscriptionLoading = true;
+    subscriptionError = null;
+
+    setQuotaDashboardLoading(true);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/pricing/my-subscription`, {
@@ -605,17 +699,52 @@
           Accept: 'application/json',
         },
       });
-      if (!res || !res.ok) return null;
+
+      if (currentReqId !== subscriptionRequestId) {
+        return null;
+      }
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          subscriptionError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          mySubscriptionData = null;
+          renderUserSubscriptionState(null, null);
+          notifyUser(subscriptionError, 'warning');
+          return null;
+        } else if (res.status === 403) {
+          subscriptionError = 'Bạn không có quyền truy cập thông tin gói dịch vụ.';
+          notifyUser(subscriptionError, 'error');
+          return null;
+        } else {
+          subscriptionError = `Lỗi máy chủ (${res.status}). Không thể tải thông tin gói.`;
+          return null;
+        }
+      }
+
       const body = await res.json();
+      if (currentReqId !== subscriptionRequestId) {
+        return null;
+      }
+
       if (body && body.success && body.data) {
         mySubscriptionData = body.data;
         renderUserSubscriptionState(getStoredUser(), mySubscriptionData);
         return mySubscriptionData;
+      } else {
+        subscriptionError = (body && body.message) ? body.message : 'Dữ liệu phản hồi không hợp lệ.';
+        return null;
       }
     } catch (_err) {
-      // Ignore network errors silently
+      if (currentReqId === subscriptionRequestId) {
+        subscriptionError = 'Lỗi kết nối mạng khi tải thông tin gói.';
+      }
+      return null;
+    } finally {
+      if (currentReqId === subscriptionRequestId) {
+        subscriptionLoading = false;
+        setQuotaDashboardLoading(false);
+      }
     }
-    return null;
   }
 
   function handleFreePlanAction() {
@@ -2233,6 +2362,10 @@
 
     if (billingTab === 'history') {
       return fetchBillingHistory(1, billingStatusFilter);
+    } else if (billingTab === 'plans') {
+      if (getStoredToken()) {
+        fetchMySubscription();
+      }
     }
   }
 
@@ -3103,6 +3236,15 @@
       },
       generateReceiptHtml,
       calculateQuotaPercent,
+      fetchMySubscription,
+      bindGlobalSyncEvents,
+      setQuotaDashboardLoading,
+      getMySubscriptionData: () => mySubscriptionData,
+      getSubscriptionRequestState: () => ({
+        isLoading: subscriptionLoading,
+        error: subscriptionError,
+        requestId: subscriptionRequestId,
+      }),
       renderQuotaDashboard: renderQuotaUsageDashboard,
       getQuotaDashboardState: () => ({
         stateKey: currentQuotaStateKey,

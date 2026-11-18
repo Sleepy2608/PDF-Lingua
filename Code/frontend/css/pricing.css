@@ -2701,6 +2701,21 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.quota-dashboard-card.is-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.quota-dashboard-card.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(1px);
+  border-radius: var(--radius-xl);
+  z-index: 10;
+}
+
 /* Warning / Alert Banners */
 .quota-warning-banner {
   display: flex;
