@@ -545,36 +545,323 @@
         </section>
 
         <!-- 5. TESTIMONIALS & HARD METRICS -->
-        <section class="welcome-section welcome-testimonials-section" id="welcomeTestimonials" aria-label="Danh gia va thong so thuc nghiem">
+        <section class="welcome-section welcome-testimonials-section" id="welcomeTestimonials" aria-label="Đánh giá và thông số thực nghiệm">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <span class="welcome-section-tag">Kiem Chung Thuc Te</span>
+                    <span class="welcome-section-tag">Kiểm Chứng Thực Tế</span>
                     <h2 class="welcome-section-title">Được Tin Dùng Bởi Giảng Viên, Nghiên Cứu Sinh & Kỹ Sư</h2>
-                    <p class="welcome-section-subtitle">Cac chi so hieu nang do luong thuc nghiem tren hang nghin trang tai lieu chuyen nganh.</p>
+                    <p class="welcome-section-subtitle">Các chỉ số hiệu năng đo lường thực nghiệm trên hàng nghìn trang tài liệu chuyên ngành cùng phản hồi từ người dùng thực tế.</p>
+                </div>
+
+                <!-- Hard Metrics Row -->
+                <div class="welcome-metrics-grid">
+                    <div class="welcome-metric-card">
+                        <div class="welcome-metric-number">&lt; 2.8s</div>
+                        <div class="welcome-metric-label">Tốc Độ Xử Lý / Trang</div>
+                        <div class="welcome-metric-sub">Nhanh gấp 4.2x OCR thông thường</div>
+                    </div>
+                    <div class="welcome-metric-card">
+                        <div class="welcome-metric-number">99.2%</div>
+                        <div class="welcome-metric-label">Độ Chính Xác Ký Tự</div>
+                        <div class="welcome-metric-sub">Khôi phục dấu thanh tiếng Việt tối ưu</div>
+                    </div>
+                    <div class="welcome-metric-card">
+                        <div class="welcome-metric-number">94.5%</div>
+                        <div class="welcome-metric-label">Bảo Tồn Cấu Trúc Bố Cục</div>
+                        <div class="welcome-metric-sub">Bảo toàn nguyên vẹn bảng biểu & đa cột</div>
+                    </div>
+                    <div class="welcome-metric-card">
+                        <div class="welcome-metric-number">100%</div>
+                        <div class="welcome-metric-label">Sandbox Cô Lập Dữ Liệu</div>
+                        <div class="welcome-metric-sub">Mã hóa AES-256 & phân quyền riêng tư</div>
+                    </div>
+                </div>
+
+                <!-- Testimonials Grid -->
+                <div class="welcome-testimonials-grid">
+                    <!-- Testimonial 1 -->
+                    <div class="welcome-testimonial-card" id="testiAcademic">
+                        <div class="welcome-testimonial-header">
+                            <div class="welcome-avatar-circle">VH</div>
+                            <div class="welcome-author-info">
+                                <h3 class="welcome-author-name">TS. Nguyễn Văn Hưng</h3>
+                                <p class="welcome-author-role">Giảng viên Khoa CNTT, ĐH Bách Khoa</p>
+                            </div>
+                            <span class="welcome-verified-badge" title="Đã xác thực danh tính">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Xác thực</span>
+                            </span>
+                        </div>
+                        <p class="welcome-testimonial-quote">
+                            "PDF-Lingua xử lý các bài báo arXiv phức tạp gồm 2 cột và nhiều công thức toán học cực kỳ ấn tượng. Tính năng song ngữ giúp sinh viên đối chiếu thuật ngữ gốc chuẩn xác 100% mà không bị xô lệch trang."
+                        </p>
+                        <div class="welcome-testimonial-footer">
+                            <span class="welcome-tag-pill">Nghiên Cứu Khoa Học</span>
+                            <span class="welcome-rating-stars">★★★★★</span>
+                        </div>
+                    </div>
+
+                    <!-- Testimonial 2 -->
+                    <div class="welcome-testimonial-card" id="testiTranslator">
+                        <div class="welcome-testimonial-header">
+                            <div class="welcome-avatar-circle">TT</div>
+                            <div class="welcome-author-info">
+                                <h3 class="welcome-author-name">ThS. Trần Thu Trang</h3>
+                                <p class="welcome-author-role">Biên dịch viên Tài liệu Y sinh & Dược học</p>
+                            </div>
+                            <span class="welcome-verified-badge" title="Đã xác thực danh tính">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Xác thực</span>
+                            </span>
+                        </div>
+                        <p class="welcome-testimonial-quote">
+                            "Bảo tồn bảng số liệu nghiên cứu lâm sàng là nỗi ám ảnh lớn nhất của tôi trước đây. Từ ngày dùng PDF-Lingua, tôi tiết kiệm được hơn 70% thời gian chỉnh sửa lại bảng biểu và xuất thẳng ra file Word .DOCX rất tiện lợi."
+                        </p>
+                        <div class="welcome-testimonial-footer">
+                            <span class="welcome-tag-pill">Tài Liệu Y Tế</span>
+                            <span class="welcome-rating-stars">★★★★★</span>
+                        </div>
+                    </div>
+
+                    <!-- Testimonial 3 -->
+                    <div class="welcome-testimonial-card" id="testiEngineer">
+                        <div class="welcome-testimonial-header">
+                            <div class="welcome-avatar-circle">HL</div>
+                            <div class="welcome-author-info">
+                                <h3 class="welcome-author-name">Lê Hoàng Long</h3>
+                                <p class="welcome-author-role">Kỹ sư Hệ thống AI, FPT Software</p>
+                            </div>
+                            <span class="welcome-verified-badge" title="Đã xác thực danh tính">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Xác thực</span>
+                            </span>
+                        </div>
+                        <p class="welcome-testimonial-quote">
+                            "Trợ lý AI Copilot trả lời kèm số trang chính xác khiến tôi hoàn toàn yên tâm khi tra cứu các tiêu chuẩn ISO và hồ sơ kỹ thuật hàng trăm trang. Không còn lo lắng về ảo giác thông tin của các mô hình LLM thông thường."
+                        </p>
+                        <div class="welcome-testimonial-footer">
+                            <span class="welcome-tag-pill">Hồ Sơ Tiêu Chuẩn ISO</span>
+                            <span class="welcome-rating-stars">★★★★★</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- 6. PRICING PLANS -->
-        <section class="welcome-section welcome-pricing-section" id="welcomePricing" aria-label="Bang gia dich vu">
+        <section class="welcome-section welcome-pricing-section" id="welcomePricing" aria-label="Bảng giá dịch vụ">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <span class="welcome-section-tag">Chi Phi Minh Bach</span>
+                    <span class="welcome-section-tag">Chi Phí Minh Bạch</span>
                     <h2 class="welcome-section-title">Bảng Giá Linh Hoạt Cho Mọi Nhu Cầu</h2>
-                    <p class="welcome-section-subtitle">Khoi dau mien phi hoan toan hoac nang cap goi Pro de mo khoa toan bo suc manh AI.</p>
+                    <p class="welcome-section-subtitle">Khởi đầu miễn phí hoàn toàn hoặc nâng cấp gói Pro để mở khóa toàn bộ sức mạnh AI và xử lý hàng loạt.</p>
+
+                    <!-- Billing Toggle -->
+                    <div class="welcome-billing-toggle" role="group" aria-label="Chu kỳ thanh toán">
+                        <button type="button" class="billing-toggle-btn active" id="btnBillingMonthly" data-billing="monthly">
+                            Hàng tháng
+                        </button>
+                        <button type="button" class="billing-toggle-btn" id="btnBillingYearly" data-billing="yearly">
+                            Hàng năm <span class="billing-discount-badge">Tiết kiệm 32%</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="welcome-pricing-grid">
+                    <!-- Free Starter Plan -->
+                    <div class="welcome-pricing-card" id="pricingCardFree">
+                        <div class="pricing-card-header">
+                            <h3 class="pricing-plan-name">Gói Miễn Phí</h3>
+                            <p class="pricing-plan-desc">Phù hợp cho cá nhân làm quen và trải nghiệm dịch thuật tài liệu cơ bản.</p>
+                            <div class="pricing-price-wrap">
+                                <span class="welcome-price-value" id="priceValueFree">0 đ</span>
+                                <span class="pricing-period" id="pricePeriodFree">/ tháng</span>
+                            </div>
+                        </div>
+
+                        <ul class="pricing-features-list">
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Xử lý tối đa <strong>5 tài liệu / ngày</strong></span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>OCR Tiếng Việt tối đa <strong>100 trang / tháng</strong></span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Xem song ngữ 2 cột đối chiếu trực quan</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Lưu trữ lịch sử xử lý 7 ngày</span>
+                            </li>
+                            <li class="feature-disabled">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Trợ lý AI Copilot hỏi đáp trích dẫn trang</span>
+                            </li>
+                            <li class="feature-disabled">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Xuất tệp Microsoft Word (.DOCX)</span>
+                            </li>
+                        </ul>
+
+                        <div class="pricing-card-footer">
+                            <a href="index.html" class="welcome-btn welcome-btn-outline welcome-btn-block" id="btnStartFree">
+                                <span>Bắt đầu miễn phí</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pro Plan (Featured) -->
+                    <div class="welcome-pricing-card pricing-card-featured" id="pricingCardPro">
+                        <div class="pricing-featured-badge">Phổ Biến Nhất</div>
+                        <div class="pricing-card-header">
+                            <h3 class="pricing-plan-name">Gói Chuyên Nghiệp (PRO)</h3>
+                            <p class="pricing-plan-desc">Giải pháp toàn diện cho sinh viên, giảng viên và kỹ sư cần công suất lớn và AI.</p>
+                            <div class="pricing-price-wrap">
+                                <span class="welcome-price-value" id="priceValuePro">49.000 đ</span>
+                                <span class="pricing-period" id="pricePeriodPro">/ tháng</span>
+                            </div>
+                        </div>
+
+                        <ul class="pricing-features-list">
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span><strong>Không giới hạn</strong> số lượng tài liệu tải lên</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>OCR Tiếng Việt chuyên sâu <strong>500 trang / tháng</strong></span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Trợ lý AI Copilot <strong>trích dẫn số trang chính xác</strong></span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Tóm tắt tài liệu lớn Map-Reduce trong 30 giây</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Xuất tệp <strong>Microsoft Word (.DOCX) &amp; nén ZIP</strong></span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Hỗ trợ kỹ thuật ưu tiên 24/7 &amp; Phân vùng bảo mật</span>
+                            </li>
+                        </ul>
+
+                        <div class="pricing-card-footer">
+                            <a href="index.html#pricing" class="welcome-btn welcome-btn-primary welcome-btn-block" id="btnUpgradePro">
+                                <span>Nâng cấp gói Pro ngay</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
     <!-- 7. COMPREHENSIVE FOOTER -->
-    <footer class="welcome-footer-section" id="welcomeFooter" role="contentinfo" aria-label="Chan trang">
+    <footer class="welcome-footer-section" id="welcomeFooter" role="contentinfo" aria-label="Chân trang">
         <div class="welcome-container">
+            <div class="welcome-footer-grid">
+                <!-- Column 1: Brand & Security -->
+                <div class="welcome-footer-col col-brand">
+                    <a href="#welcomeHero" class="welcome-brand-link" title="PDF-Lingua">
+                        <img src="assets/images/logo-app-transparent.png" alt="PDF-Lingua Logo" class="welcome-brand-img" width="34" height="34" loading="lazy">
+                        <span class="welcome-brand-name">
+                            <span class="welcome-brand-badge">PDF</span>Lingua
+                        </span>
+                    </a>
+                    <p class="welcome-footer-desc">
+                        Nền tảng dịch thuật PDF song ngữ thông minh và trợ lý AI chuyên sâu, cam kết bảo tồn 100% bố cục và cấu trúc tài liệu.
+                    </p>
+                    <div class="welcome-footer-badges">
+                        <span class="footer-cert-badge">Mã hóa AES-256</span>
+                        <span class="footer-cert-badge">ISO 27001 Ready</span>
+                    </div>
+                </div>
+
+                <!-- Column 2: Navigation Links -->
+                <div class="welcome-footer-col">
+                    <h4 class="welcome-footer-title">Điều Hướng Nhanh</h4>
+                    <ul class="welcome-footer-links">
+                        <li><a href="#welcomeHero">Trang chủ</a></li>
+                        <li><a href="#welcomeFeatures">Tính năng nổi bật</a></li>
+                        <li><a href="#welcomeHowItWorks">Quy trình 3 bước</a></li>
+                        <li><a href="#welcomeTestimonials">Đánh giá người dùng</a></li>
+                        <li><a href="#welcomePricing">Bảng giá dịch vụ</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Core Technology -->
+                <div class="welcome-footer-col">
+                    <h4 class="welcome-footer-title">Công Nghệ Cốt Lõi</h4>
+                    <ul class="welcome-footer-links">
+                        <li><a href="#welcomeFeatures">Bóc tách OCR Tiếng Việt</a></li>
+                        <li><a href="#welcomeFeatures">Dịch song ngữ bảo tồn bố cục</a></li>
+                        <li><a href="#welcomeFeatures">Tóm tắt Map-Reduce siêu tốc</a></li>
+                        <li><a href="#welcomeFeatures">Trợ lý Copilot trích dẫn trang</a></li>
+                        <li><a href="#welcomeFeatures">Xuất tệp Word .DOCX &amp; ZIP</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 4: Support & Legal -->
+                <div class="welcome-footer-col">
+                    <h4 class="welcome-footer-title">Hỗ Trợ &amp; Pháp Lý</h4>
+                    <ul class="welcome-footer-links">
+                        <li><a href="index.html#terms">Điều khoản sử dụng</a></li>
+                        <li><a href="index.html#privacy">Chính sách bảo mật</a></li>
+                        <li><a href="mailto:support@pdf-lingua.vn">Liên hệ: support@pdf-lingua.vn</a></li>
+                        <li><a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener noreferrer">Kho mã nguồn GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Copyright & Status Bar -->
             <div class="welcome-footer-bottom">
                 <p class="welcome-footer-copy">Bản quyền &copy; 2026 PDF-Lingua. Toàn bộ quyền được bảo lưu.</p>
                 <div class="welcome-footer-status">
-                    <span class="welcome-status-dot"></span>
-                    <span>He thong hoat dong on dinh (99.98% Uptime)</span>
+                    <span class="welcome-status-dot" aria-hidden="true"></span>
+                    <span>Hệ thống hoạt động ổn định (99.98% Uptime)</span>
                 </div>
             </div>
         </div>

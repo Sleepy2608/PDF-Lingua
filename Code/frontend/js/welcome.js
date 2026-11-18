@@ -141,6 +141,39 @@
         });
       });
     }
+
+    // 6. Pricing Plans Billing Toggle (Monthly / Yearly)
+    var btnMonthly = document.getElementById('btnBillingMonthly');
+    var btnYearly = document.getElementById('btnBillingYearly');
+    var priceValuePro = document.getElementById('priceValuePro');
+    var pricePeriodPro = document.getElementById('pricePeriodPro');
+    var pricePeriodFree = document.getElementById('pricePeriodFree');
+
+    if (btnMonthly && btnYearly) {
+      var setBillingCycle = function (cycle) {
+        if (cycle === 'yearly') {
+          btnYearly.classList.add('active');
+          btnMonthly.classList.remove('active');
+          if (priceValuePro) priceValuePro.textContent = '399.000 đ';
+          if (pricePeriodPro) pricePeriodPro.textContent = '/ năm';
+          if (pricePeriodFree) pricePeriodFree.textContent = '/ năm';
+        } else {
+          btnMonthly.classList.add('active');
+          btnYearly.classList.remove('active');
+          if (priceValuePro) priceValuePro.textContent = '49.000 đ';
+          if (pricePeriodPro) pricePeriodPro.textContent = '/ tháng';
+          if (pricePeriodFree) pricePeriodFree.textContent = '/ tháng';
+        }
+      };
+
+      btnMonthly.addEventListener('click', function () {
+        setBillingCycle('monthly');
+      });
+
+      btnYearly.addEventListener('click', function () {
+        setBillingCycle('yearly');
+      });
+    }
   }
 
   // Self-initialization
