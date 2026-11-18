@@ -3122,6 +3122,12 @@
   color: var(--color-primary-hover);
 }
 
+.btn-quota-meter-cta:focus-visible {
+  outline: 2px solid var(--color-primary-indigo);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* ==========================================================================
    Responsive adjustments for Quota Usage Dashboard
    Desktop (>1024px): 3 columns

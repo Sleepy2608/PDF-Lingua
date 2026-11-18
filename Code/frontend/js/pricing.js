@@ -86,6 +86,7 @@
   let checkoutCountdownInterval = null;
   let remainingSeconds = 900;
   let isSimulatingPayment = false;
+  let lastCheckoutTrigger = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     initPricingModule();
@@ -830,6 +831,16 @@
       });
     }
 
+    if (typeof document !== 'undefined') {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+          if (modal && !modal.hasAttribute('hidden') && modal.style.display !== 'none') {
+            closeCheckoutModal();
+          }
+        }
+      });
+    }
+
     if (btnCycleMonthly) {
       btnCycleMonthly.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1171,6 +1182,10 @@
   }
 
   async function openCheckoutModal(planCodeInput) {
+    if (typeof document !== 'undefined' && document.activeElement) {
+      lastCheckoutTrigger = document.activeElement;
+    }
+
     const normalizedCode =
       planCodeInput === 'pro_yearly' ||
       (!planCodeInput && currentCycle === 'yearly')
@@ -1184,6 +1199,10 @@
       modal.removeAttribute('hidden');
       modal.setAttribute('aria-hidden', 'false');
       modal.style.display = 'flex';
+      const btnClose = document.getElementById('btnCloseCheckoutModal');
+      if (btnClose && typeof btnClose.focus === 'function') {
+        btnClose.focus();
+      }
     }
     if (document && document.body && document.body.style) {
       document.body.style.overflow = 'hidden';
@@ -1211,6 +1230,12 @@
     }
     if (document && document.body && document.body.style) {
       document.body.style.overflow = '';
+    }
+    if (lastCheckoutTrigger && typeof lastCheckoutTrigger.focus === 'function') {
+      try {
+        lastCheckoutTrigger.focus();
+      } catch (_e) {}
+      lastCheckoutTrigger = null;
     }
   }
 

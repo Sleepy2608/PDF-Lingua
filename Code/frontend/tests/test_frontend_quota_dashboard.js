@@ -1401,6 +1401,14 @@ async function runAllTests() {
     assert.strictEqual(env.elements.pricingCheckoutModal.hasAttribute('hidden'), true, 'Modal hidden must be true after closing');
     assert.strictEqual(env.elements.pricingCheckoutModal.style.display, 'none');
     assert.strictEqual(env.elements.pricingCheckoutModal.getAttribute('aria-hidden'), 'true');
+
+    // 6. Escape key accessibility closes Checkout Modal
+    pricing.openCheckoutModal('pro_monthly');
+    assert.strictEqual(env.elements.pricingCheckoutModal.hasAttribute('hidden'), false);
+    if (env.documentListeners['keydown']) {
+      env.documentListeners['keydown'].forEach((fn) => fn({ key: 'Escape' }));
+    }
+    assert.strictEqual(env.elements.pricingCheckoutModal.hasAttribute('hidden'), true, 'Escape key must close checkout modal');
   });
 
   console.log('\n================================================================');
