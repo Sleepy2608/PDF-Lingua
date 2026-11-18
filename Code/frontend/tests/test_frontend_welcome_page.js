@@ -280,6 +280,73 @@ runTest('JS: Synchronization interaction attached to preview paragraphs', () => 
 });
 
 // -----------------------------------------------------------------------------
+// Part 8: Features Bento Grid (6 Asymmetric Pillars)
+// -----------------------------------------------------------------------------
+console.log('\n--- 8. Features Bento Grid (6 Asymmetric Pillars) ---');
+
+runTest('Bento: Grid container and 6 feature cards exist', () => {
+  assert.ok(htmlContent.includes('welcome-bento-grid'), 'Missing .welcome-bento-grid');
+  assert.ok(htmlContent.includes('id="bentoCardLayout"'), 'Missing #bentoCardLayout');
+  assert.ok(htmlContent.includes('id="bentoCardOcr"'), 'Missing #bentoCardOcr');
+  assert.ok(htmlContent.includes('id="bentoCardCopilot"'), 'Missing #bentoCardCopilot');
+  assert.ok(htmlContent.includes('id="bentoCardSummary"'), 'Missing #bentoCardSummary');
+  assert.ok(htmlContent.includes('id="bentoCardBatch"'), 'Missing #bentoCardBatch');
+  assert.ok(htmlContent.includes('id="bentoCardSecurity"'), 'Missing #bentoCardSecurity');
+});
+
+runTest('Bento: Asymmetric column spanning configured (3-column rows)', () => {
+  assert.ok(htmlContent.includes('welcome-bento-span-2'), 'Missing .welcome-bento-span-2 class');
+  assert.ok(htmlContent.includes('welcome-bento-span-1'), 'Missing .welcome-bento-span-1 class');
+});
+
+runTest('Bento: Micro-visuals implemented for all 6 cards', () => {
+  assert.ok(htmlContent.includes('bento-visual-dual-sync'), 'Missing Card 1 dual sync visual');
+  assert.ok(htmlContent.includes('bento-visual-deskew'), 'Missing Card 2 deskew visual');
+  assert.ok(htmlContent.includes('bento-visual-chat'), 'Missing Card 3 chat visual');
+  assert.ok(htmlContent.includes('bento-visual-compression'), 'Missing Card 4 compression visual');
+  assert.ok(htmlContent.includes('bento-visual-queue'), 'Missing Card 5 queue visual');
+  assert.ok(htmlContent.includes('bento-visual-security'), 'Missing Card 6 security visual');
+});
+
+runTest('CSS: Bento Grid layout and hover animations defined', () => {
+  assert.ok(cssContent.includes('.welcome-bento-grid'), 'Missing .welcome-bento-grid in CSS');
+  assert.ok(cssContent.includes('grid-template-columns: repeat(3, 1fr);'), 'Bento grid must be 3 columns');
+  assert.ok(cssContent.includes('.welcome-bento-span-2'), 'Missing .welcome-bento-span-2 in CSS');
+  assert.ok(cssContent.includes('.welcome-bento-card:hover'), 'Missing hover state for bento card');
+});
+
+runTest('JS: Interactive Bento sync row switcher configured', () => {
+  assert.ok(jsContent.includes('mini-sync-row'), 'JS must reference mini-sync-row');
+});
+
+// -----------------------------------------------------------------------------
+// Part 9: How It Works (3 Streamlined Steps)
+// -----------------------------------------------------------------------------
+console.log('\n--- 9. How It Works (3 Streamlined Steps) ---');
+
+runTest('Steps: Grid container and 3 step cards exist', () => {
+  assert.ok(htmlContent.includes('welcome-steps-container'), 'Missing .welcome-steps-container');
+  assert.ok(htmlContent.includes('welcome-steps-grid'), 'Missing .welcome-steps-grid');
+  assert.ok(htmlContent.includes('id="stepUpload"'), 'Missing #stepUpload');
+  assert.ok(htmlContent.includes('id="stepProcess"'), 'Missing #stepProcess');
+  assert.ok(htmlContent.includes('id="stepExport"'), 'Missing #stepExport');
+});
+
+runTest('Steps: Numbering 01, 02, 03 and progress connector line present', () => {
+  assert.ok(htmlContent.includes('>01<'), 'Missing step 01 number');
+  assert.ok(htmlContent.includes('>02<'), 'Missing step 02 number');
+  assert.ok(htmlContent.includes('>03<'), 'Missing step 03 number');
+  assert.ok(htmlContent.includes('welcome-steps-progress'), 'Missing .welcome-steps-progress');
+});
+
+runTest('CSS: How It Works 3-column grid and step cards defined', () => {
+  assert.ok(cssContent.includes('.welcome-steps-grid'), 'Missing .welcome-steps-grid in CSS');
+  assert.ok(cssContent.includes('grid-template-columns: repeat(3, 1fr);'), 'Steps grid must be 3 columns');
+  assert.ok(cssContent.includes('.welcome-step-number'), 'Missing .welcome-step-number in CSS');
+  assert.ok(cssContent.includes('font-variant-numeric: tabular-nums;'), 'Step numbers must use tabular-nums');
+});
+
+// -----------------------------------------------------------------------------
 // Summary
 // -----------------------------------------------------------------------------
 console.log('\n================================================================');
