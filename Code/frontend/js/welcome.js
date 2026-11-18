@@ -104,6 +104,30 @@
         sectionObserver.observe(sec);
       });
     }
+
+    // 4. Interactive Dual-Pane Preview Paragraph Synchronization
+    var syncParagraphs = document.querySelectorAll('.welcome-doc-para[data-sync-id]');
+    if (syncParagraphs.length > 0) {
+      syncParagraphs.forEach(function (para) {
+        para.addEventListener('mouseenter', function () {
+          var syncId = para.getAttribute('data-sync-id');
+          if (syncId) {
+            document.querySelectorAll('.welcome-doc-para[data-sync-id="' + syncId + '"]').forEach(function (el) {
+              el.classList.add('is-sync-active');
+            });
+          }
+        });
+
+        para.addEventListener('mouseleave', function () {
+          var syncId = para.getAttribute('data-sync-id');
+          if (syncId) {
+            document.querySelectorAll('.welcome-doc-para[data-sync-id="' + syncId + '"]').forEach(function (el) {
+              el.classList.remove('is-sync-active');
+            });
+          }
+        });
+      });
+    }
   }
 
   // Self-initialization
@@ -113,3 +137,4 @@
     initWelcomeController();
   }
 })();
+

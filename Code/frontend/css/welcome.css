@@ -486,6 +486,362 @@ body {
   flex-wrap: wrap;
 }
 
+/* Hero Trust Signals Bar */
+.welcome-hero-trust-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  font-size: 0.85rem;
+  color: var(--wl-text-secondary);
+}
+
+.welcome-trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.welcome-trust-divider {
+  color: var(--wl-border-strong);
+  user-select: none;
+}
+
+/* ==========================================================================
+   4.1. Interactive Product Preview Card (Dual-Pane MacOS Window)
+   ========================================================================== */
+.welcome-preview-wrapper {
+  margin-top: 48px;
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.welcome-preview-card {
+  background-color: var(--wl-bg-page);
+  border: 1px solid var(--wl-border-subtle);
+  border-radius: var(--wl-radius-lg);
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.03);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Window Chrome Header Bar */
+.welcome-preview-chrome {
+  background-color: var(--wl-bg-subtle);
+  border-bottom: 1px solid var(--wl-border-subtle);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.welcome-preview-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.welcome-preview-dots .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: var(--wl-radius-full);
+  display: inline-block;
+}
+
+.welcome-preview-dots .dot-close {
+  background-color: #EF4444;
+}
+
+.welcome-preview-dots .dot-minimize {
+  background-color: #F59E0B;
+}
+
+.welcome-preview-dots .dot-maximize {
+  background-color: #10B981;
+}
+
+.welcome-preview-filename {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--wl-font-mono);
+  font-size: 0.8rem;
+  color: var(--wl-text-primary);
+  font-weight: 500;
+}
+
+.welcome-file-badge {
+  font-size: 0.7rem;
+  background-color: var(--wl-accent-blue-subtle);
+  color: var(--wl-accent-blue);
+  padding: 2px 8px;
+  border-radius: var(--wl-radius-sm);
+  font-weight: 600;
+  font-family: var(--wl-font-sans);
+}
+
+.welcome-preview-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--wl-text-muted);
+}
+
+.welcome-page-indicator {
+  font-family: var(--wl-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.welcome-zoom-badge {
+  background-color: var(--wl-bg-page);
+  border: 1px solid var(--wl-border-subtle);
+  padding: 2px 7px;
+  border-radius: var(--wl-radius-sm);
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--wl-text-secondary);
+}
+
+/* Dual-Pane Grid Layout */
+.welcome-preview-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 400px;
+}
+
+.welcome-pane {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.welcome-pane-original {
+  border-right: 1px solid var(--wl-border-subtle);
+  background-color: var(--wl-bg-page);
+}
+
+.welcome-pane-translated {
+  background-color: #FAFAFA;
+}
+
+.welcome-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--wl-border-subtle);
+}
+
+.welcome-pane-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--wl-radius-full);
+}
+
+.original-badge {
+  background-color: var(--wl-bg-muted);
+  color: var(--wl-text-secondary);
+}
+
+.translated-badge {
+  background-color: var(--wl-accent-red-subtle);
+  color: var(--wl-accent-red);
+  border: 1px solid var(--wl-accent-red-border);
+}
+
+.welcome-pane-meta {
+  font-size: 0.74rem;
+  color: var(--wl-text-muted);
+  font-family: var(--wl-font-mono);
+}
+
+.welcome-pane-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.welcome-doc-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--wl-text-primary);
+  line-height: 1.35;
+}
+
+.welcome-doc-para {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--wl-text-secondary);
+  padding: 8px 10px;
+  border-radius: var(--wl-radius-sm);
+  transition: background-color var(--wl-transition-fast), border-color var(--wl-transition-fast);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.welcome-doc-para:hover,
+.welcome-doc-para.is-sync-active {
+  background-color: var(--wl-accent-blue-subtle);
+  border-color: var(--wl-accent-blue-border);
+}
+
+/* Document Table */
+.welcome-doc-table-wrap {
+  margin-top: 8px;
+}
+
+.welcome-table-caption {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--wl-text-muted);
+  margin-bottom: 6px;
+}
+
+.welcome-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  border: 1px solid var(--wl-border-subtle);
+  border-radius: var(--wl-radius-sm);
+  overflow: hidden;
+}
+
+.welcome-doc-table th {
+  background-color: var(--wl-bg-subtle);
+  padding: 7px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--wl-text-secondary);
+  border-bottom: 1px solid var(--wl-border-subtle);
+  text-align: left;
+}
+
+.welcome-doc-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--wl-border-subtle);
+  color: var(--wl-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.welcome-row-highlight {
+  background-color: var(--wl-accent-red-subtle);
+}
+
+.welcome-row-highlight td {
+  color: var(--wl-accent-red);
+  font-weight: 600;
+}
+
+/* Floating AI Copilot Highlight Card */
+.welcome-copilot-card {
+  position: absolute;
+  bottom: 0;
+  right: 28px;
+  max-width: 380px;
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--wl-accent-blue-border);
+  border-radius: var(--wl-radius-md);
+  padding: 16px 18px;
+  box-shadow: 0 16px 32px -8px rgba(37, 99, 235, 0.18), var(--wl-shadow-md);
+  z-index: 20;
+}
+
+.welcome-copilot-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.welcome-copilot-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--wl-radius-full);
+  background-color: var(--wl-accent-blue-subtle);
+  border: 1px solid var(--wl-accent-blue-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.welcome-copilot-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome-copilot-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--wl-text-primary);
+}
+
+.welcome-copilot-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--wl-secure-green);
+  font-weight: 600;
+}
+
+.welcome-verified-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--wl-radius-full);
+  background-color: var(--wl-secure-green);
+  display: inline-block;
+}
+
+.welcome-copilot-msg {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--wl-text-secondary);
+}
+
+.welcome-copilot-msg strong {
+  color: var(--wl-text-primary);
+}
+
+.welcome-copilot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wl-border-subtle);
+}
+
+.welcome-source-chip {
+  font-size: 0.72rem;
+  font-family: var(--wl-font-mono);
+  color: var(--wl-accent-blue);
+  background-color: var(--wl-accent-blue-subtle);
+  padding: 2px 8px;
+  border-radius: var(--wl-radius-sm);
+  font-weight: 600;
+}
+
+.welcome-copilot-badge {
+  font-size: 0.72rem;
+  color: #059669;
+  background-color: var(--wl-secure-green-subtle);
+  padding: 2px 8px;
+  border-radius: var(--wl-radius-sm);
+  font-weight: 600;
+}
+
 /* Subtle background for alternating sections */
 .welcome-how-it-works-section,
 .welcome-pricing-section {
@@ -552,6 +908,25 @@ body {
     padding-top: 60px;
     padding-bottom: 60px;
   }
+
+  .welcome-preview-panes {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-pane-original {
+    border-right: none;
+    border-bottom: 1px solid var(--wl-border-subtle);
+  }
+
+  .welcome-copilot-card {
+    position: static;
+    margin: 20px auto 0 auto;
+    max-width: 100%;
+  }
+
+  .welcome-preview-wrapper {
+    padding-bottom: 0;
+  }
 }
 
 @media (max-width: 600px) {
@@ -580,6 +955,28 @@ body {
     width: 100%;
   }
 
+  .welcome-preview-chrome {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .welcome-preview-controls {
+    display: none;
+  }
+
+  .welcome-pane {
+    padding: 16px 18px;
+  }
+
+  .welcome-hero-trust-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .welcome-trust-divider {
+    display: none;
+  }
+
   .welcome-footer-bottom {
     flex-direction: column;
     align-items: flex-start;
@@ -601,3 +998,4 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
