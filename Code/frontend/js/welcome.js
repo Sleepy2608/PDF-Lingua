@@ -174,6 +174,60 @@
         setBillingCycle('yearly');
       });
     }
+
+    // 7. Smooth Scrolling with Sticky Navbar Offset Compensation
+    var smoothScrollLinks = document.querySelectorAll('a[href^="#welcome"]');
+    if (smoothScrollLinks.length > 0) {
+      smoothScrollLinks.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          var targetId = link.getAttribute('href');
+          if (targetId && targetId.length > 1) {
+            var targetEl = document.querySelector(targetId);
+            if (targetEl) {
+              e.preventDefault();
+              var headerHeight = navbar ? navbar.offsetHeight : 72;
+              var targetPosition = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight - 16;
+              var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              window.scrollTo({
+                top: Math.max(0, targetPosition),
+                behavior: prefersReduced ? 'auto' : 'smooth'
+              });
+              if (history.pushState) {
+                history.pushState(null, null, targetId);
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // 8. Scroll Reveal Observer with Reduced Motion Fallback
+    var revealElements = document.querySelectorAll('.welcome-reveal');
+    if (revealElements.length > 0) {
+      var prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+        revealElements.forEach(function (el) {
+          el.classList.add('is-revealed');
+        });
+      } else {
+        var revealObserver = new IntersectionObserver(function (entries, observer) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-revealed');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, {
+          root: null,
+          rootMargin: '0px 0px -40px 0px',
+          threshold: 0.1
+        });
+
+        revealElements.forEach(function (el) {
+          revealObserver.observe(el);
+        });
+      }
+    }
   }
 
   // Self-initialization
