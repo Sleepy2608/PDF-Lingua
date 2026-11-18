@@ -818,6 +818,7 @@
     openAdminView,
     closeAdminView,
     fetchAdminStats,
+    renderAdminStats,
     fetchAdminUsers,
     loadAllAdminData,
     openConfirmModal,
