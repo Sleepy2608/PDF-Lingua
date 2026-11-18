@@ -236,9 +236,6 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     pricingMainTitle: new MockElement('pricingMainTitle', 'h1'),
     pricingMainSubtitle: new MockElement('pricingMainSubtitle', 'p'),
     btnPricingBackToPlans: new MockElement('btnPricingBackToPlans', 'button'),
-    tabPricingPlans: new MockElement('tabPricingPlans', 'button', ['active'], { 'aria-selected': 'true' }),
-    tabBillingHistory: new MockElement('tabBillingHistory', 'button', [], { 'aria-selected': 'false' }),
-    tabQuotaDashboard: new MockElement('tabQuotaDashboard', 'button', [], { 'aria-selected': 'false' }),
     pricingPlansContainer: new MockElement('pricingPlansContainer', 'div'),
     billingHistoryContainer: new MockElement('billingHistoryContainer', 'div'),
     quotaDashboardContainer: new MockElement('quotaDashboardContainer', 'div'),
@@ -1449,10 +1446,21 @@ async function runAllTests() {
     assert.ok(idxQuotaContainer < idxQuotaCard, 'quotaDashboardCard must reside inside quotaDashboardContainer, separate from Plans page');
     assert.ok(idxQuotaContainer < idxGuestState, 'quotaGuestState must reside inside quotaDashboardContainer');
 
-    assert.ok(htmlSource.includes('id="tabQuotaDashboard"'), '3rd Pricing tab button tabQuotaDashboard must exist in index.html');
+    assert.strictEqual(htmlSource.includes('class="pricing-tabs-bar"'), false, 'Duplicate 3-tab bar must be removed from HTML');
+    assert.strictEqual(htmlSource.includes('id="tabPricingPlans"'), false, 'tabPricingPlans must be removed from HTML');
+    assert.strictEqual(htmlSource.includes('id="tabBillingHistory"'), false, 'tabBillingHistory must be removed from HTML');
+    assert.strictEqual(htmlSource.includes('id="tabQuotaDashboard"'), false, 'tabQuotaDashboard must be removed from HTML');
+    assert.strictEqual(htmlSource.includes('id="billingHistoryTabBadge"'), false, 'billingHistoryTabBadge must be removed from HTML');
+    assert.strictEqual(htmlSource.includes('class="billing-history-header"'), false, 'Redundant sub-eyebrow billing-history-header must be removed');
+    assert.strictEqual(htmlSource.includes('class="quota-page-eyebrow-row"'), false, 'Redundant sub-eyebrow quota-page-eyebrow-row must be removed');
     assert.ok(htmlSource.includes('id="btnPricingBackToPlans"'), 'Back-to-plans header CTA must exist in index.html');
+    assert.strictEqual(pricingCssSource.includes('.pricing-tabs-bar'), false, 'Removed 3-tab bar CSS must not remain in pricing.css');
+    assert.strictEqual(pricingCssSource.includes('--radius-xl'), false, 'Undefined --radius-xl token must be replaced by --radius-lg');
+    assert.strictEqual(pricingCssSource.includes('--border-medium'), false, 'Undefined --border-medium token must not remain in pricing.css');
     assert.ok(pricingCssSource.includes('.quota-dashboard-container'), 'pricing.css must style .quota-dashboard-container');
     assert.ok(pricingCssSource.includes('.quota-guest-state-card'), 'pricing.css must style .quota-guest-state-card');
+    assert.ok(pricingCssSource.includes('.pricing-section .btn-primary'), 'pricing.css must define Pricing-themed .btn-primary CTA');
+    assert.ok(pricingCssSource.includes('.quota-free-desc'), 'pricing.css must style .quota-free-desc');
   });
 
   // 26. Multi-page Navigation, Guest State & Sidebar Submenu Synchronization
@@ -1467,10 +1475,10 @@ async function runAllTests() {
     assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'none', 'Billing container hidden on Plans page');
     assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hidden on Plans page');
     assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'none', 'Back-to-plans button hidden while already on Plans page');
-    assert.strictEqual(env.elements.tabPricingPlans.classList.contains('active'), true, 'Plans tab active');
     assert.strictEqual(env.elements.sideNavPricingGroup.classList.contains('is-expanded'), true, 'Sidebar pricing group expands');
     assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), true, 'Sidebar Plans sub-item active');
     assert.strictEqual(env.elements.sideNavPricingPlans.getAttribute('aria-current'), 'page', 'Sidebar Plans sub-item sets aria-current');
+    assert.strictEqual(env.elements.pricingMainTitle.textContent, 'Bảng giá gói dịch vụ', 'Plans header title stays synchronized');
 
     // Open Billing History view
     pricing.openBillingHistoryView();
@@ -1478,10 +1486,9 @@ async function runAllTests() {
     assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'block', 'Billing container visible on Billing page');
     assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hidden on Billing page');
     assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'inline-flex', 'Back-to-plans button shows on Billing page');
-    assert.strictEqual(env.elements.tabBillingHistory.classList.contains('active'), true, 'Billing tab active');
     assert.strictEqual(env.elements.sideNavPricingBilling.classList.contains('active'), true, 'Sidebar Billing sub-item active');
     assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), false, 'Sidebar Plans sub-item deactivated');
-    assert.ok(env.elements.pricingMainTitle.textContent.length > 0, 'Dynamic header title updates on Billing page');
+    assert.strictEqual(env.elements.pricingMainTitle.textContent, 'Lịch sử thanh toán & Hóa đơn', 'Dynamic header title updates on Billing page');
 
     // Open Quota Dashboard view as Guest -> shows quotaGuestState and hides quotaDashboardCard
     pricing.openQuotaDashboardView();
@@ -1489,20 +1496,20 @@ async function runAllTests() {
     assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'none', 'Billing container hides on Quota page');
     assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'block', 'Quota container visible on Quota page');
     assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'inline-flex', 'Back-to-plans button shows on Quota page');
-    assert.strictEqual(env.elements.tabQuotaDashboard.classList.contains('active'), true, 'Quota tab active');
     assert.strictEqual(env.elements.sideNavPricingQuota.classList.contains('active'), true, 'Sidebar Quota sub-item active');
     assert.strictEqual(env.elements.sideNavPricingQuota.getAttribute('aria-current'), 'page', 'Sidebar Quota sub-item sets aria-current');
+    assert.strictEqual(env.elements.pricingMainTitle.textContent, 'Quản lý gói & Hạn mức', 'Dynamic header title updates on Quota page');
     assert.strictEqual(env.elements.quotaGuestState.style.display, 'flex', 'Guest sees login prompt card on Quota page');
     assert.strictEqual(env.elements.quotaDashboardCard.style.display, 'none', 'Guest does not see authenticated quota card');
 
-    // Clicking Guest View Plans button or Back to Plans returns cleanly to Plans view
+    // Clicking Guest View Plans button returns cleanly to Plans view
     env.elements.btnQuotaGuestViewPlans.click();
     assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'block', 'btnQuotaGuestViewPlans returns to Plans view');
     assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hides when returning to Plans');
 
-    // Switching via tabQuotaDashboard then clicking btnPricingBackToPlans returns to Plans view
-    env.elements.tabQuotaDashboard.click();
-    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'block', 'tabQuotaDashboard switches to Quota view');
+    // Switching via switchPricingTab then clicking btnPricingBackToPlans returns to Plans view
+    pricing.switchPricingTab('quota');
+    assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'block', 'switchPricingTab switches to Quota view');
     env.elements.btnPricingBackToPlans.click();
     assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'block', 'btnPricingBackToPlans returns to Plans view');
     assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), true, 'Sidebar Plans sub-item re-activated');

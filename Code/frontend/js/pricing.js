@@ -2348,9 +2348,6 @@
   let lastActiveElementBeforeInvoiceModal = null;
 
   function initBillingHistory() {
-    const tabPlans = document.getElementById('tabPricingPlans');
-    const tabHistory = document.getElementById('tabBillingHistory');
-    const tabQuota = document.getElementById('tabQuotaDashboard');
     const btnBackToPlans = document.getElementById('btnPricingBackToPlans');
     const btnQuotaGuestLogin = document.getElementById('btnQuotaGuestLogin');
     const btnQuotaGuestViewPlans = document.getElementById('btnQuotaGuestViewPlans');
@@ -2358,27 +2355,6 @@
     const btnPrev = document.getElementById('btnBillingPrevPage');
     const btnNext = document.getElementById('btnBillingNextPage');
     const btnRetry = document.getElementById('btnRetryBillingHistory');
-
-    if (tabPlans) {
-      tabPlans.addEventListener('click', (e) => {
-        e.preventDefault();
-        switchPricingTab('plans');
-      });
-    }
-
-    if (tabHistory) {
-      tabHistory.addEventListener('click', (e) => {
-        e.preventDefault();
-        switchPricingTab('history');
-      });
-    }
-
-    if (tabQuota) {
-      tabQuota.addEventListener('click', (e) => {
-        e.preventDefault();
-        switchPricingTab('quota');
-      });
-    }
 
     if (btnBackToPlans) {
       btnBackToPlans.addEventListener('click', (e) => {
@@ -2442,15 +2418,6 @@
         fetchBillingHistory(billingCurrentPage, billingStatusFilter);
       });
     }
-
-    updateBillingTabBadge();
-  }
-
-  function updateBillingTabBadge(count) {
-    const badge = document.getElementById('billingHistoryTabBadge');
-    if (badge) {
-      badge.textContent = String(typeof count === 'number' ? count : billingTotalCount);
-    }
   }
 
   function switchPricingTab(tab) {
@@ -2462,26 +2429,12 @@
       billingTab = 'plans';
     }
 
-    const tabPlans = document.getElementById('tabPricingPlans');
-    const tabHistory = document.getElementById('tabBillingHistory');
-    const tabQuota = document.getElementById('tabQuotaDashboard');
     const plansContainer = document.getElementById('pricingPlansContainer');
     const historyContainer = document.getElementById('billingHistoryContainer');
     const quotaContainer = document.getElementById('quotaDashboardContainer');
     const mainTitle = document.getElementById('pricingMainTitle');
     const mainSubtitle = document.getElementById('pricingMainSubtitle');
     const btnBackToPlans = document.getElementById('btnPricingBackToPlans');
-
-    [
-      { el: tabPlans, key: 'plans' },
-      { el: tabHistory, key: 'history' },
-      { el: tabQuota, key: 'quota' },
-    ].forEach(({ el, key }) => {
-      if (!el) return;
-      const isSelected = billingTab === key;
-      el.classList.toggle('active', isSelected);
-      el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-    });
 
     if (plansContainer) {
       plansContainer.style.display = billingTab === 'plans' ? 'block' : 'none';
@@ -2615,7 +2568,6 @@
         }
       }
       if (countChip) countChip.textContent = '0 giao dịch';
-      updateBillingTabBadge(0);
       billingLoading = false;
       return;
     }
@@ -2730,8 +2682,6 @@
     if (countChip) {
       countChip.textContent = `${billingTotalCount} giao dịch`;
     }
-
-    updateBillingTabBadge(billingTotalCount);
 
     if (billingTotalCount === 0 || billingTransactions.length === 0) {
       if (tableWrap) tableWrap.style.display = 'none';

@@ -440,11 +440,11 @@ function createBillingApiTestEnv(options = {}) {
     return el;
   }
 
-  // Navigation tabs & containers
+  // View containers (3-tab bar removed in favor of Sidebar submenu navigation)
   reg('pricingSection', 'section');
-  reg('tabPricingPlans', 'button', ['pricing-tab-btn', 'active'], { 'aria-selected': 'true' });
-  reg('tabBillingHistory', 'button', ['pricing-tab-btn'], { 'aria-selected': 'false' });
-  reg('billingHistoryTabBadge', 'span');
+  reg('sideNavPricingPlans', 'a', ['sidebar-submenu-item', 'active']);
+  reg('sideNavPricingBilling', 'a', ['sidebar-submenu-item']);
+  reg('sideNavPricingQuota', 'a', ['sidebar-submenu-item']);
   const plansContainer = reg('pricingPlansContainer', 'div');
   plansContainer.style.display = 'block';
   const historyContainer = reg('billingHistoryContainer', 'div', [], { style: 'display: none;' });
@@ -708,15 +708,18 @@ async function runAllTests() {
   console.log('PDF-Lingua Real Billing History & Invoice API Integration Tests');
   console.log('================================================================\n');
 
-  // 1. Static HTML & CSS Architecture
-  assert.ok(htmlSource.includes('id="tabPricingPlans"'), 'HTML must contain #tabPricingPlans');
-  assert.ok(htmlSource.includes('id="tabBillingHistory"'), 'HTML must contain #tabBillingHistory');
+  // 1. Static HTML & CSS Architecture (3-tab bar removed; Sidebar submenu drives page views)
+  assert.strictEqual(htmlSource.includes('id="tabPricingPlans"'), false, 'Duplicate #tabPricingPlans tab button must be removed');
+  assert.strictEqual(htmlSource.includes('id="tabBillingHistory"'), false, 'Duplicate #tabBillingHistory tab button must be removed');
+  assert.strictEqual(htmlSource.includes('class="pricing-tabs-bar"'), false, 'Duplicate .pricing-tabs-bar must be removed');
+  assert.ok(htmlSource.includes('id="sideNavPricingBilling"'), 'Sidebar must contain #sideNavPricingBilling link');
   assert.ok(htmlSource.includes('id="billingHistoryContainer"'), 'HTML must contain #billingHistoryContainer');
   assert.ok(htmlSource.includes('id="billingHistoryTable"'), 'HTML must contain #billingHistoryTable');
   assert.ok(htmlSource.includes('id="billingHistoryLoadingState"'), 'HTML must contain #billingHistoryLoadingState');
   assert.ok(htmlSource.includes('id="invoiceModalLoadingState"'), 'HTML must contain #invoiceModalLoadingState');
   assert.ok(pricingCssSource.includes('#invoiceModalLoadingState'), 'CSS must include #invoiceModalLoadingState in print styles');
-  console.log('[PASS] 1. Static Architecture: Markup, modal loading state, and print CSS rules verified.');
+  assert.ok(pricingCssSource.includes('.billing-history-card') && pricingCssSource.includes('var(--radius-lg, 16px)'), 'Billing history card must match Pricing card radius token');
+  console.log('[PASS] 1. Static Architecture: Markup, Sidebar submenu links, synced Billing theme tokens, modal loading state, and print CSS rules verified.');
 
   // 2. Unauthenticated Guard & Security Isolation
   const unauthEnv = createBillingApiTestEnv({ token: null });
@@ -752,7 +755,6 @@ async function runAllTests() {
   assert.strictEqual(authEnv.tableWrap.style.display, 'block');
   assert.strictEqual(authEnv.elements.billingPaginationFooter.style.display, 'flex');
   assert.strictEqual(authEnv.elements.billingHistoryCountChip.textContent, '12 giao dịch');
-  assert.strictEqual(authEnv.elements.billingHistoryTabBadge.textContent, '12');
 
   const renderedRows = authEnv.elements.billingHistoryTableBody.innerHTML.match(/<tr/g);
   assert.strictEqual(renderedRows.length, 10, 'Page 1 must render exactly 10 transactions');
@@ -1144,7 +1146,7 @@ async function runAllTests() {
   console.log('[PASS] 12. Invoice Out-of-Order Race Condition: Stale invoice discarded and no data leakage observed.');
 
   // 13. Modal Closing Mechanisms & Focus Management
-  const triggerBtn = invoiceEnv.elements.tabBillingHistory;
+  const triggerBtn = invoiceEnv.elements.billingStatusFilter;
   triggerBtn.focus();
   assert.strictEqual(invoiceEnv.mockDocument.activeElement, triggerBtn);
 

@@ -1789,34 +1789,6 @@
                             </div>
                         </div>
 
-                        <!-- Sub-view Navigation Tabs: Bảng giá vs Lịch sử thanh toán vs Quản lý gói & Hạn mức -->
-                        <div class="pricing-tabs-bar" role="tablist" aria-label="Chuyển đổi trang Bảng giá, Lịch sử thanh toán và Quản lý hạn mức">
-                            <button type="button" class="pricing-tab-btn active" id="tabPricingPlans" data-pricing-tab="plans" role="tab" aria-selected="true">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                                </svg>
-                                <span>Bảng giá gói dịch vụ</span>
-                            </button>
-                            <button type="button" class="pricing-tab-btn" id="tabBillingHistory" data-pricing-tab="history" role="tab" aria-selected="false">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                                <span>Lịch sử thanh toán & Hóa đơn</span>
-                                <span class="billing-history-tab-badge font-mono" id="billingHistoryTabBadge">0</span>
-                            </button>
-                            <button type="button" class="pricing-tab-btn" id="tabQuotaDashboard" data-pricing-tab="quota" role="tab" aria-selected="false">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M18 20V10"></path>
-                                    <path d="M12 20V4"></path>
-                                    <path d="M6 20v-6"></path>
-                                </svg>
-                                <span>Quản lý gói & Hạn mức</span>
-                            </button>
-                        </div>
-
                         <!-- 1. Pricing Plans Sub-view Container -->
                         <div class="pricing-plans-container" id="pricingPlansContainer">
                             <!-- Billing Cycle Segmented Switch Bar -->
@@ -2235,20 +2207,6 @@
 
                         <!-- 2. Billing History Sub-view Container -->
                         <div class="billing-history-container" id="billingHistoryContainer" style="display: none;">
-                            <!-- Header & Description -->
-                            <div class="billing-history-header">
-                                <div class="billing-history-header-text">
-                                    <div class="pricing-eyebrow-wrapper">
-                                        <span class="pricing-eyebrow">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                            Sổ cái thanh toán
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Data Card -->
                             <div class="documents-card billing-history-card" id="billingHistoryCard">
                                 <!-- Card Toolbar -->
@@ -2355,17 +2313,6 @@
 
                         <!-- 3. Quota Usage & Pro VIP Subscription Sub-view Container -->
                         <div class="quota-dashboard-container" id="quotaDashboardContainer" style="display: none;">
-                            <div class="quota-page-eyebrow-row">
-                                <span class="pricing-eyebrow">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M18 20V10"></path>
-                                        <path d="M12 20V4"></path>
-                                        <path d="M6 20v-6"></path>
-                                    </svg>
-                                    Quản lý thuê bao & Tài nguyên
-                                </span>
-                            </div>
-
                             <!-- Unauthenticated Guest State for Quota Page -->
                             <div class="quota-guest-state-card" id="quotaGuestState" style="display: none;">
                                 <div class="billing-state-icon">
@@ -2377,7 +2324,7 @@
                                 <div class="billing-state-title">Vui lòng đăng nhập để theo dõi gói dịch vụ & hạn mức</div>
                                 <div class="billing-state-desc">Đăng nhập tài khoản PDF-Lingua để xem trạng thái gói cước, ngày hết hạn, hạn mức trang OCR, dung lượng tệp PDF và lượt hỏi đáp Trợ lý AI Copilot.</div>
                                 <div class="quota-guest-actions">
-                                    <button type="button" class="btn btn-gradient btn-sm" id="btnQuotaGuestLogin">Đăng nhập ngay</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnQuotaGuestLogin">Đăng nhập ngay</button>
                                     <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaGuestViewPlans">Xem Bảng giá gói</button>
                                 </div>
                             </div>
