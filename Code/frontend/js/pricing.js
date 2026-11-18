@@ -91,6 +91,7 @@
     initPricingModule();
     initCheckoutModal();
     initMultiTouchpointsAndQuotaModal();
+    initQuotaUsageDashboard();
     initBillingHistory();
     initInvoiceModal();
   });
@@ -233,6 +234,7 @@
     }
 
     // Initial render & background fetch
+    initQuotaUsageDashboard();
     renderPricingCatalog();
     renderUserSubscriptionState(getStoredUser(), mySubscriptionData);
     fetchPricingCatalog();
@@ -400,6 +402,8 @@
     if (!user && !effectiveRole) {
       // Guest state
       if (activeBanner) activeBanner.style.display = 'none';
+      const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+      if (quotaDashboardCard) quotaDashboardCard.style.display = 'none';
       if (btnAccountUpgradePro) btnAccountUpgradePro.style.display = 'none';
       if (dropzoneLimitText && dropzoneLimitText.classList) {
         dropzoneLimitText.classList.add('dropzone-upgrade-clickable');
@@ -463,6 +467,21 @@
             ? 'inline-flex'
             : 'none';
         }
+
+        const days = typeof activeSub.days_remaining === 'number' ? activeSub.days_remaining : 30;
+        let qState = 'pro';
+        if (days <= 0) {
+          qState = 'expired';
+        } else if (days <= 3) {
+          qState = 'expiring';
+        }
+        renderQuotaUsageDashboard(qState, {
+          plan_name: activeSub.plan_name || (currentCycle === 'yearly' ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng'),
+          plan_code: activeSub.plan_code || (currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly'),
+          days_remaining: days,
+          started_at: activeSub.started_at || null,
+          expires_at: activeSub.expires_at || null,
+        });
       } else {
         if (activeBannerTitle) {
           activeBannerTitle.textContent =
@@ -475,6 +494,7 @@
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = 'none';
         }
+        renderQuotaUsageDashboard('pro');
       }
 
       if (btnSelectFree) {
@@ -536,6 +556,7 @@
         proPlanCtaHint.textContent =
           'Kích hoạt tức thì qua mã VietQR ngân hàng 24/7';
       }
+      renderQuotaUsageDashboard('free');
     }
   }
 
@@ -1641,6 +1662,405 @@
     }
   }
 
+  // ── Quota Usage Dashboard & Pro VIP Status UI ────────────────────────
+
+  const DEFAULT_QUOTA_MOCK = {
+    pro: {
+      account_state: 'pro',
+      plan_name: 'Gói Pro Hàng Tháng',
+      plan_code: 'pro_monthly',
+      days_remaining: 28,
+      started_at: '2026-10-20T00:00:00Z',
+      expires_at: '2026-11-20T00:00:00Z',
+      warning: null,
+      ocr: {
+        used: 142,
+        limit: 500,
+        unit: 'trang',
+        note: 'Đã dùng 142/500 trang tháng này',
+      },
+      file_size: {
+        used: 100,
+        limit: 100,
+        unit: 'MB/tệp',
+        display_used: '100 MB',
+        display_limit: '100 MB',
+        note: 'Gấp 5 lần gói Miễn phí (tối đa 100 MB/tệp)',
+      },
+      ai_copilot: {
+        used: 4,
+        limit: 15,
+        unit: 'câu',
+        note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+      },
+    },
+    expiring: {
+      account_state: 'expiring',
+      plan_name: 'Gói Pro Hàng Tháng',
+      plan_code: 'pro_monthly',
+      days_remaining: 3,
+      started_at: '2026-10-20T00:00:00Z',
+      expires_at: '2026-11-20T00:00:00Z',
+      warning: {
+        level: 'warning',
+        title: 'Gói dịch vụ sắp hết hạn',
+        description: 'Gói Pro của bạn sẽ hết hạn trong 3 ngày tới. Vui lòng gia hạn để không bị gián đoạn quyền lợi.',
+        action_text: 'Gia hạn ngay',
+      },
+      ocr: {
+        used: 410,
+        limit: 500,
+        unit: 'trang',
+        note: 'Đã dùng 410/500 trang tháng này (82%)',
+      },
+      file_size: {
+        used: 100,
+        limit: 100,
+        unit: 'MB/tệp',
+        display_used: '100 MB',
+        display_limit: '100 MB',
+        note: 'Gấp 5 lần gói Miễn phí (tối đa 100 MB/tệp)',
+      },
+      ai_copilot: {
+        used: 12,
+        limit: 15,
+        unit: 'câu',
+        note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+      },
+    },
+    expired: {
+      account_state: 'expired',
+      plan_name: 'Gói Pro (Đã hết hạn)',
+      plan_code: 'pro_monthly',
+      days_remaining: 0,
+      started_at: '2026-09-20T00:00:00Z',
+      expires_at: '2026-10-20T00:00:00Z',
+      warning: {
+        level: 'danger',
+        title: 'Gói dịch vụ đã hết hạn',
+        description: 'Gói Pro của bạn đã hết hạn. Hạn mức đã tạm chuyển về gói Miễn phí. Gia hạn ngay để kích hoạt lại 500 trang OCR và 100 MB.',
+        action_text: 'Gia hạn ngay',
+      },
+      ocr: {
+        used: 500,
+        limit: 500,
+        unit: 'trang',
+        note: 'Hạn mức Pro đã hết hạn',
+      },
+      file_size: {
+        used: 20,
+        limit: 20,
+        unit: 'MB/tệp',
+        display_used: '20 MB',
+        display_limit: '20 MB',
+        note: 'Đang áp dụng hạn mức gói Miễn phí (20 MB/tệp)',
+      },
+      ai_copilot: {
+        used: 0,
+        limit: 0,
+        unit: 'câu',
+        note: 'AI Copilot yêu cầu tài khoản Pro',
+      },
+    },
+    free: {
+      account_state: 'free',
+      plan_name: 'Gói Miễn Phí',
+      plan_code: 'free',
+      days_remaining: null,
+      started_at: null,
+      expires_at: null,
+      warning: null,
+      ocr: {
+        used: 25,
+        limit: 100,
+        unit: 'trang',
+        note: 'Đã dùng 25/100 trang miễn phí',
+      },
+      file_size: {
+        used: 20,
+        limit: 20,
+        unit: 'MB/tệp',
+        display_used: '20 MB',
+        display_limit: '20 MB',
+        note: 'Hạn mức tối đa 20 MB/tệp cho gói Miễn phí',
+      },
+      ai_copilot: {
+        used: 0,
+        limit: 0,
+        unit: 'câu',
+        note: 'Nâng cấp lên Pro để mở khóa AI Copilot 15 câu/ngày',
+      },
+    },
+  };
+
+  let currentQuotaStateKey = 'pro';
+  let currentQuotaData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK.pro));
+  let isQuotaDashboardInitialized = false;
+
+  function renderQuotaUsageDashboard(stateOrData, overrides) {
+    let targetData;
+    if (typeof stateOrData === 'string' && DEFAULT_QUOTA_MOCK[stateOrData]) {
+      currentQuotaStateKey = stateOrData;
+      targetData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK[stateOrData]));
+    } else if (stateOrData && typeof stateOrData === 'object') {
+      currentQuotaStateKey = stateOrData.account_state || 'pro';
+      targetData = JSON.parse(JSON.stringify(stateOrData));
+    } else {
+      currentQuotaStateKey = 'pro';
+      targetData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK.pro));
+    }
+
+    if (overrides && typeof overrides === 'object') {
+      targetData = Object.assign({}, targetData, overrides);
+      if (overrides.ocr && targetData.ocr) {
+        targetData.ocr = Object.assign({}, targetData.ocr, overrides.ocr);
+      }
+      if (overrides.file_size && targetData.file_size) {
+        targetData.file_size = Object.assign({}, targetData.file_size, overrides.file_size);
+      }
+      if (overrides.ai_copilot && targetData.ai_copilot) {
+        targetData.ai_copilot = Object.assign({}, targetData.ai_copilot, overrides.ai_copilot);
+      }
+    }
+
+    currentQuotaData = targetData;
+
+    const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+    if (quotaDashboardCard) {
+      quotaDashboardCard.style.display = 'flex';
+    }
+
+    // 1. Warning Banner
+    const quotaWarningBanner = document.getElementById('quotaWarningBanner');
+    const quotaWarningTitle = document.getElementById('quotaWarningTitle');
+    const quotaWarningDesc = document.getElementById('quotaWarningDesc');
+    const btnQuotaWarningRenew = document.getElementById('btnQuotaWarningRenew');
+
+    if (quotaWarningBanner) {
+      if (targetData.warning) {
+        quotaWarningBanner.style.display = 'flex';
+        if (targetData.warning.level === 'danger') {
+          if (quotaWarningBanner.classList) quotaWarningBanner.classList.add('banner-danger');
+        } else {
+          if (quotaWarningBanner.classList) quotaWarningBanner.classList.remove('banner-danger');
+        }
+        if (quotaWarningTitle) {
+          quotaWarningTitle.textContent = targetData.warning.title || '';
+        }
+        if (quotaWarningDesc) {
+          quotaWarningDesc.textContent = targetData.warning.description || '';
+        }
+        if (btnQuotaWarningRenew) {
+          btnQuotaWarningRenew.textContent = targetData.warning.action_text || 'Gia hạn ngay';
+        }
+      } else {
+        quotaWarningBanner.style.display = 'none';
+        if (quotaWarningBanner.classList) quotaWarningBanner.classList.remove('banner-danger');
+      }
+    }
+
+    // 2. Header Rows (Pro vs Free)
+    const quotaProHeader = document.getElementById('quotaProHeader');
+    const quotaFreeHeader = document.getElementById('quotaFreeHeader');
+    const quotaPlanName = document.getElementById('quotaPlanName');
+    const quotaDaysRemainingBadge = document.getElementById('quotaDaysRemainingBadge');
+    const quotaStartedAt = document.getElementById('quotaStartedAt');
+    const quotaExpiresAt = document.getElementById('quotaExpiresAt');
+
+    if (targetData.account_state === 'free') {
+      if (quotaProHeader) quotaProHeader.style.display = 'none';
+      if (quotaFreeHeader) quotaFreeHeader.style.display = 'flex';
+    } else {
+      if (quotaFreeHeader) quotaFreeHeader.style.display = 'none';
+      if (quotaProHeader) quotaProHeader.style.display = 'flex';
+
+      if (quotaPlanName) {
+        quotaPlanName.textContent = targetData.plan_name || 'Gói Pro Hàng Tháng';
+      }
+      if (quotaStartedAt) {
+        quotaStartedAt.textContent = formatShortDate(targetData.started_at);
+      }
+      if (quotaExpiresAt) {
+        quotaExpiresAt.textContent = formatShortDate(targetData.expires_at);
+      }
+      if (quotaDaysRemainingBadge) {
+        if (quotaDaysRemainingBadge.classList) {
+          quotaDaysRemainingBadge.classList.remove('pill-expiring', 'pill-expired');
+        }
+        const remaining = targetData.days_remaining;
+        if (typeof remaining === 'number') {
+          if (remaining <= 0) {
+            quotaDaysRemainingBadge.textContent = 'Đã hết hạn';
+            if (quotaDaysRemainingBadge.classList) quotaDaysRemainingBadge.classList.add('pill-expired');
+          } else if (remaining <= 3) {
+            quotaDaysRemainingBadge.textContent = `Còn ${remaining} ngày`;
+            if (quotaDaysRemainingBadge.classList) quotaDaysRemainingBadge.classList.add('pill-expiring');
+          } else {
+            quotaDaysRemainingBadge.textContent = `Còn ${remaining} ngày`;
+          }
+        } else {
+          quotaDaysRemainingBadge.textContent = 'Đang kích hoạt';
+        }
+      }
+    }
+
+    // 3. Quota Meter 1: OCR Pages
+    const quotaOcrPercent = document.getElementById('quotaOcrPercent');
+    const quotaOcrUsed = document.getElementById('quotaOcrUsed');
+    const quotaOcrLimit = document.getElementById('quotaOcrLimit');
+    const quotaOcrProgressFill = document.getElementById('quotaOcrProgressFill');
+    const quotaOcrNote = document.getElementById('quotaOcrNote');
+
+    const ocrUsed = targetData.ocr && typeof targetData.ocr.used === 'number' ? targetData.ocr.used : 0;
+    const ocrLimit = targetData.ocr && typeof targetData.ocr.limit === 'number' ? targetData.ocr.limit : 500;
+    const ocrPercent = Math.min(100, Math.max(0, Math.round((ocrUsed / (ocrLimit || 1)) * 100)));
+
+    if (quotaOcrUsed) quotaOcrUsed.textContent = String(ocrUsed);
+    if (quotaOcrLimit) quotaOcrLimit.textContent = String(ocrLimit);
+    if (quotaOcrPercent) {
+      quotaOcrPercent.textContent = `${ocrPercent}%`;
+      if (quotaOcrPercent.classList) {
+        quotaOcrPercent.classList.remove('quota-pill-warning', 'quota-pill-danger', 'quota-pill-active');
+        if (ocrPercent > 90) {
+          quotaOcrPercent.classList.add('quota-pill-danger');
+        } else if (ocrPercent >= 70) {
+          quotaOcrPercent.classList.add('quota-pill-warning');
+        } else {
+          quotaOcrPercent.classList.add('quota-pill-active');
+        }
+      }
+    }
+    if (quotaOcrProgressFill) {
+      quotaOcrProgressFill.style.width = `${ocrPercent}%`;
+      if (typeof quotaOcrProgressFill.setAttribute === 'function') {
+        quotaOcrProgressFill.setAttribute('aria-valuenow', String(ocrPercent));
+      }
+      if (quotaOcrProgressFill.classList) {
+        quotaOcrProgressFill.classList.remove('quota-fill-warning', 'quota-fill-danger');
+        if (ocrPercent > 90) {
+          quotaOcrProgressFill.classList.add('quota-fill-danger');
+        } else if (ocrPercent >= 70) {
+          quotaOcrProgressFill.classList.add('quota-fill-warning');
+        }
+      }
+    }
+    if (quotaOcrNote && targetData.ocr && targetData.ocr.note) {
+      quotaOcrNote.textContent = targetData.ocr.note;
+    }
+
+    // 4. Quota Meter 2: File Size
+    const quotaFileSizePercent = document.getElementById('quotaFileSizePercent');
+    const quotaFileSizeUsed = document.getElementById('quotaFileSizeUsed');
+    const quotaFileSizeProgressFill = document.getElementById('quotaFileSizeProgressFill');
+    const quotaFileSizeNote = document.getElementById('quotaFileSizeNote');
+
+    const fileUsed = targetData.file_size ? targetData.file_size.used : 100;
+    const fileLimit = targetData.file_size ? targetData.file_size.limit : 100;
+    const filePercent = Math.min(100, Math.max(0, Math.round((fileLimit / 100) * 100)));
+
+    if (quotaFileSizeUsed) {
+      quotaFileSizeUsed.textContent = (targetData.file_size && targetData.file_size.display_used)
+        ? targetData.file_size.display_used
+        : `${fileUsed} MB`;
+    }
+    if (quotaFileSizePercent) {
+      quotaFileSizePercent.textContent = (targetData.file_size && targetData.file_size.display_limit)
+        ? targetData.file_size.display_limit
+        : `${fileLimit} MB`;
+    }
+    if (quotaFileSizeProgressFill) {
+      quotaFileSizeProgressFill.style.width = `${filePercent}%`;
+      if (typeof quotaFileSizeProgressFill.setAttribute === 'function') {
+        quotaFileSizeProgressFill.setAttribute('aria-valuenow', String(filePercent));
+      }
+    }
+    if (quotaFileSizeNote && targetData.file_size && targetData.file_size.note) {
+      quotaFileSizeNote.textContent = targetData.file_size.note;
+    }
+
+    // 5. Quota Meter 3: AI Copilot
+    const quotaCopilotPercent = document.getElementById('quotaCopilotPercent');
+    const quotaCopilotUsed = document.getElementById('quotaCopilotUsed');
+    const quotaCopilotLimit = document.getElementById('quotaCopilotLimit');
+    const quotaCopilotProgressFill = document.getElementById('quotaCopilotProgressFill');
+    const quotaCopilotNote = document.getElementById('quotaCopilotNote');
+
+    const copilotUsed = targetData.ai_copilot && typeof targetData.ai_copilot.used === 'number' ? targetData.ai_copilot.used : 0;
+    const copilotLimit = targetData.ai_copilot && typeof targetData.ai_copilot.limit === 'number' ? targetData.ai_copilot.limit : 0;
+    const copilotPercent = copilotLimit > 0 ? Math.min(100, Math.max(0, Math.round((copilotUsed / copilotLimit) * 100))) : 0;
+
+    if (quotaCopilotUsed) quotaCopilotUsed.textContent = String(copilotUsed);
+    if (quotaCopilotLimit) quotaCopilotLimit.textContent = String(copilotLimit);
+    if (quotaCopilotPercent) {
+      quotaCopilotPercent.textContent = `${copilotPercent}%`;
+      if (quotaCopilotPercent.classList) {
+        quotaCopilotPercent.classList.remove('quota-pill-warning', 'quota-pill-danger', 'quota-pill-active');
+        if (copilotPercent > 90) {
+          quotaCopilotPercent.classList.add('quota-pill-danger');
+        } else if (copilotPercent >= 70) {
+          quotaCopilotPercent.classList.add('quota-pill-warning');
+        } else if (copilotPercent > 0) {
+          quotaCopilotPercent.classList.add('quota-pill-active');
+        }
+      }
+    }
+    if (quotaCopilotProgressFill) {
+      quotaCopilotProgressFill.style.width = `${copilotPercent}%`;
+      if (typeof quotaCopilotProgressFill.setAttribute === 'function') {
+        quotaCopilotProgressFill.setAttribute('aria-valuenow', String(copilotPercent));
+      }
+      if (quotaCopilotProgressFill.classList) {
+        quotaCopilotProgressFill.classList.remove('quota-fill-warning', 'quota-fill-danger');
+        if (copilotPercent > 90) {
+          quotaCopilotProgressFill.classList.add('quota-fill-danger');
+        } else if (copilotPercent >= 70) {
+          quotaCopilotProgressFill.classList.add('quota-fill-warning');
+        }
+      }
+    }
+    if (quotaCopilotNote && targetData.ai_copilot && targetData.ai_copilot.note) {
+      quotaCopilotNote.textContent = targetData.ai_copilot.note;
+    }
+  }
+
+  function initQuotaUsageDashboard() {
+    if (isQuotaDashboardInitialized) return;
+    isQuotaDashboardInitialized = true;
+
+    const btnQuotaRenew = document.getElementById('btnQuotaRenew');
+    const btnQuotaUpgradeYearly = document.getElementById('btnQuotaUpgradeYearly');
+    const btnQuotaUpgradeFreeCta = document.getElementById('btnQuotaUpgradeFreeCta');
+    const btnQuotaWarningRenew = document.getElementById('btnQuotaWarningRenew');
+
+    if (btnQuotaRenew) {
+      btnQuotaRenew.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    if (btnQuotaUpgradeYearly) {
+      btnQuotaUpgradeYearly.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal('pro_yearly');
+      });
+    }
+
+    if (btnQuotaUpgradeFreeCta) {
+      btnQuotaUpgradeFreeCta.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    if (btnQuotaWarningRenew) {
+      btnQuotaWarningRenew.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+  }
+
   // ── User Billing Transaction History & Invoice API Integration ───────
 
   let billingTab = 'plans';
@@ -2626,6 +3046,15 @@
         currentInvoiceTransaction = tx;
       },
       generateReceiptHtml,
+      renderQuotaDashboard: renderQuotaUsageDashboard,
+      getQuotaDashboardState: () => ({
+        stateKey: currentQuotaStateKey,
+        data: JSON.parse(JSON.stringify(currentQuotaData)),
+      }),
+      setQuotaMockState: (stateKey) => {
+        renderQuotaUsageDashboard(stateKey);
+      },
+      getQuotaMockData: () => JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK)),
     };
   }
 })();

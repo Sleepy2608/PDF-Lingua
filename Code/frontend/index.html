@@ -1807,6 +1807,173 @@
                                 style="display: none;">Hủy gia hạn tự động</button>
                         </div>
 
+                        <!-- Quota Usage Dashboard & Pro VIP Status Card -->
+                        <div class="quota-dashboard-card" id="quotaDashboardCard" style="display: none;">
+                            <!-- Subscription Warning Banner (Shown for expiring_soon or expired states) -->
+                            <div class="quota-warning-banner" id="quotaWarningBanner" style="display: none;">
+                                <div class="quota-warning-icon" id="quotaWarningIcon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                </div>
+                                <div class="quota-warning-content">
+                                    <strong class="quota-warning-title" id="quotaWarningTitle">Gói dịch vụ sắp hết hạn</strong>
+                                    <p class="quota-warning-desc" id="quotaWarningDesc">Gói Pro của bạn sẽ hết hạn trong vài ngày tới. Vui lòng gia hạn để không bị gián đoạn quyền lợi.</p>
+                                </div>
+                                <button type="button" class="btn btn-warning-action btn-sm" id="btnQuotaWarningRenew">Gia hạn ngay</button>
+                            </div>
+
+                            <!-- Pro VIP Header -->
+                            <div class="quota-header-row" id="quotaProHeader">
+                                <div class="quota-header-left">
+                                    <div class="quota-title-badge-wrap">
+                                        <span class="badge-pro-vip" id="badgeProVip">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                            </svg>
+                                            <span>PRO VIP</span>
+                                        </span>
+                                        <h3 class="quota-plan-name" id="quotaPlanName">Gói Pro Hàng Tháng</h3>
+                                        <span class="quota-countdown-pill font-mono" id="quotaDaysRemainingBadge">Còn 28 ngày</span>
+                                    </div>
+                                    <div class="quota-meta-dates">
+                                        <span class="quota-meta-item">
+                                            <span>Kích hoạt:</span>
+                                            <strong class="font-mono" id="quotaStartedAt">20/10/2026</strong>
+                                        </span>
+                                        <span class="quota-meta-sep">•</span>
+                                        <span class="quota-meta-item">
+                                            <span>Hết hạn:</span>
+                                            <strong class="font-mono" id="quotaExpiresAt">20/11/2026</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="quota-header-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnQuotaRenew">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="23 4 23 10 17 10"></polyline>
+                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                        </svg>
+                                        <span>Gia hạn gói cước</span>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaUpgradeYearly">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="18 15 12 9 6 15"></polyline>
+                                        </svg>
+                                        <span>Nâng cấp gói năm</span>
+                                        <span class="quota-mini-save-pill font-mono">-32%</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Free Account Header -->
+                            <div class="quota-header-row" id="quotaFreeHeader" style="display: none;">
+                                <div class="quota-header-left">
+                                    <div class="quota-title-badge-wrap">
+                                        <span class="badge-free-tier font-mono">GÓI TIÊU CHUẨN</span>
+                                        <h3 class="quota-plan-name" id="quotaFreePlanName">Tài Khoản Miễn Phí</h3>
+                                    </div>
+                                    <p class="quota-free-desc">Bạn đang sử dụng các hạn mức mặc định của gói Miễn phí. Nâng cấp Pro để mở khóa 100 MB mỗi tệp và AI Copilot.</p>
+                                </div>
+                                <div class="quota-header-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnQuotaUpgradeFreeCta">
+                                        <span>Nâng cấp Pro ngay</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Quota Usage Meter Bars Grid -->
+                            <div class="quota-meters-grid" id="quotaMetersGrid">
+                                <!-- Meter 1: OCR Pages -->
+                                <div class="quota-meter-item" id="meterOcrPages">
+                                    <div class="quota-meter-header">
+                                        <div class="quota-meter-title-wrap">
+                                            <div class="quota-meter-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                </svg>
+                                            </div>
+                                            <span class="quota-meter-title">Trang OCR Chuyên Sâu</span>
+                                        </div>
+                                        <span class="quota-percent-pill font-mono" id="quotaOcrPercent">28%</span>
+                                    </div>
+                                    <div class="quota-meter-values">
+                                        <div class="quota-value-numbers font-mono">
+                                            <strong id="quotaOcrUsed">142</strong> / <span id="quotaOcrLimit">500</span> trang
+                                        </div>
+                                    </div>
+                                    <div class="quota-progress-track">
+                                        <div class="quota-progress-fill" id="quotaOcrProgressFill" role="progressbar"
+                                            aria-valuenow="28" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến độ sử dụng trang OCR"
+                                            style="width: 28%;"></div>
+                                    </div>
+                                    <div class="quota-meter-note" id="quotaOcrNote">Đã sử dụng trong chu kỳ hiện tại</div>
+                                </div>
+
+                                <!-- Meter 2: PDF File Upload Limit -->
+                                <div class="quota-meter-item" id="meterFileSize">
+                                    <div class="quota-meter-header">
+                                        <div class="quota-meter-title-wrap">
+                                            <div class="quota-meter-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                                </svg>
+                                            </div>
+                                            <span class="quota-meter-title">Dung Lượng Tệp Tối Đa</span>
+                                        </div>
+                                        <span class="quota-percent-pill font-mono quota-pill-active" id="quotaFileSizePercent">100 MB</span>
+                                    </div>
+                                    <div class="quota-meter-values">
+                                        <div class="quota-value-numbers font-mono">
+                                            <strong id="quotaFileSizeUsed">100 MB</strong> / tệp
+                                        </div>
+                                    </div>
+                                    <div class="quota-progress-track">
+                                        <div class="quota-progress-fill quota-fill-full" id="quotaFileSizeProgressFill" role="progressbar"
+                                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="Hạn mức dung lượng tệp tải lên"
+                                            style="width: 100%;"></div>
+                                    </div>
+                                    <div class="quota-meter-note" id="quotaFileSizeNote">Gấp 5 lần gói Miễn phí (tối đa 100 MB/tệp)</div>
+                                </div>
+
+                                <!-- Meter 3: Daily AI Copilot -->
+                                <div class="quota-meter-item" id="meterAiCopilot">
+                                    <div class="quota-meter-header">
+                                        <div class="quota-meter-title-wrap">
+                                            <div class="quota-meter-icon">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                                </svg>
+                                            </div>
+                                            <span class="quota-meter-title">Trợ Lý AI Copilot</span>
+                                        </div>
+                                        <span class="quota-percent-pill font-mono" id="quotaCopilotPercent">27%</span>
+                                    </div>
+                                    <div class="quota-meter-values">
+                                        <div class="quota-value-numbers font-mono">
+                                            <strong id="quotaCopilotUsed">4</strong> / <span id="quotaCopilotLimit">15</span> câu
+                                        </div>
+                                    </div>
+                                    <div class="quota-progress-track">
+                                        <div class="quota-progress-fill" id="quotaCopilotProgressFill" role="progressbar"
+                                            aria-valuenow="27" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến độ sử dụng AI Copilot trong ngày"
+                                            style="width: 27%;"></div>
+                                    </div>
+                                    <div class="quota-meter-note" id="quotaCopilotNote">Hồi phục 15 câu sau mỗi 24 giờ</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 2. Asymmetric 2-Card Bento Grid (Free vs Pro) -->
                         <div class="pricing-bento-grid">
                             <!-- Card 1: Free Tier -->
