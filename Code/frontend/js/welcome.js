@@ -1,0 +1,115 @@
+/**
+ * PDF-Lingua - Standalone Welcome Landing Page Script
+ * -------------------------------------------------------------
+ * Lightweight Vanilla JS modular controller.
+ * Handles sticky navbar scroll state, mobile menu toggle,
+ * and active section navigation tracking.
+ */
+
+(function () {
+  'use strict';
+
+  function initWelcomeController() {
+    // 1. Sticky Glass Header Scroll Indicator
+    var navbar = document.getElementById('welcomeNavbar');
+    if (navbar) {
+      var handleScroll = function () {
+        if (window.scrollY > 20) {
+          navbar.classList.add('is-scrolled');
+        } else {
+          navbar.classList.remove('is-scrolled');
+        }
+      };
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll();
+    }
+
+    // 2. Mobile Menu Toggle & Keyboard Accessibility
+    var mobileToggle = document.getElementById('btnWelcomeMobileMenu');
+    var mobileDrawer = document.getElementById('welcomeMobileDrawer');
+    if (mobileToggle && mobileDrawer) {
+      var toggleMobileMenu = function (forceState) {
+        var isCurrentlyOpen = mobileToggle.getAttribute('aria-expanded') === 'true';
+        var nextState = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
+        mobileToggle.setAttribute('aria-expanded', String(nextState));
+        mobileDrawer.setAttribute('aria-hidden', String(!nextState));
+        if (nextState) {
+          mobileDrawer.classList.add('is-open');
+        } else {
+          mobileDrawer.classList.remove('is-open');
+        }
+      };
+
+      mobileToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleMobileMenu();
+      });
+
+      // Close drawer when clicking any link inside it
+      var mobileLinks = mobileDrawer.querySelectorAll('a');
+      mobileLinks.forEach(function (link) {
+        link.addEventListener('click', function () {
+          toggleMobileMenu(false);
+        });
+      });
+
+      // Close on Escape key press
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && mobileDrawer.classList.contains('is-open')) {
+          toggleMobileMenu(false);
+          mobileToggle.focus();
+        }
+      });
+
+      // Close on click outside
+      document.addEventListener('click', function (e) {
+        if (
+          mobileDrawer.classList.contains('is-open') &&
+          !mobileDrawer.contains(e.target) &&
+          !mobileToggle.contains(e.target)
+        ) {
+          toggleMobileMenu(false);
+        }
+      });
+    }
+
+    // 3. Section Visibility & Active Link Tracking
+    var desktopNavLinks = document.querySelectorAll('.welcome-nav-link');
+    var trackedSections = document.querySelectorAll('section[id], footer[id]');
+
+    if ('IntersectionObserver' in window && trackedSections.length > 0 && desktopNavLinks.length > 0) {
+      var observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -65% 0px',
+        threshold: 0
+      };
+
+      var sectionObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            var currentId = entry.target.getAttribute('id');
+            desktopNavLinks.forEach(function (link) {
+              var href = link.getAttribute('href');
+              if (href === '#' + currentId) {
+                link.classList.add('is-active');
+              } else {
+                link.classList.remove('is-active');
+              }
+            });
+          }
+        });
+      }, observerOptions);
+
+      trackedSections.forEach(function (sec) {
+        sectionObserver.observe(sec);
+      });
+    }
+  }
+
+  // Self-initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWelcomeController);
+  } else {
+    initWelcomeController();
+  }
+})();

@@ -1,0 +1,603 @@
+/**
+ * PDF-Lingua - Standalone Welcome Landing Page Stylesheet
+ * -------------------------------------------------------------
+ * Brand Palette: Pure White, Slate, PDF Red (#E5322D), Lingua Ocean Blue (#2563EB)
+ * Typography: Inter (Sans-serif) & JetBrains Mono (Monospace)
+ * Focus: High contrast, responsive layout, accessible navigation
+ */
+
+/* ==========================================================================
+   1. Design Tokens & CSS Custom Properties
+   ========================================================================== */
+:root {
+  /* Surfaces & Backgrounds */
+  --wl-bg-page: #FFFFFF;
+  --wl-bg-subtle: #F8FAFC;
+  --wl-bg-muted: #F1F5F9;
+  --wl-bg-surface-hover: #F8FAFC;
+
+  /* Brand Accents: PDF Red */
+  --wl-accent-red: #E5322D;
+  --wl-accent-red-hover: #C9201C;
+  --wl-accent-red-subtle: #FEF2F2;
+  --wl-accent-red-border: rgba(229, 50, 45, 0.2);
+
+  /* Secondary Accents: Lingua Ocean Blue */
+  --wl-accent-blue: #2563EB;
+  --wl-accent-blue-hover: #1D4ED8;
+  --wl-accent-blue-subtle: #EFF6FF;
+  --wl-accent-blue-border: rgba(37, 99, 235, 0.2);
+
+  /* Typography Colors (WCAG AAA Compliance) */
+  --wl-text-primary: #0F172A;
+  --wl-text-secondary: #475569;
+  --wl-text-muted: #64748B;
+  --wl-text-inverse: #FFFFFF;
+
+  /* Functional Accents */
+  --wl-pro-gold: #F59E0B;
+  --wl-secure-green: #10B981;
+  --wl-secure-green-subtle: #ECFDF5;
+
+  /* Borders & Dividers */
+  --wl-border-subtle: #E2E8F0;
+  --wl-border-strong: #CBD5E1;
+  --wl-border-focus: #2563EB;
+
+  /* Typography Font Stacks */
+  --wl-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --wl-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Border Radii */
+  --wl-radius-sm: 6px;
+  --wl-radius-md: 10px;
+  --wl-radius-lg: 16px;
+  --wl-radius-xl: 24px;
+  --wl-radius-full: 9999px;
+
+  /* Shadows */
+  --wl-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --wl-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --wl-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --wl-shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+
+  /* Motion & Transitions */
+  --wl-transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --wl-transition-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --wl-transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   2. Reset & Base Typography
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--wl-font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--wl-text-primary);
+  background-color: var(--wl-bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Tabular figures for numbers, counters and pricing */
+.tabular-numbers,
+.welcome-btn,
+.welcome-stat-number,
+.welcome-price-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessible Keyboard Focus Indicator */
+:focus-visible {
+  outline: 2px solid var(--wl-border-focus);
+  outline-offset: 2px;
+}
+
+/* Layout Container */
+.welcome-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* ==========================================================================
+   3. Sticky Glass Header & Navigation Bar
+   ========================================================================== */
+.welcome-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--wl-border-subtle);
+  transition: background-color var(--wl-transition-normal), box-shadow var(--wl-transition-normal);
+}
+
+.welcome-navbar.is-scrolled {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--wl-shadow-sm);
+}
+
+.welcome-navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+}
+
+/* Brand Logo */
+.welcome-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  user-select: none;
+}
+
+.welcome-brand-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+
+.welcome-brand-name {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: var(--wl-text-primary);
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.welcome-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: var(--wl-radius-sm);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--wl-accent-red);
+  background-color: var(--wl-accent-red-subtle);
+  border: 1px solid var(--wl-accent-red-border);
+  line-height: 1.3;
+}
+
+/* Navigation Links */
+.welcome-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+}
+
+.welcome-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 0.93rem;
+  font-weight: 500;
+  color: var(--wl-text-secondary);
+  text-decoration: none;
+  border-radius: var(--wl-radius-sm);
+  transition: color var(--wl-transition-fast), background-color var(--wl-transition-fast);
+}
+
+.welcome-nav-link:hover {
+  color: var(--wl-accent-red);
+  background-color: var(--wl-bg-subtle);
+}
+
+.welcome-nav-link.is-active {
+  color: var(--wl-accent-red);
+  font-weight: 600;
+  background-color: var(--wl-accent-red-subtle);
+}
+
+/* Navigation Actions */
+.welcome-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Buttons System */
+.welcome-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--wl-radius-md);
+  padding: 9px 18px;
+  min-height: 42px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color var(--wl-transition-fast),
+              color var(--wl-transition-fast),
+              border-color var(--wl-transition-fast),
+              transform var(--wl-transition-fast),
+              box-shadow var(--wl-transition-fast);
+  white-space: nowrap;
+}
+
+.welcome-btn:active {
+  transform: scale(0.98);
+}
+
+.welcome-btn-ghost {
+  background-color: transparent;
+  color: var(--wl-text-primary);
+  border-color: transparent;
+}
+
+.welcome-btn-ghost:hover {
+  background-color: var(--wl-bg-muted);
+  color: var(--wl-text-primary);
+}
+
+.welcome-btn-primary {
+  background-color: var(--wl-accent-red);
+  color: var(--wl-text-inverse);
+  border-color: var(--wl-accent-red);
+  box-shadow: 0 1px 3px rgba(229, 50, 45, 0.25);
+}
+
+.welcome-btn-primary:hover {
+  background-color: var(--wl-accent-red-hover);
+  border-color: var(--wl-accent-red-hover);
+  box-shadow: 0 4px 12px rgba(229, 50, 45, 0.35);
+}
+
+.welcome-btn-outline {
+  background-color: var(--wl-bg-page);
+  color: var(--wl-text-primary);
+  border-color: var(--wl-border-subtle);
+}
+
+.welcome-btn-outline:hover {
+  background-color: var(--wl-bg-subtle);
+  border-color: var(--wl-border-strong);
+  color: var(--wl-accent-blue);
+}
+
+.welcome-btn-lg {
+  padding: 12px 24px;
+  font-size: 1rem;
+  min-height: 48px;
+  border-radius: var(--wl-radius-md);
+}
+
+.welcome-btn-block {
+  width: 100%;
+}
+
+.welcome-btn-icon {
+  flex-shrink: 0;
+  transition: transform var(--wl-transition-fast);
+}
+
+.welcome-btn:hover .welcome-btn-icon {
+  transform: translateX(2px);
+}
+
+/* Mobile Navigation Toggle Button */
+.welcome-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--wl-border-subtle);
+  border-radius: var(--wl-radius-sm);
+  color: var(--wl-text-primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.welcome-mobile-toggle .icon-menu-close {
+  display: none;
+}
+
+.welcome-mobile-toggle[aria-expanded="true"] .icon-menu-open {
+  display: none;
+}
+
+.welcome-mobile-toggle[aria-expanded="true"] .icon-menu-close {
+  display: block;
+}
+
+/* Mobile Drawer */
+.welcome-mobile-drawer {
+  display: none;
+  width: 100%;
+  background-color: var(--wl-bg-page);
+  border-bottom: 1px solid var(--wl-border-subtle);
+  padding: 20px 24px;
+  box-shadow: var(--wl-shadow-md);
+}
+
+.welcome-mobile-drawer.is-open {
+  display: block;
+}
+
+.welcome-mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.welcome-mobile-link {
+  display: block;
+  padding: 10px 14px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--wl-text-secondary);
+  text-decoration: none;
+  border-radius: var(--wl-radius-sm);
+}
+
+.welcome-mobile-link:hover,
+.welcome-mobile-link:focus {
+  background-color: var(--wl-bg-subtle);
+  color: var(--wl-accent-red);
+}
+
+.welcome-mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wl-border-subtle);
+}
+
+/* ==========================================================================
+   4. Section Skeletons & Layout Placeholders
+   ========================================================================== */
+.welcome-section {
+  padding-top: 80px;
+  padding-bottom: 80px;
+  position: relative;
+}
+
+.welcome-section-header {
+  text-align: center;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 48px;
+}
+
+.welcome-section-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--wl-accent-blue);
+  background-color: var(--wl-accent-blue-subtle);
+  padding: 4px 12px;
+  border-radius: var(--wl-radius-full);
+  margin-bottom: 12px;
+}
+
+.welcome-section-title {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--wl-text-primary);
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  margin-bottom: 14px;
+}
+
+.welcome-section-subtitle {
+  font-size: 1.08rem;
+  color: var(--wl-text-secondary);
+  line-height: 1.6;
+}
+
+/* Hero Section Specifics */
+.welcome-hero-section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  background: radial-gradient(circle at 50% 0%, rgba(229, 50, 45, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.welcome-eyebrow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--wl-accent-red);
+  background-color: var(--wl-accent-red-subtle);
+  border: 1px solid var(--wl-accent-red-border);
+  border-radius: var(--wl-radius-full);
+  margin-bottom: 20px;
+}
+
+.welcome-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--wl-radius-full);
+  background-color: var(--wl-accent-red);
+  display: inline-block;
+}
+
+.welcome-hero-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: var(--wl-text-primary);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 18px;
+}
+
+.welcome-hero-desc {
+  font-size: 1.15rem;
+  color: var(--wl-text-secondary);
+  line-height: 1.65;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 32px;
+}
+
+.welcome-hero-cta-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Subtle background for alternating sections */
+.welcome-how-it-works-section,
+.welcome-pricing-section {
+  background-color: var(--wl-bg-subtle);
+}
+
+/* ==========================================================================
+   5. Footer Structure
+   ========================================================================== */
+.welcome-footer-section {
+  background-color: var(--wl-bg-page);
+  border-top: 1px solid var(--wl-border-subtle);
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.welcome-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.88rem;
+  color: var(--wl-text-muted);
+}
+
+.welcome-footer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--wl-text-secondary);
+}
+
+.welcome-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--wl-radius-full);
+  background-color: var(--wl-secure-green);
+  display: inline-block;
+}
+
+/* ==========================================================================
+   6. Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 900px) {
+  .welcome-nav-menu {
+    display: none;
+  }
+
+  .welcome-mobile-toggle {
+    display: inline-flex;
+  }
+
+  .welcome-hero-title {
+    font-size: 2.15rem;
+  }
+
+  .welcome-section-title {
+    font-size: 1.75rem;
+  }
+
+  .welcome-section {
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .welcome-navbar-inner {
+    height: 64px;
+  }
+
+  .welcome-nav-actions #navBtnLogin {
+    display: none;
+  }
+
+  .welcome-hero-title {
+    font-size: 1.85rem;
+  }
+
+  .welcome-hero-desc {
+    font-size: 1rem;
+  }
+
+  .welcome-hero-cta-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .welcome-hero-cta-group .welcome-btn {
+    width: 100%;
+  }
+
+  .welcome-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Accessibility: Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
