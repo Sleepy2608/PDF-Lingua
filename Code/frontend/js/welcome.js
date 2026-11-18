@@ -71,6 +71,13 @@
           toggleMobileMenu(false);
         }
       });
+
+      // Close on resize if expanded past mobile/tablet breakpoint
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 1024 && mobileDrawer.classList.contains('is-open')) {
+          toggleMobileMenu(false);
+        }
+      }, { passive: true });
     }
 
     // 3. Section Visibility & Active Link Tracking
