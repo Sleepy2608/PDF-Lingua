@@ -503,6 +503,63 @@ runTest('JS: Smooth scroll with sticky navbar offset calculation implemented', (
 });
 
 // -----------------------------------------------------------------------------
+// Part 14: Responsive Breakpoints, Web Vitals & Definition of Done
+// -----------------------------------------------------------------------------
+console.log('\n--- 14. Responsive Breakpoints, Web Vitals & Definition of Done ---');
+
+runTest('Web Vitals (CLS = 0): Brand logo specifies explicit dimensions and aspect ratio', () => {
+  assert.ok(htmlContent.includes('class="welcome-brand-img" width="34" height="34"'), 'Brand logo must have width="34" height="34"');
+  assert.ok(cssContent.includes('aspect-ratio: 1 / 1;'), 'Brand logo CSS must specify aspect-ratio: 1 / 1');
+  assert.ok(cssContent.includes('object-fit: contain;'), 'Brand logo CSS must specify object-fit: contain');
+});
+
+runTest('Web Vitals (LCP < 1.8s): Below-the-fold sections configured with content-visibility: auto', () => {
+  assert.ok(cssContent.includes('content-visibility: auto;'), 'Missing content-visibility: auto in CSS');
+  assert.ok(cssContent.includes('contain-intrinsic-size: 1px 700px;'), 'Missing contain-intrinsic-size in CSS');
+  assert.ok(cssContent.includes('.welcome-features-section'), 'Features section must have content-visibility');
+  assert.ok(cssContent.includes('.welcome-pricing-section'), 'Pricing section must have content-visibility');
+  assert.ok(cssContent.includes('.welcome-footer'), 'Footer must have content-visibility');
+});
+
+runTest('Responsive: Tablet tier (@media max-width: 1024px) switches Bento and Footer to 2 columns', () => {
+  assert.ok(cssContent.includes('@media (max-width: 1024px)'), 'Missing @media (max-width: 1024px)');
+  assert.ok(cssContent.includes('grid-template-columns: repeat(2, 1fr);'), 'Tablet must set 2-column grid');
+  assert.ok(cssContent.includes('.welcome-nav-menu'), 'Tablet must handle nav menu collapse');
+});
+
+runTest('Responsive: Mobile tier (@media max-width: 640px) enables full-width buttons and single columns', () => {
+  assert.ok(cssContent.includes('@media (max-width: 640px)'), 'Missing @media (max-width: 640px)');
+  assert.ok(cssContent.includes('flex-direction: column;'), 'Mobile CTA group must be vertical column');
+  assert.ok(cssContent.includes('width: 100%;'), 'Mobile CTA buttons must be 100% width');
+});
+
+runTest('JS: Auto-dismisses mobile drawer when viewport expands past tablet breakpoint', () => {
+  assert.ok(jsContent.includes('window.innerWidth > 1024'), 'JS must check window.innerWidth > 1024');
+  assert.ok(jsContent.includes('toggleMobileMenu(false)'), 'JS must close drawer on wide resize');
+});
+
+runTest('Definition of Done: Standalone page with zero runtime dependencies on index.html', () => {
+  assert.strictEqual(htmlContent.includes('id="app"'), false, 'welcome.html must not depend on #app shell');
+  assert.strictEqual(htmlContent.includes('main.js'), false, 'welcome.html must not load main.js');
+  assert.ok(htmlContent.includes('src="js/welcome.js"'), 'welcome.html loads dedicated welcome.js');
+});
+
+runTest('Definition of Done: Complete 7-landmark semantic architecture verified', () => {
+  const landmarks = [
+    'id="welcomeNavbar"',
+    'id="welcomeHero"',
+    'id="welcomeFeatures"',
+    'id="welcomeHowItWorks"',
+    'id="welcomeTestimonials"',
+    'id="welcomePricing"',
+    'id="welcomeFooter"'
+  ];
+  landmarks.forEach((id) => {
+    assert.ok(htmlContent.includes(id), `Missing landmark: ${id}`);
+  });
+});
+
+// -----------------------------------------------------------------------------
 // Summary
 // -----------------------------------------------------------------------------
 console.log('\n================================================================');
