@@ -70,6 +70,12 @@ runTest('HTML: Document includes Inter & JetBrains Mono fonts', () => {
   assert.ok(htmlContent.includes('family=JetBrains+Mono'), 'Missing JetBrains Mono font in link tag');
 });
 
+runTest('HTML: Document links to favicon.png and favicon.ico', () => {
+  assert.ok(htmlContent.includes('rel="icon"'), 'Missing rel="icon" in <head>');
+  assert.ok(htmlContent.includes('href="assets/images/favicon.png"'), 'Missing link to favicon.png');
+  assert.ok(htmlContent.includes('href="assets/images/favicon.ico"'), 'Missing link to favicon.ico');
+});
+
 // -----------------------------------------------------------------------------
 // Part 2: 7 Semantic Landmarks & Wireframe Sections
 // -----------------------------------------------------------------------------
