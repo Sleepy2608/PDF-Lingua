@@ -235,6 +235,242 @@
         });
       }
     }
+
+    // 9. Login Modal Controller (with automatic redirection to index.html)
+    var loginModal = document.getElementById('loginModal');
+    var navBtnLogin = document.getElementById('navBtnLogin');
+    var mobileBtnLogin = document.getElementById('btnWelcomeMobileLogin');
+    var btnCloseLoginModal = document.getElementById('btnCloseLoginModal');
+    var loginForm = document.getElementById('loginForm');
+    var loginEmail = document.getElementById('loginEmail');
+    var loginPassword = document.getElementById('loginPassword');
+    var loginEmailError = document.getElementById('loginEmailError');
+    var loginPasswordError = document.getElementById('loginPasswordError');
+    var loginAlert = document.getElementById('loginAlert');
+    var toggleLoginPassword = document.getElementById('toggleLoginPassword');
+    var btnSubmitLogin = document.getElementById('btnSubmitLogin');
+    var loginSpinner = document.getElementById('loginSpinner');
+    var loginBtnText = document.getElementById('loginBtnText');
+
+    var openLoginModal = function () {
+      if (!loginModal) return;
+      var mobileToggle = document.getElementById('btnWelcomeMobileMenu');
+      var mobileDrawer = document.getElementById('welcomeMobileDrawer');
+      if (mobileToggle && mobileDrawer && mobileDrawer.classList.contains('is-open')) {
+        mobileToggle.setAttribute('aria-expanded', 'false');
+        mobileDrawer.setAttribute('aria-hidden', 'true');
+        mobileDrawer.classList.remove('is-open');
+      }
+      loginModal.removeAttribute('hidden');
+      document.body.style.overflow = 'hidden';
+      if (loginAlert) {
+        loginAlert.style.display = 'none';
+        loginAlert.textContent = '';
+        loginAlert.className = 'form-alert';
+      }
+      if (loginEmailError) {
+        loginEmailError.textContent = '';
+        loginEmailError.classList.remove('active');
+      }
+      if (loginPasswordError) {
+        loginPasswordError.textContent = '';
+        loginPasswordError.classList.remove('active');
+      }
+      if (loginEmail) {
+        setTimeout(function () {
+          loginEmail.focus();
+        }, 60);
+      }
+    };
+
+    var closeLoginModal = function () {
+      if (!loginModal) return;
+      loginModal.setAttribute('hidden', '');
+      document.body.style.overflow = '';
+      if (loginForm) {
+        loginForm.reset();
+      }
+      if (loginAlert) {
+        loginAlert.style.display = 'none';
+        loginAlert.textContent = '';
+      }
+      if (loginEmailError) {
+        loginEmailError.textContent = '';
+        loginEmailError.classList.remove('active');
+      }
+      if (loginPasswordError) {
+        loginPasswordError.textContent = '';
+        loginPasswordError.classList.remove('active');
+      }
+    };
+
+    if (navBtnLogin) {
+      navBtnLogin.addEventListener('click', function (e) {
+        e.preventDefault();
+        openLoginModal();
+      });
+    }
+
+    if (mobileBtnLogin) {
+      mobileBtnLogin.addEventListener('click', function (e) {
+        e.preventDefault();
+        openLoginModal();
+      });
+    }
+
+    if (btnCloseLoginModal) {
+      btnCloseLoginModal.addEventListener('click', function () {
+        closeLoginModal();
+      });
+    }
+
+    if (loginModal) {
+      loginModal.addEventListener('click', function (e) {
+        if (e.target === loginModal) {
+          closeLoginModal();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && loginModal && !loginModal.hasAttribute('hidden')) {
+        closeLoginModal();
+        if (navBtnLogin && typeof navBtnLogin.focus === 'function') {
+          navBtnLogin.focus();
+        }
+      }
+    });
+
+    if (toggleLoginPassword && loginPassword) {
+      toggleLoginPassword.addEventListener('click', function () {
+        var isPassword = loginPassword.getAttribute('type') === 'password';
+        loginPassword.setAttribute('type', isPassword ? 'text' : 'password');
+        var eyeOpen = toggleLoginPassword.querySelector('.eye-open');
+        var eyeClosed = toggleLoginPassword.querySelector('.eye-closed');
+        if (eyeOpen && eyeClosed) {
+          eyeOpen.style.display = isPassword ? 'none' : 'block';
+          eyeClosed.style.display = isPassword ? 'block' : 'none';
+        }
+      });
+    }
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = loginEmail ? loginEmail.value.trim() : '';
+        var password = loginPassword ? loginPassword.value : '';
+        var hasError = false;
+
+        if (loginAlert) {
+          loginAlert.style.display = 'none';
+          loginAlert.className = 'form-alert';
+        }
+        if (loginEmailError) {
+          loginEmailError.textContent = '';
+          loginEmailError.classList.remove('active');
+        }
+        if (loginPasswordError) {
+          loginPasswordError.textContent = '';
+          loginPasswordError.classList.remove('active');
+        }
+
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) {
+          if (loginEmailError) {
+            loginEmailError.textContent = 'Vui lòng nhập địa chỉ email.';
+            loginEmailError.classList.add('active');
+          }
+          hasError = true;
+        } else if (!emailRegex.test(email)) {
+          if (loginEmailError) {
+            loginEmailError.textContent = 'Địa chỉ email không đúng định dạng.';
+            loginEmailError.classList.add('active');
+          }
+          hasError = true;
+        }
+
+        if (!password) {
+          if (loginPasswordError) {
+            loginPasswordError.textContent = 'Vui lòng nhập mật khẩu.';
+            loginPasswordError.classList.add('active');
+          }
+          hasError = true;
+        }
+
+        if (hasError) return;
+
+        if (btnSubmitLogin) btnSubmitLogin.disabled = true;
+        if (loginSpinner) loginSpinner.style.display = 'inline-block';
+        if (loginBtnText) loginBtnText.textContent = 'Đang đăng nhập...';
+
+        var API_BASE_URL = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
+          ? (window.location.protocol === 'https:' ? 'https:' : 'http:') + '//' + ((window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1') + ':8000'
+          : '';
+
+        fetch(API_BASE_URL + '/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ email: email, password: password })
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { status: res.status, data: data };
+            }).catch(function () {
+              return { status: res.status, data: null };
+            });
+          })
+          .then(function (result) {
+            if (btnSubmitLogin) btnSubmitLogin.disabled = false;
+            if (loginSpinner) loginSpinner.style.display = 'none';
+            if (loginBtnText) loginBtnText.textContent = 'Đăng nhập';
+
+            if (result.status === 200 && result.data && result.data.data) {
+              var token = result.data.data.access_token;
+              var user = result.data.data.user;
+              try {
+                if (window.localStorage) {
+                  window.localStorage.setItem('pdfl_token', token);
+                  if (user) {
+                    window.localStorage.setItem('pdfl_user', JSON.stringify(user));
+                  }
+                }
+              } catch (storageErr) {
+                // Ignore storage error
+              }
+
+              if (loginAlert) {
+                loginAlert.className = 'form-alert alert-success';
+                loginAlert.textContent = 'Đăng nhập thành công! Đang chuyển hướng vào không gian làm việc...';
+                loginAlert.style.display = 'flex';
+              }
+
+              setTimeout(function () {
+                window.location.href = 'index.html';
+              }, 700);
+            } else {
+              var errorMsg = (result.data && result.data.message) ? result.data.message : 'Email hoặc mật khẩu không chính xác.';
+              if (loginAlert) {
+                loginAlert.className = 'form-alert alert-error';
+                loginAlert.textContent = errorMsg;
+                loginAlert.style.display = 'flex';
+              }
+            }
+          })
+          .catch(function () {
+            if (btnSubmitLogin) btnSubmitLogin.disabled = false;
+            if (loginSpinner) loginSpinner.style.display = 'none';
+            if (loginBtnText) loginBtnText.textContent = 'Đăng nhập';
+            if (loginAlert) {
+              loginAlert.className = 'form-alert alert-error';
+              loginAlert.textContent = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ.';
+              loginAlert.style.display = 'flex';
+            }
+          });
+      });
+    }
   }
 
   // Self-initialization
