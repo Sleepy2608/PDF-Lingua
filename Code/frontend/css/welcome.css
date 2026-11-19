@@ -454,14 +454,6 @@ body {
   margin-bottom: 20px;
 }
 
-.welcome-badge-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--wl-radius-full);
-  background-color: var(--wl-accent-red);
-  display: inline-block;
-}
-
 .welcome-hero-title {
   font-size: 2.75rem;
   font-weight: 800;
@@ -629,7 +621,7 @@ body {
 
 .preview-mode-btn.is-active {
   background-color: #FFFFFF;
-  color: #4F46E5;
+  color: #0F172A;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -672,13 +664,13 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #7C3AED 100%);
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
   color: #FFFFFF;
   border-radius: var(--wl-radius-sm);
   padding: 5px 14px;
   font-size: 0.78rem;
   font-weight: 600;
-  box-shadow: 0 2px 6px -1px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 2px 6px -1px rgba(229, 50, 45, 0.28);
 }
 
 .welcome-preview-btn-kebab {
@@ -736,8 +728,8 @@ body {
 }
 
 .original-badge {
-  background-color: #EEF2FF;
-  color: #4F46E5;
+  background-color: #F1F5F9;
+  color: #475569;
   font-size: 0.68rem;
   font-weight: 700;
   padding: 2px 7px;
@@ -2576,13 +2568,13 @@ body {
 
 .form-input:focus {
   outline: none;
-  border-color: #4F46E5;
+  border-color: #E5322D;
   background-color: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.12);
 }
 
 .input-wrap:focus-within .input-icon {
-  color: #4F46E5;
+  color: #E5322D;
 }
 
 .form-input.has-error {
@@ -2614,7 +2606,7 @@ body {
 }
 
 .btn-toggle-eye:focus-visible {
-  outline: 2px solid #4F46E5;
+  outline: 2px solid #E5322D;
   outline-offset: 2px;
 }
 
@@ -2707,7 +2699,7 @@ body {
 }
 
 .modal-footer-text a {
-  color: #4F46E5;
+  color: #E5322D;
   text-decoration: none;
   font-weight: 600;
 }
