@@ -471,6 +471,172 @@
           });
       });
     }
+
+    // 8. Legal & Contact Modal Controller (Terms, Privacy, Contact)
+    var legalOverlay = document.getElementById('legalModalOverlay');
+    var legalContainer = legalOverlay ? legalOverlay.querySelector('.legal-modal-container') : null;
+    var legalCloseBtn = document.getElementById('legalModalCloseBtn');
+    var legalTabBtns = document.querySelectorAll('.legal-tab-btn');
+    var legalTabPanels = document.querySelectorAll('.legal-tab-panel');
+
+    var footerLinkTerms = document.getElementById('footerLinkTerms');
+    var footerLinkPrivacy = document.getElementById('footerLinkPrivacy');
+
+    var btnToggleFullscreenLegal = document.getElementById('btnToggleFullscreenLegal');
+    var btnPrintLegal = document.getElementById('btnPrintLegal');
+    var btnScrollToTop = document.getElementById('btnScrollToTop');
+    var btnAcceptLegal = document.getElementById('btnAcceptLegal');
+    var btnCopySupportEmail = document.getElementById('btnCopySupportEmail');
+    var feedbackForm = document.getElementById('feedbackForm');
+
+    if (legalOverlay) {
+      var switchLegalTab = function (tabId) {
+        legalTabBtns.forEach(function (btn) {
+          var isTarget = btn.getAttribute('data-tab') === tabId;
+          btn.classList.toggle('active', isTarget);
+          btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+        });
+
+        legalTabPanels.forEach(function (panel) {
+          var isTarget = panel.id === tabId;
+          panel.classList.toggle('active', isTarget);
+        });
+
+        var modalBody = legalOverlay.querySelector('.legal-modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
+        }
+      };
+
+      var openLegalModal = function (tabId) {
+        switchLegalTab(tabId || 'tabTerms');
+        legalOverlay.style.display = 'flex';
+        legalOverlay.classList.add('active');
+        legalOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      };
+
+      var closeLegalModal = function () {
+        legalOverlay.classList.remove('active');
+        legalOverlay.setAttribute('aria-hidden', 'true');
+        legalOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+
+        if (legalContainer && legalContainer.classList.contains('fullscreen')) {
+          legalContainer.classList.remove('fullscreen');
+          var fsIcon = document.getElementById('fullscreenIcon');
+          var fsText = document.getElementById('fullscreenText');
+          if (fsIcon) fsIcon.textContent = '⛶';
+          if (fsText) fsText.textContent = 'Phóng to';
+        }
+      };
+
+      if (footerLinkTerms) {
+        footerLinkTerms.addEventListener('click', function (e) {
+          e.preventDefault();
+          openLegalModal('tabTerms');
+        });
+      }
+
+      if (footerLinkPrivacy) {
+        footerLinkPrivacy.addEventListener('click', function (e) {
+          e.preventDefault();
+          openLegalModal('tabPrivacy');
+        });
+      }
+
+      legalTabBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var targetTab = btn.getAttribute('data-tab');
+          if (targetTab) {
+            switchLegalTab(targetTab);
+          }
+        });
+      });
+
+      if (legalCloseBtn) {
+        legalCloseBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          closeLegalModal();
+        });
+      }
+
+      legalOverlay.addEventListener('click', function (e) {
+        if (e.target === legalOverlay) {
+          closeLegalModal();
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && legalOverlay.classList.contains('active')) {
+          closeLegalModal();
+        }
+      });
+
+      if (btnAcceptLegal) {
+        btnAcceptLegal.addEventListener('click', function (e) {
+          e.preventDefault();
+          closeLegalModal();
+        });
+      }
+
+      if (btnToggleFullscreenLegal && legalContainer) {
+        btnToggleFullscreenLegal.addEventListener('click', function (e) {
+          e.preventDefault();
+          var isFs = legalContainer.classList.toggle('fullscreen');
+          var fsIcon = document.getElementById('fullscreenIcon');
+          var fsText = document.getElementById('fullscreenText');
+          if (fsIcon) fsIcon.textContent = isFs ? '🗗' : '⛶';
+          if (fsText) fsText.textContent = isFs ? 'Thu nhỏ' : 'Phóng to';
+        });
+      }
+
+      if (btnPrintLegal) {
+        btnPrintLegal.addEventListener('click', function (e) {
+          e.preventDefault();
+          window.print();
+        });
+      }
+
+      if (btnScrollToTop) {
+        btnScrollToTop.addEventListener('click', function (e) {
+          e.preventDefault();
+          var modalBody = legalOverlay.querySelector('.legal-modal-body');
+          if (modalBody) {
+            modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        });
+      }
+
+      if (btnCopySupportEmail) {
+        btnCopySupportEmail.addEventListener('click', function (e) {
+          e.preventDefault();
+          var email = 'huytamnguyenle2608@gmail.com';
+          var notifyCopy = function () {
+            btnCopySupportEmail.textContent = 'Đã sao chép!';
+            setTimeout(function () {
+              btnCopySupportEmail.textContent = 'Sao chép';
+            }, 2000);
+          };
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(email).then(notifyCopy).catch(function () {
+              btnCopySupportEmail.textContent = 'huytamnguyenle2608@gmail.com';
+            });
+          } else {
+            notifyCopy();
+          }
+        });
+      }
+
+      if (feedbackForm) {
+        feedbackForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          alert('Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!');
+          feedbackForm.reset();
+        });
+      }
+    }
   }
 
   // Self-initialization

@@ -277,7 +277,7 @@ runTest('Hero: Dual CTA group connects to workspace and preview scroll', () => {
 runTest('Hero: Trust signals bar displays security and OCR badges', () => {
   assert.ok(htmlContent.includes('welcome-hero-trust-bar'), 'Missing .welcome-hero-trust-bar');
   assert.ok(htmlContent.includes('Không cần cài đặt'), 'Missing "Không cần cài đặt" trust badge');
-  assert.ok(htmlContent.includes('Bảo mật mã hóa AES-256'), 'Missing AES-256 trust badge');
+  assert.ok(htmlContent.includes('Cô lập thư mục User ID riêng biệt'), 'Missing User ID isolation trust badge');
   assert.ok(htmlContent.includes('Hỗ trợ PDF quét scan & OCR Tiếng Việt'), 'Missing OCR scan trust badge');
 });
 
@@ -449,10 +449,24 @@ runTest('Footer: 4-column semantic layout with brand, nav, tech and legal', () =
 
 runTest('Footer: Includes security badges, email support, and GitHub repo with uptime removed', () => {
   assert.ok(htmlContent.includes('footer-cert-badge'), 'Missing .footer-cert-badge');
-  assert.ok(htmlContent.includes('support@pdf-lingua.vn'), 'Missing support email');
+  assert.ok(htmlContent.includes('huytamnguyenle2608@gmail.com'), 'Missing personal support email');
   assert.ok(htmlContent.includes('github.com/Sleepy2608/PDF-Lingua'), 'Missing GitHub repo URL');
   assert.strictEqual(htmlContent.includes('99.98% Uptime'), false, 'Uptime status must be removed');
   assert.ok(htmlContent.includes('welcome-footer-copy'), 'Missing copyright text container');
+});
+
+runTest('Legal Modal: Footer terms and privacy links open legal modal directly on welcome page', () => {
+  assert.ok(htmlContent.includes('id="footerLinkTerms"'), 'Missing #footerLinkTerms');
+  assert.ok(htmlContent.includes('id="footerLinkPrivacy"'), 'Missing #footerLinkPrivacy');
+  assert.ok(htmlContent.includes('id="legalModalOverlay"'), 'Missing #legalModalOverlay');
+  assert.ok(htmlContent.includes('id="tabTerms"'), 'Missing #tabTerms panel');
+  assert.ok(htmlContent.includes('id="tabPrivacy"'), 'Missing #tabPrivacy panel');
+  assert.ok(htmlContent.includes('id="tabContact"'), 'Missing #tabContact panel');
+  assert.ok(cssContent.includes('.legal-modal-overlay'), 'Missing .legal-modal-overlay in CSS');
+  assert.ok(cssContent.includes('.legal-modal-container'), 'Missing .legal-modal-container in CSS');
+  assert.ok(jsContent.includes('footerLinkTerms'), 'JS must reference footerLinkTerms');
+  assert.ok(jsContent.includes('footerLinkPrivacy'), 'JS must reference footerLinkPrivacy');
+  assert.ok(jsContent.includes('switchLegalTab'), 'JS must define switchLegalTab');
 });
 
 runTest('Footer: Copyright line centered horizontally in CSS', () => {
