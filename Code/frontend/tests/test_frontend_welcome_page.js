@@ -133,7 +133,7 @@ runTest('Brand: Contains "PDF" badge and "Lingua" text matching index.html theme
   assert.ok(htmlContent.includes('>PDF<'), 'Missing "PDF" text inside badge');
   assert.ok(htmlContent.includes('Lingua'), 'Missing "Lingua" brand text');
   assert.ok(cssContent.includes('.welcome-brand-badge') && cssContent.includes('#EF4444'), 'Brand badge must use red background #EF4444');
-  assert.ok(cssContent.includes('.welcome-brand-text') && cssContent.includes('#4F46E5'), 'Brand text must use indigo color #4F46E5');
+  assert.ok(cssContent.includes('.welcome-brand-text') && (cssContent.includes('#0F172A') || cssContent.includes('#000000')), 'Brand text must use black color #0F172A');
 });
 
 runTest('Nav: Anchor links navigate to all major landing page sections', () => {

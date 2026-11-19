@@ -115,7 +115,7 @@
 }
 
 .header-brand-text {
-  color: var(--color-primary-indigo, #4F46E5);
+  color: var(--text-title, #0F172A);
 }
 
 /* Reveal header brand when sidebar is collapsed */
@@ -212,7 +212,7 @@
 }
 
 .sidebar-brand-text {
-  color: var(--color-primary-indigo, #4F46E5);
+  color: var(--text-title, #0F172A);
 }
 
 /* Toggle Collapse/Expand Button */
