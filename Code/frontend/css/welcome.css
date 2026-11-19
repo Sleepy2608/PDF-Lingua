@@ -1862,25 +1862,6 @@ body {
 }
 
 /* ==========================================================================
-   5.2. Web Vitals Optimization (CLS & LCP)
-   ========================================================================== */
-.welcome-brand-img {
-  width: 34px;
-  height: 34px;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-}
-
-.welcome-features-section,
-.welcome-how-section,
-.welcome-testimonials-section,
-.welcome-pricing-section,
-.welcome-footer {
-  content-visibility: auto;
-  contain-intrinsic-size: 1px 700px;
-}
-
-/* ==========================================================================
    5.1. Scroll Reveal Animation System
    ========================================================================== */
 .welcome-reveal {
@@ -1928,7 +1909,6 @@ body {
 
 .welcome-features-section,
 .welcome-how-section,
-.welcome-testimonials-section,
 .welcome-pricing-section,
 .welcome-footer {
   content-visibility: auto;

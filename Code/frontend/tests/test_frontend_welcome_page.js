@@ -95,19 +95,18 @@ runTest('HTML: Section 4 (How It Works #welcomeHowItWorks) is present', () => {
   assert.ok(/<section[^>]+id="welcomeHowItWorks"/i.test(htmlContent), '#welcomeHowItWorks must be a <section> tag');
 });
 
-runTest('HTML: Section 5 (Testimonials #welcomeTestimonials) is present', () => {
-  assert.ok(htmlContent.includes('id="welcomeTestimonials"'), 'Missing #welcomeTestimonials element');
-  assert.ok(/<section[^>]+id="welcomeTestimonials"/i.test(htmlContent), '#welcomeTestimonials must be a <section> tag');
-});
-
-runTest('HTML: Section 6 (Pricing #welcomePricing) is present', () => {
+runTest('HTML: Section 5 (Pricing #welcomePricing) is present', () => {
   assert.ok(htmlContent.includes('id="welcomePricing"'), 'Missing #welcomePricing element');
   assert.ok(/<section[^>]+id="welcomePricing"/i.test(htmlContent), '#welcomePricing must be a <section> tag');
 });
 
-runTest('HTML: Section 7 (Footer #welcomeFooter) is present', () => {
+runTest('HTML: Section 6 (Footer #welcomeFooter) is present', () => {
   assert.ok(htmlContent.includes('id="welcomeFooter"'), 'Missing #welcomeFooter element');
   assert.ok(/<footer[^>]+id="welcomeFooter"/i.test(htmlContent), '#welcomeFooter must be a <footer> tag');
+});
+
+runTest('HTML: Testimonials section (#welcomeTestimonials) is removed', () => {
+  assert.strictEqual(htmlContent.includes('id="welcomeTestimonials"'), false, '#welcomeTestimonials must be removed');
 });
 
 // -----------------------------------------------------------------------------
@@ -132,8 +131,8 @@ runTest('Nav: Anchor links navigate to all major landing page sections', () => {
   assert.ok(htmlContent.includes('href="#welcomeHero"'), 'Missing link to #welcomeHero');
   assert.ok(htmlContent.includes('href="#welcomeFeatures"'), 'Missing link to #welcomeFeatures');
   assert.ok(htmlContent.includes('href="#welcomeHowItWorks"'), 'Missing link to #welcomeHowItWorks');
-  assert.ok(htmlContent.includes('href="#welcomeTestimonials"'), 'Missing link to #welcomeTestimonials');
   assert.ok(htmlContent.includes('href="#welcomePricing"'), 'Missing link to #welcomePricing');
+  assert.strictEqual(htmlContent.includes('href="#welcomeTestimonials"'), false, 'Nav must not link to #welcomeTestimonials');
 });
 
 runTest('Nav: CTA buttons link to workspace and login portal', () => {
@@ -353,33 +352,20 @@ runTest('CSS: How It Works 3-column grid and step cards defined', () => {
 });
 
 // -----------------------------------------------------------------------------
-// Part 10: Testimonials & Hard Metrics (Section 5)
+// Part 10: Removal of Testimonials & Feedback Cards
 // -----------------------------------------------------------------------------
-console.log('\n--- 10. Testimonials & Hard Metrics ---');
+console.log('\n--- 10. Removal of Testimonials & Feedback Cards ---');
 
-runTest('Metrics: 4 technical benchmark cards exist with tabular numbers', () => {
-  assert.ok(htmlContent.includes('welcome-metrics-grid'), 'Missing .welcome-metrics-grid');
-  assert.ok(htmlContent.includes('&lt; 2.8s'), 'Missing < 2.8s metric');
-  assert.ok(htmlContent.includes('99.2%'), 'Missing 99.2% metric');
-  assert.ok(htmlContent.includes('94.5%'), 'Missing 94.5% metric');
-  assert.ok(htmlContent.includes('100%'), 'Missing 100% metric');
+runTest('Testimonials: Cards and fake profiles completely removed from welcome.html', () => {
+  assert.strictEqual(htmlContent.includes('id="welcomeTestimonials"'), false, '#welcomeTestimonials must be removed');
+  assert.strictEqual(htmlContent.includes('TS. Nguyễn Văn Hưng'), false, 'TS. Nguyen Van Hung card must be removed');
+  assert.strictEqual(htmlContent.includes('ThS. Trần Thu Trang'), false, 'ThS. Tran Thu Trang card must be removed');
+  assert.strictEqual(htmlContent.includes('Lê Hoàng Long'), false, 'Le Hoang Long card must be removed');
+  assert.strictEqual(htmlContent.includes('welcome-testimonials-grid'), false, '.welcome-testimonials-grid must be removed');
 });
 
-runTest('Testimonials: 3 real-world testimonial cards exist with verified badges', () => {
-  assert.ok(htmlContent.includes('welcome-testimonials-grid'), 'Missing .welcome-testimonials-grid');
-  assert.ok(htmlContent.includes('id="testiAcademic"'), 'Missing #testiAcademic card');
-  assert.ok(htmlContent.includes('id="testiTranslator"'), 'Missing #testiTranslator card');
-  assert.ok(htmlContent.includes('id="testiEngineer"'), 'Missing #testiEngineer card');
-  assert.ok(htmlContent.includes('TS. Nguyễn Văn Hưng'), 'Missing TS. Nguyễn Văn Hưng');
-  assert.ok(htmlContent.includes('ThS. Trần Thu Trang'), 'Missing ThS. Trần Thu Trang');
-  assert.ok(htmlContent.includes('Lê Hoàng Long'), 'Missing Lê Hoàng Long');
-  assert.ok(htmlContent.includes('welcome-verified-badge'), 'Missing verified badges');
-});
-
-runTest('CSS: Metrics and testimonials grid styling defined', () => {
-  assert.ok(cssContent.includes('.welcome-metrics-grid'), 'Missing .welcome-metrics-grid in CSS');
-  assert.ok(cssContent.includes('.welcome-testimonials-grid'), 'Missing .welcome-testimonials-grid in CSS');
-  assert.ok(cssContent.includes('.welcome-metric-number'), 'Missing .welcome-metric-number in CSS');
+runTest('Testimonials: Navigation and drawer links do not point to removed section', () => {
+  assert.strictEqual(htmlContent.includes('href="#welcomeTestimonials"'), false, 'href="#welcomeTestimonials" must not exist');
 });
 
 // -----------------------------------------------------------------------------
@@ -483,8 +469,6 @@ runTest('HTML: Scroll reveal classes integrated into major landing sections', ()
   assert.ok(htmlContent.includes('welcome-preview-card welcome-reveal'), 'Preview card missing reveal class');
   assert.ok(htmlContent.includes('welcome-bento-card welcome-bento-span-2 welcome-reveal'), 'Bento card missing reveal class');
   assert.ok(htmlContent.includes('welcome-step-card welcome-reveal'), 'Step card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-metric-card welcome-reveal'), 'Metric card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-testimonial-card welcome-reveal'), 'Testimonial card missing reveal class');
   assert.ok(htmlContent.includes('welcome-pricing-card welcome-reveal'), 'Pricing card missing reveal class');
 });
 
@@ -544,138 +528,19 @@ runTest('Definition of Done: Standalone page with zero runtime dependencies on i
   assert.ok(htmlContent.includes('src="js/welcome.js"'), 'welcome.html loads dedicated welcome.js');
 });
 
-runTest('Definition of Done: Complete 7-landmark semantic architecture verified', () => {
+runTest('Definition of Done: Complete 6-landmark semantic architecture verified', () => {
   const landmarks = [
     'id="welcomeNavbar"',
     'id="welcomeHero"',
     'id="welcomeFeatures"',
     'id="welcomeHowItWorks"',
-    'id="welcomeTestimonials"',
     'id="welcomePricing"',
     'id="welcomeFooter"'
   ];
   landmarks.forEach((id) => {
     assert.ok(htmlContent.includes(id), `Missing landmark: ${id}`);
   });
-});
-
-// -----------------------------------------------------------------------------
-// Part 14: Responsive Breakpoints, Web Vitals & Definition of Done
-// -----------------------------------------------------------------------------
-console.log('\n--- 14. Responsive Breakpoints, Web Vitals & Definition of Done ---');
-
-runTest('Web Vitals (CLS = 0): Brand logo specifies explicit dimensions and aspect ratio', () => {
-  assert.ok(htmlContent.includes('class="welcome-brand-img" width="34" height="34"'), 'Brand logo must have width="34" height="34"');
-  assert.ok(cssContent.includes('aspect-ratio: 1 / 1;'), 'Brand logo CSS must specify aspect-ratio: 1 / 1');
-  assert.ok(cssContent.includes('object-fit: contain;'), 'Brand logo CSS must specify object-fit: contain');
-});
-
-runTest('Web Vitals (LCP < 1.8s): Below-the-fold sections configured with content-visibility: auto', () => {
-  assert.ok(cssContent.includes('content-visibility: auto;'), 'Missing content-visibility: auto in CSS');
-  assert.ok(cssContent.includes('contain-intrinsic-size: 1px 700px;'), 'Missing contain-intrinsic-size in CSS');
-  assert.ok(cssContent.includes('.welcome-features-section'), 'Features section must have content-visibility');
-  assert.ok(cssContent.includes('.welcome-pricing-section'), 'Pricing section must have content-visibility');
-  assert.ok(cssContent.includes('.welcome-footer'), 'Footer must have content-visibility');
-});
-
-runTest('Responsive: Tablet tier (@media max-width: 1024px) switches Bento and Footer to 2 columns', () => {
-  assert.ok(cssContent.includes('@media (max-width: 1024px)'), 'Missing @media (max-width: 1024px)');
-  assert.ok(cssContent.includes('grid-template-columns: repeat(2, 1fr);'), 'Tablet must set 2-column grid');
-  assert.ok(cssContent.includes('.welcome-nav-menu'), 'Tablet must handle nav menu collapse');
-});
-
-runTest('Responsive: Mobile tier (@media max-width: 640px) enables full-width buttons and single columns', () => {
-  assert.ok(cssContent.includes('@media (max-width: 640px)'), 'Missing @media (max-width: 640px)');
-  assert.ok(cssContent.includes('flex-direction: column;'), 'Mobile CTA group must be vertical column');
-  assert.ok(cssContent.includes('width: 100%;'), 'Mobile CTA buttons must be 100% width');
-});
-
-runTest('JS: Auto-dismisses mobile drawer when viewport expands past tablet breakpoint', () => {
-  assert.ok(jsContent.includes('window.innerWidth > 1024'), 'JS must check window.innerWidth > 1024');
-  assert.ok(jsContent.includes('toggleMobileMenu(false)'), 'JS must close drawer on wide resize');
-});
-
-runTest('Definition of Done: Standalone page with zero runtime dependencies on index.html', () => {
-  assert.strictEqual(htmlContent.includes('id="app"'), false, 'welcome.html must not depend on #app shell');
-  assert.strictEqual(htmlContent.includes('main.js'), false, 'welcome.html must not load main.js');
-  assert.ok(htmlContent.includes('src="js/welcome.js"'), 'welcome.html loads dedicated welcome.js');
-});
-
-runTest('Definition of Done: Complete 7-landmark semantic architecture verified', () => {
-  const landmarks = [
-    'id="welcomeNavbar"',
-    'id="welcomeHero"',
-    'id="welcomeFeatures"',
-    'id="welcomeHowItWorks"',
-    'id="welcomeTestimonials"',
-    'id="welcomePricing"',
-    'id="welcomeFooter"'
-  ];
-  landmarks.forEach((id) => {
-    assert.ok(htmlContent.includes(id), `Missing landmark: ${id}`);
-  });
-});
-
-// -----------------------------------------------------------------------------
-// Part 13: Aesthetic Refinements & Accessibility Standards
-// -----------------------------------------------------------------------------
-console.log('\n--- 13. Aesthetic Refinements & Accessibility Standards ---');
-
-runTest('Typography: Tabular numeric styling configured across metrics, prices, steps', () => {
-  assert.ok(cssContent.includes('font-variant-numeric: tabular-nums;'), 'Missing tabular-nums rule in CSS');
-  assert.ok(cssContent.includes('.welcome-stat-number'), 'Missing .welcome-stat-number selector for tabular-nums');
-  assert.ok(cssContent.includes('.welcome-price-value'), 'Missing .welcome-price-value selector for tabular-nums');
-  assert.ok(cssContent.includes('.welcome-step-number'), 'Missing .welcome-step-number selector for tabular-nums');
-  assert.ok(cssContent.includes('.welcome-metric-number'), 'Missing .welcome-metric-number selector for tabular-nums');
-  assert.ok(cssContent.includes('.mini-gauge-num'), 'Missing .mini-gauge-num selector for tabular-nums');
-  assert.ok(cssContent.includes('.reduction-val'), 'Missing .reduction-val selector for tabular-nums');
-  assert.ok(cssContent.includes('.welcome-doc-table td'), 'Missing .welcome-doc-table td selector for tabular-nums');
-});
-
-runTest('Accessibility: High-contrast keyboard focus outlines with offset and glow', () => {
-  assert.ok(cssContent.includes(':focus-visible'), 'Missing :focus-visible rules');
-  assert.ok(cssContent.includes('outline-offset: 2px;'), 'Missing outline-offset');
-  assert.ok(cssContent.includes('.welcome-btn:focus-visible'), 'Missing .welcome-btn:focus-visible');
-  assert.ok(cssContent.includes('.welcome-nav-link:focus-visible'), 'Missing .welcome-nav-link:focus-visible');
-  assert.ok(cssContent.includes('.billing-toggle-btn:focus-visible'), 'Missing .billing-toggle-btn:focus-visible');
-});
-
-runTest('Scroll Reveal: CSS animation classes and stagger delays defined', () => {
-  assert.ok(cssContent.includes('.welcome-reveal {'), 'Missing .welcome-reveal rule in CSS');
-  assert.ok(cssContent.includes('.welcome-reveal.is-revealed'), 'Missing .welcome-reveal.is-revealed in CSS');
-  assert.ok(cssContent.includes('.welcome-reveal-delay-1'), 'Missing delay 1 class');
-  assert.ok(cssContent.includes('.welcome-reveal-delay-2'), 'Missing delay 2 class');
-  assert.ok(cssContent.includes('.welcome-reveal-delay-3'), 'Missing delay 3 class');
-});
-
-runTest('Motion Safety: prefers-reduced-motion media query immediately reveals elements', () => {
-  assert.ok(cssContent.includes('@media (prefers-reduced-motion: reduce)'), 'Missing prefers-reduced-motion media query');
-  assert.ok(cssContent.includes('opacity: 1 !important;'), 'Reduced motion must force full opacity');
-  assert.ok(cssContent.includes('transition: none !important;'), 'Reduced motion must disable transitions');
-});
-
-runTest('HTML: Scroll reveal classes integrated into major landing sections', () => {
-  assert.ok(htmlContent.includes('welcome-section-header welcome-hero-header welcome-reveal'), 'Hero header missing reveal class');
-  assert.ok(htmlContent.includes('welcome-preview-card welcome-reveal'), 'Preview card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-bento-card welcome-bento-span-2 welcome-reveal'), 'Bento card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-step-card welcome-reveal'), 'Step card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-metric-card welcome-reveal'), 'Metric card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-testimonial-card welcome-reveal'), 'Testimonial card missing reveal class');
-  assert.ok(htmlContent.includes('welcome-pricing-card welcome-reveal'), 'Pricing card missing reveal class');
-});
-
-runTest('JS: Scroll reveal observer with reduced motion check implemented', () => {
-  assert.ok(jsContent.includes('.welcome-reveal'), 'JS must query .welcome-reveal');
-  assert.ok(jsContent.includes('prefers-reduced-motion: reduce'), 'JS must check prefers-reduced-motion');
-  assert.ok(jsContent.includes('is-revealed'), 'JS must add is-revealed class');
-  assert.ok(jsContent.includes('unobserve'), 'JS must unobserve after reveal');
-});
-
-runTest('JS: Smooth scroll with sticky navbar offset calculation implemented', () => {
-  assert.ok(jsContent.includes('a[href^="#welcome"]'), 'JS must query anchor links');
-  assert.ok(jsContent.includes('getBoundingClientRect().top'), 'JS must calculate element position');
-  assert.ok(jsContent.includes('window.scrollTo'), 'JS must call window.scrollTo');
-  assert.ok(jsContent.includes('behavior: prefersReduced ? \'auto\' : \'smooth\''), 'JS must respect reduced motion');
+  assert.strictEqual(htmlContent.includes('id="welcomeTestimonials"'), false, '#welcomeTestimonials must not exist');
 });
 
 // -----------------------------------------------------------------------------

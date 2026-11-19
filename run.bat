@@ -21,7 +21,7 @@ echo ======================================================================
 echo                      PDF-LINGUA - CONTROL PANEL
 echo ======================================================================
 echo.
-echo   [1] Khoi dong He thong (Backend Server + Mo Trang Welcome)
+echo   [1] Khoi dong He thong (Backend Server + Frontend)
 echo   [2] Mo truc tiep Workspace Ung dung (index.html)
 echo   [3] Chay toan bo bo Kiem thu Backend (Pytest)
 echo   [4] Chay toan bo bo Kiem thu Frontend (Node.js)
