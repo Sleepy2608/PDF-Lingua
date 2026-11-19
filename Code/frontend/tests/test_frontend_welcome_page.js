@@ -329,6 +329,12 @@ runTest('JS: Synchronization interaction attached to preview paragraphs', () => 
 // -----------------------------------------------------------------------------
 console.log('\n--- 8. Features Bento Grid (6 Asymmetric Pillars) ---');
 
+runTest('Bento: Section title and eyebrow badge configured truthfully', () => {
+  assert.strictEqual(htmlContent.includes('Công Nghệ Đột Phá'), false, 'Tag "Công Nghệ Đột Phá" must be removed');
+  assert.strictEqual(htmlContent.includes('6 Trụ Cột Đột Phá'), false, 'Old title "6 Trụ Cột Đột Phá" must be removed');
+  assert.ok(htmlContent.includes('Các Tính Năng Chính Của Hệ Thống PDF-Lingua'), 'Missing updated section title');
+});
+
 runTest('Bento: Grid container and 6 feature cards exist', () => {
   assert.ok(htmlContent.includes('welcome-bento-grid'), 'Missing .welcome-bento-grid');
   assert.ok(htmlContent.includes('id="bentoCardLayout"'), 'Missing #bentoCardLayout');
