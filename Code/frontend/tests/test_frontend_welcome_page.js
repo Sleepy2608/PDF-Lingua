@@ -266,7 +266,7 @@ console.log('\n--- 7. Hero Section & Interactive Product Preview ---');
 
 runTest('Hero: Eyebrow badge contains core AI OCR proposition', () => {
   assert.ok(htmlContent.includes('welcome-eyebrow-badge'), 'Missing .welcome-eyebrow-badge');
-  assert.ok(htmlContent.includes('Công Nghệ AI OCR & Dịch Thuật Bố Cục Đa Cột'), 'Missing eyebrow text');
+  assert.ok(htmlContent.includes('Nền Tảng Dịch Thuật Học Thuật &amp; Kỹ Thuật'), 'Missing eyebrow text');
 });
 
 runTest('Hero: Headline H1 matches 2-line concise title', () => {
