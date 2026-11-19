@@ -78,9 +78,9 @@
 }
 
 .btn-login:hover {
-  border-color: var(--color-primary-indigo);
-  color: var(--color-primary-indigo);
-  background-color: var(--bg-subtle);
+  border-color: #E5322D;
+  color: #E5322D;
+  background-color: #FFFDFD;
 }
 
 .btn-sm {
@@ -3262,17 +3262,17 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: #FFFFFF;
-  background: var(--color-gradient-cta, linear-gradient(135deg, #4F46E5 0%, #2563EB 100%));
+  background: var(--color-gradient-cta, linear-gradient(135deg, #E5322D 0%, #DC2626 100%));
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);
+  box-shadow: 0 2px 8px rgba(229, 50, 45, 0.28);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .doc-header-upload-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.38);
+  box-shadow: 0 4px 14px rgba(229, 50, 45, 0.38);
 }
 
 .doc-header-upload-btn:active {

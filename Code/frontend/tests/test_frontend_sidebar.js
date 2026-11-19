@@ -220,10 +220,10 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
         return [
           elements.sideNavHome,
           elements.sideNavTranslate,
-          elements.sideNavAiCopilot,
-          elements.sideNavAiSummarize,
           elements.sideNavDocuments,
           elements.sideNavHistory,
+          elements.sideNavAiCopilot,
+          elements.sideNavAiSummarize,
           elements.sideNavPricing,
           elements.sideNavAdmin,
         ];
@@ -435,6 +435,8 @@ async function main() {
     assert.strictEqual(env.elements.sidebarUserRole.style.display, 'none');
     assert.strictEqual(env.elements.sideNavAdminItem.style.display, 'none');
     assert.strictEqual(env.elements.appShell.classList.contains('guest-mode'), false);
+    assert.strictEqual(env.elements.sideNavDocuments.classList.contains('is-dimmed'), true, 'Documents nav item must be dimmed for guest');
+    assert.strictEqual(env.elements.sideNavHistory.classList.contains('is-dimmed'), true, 'History nav item must be dimmed for guest');
   });
 
   await runTest('User Sync: Pro user renders amber role and user name', () => {
@@ -446,6 +448,8 @@ async function main() {
     assert.strictEqual(env.elements.sidebarUserRole.textContent, 'Gói Pro');
     assert.strictEqual(env.elements.sidebarUserRole.style.color, '#F59E0B');
     assert.strictEqual(env.elements.sideNavAdminItem.style.display, 'none');
+    assert.strictEqual(env.elements.sideNavDocuments.classList.contains('is-dimmed'), false, 'Documents nav item must NOT be dimmed for logged-in user');
+    assert.strictEqual(env.elements.sideNavHistory.classList.contains('is-dimmed'), false, 'History nav item must NOT be dimmed for logged-in user');
   });
 
   await runTest('User Sync: Admin user renders son red role and reveals admin menu item', () => {

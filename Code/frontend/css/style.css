@@ -4,8 +4,8 @@
   --color-primary-indigo-dark: #4338CA;
   --color-primary-blue: #2563EB;
   --color-primary-blue-dark: #1D4ED8;
-  --color-gradient-cta: linear-gradient(135deg, #4F46E5 0%, #2563EB 100%);
-  --color-gradient-subtle: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+  --color-gradient-cta: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
+  --color-gradient-subtle: linear-gradient(135deg, rgba(229, 50, 45, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
 
   /* Accents */
   --color-pdf-coral: #EF4444;
@@ -42,15 +42,15 @@
   --border-light: #E2E8F0;
   --border-subtle: #E2E8F0;
   --border-dashed: #CBD5E1;
-  --border-active: #4F46E5;
+  --border-active: #E5322D;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --shadow-dropzone: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-  --shadow-dropzone-drag: 0 25px 35px -5px rgba(79, 70, 229, 0.15);
-  --shadow-btn-cta: 0 4px 14px 0 rgba(79, 70, 229, 0.35);
-  --shadow-btn-hover: 0 6px 20px 0 rgba(79, 70, 229, 0.45);
+  --shadow-dropzone-drag: 0 25px 35px -5px rgba(229, 50, 45, 0.15);
+  --shadow-btn-cta: 0 4px 14px 0 rgba(229, 50, 45, 0.3);
+  --shadow-btn-hover: 0 6px 20px 0 rgba(229, 50, 45, 0.4);
 
   /* Radii */
   --radius-sm: 6px;

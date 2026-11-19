@@ -1210,6 +1210,8 @@
     const profileCard = document.getElementById('sidebarUserProfile');
     const sideNavAiCopilot = document.getElementById('sideNavAiCopilot');
     const sideNavAiSummarize = document.getElementById('sideNavAiSummarize');
+    const sideNavDocuments = document.getElementById('sideNavDocuments');
+    const sideNavHistory = document.getElementById('sideNavHistory');
     const btnAiSummarize = document.getElementById('btnAiSummarize');
     const btnAiCopilot = document.getElementById('btnAiCopilot');
 
@@ -1242,6 +1244,28 @@
       } else {
         sideNavAiSummarize.classList.add('is-dimmed');
         sideNavAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản dành cho Gói Pro');
+      }
+    }
+
+    // Update Documents & History appearance (dimmed on Guest, fully active when logged in)
+    const isLoggedIn = Boolean(currentUser && (currentUser.email || currentUser.id));
+    if (sideNavDocuments) {
+      if (isLoggedIn) {
+        sideNavDocuments.classList.remove('is-dimmed');
+        sideNavDocuments.removeAttribute('title');
+      } else {
+        sideNavDocuments.classList.add('is-dimmed');
+        sideNavDocuments.setAttribute('title', 'Tính năng Tài liệu (Dành cho người dùng đã đăng nhập)');
+      }
+    }
+
+    if (sideNavHistory) {
+      if (isLoggedIn) {
+        sideNavHistory.classList.remove('is-dimmed');
+        sideNavHistory.removeAttribute('title');
+      } else {
+        sideNavHistory.classList.add('is-dimmed');
+        sideNavHistory.setAttribute('title', 'Tính năng Lịch sử xử lý (Dành cho người dùng đã đăng nhập)');
       }
     }
 

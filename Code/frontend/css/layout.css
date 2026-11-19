@@ -127,13 +127,17 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.35rem 0.85rem;
-  background-color: var(--color-gradient-subtle);
-  border: 1px solid rgba(79, 70, 229, 0.15);
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: var(--radius-pill);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-primary-indigo);
+  color: #475569;
   margin-bottom: 1.25rem;
+}
+
+.hero-badge svg {
+  color: #F59E0B;
 }
 
 .hero-title {
@@ -177,8 +181,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: rgba(79, 70, 229, 0.1);
-  color: var(--color-primary-indigo);
+  background-color: #ECFDF5;
+  color: #10B981;
 }
 
 .check-icon svg {
@@ -205,8 +209,8 @@
 }
 
 .dropzone-card:hover {
-  border-color: var(--color-primary-indigo);
-  background-color: #FAFAFD;
+  border-color: #E5322D;
+  background-color: #FFFDFD;
 }
 
 .dropzone-card.dragover {
