@@ -120,11 +120,14 @@ runTest('Brand: Logo image has dimensions width="34" height="34" for CLS=0', () 
   assert.ok(htmlContent.includes('height="34"'), 'Missing height="34" attribute on logo');
 });
 
-runTest('Brand: Contains "PDF" badge and "Lingua" text', () => {
+runTest('Brand: Contains "PDF" badge and "Lingua" text matching index.html theme', () => {
   assert.ok(htmlContent.includes('welcome-brand-badge'), 'Missing .welcome-brand-badge class');
   assert.ok(htmlContent.includes('welcome-brand-name'), 'Missing .welcome-brand-name class');
+  assert.ok(htmlContent.includes('welcome-brand-text'), 'Missing .welcome-brand-text class');
   assert.ok(htmlContent.includes('>PDF<'), 'Missing "PDF" text inside badge');
   assert.ok(htmlContent.includes('Lingua'), 'Missing "Lingua" brand text');
+  assert.ok(cssContent.includes('.welcome-brand-badge') && cssContent.includes('#EF4444'), 'Brand badge must use red background #EF4444');
+  assert.ok(cssContent.includes('.welcome-brand-text') && cssContent.includes('#4F46E5'), 'Brand text must use indigo color #4F46E5');
 });
 
 runTest('Nav: Anchor links navigate to all major landing page sections', () => {
@@ -135,8 +138,9 @@ runTest('Nav: Anchor links navigate to all major landing page sections', () => {
   assert.strictEqual(htmlContent.includes('href="#welcomeTestimonials"'), false, 'Nav must not link to #welcomeTestimonials');
 });
 
-runTest('Nav: CTA buttons link to workspace and login portal', () => {
-  assert.ok(htmlContent.includes('href="index.html#login"'), 'Missing link to index.html#login');
+runTest('Nav: CTA buttons link to workspace and open login modal', () => {
+  assert.ok(htmlContent.includes('id="navBtnLogin"'), 'Missing #navBtnLogin button');
+  assert.ok(htmlContent.includes('id="btnWelcomeMobileLogin"'), 'Missing #btnWelcomeMobileLogin button');
   assert.ok(htmlContent.includes('href="index.html"'), 'Missing link to index.html workspace');
 });
 
@@ -193,6 +197,34 @@ runTest('JS: Script wraps in IIFE and strictly handles scroll & mobile toggle', 
 
 runTest('JS: Closes mobile drawer on Escape key press', () => {
   assert.ok(jsContent.includes("'Escape'"), 'JS must listen for Escape key');
+});
+
+runTest('Modal HTML: Login modal structure matches index.html specifications', () => {
+  assert.ok(htmlContent.includes('id="loginModal"'), 'Missing #loginModal dialog');
+  assert.ok(htmlContent.includes('id="loginForm"'), 'Missing #loginForm');
+  assert.ok(htmlContent.includes('id="loginEmail"'), 'Missing #loginEmail input');
+  assert.ok(htmlContent.includes('id="loginPassword"'), 'Missing #loginPassword input');
+  assert.ok(htmlContent.includes('id="btnCloseLoginModal"'), 'Missing #btnCloseLoginModal button');
+  assert.ok(htmlContent.includes('id="toggleLoginPassword"'), 'Missing #toggleLoginPassword button');
+  assert.ok(htmlContent.includes('id="btnSubmitLogin"'), 'Missing #btnSubmitLogin button');
+  assert.ok(htmlContent.includes('id="loginAlert"'), 'Missing #loginAlert container');
+});
+
+runTest('Modal CSS: Dialog styling with backdrop blur and responsive modal', () => {
+  assert.ok(cssContent.includes('.modal-backdrop'), 'Missing .modal-backdrop styles');
+  assert.ok(cssContent.includes('.modal-dialog'), 'Missing .modal-dialog styles');
+  assert.ok(cssContent.includes('.btn-gradient'), 'Missing .btn-gradient styles');
+  assert.ok(cssContent.includes('.form-alert'), 'Missing .form-alert styles');
+});
+
+runTest('Modal JS: Login controller handles open, close, API call, token storage, and redirect', () => {
+  assert.ok(jsContent.includes('navBtnLogin'), 'JS must hook desktop nav login button');
+  assert.ok(jsContent.includes('btnWelcomeMobileLogin'), 'JS must hook mobile drawer login button');
+  assert.ok(jsContent.includes('/api/auth/login'), 'JS must post credentials to /api/auth/login');
+  assert.ok(jsContent.includes('pdfl_token'), 'JS must persist pdfl_token in localStorage');
+  assert.ok(jsContent.includes('pdfl_user'), 'JS must persist pdfl_user in localStorage');
+  assert.ok(jsContent.includes("window.location.href = 'index.html'"), 'JS must redirect to index.html on login success');
+  assert.ok(jsContent.includes('closeLoginModal'), 'JS must provide clean closeLoginModal without navigation');
 });
 
 // -----------------------------------------------------------------------------
@@ -413,11 +445,26 @@ runTest('Footer: 4-column semantic layout with brand, nav, tech and legal', () =
   assert.ok(htmlContent.includes('Hỗ Trợ &amp; Pháp Lý'), 'Missing Legal column');
 });
 
-runTest('Footer: Includes security badges, email support, and GitHub repo', () => {
+runTest('Footer: Includes security badges, email support, and GitHub repo with uptime removed', () => {
   assert.ok(htmlContent.includes('footer-cert-badge'), 'Missing .footer-cert-badge');
   assert.ok(htmlContent.includes('support@pdf-lingua.vn'), 'Missing support email');
   assert.ok(htmlContent.includes('github.com/Sleepy2608/PDF-Lingua'), 'Missing GitHub repo URL');
-  assert.ok(htmlContent.includes('99.98% Uptime'), 'Missing system uptime status');
+  assert.strictEqual(htmlContent.includes('99.98% Uptime'), false, 'Uptime status must be removed');
+  assert.ok(htmlContent.includes('welcome-footer-copy'), 'Missing copyright text container');
+});
+
+runTest('Footer: Copyright line centered horizontally in CSS', () => {
+  assert.ok(cssContent.includes('.welcome-footer-bottom'), 'Missing .welcome-footer-bottom in CSS');
+  assert.ok(cssContent.includes('justify-content: center;'), 'Footer bottom must be centered');
+  assert.ok(cssContent.includes('.welcome-footer-copy'), 'Missing .welcome-footer-copy in CSS');
+});
+
+runTest('Theme: Alternating grey and white backgrounds with grey footer configured', () => {
+  assert.ok(cssContent.includes('.welcome-hero-section'), 'Missing .welcome-hero-section in CSS');
+  assert.ok(cssContent.includes('.welcome-how-it-works-section'), 'Missing .welcome-how-it-works-section in CSS');
+  assert.ok(cssContent.includes('.welcome-footer-section'), 'Missing .welcome-footer-section in CSS');
+  assert.ok(cssContent.includes('background-color: var(--wl-bg-subtle);'), 'Subtle grey background must be defined');
+  assert.ok(cssContent.includes('background-color: var(--wl-bg-page);'), 'Page white background must be defined');
 });
 
 runTest('CSS: Footer grid, columns, and link hover styles defined', () => {
