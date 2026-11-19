@@ -14,14 +14,14 @@
   --sidebar-bg: #FFFFFF;
   --sidebar-bg-secondary: #F8FAFC;
   --sidebar-hover: #F1F5F9;
-  --sidebar-active-bg: #EEF2FF;
-  --sidebar-active-text: #4F46E5;
-  --sidebar-active-border: #C7D2FE;
+  --sidebar-active-bg: #FEF2F2;
+  --sidebar-active-text: #DC2626;
+  --sidebar-active-border: #FECACA;
   --sidebar-border: #E2E8F0;
 
-  /* Primary Action Button (Vibrant Purple/Indigo matching brand) */
-  --sidebar-btn-bg: #5B51D8;
-  --sidebar-btn-hover: #4F46E5;
+  /* Primary Action Button (PDF Red matching brand) */
+  --sidebar-btn-bg: #E5322D;
+  --sidebar-btn-hover: #D02924;
   --sidebar-btn-text: #FFFFFF;
 
   /* Typography */
@@ -115,7 +115,7 @@
 }
 
 .header-brand-text {
-  color: var(--color-primary-indigo, #4F46E5);
+  color: var(--text-title, #0F172A);
 }
 
 /* Reveal header brand when sidebar is collapsed */
@@ -212,7 +212,7 @@
 }
 
 .sidebar-brand-text {
-  color: var(--color-primary-indigo, #4F46E5);
+  color: var(--text-title, #0F172A);
 }
 
 /* Toggle Collapse/Expand Button */
@@ -316,7 +316,7 @@
 .btn-sidebar-upload:hover {
   background-color: var(--sidebar-btn-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(91, 81, 216, 0.35);
+  box-shadow: 0 6px 16px rgba(229, 50, 45, 0.32);
 }
 
 .btn-sidebar-upload:active {
@@ -461,11 +461,11 @@
 }
 
 .sidebar-nav-item:hover .nav-item-icon {
-  color: #4F46E5;
+  color: var(--sidebar-active-text, #DC2626);
 }
 
 .sidebar-nav-item.active .nav-item-icon {
-  color: #4F46E5;
+  color: var(--sidebar-active-text, #DC2626);
 }
 
 .sidebar-nav-item#sideNavAdmin.active .nav-item-icon,
