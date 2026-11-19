@@ -376,6 +376,7 @@ runTest('JS: Interactive Bento sync row switcher configured', () => {
 console.log('\n--- 9. How It Works (3 Streamlined Steps) ---');
 
 runTest('Steps: Grid container and 3 step cards exist', () => {
+  assert.strictEqual(htmlContent.includes('Hướng Dẫn Nhanh'), false, 'Tag "Hướng Dẫn Nhanh" must be removed');
   assert.ok(htmlContent.includes('welcome-steps-container'), 'Missing .welcome-steps-container');
   assert.ok(htmlContent.includes('welcome-steps-grid'), 'Missing .welcome-steps-grid');
   assert.ok(htmlContent.includes('id="stepUpload"'), 'Missing #stepUpload');
@@ -420,6 +421,8 @@ runTest('Testimonials: Navigation and drawer links do not point to removed secti
 console.log('\n--- 11. Pricing Plans & Billing Toggle ---');
 
 runTest('Pricing: Monthly / Yearly billing toggle configured with discount badge', () => {
+  assert.strictEqual(htmlContent.includes('Chi Phí Minh Bạch'), false, 'Tag "Chi Phí Minh Bạch" must be removed');
+  assert.strictEqual(cssContent.includes('.welcome-section-tag'), false, '.welcome-section-tag must be removed from CSS');
   assert.ok(htmlContent.includes('welcome-billing-toggle'), 'Missing .welcome-billing-toggle');
   assert.ok(htmlContent.includes('id="btnBillingMonthly"'), 'Missing #btnBillingMonthly');
   assert.ok(htmlContent.includes('id="btnBillingYearly"'), 'Missing #btnBillingYearly');
