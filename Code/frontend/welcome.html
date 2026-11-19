@@ -141,139 +141,155 @@
                 <!-- Interactive Dual-Pane Product Preview Card -->
                 <div class="welcome-preview-wrapper" id="welcomePreview">
                     <div class="welcome-preview-card welcome-reveal welcome-reveal-delay-1">
-                        <!-- Window Chrome Bar -->
-                        <div class="welcome-preview-chrome">
-                            <div class="welcome-preview-dots" aria-hidden="true">
-                                <span class="dot dot-close"></span>
-                                <span class="dot dot-minimize"></span>
-                                <span class="dot dot-maximize"></span>
+                        <!-- Workspace Action Bar (Synchronized with Real Workspace UI) -->
+                        <div class="welcome-preview-toolbar">
+                            <div class="welcome-preview-fileinfo">
+                                <span class="welcome-file-badge-pdf">PDF</span>
+                                <span class="welcome-preview-filename">test_pdfl2.pdf</span>
+                                <span class="welcome-file-meta-pill">1 trang</span>
+                                <span class="welcome-file-meta-pill">0.2 MB</span>
+                                <span class="welcome-file-type-pill">PDF Số</span>
                             </div>
-                            <div class="welcome-preview-filename">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                                <span>academic_deep_learning_survey_2026.pdf</span>
-                                <span class="welcome-file-badge">Đối chiếu song ngữ</span>
-                            </div>
-                            <div class="welcome-preview-controls">
-                                <span class="welcome-page-indicator">Trang 02 / 18</span>
-                                <span class="welcome-zoom-badge">100%</span>
+                            <div class="welcome-preview-actions">
+                                <div class="welcome-preview-mode-group">
+                                    <span class="preview-mode-btn is-active">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                                        </svg>
+                                        <span>Văn bản</span>
+                                    </span>
+                                    <span class="preview-mode-btn">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
+                                        <span>PDF gốc</span>
+                                    </span>
+                                    <span class="preview-mode-btn">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="12" y1="3" x2="12" y2="21"></line>
+                                        </svg>
+                                        <span>Song song</span>
+                                    </span>
+                                </div>
+
+                                <div class="welcome-preview-lang">
+                                    <span class="preview-lang-label">Dịch sang:</span>
+                                    <div class="preview-lang-select">
+                                        <span>English (en)</span>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="welcome-preview-btn-secondary">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="1 4 1 10 7 10"></polyline>
+                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                    </svg>
+                                    <span>Dịch lại</span>
+                                </div>
+
+                                <div class="welcome-preview-btn-download">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    <span>Tải xuống</span>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </div>
+
+                                <div class="welcome-preview-btn-kebab" aria-hidden="true">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="12" cy="5" r="1.75"></circle>
+                                        <circle cx="12" cy="12" r="1.75"></circle>
+                                        <circle cx="12" cy="19" r="1.75"></circle>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Preview Panes Split Grid -->
                         <div class="welcome-preview-panes">
-                            <!-- Left Pane: English Original -->
+                            <!-- Left Pane: Vietnamese Original -->
                             <div class="welcome-pane welcome-pane-original" id="paneOriginal">
                                 <div class="welcome-pane-header">
-                                    <span class="welcome-pane-badge original-badge">Tài liệu gốc (English)</span>
-                                    <span class="welcome-pane-meta">Ký tự nhận diện: 99.4%</span>
+                                    <div class="welcome-pane-title-wrap">
+                                        <span class="welcome-pane-title">Văn bản gốc</span>
+                                        <span class="welcome-pane-badge original-badge">GỐC</span>
+                                    </div>
+                                    <div class="welcome-pane-meta-group">
+                                        <span class="welcome-pane-stats">95 từ (580 ký tự)</span>
+                                        <button type="button" class="welcome-pane-copy" title="Sao chép văn bản">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            <span>Sao chép</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="welcome-pane-content">
-                                    <h3 class="welcome-doc-title">Transformer Architecture in Multilingual Synthesis</h3>
-                                    <p class="welcome-doc-para" data-sync-id="p1">
-                                        Multi-head attention mechanisms have revolutionized sequence transduction tasks, enabling complex alignment across languages without sacrificing structural fidelity.
-                                    </p>
-                                    <p class="welcome-doc-para" data-sync-id="p2">
-                                        Unlike traditional sentence-level translation pipelines that often collapse tabular arrangements into unreadable raw text, our structural parser isolates bounding polygons for each paragraph and table cell.
-                                    </p>
-                                    <div class="welcome-doc-table-wrap">
-                                        <div class="welcome-table-caption">Table 1: Structural Retention & Extraction Accuracy</div>
-                                        <table class="welcome-doc-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Framework</th>
-                                                    <th>Preservation</th>
-                                                    <th>Latency / p.</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>Legacy OCR</td>
-                                                    <td>62.4%</td>
-                                                    <td>8.4s</td>
-                                                </tr>
-                                                <tr class="welcome-row-highlight">
-                                                    <td><strong>PDF-Lingua</strong></td>
-                                                    <td><strong>94.5%</strong></td>
-                                                    <td><strong>2.8s</strong></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <p class="welcome-doc-para" data-sync-id="p1">Kiểm tra dịch các ký hiệu kỹ thuật, URL, Email &amp; Đoạn mã (Code/API)</p>
+                                    <p class="welcome-doc-para welcome-para-heading" data-sync-id="p2">HƯỚNG DẪN CẤU HÌNH HỆ THỐNG VÀ API</p>
+                                    <p class="welcome-doc-para" data-sync-id="p3">Vui lòng kiểm tra kết nối tới máy chủ thông qua đường dẫn sau:</p>
+                                    <p class="welcome-doc-para welcome-para-code" data-sync-id="p4">https://pdflingua.com/api/v1/translate?lang=en&amp;format=pdf</p>
+                                    <p class="welcome-doc-para" data-sync-id="p5">Thông tin liên hệ hỗ trợ kỹ thuật:</p>
+                                    <p class="welcome-doc-para" data-sync-id="p6">- Email chính thức: support-team@pdflingua.edu.vn</p>
+                                    <p class="welcome-doc-para" data-sync-id="p7">- Hotline khẩn cấp: +84 (0) 912 345 678</p>
+                                    <p class="welcome-doc-para" data-sync-id="p8">Cấu hình biến môi trường trong file .env:</p>
+                                    <div class="welcome-doc-para welcome-para-pre" data-sync-id="p9">API_BASE_URL="http://127.0.0.1:8000"
+MAX_FILE_SIZE_MB=20
+ENABLE_TESSERACT_OCR=True
+DEBUG_MODE=False</div>
+                                    <p class="welcome-doc-para" data-sync-id="p10">Công thức tính toán hiệu suất:</p>
+                                    <p class="welcome-doc-para welcome-para-code" data-sync-id="p11">E = mc^2</p>
+                                    <p class="welcome-doc-para welcome-para-code" data-sync-id="p12">Accuracy = (TP + TN) / (TP + TN + FP + FN) * 100%</p>
                                 </div>
                             </div>
 
-                            <!-- Right Pane: Vietnamese Translation -->
+                            <!-- Right Pane: English Translation -->
                             <div class="welcome-pane welcome-pane-translated" id="paneTranslated">
                                 <div class="welcome-pane-header">
-                                    <span class="welcome-pane-badge translated-badge">Bản dịch bảo tồn bố cục (Tiếng Việt)</span>
-                                    <span class="welcome-pane-meta">Đồng bộ 2 cột: Khớp 100%</span>
-                                </div>
-                                <div class="welcome-pane-content">
-                                    <h3 class="welcome-doc-title">Kiến Trúc Transformer Trong Tổng Hợp Đa Ngôn Ngữ</h3>
-                                    <p class="welcome-doc-para" data-sync-id="p1">
-                                        Cơ chế tập trung đa đầu (multi-head attention) đã tạo ra cuộc cách mạng trong các tác vụ chuyển đổi chuỗi, cho phép căn chỉnh ngữ nghĩa phức tạp giữa các ngôn ngữ mà không làm mất tính toàn vẹn cấu trúc.
-                                    </p>
-                                    <p class="welcome-doc-para" data-sync-id="p2">
-                                        Khác với các luồng dịch thuật câu đơn truyền thống thường làm vỡ bảng biểu thành văn bản thô khó đọc, bộ phân tích cấu trúc của chúng tôi cô lập đa giác bao quanh từng đoạn văn và ô bảng.
-                                    </p>
-                                    <div class="welcome-doc-table-wrap">
-                                        <div class="welcome-table-caption">Bảng 1: Tỷ lệ bảo tồn cấu trúc và độ chính xác bóc tách</div>
-                                        <table class="welcome-doc-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Hệ thống</th>
-                                                    <th>Bảo tồn bố cục</th>
-                                                    <th>Độ trễ / tr.</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>OCR truyền thống</td>
-                                                    <td>62.4%</td>
-                                                    <td>8.4s</td>
-                                                </tr>
-                                                <tr class="welcome-row-highlight">
-                                                    <td><strong>PDF-Lingua</strong></td>
-                                                    <td><strong>94.5%</strong></td>
-                                                    <td><strong>2.8s</strong></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div class="welcome-pane-title-wrap">
+                                        <span class="welcome-pane-title">Bản dịch</span>
+                                        <span class="welcome-pane-badge translated-badge">BẢN DỊCH</span>
+                                    </div>
+                                    <div class="welcome-pane-meta-group">
+                                        <span class="welcome-pane-stats">75 từ (603 ký tự)</span>
+                                        <button type="button" class="welcome-pane-copy" title="Sao chép bản dịch">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                            <span>Sao chép</span>
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Floating AI Copilot Highlight Card -->
-                        <div class="welcome-copilot-card" id="welcomeCopilotCard">
-                            <div class="welcome-copilot-header">
-                                <div class="welcome-copilot-avatar">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
-                                        <path d="M4 11a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7z"></path>
-                                        <line x1="9" y1="15" x2="9" y2="15.01"></line>
-                                        <line x1="15" y1="15.01" x2="15.01" y2="15.01"></line>
-                                    </svg>
+                                <div class="welcome-pane-content">
+                                    <p class="welcome-doc-para" data-sync-id="p1">Test translation of technical symbols, URLs, Emails &amp; Snippets (Code/API)</p>
+                                    <p class="welcome-doc-para welcome-para-heading" data-sync-id="p2">SYSTEM AND API CONFIGURATION GUIDE</p>
+                                    <p class="welcome-doc-para" data-sync-id="p3">Please check your connection to the server via the following path:</p>
+                                    <p class="welcome-doc-para welcome-para-code" data-sync-id="p4">https://pdflingua.com/api/v1/translate?lang=en&amp;format=pdf</p>
+                                    <p class="welcome-doc-para" data-sync-id="p5">Technical support contact information:</p>
+                                    <p class="welcome-doc-para" data-sync-id="p6">- Official email: support-team@pdflingua.edu.vn</p>
+                                    <p class="welcome-doc-para" data-sync-id="p7">- Emergency hotline: +84 (0) 912 345 678</p>
+                                    <p class="welcome-doc-para" data-sync-id="p8">Configure environment variables in the .env file:</p>
+                                    <div class="welcome-doc-para welcome-para-pre" data-sync-id="p9">API_BASE_URL="http://127.0.0.1:8000"
+MAX_FILE_SIZE_MB=20
+ENABLE_TESSERACT_OCR=True
+DEBUG_MODE=False</div>
+                                    <p class="welcome-doc-para" data-sync-id="p10">Performance calculation formula:</p>
+                                    <p class="welcome-doc-para welcome-para-code" data-sync-id="p11">E = mc^2</p>
+                                    <p class="welcome-doc-para welcome-para-code" data-sync-id="p12">Accuracy = (TP + TN) / (TP + TN + FP + FN) * 100%</p>
                                 </div>
-                                <div class="welcome-copilot-title-group">
-                                    <span class="welcome-copilot-name">Trợ lý AI Copilot</span>
-                                    <span class="welcome-copilot-verified">
-                                        <span class="welcome-verified-dot" aria-hidden="true"></span>
-                                        Trích dẫn nguồn thực tế
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="welcome-copilot-body">
-                                <p class="welcome-copilot-msg">
-                                    "Trích dẫn từ <strong>Trang 2, Bảng 1</strong>: Tỷ lệ bảo tồn bố cục của PDF-Lingua đạt <strong>94.5%</strong> so với 62.4% của OCR thông thường, thời gian xử lý rút ngắn xuống còn <strong>2.8 giây/trang</strong>."
-                                </p>
-                            </div>
-                            <div class="welcome-copilot-footer">
-                                <span class="welcome-source-chip">Nguồn: Trang 2 (Bảng 1)</span>
-                                <span class="welcome-copilot-badge">Không ảo giác</span>
                             </div>
                         </div>
                     </div>

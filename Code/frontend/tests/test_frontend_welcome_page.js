@@ -281,34 +281,36 @@ runTest('Hero: Trust signals bar displays security and OCR badges', () => {
   assert.ok(htmlContent.includes('Hỗ trợ PDF quét scan & OCR Tiếng Việt'), 'Missing OCR scan trust badge');
 });
 
-runTest('Preview: macOS window chrome has colored dots and document name', () => {
+runTest('Preview: Workspace toolbar displays test_pdfl2.pdf and meta badges', () => {
   assert.ok(htmlContent.includes('id="welcomePreview"'), 'Missing #welcomePreview container');
   assert.ok(htmlContent.includes('welcome-preview-card'), 'Missing .welcome-preview-card');
-  assert.ok(htmlContent.includes('dot-close'), 'Missing .dot-close');
-  assert.ok(htmlContent.includes('dot-minimize'), 'Missing .dot-minimize');
-  assert.ok(htmlContent.includes('dot-maximize'), 'Missing .dot-maximize');
-  assert.ok(htmlContent.includes('academic_deep_learning_survey_2026.pdf'), 'Missing preview filename');
+  assert.ok(htmlContent.includes('welcome-preview-toolbar'), 'Missing .welcome-preview-toolbar');
+  assert.ok(htmlContent.includes('test_pdfl2.pdf'), 'Missing test_pdfl2.pdf filename in preview');
+  assert.ok(htmlContent.includes('1 trang'), 'Missing 1 trang badge');
+  assert.ok(htmlContent.includes('0.2 MB'), 'Missing 0.2 MB badge');
+  assert.ok(htmlContent.includes('PDF Số'), 'Missing PDF Số badge');
+  assert.ok(htmlContent.includes('Văn bản'), 'Missing Van ban view mode');
+  assert.ok(htmlContent.includes('English (en)'), 'Missing English (en) target language');
 });
 
-runTest('Preview: Split panes present original EN and translated VI columns', () => {
+runTest('Preview: Split panes present original VI and translated EN columns matching real workspace', () => {
   assert.ok(htmlContent.includes('id="paneOriginal"'), 'Missing #paneOriginal left column');
   assert.ok(htmlContent.includes('id="paneTranslated"'), 'Missing #paneTranslated right column');
   assert.ok(htmlContent.includes('data-sync-id="p1"'), 'Missing data-sync-id attributes for paragraph pairing');
-  assert.ok(htmlContent.includes('welcome-doc-table'), 'Missing benchmark table in preview');
+  assert.ok(htmlContent.includes('Văn bản gốc'), 'Missing Van ban goc title');
+  assert.ok(htmlContent.includes('Bản dịch'), 'Missing Ban dich title');
+  assert.ok(htmlContent.includes('95 từ (580 ký tự)'), 'Missing original word count');
+  assert.ok(htmlContent.includes('75 từ (603 ký tự)'), 'Missing translated word count');
+  assert.ok(htmlContent.includes('support-team@pdflingua.edu.vn'), 'Missing technical support email in content');
+  assert.ok(htmlContent.includes('API_BASE_URL='), 'Missing env configuration in preview content');
+  assert.ok(htmlContent.includes('E = mc^2'), 'Missing formula line in preview content');
 });
 
-runTest('Preview: Floating Copilot Highlight Card cites source page and table', () => {
-  assert.ok(htmlContent.includes('id="welcomeCopilotCard"'), 'Missing #welcomeCopilotCard');
-  assert.ok(htmlContent.includes('Trợ lý AI Copilot'), 'Missing Copilot title');
-  assert.ok(htmlContent.includes('Trang 2, Bảng 1'), 'Missing page and table source citation');
-  assert.ok(htmlContent.includes('Không ảo giác'), 'Missing non-hallucination tag');
-});
-
-runTest('CSS: Preview Card grid layout and Copilot card styles defined', () => {
+runTest('CSS: Preview Card grid layout and workspace toolbar styles defined', () => {
   assert.ok(cssContent.includes('.welcome-preview-panes'), 'Missing .welcome-preview-panes in CSS');
   assert.ok(cssContent.includes('grid-template-columns: 1fr 1fr;'), 'Missing 2-column grid in preview');
-  assert.ok(cssContent.includes('.welcome-copilot-card'), 'Missing .welcome-copilot-card in CSS');
-  assert.ok(cssContent.includes('backdrop-filter: blur(16px);'), 'Missing blur in copilot card');
+  assert.ok(cssContent.includes('.welcome-preview-toolbar'), 'Missing .welcome-preview-toolbar in CSS');
+  assert.ok(cssContent.includes('.welcome-file-badge-pdf'), 'Missing .welcome-file-badge-pdf in CSS');
 });
 
 runTest('JS: Synchronization interaction attached to preview paragraphs', () => {
