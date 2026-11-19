@@ -182,28 +182,29 @@ body {
 }
 
 .welcome-brand-name {
-  font-size: 1.18rem;
-  font-weight: 700;
-  color: var(--wl-text-primary);
-  letter-spacing: -0.02em;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 0.3rem;
+  font-size: 1.1875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .welcome-brand-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 7px;
-  border-radius: var(--wl-radius-sm);
-  font-size: 0.68rem;
+  font-size: 1rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--wl-accent-red);
-  background-color: var(--wl-accent-red-subtle);
-  border: 1px solid var(--wl-accent-red-border);
-  line-height: 1.3;
+  padding: 0.15rem 0.45rem;
+  background-color: #EF4444;
+  color: #FFFFFF;
+  border-radius: 5px;
+  line-height: 1.1;
+  border: none;
+}
+
+.welcome-brand-text {
+  color: #4F46E5;
+  font-weight: 800;
 }
 
 /* Navigation Links */
@@ -448,7 +449,8 @@ body {
 .welcome-hero-section {
   padding-top: 96px;
   padding-bottom: 96px;
-  background: radial-gradient(circle at 50% 0%, rgba(229, 50, 45, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+  background-color: var(--wl-bg-subtle);
+  background-image: radial-gradient(circle at 50% 0%, rgba(229, 50, 45, 0.03) 0%, rgba(248, 250, 252, 0) 70%);
 }
 
 .welcome-eyebrow-badge {
@@ -860,9 +862,15 @@ body {
 }
 
 /* Subtle background for alternating sections */
+.welcome-hero-section,
 .welcome-how-it-works-section,
-.welcome-pricing-section {
+.welcome-footer-section {
   background-color: var(--wl-bg-subtle);
+}
+
+.welcome-features-section,
+.welcome-pricing-section {
+  background-color: var(--wl-bg-page);
 }
 
 /* ==========================================================================
@@ -1561,7 +1569,7 @@ body {
    4.5. Pricing Plans & Billing Toggle
    ========================================================================== */
 .welcome-pricing-section {
-  background-color: var(--wl-bg-subtle);
+  background-color: var(--wl-bg-page);
 }
 
 .welcome-billing-toggle {
@@ -1723,7 +1731,7 @@ body {
    5. Comprehensive Footer Section
    ========================================================================== */
 .welcome-footer-section {
-  background-color: var(--wl-bg-page);
+  background-color: var(--wl-bg-subtle);
   border-top: 1px solid var(--wl-border-subtle);
   padding-top: 56px;
   padding-bottom: 36px;
@@ -1801,12 +1809,16 @@ body {
 .welcome-footer-bottom {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
+  justify-content: center;
+  text-align: center;
   font-size: 0.86rem;
   color: var(--wl-text-muted);
   padding-top: 24px;
+}
+
+.welcome-footer-copy {
+  margin: 0;
+  text-align: center;
 }
 
 .welcome-footer-status {
@@ -2076,8 +2088,301 @@ body {
 
   .welcome-footer-bottom {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
   }
+}
+
+/* ==========================================================================
+   7. Login Modal Component (Synchronized with index.html theme)
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  opacity: 1;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.modal-dialog {
+  background: #FFFFFF;
+  border-radius: var(--wl-radius-lg, 12px);
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  border: 1px solid var(--wl-border-subtle);
+  padding: 2rem;
+  position: relative;
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--wl-text-primary);
+  line-height: 1.3;
+  margin-bottom: 0.25rem;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: var(--wl-text-secondary);
+  line-height: 1.4;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--wl-radius-sm, 6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wl-text-muted);
+  cursor: pointer;
+  transition: all var(--wl-transition-fast);
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: var(--wl-bg-subtle);
+  color: var(--wl-text-primary);
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--wl-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.label-required {
+  color: #EF4444;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.875rem;
+  width: 18px;
+  height: 18px;
+  color: var(--wl-text-muted);
+  pointer-events: none;
+  transition: color var(--wl-transition-fast);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 2.75rem 0.75rem 2.6rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  border: 1px solid var(--wl-border-subtle);
+  border-radius: var(--wl-radius-md, 8px);
+  background-color: var(--wl-bg-subtle);
+  color: var(--wl-text-primary);
+  transition: all var(--wl-transition-fast);
+}
+
+#loginEmail {
+  padding-right: 1rem;
+}
+
+.form-input::placeholder {
+  color: var(--wl-text-muted);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4F46E5;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.input-wrap:focus-within .input-icon {
+  color: #4F46E5;
+}
+
+.form-input.has-error {
+  border-color: #EF4444;
+  background-color: #FFF5F5;
+}
+
+.form-input.has-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.btn-toggle-eye {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  padding: 0.35rem;
+  border-radius: var(--wl-radius-sm, 6px);
+  color: var(--wl-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--wl-transition-fast);
+}
+
+.btn-toggle-eye:hover {
+  color: var(--wl-text-primary);
+}
+
+.btn-toggle-eye:focus-visible {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+}
+
+.field-error {
+  font-size: 0.8125rem;
+  color: #EF4444;
+  line-height: 1.3;
+  margin: 0;
+  display: none;
+}
+
+.field-error.active {
+  display: block;
+}
+
+.form-alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--wl-radius-md, 8px);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.form-alert.alert-success {
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+}
+
+.form-alert.alert-error {
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.28);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--wl-radius-md, 8px);
+  cursor: pointer;
+  transition: all var(--wl-transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-gradient:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+  transform: translateY(-2px);
+  color: #FFFFFF;
+}
+
+.btn-gradient:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spinner-spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.modal-footer-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--wl-text-secondary);
+  margin-top: 0.5rem;
+}
+
+.modal-footer-text a {
+  color: #4F46E5;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.modal-footer-text a:hover {
+  text-decoration: underline;
 }
 
 /* Accessibility: Reduced Motion Override */
