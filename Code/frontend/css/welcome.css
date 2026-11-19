@@ -1136,6 +1136,10 @@ body {
   gap: 8px;
 }
 
+.mini-sync-col-header.vi-col-header {
+  justify-content: flex-end;
+}
+
 .mini-sync-pill {
   font-size: 0.7rem;
   font-weight: 700;
@@ -1158,13 +1162,6 @@ body {
   color: var(--wl-text-muted);
   font-size: 0.8rem;
   font-weight: 600;
-}
-
-.mini-sync-tag {
-  font-size: 0.68rem;
-  font-family: var(--wl-font-mono);
-  color: var(--wl-text-muted);
-  white-space: nowrap;
 }
 
 .mini-sync-body {
@@ -1191,6 +1188,10 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mini-sync-col:last-child {
+  text-align: right;
 }
 
 .mini-sync-row.active {
