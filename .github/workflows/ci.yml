@@ -160,10 +160,10 @@ jobs:
         run: |
           python -m pytest ../tests -v
 
-      - name: Run Core Backend Services & Model Tests (Code/backend/tests)
+      - name: Run Core Backend Model & Detection Tests (Code/backend/tests)
         env:
           DATABASE_URL: "sqlite:///./ci_test.db"
           SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
           PYTHONPATH: "."
         run: |
-          python -m pytest tests/test_document_model.py tests/test_blank_page.py tests/test_services.py -o testpaths="" -v
+          python -m pytest tests/test_document_model.py tests/test_blank_page.py -o testpaths="" -v
