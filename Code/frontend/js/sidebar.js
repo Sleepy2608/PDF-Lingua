@@ -160,10 +160,27 @@
       });
     }
 
-    // Empty state click to trigger upload
+    // Empty state click to trigger upload or open login modal
     const sidebarEmptyDocsState = document.getElementById('sidebarEmptyDocsState');
     if (sidebarEmptyDocsState) {
-      sidebarEmptyDocsState.addEventListener('click', () => {
+      sidebarEmptyDocsState.addEventListener('click', (e) => {
+        const token = getStoredAuthToken();
+        let currentUser = null;
+        try {
+          const raw = localStorage.getItem('pdfl_user') || sessionStorage.getItem('pdfl_user');
+          if (raw) currentUser = JSON.parse(raw);
+        } catch (_err) {}
+        const isGuest = !token || !currentUser || !currentUser.email;
+
+        const clickedLoginAction = e && e.target && (e.target.id === 'emptyStateLoginAction' || (typeof e.target.closest === 'function' && e.target.closest('#emptyStateLoginAction')));
+
+        if ((clickedLoginAction || isGuest) && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+          if (e && typeof e.preventDefault === 'function') e.preventDefault();
+          if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+          window.pdfLinguaAuth.openLoginModal();
+          return;
+        }
+
         triggerPdfUpload();
       });
     }
@@ -1144,6 +1161,7 @@
 
     // Update Documents & History appearance (dimmed on Guest, fully active when logged in)
     const isLoggedIn = Boolean(currentUser && (currentUser.email || currentUser.id));
+    updateSidebarEmptyDocsContent(isLoggedIn);
     if (sideNavDocuments) {
       if (isLoggedIn) {
         sideNavDocuments.classList.remove('is-dimmed');
@@ -1340,6 +1358,43 @@
   }
 
   /**
+   * Update Sidebar Recent Docs Empty State content based on authentication state
+   * - Guest (Chưa đăng nhập): "Đăng nhập để lưu tài liệu" & prompt login
+   * - Logged In (Đã đăng nhập, 0 tài liệu): "Bạn chưa có tài liệu nào." & "Hãy tải tài liệu đầu tiên của bạn!"
+   */
+  function updateSidebarEmptyDocsContent(isLoggedIn) {
+    const emptyStateEl = document.getElementById('sidebarEmptyDocsState');
+    if (!emptyStateEl) return;
+
+    try {
+      const titleEl = typeof emptyStateEl.querySelector === 'function'
+        ? emptyStateEl.querySelector('.empty-state-title')
+        : null;
+      const descEl = typeof emptyStateEl.querySelector === 'function'
+        ? emptyStateEl.querySelector('.empty-state-desc')
+        : null;
+
+      if (!isLoggedIn) {
+        if (titleEl) titleEl.textContent = 'Đăng nhập để lưu tài liệu';
+        if (descEl) {
+          descEl.innerHTML = 'Tài liệu đã dịch sẽ được lưu tự động tại đây.<br><span class="empty-state-action" id="emptyStateLoginAction">Đăng nhập ngay &rarr;</span>';
+        }
+        if (typeof emptyStateEl.setAttribute === 'function') {
+          emptyStateEl.setAttribute('data-tooltip', 'Bấm để đăng nhập');
+        }
+      } else {
+        if (titleEl) titleEl.textContent = 'Bạn chưa có tài liệu nào.';
+        if (descEl) {
+          descEl.textContent = 'Hãy tải tài liệu đầu tiên của bạn!';
+        }
+        if (typeof emptyStateEl.setAttribute === 'function') {
+          emptyStateEl.setAttribute('data-tooltip', 'Bấm để tải tệp PDF lên');
+        }
+      }
+    } catch (_e) {}
+  }
+
+  /**
    * Fetch and Render User Documents from Backend
    * Updates both Sidebar recent list and Main #documentsSection table.
    * Deduplicates concurrent requests for the same auth token.
@@ -1366,7 +1421,10 @@
       // Unauthenticated State
       cachedDocuments = [];
       cachedToken = null;
-      if (emptyStateEl) emptyStateEl.style.display = 'block';
+      if (emptyStateEl) {
+        emptyStateEl.style.display = 'block';
+        updateSidebarEmptyDocsContent(false);
+      }
       if (docListEl) {
         docListEl.style.display = 'none';
         docListEl.innerHTML = '';
@@ -1391,7 +1449,10 @@
         if (response.status === 401) {
           cachedDocuments = [];
           cachedToken = null;
-          if (emptyStateEl) emptyStateEl.style.display = 'block';
+          if (emptyStateEl) {
+            emptyStateEl.style.display = 'block';
+            updateSidebarEmptyDocsContent(false);
+          }
           if (docListEl) {
             docListEl.style.display = 'none';
             docListEl.innerHTML = '';
@@ -1418,7 +1479,10 @@
         cachedToken = token;
 
         if (docs.length === 0) {
-          if (emptyStateEl) emptyStateEl.style.display = 'block';
+          if (emptyStateEl) {
+            emptyStateEl.style.display = 'block';
+            updateSidebarEmptyDocsContent(true);
+          }
           if (docListEl) {
             docListEl.style.display = 'none';
             docListEl.innerHTML = '';
@@ -1864,7 +1928,10 @@
     }
 
     if (cachedDocuments.length === 0) {
-      if (emptyStateEl) emptyStateEl.style.display = 'block';
+      if (emptyStateEl) {
+        emptyStateEl.style.display = 'block';
+        updateSidebarEmptyDocsContent(true);
+      }
       if (docListEl) {
         docListEl.style.display = 'none';
         docListEl.innerHTML = '';
