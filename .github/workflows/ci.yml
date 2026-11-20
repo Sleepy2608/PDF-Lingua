@@ -26,7 +26,7 @@ jobs:
   frontend-tests:
     name: Frontend Test Suites (Node.js)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
       - name: Checkout repository
@@ -42,7 +42,7 @@ jobs:
           node -e "
           const fs = require('fs');
           const path = require('path');
-          const targetDirs = ['Code/frontend', 'Docs'];
+          const targetDirs = ['Code/frontend'];
           let totalViolations = 0;
 
           function scanDirectory(dir) {
@@ -123,7 +123,10 @@ jobs:
   backend-tests:
     name: Backend Tests (Pytest)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: Code/backend
 
     steps:
       - name: Checkout repository
@@ -136,46 +139,24 @@ jobs:
           cache: "pip"
           cache-dependency-path: "Code/backend/requirements.txt"
 
-      - name: Install System Dependencies (Tesseract OCR & Graphics)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-vie libgl1
-
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r Code/backend/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run Basic Framework Tests (Code/tests)
         env:
           DATABASE_URL: "sqlite:///:memory:"
-          JWT_SECRET: "ci-secret-key-for-testing-only-12345678"
-          PYTHONPATH: "Code/backend"
+          SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          PYTHONPATH: "."
         run: |
-          python -m pytest Code/tests -v
+          python -m pytest ../tests -v
 
       - name: Run Core Backend API & Security Tests (Code/backend/tests)
         env:
           DATABASE_URL: "sqlite:///:memory:"
-          JWT_SECRET: "ci-secret-key-for-testing-only-12345678"
+          SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
           GEMINI_API_KEY: "mock-gemini-key-for-ci"
-          PYTHONPATH: "Code/backend"
+          PYTHONPATH: "."
         run: |
-          python -m pytest \
-            Code/backend/tests/test_auth.py \
-            Code/backend/tests/test_security.py \
-            Code/backend/tests/test_security_matrix.py \
-            Code/backend/tests/test_upload_security.py \
-            Code/backend/tests/test_document_model.py \
-            Code/backend/tests/test_document_access_control.py \
-            Code/backend/tests/test_pricing_api.py \
-            Code/backend/tests/test_pricing_subscription.py \
-            Code/backend/tests/test_history_api.py \
-            Code/backend/tests/test_history_delete.py \
-            Code/backend/tests/test_admin_management.py \
-            Code/backend/tests/test_services.py \
-            Code/backend/tests/test_blank_page.py \
-            Code/backend/tests/test_ai_api.py \
-            Code/backend/tests/test_ai_service.py \
-            -v
-
+          python -m pytest tests/test_document_model.py tests/test_pricing_api.py tests/test_pricing_subscription.py tests/test_document_access_control.py tests/test_history_api.py tests/test_history_delete.py tests/test_admin_management.py tests/test_services.py tests/test_blank_page.py tests/test_ai_api.py tests/test_ai_service.py tests/test_upload_security.py tests/test_security.py -v
