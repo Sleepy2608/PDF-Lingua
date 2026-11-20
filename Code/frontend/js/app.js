@@ -262,7 +262,11 @@ function initLegalModal() {
             e.preventDefault();
             e.stopPropagation();
             const isFull = modalContainer.classList.toggle('fullscreen');
-            if (fullscreenIcon) fullscreenIcon.textContent = isFull ? '❐' : '⛶';
+            if (fullscreenIcon) {
+                fullscreenIcon.innerHTML = isFull
+                    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>'
+                    : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+            }
             if (fullscreenText) fullscreenText.textContent = isFull ? 'Thu nhỏ' : 'Phóng to';
             btnFullscreen.setAttribute('title', isFull ? 'Thu nhỏ cửa sổ' : 'Phóng to toàn màn hình');
         };
