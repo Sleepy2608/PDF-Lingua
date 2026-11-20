@@ -1,4 +1,19 @@
-# PDF-Lingua - Danh Mục Tài Liệu Kiểm Thử (Test Examples)
+# DANH MỤC TÀI LIỆU KIỂM THỬ THỰC TẾ (TEST EXAMPLES DIRECTORY)
+
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | Test Artifacts & Edge Case Examples Directory |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 20/10/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
+
+---
 
 Thư mục này chứa tập hợp các tệp PDF mẫu dùng để kiểm thử (functional testing), kiểm thử hồi quy (regression testing) và đánh giá các trường hợp biên (edge cases) của luồng xử lý tài liệu, trích xuất văn bản số, tách đoạn thông minh (`chunking`) và dịch thuật đa ngôn ngữ trên hệ thống **PDF-Lingua**.
 

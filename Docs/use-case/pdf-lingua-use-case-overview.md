@@ -1,15 +1,17 @@
-# Tài liệu mô tả Use Case tổng quát - PDF Lingua
+# TÀI LIỆU MÔ TẢ USE CASE TỔNG QUÁT (USE CASE SPECIFICATION)
 
-> **THÔNG TIN TÀI LIỆU (DOCUMENT METADATA)**
-> - **Tên dự án**: **PDF Lingua** - Nền tảng Web Trích xuất PDF, OCR, Dịch thuật Đa ngôn ngữ & Trợ lý AI
-> - **Mã tài liệu**: `DOC-UC-OVERVIEW`
-> - **Phiên bản (Version)**: `v1.2.0`
-> - **Trạng thái (Status)**: `Chính thức (Approved)`
-> - **Ngày tạo (Created Date)**: `24/10/2026`
-> - **Ngày cập nhật gần nhất (Last Modified)**: `27/10/2026`
-> - **Tham chiếu Jira Task**: `PDFL-21` (Xây dựng Use Case Diagram)
-> - **Thuộc phân hệ**: `EPIC 01` (Phân tích yêu cầu và thiết kế hệ thống)
-> - **Tài liệu tham chiếu trực quan**: [use-case-tong-quat.png](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/use-case/use-case-tong-quat.png)
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | Use Case Specification & Actor Modeling |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 24/10/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
 
 ---
 
