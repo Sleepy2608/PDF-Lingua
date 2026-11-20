@@ -231,6 +231,107 @@
     const bytes = stats.total_storage_bytes || 0;
     if (elTotalStorage) elTotalStorage.textContent = formatBytes(bytes);
     if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} byte dữ liệu`;
+
+    // Card 5: Service Usage Breakdown
+    const services = stats.services || {};
+    const extractCount = Number(services.extract_count) || 0;
+    const translateCount = Number(services.translate_count) || 0;
+    const summarizeCount = Number(services.summarize_count) || 0;
+    const chatCount = Number(services.chat_count) || 0;
+    const totalActions = Number(services.total_actions) || (extractCount + translateCount + summarizeCount + chatCount);
+
+    const elServicesTotal = document.getElementById('statServicesTotal');
+    if (elServicesTotal) {
+      elServicesTotal.textContent = totalActions.toLocaleString('vi-VN');
+    }
+
+    const elExtractCount = document.getElementById('statExtractCount');
+    const elTranslateCount = document.getElementById('statTranslateCount');
+    const elSummarizeCount = document.getElementById('statSummarizeCount');
+    const elChatCount = document.getElementById('statChatCount');
+
+    if (elExtractCount) elExtractCount.textContent = extractCount.toLocaleString('vi-VN');
+    if (elTranslateCount) elTranslateCount.textContent = translateCount.toLocaleString('vi-VN');
+    if (elSummarizeCount) elSummarizeCount.textContent = summarizeCount.toLocaleString('vi-VN');
+    if (elChatCount) elChatCount.textContent = chatCount.toLocaleString('vi-VN');
+
+    const elExtractPct = document.getElementById('statExtractPct');
+    const elTranslatePct = document.getElementById('statTranslatePct');
+    const elSummarizePct = document.getElementById('statSummarizePct');
+    const elChatPct = document.getElementById('statChatPct');
+
+    const segExtract = document.getElementById('distSegExtract');
+    const segTranslate = document.getElementById('distSegTranslate');
+    const segSummarize = document.getElementById('distSegSummarize');
+    const segChat = document.getElementById('distSegChat');
+    const servicesProgressBar = document.getElementById('statServicesDistBar');
+    const emptyHint = document.getElementById('statServicesEmptyHint');
+
+    if (totalActions > 0) {
+      const rawExtractPct = (extractCount / totalActions) * 100;
+      const rawTranslatePct = (translateCount / totalActions) * 100;
+      const rawSummarizePct = (summarizeCount / totalActions) * 100;
+      const rawChatPct = (chatCount / totalActions) * 100;
+
+      const extractPct = Math.round(rawExtractPct);
+      const translatePct = Math.round(rawTranslatePct);
+      const summarizePct = Math.round(rawSummarizePct);
+      const chatPct = Math.round(rawChatPct);
+
+      if (elExtractPct) elExtractPct.textContent = `${extractPct}%`;
+      if (elTranslatePct) elTranslatePct.textContent = `${translatePct}%`;
+      if (elSummarizePct) elSummarizePct.textContent = `${summarizePct}%`;
+      if (elChatPct) elChatPct.textContent = `${chatPct}%`;
+
+      if (segExtract) {
+        segExtract.style.width = `${rawExtractPct}%`;
+        segExtract.title = `Trích xuất: ${extractCount.toLocaleString('vi-VN')} lượt (${extractPct}%)`;
+      }
+      if (segTranslate) {
+        segTranslate.style.width = `${rawTranslatePct}%`;
+        segTranslate.title = `Dịch thuật: ${translateCount.toLocaleString('vi-VN')} lượt (${translatePct}%)`;
+      }
+      if (segSummarize) {
+        segSummarize.style.width = `${rawSummarizePct}%`;
+        segSummarize.title = `Tóm tắt AI: ${summarizeCount.toLocaleString('vi-VN')} lượt (${summarizePct}%)`;
+      }
+      if (segChat) {
+        segChat.style.width = `${rawChatPct}%`;
+        segChat.title = `Trợ lý AI Copilot: ${chatCount.toLocaleString('vi-VN')} lượt (${chatPct}%)`;
+      }
+
+      if (servicesProgressBar) {
+        servicesProgressBar.setAttribute('aria-valuenow', '100');
+      }
+      if (emptyHint) emptyHint.style.display = 'none';
+    } else {
+      if (elExtractPct) elExtractPct.textContent = '0%';
+      if (elTranslatePct) elTranslatePct.textContent = '0%';
+      if (elSummarizePct) elSummarizePct.textContent = '0%';
+      if (elChatPct) elChatPct.textContent = '0%';
+
+      if (segExtract) {
+        segExtract.style.width = '0%';
+        segExtract.title = 'Trích xuất: 0 lượt (0%)';
+      }
+      if (segTranslate) {
+        segTranslate.style.width = '0%';
+        segTranslate.title = 'Dịch thuật: 0 lượt (0%)';
+      }
+      if (segSummarize) {
+        segSummarize.style.width = '0%';
+        segSummarize.title = 'Tóm tắt AI: 0 lượt (0%)';
+      }
+      if (segChat) {
+        segChat.style.width = '0%';
+        segChat.title = 'Trợ lý AI Copilot: 0 lượt (0%)';
+      }
+
+      if (servicesProgressBar) {
+        servicesProgressBar.setAttribute('aria-valuenow', '0');
+      }
+      if (emptyHint) emptyHint.style.display = 'block';
+    }
   }
 
   function renderSkeletonRows(count = 5) {
@@ -717,6 +818,7 @@
     openAdminView,
     closeAdminView,
     fetchAdminStats,
+    renderAdminStats,
     fetchAdminUsers,
     loadAllAdminData,
     openConfirmModal,

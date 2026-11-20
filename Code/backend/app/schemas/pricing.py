@@ -7,6 +7,7 @@ Defines data transfer objects (DTOs) for the Pricing Plans and Subscription API:
 - Subscription checkout & VietQR payloads (`POST /api/pricing/subscribe`)
 - Transaction status polling & simulation payloads (`GET/POST /api/pricing/transactions/...`)
 - Payment gateway webhook payloads (`POST /api/pricing/webhook`)
+- User billing transaction history & invoice details (`GET /api/pricing/billing/...`)
 """
 
 from datetime import datetime
@@ -174,4 +175,70 @@ class PaymentWebhookRequest(BaseModel):
         default="completed",
         description="Reported payment status ('completed' or 'failed').",
     )
+
+
+# ── User Billing Transaction History & Invoice Schemas ───────────
+
+
+class BillingTransactionItemSchema(BaseModel):
+    """Schema representing an individual billing transaction item in user history."""
+
+    id: int = Field(..., description="Unique transaction ID.")
+    transaction_code: str = Field(..., description="Unique transaction reference code.")
+    invoice_number: str = Field(..., description="Formatted invoice reference identifier.")
+    plan_code: str = Field(..., description="Subscribed pricing plan code ('pro_monthly' or 'pro_yearly').")
+    plan_name: str = Field(..., description="Human-readable plan display name.")
+    billing_cycle: str = Field(..., description="Billing cycle: monthly | yearly.")
+    amount_vnd: int = Field(..., description="Total transaction amount in VND.")
+    amount_display: str = Field(..., description="Formatted amount string with currency unit.")
+    payment_method: str = Field(..., description="Payment method used.")
+    payment_status: str = Field(..., description="Lifecycle status: pending | completed | failed | expired.")
+    payment_note: Optional[str] = Field(default=None, description="Bank transfer memo or reconciliation note.")
+    paid_at: Optional[datetime] = Field(default=None, description="UTC timestamp when payment was confirmed.")
+    created_at: datetime = Field(..., description="UTC timestamp when the transaction was created.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BillingHistoryResponse(BaseModel):
+    """Paginated response payload for user billing transaction history."""
+
+    items: list[BillingTransactionItemSchema] = Field(
+        default_factory=list,
+        description="List of user payment transaction items.",
+    )
+    total_count: int = Field(..., description="Total matching transaction count.")
+    page: int = Field(default=1, description="Current page number (1-based).")
+    page_size: int = Field(default=10, description="Items per page.")
+    total_pages: int = Field(..., description="Total number of pages available.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BillingInvoiceDetailSchema(BaseModel):
+    """Detailed invoice receipt representation for electronic billing and receipt generation."""
+
+    buyer_name: Optional[str] = Field(default=None, description="Purchaser full name.")
+    buyer_email: str = Field(..., description="Purchaser email address.")
+    invoice_number: str = Field(..., description="Unique electronic invoice code.")
+    transaction_code: str = Field(..., description="Associated transaction reference code.")
+    issued_at: datetime = Field(..., description="UTC timestamp when the invoice was issued.")
+    paid_at: Optional[datetime] = Field(default=None, description="UTC timestamp when payment was confirmed.")
+    plan_code: str = Field(..., description="Target plan identifier.")
+    plan_name: str = Field(..., description="Human-readable plan title.")
+    billing_cycle: str = Field(..., description="Billing cycle: monthly | yearly.")
+    duration_days: int = Field(..., description="Subscription duration in days.")
+    payment_method: str = Field(..., description="Payment channel used.")
+    payment_status: str = Field(..., description="Payment settlement status.")
+    amount_vnd: int = Field(..., description="Subtotal amount in VND before taxes.")
+    amount_display: str = Field(..., description="Formatted subtotal amount display.")
+    tax_rate_percent: int = Field(default=0, description="Applicable VAT percentage rate (0%).")
+    tax_amount_vnd: int = Field(default=0, description="Calculated tax amount in VND.")
+    total_amount_vnd: int = Field(..., description="Final invoice settlement amount in VND.")
+    total_amount_display: str = Field(..., description="Formatted final amount display.")
+    payment_note: Optional[str] = Field(default=None, description="Reconciliation transfer memo.")
+    qr_code_url: Optional[str] = Field(default=None, description="VietQR payment link if applicable.")
+
+    model_config = ConfigDict(from_attributes=True)
+
 
