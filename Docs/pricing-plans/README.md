@@ -1,4 +1,19 @@
-# Tài Liệu Bảng Giá Gói Dịch Vụ (PDF-Lingua Pricing Plans)
+# TÀI LIỆU BẢNG GIÁ GÓI DỊCH VỤ (PRICING PLANS DIRECTORY)
+
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | Pricing Documentation Index |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 10/11/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
+
+---
 
 Thư mục này chứa tài liệu đặc tả chi tiết về mô hình gói cước, bảng giá dịch vụ và chính sách phân tầng tài khoản giữa **Gói Miễn Phí (Free Tier)** và **Gói Pro VIP (Pro Tier)** trong dự án **PDF-Lingua**.
 
