@@ -277,28 +277,45 @@
   }
 
   // Append Assistant message to UI
-  function appendAssistantMessage(answer, relevantChunks = []) {
+  function appendAssistantMessage(answer, relevantChunks = [], citations = []) {
     const list = document.getElementById('copilotMessagesList');
     if (!list) return;
-
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'copilot-msg copilot-msg-assistant';
 
     const formattedContent = renderMarkdown(answer);
     const time = formatCurrentTime();
 
     let sourcesHtml = '';
-    if (relevantChunks && relevantChunks.length > 0) {
+    if (citations && citations.length > 0) {
+      const citationBadges = citations.map(c => {
+        const pageLabel = c.page_number !== null && c.page_number !== undefined
+          ? `Trang ${c.page_number}, Đoạn ${c.chunk_index}`
+          : `Đoạn ${c.chunk_index}`;
+        const preview = escapeHtml(c.snippet || '');
+        return `
+          <span class="copilot-source-tag" title="${preview}">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            ${pageLabel}
+          </span>
+        `;
+      }).join(' ');
+      sourcesHtml = citationBadges;
+    } else if (relevantChunks && relevantChunks.length > 0) {
       sourcesHtml = `
-        <span class="copilot-source-tag" title="Can cu theo noi dung trich xuat tu tai lieu">
+        <span class="copilot-source-tag" title="Căn cứ theo nội dung trích xuất từ tài liệu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
-          ${relevantChunks.length} doan trich dan
+          ${relevantChunks.length} đoạn trích dẫn
         </span>
       `;
     }
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'copilot-msg copilot-msg-assistant';
 
     msgDiv.innerHTML = `
       <div class="copilot-msg-avatar" aria-hidden="true">
@@ -548,6 +565,7 @@
       setTyping(false);
       const answer = resData.data.answer || 'Khong nhan duoc cau tra loi tu he thong.';
       const chunks = resData.data.relevant_chunks || [];
+      const citations = resData.data.citations || [];
 
       // Record assistant answer in history
       state.conversationHistory.push({ role: 'assistant', content: answer });
@@ -558,7 +576,7 @@
       }
 
       // Render assistant message in thread
-      appendAssistantMessage(answer, chunks);
+      appendAssistantMessage(answer, chunks, citations);
 
     } catch (networkError) {
       setTyping(false);

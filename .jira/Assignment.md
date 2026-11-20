@@ -318,7 +318,7 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-275` | Xây dựng giao diện xem Lịch sử giao dịch, hóa đơn và thanh toán Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Billing invoice history UI | **To Do** |
 | `PDFL-276` | Xây dựng giao diện hiển thị mức độ sử dụng, trạng thái gói cho Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Quota usage meter bar | **To Do** |
 | `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | EPIC 17 | 3 | Huỳnh Đình Chấn | `admin_service.py`, `admin.js` | **To Do** *(Đã có code)* |
-| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan | EPIC 17 | 3 | Nguyễn Lê Huy Tâm | `ai_service.py`, `test_ai_copilot_quality.py` | **To Do** *(Đã có code)* |
+| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan | EPIC 17 | 3 | Nguyễn Lê Huy Tâm | `ai_service.py`, `schemas/ai.py`, `api/ai.py`, `ai_copilot.js`, `test_ai_citations.py` | **To Do** *(Đã hoàn thiện & kiểm thử 27/27 ca)* |
 
 > **Thống kê Tuần 5**:
 > - **Tổng số công việc**: 42 work items (35 Done / 2 In Progress / 5 To Do)
