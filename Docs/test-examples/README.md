@@ -1,4 +1,19 @@
-# PDF-Lingua — Danh Mục Tài Liệu Kiểm Thử (Test Examples)
+# DANH MỤC TÀI LIỆU KIỂM THỬ THỰC TẾ (TEST EXAMPLES DIRECTORY)
+
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | Test Artifacts & Edge Case Examples Directory |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 20/10/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
+
+---
 
 Thư mục này chứa tập hợp các tệp PDF mẫu dùng để kiểm thử (functional testing), kiểm thử hồi quy (regression testing) và đánh giá các trường hợp biên (edge cases) của luồng xử lý tài liệu, trích xuất văn bản số, tách đoạn thông minh (`chunking`) và dịch thuật đa ngôn ngữ trên hệ thống **PDF-Lingua**.
 
@@ -39,7 +54,7 @@ Thư mục này chứa tập hợp các tệp PDF mẫu dùng để kiểm thử
 
 ---
 
-### File 02: `test_pdfl1.pdf` (Test Case 1 — Đa ngôn ngữ hỗn hợp)
+### File 02: `test_pdfl1.pdf` (Test Case 1 - Đa ngôn ngữ hỗn hợp)
 - **Mục đích**: Đánh giá thuật toán phân loại ký tự [`get_script_category()`](file:///c:/University%20Coding%20Project/PDF-Lingua/Code/backend/app/services/translation_service.py#L42) và chuyển đổi ngữ cảnh liên tục giữa các hệ ngôn ngữ CJK, Cyrillic, Latinh và tiếng Việt không dấu.
 - **Nội dung kiểm thử**:
   - Tiếng Việt không dấu: *"Xin chao tat ca moi nguoi, hom nay toi review tinh nang nay."*
@@ -56,7 +71,7 @@ Thư mục này chứa tập hợp các tệp PDF mẫu dùng để kiểm thử
 
 ---
 
-### File 03: `test_pdfl2.pdf` (Test Case 2 — Ký hiệu kỹ thuật, Code & URL)
+### File 03: `test_pdfl2.pdf` (Test Case 2 - Ký hiệu kỹ thuật, Code & URL)
 - **Mục đích**: Đảm bảo các thành phần công nghệ không bị bộ máy AI dịch nhầm thành các từ ngữ tiếng Việt vô nghĩa.
 - **Nội dung kiểm thử**:
   - URL có query parameters: `https://pdflingua.com/api/v1/translate?lang=en&format=pdf`
@@ -70,7 +85,7 @@ Thư mục này chứa tập hợp các tệp PDF mẫu dùng để kiểm thử
 
 ---
 
-### File 04: `test_pdfl3.pdf` (Test Case 3 — Bảng kê, Tiền tệ & Định dạng số)
+### File 04: `test_pdfl3.pdf` (Test Case 3 - Bảng kê, Tiền tệ & Định dạng số)
 - **Mục đích**: Kiểm tra tính chính xác của các ký hiệu tài chính, số phần trăm và thứ tự liệt kê phân cấp.
 - **Nội dung kiểm thử**:
   - Phân mục La Mã: `I. Mục tiêu...`, `II. Chi phí...`, `III. Thống kê...`
@@ -83,7 +98,7 @@ Thư mục này chứa tập hợp các tệp PDF mẫu dùng để kiểm thử
 
 ---
 
-### File 05: `test_pdfl4.pdf` (Test Case 4 — Hội thoại, Trích dẫn & Dấu ngoặc kép)
+### File 05: `test_pdfl4.pdf` (Test Case 4 - Hội thoại, Trích dẫn & Dấu ngoặc kép)
 - **Mục đích**: Kiểm tra khả năng xử lý ngữ cảnh đối thoại hai chiều, câu hỏi cảm thán và các quy chuẩn dấu ngoặc kép theo từng quốc gia.
 - **Nội dung kiểm thử**:
   - Ngoặc kép phương Tây: `"Công nghệ trí tuệ nhân tạo không thay thế con người..."`

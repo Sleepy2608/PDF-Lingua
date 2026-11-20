@@ -1,0 +1,243 @@
+name: CI / Automated Testing
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - docs
+      - 'feat/**'
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - master
+      - docs
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # Job 1: Frontend Test Suites (21 Standalone Suites in Pure Node.js)
+  # ============================================================================
+  frontend-tests:
+    name: Frontend Test Suites (Node.js)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify Zero En-dash & Em-dash Character Compliance
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const targetDirs = ['Code/frontend'];
+          let totalViolations = 0;
+
+          function scanDirectory(dir) {
+            if (!fs.existsSync(dir)) return;
+            const items = fs.readdirSync(dir);
+            for (const item of items) {
+              const fullPath = path.join(dir, item);
+              const stat = fs.statSync(fullPath);
+              if (stat.isDirectory()) {
+                if (item !== 'node_modules' && item !== '.git') {
+                  scanDirectory(fullPath);
+                }
+              } else if (/\.(html|css|js|md)$/.test(item)) {
+                const content = fs.readFileSync(fullPath, 'utf8');
+                const enDashMatches = (content.match(/\u2013/g) || []).length;
+                const emDashMatches = (content.match(/\u2014/g) || []).length;
+                if (enDashMatches > 0 || emDashMatches > 0) {
+                  console.error('Dash violation in ' + fullPath + ' -> en-dash: ' + enDashMatches + ', em-dash: ' + emDashMatches);
+                  totalViolations += (enDashMatches + emDashMatches);
+                }
+              }
+            }
+          }
+
+          targetDirs.forEach(scanDirectory);
+          if (totalViolations > 0) {
+            console.error('\nTotal dash violations detected: ' + totalViolations + '. All text must use standard ASCII hyphen.');
+            process.exit(1);
+          }
+          console.log('Zero en-dash and em-dash character compliance: 100% PASSED');
+          "
+
+      - name: Validate JavaScript Syntax Across All Frontend Modules
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const { execSync } = require('child_process');
+          const jsDir = 'Code/frontend/js';
+          if (!fs.existsSync(jsDir)) {
+            console.error('Directory not found: ' + jsDir);
+            process.exit(1);
+          }
+          const files = fs.readdirSync(jsDir).filter(f => f.endsWith('.js'));
+          console.log('Validating JS syntax for ' + files.length + ' modules in ' + jsDir + '...\n');
+          let failed = 0;
+          for (const f of files) {
+            const filePath = path.join(jsDir, f);
+            try {
+              execSync('node -c ' + filePath, { stdio: 'pipe' });
+              console.log('  [VALID] ' + f);
+            } catch (err) {
+              console.error('  [SYNTAX ERROR] in ' + f + ': ' + (err.stderr ? err.stderr.toString() : err.message));
+              failed++;
+            }
+          }
+          if (failed > 0) {
+            console.error('\nSyntax validation failed for ' + failed + ' module(s).');
+            process.exit(1);
+          }
+          console.log('\nAll ' + files.length + ' frontend JS modules passed syntax validation.');
+          "
+
+      - name: Validate CSS Bracket Balance (Prevent Stray Braces)
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const cssDir = 'Code/frontend/css';
+          if (!fs.existsSync(cssDir)) {
+            console.error('Directory not found: ' + cssDir);
+            process.exit(1);
+          }
+          const files = fs.readdirSync(cssDir).filter(f => f.endsWith('.css'));
+          console.log('Validating CSS bracket balance for ' + files.length + ' stylesheets...\n');
+          let hasError = false;
+          for (const f of files) {
+            const raw = fs.readFileSync(path.join(cssDir, f), 'utf8');
+            const clean = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(new RegExp('\"[^\"]*\"', 'g'), '').replace(new RegExp('\'[^\']*\'', 'g'), '');
+            const openCount = (clean.match(/\{/g) || []).length;
+            const closeCount = (clean.match(/\}/g) || []).length;
+            if (openCount !== closeCount) {
+              console.error('  [MISMATCH] ' + f + ' -> open {: ' + openCount + ' vs close }: ' + closeCount);
+              hasError = true;
+            } else {
+              console.log('  [BALANCED] ' + f + ' (' + openCount + ' pairs)');
+            }
+          }
+          if (hasError) {
+            console.error('\nCSS bracket balance validation failed.');
+            process.exit(1);
+          }
+          console.log('\nAll ' + files.length + ' CSS stylesheets are balanced.');
+          "
+
+      - name: Run 21 Frontend Test Suites
+        run: |
+          node -e "
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+          const testDir = 'Code/frontend/tests';
+
+          if (!fs.existsSync(testDir)) {
+            console.error('Frontend tests directory not found: ' + testDir);
+            process.exit(1);
+          }
+
+          const testFiles = fs.readdirSync(testDir).filter(f => f.endsWith('.js'));
+          console.log('Discovered ' + testFiles.length + ' test suites in ' + testDir + '\n');
+
+          let failedCount = 0;
+          const startTime = Date.now();
+
+          for (const file of testFiles) {
+            const filePath = testDir + '/' + file;
+            try {
+              process.stdout.write('[TESTING] ' + file.padEnd(48) + ' ... ');
+              execSync('node ' + filePath, { stdio: 'pipe' });
+              console.log('PASS');
+            } catch (err) {
+              console.log('FAIL');
+              console.error(err.stdout ? err.stdout.toString() : err.message);
+              failedCount++;
+            }
+          }
+
+          const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
+          console.log('\n======================================================');
+          console.log('Frontend Suites Result: ' + (testFiles.length - failedCount) + '/' + testFiles.length + ' PASSED in ' + elapsedSec + 's');
+          console.log('======================================================');
+
+          if (failedCount > 0) {
+            console.error(failedCount + ' test suite(s) failed.');
+            process.exit(1);
+          }
+          "
+
+  # ============================================================================
+  # Job 2: Backend Core Tests (Pytest with In-Memory SQLite & Mocks)
+  # ============================================================================
+  backend-tests:
+    name: Backend Tests (Pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: Code/backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "Code/backend/requirements.txt"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize Database Schema
+        env:
+          DATABASE_URL: "sqlite:///./ci_test.db"
+          SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          PYTHONPATH: "."
+        run: |
+          python -c "from app.core.database import init_db; init_db()"
+
+      - name: Run Basic Framework Tests (Code/tests)
+        env:
+          DATABASE_URL: "sqlite:///./ci_test.db"
+          SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          PYTHONPATH: "."
+        run: |
+          python -m pytest ../tests -v
+
+      - name: Run Core & Extended Backend Unit Tests (Code/backend/tests)
+        env:
+          DATABASE_URL: "sqlite:///./ci_test.db"
+          SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          PYTHONPATH: "."
+        run: |
+          python -m pytest \
+            tests/test_document_model.py \
+            tests/test_blank_page.py \
+            tests/test_avatar_schema.py \
+            tests/test_avatar_storage.py \
+            tests/test_security.py \
+            tests/test_pricing_api.py \
+            tests/test_subscription_model.py \
+            tests/test_deskew.py \
+            tests/test_text_metrics.py \
+            tests/test_layout_metrics.py \
+            -o testpaths="" -v

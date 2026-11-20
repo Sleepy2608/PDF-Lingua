@@ -1,13 +1,21 @@
-# Hướng Dẫn Sử Dụng & Bộ Quy Chuẩn Vận Hành PDF-Lingua (User Guide & Guidelines)
+# HƯỚNG DẪN SỬ DỤNG & QUY CHUẨN VẬN HÀNH (USER GUIDE & GUIDELINES)
 
-> **Tài liệu**: Hướng dẫn sử dụng chi tiết & Quy chuẩn vận hành ứng dụng Web PDF-Lingua  
-> **Vị trí tệp**: `Docs/USER_GUIDE.md`  
-> **Dự án**: **PDF-Lingua**: Nền tảng trích xuất văn bản PDF thông minh, OCR tài liệu scan và dịch thuật đa ngôn ngữ  
-> **Phiên bản**: `1.0.0` (Cập nhật tháng 11/2026)
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | End-User Guide & Operating Manual |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 25/10/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
 
 ---
 
-## 📖 Mục Lục
+## Mục Lục
 
 1. [Giới Thiệu Chung](#1-giới-thiệu-chung)
 2. [Yêu Cầu Hệ Thống & Chuẩn Bị](#2-yêu-cầu-hệ-thống--chuẩn-bị)

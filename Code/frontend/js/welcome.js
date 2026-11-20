@@ -262,7 +262,11 @@
         mobileDrawer.classList.remove('is-open');
       }
       loginModal.removeAttribute('hidden');
-      document.body.style.overflow = 'hidden';
+      if (window.PDFLinguaWelcomeModalManager) {
+        window.PDFLinguaWelcomeModalManager.sync();
+      } else {
+        document.body.style.overflow = 'hidden';
+      }
       if (loginAlert) {
         loginAlert.style.display = 'none';
         loginAlert.textContent = '';
@@ -286,7 +290,11 @@
     var closeLoginModal = function () {
       if (!loginModal) return;
       loginModal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
+      if (window.PDFLinguaWelcomeModalManager) {
+        window.PDFLinguaWelcomeModalManager.sync();
+      } else {
+        document.body.style.overflow = '';
+      }
       if (loginForm) {
         loginForm.reset();
       }
@@ -513,14 +521,22 @@
         legalOverlay.style.display = 'flex';
         legalOverlay.classList.add('active');
         legalOverlay.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        if (window.PDFLinguaWelcomeModalManager) {
+          window.PDFLinguaWelcomeModalManager.sync();
+        } else {
+          document.body.style.overflow = 'hidden';
+        }
       };
 
       var closeLegalModal = function () {
         legalOverlay.classList.remove('active');
         legalOverlay.setAttribute('aria-hidden', 'true');
         legalOverlay.style.display = 'none';
-        document.body.style.overflow = '';
+        if (window.PDFLinguaWelcomeModalManager) {
+          window.PDFLinguaWelcomeModalManager.sync();
+        } else {
+          document.body.style.overflow = '';
+        }
 
         if (legalContainer && legalContainer.classList.contains('fullscreen')) {
           legalContainer.classList.remove('fullscreen');
@@ -586,7 +602,11 @@
           var isFs = legalContainer.classList.toggle('fullscreen');
           var fsIcon = document.getElementById('fullscreenIcon');
           var fsText = document.getElementById('fullscreenText');
-          if (fsIcon) fsIcon.textContent = isFs ? '🗗' : '⛶';
+          if (fsIcon) {
+            fsIcon.innerHTML = isFs
+              ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>'
+              : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+          }
           if (fsText) fsText.textContent = isFs ? 'Thu nhỏ' : 'Phóng to';
         });
       }
@@ -637,6 +657,202 @@
         });
       }
     }
+
+    // 9. Global Modal Scroll Lock & Boundary Containment Manager
+    initWelcomeModalScrollLock();
+  }
+
+  /**
+   * Global Modal Scroll Lock & Boundary Containment Manager for Welcome page
+   * 1. Background page scroll is strictly locked (html & body).
+   * 2. Only the active modal's scrollable content can scroll.
+   * 3. Boundary overscroll chaining is completely blocked so background never moves.
+   * 4. Closing the popup unlocks page scroll immediately.
+   */
+  function initWelcomeModalScrollLock() {
+    var MODAL_SELECTORS = [
+      '.modal-backdrop',
+      '.legal-modal-overlay',
+      '[role="dialog"]'
+    ];
+
+    var savedScrollY = 0;
+    var isLocked = false;
+
+    function isElementVisibleModal(el) {
+      if (!el) return false;
+      if (el.hasAttribute('hidden')) return false;
+      if (el.style && el.style.display === 'none') return false;
+      if (el.classList.contains('legal-modal-overlay')) {
+        return el.classList.contains('active') || (el.style && el.style.display === 'flex');
+      }
+      if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+        var comp = window.getComputedStyle(el);
+        return comp.display !== 'none' && comp.visibility !== 'hidden';
+      }
+      return true;
+    }
+
+    function hasAnyOpenModal() {
+      var candidates = document.querySelectorAll(MODAL_SELECTORS.join(', '));
+      for (var i = 0; i < candidates.length; i++) {
+        if (isElementVisibleModal(candidates[i])) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function applyLock() {
+      if (isLocked) return;
+      isLocked = true;
+      savedScrollY = window.scrollY || window.pageYOffset || 0;
+      document.documentElement.classList.add('modal-open');
+      document.body.classList.add('modal-open');
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function releaseLock() {
+      if (!isLocked) return;
+      isLocked = false;
+      document.documentElement.classList.remove('modal-open');
+      document.body.classList.remove('modal-open');
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      if (savedScrollY > 0) {
+        window.scrollTo(0, savedScrollY);
+      }
+    }
+
+    function syncScrollLock() {
+      if (hasAnyOpenModal()) {
+        applyLock();
+      } else {
+        releaseLock();
+      }
+    }
+
+    function findScrollableTarget(target) {
+      var el = target;
+      while (el && el !== document.body && el !== document.documentElement) {
+        var isModalBackdrop = el.matches && (
+          el.matches('.modal-backdrop, .legal-modal-overlay')
+        );
+
+        if (isModalBackdrop && (el.classList.contains('modal-backdrop') || el.classList.contains('legal-modal-overlay'))) {
+          return null;
+        }
+
+        if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+          var style = window.getComputedStyle(el);
+          var overflowY = style.overflowY;
+          if (
+            (overflowY === 'auto' || overflowY === 'scroll') &&
+            el.scrollHeight > el.clientHeight
+          ) {
+            return el;
+          }
+        }
+
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    function handleWheel(e) {
+      if (!isLocked) return;
+
+      var scrollable = findScrollableTarget(e.target);
+      if (!scrollable) {
+        e.preventDefault();
+        return;
+      }
+
+      var delta = e.deltaY;
+      var atTop = scrollable.scrollTop <= 0 && delta < 0;
+      var atBottom =
+        scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1 &&
+        delta > 0;
+
+      if (atTop || atBottom) {
+        e.preventDefault();
+      }
+    }
+
+    var touchStartY = 0;
+    window.addEventListener('touchstart', function (e) {
+      if (e.touches && e.touches[0]) {
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    function handleTouchMove(e) {
+      if (!isLocked) return;
+
+      var scrollable = findScrollableTarget(e.target);
+      if (!scrollable) {
+        e.preventDefault();
+        return;
+      }
+
+      if (e.touches && e.touches[0]) {
+        var currentY = e.touches[0].clientY;
+        var delta = touchStartY - currentY;
+        var atTop = scrollable.scrollTop <= 0 && delta < 0;
+        var atBottom =
+          scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1 &&
+          delta > 0;
+
+        if (atTop || atBottom) {
+          e.preventDefault();
+        }
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (!isLocked) return;
+      var scrollKeys = ['Space', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'];
+      if (scrollKeys.indexOf(e.code) === -1 && scrollKeys.indexOf(e.key) === -1) return;
+
+      var active = document.activeElement;
+      var isInput =
+        active &&
+        (active.tagName === 'INPUT' ||
+          active.tagName === 'TEXTAREA' ||
+          active.tagName === 'SELECT' ||
+          active.isContentEditable);
+      if (isInput) return;
+
+      var scrollable = findScrollableTarget(active || e.target);
+      if (!scrollable) {
+        e.preventDefault();
+      }
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
+
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      var observer = new MutationObserver(function () {
+        syncScrollLock();
+      });
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['style', 'hidden', 'class', 'aria-hidden'],
+        subtree: true
+      });
+    }
+
+    window.PDFLinguaWelcomeModalManager = {
+      sync: syncScrollLock,
+      lock: applyLock,
+      unlock: releaseLock,
+      isOpen: hasAnyOpenModal
+    };
+
+    syncScrollLock();
   }
 
   // Self-initialization

@@ -1,5 +1,17 @@
-# Hệ Thống Màu Sắc & Chuẩn Giao Diện (Design System - Color Theme)
-Dự án: **PDF-Lingua** - Nền tảng dịch thuật tài liệu PDF học thuật & trợ lý AI song ngữ
+# HỆ THỐNG MÀU SẮC & CHUẨN GIAO DIỆN (DESIGN SYSTEM - COLOR THEME)
+
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | Design System & Color Palette Specifications |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 19/11/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
 
 ---
 

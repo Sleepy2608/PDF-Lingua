@@ -4,7 +4,7 @@ AI Pydantic Schemas
 Defines request and response schemas for AI summarization and Copilot chat endpoints.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -111,6 +111,10 @@ class ChatResponseData(BaseModel):
     relevant_chunks: list[str] = Field(
         default_factory=list,
         description="Cac doan van ban lien quan nhat duoc trinh trich lam ngu canh",
+    )
+    citations: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Danh sach cac nguon tham chieu (trang / doan van) minh chung cho cau tra loi",
     )
     model_used: str = Field(..., description="Mo hinh AI duoc su dung")
     provider: str = Field(..., description="Nha cung cap AI (b.ai)")

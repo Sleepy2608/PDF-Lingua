@@ -1,6 +1,17 @@
-# Bảng Giá Gói Dịch Vụ & So Sánh Quyền Lợi (PDF-Lingua Pricing Plans)
+# BẢNG GIÁ GÓI DỊCH VỤ & SO SÁNH QUYỀN LỢI (PRICING PLANS SPECIFICATION)
 
-Tài liệu này định nghĩa chi tiết cơ chế phân tầng tài khoản, bảng giá dịch vụ, chính sách hạn mức kỹ thuật và bảng so sánh toàn diện giữa hai gói **Gói Miễn Phí (Free Tier)** và **Gói Pro VIP (Pro Tier)** trong hệ thống **PDF-Lingua**.
+## DỰ ÁN: NỀN TẢNG DỊCH THUẬT TÀI LIỆU PDF HỌC THUẬT & TRỢ LÝ AI (PDF-LINGUA)
+
+| Thông tin | Chi tiết |
+|---|---|
+| **Tên dự án (EN)** | PDF-Lingua: Academic PDF Translation & AI Research Assistant |
+| **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
+| **Loại tài liệu** | Pricing Plans & Tier Comparison |
+| **Viết tắt** | PDF-Lingua |
+| **Phiên bản tài liệu** | 1.2 |
+| **Ngày tạo** | 10/11/2026 |
+| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
 
 ---
 
