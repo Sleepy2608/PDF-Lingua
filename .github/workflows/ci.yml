@@ -75,6 +75,69 @@ jobs:
           console.log('Zero en-dash and em-dash character compliance: 100% PASSED');
           "
 
+      - name: Validate JavaScript Syntax Across All Frontend Modules
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const { execSync } = require('child_process');
+          const jsDir = 'Code/frontend/js';
+          if (!fs.existsSync(jsDir)) {
+            console.error('Directory not found: ' + jsDir);
+            process.exit(1);
+          }
+          const files = fs.readdirSync(jsDir).filter(f => f.endsWith('.js'));
+          console.log('Validating JS syntax for ' + files.length + ' modules in ' + jsDir + '...\n');
+          let failed = 0;
+          for (const f of files) {
+            const filePath = path.join(jsDir, f);
+            try {
+              execSync('node -c ' + filePath, { stdio: 'pipe' });
+              console.log('  [VALID] ' + f);
+            } catch (err) {
+              console.error('  [SYNTAX ERROR] in ' + f + ': ' + (err.stderr ? err.stderr.toString() : err.message));
+              failed++;
+            }
+          }
+          if (failed > 0) {
+            console.error('\nSyntax validation failed for ' + failed + ' module(s).');
+            process.exit(1);
+          }
+          console.log('\nAll ' + files.length + ' frontend JS modules passed syntax validation.');
+          "
+
+      - name: Validate CSS Bracket Balance (Prevent Stray Braces)
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const cssDir = 'Code/frontend/css';
+          if (!fs.existsSync(cssDir)) {
+            console.error('Directory not found: ' + cssDir);
+            process.exit(1);
+          }
+          const files = fs.readdirSync(cssDir).filter(f => f.endsWith('.css'));
+          console.log('Validating CSS bracket balance for ' + files.length + ' stylesheets...\n');
+          let hasError = false;
+          for (const f of files) {
+            const raw = fs.readFileSync(path.join(cssDir, f), 'utf8');
+            const clean = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(new RegExp('\"[^\"]*\"', 'g'), '').replace(new RegExp('\'[^\']*\'', 'g'), '');
+            const openCount = (clean.match(/\{/g) || []).length;
+            const closeCount = (clean.match(/\}/g) || []).length;
+            if (openCount !== closeCount) {
+              console.error('  [MISMATCH] ' + f + ' -> open {: ' + openCount + ' vs close }: ' + closeCount);
+              hasError = true;
+            } else {
+              console.log('  [BALANCED] ' + f + ' (' + openCount + ' pairs)');
+            }
+          }
+          if (hasError) {
+            console.error('\nCSS bracket balance validation failed.');
+            process.exit(1);
+          }
+          console.log('\nAll ' + files.length + ' CSS stylesheets are balanced.');
+          "
+
       - name: Run 21 Frontend Test Suites
         run: |
           node -e "
@@ -160,10 +223,21 @@ jobs:
         run: |
           python -m pytest ../tests -v
 
-      - name: Run Core Backend Model & Detection Tests (Code/backend/tests)
+      - name: Run Core & Extended Backend Unit Tests (Code/backend/tests)
         env:
           DATABASE_URL: "sqlite:///./ci_test.db"
           SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
           PYTHONPATH: "."
         run: |
-          python -m pytest tests/test_document_model.py tests/test_blank_page.py -o testpaths="" -v
+          python -m pytest \
+            tests/test_document_model.py \
+            tests/test_blank_page.py \
+            tests/test_avatar_schema.py \
+            tests/test_avatar_storage.py \
+            tests/test_security.py \
+            tests/test_pricing_api.py \
+            tests/test_subscription_model.py \
+            tests/test_deskew.py \
+            tests/test_text_metrics.py \
+            tests/test_layout_metrics.py \
+            -o testpaths="" -v
