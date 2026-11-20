@@ -2758,6 +2758,7 @@ body {
 }
 
 .legal-modal-header {
+  flex-shrink: 0;
   padding: 1.25rem 1.75rem;
   border-bottom: 1px solid #E2E8F0;
   display: flex;
@@ -2826,6 +2827,11 @@ body {
   background-color: #F8FAFC;
 }
 
+.legal-action-btn:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 1px;
+}
+
 .legal-action-btn .btn-icon {
   display: inline-flex;
   align-items: center;
@@ -2857,8 +2863,16 @@ body {
   background-color: #FEE2E2;
 }
 
+.legal-modal-close:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
 /* Legal Tabs Navigation Bar - Minimalist linear indicator */
 .legal-tabs-bar {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
   display: flex;
   background-color: #ffffff;
   border-bottom: 1px solid #E2E8F0;
@@ -2900,10 +2914,15 @@ body {
 }
 
 .legal-tab-btn.active {
-  color: #DC2626;
+  color: #E5322D;
   font-weight: 600;
-  border-bottom-color: #DC2626;
+  border-bottom-color: #E5322D;
   background: transparent;
+}
+
+.legal-tab-btn:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: -2px;
 }
 
 .tab-icon {
@@ -2916,11 +2935,11 @@ body {
 .tab-icon svg {
   display: block;
 }
-}
 
 /* Legal Modal Body & Content */
 .legal-modal-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 1.5rem 1.75rem;
   background-color: #ffffff;
@@ -3042,16 +3061,16 @@ body {
 }
 
 .legal-callout-box.info .callout-body strong {
-  color: #1E3A8A;
+  color: #1D4ED8;
 }
 
 .legal-callout-box.success {
-  border-left-color: #16A34A;
+  border-left-color: #10B981;
 }
 
 .legal-callout-box.success .callout-icon {
-  background-color: #F0FDF4;
-  color: #16A34A;
+  background-color: #ECFDF5;
+  color: #10B981;
 }
 
 .legal-callout-box.success .callout-body {
@@ -3059,7 +3078,7 @@ body {
 }
 
 .legal-callout-box.success .callout-body strong {
-  color: #14532D;
+  color: #065F46;
 }
 
 /* Quick Jump TOC Chips - Clean unslop layout without nested grey box */
@@ -3213,6 +3232,28 @@ body {
   border-radius: 10px;
 }
 
+.contact-channel-item .btn-secondary {
+  background-color: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-channel-item .btn-secondary:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
+  border-color: #94A3B8;
+  transform: translateY(-1px);
+}
+
 .channel-icon-img {
   width: 32px;
   height: 32px;
@@ -3285,8 +3326,36 @@ body {
   min-height: 70px;
 }
 
+#btnSubmitFeedback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
+  color: #ffffff;
+  border: 1px solid transparent;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.45rem 1.15rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
+  cursor: pointer;
+}
+
+#btnSubmitFeedback:hover {
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
+}
+
+#btnSubmitFeedback:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
 /* Legal Modal Footer */
 .legal-modal-footer {
+  flex-shrink: 0;
   padding: 0.85rem 1.75rem;
   border-top: 1px solid #E2E8F0;
   background-color: #F8FAFC;
@@ -3318,20 +3387,26 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: #DC2626;
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
   color: #ffffff;
   border: 1px solid transparent;
   font-weight: 600;
   border-radius: 6px;
   padding: 0.45rem 1rem;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
+  cursor: pointer;
 }
 
 #btnAcceptLegal:hover {
-  background: #B91C1C;
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
+}
+
+#btnAcceptLegal:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
 }
 
 #btnScrollToTop {
@@ -3346,6 +3421,11 @@ body {
 #btnScrollToTop:hover {
   color: #0F172A;
   background-color: #F1F5F9;
+}
+
+#btnScrollToTop:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
 }
 
 .footer-btn-icon {
@@ -3388,14 +3468,16 @@ body {
 }
 
 .btn-gradient {
-  background: linear-gradient(135deg, #E5322D 0%, #C9201C 100%);
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
   color: #ffffff;
   border: none;
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
 }
 
 .btn-gradient:hover {
-  filter: brightness(1.08);
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
   transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
 }
 
 .btn-ghost {

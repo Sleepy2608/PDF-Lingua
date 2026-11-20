@@ -1352,6 +1352,7 @@
 }
 
 .legal-modal-header {
+  flex-shrink: 0;
   padding: 1.25rem 1.75rem;
   border-bottom: 1px solid var(--border-subtle, #E2E8F0);
   display: flex;
@@ -1413,8 +1414,16 @@
   background-color: #FEE2E2;
 }
 
+.legal-modal-close:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
 /* Legal Tabs Navigation Bar - Minimalist linear indicator */
 .legal-tabs-bar {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
   display: flex;
   background-color: #ffffff;
   border-bottom: 1px solid var(--border-subtle, #E2E8F0);
@@ -1456,10 +1465,15 @@
 }
 
 .legal-tab-btn.active {
-  color: var(--color-primary-indigo, #DC2626);
+  color: var(--color-pdf-coral-dark, #E5322D);
   font-weight: 600;
-  border-bottom-color: var(--color-primary-indigo, #DC2626);
+  border-bottom-color: var(--color-pdf-coral-dark, #E5322D);
   background: transparent;
+}
+
+.legal-tab-btn:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: -2px;
 }
 
 .tab-icon {
@@ -1472,11 +1486,11 @@
 .tab-icon svg {
   display: block;
 }
-}
 
 /* Legal Modal Body & Content */
 .legal-modal-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 1.5rem 1.75rem;
   background-color: #ffffff;
@@ -1549,13 +1563,13 @@
 }
 
 .legal-content a {
-  color: var(--color-primary-indigo, #E5322D);
+  color: #E5322D;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .legal-content a:hover {
-  color: #C9201C;
+  color: #DC2626;
 }
 
 /* Team Cards Grid */
@@ -1580,7 +1594,7 @@
   position: relative;
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-primary-indigo, #E5322D);
+  color: #E5322D;
   background: linear-gradient(135deg, #FFF1F0 0%, #FFE2E0 100%);
   border: 2px solid #FFCDD2;
   width: 48px;
@@ -1599,7 +1613,7 @@
 }
 
 .member-avatar:hover {
-  border-color: var(--color-primary-indigo, #E5322D);
+  border-color: #E5322D;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(229, 50, 45, 0.2);
 }
@@ -1629,7 +1643,7 @@
 .member-github-badge {
   font-size: 0.725rem;
   font-weight: 600;
-  color: var(--color-primary-indigo, #E5322D);
+  color: #E5322D;
   background-color: #FFF1F0;
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius-pill, 9999px);
@@ -1640,9 +1654,9 @@
 }
 
 .member-github-badge:hover {
-  background-color: var(--color-primary-indigo, #E5322D);
+  background-color: #E5322D;
   color: #ffffff !important;
-  border-color: var(--color-primary-indigo, #E5322D);
+  border-color: #E5322D;
 }
 
 .member-info strong {
@@ -1652,7 +1666,7 @@
 
 .member-role {
   font-size: 0.8rem;
-  color: var(--color-primary-indigo, #E5322D);
+  color: #E5322D;
   font-weight: 500;
 }
 
@@ -1701,16 +1715,16 @@
 }
 
 .legal-callout-box.info .callout-body strong {
-  color: #1E3A8A;
+  color: #1D4ED8;
 }
 
 .legal-callout-box.success {
-  border-left-color: #16A34A;
+  border-left-color: #10B981;
 }
 
 .legal-callout-box.success .callout-icon {
-  background-color: #F0FDF4;
-  color: #16A34A;
+  background-color: #ECFDF5;
+  color: #10B981;
 }
 
 .legal-callout-box.success .callout-body {
@@ -1718,7 +1732,7 @@
 }
 
 .legal-callout-box.success .callout-body strong {
-  color: #14532D;
+  color: #065F46;
 }
 
 /* Contact Channels Box */
@@ -1738,6 +1752,28 @@
   background-color: #F8FAFC;
   border: 1px solid var(--border-subtle, #E2E8F0);
   border-radius: var(--radius-md, 10px);
+}
+
+.contact-channel-item .btn-secondary {
+  background-color: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm, 6px);
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-channel-item .btn-secondary:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
+  border-color: #94A3B8;
+  transform: translateY(-1px);
 }
 
 .contact-channel-item .channel-icon {
@@ -1808,9 +1844,9 @@
 }
 
 .feedback-form .form-control:focus {
-  border-color: var(--color-primary-indigo, #4F46E5);
+  border-color: #E5322D;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.15);
 }
 
 .feedback-form textarea.form-control {
@@ -1818,7 +1854,35 @@
   min-height: 70px;
 }
 
+#btnSubmitFeedback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
+  color: #ffffff;
+  border: 1px solid transparent;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.45rem 1.15rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
+  cursor: pointer;
+}
+
+#btnSubmitFeedback:hover {
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
+}
+
+#btnSubmitFeedback:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
 .legal-modal-footer {
+  flex-shrink: 0;
   padding: 0.85rem 1.75rem;
   border-top: 1px solid var(--border-subtle, #E2E8F0);
   background-color: #F8FAFC;
@@ -1850,20 +1914,26 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: var(--color-primary-indigo, #DC2626);
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
   color: #ffffff;
   border: 1px solid transparent;
   font-weight: 600;
   border-radius: var(--radius-sm, 6px);
   padding: 0.45rem 1rem;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
+  cursor: pointer;
 }
 
 #btnAcceptLegal:hover {
-  background: #B91C1C;
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
+}
+
+#btnAcceptLegal:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
 }
 
 #btnScrollToTop {
@@ -1878,6 +1948,11 @@
 #btnScrollToTop:hover {
   color: var(--text-title, #0F172A);
   background-color: #F1F5F9;
+}
+
+#btnScrollToTop:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
 }
 
 .footer-btn-icon {
@@ -1913,6 +1988,11 @@
   color: var(--text-title, #0F172A);
   border-color: #CBD5E1;
   background-color: #F8FAFC;
+}
+
+.legal-action-btn:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 1px;
 }
 
 .legal-action-btn .btn-icon {
