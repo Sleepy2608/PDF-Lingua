@@ -144,9 +144,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Initialize Database Schema
+        env:
+          DATABASE_URL: "sqlite:///./ci_test.db"
+          SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          PYTHONPATH: "."
+        run: |
+          python -c "from app.core.database import init_db; init_db()"
+
       - name: Run Basic Framework Tests (Code/tests)
         env:
-          DATABASE_URL: "sqlite:///:memory:"
+          DATABASE_URL: "sqlite:///./ci_test.db"
           SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
           PYTHONPATH: "."
         run: |
@@ -154,7 +162,7 @@ jobs:
 
       - name: Run Core Backend API & Security Tests (Code/backend/tests)
         env:
-          DATABASE_URL: "sqlite:///:memory:"
+          DATABASE_URL: "sqlite:///./ci_test.db"
           SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
           GEMINI_API_KEY: "mock-gemini-key-for-ci"
           PYTHONPATH: "."
