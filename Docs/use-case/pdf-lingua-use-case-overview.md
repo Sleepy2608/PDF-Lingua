@@ -1,7 +1,7 @@
-# Tài liệu mô tả Use Case tổng quát — PDF Lingua
+# Tài liệu mô tả Use Case tổng quát - PDF Lingua
 
 > **THÔNG TIN TÀI LIỆU (DOCUMENT METADATA)**
-> - **Tên dự án**: **PDF Lingua** – Nền tảng Web Trích xuất PDF, OCR, Dịch thuật Đa ngôn ngữ & Trợ lý AI
+> - **Tên dự án**: **PDF Lingua** - Nền tảng Web Trích xuất PDF, OCR, Dịch thuật Đa ngôn ngữ & Trợ lý AI
 > - **Mã tài liệu**: `DOC-UC-OVERVIEW`
 > - **Phiên bản (Version)**: `v1.2.0`
 > - **Trạng thái (Status)**: `Chính thức (Approved)`
