@@ -83,6 +83,15 @@ html {
   font-size: 16px;
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+/* Modal Open: Strict background page scroll lock */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  height: 100% !important;
+  overscroll-behavior: none !important;
 }
 
 body {
@@ -2432,6 +2441,8 @@ body {
   padding: 1.25rem;
   opacity: 1;
   transition: opacity 0.2s ease, visibility 0.2s ease;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .modal-backdrop[hidden] {
@@ -2449,6 +2460,8 @@ body {
   position: relative;
   max-height: 92vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2724,6 +2737,8 @@ body {
   justify-content: center;
   padding: 1.5rem;
   animation: fadeInLegal 0.2s ease-out;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .legal-modal-overlay.active {
@@ -2941,6 +2956,8 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 1.5rem 1.75rem;
   background-color: #ffffff;
 }

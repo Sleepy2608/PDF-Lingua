@@ -5,6 +5,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[PDF-Lingua] Frontend initialized successfully.');
 
+    // Initialize Global Modal Scroll Lock & Boundary Containment Manager
+    initModalScrollLock();
+
     // Initialize Legal & Contact Modal Controller
     initLegalModal();
 });
@@ -55,7 +58,11 @@ function initLegalModal() {
         overlay.style.display = 'flex';
         overlay.classList.add('active');
         overlay.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        if (window.PDFLinguaModalManager) {
+            window.PDFLinguaModalManager.sync();
+        } else {
+            document.body.style.overflow = 'hidden';
+        }
     }
 
     /**
@@ -65,7 +72,11 @@ function initLegalModal() {
         overlay.classList.remove('active');
         overlay.setAttribute('aria-hidden', 'true');
         overlay.style.display = 'none';
-        document.body.style.overflow = '';
+        if (window.PDFLinguaModalManager) {
+            window.PDFLinguaModalManager.sync();
+        } else {
+            document.body.style.overflow = '';
+        }
 
         // Reset fullscreen state if it was open
         if (modalContainer && modalContainer.classList.contains('fullscreen')) {
@@ -289,4 +300,200 @@ function initLegalModal() {
             }
         };
     }
+}
+
+/**
+ * Global Modal Scroll Lock & Boundary Containment Manager
+ * Ensures that whenever any modal, popup, or overlay is open:
+ * 1. Background page scroll is strictly locked (html & body).
+ * 2. Only the active modal's scrollable content can scroll.
+ * 3. Boundary overscroll chaining is completely blocked so background never moves.
+ * 4. Closing the popup unlocks page scroll immediately.
+ */
+function initModalScrollLock() {
+    const MODAL_SELECTORS = [
+        '.modal-backdrop',
+        '.modal-overlay',
+        '.legal-modal-overlay',
+        '.avatar-crop-modal-backdrop',
+        '[role="dialog"]'
+    ];
+
+    let savedScrollY = 0;
+    let isLocked = false;
+
+    function isElementVisibleModal(el) {
+        if (!el || el.id === 'sidebarBackdrop') return false;
+        if (el.hasAttribute('hidden')) return false;
+        if (el.style && el.style.display === 'none') return false;
+        if (el.classList.contains('legal-modal-overlay')) {
+            return el.classList.contains('active') || (el.style && el.style.display === 'flex');
+        }
+        if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+            const comp = window.getComputedStyle(el);
+            return comp.display !== 'none' && comp.visibility !== 'hidden';
+        }
+        return true;
+    }
+
+    function hasAnyOpenModal() {
+        const candidates = document.querySelectorAll(MODAL_SELECTORS.join(', '));
+        for (let i = 0; i < candidates.length; i++) {
+            if (isElementVisibleModal(candidates[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function applyLock() {
+        if (isLocked) return;
+        isLocked = true;
+        savedScrollY = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('modal-open');
+        document.body.classList.add('modal-open');
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function releaseLock() {
+        if (!isLocked) return;
+        isLocked = false;
+        document.documentElement.classList.remove('modal-open');
+        document.body.classList.remove('modal-open');
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (savedScrollY > 0) {
+            window.scrollTo(0, savedScrollY);
+        }
+    }
+
+    function syncScrollLock() {
+        if (hasAnyOpenModal()) {
+            applyLock();
+        } else {
+            releaseLock();
+        }
+    }
+
+    function findScrollableTarget(target) {
+        let el = target;
+        while (el && el !== document.body && el !== document.documentElement) {
+            const isModalBackdrop = el.matches && (
+                el.matches('.modal-backdrop, .modal-overlay, .legal-modal-overlay, .avatar-crop-modal-backdrop')
+            );
+
+            if (isModalBackdrop && (el.classList.contains('modal-backdrop') || el.classList.contains('legal-modal-overlay') || el.classList.contains('modal-overlay'))) {
+                return null;
+            }
+
+            if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+                const style = window.getComputedStyle(el);
+                const overflowY = style.overflowY;
+                if (
+                    (overflowY === 'auto' || overflowY === 'scroll') &&
+                    el.scrollHeight > el.clientHeight
+                ) {
+                    return el;
+                }
+            }
+
+            el = el.parentElement;
+        }
+        return null;
+    }
+
+    function handleWheel(e) {
+        if (!isLocked) return;
+
+        const scrollable = findScrollableTarget(e.target);
+        if (!scrollable) {
+            e.preventDefault();
+            return;
+        }
+
+        const delta = e.deltaY;
+        const atTop = scrollable.scrollTop <= 0 && delta < 0;
+        const atBottom =
+            scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1 &&
+            delta > 0;
+
+        if (atTop || atBottom) {
+            e.preventDefault();
+        }
+    }
+
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches[0]) {
+            touchStartY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    function handleTouchMove(e) {
+        if (!isLocked) return;
+
+        const scrollable = findScrollableTarget(e.target);
+        if (!scrollable) {
+            e.preventDefault();
+            return;
+        }
+
+        if (e.touches && e.touches[0]) {
+            const currentY = e.touches[0].clientY;
+            const delta = touchStartY - currentY;
+            const atTop = scrollable.scrollTop <= 0 && delta < 0;
+            const atBottom =
+                scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1 &&
+                delta > 0;
+
+            if (atTop || atBottom) {
+                e.preventDefault();
+            }
+        }
+    }
+
+    function handleKeyDown(e) {
+        if (!isLocked) return;
+        const scrollKeys = ['Space', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown'];
+        if (!scrollKeys.includes(e.code) && !scrollKeys.includes(e.key)) return;
+
+        const active = document.activeElement;
+        const isInput =
+            active &&
+            (active.tagName === 'INPUT' ||
+                active.tagName === 'TEXTAREA' ||
+                active.tagName === 'SELECT' ||
+                active.isContentEditable);
+        if (isInput) return;
+
+        const scrollable = findScrollableTarget(active || e.target);
+        if (!scrollable) {
+            e.preventDefault();
+        }
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
+
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+        const observer = new MutationObserver(() => {
+            syncScrollLock();
+        });
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['style', 'hidden', 'class', 'aria-hidden'],
+            subtree: true
+        });
+    }
+
+    window.PDFLinguaModalManager = {
+        sync: syncScrollLock,
+        lock: applyLock,
+        unlock: releaseLock,
+        isOpen: hasAnyOpenModal
+    };
+
+    syncScrollLock();
 }

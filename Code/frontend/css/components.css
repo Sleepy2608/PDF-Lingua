@@ -256,6 +256,8 @@
   padding: 1.25rem;
   opacity: 1;
   transition: opacity 0.2s ease, visibility 0.2s ease;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .modal-backdrop[hidden] {
@@ -273,6 +275,8 @@
   position: relative;
   max-height: 92vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -906,6 +910,8 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .avatar-crop-dialog {
@@ -1323,6 +1329,8 @@
   justify-content: center;
   padding: 1.5rem;
   animation: fadeIn 0.2s ease-out;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .legal-modal-overlay.active {
@@ -1492,6 +1500,8 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 1.5rem 1.75rem;
   background-color: #ffffff;
 }
