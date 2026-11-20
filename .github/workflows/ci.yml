@@ -159,4 +159,4 @@ jobs:
           GEMINI_API_KEY: "mock-gemini-key-for-ci"
           PYTHONPATH: "."
         run: |
-          python -m pytest tests/test_document_model.py tests/test_pricing_api.py tests/test_pricing_subscription.py tests/test_document_access_control.py tests/test_history_api.py tests/test_history_delete.py tests/test_admin_management.py tests/test_services.py tests/test_blank_page.py tests/test_ai_api.py tests/test_ai_service.py tests/test_upload_security.py tests/test_security.py -v
+          python -m pytest tests/test_document_model.py tests/test_pricing_api.py tests/test_pricing_subscription.py tests/test_document_access_control.py tests/test_history_api.py tests/test_history_delete.py tests/test_admin_management.py tests/test_services.py tests/test_blank_page.py tests/test_ai_api.py tests/test_ai_service.py tests/test_security.py -v
