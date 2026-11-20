@@ -83,6 +83,15 @@ html {
   font-size: 16px;
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+/* Modal Open: Strict background page scroll lock */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  height: 100% !important;
+  overscroll-behavior: none !important;
 }
 
 body {
@@ -2432,6 +2441,8 @@ body {
   padding: 1.25rem;
   opacity: 1;
   transition: opacity 0.2s ease, visibility 0.2s ease;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .modal-backdrop[hidden] {
@@ -2449,6 +2460,8 @@ body {
   position: relative;
   max-height: 92vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2724,6 +2737,8 @@ body {
   justify-content: center;
   padding: 1.5rem;
   animation: fadeInLegal 0.2s ease-out;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .legal-modal-overlay.active {
@@ -2758,6 +2773,7 @@ body {
 }
 
 .legal-modal-header {
+  flex-shrink: 0;
   padding: 1.25rem 1.75rem;
   border-bottom: 1px solid #E2E8F0;
   display: flex;
@@ -2773,13 +2789,14 @@ body {
 }
 
 .legal-version-badge {
+  font-family: var(--wl-font-mono, monospace);
   font-size: 0.725rem;
-  font-weight: 700;
-  background: #FFF1F0;
-  color: #E5322D;
-  padding: 0.15rem 0.5rem;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #475569;
+  padding: 0.15rem 0.55rem;
   border-radius: 9999px;
-  border: 1px solid #FFCDD2;
+  border: 1px solid #E2E8F0;
   line-height: 1.2;
 }
 
@@ -2788,6 +2805,7 @@ body {
   font-weight: 700;
   color: #0F172A;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .legal-modal-subtitle {
@@ -2805,44 +2823,53 @@ body {
 .legal-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
   font-family: inherit;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #64748B;
-  background-color: #F8FAFC;
+  background-color: #ffffff;
   border: 1px solid #E2E8F0;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .legal-action-btn:hover {
-  color: #E5322D;
-  border-color: #E5322D;
-  background-color: #ffffff;
+  color: #0F172A;
+  border-color: #CBD5E1;
+  background-color: #F8FAFC;
+}
+
+.legal-action-btn:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 1px;
 }
 
 .legal-action-btn .btn-icon {
-  font-size: 0.9rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  color: currentColor;
+}
+
+.legal-action-btn .btn-icon svg {
+  display: block;
 }
 
 .legal-modal-close {
   background: transparent;
-  border: none;
-  font-size: 1.65rem;
-  font-weight: 400;
+  border: 1px solid transparent;
   color: #64748B;
   cursor: pointer;
-  padding: 0.2rem 0.55rem;
-  line-height: 1;
+  padding: 0.35rem;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   user-select: none;
 }
 
@@ -2851,13 +2878,21 @@ body {
   background-color: #FEE2E2;
 }
 
-/* Legal Tabs Navigation Bar */
+.legal-modal-close:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
+/* Legal Tabs Navigation Bar - Minimalist linear indicator */
 .legal-tabs-bar {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
   display: flex;
-  background-color: #F8FAFC;
+  background-color: #ffffff;
   border-bottom: 1px solid #E2E8F0;
-  padding: 0 1.25rem;
-  gap: 0.5rem;
+  padding: 0 1.75rem;
+  gap: 1.5rem;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -2873,41 +2908,56 @@ body {
 .legal-tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.85rem 1.25rem;
+  gap: 0.5rem;
+  padding: 0.85rem 0.25rem;
   font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: #64748B;
   background: transparent;
   border: none;
-  border-bottom: 2.5px solid transparent;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
   margin-bottom: -1px;
   white-space: nowrap;
 }
 
 .legal-tab-btn:hover {
-  color: #E5322D;
-  background: rgba(229, 50, 45, 0.05);
+  color: #0F172A;
+  background: transparent;
 }
 
 .legal-tab-btn.active {
   color: #E5322D;
+  font-weight: 600;
   border-bottom-color: #E5322D;
-  background-color: #ffffff;
+  background: transparent;
+}
+
+.legal-tab-btn:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: -2px;
 }
 
 .tab-icon {
-  font-size: 1rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.tab-icon svg {
+  display: block;
 }
 
 /* Legal Modal Body & Content */
 .legal-modal-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 1.5rem 1.75rem;
   background-color: #ffffff;
 }
@@ -2988,72 +3038,103 @@ body {
   color: #C9201C;
 }
 
-/* Callout Summary Box */
+/* Callout Summary Box - Clean unslop border-accent card */
 .legal-callout-box {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem 1.1rem;
-  border-radius: 10px;
+  gap: 0.85rem;
+  padding: 0.875rem 1.125rem;
+  border-radius: 8px;
   margin-bottom: 1.25rem;
   font-size: 0.875rem;
   line-height: 1.55;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left-width: 3.5px;
 }
 
 .legal-callout-box .callout-icon {
-  font-size: 1.2rem;
-  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 0.1rem;
 }
 
 .legal-callout-box.info {
+  border-left-color: #2563EB;
+}
+
+.legal-callout-box.info .callout-icon {
   background-color: #EFF6FF;
-  border: 1px solid #BFDBFE;
-  color: #1E40AF;
+  color: #2563EB;
+}
+
+.legal-callout-box.info .callout-body {
+  color: #334155;
+}
+
+.legal-callout-box.info .callout-body strong {
+  color: #1D4ED8;
 }
 
 .legal-callout-box.success {
-  background-color: #F0FDF4;
-  border: 1px solid #BBF7D0;
-  color: #166534;
+  border-left-color: #10B981;
 }
 
-/* Quick Jump TOC Chips */
+.legal-callout-box.success .callout-icon {
+  background-color: #ECFDF5;
+  color: #10B981;
+}
+
+.legal-callout-box.success .callout-body {
+  color: #334155;
+}
+
+.legal-callout-box.success .callout-body strong {
+  color: #065F46;
+}
+
+/* Quick Jump TOC Chips - Clean unslop layout without nested grey box */
 .legal-toc-chips {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 1.25rem;
-  padding: 0.65rem 0.85rem;
-  background-color: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 10px;
+  gap: 0.45rem;
+  margin: 0.75rem 0 1.5rem 0;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
 .legal-toc-chips .toc-label {
-  font-size: 0.8rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  color: #64748B;
-  margin-right: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94A3B8;
+  margin-right: 0.35rem;
 }
 
 .legal-toc-chips .toc-chip {
-  font-size: 0.785rem;
-  font-weight: 600;
-  color: #E5322D;
-  background-color: #ffffff;
-  border: 1px solid #CBD5E1;
-  border-radius: 9999px;
-  padding: 0.2rem 0.65rem;
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: #475569;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .legal-toc-chips .toc-chip:hover {
-  background-color: #E5322D;
-  color: #ffffff;
-  border-color: #E5322D;
+  background-color: #E2E8F0;
+  color: #0F172A;
+  border-color: #CBD5E1;
   transform: translateY(-1px);
 }
 
@@ -3168,6 +3249,28 @@ body {
   border-radius: 10px;
 }
 
+.contact-channel-item .btn-secondary {
+  background-color: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-channel-item .btn-secondary:hover {
+  background-color: #E2E8F0;
+  color: #0F172A;
+  border-color: #94A3B8;
+  transform: translateY(-1px);
+}
+
 .channel-icon-img {
   width: 32px;
   height: 32px;
@@ -3240,8 +3343,36 @@ body {
   min-height: 70px;
 }
 
+#btnSubmitFeedback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
+  color: #ffffff;
+  border: 1px solid transparent;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.45rem 1.15rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
+  cursor: pointer;
+}
+
+#btnSubmitFeedback:hover {
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
+}
+
+#btnSubmitFeedback:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
 /* Legal Modal Footer */
 .legal-modal-footer {
+  flex-shrink: 0;
   padding: 0.85rem 1.75rem;
   border-top: 1px solid #E2E8F0;
   background-color: #F8FAFC;
@@ -3260,13 +3391,64 @@ body {
 
 .legal-footer-meta {
   font-size: 0.75rem;
-  color: #64748B;
+  color: #94A3B8;
 }
 
 .legal-footer-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+#btnAcceptLegal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
+  color: #ffffff;
+  border: 1px solid transparent;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
+  cursor: pointer;
+}
+
+#btnAcceptLegal:hover {
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
+}
+
+#btnAcceptLegal:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
+#btnScrollToTop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #64748B;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+#btnScrollToTop:hover {
+  color: #0F172A;
+  background-color: #F1F5F9;
+}
+
+#btnScrollToTop:focus-visible {
+  outline: 2px solid #E5322D;
+  outline-offset: 2px;
+}
+
+.footer-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 /* General Buttons inside Modal */
@@ -3303,14 +3485,16 @@ body {
 }
 
 .btn-gradient {
-  background: linear-gradient(135deg, #E5322D 0%, #C9201C 100%);
+  background: linear-gradient(135deg, #E5322D 0%, #DC2626 100%);
   color: #ffffff;
   border: none;
+  box-shadow: 0 4px 14px 0 rgba(229, 50, 45, 0.28);
 }
 
 .btn-gradient:hover {
-  filter: brightness(1.08);
+  background: linear-gradient(135deg, #DC2626 0%, #C9201C 100%);
   transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(229, 50, 45, 0.35);
 }
 
 .btn-ghost {
