@@ -68,4 +68,39 @@ assert.strictEqual(i18n.t('feedback_section_feedback'), 'Send Feedback to the Te
 assert.strictEqual(i18n.t('feedback_btn_submit'), 'Submit Feedback');
 console.log('[PASS] Legal modal detailed content translates to English');
 
+// 7. Verify Accessibility Labels & Interactive Tooltips
+assert.strictEqual(i18n.t('lang_select_aria'), 'Select language');
+assert.strictEqual(i18n.t('lang_vi_title'), 'Vietnamese');
+assert.strictEqual(i18n.t('lang_en_title'), 'English');
+assert.strictEqual(i18n.t('welcome_aria_hero'), 'About PDF-Lingua');
+assert.strictEqual(i18n.t('welcome_aria_features'), 'Core features');
+assert.strictEqual(i18n.t('welcome_aria_workflow'), 'How it works');
+assert.strictEqual(i18n.t('welcome_aria_pricing'), 'Service pricing');
+assert.strictEqual(i18n.t('welcome_aria_billing_toggle'), 'Billing cycle');
+assert.strictEqual(i18n.t('welcome_aria_footer'), 'Footer');
+assert.strictEqual(i18n.t('welcome_copy_source_title'), 'Copy text');
+assert.strictEqual(i18n.t('welcome_copy_target_title'), 'Copy translation');
+assert.strictEqual(i18n.t('common_scroll_top_title'), 'Scroll to top');
+assert.strictEqual(i18n.t('legal_toggle_fullscreen_title'), 'Toggle fullscreen');
+assert.strictEqual(i18n.t('legal_print_title'), 'Print or save as PDF');
+assert.strictEqual(i18n.t('feedback_copy_email_title'), 'Copy email');
+console.log('[PASS] All section accessibility labels and tooltips translate to English');
+
+// 8. Verify Modal Authentication & Navigation Attributes
+assert.strictEqual(i18n.t('auth_login_password_placeholder'), 'Enter your password');
+assert.strictEqual(i18n.t('auth_show_password_aria'), 'Show password');
+assert.ok(i18n.t('auth_no_account_register').includes('Sign up now'));
+assert.ok(html.includes('data-i18n-attr="aria-label:lang_select_aria"'));
+assert.ok(html.includes('data-i18n-attr="title:lang_vi_title"'));
+assert.ok(html.includes('data-i18n-attr="aria-label:welcome_aria_hero"'));
+assert.ok(html.includes('data-i18n-attr="title:welcome_copy_source_title"'));
+assert.ok(html.includes('data-i18n-attr="aria-label:welcome_aria_features"'));
+assert.ok(html.includes('data-i18n-attr="aria-label:welcome_aria_workflow"'));
+assert.ok(html.includes('data-i18n-attr="aria-label:welcome_aria_pricing"'));
+assert.ok(html.includes('data-i18n-attr="aria-label:welcome_aria_billing_toggle"'));
+assert.ok(html.includes('data-i18n-attr="aria-label:welcome_aria_footer"'));
+assert.ok(html.includes('data-i18n-attr="placeholder:auth_login_password_placeholder"'));
+assert.ok(html.includes('data-i18n-attr="title:common_scroll_top_title"'));
+console.log('[PASS] Welcome HTML bindings and modal auth attributes verified');
+
 console.log('\n[SUCCESS] Welcome page i18n E2E verification complete: 100% PASS!');
