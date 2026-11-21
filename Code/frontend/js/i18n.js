@@ -1027,7 +1027,45 @@
             "auth_val_confirm_req": "Vui lòng nhập lại mật khẩu xác nhận.",
             "auth_val_confirm_max": "Mật khẩu xác nhận không được vượt quá 128 ký tự.",
             "auth_val_confirm_mismatch": "Mật khẩu xác nhận không khớp với mật khẩu đã nhập.",
-            "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!": "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!"
+            "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!": "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!",
+
+            // Welcome Page Attributes
+            "welcome_aria_main_nav": "Menu điều hướng chính",
+            "welcome_aria_mobile_menu": "Mở menu điều hướng",
+            "welcome_aria_mobile_nav": "Menu điều hướng di động",
+
+            // Workspace & Upload Attributes
+            "nav_translate_tooltip": "Dịch PDF",
+            "nav_pricing_tooltip": "Bảng giá gói",
+            "batch_download_zip_pdf_title": "Tải toàn bộ kết quả dạng file ZIP (PDF)",
+            "batch_download_zip_docx_title": "Tải toàn bộ kết quả dạng file ZIP (Word .docx) - Dành cho tài khoản Pro",
+            "page_select_quick_group_aria": "Chọn nhanh dải trang",
+            "ai_summary_copy_result_title": "Sao chép kết quả tóm tắt",
+            "view_mode_tab_switch_aria": "Chuyển tab so sánh",
+            "history_clean_old_title": "Dọn dẹp lịch sử cũ hơn chính sách lưu trữ",
+            "admin_account_admin_title": "Tài khoản Quản trị",
+            "proc_bg_active_doc_title": "Tài liệu đang xử lý",
+            "proc_bg_restore_aria": "Mở lại",
+            "avatar_input_file_aria": "Chọn tệp ảnh đại diện (JPEG, PNG, WebP)",
+            "avatar_delete_title_aria": "Xóa ảnh đại diện",
+            "avatar_user_alt": "Ảnh đại diện người dùng",
+            "avatar_crop_img_alt": "Ảnh tải lên cần cắt",
+            "checkout_vietqr_alt": "Mã VietQR thanh toán gói Pro VietinBank",
+            "auth_current_password_placeholder": "Nhập mật khẩu hiện tại",
+            "auth_new_password_placeholder": "Tối thiểu 8 ký tự, có cả chữ và số",
+            "auth_confirm_new_password_placeholder": "Nhập lại mật khẩu mới",
+            "avatar_crop_modal_close_aria": "Đóng cửa sổ cắt ảnh",
+            "avatar_crop_region_aria": "Vùng tương tác cắt ảnh. Sử dụng chuột để kéo hoặc các phím mũi tên để căn chỉnh",
+            "avatar_crop_zoom_out_aria": "Thu nhỏ ảnh",
+            "avatar_crop_slider_aria": "Thanh trượt phóng to thu nhỏ ảnh",
+            "avatar_crop_zoom_in_aria": "Phóng to ảnh",
+            "checkout_cycle_switch_aria": "Đổi chu kỳ gói Pro",
+            "pricing_cta_start_free": "Bắt đầu miễn phí",
+            "pricing_discount_badge": "TIẾT KIỆM 32%",
+            "admin_btn_prev": "Trước",
+            "copilot_prompt_chip_summary": "Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?",
+            "copilot_prompt_chip_keypoints": "Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?",
+            "copilot_prompt_chip_terms": "Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?"
         },
         en: {
             // Common Actions & Badges
@@ -2044,7 +2082,45 @@
             "auth_val_confirm_req": "Please re-enter your password to confirm.",
             "auth_val_confirm_max": "Password confirmation cannot exceed 128 characters.",
             "auth_val_confirm_mismatch": "Password confirmation does not match the entered password.",
-            "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!": "Thank you! Your feedback has been sent to our team."
+            "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!": "Thank you! Your feedback has been sent to our team.",
+
+            // Welcome Page Attributes
+            "welcome_aria_main_nav": "Main navigation menu",
+            "welcome_aria_mobile_menu": "Open navigation menu",
+            "welcome_aria_mobile_nav": "Mobile navigation menu",
+
+            // Workspace & Upload Attributes
+            "nav_translate_tooltip": "Translate PDF",
+            "nav_pricing_tooltip": "Pricing Plans",
+            "batch_download_zip_pdf_title": "Download all results as ZIP file (PDF)",
+            "batch_download_zip_docx_title": "Download all results as ZIP file (Word .docx) - For Pro accounts",
+            "page_select_quick_group_aria": "Quick page range selection",
+            "ai_summary_copy_result_title": "Copy summary results",
+            "view_mode_tab_switch_aria": "Switch comparison tab",
+            "history_clean_old_title": "Clean up history older than retention policy",
+            "admin_account_admin_title": "Admin Account",
+            "proc_bg_active_doc_title": "Document currently processing",
+            "proc_bg_restore_aria": "Restore",
+            "avatar_input_file_aria": "Choose avatar image file (JPEG, PNG, WebP)",
+            "avatar_delete_title_aria": "Delete avatar image",
+            "avatar_user_alt": "User profile avatar",
+            "avatar_crop_img_alt": "Uploaded image to crop",
+            "checkout_vietqr_alt": "VietinBank Pro package VietQR code",
+            "auth_current_password_placeholder": "Enter current password",
+            "auth_new_password_placeholder": "At least 8 characters with letters and numbers",
+            "auth_confirm_new_password_placeholder": "Re-enter new password",
+            "avatar_crop_modal_close_aria": "Close avatar crop modal",
+            "avatar_crop_region_aria": "Interactive avatar crop region. Drag with mouse or use arrow keys to adjust",
+            "avatar_crop_zoom_out_aria": "Zoom out image",
+            "avatar_crop_slider_aria": "Image zoom slider",
+            "avatar_crop_zoom_in_aria": "Zoom in image",
+            "checkout_cycle_switch_aria": "Switch Pro billing cycle",
+            "pricing_cta_start_free": "Start for free",
+            "pricing_discount_badge": "SAVE 32%",
+            "admin_btn_prev": "Previous",
+            "copilot_prompt_chip_summary": "Summarize the key points of this document in 3 bullet points?",
+            "copilot_prompt_chip_keypoints": "Find key milestones, figures, and data in the document?",
+            "copilot_prompt_chip_terms": "Explain technical terms appearing in the document?"
         }
     };
 

@@ -29,7 +29,7 @@
     <header class="welcome-navbar" id="welcomeNavbar" role="banner">
         <div class="welcome-container welcome-navbar-inner">
             <!-- Brand Logo -->
-            <a href="#welcomeHero" class="welcome-brand-link" id="welcomeBrandLink" title="PDF-Lingua - Trang chu">
+            <a href="#welcomeHero" class="welcome-brand-link" id="welcomeBrandLink" title="PDF-Lingua - Trang chủ" data-i18n-attr="title:nav_home">
                 <img src="assets/images/logo-app-transparent.png" alt="PDF-Lingua Logo" class="welcome-brand-img" width="34" height="34" loading="eager">
                 <span class="welcome-brand-name">
                     <span class="welcome-brand-badge">PDF</span>
@@ -38,7 +38,7 @@
             </a>
 
             <!-- Desktop Navigation Menu -->
-            <nav class="welcome-nav-menu" id="welcomeNavMenu" aria-label="Menu dieu huong chinh">
+            <nav class="welcome-nav-menu" id="welcomeNavMenu" aria-label="Menu điều hướng chính" data-i18n-attr="aria-label:welcome_aria_main_nav">
                 <a href="#welcomeHero" class="welcome-nav-link is-active" id="navLinkHero" data-i18n="nav_home">Trang chủ</a>
                 <a href="#welcomeFeatures" class="welcome-nav-link" id="navLinkFeatures" data-i18n="nav_features">Tính năng</a>
                 <a href="#welcomeHowItWorks" class="welcome-nav-link" id="navLinkHowItWorks" data-i18n="nav_how_it_works">Quy trình</a>
@@ -47,10 +47,10 @@
 
             <!-- Navigation Actions: Login (Ghost) + Start Trial (Primary Red) + Language Switcher -->
             <div class="welcome-nav-actions" id="welcomeNavActions">
-                <button type="button" class="welcome-btn welcome-btn-ghost" id="navBtnLogin" title="Dang nhap vao he thong">
+                <button type="button" class="welcome-btn welcome-btn-ghost" id="navBtnLogin" title="Đăng nhập vào hệ thống" data-i18n-attr="title:auth_btn_login">
                     <span data-i18n="nav_login">Đăng nhập</span>
                 </button>
-                <a href="index.html" class="welcome-btn welcome-btn-primary" id="navBtnTrial" title="Bat dau trai nghiem khong gian lam viec">
+                <a href="index.html" class="welcome-btn welcome-btn-primary" id="navBtnTrial" title="Bắt đầu trải nghiệm không gian làm việc" data-i18n-attr="title:nav_start_free">
                     <span data-i18n="nav_start_free">Bắt đầu miễn phí</span>
                     <svg class="welcome-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -63,7 +63,7 @@
                     <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English" data-i18n-attr="title:lang_en_title">EN</button>
                 </div>
                 <!-- Mobile Menu Button -->
-                <button type="button" class="welcome-mobile-toggle" id="btnWelcomeMobileMenu" aria-label="Mo menu dieu huong" aria-expanded="false" aria-controls="welcomeMobileDrawer">
+                <button type="button" class="welcome-mobile-toggle" id="btnWelcomeMobileMenu" aria-label="Mở menu điều hướng" aria-expanded="false" aria-controls="welcomeMobileDrawer" data-i18n-attr="aria-label:welcome_aria_mobile_menu">
                     <svg class="icon-menu-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -80,7 +80,7 @@
         <!-- Mobile Drawer Navigation -->
         <div class="welcome-mobile-drawer" id="welcomeMobileDrawer" aria-hidden="true">
             <div class="welcome-mobile-drawer-inner">
-                <nav class="welcome-mobile-nav" aria-label="Menu dieu huong di dong">
+                <nav class="welcome-mobile-nav" aria-label="Menu điều hướng di động" data-i18n-attr="aria-label:welcome_aria_mobile_nav">
                     <a href="#welcomeHero" class="welcome-mobile-link" data-i18n="nav_home">Trang chủ</a>
                     <a href="#welcomeFeatures" class="welcome-mobile-link" data-i18n="nav_features">Tính năng</a>
                     <a href="#welcomeHowItWorks" class="welcome-mobile-link" data-i18n="nav_how_it_works">Quy trình</a>
@@ -907,8 +907,7 @@ DEBUG_MODE=False</div>
                     <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF" data-i18n-attr="title:legal_print_title">
                         <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></span> <span data-i18n="common_print_save_pdf">In</span>
                     </button>
-                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng"
-                        title="Đóng" data-i18n-attr="aria-label:common_close,title:common_close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng" title="Đóng" data-i18n-attr="aria-label:common_close,title:common_close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                 </div>
             </div>
 
