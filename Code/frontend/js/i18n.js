@@ -175,23 +175,39 @@
             "sidebar_btn_upload": "Tải PDF lên",
             "sidebar_collapse_tooltip": "Thu gọn thanh điều hướng",
             "sidebar_expand_tooltip": "Mở rộng thanh điều hướng",
+            "sidebar_toggle": "Mở menu điều hướng",
+            "sidebar_more_options": "Tùy chọn",
 
             // Workspace Dropzone
             "dropzone_main_title": "Kéo thả tệp PDF vào đây",
             "dropzone_main_subtitle": "hoặc nhấp chuột để chọn tệp từ máy tính",
+            "dropzone_or_browse": "hoặc",
             "dropzone_btn_select": "Chọn tệp PDF",
             "dropzone_limits_hint": "Hỗ trợ tệp PDF tối đa {max_size} MB và {max_pages} trang",
             "dropzone_drag_over": "Thả tệp PDF vào đây để bắt đầu tải lên",
 
+            // Batch Queue UI
+            "batch_queue_title": "Hàng đợi tệp",
+            "batch_add_files": "Thêm tệp",
+            "batch_add_files_title": "Thêm tệp PDF vào hàng đợi",
+            "batch_clear_all": "Xóa tất cả",
+            "batch_clear_all_title": "Xóa toàn bộ hàng đợi",
+            "batch_queue_empty": "Hàng đợi trống. Kéo thả hoặc chọn tệp PDF để thêm vào.",
+            "batch_progress_title": "Tiến độ xử lý hàng đợi",
+            "batch_download_zip_pdf": "Tải ZIP (.PDF)",
+            "batch_download_zip_word": "Tải ZIP (.Word)",
+
             // Workspace Page Selection
             "page_select_title": "Phạm vi trang xử lý",
-            "page_select_all": "Tất cả các trang",
-            "page_select_custom": "Tùy chọn trang",
+            "page_select_all": "Toàn bộ tài liệu",
+            "page_select_custom": "Chọn trang cụ thể",
             "page_select_placeholder": "Ví dụ: 1-5, 8, 11-13",
-            "page_select_chip_all": "Toàn bộ",
+            "page_select_range_hint": "Ví dụ: <code>1-3, 5</code> (hỗ trợ trang đơn và khoảng)",
+            "page_select_quick_chips": "Chọn nhanh:",
+            "page_select_chip_first": "Trang đầu",
             "page_select_chip_first5": "5 trang đầu",
-            "page_select_chip_odd": "Trang lẻ",
-            "page_select_chip_even": "Trang chẵn",
+            "page_select_chip_first10": "Trang 1-10",
+            "btn_start_processing": "Bắt đầu xử lý & Dịch thuật",
 
             // Workspace Action Toolbar
             "toolbar_target_lang": "Dịch sang:",
@@ -204,12 +220,44 @@
             "toolbar_btn_export_docx": "Xuất Word (.docx)",
             "toolbar_btn_export_pdf": "Xuất PDF song ngữ",
             "toolbar_btn_copy": "Sao chép toàn bộ",
+            "view_mode_text_title": "Chỉ xem văn bản trích xuất",
+            "view_mode_pdf_title": "Xem trước PDF gốc",
+            "view_mode_split_title": "So sánh song song (PDF gốc | Bản dịch)",
+            "btn_retranslate_title": "Dịch lại theo ngôn ngữ đã chọn",
+            "btn_download_title": "Tải xuống tệp",
+            "dropdown_export_bilingual": "Bản dịch song ngữ",
+            "dropdown_export_summary": "Bản tóm tắt",
+            "dropdown_format_txt": "File TXT",
+            "dropdown_format_pdf": "File PDF",
+            "dropdown_format_word": "File Word",
+            "ai_tools_title": "Tiện ích AI",
+            "doc_actions_title": "Thao tác tài liệu",
+            "btn_upload_another": "Tải lên tệp khác",
+            "btn_copy_translation": "Sao chép bản dịch",
+            "btn_reset_workspace": "Làm mới phiên làm việc",
 
-            // Workspace Results Panels
+            // AI Summary & Copilot Card
+            "ai_summary_card_title": "Tóm tắt văn bản thông minh",
+            "ai_summary_card_sub": "Đúc kết thông điệp cốt lõi, rút trích luận điểm chính từ tài liệu với AI Gateway",
+            "ai_summary_style_label": "Kiểu tóm tắt:",
+            "ai_summary_length_label": "Độ dài:",
+            "btn_execute_ai_summary": "Bắt đầu tóm tắt",
+            "btn_copy_summary": "Sao chép tóm tắt",
+
+            // PDF Preview & Panels
+            "preview_pdf_heading": "Xem trước PDF",
+            "preview_pdf_subheading": "Bản gốc",
+            "preview_page_label": "Trang",
+            "preview_zoom_fit": "Vừa khung",
+            "preview_pdf_loading": "Đang tải và dựng trang PDF...",
             "panel_source_title": "Văn bản gốc",
             "panel_target_title": "Bản dịch",
             "panel_empty_source": "Chưa có nội dung văn bản gốc. Vui lòng tải tài liệu PDF để bắt đầu.",
             "panel_empty_target": "Chưa có bản dịch. Nhấn nút 'Dịch văn bản' trên thanh công cụ để thực hiện.",
+            "pane_tag_original": "Gốc",
+            "pane_tag_translated": "Bản Dịch",
+            "split_tab_pdf": "PDF Gốc",
+            "split_tab_translated": "Bản Dịch",
 
             // Auth Modal
             "auth_login_title": "Đăng Nhập Tài Khoản",
@@ -405,23 +453,39 @@
             "sidebar_btn_upload": "Upload PDF",
             "sidebar_collapse_tooltip": "Collapse sidebar",
             "sidebar_expand_tooltip": "Expand sidebar",
+            "sidebar_toggle": "Toggle navigation menu",
+            "sidebar_more_options": "Options",
 
             // Workspace Dropzone
             "dropzone_main_title": "Drag & drop your PDF file here",
             "dropzone_main_subtitle": "or click to select from your device",
+            "dropzone_or_browse": "or",
             "dropzone_btn_select": "Choose PDF File",
             "dropzone_limits_hint": "Supports PDF up to {max_size} MB and {max_pages} pages",
             "dropzone_drag_over": "Drop your PDF file here to start upload",
 
+            // Batch Queue UI
+            "batch_queue_title": "Batch Queue",
+            "batch_add_files": "Add Files",
+            "batch_add_files_title": "Add PDF files to batch queue",
+            "batch_clear_all": "Clear All",
+            "batch_clear_all_title": "Clear entire batch queue",
+            "batch_queue_empty": "Queue is empty. Drag and drop or choose PDF files to add.",
+            "batch_progress_title": "Batch Processing Progress",
+            "batch_download_zip_pdf": "Download ZIP (.PDF)",
+            "batch_download_zip_word": "Download ZIP (.Word)",
+
             // Workspace Page Selection
             "page_select_title": "Page Selection Range",
             "page_select_all": "All Pages",
-            "page_select_custom": "Custom Range",
+            "page_select_custom": "Custom Pages",
             "page_select_placeholder": "E.g. 1-5, 8, 11-13",
-            "page_select_chip_all": "All",
-            "page_select_chip_first5": "First 5",
-            "page_select_chip_odd": "Odd Pages",
-            "page_select_chip_even": "Even Pages",
+            "page_select_range_hint": "E.g. <code>1-3, 5</code> (supports single pages and ranges)",
+            "page_select_quick_chips": "Quick select:",
+            "page_select_chip_first": "First page",
+            "page_select_chip_first5": "First 5 pages",
+            "page_select_chip_first10": "Pages 1-10",
+            "btn_start_processing": "Start Processing & Translation",
 
             // Workspace Action Toolbar
             "toolbar_target_lang": "Translate to:",
@@ -434,12 +498,44 @@
             "toolbar_btn_export_docx": "Export Word (.docx)",
             "toolbar_btn_export_pdf": "Export Bilingual PDF",
             "toolbar_btn_copy": "Copy All",
+            "view_mode_text_title": "View extracted text only",
+            "view_mode_pdf_title": "Preview original PDF",
+            "view_mode_split_title": "Side-by-side comparison (PDF | Translation)",
+            "btn_retranslate_title": "Retranslate with selected language",
+            "btn_download_title": "Download exported file",
+            "dropdown_export_bilingual": "Bilingual Translation",
+            "dropdown_export_summary": "AI Summary",
+            "dropdown_format_txt": "TXT File",
+            "dropdown_format_pdf": "PDF File",
+            "dropdown_format_word": "Word File",
+            "ai_tools_title": "AI Utilities",
+            "doc_actions_title": "Document Actions",
+            "btn_upload_another": "Upload Another File",
+            "btn_copy_translation": "Copy Translation",
+            "btn_reset_workspace": "Reset Workspace Session",
 
-            // Workspace Results Panels
+            // AI Summary & Copilot Card
+            "ai_summary_card_title": "Smart Document Summarization",
+            "ai_summary_card_sub": "Extract core takeaways and main arguments from your document with AI Gateway",
+            "ai_summary_style_label": "Summary style:",
+            "ai_summary_length_label": "Length:",
+            "btn_execute_ai_summary": "Start Summary",
+            "btn_copy_summary": "Copy Summary",
+
+            // PDF Preview & Panels
+            "preview_pdf_heading": "PDF Preview",
+            "preview_pdf_subheading": "Original",
+            "preview_page_label": "Page",
+            "preview_zoom_fit": "Fit View",
+            "preview_pdf_loading": "Loading and rendering PDF page...",
             "panel_source_title": "Source Document",
             "panel_target_title": "Translation",
             "panel_empty_source": "No source content available. Please upload a PDF document to begin.",
             "panel_empty_target": "No translation available. Click 'Translate' on the toolbar to process.",
+            "pane_tag_original": "Original",
+            "pane_tag_translated": "Translation",
+            "split_tab_pdf": "Original PDF",
+            "split_tab_translated": "Translation",
 
             // Auth Modal
             "auth_login_title": "Sign In to Account",
@@ -592,7 +688,19 @@
                 });
             });
 
-            // 4. Update all switcher UI buttons
+            // 4. Custom navigation bindings for sidebar
+            if (typeof document.querySelector === 'function') {
+                const sideNavDocsSpan = document.querySelector('#sideNavDocuments .nav-item-text');
+                if (sideNavDocsSpan) {
+                    sideNavDocsSpan.textContent = this.t('nav_documents');
+                }
+                const sideNavDocsLink = document.querySelector('#sideNavDocuments');
+                if (sideNavDocsLink) {
+                    sideNavDocsLink.setAttribute('data-tooltip', this.t('nav_documents'));
+                }
+            }
+
+            // 5. Update all switcher UI buttons
             this.updateSwitcherUI(lang);
         },
 
