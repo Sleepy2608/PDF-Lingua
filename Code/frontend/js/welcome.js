@@ -158,18 +158,22 @@
 
     if (btnMonthly && btnYearly) {
       var setBillingCycle = function (cycle) {
+        var isEn = (window.PDFL_i18n && typeof window.PDFL_i18n.getLanguage === 'function')
+          ? window.PDFL_i18n.getLanguage() === 'en'
+          : (window.i18n && typeof window.i18n.getLanguage === 'function' ? window.i18n.getLanguage() === 'en' : false);
+
         if (cycle === 'yearly') {
           btnYearly.classList.add('active');
           btnMonthly.classList.remove('active');
-          if (priceValuePro) priceValuePro.textContent = '399.000 đ';
-          if (pricePeriodPro) pricePeriodPro.textContent = '/ năm';
-          if (pricePeriodFree) pricePeriodFree.textContent = '/ năm';
+          if (priceValuePro) priceValuePro.textContent = isEn ? '399,000 VND' : '399.000 đ';
+          if (pricePeriodPro) pricePeriodPro.textContent = isEn ? '/ year' : '/ năm';
+          if (pricePeriodFree) pricePeriodFree.textContent = isEn ? '/ year' : '/ năm';
         } else {
           btnMonthly.classList.add('active');
           btnYearly.classList.remove('active');
-          if (priceValuePro) priceValuePro.textContent = '49.000 đ';
-          if (pricePeriodPro) pricePeriodPro.textContent = '/ tháng';
-          if (pricePeriodFree) pricePeriodFree.textContent = '/ tháng';
+          if (priceValuePro) priceValuePro.textContent = isEn ? '49,000 VND' : '49.000 đ';
+          if (pricePeriodPro) pricePeriodPro.textContent = isEn ? '/ month' : '/ tháng';
+          if (pricePeriodFree) pricePeriodFree.textContent = isEn ? '/ month' : '/ tháng';
         }
       };
 
@@ -179,6 +183,11 @@
 
       btnYearly.addEventListener('click', function () {
         setBillingCycle('yearly');
+      });
+
+      document.addEventListener('languageChanged', function () {
+        var currentCycle = btnYearly.classList.contains('active') ? 'yearly' : 'monthly';
+        setBillingCycle(currentCycle);
       });
     }
 
@@ -385,13 +394,13 @@
         var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!email) {
           if (loginEmailError) {
-            loginEmailError.textContent = 'Vui lòng nhập địa chỉ email.';
+            loginEmailError.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_email_required') : 'Vui lòng nhập địa chỉ email.';
             loginEmailError.classList.add('active');
           }
           hasError = true;
         } else if (!emailRegex.test(email)) {
           if (loginEmailError) {
-            loginEmailError.textContent = 'Địa chỉ email không đúng định dạng.';
+            loginEmailError.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_email_format') : 'Địa chỉ email không đúng định dạng.';
             loginEmailError.classList.add('active');
           }
           hasError = true;
@@ -399,7 +408,7 @@
 
         if (!password) {
           if (loginPasswordError) {
-            loginPasswordError.textContent = 'Vui lòng nhập mật khẩu.';
+            loginPasswordError.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_password_required') : 'Vui lòng nhập mật khẩu.';
             loginPasswordError.classList.add('active');
           }
           hasError = true;
@@ -409,7 +418,7 @@
 
         if (btnSubmitLogin) btnSubmitLogin.disabled = true;
         if (loginSpinner) loginSpinner.style.display = 'inline-block';
-        if (loginBtnText) loginBtnText.textContent = 'Đang đăng nhập...';
+        if (loginBtnText) loginBtnText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_logging_in') : 'Đang đăng nhập...';
 
         var API_BASE_URL = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
           ? (window.location.protocol === 'https:' ? 'https:' : 'http:') + '//' + ((window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1') + ':8000'
@@ -433,7 +442,7 @@
           .then(function (result) {
             if (btnSubmitLogin) btnSubmitLogin.disabled = false;
             if (loginSpinner) loginSpinner.style.display = 'none';
-            if (loginBtnText) loginBtnText.textContent = 'Đăng nhập';
+            if (loginBtnText) loginBtnText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_btn_login') : 'Đăng nhập';
 
             if (result.status === 200 && result.data && result.data.data) {
               var token = result.data.data.access_token;
@@ -451,7 +460,9 @@
 
               if (loginAlert) {
                 loginAlert.className = 'form-alert alert-success';
-                loginAlert.textContent = 'Đăng nhập thành công! Đang chuyển hướng vào không gian làm việc...';
+                loginAlert.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                  ? window.i18n.t('auth_login_success_redirect')
+                  : 'Đăng nhập thành công! Đang chuyển hướng vào không gian làm việc...';
                 loginAlert.style.display = 'flex';
               }
 
@@ -459,7 +470,7 @@
                 window.location.href = 'index.html';
               }, 700);
             } else {
-              var errorMsg = (result.data && result.data.message) ? result.data.message : 'Email hoặc mật khẩu không chính xác.';
+              var errorMsg = (result.data && result.data.message) ? result.data.message : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_invalid_credentials') : 'Email hoặc mật khẩu không chính xác.');
               if (loginAlert) {
                 loginAlert.className = 'form-alert alert-error';
                 loginAlert.textContent = errorMsg;
@@ -470,10 +481,16 @@
           .catch(function () {
             if (btnSubmitLogin) btnSubmitLogin.disabled = false;
             if (loginSpinner) loginSpinner.style.display = 'none';
-            if (loginBtnText) loginBtnText.textContent = 'Đăng nhập';
+            if (loginBtnText) {
+              loginBtnText.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                ? window.i18n.t('auth_btn_login')
+                : 'Đăng nhập';
+            }
             if (loginAlert) {
               loginAlert.className = 'form-alert alert-error';
-              loginAlert.textContent = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ.';
+              loginAlert.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                ? window.i18n.t('auth_error_server_unreachable')
+                : 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ.';
               loginAlert.style.display = 'flex';
             }
           });
@@ -607,7 +624,7 @@
               ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>'
               : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
           }
-          if (fsText) fsText.textContent = isFs ? 'Thu nhỏ' : 'Phóng to';
+          if (fsText) fsText.textContent = isFs ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_exit_fullscreen') : 'Thu nhỏ') : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_fullscreen') : 'Phóng to');
         });
       }
 
@@ -633,9 +650,9 @@
           e.preventDefault();
           var email = 'huytamnguyenle2608@gmail.com';
           var notifyCopy = function () {
-            btnCopySupportEmail.textContent = 'Đã sao chép!';
+            btnCopySupportEmail.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copied') : 'Đã sao chép!';
             setTimeout(function () {
-              btnCopySupportEmail.textContent = 'Sao chép';
+              btnCopySupportEmail.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copy') : 'Sao chép';
             }, 2000);
           };
 
@@ -652,7 +669,10 @@
       if (feedbackForm) {
         feedbackForm.addEventListener('submit', function (e) {
           e.preventDefault();
-          alert('Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!');
+          var alertMsg = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('toast_feedback_sent')
+            : 'Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!';
+          alert(alertMsg);
           feedbackForm.reset();
         });
       }
@@ -672,8 +692,7 @@
   function initWelcomeModalScrollLock() {
     var MODAL_SELECTORS = [
       '.modal-backdrop',
-      '.legal-modal-overlay',
-      '[role="dialog"]'
+      '.legal-modal-overlay'
     ];
 
     var savedScrollY = 0;
@@ -682,15 +701,20 @@
     function isElementVisibleModal(el) {
       if (!el) return false;
       if (el.hasAttribute('hidden')) return false;
-      if (el.style && el.style.display === 'none') return false;
+      if (el.style && (el.style.display === 'none' || el.style.visibility === 'hidden')) return false;
       if (el.classList.contains('legal-modal-overlay')) {
         return el.classList.contains('active') || (el.style && el.style.display === 'flex');
       }
+      if (typeof el.checkVisibility === 'function') {
+        return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+      }
       if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
         var comp = window.getComputedStyle(el);
-        return comp.display !== 'none' && comp.visibility !== 'hidden';
+        if (comp.display === 'none' || comp.visibility === 'hidden' || comp.opacity === '0') {
+          return false;
+        }
       }
-      return true;
+      return el.offsetWidth > 0 || el.offsetHeight > 0 || (typeof el.getClientRects === 'function' && el.getClientRects().length > 0);
     }
 
     function hasAnyOpenModal() {

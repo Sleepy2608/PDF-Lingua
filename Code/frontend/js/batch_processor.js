@@ -147,7 +147,9 @@
       }
 
       if (progressText) {
-        progressText.textContent = `${processedCount} / ${total} hoàn thành (${overallPercent}%)`;
+        progressText.textContent = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('batch_progress_format', { count: processedCount, total: total, percent: overallPercent })
+          : `${processedCount} / ${total} hoàn thành (${overallPercent}%)`;
       }
     }
 
@@ -156,7 +158,10 @@
 
       const queue = (window.pdfLinguaBatchQueue && window.pdfLinguaBatchQueue.getQueue()) || [];
       if (queue.length === 0) {
-        this.showToast('Hàng đợi tệp đang trống. Vui lòng thêm tệp PDF trước!', 'warning');
+        const warnMsg = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('batch_queue_empty_warning')
+          : 'Hàng đợi tệp đang trống. Vui lòng thêm tệp PDF trước!';
+        this.showToast(warnMsg, 'warning');
         return;
       }
 
@@ -171,7 +176,9 @@
         if (item.status !== 'completed') {
           window.pdfLinguaBatchQueue.updateItem(item.id, {
             status: 'waiting',
-            statusText: 'Đang xếp hàng chờ...',
+            statusText: (window.i18n && typeof window.i18n.t === 'function')
+              ? window.i18n.t('batch_status_waiting')
+              : 'Đang xếp hàng chờ...',
             progress: 0,
           });
         }
@@ -223,7 +230,9 @@
       item.startTime = Date.now();
       window.pdfLinguaBatchQueue.updateItem(item.id, {
         status: 'processing',
-        statusText: 'Đang gửi tệp lên máy chủ...',
+        statusText: (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('batch_status_uploading')
+          : 'Đang gửi tệp lên máy chủ...',
         progress: 10,
       });
       this.updateOverallProgress();
@@ -305,7 +314,9 @@
         window.pdfLinguaBatchQueue.updateItem(item.id, {
           job_id: jobId,
           status: 'processing',
-          statusText: 'Đang phân tích & dịch thuật...',
+          statusText: (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('batch_status_processing')
+            : 'Đang phân tích & dịch thuật...',
           progress: 20,
         });
         this.updateOverallProgress();
@@ -436,8 +447,11 @@
     }
 
     handleItemSuccess(item, result) {
+      const completedText = (window.i18n && typeof window.i18n.t === 'function')
+        ? window.i18n.t('batch_status_completed')
+        : 'Hoàn thành';
       item.status = 'completed';
-      item.statusText = 'Hoàn thành';
+      item.statusText = completedText;
       item.progress = 100;
       item.result = result;
       if (item.startTime) {
@@ -453,7 +467,7 @@
 
       window.pdfLinguaBatchQueue.updateItem(item.id, {
         status: 'completed',
-        statusText: 'Hoàn thành',
+        statusText: completedText,
         progress: 100,
         result: result,
         execution_time_ms: execTimeMs,
@@ -522,21 +536,31 @@
         if (this.failedJobs.length > 0) {
           if (notice) {
             notice.style.display = 'block';
-            notice.textContent = `Đã hoàn thành ${this.completedJobs.length} tệp, có ${this.failedJobs.length} tệp thất bại. Bạn có thể tải các tệp thành công.`;
+            notice.textContent = (window.i18n && typeof window.i18n.t === 'function')
+              ? window.i18n.t('batch_completed_partial_notice', { done: this.completedJobs.length, fail: this.failedJobs.length })
+              : `Đã hoàn thành ${this.completedJobs.length} tệp, có ${this.failedJobs.length} tệp thất bại. Bạn có thể tải các tệp thành công.`;
           }
           this.showToast(`Hoàn tất: ${this.completedJobs.length} thành công, ${this.failedJobs.length} thất bại.`, 'warning');
         } else {
           if (notice) notice.style.display = 'none';
-          this.showToast(`Đã xử lý thành công toàn bộ ${this.completedJobs.length} tệp!`, 'success');
+          const successToast = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('batch_toast_all_success', { count: this.completedJobs.length })
+            : `Đã xử lý thành công toàn bộ ${this.completedJobs.length} tệp!`;
+          this.showToast(successToast, 'success');
         }
       } else {
         if (btnZip) btnZip.style.display = 'none';
         if (btnZipDocx) btnZipDocx.style.display = 'none';
         if (notice) {
           notice.style.display = 'block';
-          notice.textContent = 'Toàn bộ các tệp trong hàng đợi đều xử lý thất bại.';
+          notice.textContent = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('batch_toast_all_failed')
+            : 'Toàn bộ các tệp trong hàng đợi đều xử lý thất bại.';
         }
-        this.showToast('Không có tệp nào xử lý thành công trong hàng đợi.', 'error');
+        const noSuccessToast = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('batch_toast_no_success_to_download')
+          : 'Không có tệp nào xử lý thành công trong hàng đợi.';
+        this.showToast(noSuccessToast, 'error');
       }
 
       // If exactly 1 file was processed successfully and workspace can render it
@@ -556,7 +580,10 @@
 
     async downloadBatchZip(format = 'pdf') {
         if (this.completedJobs.length === 0) {
-          this.showToast('Không có tệp nào xử lý thành công để tải về.', 'warning');
+          const noSuccessMsg = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('batch_toast_no_success_to_download')
+            : 'Không có tệp nào xử lý thành công để tải về.';
+          this.showToast(noSuccessMsg, 'warning');
           return;
         }
 
@@ -569,7 +596,10 @@
             window.PDFLinguaPricing &&
             typeof window.PDFLinguaPricing.openQuotaExceededModal === 'function'
           ) {
-            window.PDFLinguaPricing.openQuotaExceededModal('Tính năng tải trọn bộ ZIP file Word (.docx) chỉ dành riêng cho tài khoản Pro. Vui lòng nâng cấp gói để sử dụng!');
+            const modalMsg = (window.i18n && typeof window.i18n.t === 'function')
+              ? window.i18n.t('pricing_pro_zip_modal_msg')
+              : 'Tính năng tải trọn bộ ZIP file Word (.docx) chỉ dành riêng cho tài khoản Pro. Vui lòng nâng cấp gói để sử dụng!';
+            window.PDFLinguaPricing.openQuotaExceededModal(modalMsg);
           }
           return;
         }
@@ -614,13 +644,19 @@
         });
 
         if (response.status === 401) {
-          this.showToast('Vui lòng đăng nhập để tải trọn bộ kết quả dạng ZIP.', 'warning');
+          const authZipMsg = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('batch_toast_login_required_zip')
+            : 'Vui lòng đăng nhập để tải trọn bộ kết quả dạng ZIP.';
+          this.showToast(authZipMsg, 'warning');
           if (typeof handleAuthError === 'function') handleAuthError();
           return;
         }
 
         if (response.status === 403) {
-          this.showToast('Bạn không có quyền tải tệp này.', 'error');
+          const forbidMsg = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('batch_toast_zip_forbidden')
+            : 'Bạn không có quyền tải tệp này.';
+          this.showToast(forbidMsg, 'error');
           return;
         }
 
@@ -649,7 +685,10 @@
         window.URL.revokeObjectURL(blobUrl);
 
         const fmtLabel = format === 'docx' ? 'Word (.docx)' : 'PDF';
-        this.showToast(`Đã tải về trọn bộ file ZIP(${ fmtLabel }) thành công!`, 'success');
+        const zipSuccessMsg = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('batch_toast_zip_success', { format: fmtLabel })
+          : `Đã tải về trọn bộ file ZIP(${ fmtLabel }) thành công!`;
+        this.showToast(zipSuccessMsg, 'success');
       } catch (err) {
         const msg = err.message || 'Lỗi khi tải tệp ZIP.';
         this.showToast(msg, 'error');

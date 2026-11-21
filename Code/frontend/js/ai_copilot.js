@@ -163,7 +163,7 @@
       const doc = window.pdfLinguaWorkspace.getCurrentDocData();
       if (doc && doc.filename) docName = doc.filename;
     }
-    badge.textContent = docName || 'Tài liệu song ngữ';
+    badge.textContent = docName || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('copilot_badge_bilingual_doc') : 'Tài liệu song ngữ');
   }
 
   // Open Copilot Drawer
@@ -288,8 +288,8 @@
     if (citations && citations.length > 0) {
       const citationBadges = citations.map(c => {
         const pageLabel = c.page_number !== null && c.page_number !== undefined
-          ? `Trang ${c.page_number}, Đoạn ${c.chunk_index}`
-          : `Đoạn ${c.chunk_index}`;
+          ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('copilot_citation_page_chunk', { page: c.page_number, chunk: c.chunk_index }) : `Trang ${c.page_number}, Đoạn ${c.chunk_index}`)
+          : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('copilot_citation_chunk', { chunk: c.chunk_index }) : `Đoạn ${c.chunk_index}`);
         const preview = escapeHtml(c.snippet || '');
         return `
           <span class="copilot-source-tag" title="${preview}">
@@ -303,13 +303,15 @@
       }).join(' ');
       sourcesHtml = citationBadges;
     } else if (relevantChunks && relevantChunks.length > 0) {
+      const sourceTagTitle = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('copilot_source_tag_title') : 'Căn cứ theo nội dung trích xuất từ tài liệu';
+      const chunkCountLbl = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('copilot_citation_count_label') : 'đoạn trích dẫn';
       sourcesHtml = `
-        <span class="copilot-source-tag" title="Căn cứ theo nội dung trích xuất từ tài liệu">
+        <span class="copilot-source-tag" title="${sourceTagTitle}">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
           </svg>
-          ${relevantChunks.length} đoạn trích dẫn
+          ${relevantChunks.length} ${chunkCountLbl}
         </span>
       `;
     }

@@ -97,7 +97,7 @@
       errorEl.style.display = 'flex';
       if (errorMsgEl) {
         errorMsgEl.textContent =
-          errorMessage || 'Không thể hiển thị bản xem trước tệp PDF.';
+          errorMessage || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_error_cannot_display') : 'Không thể hiển thị bản xem trước tệp PDF.');
       }
     }
 
@@ -177,7 +177,7 @@
    */
   async function loadPdfPreview(pdfDataOrUrl) {
     if (!pdfDataOrUrl) {
-      showPreviewError('Không có dữ liệu tệp PDF hợp lệ.');
+      showPreviewError((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_error_no_valid_data') : 'Không có dữ liệu tệp PDF hợp lệ.');
       return false;
     }
 
@@ -214,7 +214,7 @@
       currentRenderTask = null;
     }
 
-    setLoadingState(true, 'Đang chuẩn bị bản xem trước PDF...');
+    setLoadingState(true, (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_loading_preparing') : 'Đang chuẩn bị bản xem trước PDF...');
     clearPreviewError();
 
     const previewContainer = getEl('pdfPreviewContainer');
@@ -294,7 +294,7 @@
           docNameEl.textContent = pdfDataOrUrl.name;
         } else if (typeof pdfDataOrUrl === 'string') {
           const rawName = pdfDataOrUrl.split('/').pop() || '';
-          docNameEl.textContent = rawName.split('?')[0] || 'Bản gốc';
+          docNameEl.textContent = rawName.split('?')[0] || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_doc_original_fallback') : 'Bản gốc');
         }
       }
 
@@ -353,7 +353,7 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return false;
 
-    setLoadingState(true, `Đang dựng trang ${targetPage}...`);
+    setLoadingState(true, (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_rendering_page', { page: targetPage }) : `Đang dựng trang ${targetPage}...`);
 
     let renderTask = null;
 
@@ -559,7 +559,9 @@
     }
 
     if (toggleBtn) {
-      toggleBtn.title = isCollapsed ? 'Mở rộng bản xem trước' : 'Thu gọn bản xem trước';
+      toggleBtn.title = isCollapsed
+        ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_expand_title') : 'Mở rộng bản xem trước')
+        : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_collapse_title') : 'Thu gọn bản xem trước');
       toggleBtn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
     }
   }

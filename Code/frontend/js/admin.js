@@ -100,7 +100,10 @@
   function openAdminView() {
     const user = getCurrentUser();
     if (!user || user.role !== 'admin') {
-      notifyUser('Bạn không có quyền truy cập bảng quản trị.', 'error');
+      const msg = (window.i18n && typeof window.i18n.t === 'function')
+        ? window.i18n.t('admin_forbidden_toast')
+        : 'Bạn không có quyền truy cập bảng quản trị.';
+      notifyUser(msg, 'error');
       return;
     }
 
@@ -170,12 +173,21 @@
       }
     } catch (err) {
       console.error('[PDF-Lingua Admin] Error loading stats:', err);
-      notifyUser('Không thể kết nối đến máy chủ để tải số liệu thống kê.', 'error');
+      const msg = (window.i18n && typeof window.i18n.t === 'function')
+        ? window.i18n.t('admin_stats_conn_error')
+        : 'Không thể kết nối đến máy chủ để tải số liệu thống kê.';
+      notifyUser(msg, 'error');
     }
   }
 
   function renderAdminStats(stats) {
     if (!stats) return;
+
+    const freeLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_free') : 'Miễn phí';
+    const adminLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_admin') : 'Quản trị';
+    const activeLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_active') : 'Hoạt động';
+    const lockedLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_locked') : 'Đã khóa';
+    const bytesLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_bytes_label') : 'byte dữ liệu';
 
     // Card 1: Users
     const elTotalUsers = document.getElementById('statTotalUsers');
@@ -189,9 +201,9 @@
     const adminCount = stats.admin_users || 0;
 
     if (elTotalUsers) elTotalUsers.textContent = total.toLocaleString('vi-VN');
-    if (elFreeUsers) elFreeUsers.textContent = `Miễn phí: ${freeCount}`;
+    if (elFreeUsers) elFreeUsers.textContent = `${freeLabel}: ${freeCount}`;
     if (elProUsers) elProUsers.textContent = `Pro: ${proCount}`;
-    if (elAdminUsers) elAdminUsers.textContent = `Quản trị: ${adminCount}`;
+    if (elAdminUsers) elAdminUsers.textContent = `${adminLabel}: ${adminCount}`;
 
     // Bento Distribution Bar segments
     const segFree = document.getElementById('distSegFree');
@@ -217,8 +229,8 @@
     const ratio = total > 0 ? Math.round((active / total) * 100) : 100;
 
     if (elActiveRatio) elActiveRatio.textContent = `${ratio}%`;
-    if (elActiveUsers) elActiveUsers.textContent = `Hoạt động: ${active}`;
-    if (elLockedUsers) elLockedUsers.textContent = `Đã khóa: ${stats.locked_users || 0}`;
+    if (elActiveUsers) elActiveUsers.textContent = `${activeLabel}: ${active}`;
+    if (elLockedUsers) elLockedUsers.textContent = `${lockedLabel}: ${stats.locked_users || 0}`;
 
     // Card 3: Documents
     const elTotalDocs = document.getElementById('statTotalDocs');
@@ -230,7 +242,7 @@
 
     const bytes = stats.total_storage_bytes || 0;
     if (elTotalStorage) elTotalStorage.textContent = formatBytes(bytes);
-    if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} byte dữ liệu`;
+    if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} ${bytesLabel}`;
   }
 
   function renderSkeletonRows(count = 5) {
@@ -304,7 +316,10 @@
         notifyUser('Phiên làm việc hết hạn hoặc bạn không có quyền Admin.', 'error');
         closeAdminView();
       } else {
-        notifyUser('Không thể tải danh sách người dùng.', 'error');
+        const loadUsersFailMsg = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('admin_load_users_failed')
+          : 'Không thể tải danh sách người dùng.';
+        notifyUser(loadUsersFailMsg, 'error');
       }
     } catch (err) {
       console.error('[PDF-Lingua Admin] Error loading user list:', err);
@@ -320,8 +335,11 @@
     const tableEl = document.getElementById('adminUsersTable');
     const countBadge = document.getElementById('adminUsersCountBadge');
 
+    const accountsUnit = (window.i18n && typeof window.i18n.t === 'function')
+      ? window.i18n.t('admin_accounts_count_unit')
+      : 'tài khoản';
     if (countBadge) {
-      countBadge.textContent = `${totalCount.toLocaleString('vi-VN')} tài khoản`;
+      countBadge.textContent = `${totalCount.toLocaleString('vi-VN')} ${accountsUnit}`;
     }
 
     if (!users || users.length === 0) {
@@ -337,17 +355,29 @@
     const currentAdmin = getCurrentUser();
     const currentAdminId = currentAdmin ? currentAdmin.id : -1;
 
+    const unnamedText = (window.i18n && typeof window.i18n.t === 'function')
+      ? window.i18n.t('admin_unnamed_user')
+      : 'Chưa đặt tên';
+    const freeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_free') : 'Miễn phí';
+    const adminText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_admin') : 'Quản trị';
+    const activeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_active') : 'Hoạt động';
+    const lockedText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_locked') : 'Đã khóa';
+    const btnLockText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_lock') : 'Khóa';
+    const btnUnlockText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_unlock') : 'Mở khóa';
+    const btnDemoteFreeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_demote_free') : 'Hạ Miễn phí';
+    const btnGrantProText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_grant_pro') : 'Cấp Pro';
+
     let html = '';
     users.forEach((u) => {
       const isSelf = u.id === currentAdminId;
       const initial = (u.full_name ? u.full_name.charAt(0) : (u.email ? u.email.charAt(0) : 'U')).toUpperCase();
-      const displayName = u.full_name ? escapeHtml(u.full_name) : '<em>Chưa đặt tên</em>';
+      const displayName = u.full_name ? escapeHtml(u.full_name) : `<em>${unnamedText}</em>`;
       const email = escapeHtml(u.email);
 
       // Role badge with sleek inline SVG
       let roleBadgeClass = 'role-badge free';
       let roleAvatarClass = 'role-avatar-free';
-      let roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Miễn phí';
+      let roleLabel = `<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${freeText}`;
       if (u.role === 'pro') {
         roleBadgeClass = 'role-badge pro';
         roleAvatarClass = 'role-avatar-pro';
@@ -355,14 +385,14 @@
       } else if (u.role === 'admin') {
         roleBadgeClass = 'role-badge admin';
         roleAvatarClass = 'role-avatar-admin';
-        roleLabel = '<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Quản trị';
+        roleLabel = `<svg class="badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>${adminText}`;
       }
 
       // Status pill with pulsing dot or locked icon
       const statusPillClass = u.is_active ? 'status-pill active' : 'status-pill locked';
       const statusLabel = u.is_active
-        ? '<span class="status-dot"></span>Hoạt động'
-        : '<svg class="status-lock-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Đã khóa';
+        ? `<span class="status-dot"></span>${activeText}`
+        : `<svg class="status-lock-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>${lockedText}`;
 
       // Action buttons with tactile feedback and crisp SVG icons
       let actionButtons = '';
@@ -370,11 +400,11 @@
         actionButtons = `<span class="admin-self-tag">(Tài khoản hiện tại)</span>`;
       } else {
         const toggleStatusBtn = u.is_active
-          ? `<button type="button" class="btn-action btn-action-lock" data-action="lock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Khóa</button>`
-          : `<button type="button" class="btn-action btn-action-unlock" data-action="unlock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg> Mở khóa</button>`;
+          ? `<button type="button" class="btn-action btn-action-lock" data-action="lock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> ${btnLockText}</button>`
+          : `<button type="button" class="btn-action btn-action-unlock" data-action="unlock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg> ${btnUnlockText}</button>`;
 
         const nextRole = u.role === 'pro' ? 'free' : 'pro';
-        const roleBtnLabel = u.role === 'pro' ? 'Hạ Miễn phí' : 'Cấp Pro';
+        const roleBtnLabel = u.role === 'pro' ? btnDemoteFreeText : btnGrantProText;
         const roleBtnClass = u.role === 'pro' ? 'btn-action-role action-to-free' : 'btn-action-role action-to-pro';
         const changeRoleBtn = `<button type="button" class="btn-action ${roleBtnClass}" data-action="change-role" data-user-id="${u.id}" data-user-email="${email}" data-target-role="${nextRole}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> ${roleBtnLabel}</button>`;
 
@@ -420,7 +450,9 @@
     if (btnNext) btnNext.disabled = currentPage >= totalPages;
     if (pageBadge) pageBadge.textContent = String(currentPage);
     if (pageInfo) {
-      pageInfo.textContent = `Trang ${currentPage} / ${totalPages} (Tổng ${totalCount} tài khoản)`;
+      pageInfo.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        ? window.i18n.t('admin_pagination_info', { current: currentPage, total: totalPages, count: totalCount })
+        : `Trang ${currentPage} / ${totalPages} (Tổng ${totalCount} tài khoản)`;
     }
   }
 
@@ -448,7 +480,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-danger';
-        proceedBtn.textContent = 'Khóa tài khoản này';
+        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('admin_confirm_lock_btn')
+          : 'Khóa tài khoản này';
       }
     } else if (config.actionType === 'success') {
       if (iconWrap) {
@@ -458,7 +492,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
-        proceedBtn.textContent = 'Mở khóa tài khoản';
+        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('admin_confirm_unlock_btn')
+          : 'Mở khóa tài khoản';
       }
     } else {
       if (iconWrap) {
@@ -468,7 +504,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
-        proceedBtn.textContent = 'Xác nhận thay đổi';
+        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('admin_confirm_change_btn')
+          : 'Xác nhận thay đổi';
       }
     }
 
@@ -500,8 +538,13 @@
 
       const json = await res.json();
       if (res.status === 200) {
-        const actionLabel = newActiveStatus ? 'Mở khóa' : 'Khóa';
-        notifyUser(`${actionLabel} tài khoản ${userEmail} thành công!`, 'success');
+        const actionLabel = newActiveStatus
+          ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_unlock') : 'Mở khóa')
+          : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_lock') : 'Khóa');
+        const toastMsg = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('admin_toast_user_status_updated', { action: actionLabel, email: userEmail })
+          : `${actionLabel} tài khoản ${userEmail} thành công!`;
+        notifyUser(toastMsg, 'success');
         // Refresh table & stats
         fetchAdminUsers(currentPage);
         fetchAdminStats();
@@ -532,7 +575,10 @@
 
       const json = await res.json();
       if (res.status === 200) {
-        notifyUser(`Đã cập nhật vai trò ${userEmail} thành ${newRole.toUpperCase()}!`, 'success');
+        const toastMsg = (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('admin_toast_role_updated', { email: userEmail, role: newRole.toUpperCase() })
+          : `Đã cập nhật vai trò ${userEmail} thành ${newRole.toUpperCase()}!`;
+        notifyUser(toastMsg, 'success');
         // Refresh table & stats
         fetchAdminUsers(currentPage);
         fetchAdminStats();
