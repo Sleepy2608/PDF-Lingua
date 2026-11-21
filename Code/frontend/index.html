@@ -24,7 +24,7 @@
 <body>
     <div class="app-shell" id="appShell">
         <!-- Collapsible Sidebar Navigation (PDF Document Management) -->
-        <aside class="app-sidebar" id="appSidebar" aria-label="Thanh điều hướng chính"
+        <aside class="app-sidebar" id="appSidebar" aria-label="Thanh điều hướng chính" data-i18n-attr="aria-label:sidebar_main_nav_aria"
             data-i18n-attr="aria-label:sidebar_main_nav_aria">
             <!-- Sidebar Header: Brand + Toggle Button -->
             <div class="sidebar-header">
@@ -36,7 +36,7 @@
                     </span>
                 </a>
                 <button type="button" class="sidebar-toggle-btn" id="btnToggleSidebar"
-                    aria-label="Thu gọn thanh điều hướng" data-tooltip="Thu gọn thanh điều hướng"
+                    aria-label="Thu gọn thanh điều hướng" data-tooltip="Thu gọn thanh điều hướng" data-i18n-attr="aria-label:sidebar_collapse_title,data-tooltip:sidebar_collapse_title"
                     data-i18n-attr="aria-label:sidebar_collapse_tooltip,data-tooltip:sidebar_collapse_tooltip">
                     <svg class="toggle-icon-open" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -53,7 +53,7 @@
 
             <!-- Primary Action Button: Upload PDF -->
             <div class="sidebar-action-wrap">
-                <button type="button" class="btn-sidebar-upload" id="btnSidebarUpload" data-tooltip="Tải PDF lên"
+                <button type="button" class="btn-sidebar-upload" id="btnSidebarUpload" data-tooltip="Tải PDF lên" data-i18n-attr="data-tooltip:docs_btn_upload"
                     aria-label="Tải PDF lên" data-i18n-attr="data-tooltip:sidebar_btn_upload,aria-label:sidebar_btn_upload">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -71,7 +71,7 @@
                 <div class="sidebar-section">
                     <ul class="sidebar-nav-list">
                         <li>
-                            <a href="#home" class="sidebar-nav-item active" id="sideNavHome" data-tooltip="Trang chủ"
+                            <a href="#home" class="sidebar-nav-item active" id="sideNavHome" data-tooltip="Trang chủ" data-i18n-attr="data-tooltip:nav_home"
                                 data-i18n-attr="data-tooltip:nav_home">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -84,7 +84,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#translate" class="sidebar-nav-item" id="sideNavTranslate" data-tooltip="Dịch PDF"
+                            <a href="#translate" class="sidebar-nav-item" id="sideNavTranslate" data-tooltip="Dịch PDF" data-i18n-attr="data-tooltip:nav_translate_tooltip"
                                 data-i18n-attr="data-tooltip:toolbar_btn_translate">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -153,7 +153,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá gói"
+                            <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá gói" data-i18n-attr="data-tooltip:nav_pricing_tooltip"
                                 data-i18n-attr="data-tooltip:nav_pricing">
                                 <span class="nav-item-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -200,7 +200,7 @@
             <!-- Fixed Footer: User Profile -->
             <div class="sidebar-footer">
                 <div class="sidebar-profile-card" id="sidebarUserProfile" tabindex="0" role="button"
-                    aria-label="Xem thông tin tài khoản" data-tooltip="Khách"
+                    aria-label="Xem thông tin tài khoản" data-tooltip="Khách" data-i18n-attr="aria-label:sidebar_profile_aria,data-tooltip:role_guest_tooltip"
                     data-i18n-attr="aria-label:sidebar_profile_aria,data-tooltip:role_guest">
                     <div class="sidebar-avatar" id="sidebarUserAvatar">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -213,7 +213,7 @@
                         <div class="sidebar-user-name" id="sidebarUserName" data-i18n="role_guest">Khách</div>
                         <div class="sidebar-user-sub" id="sidebarUserRole" style="display: none;"></div>
                     </div>
-                    <div class="sidebar-profile-more" id="btnSidebarMore" title="Tùy chọn"
+                    <div class="sidebar-profile-more" id="btnSidebarMore" title="Tùy chọn" data-i18n-attr="title:sidebar_more_options"
                         data-i18n-attr="title:sidebar_more_options">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -235,7 +235,7 @@
                 <div class="container header-container">
                     <div class="header-left">
                         <button type="button" class="btn-mobile-sidebar-toggle" id="btnMobileSidebarToggle"
-                            aria-label="Mở menu điều hướng" title="Mở menu điều hướng"
+                            aria-label="Mở menu điều hướng" title="Mở menu điều hướng" data-i18n-attr="aria-label:sidebar_toggle,title:sidebar_toggle"
                             data-i18n-attr="aria-label:sidebar_toggle,title:sidebar_toggle">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -269,15 +269,15 @@
                                 <span class="admin-badge-text" data-i18n="role_admin">Quản trị viên</span>
                             </div>
                             <button type="button" class="user-profile-badge" id="btnOpenAccountModal"
-                                title="Xem thông tin tài khoản">
+                                title="Xem thông tin tài khoản" data-i18n-attr="title:sidebar_profile_aria">
                                 <span class="user-avatar" id="userAvatar"></span>
                                 <span class="user-name" id="userDisplayName"></span>
                             </button>
                             <button type="button" class="btn btn-logout" id="btnLogout" data-i18n="nav_logout">Đăng xuất</button>
                         </div>
                         <!-- Language Switcher (VI / EN) on the outside -->
-                        <div class="lang-switcher" id="appLangSwitcher" role="group" aria-label="Chọn ngôn ngữ">
-                            <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt">VI</button>
+                        <div class="lang-switcher" id="appLangSwitcher" role="group" aria-label="Chọn ngôn ngữ" data-i18n-attr="aria-label:lang_select_aria">
+                            <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt" data-i18n-attr="title:lang_vi_title">VI</button>
                             <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English">EN</button>
                         </div>
                     </div>
@@ -540,7 +540,7 @@
                                             </div>
                                             <div class="batch-queue-actions">
                                                 <button type="button" class="btn-batch-action btn-batch-add"
-                                                    id="btnAddMoreFiles" title="Thêm tệp PDF vào hàng đợi"
+                                                    id="btnAddMoreFiles" title="Thêm tệp PDF vào hàng đợi" data-i18n-attr="title:batch_add_files_title"
                                                     data-i18n-attr="title:batch_add_files_title">
                                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                                                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -551,7 +551,7 @@
                                                     <span data-i18n="batch_add_files">Thêm tệp</span>
                                                 </button>
                                                 <button type="button" class="btn-batch-action btn-batch-clear"
-                                                    id="btnClearBatchQueue" title="Xóa toàn bộ hàng đợi"
+                                                    id="btnClearBatchQueue" title="Xóa toàn bộ hàng đợi" data-i18n-attr="title:batch_clear_all_title"
                                                     data-i18n-attr="title:batch_clear_all_title">
                                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                                                         stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -568,7 +568,7 @@
 
                                         <!-- Batch Queue List -->
                                         <div class="batch-queue-list" id="batchQueueList" role="list"
-                                            aria-label="Danh sách tệp trong hàng đợi"
+                                            aria-label="Danh sách tệp trong hàng đợi" data-i18n-attr="aria-label:batch_queue_list_aria"
                                             data-i18n-attr="aria-label:batch_queue_list_aria">
                                         </div>
 
@@ -606,7 +606,7 @@
                                             <div class="batch-zip-btn-group" id="batchZipBtnGroup">
                                                 <button type="button" class="btn btn-gradient btn-batch-zip"
                                                     id="btnDownloadBatchZip" style="display: none;"
-                                                    title="Tải toàn bộ kết quả dạng file ZIP (PDF)"
+                                                    title="Tải toàn bộ kết quả dạng file ZIP (PDF)" data-i18n-attr="title:batch_download_zip_pdf_title"
                                                     data-i18n-attr="title:batch_download_zip_pdf">
                                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -619,7 +619,7 @@
                                                 </button>
                                                 <button type="button" class="btn btn-batch-zip-docx"
                                                     id="btnDownloadBatchZipDocx" style="display: none;"
-                                                    title="Tải toàn bộ kết quả dạng file ZIP (Word .docx) - Dành cho tài khoản Pro"
+                                                    title="Tải toàn bộ kết quả dạng file ZIP (Word .docx) - Dành cho tài khoản Pro" data-i18n-attr="title:batch_download_zip_docx_title"
                                                     data-i18n-attr="title:batch_download_zip_word">
                                                     <span class="fmt-pill docx">DOCX</span>
                                                     <span data-i18n="batch_download_zip_word">Tải ZIP (.Word)</span>
@@ -648,7 +648,7 @@
                                         </div>
 
                                         <!-- Mode Options: All pages vs Custom range -->
-                                        <div class="page-mode-group" role="radiogroup" aria-label="Phạm vi trang xử lý"
+                                        <div class="page-mode-group" role="radiogroup" aria-label="Phạm vi trang xử lý" data-i18n-attr="aria-label:page_select_title"
                                             data-i18n-attr="aria-label:page_select_title">
                                             <label class="page-mode-option active" id="labelPageModeAll">
                                                  <input type="radio" name="pageSelectionMode" id="radioPageModeAll"
@@ -671,7 +671,7 @@
                                                 <input type="text" id="inputPageRange" class="page-range-input"
                                                     placeholder="1-3, 5, 8-10"
                                                     data-i18n-attr="placeholder:page_select_placeholder,aria-label:page_select_input_aria"
-                                                    aria-label="Nhập số trang hoặc khoảng trang" autocomplete="off"
+                                                    aria-label="Nhập số trang hoặc khoảng trang" autocomplete="off" data-i18n-attr="aria-label:page_select_input_aria"
                                                     spellcheck="false">
                                                 <span class="page-range-hint" data-i18n-html="page_select_range_hint">Ví dụ: <code>1-3, 5</code> (hỗ trợ trang
                                                     đơn và khoảng)</span>
@@ -680,15 +680,15 @@
                                             <div class="quick-chips-wrap" id="quickChipsWrap">
                                                 <span class="quick-chips-label" data-i18n="page_select_quick_chips">Chọn nhanh:</span>
                                                 <div class="quick-chips-list" role="group"
-                                                    aria-label="Chọn nhanh dải trang">
+                                                    aria-label="Chọn nhanh dải trang" data-i18n-attr="aria-label:page_select_quick_group_aria">
                                                     <button type="button" class="quick-chip" id="chipFirstPage"
-                                                        data-range="1" title="Trang đầu"
+                                                        data-range="1" title="Trang đầu" data-i18n-attr="title:page_select_chip_first"
                                                         data-i18n-attr="title:page_select_chip_first">
                                                         <span data-i18n="page_select_chip_first">Trang đầu</span>
                                                         <span class="chip-val">1</span>
                                                     </button>
                                                     <button type="button" class="quick-chip" id="chipFirst5Pages"
-                                                        data-range="1-5" title="5 trang đầu"
+                                                        data-range="1-5" title="5 trang đầu" data-i18n-attr="title:page_select_chip_first5"
                                                         data-i18n-attr="title:page_select_chip_first5">
                                                         <span data-i18n="page_select_chip_first5">5 trang đầu</span>
                                                         <span class="chip-val">1-5</span>
@@ -761,7 +761,7 @@
                                         <span data-i18n="welcome_preview_mode_pdf">PDF gốc</span>
                                     </button>
                                     <button type="button" class="view-mode-btn active" id="btnViewModeSplit"
-                                        data-mode="split" title="So sánh song song (PDF gốc | Bản dịch)"
+                                        data-mode="split" title="So sánh song song (PDF gốc | Bản dịch)" data-i18n-attr="title:view_mode_split_title"
                                         data-i18n-attr="title:view_mode_split_title" aria-pressed="true">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -802,7 +802,7 @@
                                 </div>
                                 <div class="download-wrap">
                                     <button type="button" class="btn btn-gradient" id="btnDownloadMenu"
-                                        aria-haspopup="true" aria-expanded="false" title="Tải xuống tệp"
+                                        aria-haspopup="true" aria-expanded="false" title="Tải xuống tệp" data-i18n-attr="title:workspace_export_dropdown_title"
                                         data-i18n-attr="title:btn_download_title">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -832,21 +832,21 @@
                                         <div class="dropdown-format-row">
                                             <button type="button" class="dropdown-format-btn" id="btnDownloadTxt"
                                                 data-export-type="translated" data-format="txt"
-                                                title="Tải bản dịch định dạng TXT"
+                                                title="Tải bản dịch định dạng TXT" data-i18n-attr="title:btn_download_txt_trans"
                                                 data-i18n-attr="title:btn_download_txt_trans">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn" id="btnDownloadPdf"
                                                 data-export-type="translated" data-format="pdf"
-                                                title="Tải bản dịch định dạng PDF"
+                                                title="Tải bản dịch định dạng PDF" data-i18n-attr="title:btn_download_pdf_trans"
                                                 data-i18n-attr="title:btn_download_pdf_trans">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn" id="btnDownloadDocx"
                                                 data-export-type="translated" data-format="docx"
-                                                title="Tải bản dịch định dạng Word (.docx) - Pro VIP"
+                                                title="Tải bản dịch định dạng Word (.docx) - Pro VIP" data-i18n-attr="title:btn_download_docx_trans"
                                                 data-i18n-attr="title:btn_download_docx_trans">
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
@@ -871,14 +871,14 @@
                                         <div class="dropdown-format-row">
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadOriginalTxt" data-export-type="original"
-                                                data-format="txt" title="Tải văn bản gốc định dạng TXT"
+                                                data-format="txt" title="Tải văn bản gốc định dạng TXT" data-i18n-attr="title:btn_download_txt_orig"
                                                 data-i18n-attr="title:btn_download_txt_orig">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadOriginalPdf" data-export-type="original"
-                                                data-format="pdf" title="Tải văn bản gốc định dạng PDF"
+                                                data-format="pdf" title="Tải văn bản gốc định dạng PDF" data-i18n-attr="title:btn_download_pdf_orig"
                                                 data-i18n-attr="title:btn_download_pdf_orig">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
@@ -886,7 +886,7 @@
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadOriginalDocx" data-export-type="original"
                                                 data-format="docx"
-                                                title="Tải văn bản gốc định dạng Word (.docx) - Pro VIP"
+                                                title="Tải văn bản gốc định dạng Word (.docx) - Pro VIP" data-i18n-attr="title:btn_download_docx_orig"
                                                 data-i18n-attr="title:btn_download_docx_orig">
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
@@ -910,14 +910,14 @@
                                         <div class="dropdown-format-row">
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadBilingualTxt" data-export-type="bilingual"
-                                                data-format="txt" title="Tải song ngữ định dạng TXT"
+                                                data-format="txt" title="Tải song ngữ định dạng TXT" data-i18n-attr="title:btn_download_txt_bi"
                                                 data-i18n-attr="title:btn_download_txt_bi">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadBilingualPdf" data-export-type="bilingual"
-                                                data-format="pdf" title="Tải song ngữ định dạng PDF"
+                                                data-format="pdf" title="Tải song ngữ định dạng PDF" data-i18n-attr="title:btn_download_pdf_bi"
                                                 data-i18n-attr="title:btn_download_pdf_bi">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
@@ -925,7 +925,7 @@
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadBilingualDocx" data-export-type="bilingual"
                                                 data-format="docx"
-                                                title="Tải song ngữ định dạng Word (.docx) - Pro VIP"
+                                                title="Tải song ngữ định dạng Word (.docx) - Pro VIP" data-i18n-attr="title:btn_download_docx_bi"
                                                 data-i18n-attr="title:btn_download_docx_bi">
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
@@ -971,7 +971,7 @@
                                 <!-- More Options Kebab Menu -->
                                 <div class="more-actions-wrap">
                                     <button type="button" class="btn btn-icon-kebab" id="btnMoreActionsMenu"
-                                        aria-haspopup="true" aria-expanded="false" title="Tùy chọn khác"
+                                        aria-haspopup="true" aria-expanded="false" title="Tùy chọn khác" data-i18n-attr="title:workspace_more_options_title"
                                         data-i18n-attr="title:sidebar_more_options">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                             <circle cx="12" cy="5" r="1.75"></circle>
@@ -1023,7 +1023,7 @@
                                             </span>
                                         </div>
 
-                                        <button type="button" class="dropdown-item" id="btnNewFile" title="Tải lên tệp PDF khác"
+                                        <button type="button" class="dropdown-item" id="btnNewFile" title="Tải lên tệp PDF khác" data-i18n-attr="title:workspace_btn_new_file"
                                             data-i18n-attr="title:btn_upload_another">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1033,7 +1033,7 @@
                                             <span data-i18n="btn_upload_another">Tải lên tệp khác</span>
                                         </button>
 
-                                        <button type="button" class="dropdown-item" id="btnCopyAllTranslatedText" title="Sao chép toàn bộ văn bản dịch"
+                                        <button type="button" class="dropdown-item" id="btnCopyAllTranslatedText" title="Sao chép toàn bộ văn bản dịch" data-i18n-attr="title:workspace_btn_copy_all"
                                             data-i18n-attr="title:btn_copy_translation">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1045,7 +1045,7 @@
 
                                         <div class="dropdown-divider"></div>
 
-                                        <button type="button" class="dropdown-item text-danger" id="btnResetWorkspaceSession" title="Làm mới lại phiên làm việc"
+                                        <button type="button" class="dropdown-item text-danger" id="btnResetWorkspaceSession" title="Làm mới lại phiên làm việc" data-i18n-attr="title:workspace_btn_reset"
                                             data-i18n-attr="title:btn_reset_workspace">
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1144,7 +1144,7 @@
                                     </div>
                                     <div class="ai-result-actions">
                                         <button type="button" class="btn-action-copy" id="btnCopyAiSummary"
-                                            title="Sao chép kết quả tóm tắt">
+                                            title="Sao chép kết quả tóm tắt" data-i18n-attr="title:ai_summary_copy_result_title">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -1165,7 +1165,7 @@
                             data-view-mode="split" data-split-tab="pdf">
                             <!-- Mobile Tab Bar for Split Mode (Visible on <= 1024px) -->
                             <div class="split-mobile-tab-bar" id="splitMobileTabBar" style="display: none;"
-                                role="tablist" aria-label="Chuyển tab so sánh">
+                                role="tablist" aria-label="Chuyển tab so sánh" data-i18n-attr="aria-label:view_mode_tab_switch_aria">
                                 <button type="button" class="split-tab-btn active" id="btnSplitTabPdf" role="tab"
                                     aria-selected="true" data-tab="pdf">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -1281,7 +1281,7 @@
 
                                         <!-- Toggle Collapse Button -->
                                         <button type="button" class="preview-btn preview-toggle-btn"
-                                            id="btnTogglePdfPreview" title="Thu gọn / Mở rộng"
+                                            id="btnTogglePdfPreview" title="Thu gọn / Mở rộng" data-i18n-attr="title:preview_toggle_view"
                                             aria-label="Thu gọn hoặc mở rộng bản xem trước" data-i18n-attr="title:preview_toggle_view,aria-label:preview_toggle_aria">
                                             <svg class="preview-toggle-icon" width="15" height="15" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5"
@@ -1430,7 +1430,7 @@
                                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                         </svg>
                                         <input type="text" id="documentsSearchInput" class="documents-search-input"
-                                            placeholder="Tìm kiếm theo tên tài liệu..."
+                                            placeholder="Tìm kiếm theo tên tài liệu..." data-i18n-attr="placeholder:docs_search_placeholder"
                                             data-i18n-attr="placeholder:docs_search_placeholder">
                                     </div>
                                 </div>
@@ -1561,7 +1561,7 @@
                                 <div class="documents-toolbar-left history-toolbar-left">
                                     <span class="documents-count-chip font-mono" id="historyCountBadge" data-i18n="history_count_label">0 bản ghi</span>
                                     <button type="button" class="btn btn-secondary btn-sm history-cleanup-btn"
-                                        id="btnHistoryCleanup" title="Dọn dẹp lịch sử cũ hơn chính sách lưu trữ"
+                                        id="btnHistoryCleanup" title="Dọn dẹp lịch sử cũ hơn chính sách lưu trữ" data-i18n-attr="title:history_clean_old_title"
                                         data-i18n-attr="title:history_btn_cleanup">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -1905,7 +1905,7 @@
                                         <div class="pricing-price-note-row">
                                             <span class="pricing-price-subnote" id="proPlanSubnote" data-i18n="pricing_pro_subnote_monthly">Thanh toán linh hoạt từng tháng (30 ngày)</span>
                                             <span class="pricing-discount-badge" id="proPlanDiscountBadge"
-                                                style="display: none;">TIẾT KIỆM 32%</span>
+                                                style="display: none;" data-i18n="pricing_discount_badge">TIẾT KIỆM 32%</span>
                                         </div>
                                     </div>
 
@@ -2213,11 +2213,11 @@
                                 <!-- Proportional Distribution Bar -->
                                 <div class="bento-dist-bar" id="statUsersDistBar">
                                     <div class="dist-seg dist-free" id="distSegFree" style="width: 70%;"
-                                        title="Tài khoản Miễn phí"></div>
+                                        title="Tài khoản Miễn phí" data-i18n-attr="title:tier_free_name"></div>
                                     <div class="dist-seg dist-pro" id="distSegPro" style="width: 20%;"
-                                        title="Tài khoản Pro"></div>
+                                        title="Tài khoản Pro" data-i18n-attr="title:admin_filter_role_pro"></div>
                                     <div class="dist-seg dist-admin" id="distSegAdmin" style="width: 10%;"
-                                        title="Tài khoản Quản trị"></div>
+                                        title="Tài khoản Quản trị" data-i18n-attr="title:admin_account_admin_title"></div>
                                 </div>
                                 <div class="bento-pills-row">
                                     <span class="badge-sub free" id="statFreeUsers">Miễn phí: --</span>
@@ -2388,7 +2388,7 @@
                                             stroke-linejoin="round">
                                             <polyline points="15 18 9 12 15 6"></polyline>
                                         </svg>
-                                        <span>Trước</span>
+                                        <span data-i18n="admin_btn_prev">Trước</span>
                                     </button>
                                     <span class="pagination-current-page font-mono" id="adminCurrentPageBadge">1</span>
                                     <button type="button" class="btn btn-admin-pager" id="btnAdminNextPage" disabled>
@@ -2470,19 +2470,19 @@
             </div>
 
             <!-- Floating Mini-Widget for Background Job -->
-            <div class="bg-job-widget" id="bgJobWidget" style="display: none;" role="region" aria-live="polite" aria-label="Tiến trình xử lý nền">
+            <div class="bg-job-widget" id="bgJobWidget" style="display: none;" role="region" aria-live="polite" aria-label="Tiến trình xử lý nền" data-i18n-attr="aria-label:proc_bg_aria">
                 <div class="bg-widget-glow"></div>
                 <div class="bg-widget-content">
                     <div class="bg-widget-header">
                         <div class="bg-widget-indicator">
                             <div class="bg-widget-spinner"></div>
                             <div class="bg-widget-meta">
-                                <span class="bg-widget-filename" id="bgJobFileName" title="Tài liệu đang xử lý">document.pdf</span>
+                                <span class="bg-widget-filename" id="bgJobFileName" title="Tài liệu đang xử lý" data-i18n-attr="title:proc_bg_active_doc_title">document.pdf</span>
                                 <span class="bg-widget-status" id="bgJobStatusText">Đang chuẩn bị...</span>
                             </div>
                         </div>
                         <div class="bg-widget-actions">
-                            <button type="button" class="btn-widget-icon" id="btnMaximizeProgress" title="Mở lại modal chi tiết" aria-label="Mở lại">
+                            <button type="button" class="btn-widget-icon" id="btnMaximizeProgress" title="Mở lại modal chi tiết" aria-label="Mở lại" data-i18n-attr="title:proc_bg_restore_title,aria-label:proc_bg_restore_aria">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="15 3 21 3 21 9"></polyline>
                                     <polyline points="9 21 3 21 3 15"></polyline>
@@ -2490,7 +2490,7 @@
                                     <line x1="3" y1="21" x2="10" y2="14"></line>
                                 </svg>
                             </button>
-                            <button type="button" class="btn-widget-icon" id="btnCloseBgWidget" title="Đóng thanh tiến trình (vẫn chạy ngầm)" aria-label="Đóng">
+                            <button type="button" class="btn-widget-icon" id="btnCloseBgWidget" title="Đóng thanh tiến trình (vẫn chạy ngầm)" aria-label="Đóng" data-i18n-attr="title:proc_bg_close_title,aria-label:common_close">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2542,12 +2542,12 @@
             <aside class="ai-copilot-drawer ai-copilot-chat-frame" id="aiCopilotDrawer" style="display: none;" aria-label="AI Copilot Chat">
                 <div class="copilot-drawer-header">
                     <div class="copilot-header-info">
-                        <button type="button" class="btn-copilot-back" id="btnCloseCopilotDrawer" title="Quay lại Dịch PDF" style="display: none !important;" aria-hidden="true">
+                        <button type="button" class="btn-copilot-back" id="btnCloseCopilotDrawer" title="Quay lại Dịch PDF" data-i18n-attr="title:pricing_btn_back_workspace" style="display: none !important;" aria-hidden="true">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="19" y1="12" x2="5" y2="12"></line>
                                 <polyline points="12 19 5 12 12 5"></polyline>
                             </svg>
-                            <span>Quay lại Dịch PDF</span>
+                            <span data-i18n="pricing_btn_back_workspace">Quay lại Dịch PDF</span>
                         </button>
                         <div class="copilot-header-divider" style="display: none !important;" aria-hidden="true"></div>
                         <div class="copilot-avatar-icon" aria-hidden="true">
@@ -2566,8 +2566,8 @@
                     </div>
 
                     <div class="copilot-header-actions">
-                        <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay">15/15 câu hỏi</span>
-                        <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat" title="Xóa toàn bộ lịch sử trò chuyện">
+                        <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay" data-i18n-attr="title:copilot_quota_title">15/15 câu hỏi</span>
+                        <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat" title="Xóa toàn bộ lịch sử trò chuyện" data-i18n-attr="title:copilot_clear_chat_title">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -2588,7 +2588,7 @@
                         <h1 class="copilot-hero-title" data-i18n="copilot_hero_title">Bạn muốn tìm hiểu gì về tài liệu?</h1>
                         <p class="copilot-hero-subtitle" data-i18n="copilot_hero_subtitle">Đặt câu hỏi, trích xuất số liệu quan trọng hoặc giải thích thuật ngữ trong văn bản.</p>
                         <div class="copilot-quick-prompts-grid" id="copilotQuickPrompts">
-                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?">
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?" data-i18n-attr="data-prompt:copilot_prompt_chip_summary">
                                 <span class="prompt-icon-svg" aria-hidden="true">
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="8" y1="6" x2="21" y2="6"></line>
@@ -2604,7 +2604,7 @@
                                     <span class="prompt-card-desc" data-i18n="copilot_prompt_summary_desc">Khái quát nội dung cốt lõi</span>
                                 </span>
                             </button>
-                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?">
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?" data-i18n-attr="data-prompt:copilot_prompt_chip_keypoints">
                                 <span class="prompt-icon-svg" aria-hidden="true">
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -2617,7 +2617,7 @@
                                     <span class="prompt-card-desc" data-i18n="copilot_prompt_metrics_desc">Thống kê & mốc thời gian</span>
                                 </span>
                             </button>
-                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?">
+                            <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?" data-i18n-attr="data-prompt:copilot_prompt_chip_terms">
                                 <span class="prompt-icon-svg" aria-hidden="true">
                                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -2670,7 +2670,7 @@
                             </svg>
                         </div>
                         <textarea class="copilot-input" id="copilotInput" rows="1"
-                            placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)"
+                            placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)" data-i18n-attr="placeholder:copilot_input_placeholder"
                             maxlength="2000"></textarea>
                         <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" data-i18n-attr="title:copilot_send_title" disabled>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2730,7 +2730,7 @@
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                         <input type="text" id="regFullName" name="full_name" class="form-input"
-                            placeholder="Nguyễn Văn A" autocomplete="name" maxlength="150"
+                            placeholder="Nguyễn Văn A" autocomplete="name" maxlength="150" data-i18n-attr="placeholder:auth_fullname_placeholder"
                             data-i18n-attr="placeholder:auth_fullname_placeholder">
                     </div>
                     <p class="field-error" id="regFullNameError" role="alert" aria-live="polite"></p>
@@ -2766,9 +2766,9 @@
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                         <input type="password" id="regPassword" name="password" class="form-input"
-                            placeholder="Tối thiểu 8 ký tự (chữ & số)" required autocomplete="new-password"
+                            placeholder="Tối thiểu 8 ký tự (chữ & số)" required autocomplete="new-password" data-i18n-attr="placeholder:auth_password_placeholder"
                             maxlength="128" data-i18n-attr="placeholder:auth_password_placeholder">
-                        <button type="button" class="btn-toggle-eye" id="toggleRegPassword" aria-label="Hiện mật khẩu"
+                        <button type="button" class="btn-toggle-eye" id="toggleRegPassword" aria-label="Hiện mật khẩu" data-i18n-attr="aria-label:auth_show_password_aria"
                             data-i18n-attr="aria-label:auth_show_password_aria">
                             <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2800,7 +2800,7 @@
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                         <input type="password" id="regConfirmPassword" name="confirm_password" class="form-input"
-                            placeholder="Nhập lại mật khẩu" required autocomplete="new-password" maxlength="128"
+                            placeholder="Nhập lại mật khẩu" required autocomplete="new-password" maxlength="128" data-i18n-attr="placeholder:auth_confirm_password_placeholder"
                             data-i18n-attr="placeholder:auth_confirm_password_placeholder">
                         <button type="button" class="btn-toggle-eye" id="toggleRegConfirmPassword"
                             aria-label="Hiện mật khẩu xác nhận" data-i18n-attr="aria-label:auth_show_confirm_password_aria">
@@ -2888,7 +2888,7 @@
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                         <input type="password" id="loginPassword" name="password" class="form-input"
-                            placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128">
+                            placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128" data-i18n-attr="placeholder:auth_login_password_placeholder">
                         <button type="button" class="btn-toggle-eye" id="toggleLoginPassword"
                             aria-label="Hiện mật khẩu" data-i18n-attr="aria-label:auth_show_password_aria">
                             <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -2957,7 +2957,7 @@
                         <div class="account-avatar-preview-area">
                             <div class="account-avatar-large" id="accountAvatarLarge" role="img" aria-label="Ảnh đại diện tài khoản" data-i18n-attr="aria-label:account_avatar_label">
                                 <span class="account-avatar-initial" id="accountAvatarInitial">U</span>
-                                <img src="" alt="Ảnh đại diện người dùng" class="account-avatar-img" id="accountAvatarImg" style="display: none;">
+                                <img src="" alt="Ảnh đại diện người dùng" class="account-avatar-img" id="accountAvatarImg" style="display: none;" data-i18n-attr="alt:avatar_user_alt">
                             </div>
                             <button type="button" class="account-avatar-camera-btn" id="btnSelectAvatar" aria-label="Đổi ảnh đại diện" title="Chọn ảnh đại diện mới" data-i18n-attr="title:account_avatar_camera_title,aria-label:account_avatar_camera_title">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -2968,7 +2968,7 @@
                             </button>
                             <input type="file" id="avatarFileInput" class="account-avatar-file-input"
                                 accept="image/jpeg,image/png,image/webp" style="display: none;"
-                                aria-label="Chọn tệp ảnh đại diện (JPEG, PNG, WebP)">
+                                aria-label="Chọn tệp ảnh đại diện (JPEG, PNG, WebP)" data-i18n-attr="aria-label:avatar_input_file_aria">
                         </div>
                         <div class="account-hero-meta">
                             <h3 class="account-hero-name" id="accountFullNameDisplay">---</h3>
@@ -2983,7 +2983,7 @@
                                     <span data-i18n="account_btn_change_avatar">Đổi ảnh</span>
                                 </button>
                                 <button type="button" class="btn-avatar-action btn-avatar-delete" id="btnDeleteAvatar"
-                                    title="Xóa ảnh đại diện" aria-label="Xóa ảnh đại diện" style="display: none;">
+                                    title="Xóa ảnh đại diện" aria-label="Xóa ảnh đại diện" style="display: none;" data-i18n-attr="title:avatar_delete_title_aria,aria-label:avatar_delete_title_aria">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <polyline points="3 6 5 6 21 6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -3096,10 +3096,10 @@
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
                                     <input type="password" id="currentPasswordInput" name="current_password"
-                                        class="form-input" placeholder="Nhập mật khẩu hiện tại" required
+                                        class="form-input" placeholder="Nhập mật khẩu hiện tại" required data-i18n-attr="placeholder:auth_current_password_placeholder"
                                         autocomplete="current-password" maxlength="128">
                                     <button type="button" class="btn-toggle-eye" id="toggleCurrentPassword"
-                                        aria-label="Hiện mật khẩu">
+                                        aria-label="Hiện mật khẩu" data-i18n-attr="aria-label:auth_show_password_aria">
                                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -3130,10 +3130,10 @@
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
                                     <input type="password" id="newPasswordInput" name="new_password" class="form-input"
-                                        placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required
+                                        placeholder="Tối thiểu 8 ký tự, có cả chữ và số" required data-i18n-attr="placeholder:auth_new_password_placeholder"
                                         autocomplete="new-password" maxlength="128">
                                     <button type="button" class="btn-toggle-eye" id="toggleNewPassword"
-                                        aria-label="Hiện mật khẩu">
+                                        aria-label="Hiện mật khẩu" data-i18n-attr="aria-label:auth_show_password_aria">
                                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -3163,10 +3163,10 @@
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                     </svg>
                                     <input type="password" id="confirmNewPasswordInput" name="confirm_new_password"
-                                        class="form-input" placeholder="Nhập lại mật khẩu mới" required
+                                        class="form-input" placeholder="Nhập lại mật khẩu mới" required data-i18n-attr="placeholder:auth_confirm_new_password_placeholder"
                                         autocomplete="new-password" maxlength="128">
                                     <button type="button" class="btn-toggle-eye" id="toggleConfirmNewPassword"
-                                        aria-label="Hiện mật khẩu">
+                                        aria-label="Hiện mật khẩu" data-i18n-attr="aria-label:auth_show_password_aria">
                                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -3216,7 +3216,7 @@
                     <h2 class="modal-title" id="avatarCropModalTitle" data-i18n="avatar_crop_title">Cắt ảnh đại diện</h2>
                     <p class="modal-subtitle" data-i18n="avatar_crop_subtitle">Điều chỉnh khung hình vuông tròn cho ảnh đại diện của bạn</p>
                 </div>
-                <button type="button" class="modal-close" id="btnCloseAvatarCropModal" aria-label="Đóng cửa sổ cắt ảnh">
+                <button type="button" class="modal-close" id="btnCloseAvatarCropModal" aria-label="Đóng cửa sổ cắt ảnh" data-i18n-attr="aria-label:avatar_crop_modal_close_aria">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -3231,8 +3231,8 @@
 
                 <!-- Interactive Crop Viewport -->
                 <div class="avatar-crop-viewport" id="avatarCropViewport" tabindex="0"
-                    role="region" aria-label="Vùng tương tác cắt ảnh. Sử dụng chuột để kéo hoặc các phím mũi tên để căn chỉnh">
-                    <img id="avatarCropImg" class="avatar-crop-img" draggable="false" alt="Ảnh tải lên cần cắt">
+                    role="region" aria-label="Vùng tương tác cắt ảnh. Sử dụng chuột để kéo hoặc các phím mũi tên để căn chỉnh" data-i18n-attr="aria-label:avatar_crop_region_aria">
+                    <img id="avatarCropImg" class="avatar-crop-img" draggable="false" alt="Ảnh tải lên cần cắt" data-i18n-attr="alt:avatar_crop_img_alt">
                     <!-- Circular overlay mask -->
                     <div class="avatar-crop-mask" aria-hidden="true">
                         <div class="avatar-crop-grid-lines">
@@ -3247,7 +3247,7 @@
                 <!-- Cropping Controls (Zoom & Helper) -->
                 <div class="avatar-crop-controls">
                     <div class="avatar-crop-zoom-group">
-                        <button type="button" class="btn-crop-zoom" id="btnCropZoomOut" aria-label="Thu nhỏ ảnh" title="Thu nhỏ">
+                        <button type="button" class="btn-crop-zoom" id="btnCropZoomOut" aria-label="Thu nhỏ ảnh" title="Thu nhỏ" data-i18n-attr="aria-label:avatar_crop_zoom_out_aria,title:proc_minimize_aria">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -3256,8 +3256,8 @@
                             </svg>
                         </button>
                         <input type="range" class="crop-zoom-range" id="cropZoomRange" min="1" max="3" step="0.02" value="1"
-                            aria-label="Thanh trượt phóng to thu nhỏ ảnh">
-                        <button type="button" class="btn-crop-zoom" id="btnCropZoomIn" aria-label="Phóng to ảnh" title="Phóng to">
+                            aria-label="Thanh trượt phóng to thu nhỏ ảnh" data-i18n-attr="aria-label:avatar_crop_slider_aria">
+                        <button type="button" class="btn-crop-zoom" id="btnCropZoomIn" aria-label="Phóng to ảnh" title="Phóng to" data-i18n-attr="aria-label:avatar_crop_zoom_in_aria,title:common_fullscreen">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -3302,7 +3302,7 @@
                         <p class="checkout-modal-subtitle" data-i18n="checkout_modal_subtitle">Mở khóa hạn mức 100 MB mỗi tệp, 500 trang OCR chuyên sâu và Trợ lý AI Copilot 15 câu / ngày.</p>
 
                         <!-- Quick Billing Cycle Switcher inside Checkout -->
-                        <div class="checkout-cycle-switch" role="group" aria-label="Đổi chu kỳ gói Pro">
+                        <div class="checkout-cycle-switch" role="group" aria-label="Đổi chu kỳ gói Pro" data-i18n-attr="aria-label:checkout_cycle_switch_aria">
                             <button type="button" class="checkout-cycle-btn active" id="btnCheckoutCycleMonthly"
                                 data-plan-code="pro_monthly">
                                 <span class="checkout-cycle-label" data-i18n="checkout_cycle_monthly">Theo Tháng</span>
@@ -3393,7 +3393,7 @@
                             <div class="checkout-qr-box">
                                 <div class="checkout-qr-laser" id="checkoutQrLaser" aria-hidden="true"></div>
                                 <img id="checkoutQrImage" class="checkout-qr-img" src="assets/images/vietqr-pro.png"
-                                    alt="Mã VietQR thanh toán gói Pro VietinBank" />
+                                    alt="Mã VietQR thanh toán gói Pro VietinBank" data-i18n-attr="alt:checkout_vietqr_alt" />
                                 <div class="checkout-qr-fallback" id="checkoutQrFallback" style="display: none;">
                                     <svg width="132" height="132" viewBox="0 0 120 120" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -3614,13 +3614,13 @@
                 </div>
                 <div class="legal-header-actions">
                     <button type="button" class="legal-action-btn" id="btnToggleFullscreenLegal"
-                        title="Phóng to / Thu nhỏ modal">
+                        title="Phóng to / Thu nhỏ modal" data-i18n-attr="title:legal_toggle_fullscreen_title">
                         <span class="btn-icon" id="fullscreenIcon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span> <span id="fullscreenText" data-i18n="common_fullscreen">Phóng to</span>
                     </button>
-                    <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
+                    <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF" data-i18n-attr="title:legal_print_title">
                         <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></span> <span data-i18n="common_print_save_pdf">In</span>
                     </button>
-                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng"
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng" data-i18n-attr="aria-label:common_close,title:common_close"
                         title="Đóng" data-i18n-attr="aria-label:common_close,title:common_close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                 </div>
             </div>
@@ -3773,7 +3773,7 @@
                                     <span id="supportEmailText">huytamnguyenle2608@gmail.com</span>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-secondary" id="btnCopySupportEmail"
-                                    title="Sao chép email" data-i18n="feedback_copy_btn">
+                                    title="Sao chép email" data-i18n="feedback_copy_btn" data-i18n-attr="title:feedback_copy_email_title">
                                     Sao chép
                                 </button>
                             </div>
@@ -3829,7 +3829,7 @@
 
             <div class="legal-modal-footer">
                 <div class="legal-footer-left">
-                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="footer-btn-icon"><polyline points="18 15 12 9 6 15"></polyline></svg> <span data-i18n="common_scroll_top">Lên đầu trang</span></button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang" data-i18n-attr="title:common_scroll_top_title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="footer-btn-icon"><polyline points="18 15 12 9 6 15"></polyline></svg> <span data-i18n="common_scroll_top">Lên đầu trang</span></button>
                     <span class="legal-footer-meta" data-i18n="feedback_legal_meta">Phiên bản: v1.0.0 • Hiệu lực từ: 28/10/2026</span>
                 </div>
                 <div class="legal-footer-right">
@@ -4128,14 +4128,14 @@
                         <span>AI Copilot</span>
                         <span class="badge-pro-pill">PRO VIP</span>
                     </div>
-                    <div class="copilot-header-status" id="copilotStatusText">Sẵn sàng hỗ trợ tài liệu</div>
+                    <div class="copilot-header-status" id="copilotStatusText" data-i18n="copilot_status_ready">Sẵn sàng hỗ trợ tài liệu</div>
                 </div>
             </div>
 
             <div class="copilot-header-actions">
                 <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay" data-i18n-attr="title:copilot_quota_title">15/15 câu hỏi</span>
                 <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat"
-                    title="Xóa toàn bộ lịch sử trò chuyện">
+                    title="Xóa toàn bộ lịch sử trò chuyện" data-i18n-attr="title:copilot_clear_chat_title">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -4143,7 +4143,7 @@
                     </svg>
                 </button>
                 <button type="button" class="btn-copilot-icon btn-copilot-close" id="btnCloseCopilotDrawer"
-                    title="Đóng trợ lý AI">
+                    title="Đóng trợ lý AI" data-i18n-attr="title:copilot_close_title">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -4195,7 +4195,7 @@
         <div class="copilot-drawer-footer">
             <form class="copilot-input-form" id="copilotChatForm">
                 <textarea class="copilot-input" id="copilotInput" rows="1" placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)" maxlength="2000" data-i18n-attr="placeholder:copilot_input_placeholder"></textarea>
-                <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
+                <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled data-i18n-attr="title:copilot_send_title">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
