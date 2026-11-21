@@ -45,13 +45,8 @@
                 <a href="#welcomePricing" class="welcome-nav-link" id="navLinkPricing" data-i18n="nav_pricing">Bảng giá</a>
             </nav>
 
-            <!-- Navigation Actions: Login (Ghost) + Start Trial (Primary Red) -->
+            <!-- Navigation Actions: Login (Ghost) + Start Trial (Primary Red) + Language Switcher -->
             <div class="welcome-nav-actions" id="welcomeNavActions">
-                <!-- Language Switcher (VI / EN) -->
-                <div class="lang-switcher" id="welcomeLangSwitcher" role="group" aria-label="Chọn ngôn ngữ">
-                    <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt">VI</button>
-                    <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English">EN</button>
-                </div>
                 <button type="button" class="welcome-btn welcome-btn-ghost" id="navBtnLogin" title="Dang nhap vao he thong">
                     <span data-i18n="nav_login">Đăng nhập</span>
                 </button>
@@ -62,6 +57,11 @@
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </a>
+                <!-- Language Switcher (VI / EN) on the outside -->
+                <div class="lang-switcher" id="welcomeLangSwitcher" role="group" aria-label="Chọn ngôn ngữ">
+                    <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt">VI</button>
+                    <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English">EN</button>
+                </div>
                 <!-- Mobile Menu Button -->
                 <button type="button" class="welcome-mobile-toggle" id="btnWelcomeMobileMenu" aria-label="Mo menu dieu huong" aria-expanded="false" aria-controls="welcomeMobileDrawer">
                     <svg class="icon-menu-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -87,12 +87,12 @@
                     <a href="#welcomePricing" class="welcome-mobile-link" data-i18n="nav_pricing">Bảng giá</a>
                 </nav>
                 <div class="welcome-mobile-actions">
-                    <div class="lang-switcher" style="margin-bottom: 12px; justify-content: center; width: 100%;" role="group" aria-label="Chọn ngôn ngữ">
+                    <button type="button" class="welcome-btn welcome-btn-ghost welcome-btn-block" id="btnWelcomeMobileLogin" data-i18n="nav_login">Đăng nhập</button>
+                    <a href="index.html" class="welcome-btn welcome-btn-primary welcome-btn-block" data-i18n="nav_start_free">Bắt đầu miễn phí</a>
+                    <div class="lang-switcher" style="margin-top: 12px; justify-content: center; width: 100%;" role="group" aria-label="Chọn ngôn ngữ">
                         <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt" style="flex: 1;">VI</button>
                         <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English" style="flex: 1;">EN</button>
                     </div>
-                    <button type="button" class="welcome-btn welcome-btn-ghost welcome-btn-block" id="btnWelcomeMobileLogin" data-i18n="nav_login">Đăng nhập</button>
-                    <a href="index.html" class="welcome-btn welcome-btn-primary welcome-btn-block" data-i18n="nav_start_free">Bắt đầu miễn phí</a>
                 </div>
             </div>
         </div>
