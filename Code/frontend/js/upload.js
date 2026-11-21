@@ -46,6 +46,9 @@ if (typeof window !== 'undefined') {
   if (typeof document !== 'undefined') {
     document.addEventListener('languageChanged', () => {
       updateUploadLimitsUI();
+      if (typeof renderBatchQueueUI === 'function') {
+        renderBatchQueueUI();
+      }
     });
   }
 }
@@ -200,7 +203,10 @@ function initDropzone() {
 
     const count = batchQueue.length;
     if (countBadge) {
-      countBadge.textContent = `${count} tệp`;
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+      countBadge.textContent = isEn ? `${count} ${count === 1 ? 'file' : 'files'}` : `${count} tệp`;
     }
 
     if (emptyEl) {

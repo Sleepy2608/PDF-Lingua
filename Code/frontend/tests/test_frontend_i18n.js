@@ -265,6 +265,56 @@ runTest('Index.html HTML bindings: sidebar and topbar configure role i18n attrib
     assert.ok(indexHtml.includes('data-i18n="account_role_label"'), 'Missing data-i18n="account_role_label" on account modal');
 });
 
+// -----------------------------------------------------------------------------
+// Part 8: Index.html Hero, Title & Footer Multilingual Verification
+// -----------------------------------------------------------------------------
+console.log('\n--- 8. Index.html Hero, Title & Footer Multilingual Verification ---');
+
+runTest('Hero section and Meta Title dictionary keys exist for both VI and EN', () => {
+    i18n.setLanguage('vi');
+    assert.strictEqual(i18n.t('app_meta_title'), 'PDF-Lingua | Trích xuất & Dịch thuật PDF thông minh');
+    assert.strictEqual(i18n.t('hero_eyebrow'), 'Không gian làm việc tài liệu AI thế hệ mới');
+    assert.strictEqual(i18n.t('hero_title'), 'Trình Dịch Thuật & Trợ Lý PDF AI');
+    assert.ok(i18n.t('hero_desc').includes('Dịch tài liệu song ngữ'));
+    assert.strictEqual(i18n.t('hero_check_1'), 'Dịch tài liệu song ngữ thông minh giữ nguyên định dạng');
+    assert.strictEqual(i18n.t('hero_check_2'), 'Nhận dạng OCR chuyên sâu cho tài liệu scan và chữ mờ');
+    assert.strictEqual(i18n.t('hero_check_3'), 'Trợ lý AI hỏi đáp tài liệu tức thì có trích dẫn số trang');
+    assert.strictEqual(i18n.t('hero_check_4'), 'Tóm tắt nhanh văn bản và bảng thuật ngữ chỉ trong vài giây');
+
+    i18n.setLanguage('en');
+    assert.strictEqual(i18n.t('app_meta_title'), 'PDF-Lingua | Smart PDF Extraction & Translation');
+    assert.strictEqual(i18n.t('hero_eyebrow'), 'Next-Gen AI Document Workspace');
+    assert.strictEqual(i18n.t('hero_title'), 'Intelligent PDF AI Translator & Assistant');
+    assert.ok(i18n.t('hero_desc').includes('Smart bilingual document translation'));
+    assert.strictEqual(i18n.t('hero_check_1'), 'Intelligent bilingual translation with layout preservation');
+    assert.strictEqual(i18n.t('hero_check_2'), 'Deep OCR recognition for scanned and low-contrast PDFs');
+    assert.strictEqual(i18n.t('hero_check_3'), 'Instant AI document Q&A with page number citations');
+    assert.strictEqual(i18n.t('hero_check_4'), 'Fast document & terminology summarization in seconds');
+});
+
+runTest('Index.html contains explicit data-i18n bindings for Hero and Footer links', () => {
+    const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+    assert.ok(indexHtml.includes('data-i18n="app_meta_title"'), 'Missing data-i18n="app_meta_title" on title tag');
+    assert.ok(indexHtml.includes('data-i18n="hero_eyebrow"'), 'Missing data-i18n="hero_eyebrow"');
+    assert.ok(indexHtml.includes('data-i18n="hero_title"'), 'Missing data-i18n="hero_title"');
+    assert.ok(indexHtml.includes('data-i18n="hero_desc"'), 'Missing data-i18n="hero_desc"');
+    assert.ok(indexHtml.includes('data-i18n="hero_check_1"'), 'Missing data-i18n="hero_check_1"');
+    assert.ok(indexHtml.includes('data-i18n="hero_check_2"'), 'Missing data-i18n="hero_check_2"');
+    assert.ok(indexHtml.includes('data-i18n="hero_check_3"'), 'Missing data-i18n="hero_check_3"');
+    assert.ok(indexHtml.includes('data-i18n="hero_check_4"'), 'Missing data-i18n="hero_check_4"');
+    assert.ok(indexHtml.includes('id="linkTerms" data-i18n="legal_tab_terms"'), 'Missing legal_tab_terms on linkTerms');
+    assert.ok(indexHtml.includes('id="linkPrivacy" data-i18n="legal_tab_privacy"'), 'Missing legal_tab_privacy on linkPrivacy');
+    assert.ok(indexHtml.includes('id="linkContact" data-i18n="legal_tab_contact"'), 'Missing legal_tab_contact on linkContact');
+});
+
+runTest('Index.html strictly contains zero en-dash and zero em-dash characters', () => {
+    const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+    const enDashes = (indexHtml.match(/\u2013/g) || []).length;
+    const emDashes = (indexHtml.match(/\u2014/g) || []).length;
+    assert.strictEqual(enDashes, 0, `Forbidden en-dash character found in index.html: ${enDashes}`);
+    assert.strictEqual(emDashes, 0, `Forbidden em-dash character found in index.html: ${emDashes}`);
+});
+
 console.log('\n================================================================');
 console.log(`Frontend i18n Test Suites Result: ${passedTests}/${totalTests} PASSED`);
 console.log('================================================================\n');
