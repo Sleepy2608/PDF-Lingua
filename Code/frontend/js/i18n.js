@@ -288,7 +288,60 @@
             "feedback_topic_bug": "Báo cáo lỗi dịch thuật / OCR",
             "feedback_topic_feature": "Đề xuất tính năng mới",
             "feedback_topic_support": "Câu hỏi / Hỗ trợ sử dụng",
-            "feedback_topic_other": "Ý kiến đóng góp khác"
+            "feedback_topic_other": "Ý kiến đóng góp khác",
+
+            // HTTP Errors & Dynamic Status Messages
+            "http_error_400": "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.",
+            "http_error_401": "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.",
+            "http_error_403": "Bạn không có quyền thực hiện thao tác này.",
+            "http_error_404": "Không tìm thấy tài nguyên yêu cầu.",
+            "http_error_413": "Dung lượng tệp vượt quá giới hạn cho phép.",
+            "http_error_429": "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.",
+            "http_error_500": "Máy chủ gặp sự cố xử lý. Vui lòng thử lại sau.",
+            "http_error_default": "Đã xảy ra lỗi kết nối. Vui lòng thử lại.",
+            "status_completed": "hoàn thành",
+            "preview_loading_server": "Đang tải tệp PDF xem trước từ máy chủ...",
+            "toast_preparing_file": "Đang chuẩn bị tệp .{format}...",
+            "toast_email_copied": "Đã sao chép địa chỉ email vào clipboard!",
+            "toast_feedback_sent": "Cảm ơn bạn! Phản hồi đã được gửi đến nhóm phát triển.",
+            "toast_legal_accepted": "Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.",
+            "toast_translation_copied": "Đã sao chép toàn bộ bản dịch vào clipboard!",
+            "toast_original_copied": "Đã sao chép văn bản gốc vào clipboard!",
+            "toast_summary_copied": "Đã sao chép tóm tắt vào clipboard!",
+            "toast_workspace_reset": "Làm mới phiên làm việc thành công.",
+            "toast_upload_required": "Vui lòng tải lên tệp PDF để bắt đầu!",
+            "toast_admin_denied": "Bạn chưa có quyền xem quản trị!",
+
+            // Dynamic Progress & Statuses
+            "Đang xử lý...": "Đang xử lý...",
+            "Đang tải tài liệu lên máy chủ...": "Đang tải tài liệu lên máy chủ...",
+            "Đang nhận dạng OCR văn bản...": "Đang nhận dạng OCR văn bản...",
+            "Đang dịch thuật văn bản...": "Đang dịch thuật văn bản...",
+            "Đang xếp hàng chờ...": "Đang xếp hàng chờ...",
+            "Đang phân tích & dịch thuật...": "Đang phân tích & dịch thuật...",
+            "Hoàn tất xử lý": "Hoàn tất xử lý",
+            "Sẵn sàng": "Sẵn sàng",
+
+            // Common Dynamic Toast Sentences
+            "Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!": "Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!",
+            "Đã sao chép văn bản gốc vào clipboard!": "Đã sao chép văn bản gốc vào clipboard!",
+            "Đã sao chép vào bộ nhớ tạm!": "Đã sao chép vào bộ nhớ tạm!",
+            "Chưa có nội dung bản dịch để sao chép!": "Chưa có nội dung bản dịch để sao chép!",
+            "Không thể sao chép văn bản.": "Không thể sao chép văn bản.",
+            "Vui lòng tải lên tệp PDF để bắt đầu!": "Vui lòng tải lên tệp PDF để bắt đầu!",
+            "Vui lòng chọn một tệp PDF trước khi bắt đầu!": "Vui lòng chọn một tệp PDF trước khi bắt đầu!",
+            "Tài liệu đã được dịch thuật thành công!": "Tài liệu đã được dịch thuật thành công!",
+            "Đã hủy tác vụ xử lý thành công.": "Đã hủy tác vụ xử lý thành công.",
+            "Tác vụ đang tiếp tục xử lý ở chế độ nền.": "Tác vụ đang tiếp tục xử lý ở chế độ nền.",
+            "Lỗi kết nối khi tải bản xem trước PDF.": "Lỗi kết nối khi tải bản xem trước PDF.",
+            "Chưa có tài liệu để tải về!": "Chưa có tài liệu để tải về!",
+            "Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!": "Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!",
+            "Chưa có nội dung bản dịch để tải về!": "Chưa có nội dung bản dịch để tải về!",
+            "Chưa có nội dung văn bản gốc để tải về!": "Chưa có nội dung văn bản gốc để tải về!",
+            "Thiếu nội dung văn bản gốc để xuất song ngữ!": "Thiếu nội dung văn bản gốc để xuất song ngữ!",
+            "Thiếu nội dung bản dịch để xuất song ngữ!": "Thiếu nội dung bản dịch để xuất song ngữ!",
+            "Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.": "Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.",
+            "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!": "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!"
         },
         en: {
             // Common Actions & Badges
@@ -566,7 +619,60 @@
             "feedback_topic_bug": "Report OCR / Translation Bug",
             "feedback_topic_feature": "Suggest a New Feature",
             "feedback_topic_support": "Question / Help Request",
-            "feedback_topic_other": "General Feedback"
+            "feedback_topic_other": "General Feedback",
+
+            // HTTP Errors & Dynamic Status Messages
+            "http_error_400": "Invalid request. Please check your input.",
+            "http_error_401": "Your session has expired or is invalid. Please sign in again.",
+            "http_error_403": "You do not have permission to perform this action.",
+            "http_error_404": "The requested resource could not be found.",
+            "http_error_413": "File size exceeds the permitted limit.",
+            "http_error_429": "Too many requests. Please wait a moment and try again.",
+            "http_error_500": "Internal server error occurred. Please try again later.",
+            "http_error_default": "A network error occurred. Please try again.",
+            "status_completed": "completed",
+            "preview_loading_server": "Loading PDF preview from server...",
+            "toast_preparing_file": "Preparing .{format} file...",
+            "toast_email_copied": "Email address copied to clipboard!",
+            "toast_feedback_sent": "Thank you! Your feedback has been sent to our team.",
+            "toast_legal_accepted": "Thank you! Terms & Privacy agreement recorded.",
+            "toast_translation_copied": "Full translation copied to clipboard!",
+            "toast_original_copied": "Original text copied to clipboard!",
+            "toast_summary_copied": "AI summary copied to clipboard!",
+            "toast_workspace_reset": "Workspace session reset successfully.",
+            "toast_upload_required": "Please upload a PDF file to begin!",
+            "toast_admin_denied": "You do not have administrative privileges!",
+
+            // Dynamic Progress & Statuses
+            "Đang xử lý...": "Processing...",
+            "Đang tải tài liệu lên máy chủ...": "Uploading document to server...",
+            "Đang nhận dạng OCR văn bản...": "Running OCR text recognition...",
+            "Đang dịch thuật văn bản...": "Translating text content...",
+            "Đang xếp hàng chờ...": "Queued in line...",
+            "Đang phân tích & dịch thuật...": "Analyzing & translating...",
+            "Hoàn tất xử lý": "Processing complete",
+            "Sẵn sàng": "Ready",
+
+            // Common Dynamic Toast Sentences
+            "Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!": "Full translation copied to clipboard!",
+            "Đã sao chép văn bản gốc vào clipboard!": "Original text copied to clipboard!",
+            "Đã sao chép vào bộ nhớ tạm!": "Copied to clipboard!",
+            "Chưa có nội dung bản dịch để sao chép!": "No translated content to copy!",
+            "Không thể sao chép văn bản.": "Failed to copy text to clipboard.",
+            "Vui lòng tải lên tệp PDF để bắt đầu!": "Please upload a PDF file to begin!",
+            "Vui lòng chọn một tệp PDF trước khi bắt đầu!": "Please select a PDF file before starting!",
+            "Tài liệu đã được dịch thuật thành công!": "Document translated successfully!",
+            "Đã hủy tác vụ xử lý thành công.": "Task cancelled successfully.",
+            "Tác vụ đang tiếp tục xử lý ở chế độ nền.": "Task continues processing in the background.",
+            "Lỗi kết nối khi tải bản xem trước PDF.": "Connection error while loading PDF preview.",
+            "Chưa có tài liệu để tải về!": "No document available for download!",
+            "Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!": "Word export (.docx) is exclusive to Pro VIP accounts!",
+            "Chưa có nội dung bản dịch để tải về!": "No translated text to export!",
+            "Chưa có nội dung văn bản gốc để tải về!": "No original text to export!",
+            "Thiếu nội dung văn bản gốc để xuất song ngữ!": "Missing original text for bilingual export!",
+            "Thiếu nội dung bản dịch để xuất song ngữ!": "Missing translated text for bilingual export!",
+            "Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.": "Thank you! Terms & Privacy agreement recorded.",
+            "Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!": "Thank you! Your feedback has been sent to our team."
         }
     };
 
@@ -738,6 +844,29 @@
                     }
                 }
             });
+        },
+
+        /**
+         * Get localized HTTP error message by status code.
+         * @param {number} status
+         * @param {string} fallbackMsg
+         * @returns {string}
+         */
+        getHttpError: function (status, fallbackMsg) {
+            const errorKeys = {
+                400: 'http_error_400',
+                401: 'http_error_401',
+                403: 'http_error_403',
+                404: 'http_error_404',
+                413: 'http_error_413',
+                429: 'http_error_429',
+                500: 'http_error_500'
+            };
+            const key = errorKeys[status];
+            if (key) {
+                return this.t(key);
+            }
+            return fallbackMsg || this.t('http_error_default');
         },
 
         /**

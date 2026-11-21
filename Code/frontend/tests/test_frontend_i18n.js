@@ -194,9 +194,38 @@ runTest('applyTranslations updates textContent and attributes on mocked DOM elem
 });
 
 // -----------------------------------------------------------------------------
-// Part 5: Zero En-dash & Em-dash Character Compliance in Dictionaries
+// Part 5: HTTP Errors & Dynamic Message Localization
 // -----------------------------------------------------------------------------
-console.log('\n--- 5. Zero En-dash & Em-dash Compliance in i18n.js ---');
+console.log('\n--- 5. HTTP Errors & Dynamic Message Localization ---');
+
+runTest('getHttpError returns localized messages for standard status codes', () => {
+    i18n.setLanguage('vi');
+    assert.strictEqual(i18n.getHttpError(400), 'Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.');
+    assert.strictEqual(i18n.getHttpError(404), 'Không tìm thấy tài nguyên yêu cầu.');
+    assert.strictEqual(i18n.getHttpError(500), 'Máy chủ gặp sự cố xử lý. Vui lòng thử lại sau.');
+    assert.strictEqual(i18n.getHttpError(999, 'Lỗi tùy chỉnh'), 'Lỗi tùy chỉnh');
+
+    i18n.setLanguage('en');
+    assert.strictEqual(i18n.getHttpError(400), 'Invalid request. Please check your input.');
+    assert.strictEqual(i18n.getHttpError(404), 'The requested resource could not be found.');
+    assert.strictEqual(i18n.getHttpError(500), 'Internal server error occurred. Please try again later.');
+    assert.strictEqual(i18n.getHttpError(999, 'Custom fallback'), 'Custom fallback');
+});
+
+runTest('Dynamic progress text and toast sentences translate accurately', () => {
+    i18n.setLanguage('vi');
+    assert.strictEqual(i18n.t('Đang xử lý...'), 'Đang xử lý...');
+    assert.strictEqual(i18n.t('Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!'), 'Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!');
+
+    i18n.setLanguage('en');
+    assert.strictEqual(i18n.t('Đang xử lý...'), 'Processing...');
+    assert.strictEqual(i18n.t('Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!'), 'Full translation copied to clipboard!');
+});
+
+// -----------------------------------------------------------------------------
+// Part 6: Zero En-dash & Em-dash Character Compliance in Dictionaries
+// -----------------------------------------------------------------------------
+console.log('\n--- 6. Zero En-dash & Em-dash Compliance in i18n.js ---');
 
 runTest('i18n.js strictly contains zero en-dash and zero em-dash characters', () => {
     const i18nSource = fs.readFileSync(path.resolve(__dirname, '../js/i18n.js'), 'utf8');

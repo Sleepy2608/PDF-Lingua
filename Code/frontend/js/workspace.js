@@ -2292,8 +2292,12 @@ function updateProgress(percentage, text, currentStep) {
   const bar = document.getElementById('progressBarFill');
   const desc = document.getElementById('progressDesc');
 
+  const localizedText = (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function' && text)
+    ? window.i18n.t(text)
+    : text;
+
   if (bar) bar.style.width = `${percentage}%`;
-  if (desc) desc.textContent = text;
+  if (desc) desc.textContent = localizedText;
 
   for (let i = 1; i <= 4; i++) {
     const stepEl = document.getElementById(`stepItem${i}`);
@@ -2314,13 +2318,17 @@ function updateProgress(percentage, text, currentStep) {
 
   if (bgBar) bgBar.style.width = `${percentage}%`;
   if (bgPercent) bgPercent.textContent = `${Math.round(percentage)}%`;
-  if (bgStatus && text) bgStatus.textContent = text;
+  if (bgStatus && localizedText) bgStatus.textContent = localizedText;
   if (bgFileName && currentJobFileName) bgFileName.textContent = currentJobFileName;
 }
 
 function showToast(message, type = 'info', action = null) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
+
+  const localizedMessage = (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function')
+    ? window.i18n.t(message)
+    : message;
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -2329,7 +2337,7 @@ function showToast(message, type = 'info', action = null) {
   }
 
   const textSpan = document.createElement('span');
-  textSpan.textContent = message;
+  textSpan.textContent = localizedMessage;
   if (typeof toast.appendChild === 'function') {
     toast.appendChild(textSpan);
   } else {

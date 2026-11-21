@@ -633,9 +633,9 @@
           e.preventDefault();
           var email = 'huytamnguyenle2608@gmail.com';
           var notifyCopy = function () {
-            btnCopySupportEmail.textContent = 'Đã sao chép!';
+            btnCopySupportEmail.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copied') : 'Đã sao chép!';
             setTimeout(function () {
-              btnCopySupportEmail.textContent = 'Sao chép';
+              btnCopySupportEmail.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copy') : 'Sao chép';
             }, 2000);
           };
 
@@ -652,7 +652,10 @@
       if (feedbackForm) {
         feedbackForm.addEventListener('submit', function (e) {
           e.preventDefault();
-          alert('Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!');
+          var alertMsg = (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('toast_feedback_sent')
+            : 'Cảm ơn bạn đã gửi phản hồi đóng góp cho nhóm phát triển PDF-Lingua!';
+          alert(alertMsg);
           feedbackForm.reset();
         });
       }

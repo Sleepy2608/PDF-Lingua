@@ -166,7 +166,8 @@ function initLegalModal() {
                     btnCopyEmail.innerHTML = 'Sao chép';
                 }, 2000);
                 if (typeof showToast === 'function') {
-                    showToast('Đã sao chép địa chỉ email vào clipboard!', 'success');
+                    const msg = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_email_copied') : 'Đã sao chép địa chỉ email vào clipboard!';
+                    showToast(msg, 'success');
                 }
             } catch (_err) {
                 if (typeof showToast === 'function') {
@@ -210,13 +211,15 @@ function initLegalModal() {
                 const result = await response.json();
                 feedbackForm.reset();
                 if (typeof showToast === 'function') {
-                    showToast(result.message || 'Cảm ơn bạn! Phản hồi đã được gửi đến nhóm phát triển.', 'success');
+                    const msg = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_feedback_sent') : (result.message || 'Cảm ơn bạn! Phản hồi đã được gửi đến nhóm phát triển.');
+                    showToast(msg, 'success');
                 }
             } catch (_err) {
                 // Fallback graceful success
                 feedbackForm.reset();
                 if (typeof showToast === 'function') {
-                    showToast('Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.', 'success');
+                    const msg = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_feedback_sent') : 'Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.';
+                    showToast(msg, 'success');
                 }
             } finally {
                 if (btnSubmit) {
