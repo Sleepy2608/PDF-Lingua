@@ -85,13 +85,20 @@ function getCurrentUserLimits(user) {
   }
 
   const config = ROLE_LIMITS[role] || DEFAULT_LIMITS;
+  let label = config.label;
+  if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
+    if (role === 'guest') label = window.i18n.t('role_guest');
+    else if (role === 'free') label = window.i18n.t('role_free');
+    else if (role === 'pro') label = window.i18n.t('role_pro');
+    else if (role === 'admin') label = window.i18n.t('role_admin');
+  }
   return {
     role: role,
     maxFileSizeMb: config.maxFileSizeMb,
     maxFileSizeBytes: config.maxFileSizeMb * 1024 * 1024,
     maxPages: config.maxPages || 100,
     maxOcrPages: config.maxOcrPages || 100,
-    label: config.label,
+    label: label,
   };
 }
 
@@ -496,19 +503,7 @@ if (typeof window !== 'undefined') {
     clearQueue: () => clearBatchQueue(),
     renderQueueUI: () => renderBatchQueueUI(),
     isDuplicate: (file) => (batchQueue.some(item => item.name === file.name && item.size === file.size)),
-    validateFile: (file) => {
-      if (!file) return { valid: false, reason: 'empty', message: 'Tệp không hợp lệ.' };
-      const isPdf = Boolean((file.name && file.name.toLowerCase().endsWith('.pdf')) || file.type === 'application/pdf');
-      if (!isPdf) return { valid: false, reason: 'format', message: `Tệp "${file.name || 'Không rõ'}" không phải định dạng PDF (.pdf)!` };
-      const limits = getCurrentUserLimits();
-      if (file.size > limits.maxFileSizeBytes) {
-        return { valid: false, reason: 'size', message: `Dung lượng tệp (${formatFileSize(file.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!` };
-      }
-      if (batchQueue.some(item => item.name === file.name && item.size === file.size)) {
-        return { valid: false, reason: 'duplicate', message: `Tệp "${file.name}" đã có trong hàng đợi.` };
-      }
-      return { valid: true };
-    },
+    validateFile: (file) => validateFileForQueue(file),
     updateItem: (id, updates) => {
       const item = batchQueue.find(i => i.id === id);
       if (item && updates) {
@@ -536,7 +531,9 @@ if (typeof window !== 'undefined') {
           name: f.name || 'manual.pdf',
           size: f.size || 0,
           status: 'ready',
-          statusText: 'Sẵn sàng',
+          statusText: (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('upload_status_ready')
+            : 'Sẵn sàng',
         }];
         renderBatchQueueUI();
       }

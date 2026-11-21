@@ -356,6 +356,41 @@ runTest('Modals and Admin dashboard bindings exist in index.html', () => {
     assert.ok(indexHtml.includes('data-i18n="admin_table_title"'), 'Missing admin_table_title');
 });
 
+// -----------------------------------------------------------------------------
+// Part 10: Documents, Profile, and Workspace Multilingual Keys Verification
+// -----------------------------------------------------------------------------
+console.log('\n--- 10. Documents, Profile, and Workspace Multilingual Keys Verification ---');
+
+runTest('Documents, Profile, and Workspace dictionary keys exist and render correctly in VI and EN', () => {
+    i18n.setLanguage('vi');
+    assert.strictEqual(i18n.t('docs_btn_download'), 'Tải xuống');
+    assert.strictEqual(i18n.t('docs_badge_ocr'), 'Quét OCR');
+    assert.strictEqual(i18n.t('docs_badge_digital'), 'PDF Số');
+    assert.strictEqual(i18n.t('auth_status_active'), 'Hoạt động');
+    assert.strictEqual(i18n.t('auth_status_disabled'), 'Bị vô hiệu');
+    assert.strictEqual(i18n.t('auth_update_pwd_btn'), 'Cập nhật mật khẩu');
+    assert.strictEqual(i18n.t('workspace_btn_retranslate'), 'Dịch lại');
+    assert.strictEqual(i18n.t('workspace_cancel_task'), 'Hủy tác vụ');
+    assert.strictEqual(i18n.t('workspace_cancelling'), 'Đang hủy...');
+    assert.strictEqual(i18n.t('workspace_docx_pro_only'), 'Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!');
+    assert.strictEqual(i18n.t('workspace_download_prep', { format: 'PDF' }), 'Đang chuẩn bị tệp .PDF...');
+    assert.strictEqual(i18n.t('workspace_download_success', { format: 'PDF' }), 'Đã tải xuống thành công tệp .PDF!');
+
+    i18n.setLanguage('en');
+    assert.strictEqual(i18n.t('docs_btn_download'), 'Download');
+    assert.strictEqual(i18n.t('docs_badge_ocr'), 'OCR Scan');
+    assert.strictEqual(i18n.t('docs_badge_digital'), 'Digital PDF');
+    assert.strictEqual(i18n.t('auth_status_active'), 'Active');
+    assert.strictEqual(i18n.t('auth_status_disabled'), 'Disabled');
+    assert.strictEqual(i18n.t('auth_update_pwd_btn'), 'Update Password');
+    assert.strictEqual(i18n.t('workspace_btn_retranslate'), 'Retranslate');
+    assert.strictEqual(i18n.t('workspace_cancel_task'), 'Cancel Task');
+    assert.strictEqual(i18n.t('workspace_cancelling'), 'Cancelling...');
+    assert.strictEqual(i18n.t('workspace_docx_pro_only'), 'Exporting Word (.docx) is exclusive to Pro VIP accounts!');
+    assert.strictEqual(i18n.t('workspace_download_prep', { format: 'PDF' }), 'Preparing .PDF file...');
+    assert.strictEqual(i18n.t('workspace_download_success', { format: 'PDF' }), 'Downloaded .PDF file successfully!');
+});
+
 console.log('\n================================================================');
 console.log(`Frontend i18n Test Suites Result: ${passedTests}/${totalTests} PASSED`);
 console.log('================================================================\n');
