@@ -235,6 +235,36 @@ runTest('i18n.js strictly contains zero en-dash and zero em-dash characters', ()
     assert.strictEqual(emDashes, 0, 'Forbidden em-dash character found in i18n.js');
 });
 
+// -----------------------------------------------------------------------------
+// Part 7: Role Translations (Guest, Free, Pro, Admin) & DOM Bindings
+// -----------------------------------------------------------------------------
+console.log('\n--- 7. Multilingual Role Mapping & Index.html Bindings ---');
+
+runTest('Role dictionary mapping: Khach -> Guest, Nguoi dung Free -> Free User, Nguoi dung Pro -> Pro User, Quan tri vien -> Admin', () => {
+    i18n.setLanguage('vi');
+    assert.strictEqual(i18n.t('role_guest'), 'Khách');
+    assert.strictEqual(i18n.t('role_free'), 'Người dùng Free');
+    assert.strictEqual(i18n.t('role_pro'), 'Người dùng Pro');
+    assert.strictEqual(i18n.t('role_admin'), 'Quản trị viên');
+    assert.strictEqual(i18n.t('role_admin_title'), 'Vai trò: Quản trị viên');
+
+    i18n.setLanguage('en');
+    assert.strictEqual(i18n.t('role_guest'), 'Guest');
+    assert.strictEqual(i18n.t('role_free'), 'Free User');
+    assert.strictEqual(i18n.t('role_pro'), 'Pro User');
+    assert.strictEqual(i18n.t('role_admin'), 'Admin');
+    assert.strictEqual(i18n.t('role_admin_title'), 'Role: Admin');
+});
+
+runTest('Index.html HTML bindings: sidebar and topbar configure role i18n attributes', () => {
+    const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+    assert.ok(indexHtml.includes('data-i18n="role_guest"'), 'Missing data-i18n="role_guest" on sidebar user name');
+    assert.ok(indexHtml.includes('data-tooltip:role_guest'), 'Missing data-tooltip:role_guest on sidebar profile card');
+    assert.ok(indexHtml.includes('data-i18n="role_admin"'), 'Missing data-i18n="role_admin" on admin crown badge');
+    assert.ok(indexHtml.includes('data-i18n-attr="title:role_admin_title"'), 'Missing title:role_admin_title on admin button');
+    assert.ok(indexHtml.includes('data-i18n="account_role_label"'), 'Missing data-i18n="account_role_label" on account modal');
+});
+
 console.log('\n================================================================');
 console.log(`Frontend i18n Test Suites Result: ${passedTests}/${totalTests} PASSED`);
 console.log('================================================================\n');

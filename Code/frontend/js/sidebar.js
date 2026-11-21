@@ -280,6 +280,13 @@
       }
     });
 
+    // Listen to languageChanged events from i18n.js
+    document.addEventListener('languageChanged', () => {
+      syncUserProfile();
+      const isLoggedIn = !!getStoredAuthToken();
+      updateSidebarEmptyDocsContent(isLoggedIn);
+    });
+
     // Listen to document processed events from workspace.js for auto-refresh
     window.addEventListener('pdfl:document-processed', () => {
       fetchRecentDocuments();
@@ -1132,7 +1139,13 @@
     }
 
     if (profileCard) {
-      profileCard.setAttribute('data-tooltip', currentUser && (currentUser.email || currentUser.id) ? 'Tài khoản cá nhân' : 'Khách');
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+      const tooltip = currentUser && (currentUser.email || currentUser.id)
+        ? (isEn ? 'Personal Account' : 'Tài khoản cá nhân')
+        : (isEn ? 'Guest' : 'Khách');
+      profileCard.setAttribute('data-tooltip', tooltip);
     }
 
     const role = currentUser ? (currentUser.role || 'free') : 'guest';
@@ -1247,14 +1260,18 @@
 
       if (roleEl) {
         roleEl.style.display = '';
+        const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+          ? i18n.getLanguage() === 'en'
+          : false;
+
         if (role === 'admin') {
-          roleEl.textContent = 'Quản trị viên';
+          roleEl.textContent = isEn ? 'Admin' : 'Quản trị viên';
           roleEl.style.color = '#C9201C';
         } else if (role === 'pro') {
-          roleEl.textContent = 'Gói Pro';
+          roleEl.textContent = isEn ? 'Pro User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Pro' : 'Gói Pro');
           roleEl.style.color = '#F59E0B';
         } else {
-          roleEl.textContent = 'Gói Miễn phí';
+          roleEl.textContent = isEn ? 'Free User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Free' : 'Gói Miễn phí');
           roleEl.style.color = '#64748B';
         }
       }
@@ -1276,7 +1293,10 @@
         avatarEl.style.borderColor = '#CBD5E1';
       }
 
-      if (nameEl) nameEl.textContent = 'Khách';
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+      if (nameEl) nameEl.textContent = isEn ? 'Guest' : 'Khách';
       if (roleEl) {
         roleEl.textContent = '';
         roleEl.style.display = 'none';
@@ -1374,21 +1394,27 @@
         ? emptyStateEl.querySelector('.empty-state-desc')
         : null;
 
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+
       if (!isLoggedIn) {
-        if (titleEl) titleEl.textContent = 'Đăng nhập để lưu tài liệu';
+        if (titleEl) titleEl.textContent = isEn ? 'Sign in to save documents' : 'Đăng nhập để lưu tài liệu';
         if (descEl) {
-          descEl.innerHTML = 'Tài liệu đã dịch sẽ được lưu tự động tại đây.<br><span class="empty-state-action" id="emptyStateLoginAction">Đăng nhập ngay &rarr;</span>';
+          descEl.innerHTML = isEn
+            ? 'Translated documents will be saved automatically here.<br><span class="empty-state-action" id="emptyStateLoginAction">Sign in now &rarr;</span>'
+            : 'Tài liệu đã dịch sẽ được lưu tự động tại đây.<br><span class="empty-state-action" id="emptyStateLoginAction">Đăng nhập ngay &rarr;</span>';
         }
         if (typeof emptyStateEl.setAttribute === 'function') {
-          emptyStateEl.setAttribute('data-tooltip', 'Bấm để đăng nhập');
+          emptyStateEl.setAttribute('data-tooltip', isEn ? 'Click to sign in' : 'Bấm để đăng nhập');
         }
       } else {
-        if (titleEl) titleEl.textContent = 'Bạn chưa có tài liệu nào.';
+        if (titleEl) titleEl.textContent = isEn ? 'You have no documents yet.' : 'Bạn chưa có tài liệu nào.';
         if (descEl) {
-          descEl.textContent = 'Hãy tải tài liệu đầu tiên của bạn!';
+          descEl.textContent = isEn ? 'Upload your first document to get started!' : 'Hãy tải tài liệu đầu tiên của bạn!';
         }
         if (typeof emptyStateEl.setAttribute === 'function') {
-          emptyStateEl.setAttribute('data-tooltip', 'Bấm để tải tệp PDF lên');
+          emptyStateEl.setAttribute('data-tooltip', isEn ? 'Click to upload PDF' : 'Bấm để tải tệp PDF lên');
         }
       }
     } catch (_e) {}

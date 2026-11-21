@@ -203,6 +203,11 @@
       });
     }
 
+    document.addEventListener('languageChanged', () => {
+      renderProCardForCycle();
+      syncActivePlanBanner();
+    });
+
     if (topNavPricing) {
       topNavPricing.addEventListener('click', (e) => {
         e.preventDefault();
@@ -434,14 +439,20 @@
         activeBanner.style.display = 'flex';
       }
 
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+
       if (effectiveRole === 'admin') {
         if (activeBannerTitle) {
-          activeBannerTitle.textContent =
-            'Tài khoản Quản trị viên: Đã mở khóa toàn bộ đặc quyền Pro';
+          activeBannerTitle.textContent = isEn
+            ? 'Admin Account: All Pro privileges unlocked'
+            : 'Tài khoản Quản trị viên: Đã mở khóa toàn bộ đặc quyền Pro';
         }
         if (activeBannerSub) {
-          activeBannerSub.textContent =
-            'Hạn mức tối đa: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.';
+          activeBannerSub.textContent = isEn
+            ? 'Maximum limit: 100 MB per file and 500 deep OCR pages.'
+            : 'Hạn mức tối đa: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.';
         }
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = 'none';

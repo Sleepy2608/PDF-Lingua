@@ -115,6 +115,12 @@
     initAccountModal();
     initAvatarCropModal();
     restoreSession();
+    document.addEventListener('languageChanged', () => {
+      const user = getStoredUser();
+      if (user) {
+        renderAccountDetails(user);
+      }
+    });
   });
 
   /**
@@ -2899,12 +2905,16 @@
 
     if (detailRole) {
       const roleStr = (user.role || 'free').toLowerCase();
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+
       const roleLabels = {
-        admin: 'Quản trị viên',
-        pro: 'Gói Pro VIP',
-        free: 'Gói Miễn phí',
+        admin: isEn ? 'Admin' : 'Quản trị viên',
+        pro: isEn ? 'Pro User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Pro' : 'Gói Pro VIP'),
+        free: isEn ? 'Free User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Free' : 'Gói Miễn phí'),
       };
-      detailRole.textContent = roleLabels[roleStr] || 'Gói Miễn phí';
+      detailRole.textContent = roleLabels[roleStr] || (isEn ? 'Free User' : 'Gói Miễn phí');
       detailRole.className = `badge-role role-${roleStr}`;
 
       const btnAccountUpgradePro = document.getElementById('btnAccountUpgradePro');

@@ -43,6 +43,11 @@ if (typeof window !== 'undefined') {
   window.addEventListener('pdfl:auth-change', (e) => {
     updateUploadLimitsUI(e && e.detail ? e.detail.user : null);
   });
+  if (typeof document !== 'undefined') {
+    document.addEventListener('languageChanged', () => {
+      updateUploadLimitsUI();
+    });
+  }
 }
 
 /**
@@ -96,15 +101,27 @@ function updateUploadLimitsUI(user) {
   const limits = getCurrentUserLimits(user);
 
   if (dropzoneLimitEl) {
+    const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+      ? i18n.getLanguage() === 'en'
+      : false;
+
     if (limits.role === 'pro') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
+      dropzoneLimitEl.innerHTML = isEn
+        ? '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Max <strong>100 MB</strong>, up to <strong>500 pages</strong> / file'
+        : '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
     } else if (limits.role === 'admin') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">QUẢN TRỊ VIÊN</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
+      dropzoneLimitEl.innerHTML = isEn
+        ? '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">ADMIN</span> Max <strong>100 MB</strong>, up to <strong>500 pages</strong> / file'
+        : '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">QUẢN TRỊ VIÊN</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
     } else if (limits.role === 'free') {
-      dropzoneLimitEl.innerHTML = 'Tệp miễn phí tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
+      dropzoneLimitEl.innerHTML = isEn
+        ? 'Free tier max <strong>20 MB</strong>, up to <strong>100 pages</strong> / file (Upgrade to Pro for 100 MB / 500 pages)'
+        : 'Tệp miễn phí tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     } else {
       // Guest (unauthenticated)
-      dropzoneLimitEl.innerHTML = 'Tệp tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
+      dropzoneLimitEl.innerHTML = isEn
+        ? 'Max <strong>20 MB</strong>, up to <strong>100 pages</strong> / file (Upgrade to Pro for 100 MB / 500 pages)'
+        : 'Tệp tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     }
   }
 
