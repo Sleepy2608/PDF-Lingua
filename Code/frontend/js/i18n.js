@@ -60,11 +60,14 @@
 
             // Welcome Hero Section
             "welcome_hero_eyebrow": "Nền Tảng Dịch Thuật Học Thuật & Kỹ Thuật",
-            "welcome_hero_title_1": "Trích xuất & Dịch thuật PDF Thông minh",
+            "welcome_hero_title_1": "Dịch Thuật PDF Song Ngữ Thông Minh & Trợ Lý AI Chuyên Sâu",
             "welcome_hero_title_accent": "Bảo Toàn Bố Cục 100%",
-            "welcome_hero_subtitle": "Chuyển đổi tài liệu khoa học, sách giáo trình và báo cáo đa ngôn ngữ với độ chính xác cao. Tích hợp OCR nhận diện ký tự quang học và Trợ lý AI hỏi đáp chuyên sâu.",
+            "welcome_hero_subtitle": "Bảo tồn nguyên vẹn cấu trúc bảng biểu, khử lệch dòng đa cột và tương tác hỏi đáp RAG trực tiếp trên ngữ cảnh tài liệu gốc.",
             "welcome_hero_cta_primary": "Bắt đầu miễn phí ngay",
-            "welcome_hero_cta_secondary": "Khám phá bảng giá",
+            "welcome_hero_cta_secondary": "Xem bản dịch mẫu",
+            "welcome_trust_no_install": "Không cần cài đặt",
+            "welcome_trust_user_isolation": "Cô lập thư mục User ID riêng biệt",
+            "welcome_trust_ocr_support": "Hỗ trợ PDF quét scan & OCR Tiếng Việt",
             "welcome_hero_badge_ocr": "OCR Tiếng Việt & Đa Ngữ",
             "welcome_hero_badge_layout": "Giữ nguyên format gốc",
             "welcome_hero_badge_privacy": "Bảo mật & Tự hủy file",
@@ -76,6 +79,11 @@
             "welcome_preview_target_title": "Bản dịch song ngữ",
             "welcome_preview_tag_academic": "Báo cáo nghiên cứu khoa học",
             "welcome_preview_target_lang": "Tiếng Việt (vi)",
+            "welcome_preview_mode_text": "Văn bản",
+            "welcome_preview_mode_pdf": "PDF gốc",
+            "welcome_preview_mode_split": "Song song",
+            "welcome_preview_btn_retranslate": "Dịch lại",
+            "welcome_preview_btn_download": "Tải xuống",
 
             // Welcome Features Section
             "welcome_features_eyebrow": "Tính Năng Vượt Trội",
@@ -102,8 +110,11 @@
 
             // Welcome Pricing Section
             "welcome_pricing_eyebrow": "Bảng Giá Minh Bạch",
-            "welcome_pricing_title": "Chọn Gói Cước Phù Hợp Với Nhu Cầu Của Bạn",
-            "welcome_pricing_subtitle": "Trải nghiệm miễn phí không cần thẻ tín dụng. Nâng cấp linh hoạt bất cứ lúc nào.",
+            "welcome_pricing_title": "Bảng Giá Linh Hoạt Cho Mọi Nhu Cầu",
+            "welcome_pricing_subtitle": "Khởi đầu miễn phí hoàn toàn hoặc nâng cấp gói Pro để mở khóa toàn bộ sức mạnh AI và xử lý hàng loạt.",
+            "welcome_billing_monthly": "Hàng tháng",
+            "welcome_billing_yearly": "Hàng năm",
+            "welcome_billing_save": "Tiết kiệm 32%",
             "tier_guest_name": "Khách vãng lai",
             "tier_guest_desc": "Trải nghiệm nhanh không cần tạo tài khoản",
             "tier_guest_price": "0đ",
@@ -133,6 +144,11 @@
 
             // Welcome Footer
             "footer_desc": "Nền tảng dịch thuật tài liệu PDF chuyên sâu, bảo toàn cấu trúc và tích hợp trợ lý AI thông minh cho học thuật và công việc.",
+            "welcome_footer_quick_nav": "Điều Hướng Nhanh",
+            "welcome_footer_core_tech": "Công Nghệ Cốt Lõi",
+            "welcome_footer_support_legal": "Hỗ Trợ & Pháp Lý",
+            "welcome_footer_github": "Kho mã nguồn GitHub",
+            "welcome_footer_copyright": "Bản quyền 2026 PDF-Lingua. Toàn bộ quyền được bảo lưu.",
             "footer_col_product": "Sản phẩm",
             "footer_col_resources": "Tài nguyên",
             "footer_col_legal": "Chính sách & Pháp lý",
@@ -274,11 +290,14 @@
 
             // Welcome Hero Section
             "welcome_hero_eyebrow": "Academic & Technical Translation Platform",
-            "welcome_hero_title_1": "Intelligent PDF Extraction & Translation",
+            "welcome_hero_title_1": "Intelligent Bilingual PDF Translation & Specialized AI Assistant",
             "welcome_hero_title_accent": "100% Layout Preserved",
-            "welcome_hero_subtitle": "Transform scientific papers, textbooks, and reports across languages with precision. Featuring advanced optical character recognition (OCR) and an intelligent AI assistant.",
+            "welcome_hero_subtitle": "Preserve tables, fix multi-column reading flows, and query with conversational AI directly on your original documents.",
             "welcome_hero_cta_primary": "Start for free now",
-            "welcome_hero_cta_secondary": "Explore pricing",
+            "welcome_hero_cta_secondary": "View sample translation",
+            "welcome_trust_no_install": "No installation required",
+            "welcome_trust_user_isolation": "Isolated user storage",
+            "welcome_trust_ocr_support": "Supports scanned PDFs & Vietnamese OCR",
             "welcome_hero_badge_ocr": "Multilingual OCR Engine",
             "welcome_hero_badge_layout": "Original format intact",
             "welcome_hero_badge_privacy": "Private & auto-cleanup",
@@ -290,6 +309,11 @@
             "welcome_preview_target_title": "Bilingual Translation",
             "welcome_preview_tag_academic": "Scientific Research Paper",
             "welcome_preview_target_lang": "English (en)",
+            "welcome_preview_mode_text": "Text",
+            "welcome_preview_mode_pdf": "Original PDF",
+            "welcome_preview_mode_split": "Side-by-side",
+            "welcome_preview_btn_retranslate": "Retranslate",
+            "welcome_preview_btn_download": "Download",
 
             // Welcome Features Section
             "welcome_features_eyebrow": "Core Capabilities",
@@ -316,8 +340,11 @@
 
             // Welcome Pricing Section
             "welcome_pricing_eyebrow": "Transparent Pricing",
-            "welcome_pricing_title": "Choose the Plan That Fits Your Workflow",
-            "welcome_pricing_subtitle": "Free trial with no credit card required. Upgrade or downgrade anytime.",
+            "welcome_pricing_title": "Flexible Pricing for Every Need",
+            "welcome_pricing_subtitle": "Start completely free or upgrade to Pro to unlock advanced AI and batch processing.",
+            "welcome_billing_monthly": "Monthly",
+            "welcome_billing_yearly": "Yearly",
+            "welcome_billing_save": "Save 32%",
             "tier_guest_name": "Guest User",
             "tier_guest_desc": "Instant trial without creating an account",
             "tier_guest_price": "$0",
@@ -347,6 +374,11 @@
 
             // Welcome Footer
             "footer_desc": "Dedicated PDF translation platform with layout preservation and conversational AI assistant for academic and professional workflows.",
+            "welcome_footer_quick_nav": "Quick Navigation",
+            "welcome_footer_core_tech": "Core Technology",
+            "welcome_footer_support_legal": "Support & Legal",
+            "welcome_footer_github": "GitHub Repository",
+            "welcome_footer_copyright": "Copyright 2026 PDF-Lingua. All rights reserved.",
             "footer_col_product": "Product",
             "footer_col_resources": "Resources",
             "footer_col_legal": "Legal & Policies",
