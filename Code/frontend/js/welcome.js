@@ -158,18 +158,22 @@
 
     if (btnMonthly && btnYearly) {
       var setBillingCycle = function (cycle) {
+        var isEn = (window.PDFL_i18n && typeof window.PDFL_i18n.getLanguage === 'function')
+          ? window.PDFL_i18n.getLanguage() === 'en'
+          : (window.i18n && typeof window.i18n.getLanguage === 'function' ? window.i18n.getLanguage() === 'en' : false);
+
         if (cycle === 'yearly') {
           btnYearly.classList.add('active');
           btnMonthly.classList.remove('active');
-          if (priceValuePro) priceValuePro.textContent = '399.000 đ';
-          if (pricePeriodPro) pricePeriodPro.textContent = '/ năm';
-          if (pricePeriodFree) pricePeriodFree.textContent = '/ năm';
+          if (priceValuePro) priceValuePro.textContent = isEn ? '399,000 VND' : '399.000 đ';
+          if (pricePeriodPro) pricePeriodPro.textContent = isEn ? '/ year' : '/ năm';
+          if (pricePeriodFree) pricePeriodFree.textContent = isEn ? '/ year' : '/ năm';
         } else {
           btnMonthly.classList.add('active');
           btnYearly.classList.remove('active');
-          if (priceValuePro) priceValuePro.textContent = '49.000 đ';
-          if (pricePeriodPro) pricePeriodPro.textContent = '/ tháng';
-          if (pricePeriodFree) pricePeriodFree.textContent = '/ tháng';
+          if (priceValuePro) priceValuePro.textContent = isEn ? '49,000 VND' : '49.000 đ';
+          if (pricePeriodPro) pricePeriodPro.textContent = isEn ? '/ month' : '/ tháng';
+          if (pricePeriodFree) pricePeriodFree.textContent = isEn ? '/ month' : '/ tháng';
         }
       };
 
@@ -179,6 +183,11 @@
 
       btnYearly.addEventListener('click', function () {
         setBillingCycle('yearly');
+      });
+
+      document.addEventListener('languageChanged', function () {
+        var currentCycle = btnYearly.classList.contains('active') ? 'yearly' : 'monthly';
+        setBillingCycle(currentCycle);
       });
     }
 
@@ -451,7 +460,9 @@
 
               if (loginAlert) {
                 loginAlert.className = 'form-alert alert-success';
-                loginAlert.textContent = 'Đăng nhập thành công! Đang chuyển hướng vào không gian làm việc...';
+                loginAlert.textContent = (window.PDFL_i18n && typeof window.PDFL_i18n.t === 'function')
+                  ? window.PDFL_i18n.t('toast_login_success')
+                  : 'Đăng nhập thành công! Đang chuyển hướng vào không gian làm việc...';
                 loginAlert.style.display = 'flex';
               }
 
@@ -470,10 +481,16 @@
           .catch(function () {
             if (btnSubmitLogin) btnSubmitLogin.disabled = false;
             if (loginSpinner) loginSpinner.style.display = 'none';
-            if (loginBtnText) loginBtnText.textContent = 'Đăng nhập';
+            if (loginBtnText) {
+              loginBtnText.textContent = (window.PDFL_i18n && typeof window.PDFL_i18n.t === 'function')
+                ? window.PDFL_i18n.t('nav_login')
+                : 'Đăng nhập';
+            }
             if (loginAlert) {
               loginAlert.className = 'form-alert alert-error';
-              loginAlert.textContent = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ.';
+              loginAlert.textContent = (window.PDFL_i18n && typeof window.PDFL_i18n.t === 'function')
+                ? window.PDFL_i18n.t('toast_network_error')
+                : 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ.';
               loginAlert.style.display = 'flex';
             }
           });
