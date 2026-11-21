@@ -778,15 +778,15 @@
                                     <div class="lang-select-wrap">
                                         <span class="lang-select-label" data-i18n="toolbar_target_lang">Dịch sang:</span>
                                         <select class="lang-select" id="targetLangSelect">
-                                            <option value="vi" selected>Tiếng Việt (vi)</option>
-                                            <option value="en">English (en)</option>
-                                            <option value="ja">日本語 (ja)</option>
-                                            <option value="ko">한국어 (ko)</option>
-                                            <option value="zh-CN">中文 (zh)</option>
-                                            <option value="fr">Français (fr)</option>
-                                            <option value="de">Deutsch (de)</option>
-                                            <option value="es">Español (es)</option>
-                                            <option value="ru">Русский (ru)</option>
+                                            <option value="vi" selected data-i18n="lang_vi">Tiếng Việt (vi)</option>
+                                            <option value="en" data-i18n="lang_en">English (en)</option>
+                                            <option value="ja" data-i18n="lang_ja">日本語 (ja)</option>
+                                            <option value="ko" data-i18n="lang_ko">한국어 (ko)</option>
+                                            <option value="zh-CN" data-i18n="lang_zh">中文 (zh)</option>
+                                            <option value="fr" data-i18n="lang_fr">Français (fr)</option>
+                                            <option value="de" data-i18n="lang_de">Deutsch (de)</option>
+                                            <option value="es" data-i18n="lang_es">Español (es)</option>
+                                            <option value="ru" data-i18n="lang_ru">Русский (ru)</option>
                                         </select>
                                     </div>
 
@@ -832,19 +832,22 @@
                                         <div class="dropdown-format-row">
                                             <button type="button" class="dropdown-format-btn" id="btnDownloadTxt"
                                                 data-export-type="translated" data-format="txt"
-                                                title="Tải bản dịch định dạng TXT">
+                                                title="Tải bản dịch định dạng TXT"
+                                                data-i18n-attr="title:btn_download_txt_trans">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn" id="btnDownloadPdf"
                                                 data-export-type="translated" data-format="pdf"
-                                                title="Tải bản dịch định dạng PDF">
+                                                title="Tải bản dịch định dạng PDF"
+                                                data-i18n-attr="title:btn_download_pdf_trans">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn" id="btnDownloadDocx"
                                                 data-export-type="translated" data-format="docx"
-                                                title="Tải bản dịch định dạng Word (.docx) - Pro VIP">
+                                                title="Tải bản dịch định dạng Word (.docx) - Pro VIP"
+                                                data-i18n-attr="title:btn_download_docx_trans">
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
                                                 <span class="badge-role role-pro">PRO</span>
@@ -868,20 +871,23 @@
                                         <div class="dropdown-format-row">
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadOriginalTxt" data-export-type="original"
-                                                data-format="txt" title="Tải văn bản gốc định dạng TXT">
+                                                data-format="txt" title="Tải văn bản gốc định dạng TXT"
+                                                data-i18n-attr="title:btn_download_txt_orig">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadOriginalPdf" data-export-type="original"
-                                                data-format="pdf" title="Tải văn bản gốc định dạng PDF">
+                                                data-format="pdf" title="Tải văn bản gốc định dạng PDF"
+                                                data-i18n-attr="title:btn_download_pdf_orig">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadOriginalDocx" data-export-type="original"
                                                 data-format="docx"
-                                                title="Tải văn bản gốc định dạng Word (.docx) - Pro VIP">
+                                                title="Tải văn bản gốc định dạng Word (.docx) - Pro VIP"
+                                                data-i18n-attr="title:btn_download_docx_orig">
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
                                                 <span class="badge-role role-pro">PRO</span>
@@ -904,20 +910,23 @@
                                         <div class="dropdown-format-row">
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadBilingualTxt" data-export-type="bilingual"
-                                                data-format="txt" title="Tải song ngữ định dạng TXT">
+                                                data-format="txt" title="Tải song ngữ định dạng TXT"
+                                                data-i18n-attr="title:btn_download_txt_bi">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadBilingualPdf" data-export-type="bilingual"
-                                                data-format="pdf" title="Tải song ngữ định dạng PDF">
+                                                data-format="pdf" title="Tải song ngữ định dạng PDF"
+                                                data-i18n-attr="title:btn_download_pdf_bi">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadBilingualDocx" data-export-type="bilingual"
                                                 data-format="docx"
-                                                title="Tải song ngữ định dạng Word (.docx) - Pro VIP">
+                                                title="Tải song ngữ định dạng Word (.docx) - Pro VIP"
+                                                data-i18n-attr="title:btn_download_docx_bi">
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
                                                 <span class="badge-role role-pro">PRO</span>
@@ -937,20 +946,20 @@
                                                 </svg>
                                                 <span data-i18n="dropdown_export_summary">Bản tóm tắt</span>
                                             </span>
-                                            <span class="summary-badge" id="summaryExportStatus">(chưa có)</span>
+                                            <span class="summary-badge" id="summaryExportStatus" data-i18n="summary_not_ready">(chưa có)</span>
                                         </div>
                                         <div class="dropdown-format-row">
-                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryTxt" data-export-type="summary" data-format="txt" title="Chưa có bản tóm tắt" disabled>
+                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryTxt" data-export-type="summary" data-format="txt" title="Chưa có bản tóm tắt" disabled data-i18n-attr="title:summary_not_ready_title">
                                                 <span class="fmt-pill txt">TXT</span>
                                                 <span data-i18n="dropdown_format_txt">File TXT</span>
                                             </button>
-                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryPdf" data-export-type="summary" data-format="pdf" title="Chưa có bản tóm tắt" disabled>
+                                            <button type="button" class="dropdown-format-btn" id="btnDownloadSummaryPdf" data-export-type="summary" data-format="pdf" title="Chưa có bản tóm tắt" disabled data-i18n-attr="title:summary_not_ready_title">
                                                 <span class="fmt-pill pdf">PDF</span>
                                                 <span data-i18n="dropdown_format_pdf">File PDF</span>
                                             </button>
                                             <button type="button" class="dropdown-format-btn"
                                                 id="btnDownloadSummaryDocx" data-export-type="summary"
-                                                data-format="docx" title="Chưa có bản tóm tắt" disabled>
+                                                data-format="docx" title="Chưa có bản tóm tắt" data-i18n-attr="title:summary_not_ready_title" disabled>
                                                 <span class="fmt-pill docx">DOCX</span>
                                                 <span data-i18n="dropdown_format_word">File Word</span>
                                                 <span class="badge-role role-pro">PRO</span>
@@ -1074,23 +1083,23 @@
                                     <div class="ai-control-group">
                                         <label for="aiSummaryStyle" class="ai-control-label" data-i18n="ai_summary_style_label">Kiểu tóm tắt:</label>
                                         <select class="ai-select" id="aiSummaryStyle">
-                                            <option value="brief" selected>Ngắn gọn (2-3 câu)</option>
-                                            <option value="bullets">Ý chính (Gạch đầu dòng)</option>
-                                            <option value="detailed">Chi tiết (Phân tích chuyên sâu)</option>
+                                            <option value="brief" selected data-i18n="ai_summary_style_brief">Ngắn gọn (2-3 câu)</option>
+                                            <option value="bullets" data-i18n="ai_summary_style_bullets">Ý chính (Gạch đầu dòng)</option>
+                                            <option value="detailed" data-i18n="ai_summary_style_detailed">Chi tiết (Phân tích chuyên sâu)</option>
                                         </select>
                                     </div>
 
                                     <div class="ai-control-group">
                                         <label for="aiSummaryLength" class="ai-control-label" data-i18n="ai_summary_length_label">Độ dài:</label>
                                         <select class="ai-select" id="aiSummaryLength">
-                                            <option value="short">Ngắn (50 - 100 từ)</option>
-                                            <option value="medium" selected>Vừa (150 - 300 từ)</option>
-                                            <option value="long">Dài (400 - 600 từ)</option>
+                                            <option value="short" data-i18n="ai_summary_len_short">Ngắn (50 - 100 từ)</option>
+                                            <option value="medium" selected data-i18n="ai_summary_len_medium">Vừa (150 - 300 từ)</option>
+                                            <option value="long" data-i18n="ai_summary_len_long">Dài (400 - 600 từ)</option>
                                         </select>
                                     </div>
 
                                     <button type="button" class="btn btn-ai-generate" id="btnExecuteAiSummary"
-                                        title="Bắt đầu phân tích và tóm tắt">
+                                        title="Bắt đầu phân tích và tóm tắt" data-i18n-attr="title:ai_summary_btn_title">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -1100,7 +1109,7 @@
                                     </button>
 
                                     <button type="button" class="btn-icon-close" id="btnCloseAiSummary"
-                                        title="Thu gọn bảng tóm tắt">
+                                        title="Thu gọn bảng tóm tắt" data-i18n-attr="title:ai_summary_collapse_title">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -1115,8 +1124,7 @@
                             <div class="ai-summary-loading" id="aiSummaryLoading" style="display: none;">
                                 <div class="ai-loading-spinner-wrap">
                                     <div class="ai-loading-spinner" aria-hidden="true"></div>
-                                    <span class="ai-loading-text">AI đang phân tích và đúc kết ý chính từ tài
-                                        liệu...</span>
+                                    <span class="ai-loading-text" data-i18n="ai_summary_loading">AI đang phân tích và đúc kết ý chính từ tài liệu...</span>
                                 </div>
                                 <div class="ai-skeleton-shimmer" aria-hidden="true">
                                     <div class="skeleton-line full"></div>
@@ -1130,7 +1138,7 @@
                                 <div class="ai-result-meta-bar">
                                     <div class="ai-result-meta">
                                         <span class="meta-tag model-tag" id="aiModelUsedBadge">gpt-5-mini</span>
-                                        <span class="meta-tag style-tag" id="aiStyleUsedBadge">Ngắn gọn</span>
+                                        <span class="meta-tag style-tag" id="aiStyleUsedBadge" data-i18n="ai_summary_badge_brief">Ngắn gọn</span>
                                         <span class="meta-tag word-tag" id="aiWordCountBadge">0 từ</span>
                                         <span class="meta-tag time-tag" id="aiTimeElapsedBadge">0ms</span>
                                     </div>
@@ -1202,9 +1210,9 @@
                                     <!-- PDF Navigation & Zoom Toolbar -->
                                     <div class="preview-toolbar-actions">
                                         <!-- Page Navigation Controls -->
-                                        <div class="preview-page-controls" role="group" aria-label="Điều hướng trang">
+                                        <div class="preview-page-controls" role="group" aria-label="Điều hướng trang" data-i18n-attr="aria-label:preview_nav_group_aria">
                                             <button type="button" class="preview-btn" id="btnPrevPage"
-                                                title="Trang trước" aria-label="Trang trước" disabled>
+                                                title="Trang trước" aria-label="Trang trước" data-i18n-attr="title:preview_btn_prev,aria-label:preview_btn_prev" disabled>
                                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                     stroke-linejoin="round">
@@ -1214,12 +1222,12 @@
                                             <div class="preview-page-indicator">
                                                 <span class="preview-page-label" data-i18n="preview_page_label">Trang</span>
                                                 <input type="number" class="preview-page-input" id="previewPageInput"
-                                                    min="1" max="1" value="1" aria-label="Số trang hiện tại">
+                                                    min="1" max="1" value="1" aria-label="Số trang hiện tại" data-i18n-attr="aria-label:preview_page_current_aria">
                                                 <span class="preview-page-slash">/</span>
                                                 <span class="preview-total-pages" id="previewTotalPages">1</span>
                                             </div>
                                             <button type="button" class="preview-btn" id="btnNextPage"
-                                                title="Trang tiếp" aria-label="Trang tiếp" disabled>
+                                                title="Trang tiếp" aria-label="Trang tiếp" data-i18n-attr="title:preview_btn_next,aria-label:preview_btn_next" disabled>
                                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                     stroke-linejoin="round">
@@ -1231,9 +1239,9 @@
                                         <div class="preview-divider" aria-hidden="true"></div>
 
                                         <!-- Zoom Controls -->
-                                        <div class="preview-zoom-controls" role="group" aria-label="Thu phóng">
+                                        <div class="preview-zoom-controls" role="group" aria-label="Thu phóng" data-i18n-attr="aria-label:preview_zoom_group_aria">
                                             <button type="button" class="preview-btn" id="btnZoomOut"
-                                                title="Thu nhỏ (-20%)" aria-label="Thu nhỏ">
+                                                title="Thu nhỏ (-20%)" aria-label="Thu nhỏ" data-i18n-attr="title:preview_zoom_out,aria-label:preview_zoom_out">
                                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                     stroke-linejoin="round">
@@ -1243,9 +1251,9 @@
                                                 </svg>
                                             </button>
                                             <span class="preview-zoom-level" id="previewZoomLevel"
-                                                title="Tỷ lệ hiển thị">100%</span>
+                                                title="Tỷ lệ hiển thị" data-i18n-attr="title:preview_zoom_ratio">100%</span>
                                             <button type="button" class="preview-btn" id="btnZoomIn"
-                                                title="Phóng to (+20%)" aria-label="Phóng to">
+                                                title="Phóng to (+20%)" aria-label="Phóng to" data-i18n-attr="title:preview_zoom_in,aria-label:preview_zoom_in">
                                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                     stroke-linejoin="round">
@@ -1256,7 +1264,7 @@
                                                 </svg>
                                             </button>
                                             <button type="button" class="preview-btn preview-btn-fit" id="btnZoomFit"
-                                                title="Vừa khung nhìn" aria-label="Vừa khung nhìn">
+                                                title="Vừa khung nhìn" aria-label="Vừa khung nhìn" data-i18n-attr="title:preview_zoom_fit,aria-label:preview_zoom_fit">
                                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                     stroke-linejoin="round">
@@ -1274,7 +1282,7 @@
                                         <!-- Toggle Collapse Button -->
                                         <button type="button" class="preview-btn preview-toggle-btn"
                                             id="btnTogglePdfPreview" title="Thu gọn / Mở rộng"
-                                            aria-label="Thu gọn hoặc mở rộng bản xem trước">
+                                            aria-label="Thu gọn hoặc mở rộng bản xem trước" data-i18n-attr="title:preview_toggle_view,aria-label:preview_toggle_aria">
                                             <svg class="preview-toggle-icon" width="15" height="15" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5"
                                                 stroke-linecap="round" stroke-linejoin="round">
@@ -1286,7 +1294,7 @@
 
                                 <!-- Preview Viewport Area -->
                                 <div class="pdf-preview-viewport" id="pdfPreviewViewport" tabindex="0"
-                                    aria-label="Khu vực hiển thị tài liệu PDF">
+                                    aria-label="Khu vực hiển thị tài liệu PDF" data-i18n-attr="aria-label:preview_viewport_aria">
                                     <!-- Loading State -->
                                     <div class="pdf-preview-loading" id="pdfPreviewLoading" style="display: none;">
                                         <div class="preview-spinner" aria-hidden="true"></div>
@@ -1304,8 +1312,7 @@
                                                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                             </svg>
                                         </div>
-                                        <div class="preview-error-msg" id="pdfPreviewErrorMsg">Không thể tải trước tài
-                                            liệu PDF.</div>
+                                        <div class="preview-error-msg" id="pdfPreviewErrorMsg" data-i18n="preview_error_msg">Không thể tải trước tài liệu PDF.</div>
                                     </div>
 
                                     <!-- Canvas Stage -->
@@ -1412,8 +1419,7 @@
                         <div class="documents-card" id="documentsListCard">
                             <div class="documents-card-toolbar">
                                 <div class="documents-toolbar-left">
-                                    <span class="documents-count-chip font-mono" id="documentsCountBadge">0 tài
-                                        liệu</span>
+                                    <span class="documents-count-chip font-mono" id="documentsCountBadge" data-i18n="docs_count_label">0 tài liệu</span>
                                 </div>
                                 <div class="documents-toolbar-right">
                                     <div class="documents-search-box">
@@ -1454,9 +1460,8 @@
                                     style="display: none;">
                                     <div class="progress-spinner"
                                         style="width: 32px; height: 32px; margin: 0 auto 0.75rem;"></div>
-                                    <h4 class="documents-state-title empty-title">Đang tải danh sách tài liệu...</h4>
-                                    <p class="documents-state-text empty-text">Vui lòng chờ trong giây lát trong khi hệ
-                                        thống đồng bộ dữ liệu của bạn.</p>
+                                    <h4 class="documents-state-title empty-title" data-i18n="docs_loading_title">Đang tải danh sách tài liệu...</h4>
+                                    <p class="documents-state-text empty-text" data-i18n="docs_loading_desc">Vui lòng chờ trong giây lát trong khi hệ thống đồng bộ dữ liệu của bạn.</p>
                                 </div>
 
                                 <div class="documents-card-state admin-table-empty" id="documentsEmptyState">
@@ -1470,9 +1475,8 @@
                                             <line x1="9" y1="15" x2="15" y2="15"></line>
                                         </svg>
                                     </div>
-                                    <h4 class="documents-state-title empty-title">Bạn chưa có tài liệu nào</h4>
-                                    <p class="documents-state-text empty-text">Hãy tải lên tệp PDF đầu tiên để bắt đầu
-                                        trích xuất văn bản và dịch thuật song ngữ.</p>
+                                    <h4 class="documents-state-title empty-title" data-i18n="docs_empty_title">Bạn chưa có tài liệu nào</h4>
+                                    <p class="documents-state-text empty-text" data-i18n="docs_empty_desc">Hãy tải lên tệp PDF đầu tiên để bắt đầu trích xuất văn bản và dịch thuật song ngữ.</p>
                                 </div>
 
                                 <div class="documents-card-state admin-table-empty" id="documentsErrorState"
@@ -1486,13 +1490,11 @@
                                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                         </svg>
                                     </div>
-                                    <h4 class="documents-state-title empty-title" id="documentsErrorTitle">Không thể tải
-                                        danh sách tài liệu</h4>
-                                    <p class="documents-state-text empty-text" id="documentsErrorText">Đã xảy ra lỗi kết
-                                        nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.</p>
+                                    <h4 class="documents-state-title empty-title" id="documentsErrorTitle" data-i18n="docs_error_title">Không thể tải danh sách tài liệu</h4>
+                                    <p class="documents-state-text empty-text" id="documentsErrorText" data-i18n="docs_error_desc">Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.</p>
                                     <button type="button" class="btn btn-secondary btn-sm" id="btnDocsRetry"
                                         style="margin-top: 0.85rem;">
-                                        <span>Thử lại</span>
+                                        <span data-i18n="common_retry">Thử lại</span>
                                     </button>
                                 </div>
 
@@ -1506,13 +1508,11 @@
                                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                         </svg>
                                     </div>
-                                    <h4 class="documents-state-title empty-title">Vui lòng đăng nhập để quản lý tài liệu
-                                    </h4>
-                                    <p class="documents-state-text empty-text">Đăng nhập tài khoản để lưu trữ, tra cứu
-                                        và tải xuống danh sách các tài liệu PDF của bạn.</p>
+                                    <h4 class="documents-state-title empty-title" data-i18n="docs_unauth_title">Vui lòng đăng nhập để quản lý tài liệu</h4>
+                                    <p class="documents-state-text empty-text" data-i18n="docs_unauth_desc">Đăng nhập tài khoản để lưu trữ, tra cứu và tải xuống danh sách các tài liệu PDF của bạn.</p>
                                     <button type="button" class="btn btn-gradient btn-sm" id="btnDocsLoginPrompt"
                                         style="margin-top: 0.85rem;">
-                                        <span>Đăng nhập ngay</span>
+                                        <span data-i18n="auth_switch_to_login">Đăng nhập ngay</span>
                                     </button>
                                 </div>
                             </div>
@@ -1559,7 +1559,7 @@
                             <!-- Filter & Search Toolbar -->
                             <div class="documents-card-toolbar history-card-toolbar" id="historyCardToolbar">
                                 <div class="documents-toolbar-left history-toolbar-left">
-                                    <span class="documents-count-chip font-mono" id="historyCountBadge">0 bản ghi</span>
+                                    <span class="documents-count-chip font-mono" id="historyCountBadge" data-i18n="history_count_label">0 bản ghi</span>
                                     <button type="button" class="btn btn-secondary btn-sm history-cleanup-btn"
                                         id="btnHistoryCleanup" title="Dọn dẹp lịch sử cũ hơn chính sách lưu trữ"
                                         data-i18n-attr="title:history_btn_cleanup">
@@ -1577,23 +1577,21 @@
                                 <div class="documents-toolbar-right history-toolbar-right">
                                     <!-- Action Type Filter -->
                                     <div class="admin-filter-wrap history-filter-wrap">
-                                        <select id="historyActionFilter" class="admin-filter-select"
-                                            aria-label="Lọc theo loại thao tác">
+                                        <select id="historyActionFilter" class="admin-filter-select" aria-label="Lọc theo loại thao tác" data-i18n-attr="aria-label:history_filter_action_aria">
                                             <option value="all" data-i18n="history_filter_all">Tất cả thao tác</option>
-                                            <option value="EXTRACT">Trích xuất văn bản (EXTRACT)</option>
-                                            <option value="TRANSLATE">Dịch thuật song ngữ (TRANSLATE)</option>
-                                            <option value="SUMMARIZE">Tóm tắt văn bản (SUMMARIZE)</option>
+                                            <option value="EXTRACT" data-i18n="history_filter_op_extract">Trích xuất văn bản (EXTRACT)</option>
+                                            <option value="TRANSLATE" data-i18n="history_filter_op_translate">Dịch thuật song ngữ (TRANSLATE)</option>
+                                            <option value="SUMMARIZE" data-i18n="history_filter_op_summarize">Tóm tắt văn bản (SUMMARIZE)</option>
                                         </select>
                                     </div>
 
                                     <!-- Execution Status Filter -->
                                     <div class="admin-filter-wrap history-filter-wrap">
-                                        <select id="historyStatusFilter" class="admin-filter-select"
-                                            aria-label="Lọc theo trạng thái">
-                                            <option value="all">Tất cả trạng thái</option>
-                                            <option value="SUCCESS">Thành công (SUCCESS)</option>
-                                            <option value="PENDING">Đang xử lý (PENDING)</option>
-                                            <option value="FAILED">Thất bại (FAILED)</option>
+                                        <select id="historyStatusFilter" class="admin-filter-select" aria-label="Lọc theo trạng thái" data-i18n-attr="aria-label:history_filter_status_aria">
+                                            <option value="all" data-i18n="history_filter_status_all">Tất cả trạng thái</option>
+                                            <option value="SUCCESS" data-i18n="history_filter_status_success">Thành công (SUCCESS)</option>
+                                            <option value="PENDING" data-i18n="history_filter_status_pending">Đang xử lý (PENDING)</option>
+                                            <option value="FAILED" data-i18n="history_filter_status_failed">Thất bại (FAILED)</option>
                                         </select>
                                     </div>
 
@@ -1605,8 +1603,7 @@
                                             <circle cx="11" cy="11" r="8"></circle>
                                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                         </svg>
-                                        <input type="text" id="historySearchInput" class="documents-search-input"
-                                            placeholder="Tìm kiếm theo tên tài liệu...">
+                                        <input type="text" id="historySearchInput" class="documents-search-input" placeholder="Tìm kiếm theo tên tài liệu..." data-i18n-attr="placeholder:docs_search_placeholder">
                                     </div>
                                 </div>
                             </div>
@@ -1617,13 +1614,13 @@
                                     style="display: none;">
                                     <thead>
                                         <tr>
-                                            <th class="history-th-stt">STT</th>
-                                            <th>Tên tài liệu</th>
-                                            <th>Thao tác</th>
-                                            <th>Trạng thái</th>
-                                            <th>Thời gian xử lý</th>
-                                            <th>Thời điểm</th>
-                                            <th class="text-right">Hành động</th>
+                                            <th class="history-th-stt" data-i18n="docs_th_stt">STT</th>
+                                            <th data-i18n="history_th_doc_name">Tên tài liệu</th>
+                                            <th data-i18n="history_th_operation">Thao tác</th>
+                                            <th data-i18n="history_th_status">Trạng thái</th>
+                                            <th data-i18n="history_th_duration">Thời gian xử lý</th>
+                                            <th data-i18n="history_th_timestamp">Thời điểm</th>
+                                            <th class="text-right" data-i18n="history_th_actions">Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody id="historyTableBody">
@@ -1636,9 +1633,8 @@
                                     style="display: none;">
                                     <div class="progress-spinner"
                                         style="width: 32px; height: 32px; margin: 0 auto 0.75rem;"></div>
-                                    <h4 class="documents-state-title empty-title">Đang tải lịch sử xử lý...</h4>
-                                    <p class="documents-state-text empty-text">Vui lòng chờ trong giây lát trong khi hệ
-                                        thống đồng bộ dữ liệu nhật ký của bạn.</p>
+                                    <h4 class="documents-state-title empty-title" data-i18n="history_loading_title">Đang tải lịch sử xử lý...</h4>
+                                    <p class="documents-state-text empty-text" data-i18n="history_loading_desc">Vui lòng chờ trong giây lát trong khi hệ thống đồng bộ dữ liệu nhật ký của bạn.</p>
                                 </div>
 
                                 <!-- UI State: Empty State -->
@@ -1651,13 +1647,11 @@
                                             <polyline points="12 6 12 12 16 14"></polyline>
                                         </svg>
                                     </div>
-                                    <h4 class="documents-state-title empty-title" id="historyEmptyTitle">Bạn chưa có
-                                        lịch sử xử lý nào</h4>
-                                    <p class="documents-state-text empty-text" id="historyEmptyText">Các thao tác trích
-                                        xuất và dịch tài liệu PDF của bạn sẽ được tự động ghi nhận tại đây.</p>
+                                    <h4 class="documents-state-title empty-title" id="historyEmptyTitle" data-i18n="history_empty_title">Bạn chưa có lịch sử xử lý nào</h4>
+                                    <p class="documents-state-text empty-text" id="historyEmptyText" data-i18n="history_empty_desc">Các thao tác trích xuất và dịch tài liệu PDF của bạn sẽ được tự động ghi nhận tại đây.</p>
                                     <button type="button" class="btn btn-gradient btn-sm" id="btnHistoryUploadPrompt"
                                         style="margin-top: 0.85rem;">
-                                        <span>Bắt đầu dịch PDF ngay</span>
+                                        <span data-i18n="history_btn_start">Bắt đầu dịch PDF ngay</span>
                                     </button>
                                 </div>
 
@@ -1673,13 +1667,11 @@
                                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                         </svg>
                                     </div>
-                                    <h4 class="documents-state-title empty-title" id="historyErrorTitle">Không thể tải
-                                        lịch sử xử lý</h4>
-                                    <p class="documents-state-text empty-text" id="historyErrorText">Đã xảy ra lỗi kết
-                                        nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.</p>
+                                    <h4 class="documents-state-title empty-title" id="historyErrorTitle" data-i18n="history_error_title_state">Không thể tải lịch sử xử lý</h4>
+                                    <p class="documents-state-text empty-text" id="historyErrorText" data-i18n="history_error_desc_state">Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.</p>
                                     <button type="button" class="btn btn-secondary btn-sm" id="btnHistoryRetry"
                                         style="margin-top: 0.85rem;">
-                                        <span>Thử lại</span>
+                                        <span data-i18n="common_retry">Thử lại</span>
                                     </button>
                                 </div>
 
@@ -1694,35 +1686,31 @@
                                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                         </svg>
                                     </div>
-                                    <h4 class="documents-state-title empty-title">Vui lòng đăng nhập để xem lịch sử</h4>
-                                    <p class="documents-state-text empty-text">Đăng nhập tài khoản để tra cứu nhật ký xử
-                                        lý, tải lại kết quả và quản lý dữ liệu an toàn.</p>
+                                    <h4 class="documents-state-title empty-title" data-i18n="history_unauth_title">Vui lòng đăng nhập để xem lịch sử</h4>
+                                    <p class="documents-state-text empty-text" data-i18n="history_unauth_desc">Đăng nhập tài khoản để tra cứu nhật ký xử lý, tải lại kết quả và quản lý dữ liệu an toàn.</p>
                                     <button type="button" class="btn btn-gradient btn-sm" id="btnHistoryLoginPrompt"
                                         style="margin-top: 0.85rem;">
-                                        <span>Đăng nhập ngay</span>
+                                        <span data-i18n="auth_switch_to_login">Đăng nhập ngay</span>
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Pagination Footer -->
                             <div class="admin-pagination-footer" id="historyPaginationFooter" style="display: none;">
-                                <span class="pagination-info" id="historyPaginationInfo">Hiển thị 0 - 0 trong 0 bản
-                                    ghi</span>
+                                <span class="pagination-info" id="historyPaginationInfo" data-i18n="history_pagination_info">Hiển thị 0 - 0 trong 0 bản ghi</span>
                                 <div class="pagination-controls">
-                                    <button type="button" class="btn-admin-pager" id="btnHistoryPrevPage" disabled
-                                        title="Trang trước">
+                                    <button type="button" class="btn-admin-pager" id="btnHistoryPrevPage" disabled title="Trang trước" data-i18n-attr="title:preview_btn_prev">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <polyline points="15 18 9 12 15 6"></polyline>
                                         </svg>
-                                        <span>Trước</span>
+                                        <span data-i18n="common_prev">Trước</span>
                                     </button>
                                     <span class="pagination-current-page font-mono"
                                         id="historyCurrentPageBadge">1</span>
-                                    <button type="button" class="btn-admin-pager" id="btnHistoryNextPage" disabled
-                                        title="Trang sau">
-                                        <span>Sau</span>
+                                    <button type="button" class="btn-admin-pager" id="btnHistoryNextPage" disabled title="Trang sau" data-i18n-attr="title:preview_btn_next">
+                                        <span data-i18n="common_next">Sau</span>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -1741,35 +1729,32 @@
                         <!-- 1. Section Header & Segmented Billing Switch -->
                         <div class="pricing-header pricing-page-header">
                             <div class="pricing-header-text">
-                                <h2 class="pricing-title">Bảng giá gói dịch vụ</h2>
-                                <p class="pricing-subtitle">Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ
-                                    lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của
-                                    bạn.</p>
+                                <h2 class="pricing-title" data-i18n="pricing_section_title">Bảng giá gói dịch vụ</h2>
+                                <p class="pricing-subtitle" data-i18n="pricing_section_subtitle">Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.</p>
                             </div>
                             <div class="pricing-header-actions">
-                                <button type="button" class="doc-header-back-btn" id="btnPricingBackToWorkspace"
-                                    title="Quay lại không gian làm việc">
+                                <button type="button" class="doc-header-back-btn" id="btnPricingBackToWorkspace" title="Quay lại không gian làm việc" data-i18n-attr="title:pricing_btn_back_workspace">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="19" y1="12" x2="5" y2="12"></line>
                                         <polyline points="12 19 5 12 12 5"></polyline>
                                     </svg>
-                                    <span>Quay lại Dịch PDF</span>
+                                    <span data-i18n="pricing_btn_back_workspace">Quay lại Dịch PDF</span>
                                 </button>
                             </div>
                         </div>
 
                         <!-- Billing Cycle Segmented Switch Bar -->
                         <div class="pricing-billing-bar">
-                            <div class="billing-toggle-wrap" role="tablist" aria-label="Chọn chu kỳ thanh toán">
+                            <div class="billing-toggle-wrap" role="tablist" aria-label="Chọn chu kỳ thanh toán" data-i18n-attr="aria-label:pricing_billing_aria">
                                 <button type="button" class="billing-toggle-btn active" id="btnBillingMonthly"
                                     data-cycle="monthly" role="tab" aria-selected="true">
-                                    <span>Theo tháng (49k/tháng)</span>
+                                    <span data-i18n="billing_monthly_opt">Theo tháng (49k/tháng)</span>
                                 </button>
                                 <button type="button" class="billing-toggle-btn" id="btnBillingYearly"
                                     data-cycle="yearly" role="tab" aria-selected="false">
-                                    <span>Theo năm (399k/năm)</span>
-                                    <span class="billing-save-pill" id="billingSavePill">TIẾT KIỆM 32%</span>
+                                    <span data-i18n="billing_yearly_opt">Theo năm (399k/năm)</span>
+                                    <span class="billing-save-pill" id="billingSavePill" data-i18n="billing_save_pill">TIẾT KIỆM 32%</span>
                                 </button>
                             </div>
                         </div>
@@ -1786,14 +1771,11 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <div class="pricing-active-banner-title" id="pricingActiveBannerTitle">Tài khoản của
-                                        bạn đang kích hoạt đặc quyền Gói Pro</div>
-                                    <div class="pricing-active-banner-sub" id="pricingActiveBannerSub">Hạn mức: 100 MB
-                                        mỗi tệp và 500 trang OCR chuyên sâu.</div>
+                                    <div class="pricing-active-banner-title" id="pricingActiveBannerTitle" data-i18n="pricing_active_banner_title">Tài khoản của bạn đang kích hoạt đặc quyền Gói Pro</div>
+                                    <div class="pricing-active-banner-sub" id="pricingActiveBannerSub" data-i18n="pricing_active_banner_sub">Hạn mức: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.</div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-secondary btn-sm" id="btnCancelAutoRenew"
-                                style="display: none;">Hủy gia hạn tự động</button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnCancelAutoRenew" style="display: none;" data-i18n="pricing_btn_cancel_renew">Hủy gia hạn tự động</button>
                         </div>
 
                         <!-- 2. Asymmetric 2-Card Bento Grid (Free vs Pro) -->
@@ -1803,31 +1785,29 @@
                                 <div class="pricing-card-top">
                                     <div class="pricing-plan-header">
                                         <div>
-                                            <h3 class="pricing-plan-name" id="freePlanName">Gói Miễn Phí</h3>
-                                            <p class="pricing-plan-tagline">Dành cho nhu cầu đọc hiểu và dịch thuật PDF
-                                                cơ bản hàng ngày</p>
+                                            <h3 class="pricing-plan-name" id="freePlanName" data-i18n="pricing_free_name">Gói Miễn Phí</h3>
+                                            <p class="pricing-plan-tagline" data-i18n="pricing_free_tagline">Dành cho nhu cầu đọc hiểu và dịch thuật PDF cơ bản hàng ngày</p>
                                         </div>
-                                        <span class="pricing-tier-pill">Tiêu chuẩn</span>
+                                        <span class="pricing-tier-pill" data-i18n="pricing_free_pill">Tiêu chuẩn</span>
                                     </div>
 
                                     <div class="pricing-price-block">
                                         <div class="pricing-price-row">
-                                            <span class="pricing-price-amount" id="freePlanPriceDisplay">0đ</span>
-                                            <span class="pricing-price-period" id="freePlanPeriodDisplay">/ vĩnh
-                                                viễn</span>
+                                            <span class="pricing-price-amount" id="freePlanPriceDisplay" data-i18n="pricing_free_price">0đ</span>
+                                            <span class="pricing-price-period" id="freePlanPeriodDisplay" data-i18n="pricing_free_period">/ vĩnh viễn</span>
                                         </div>
                                         <div class="pricing-price-note-row">
-                                            <span class="pricing-price-subnote">Không yêu cầu thẻ thanh toán</span>
+                                            <span class="pricing-price-subnote" data-i18n="pricing_free_note">Không yêu cầu thẻ thanh toán</span>
                                         </div>
                                     </div>
 
                                     <div class="pricing-quota-strip">
                                         <div class="pricing-quota-box">
-                                            <span class="pricing-quota-label">Dung lượng tệp</span>
+                                            <span class="pricing-quota-label" data-i18n="pricing_quota_filesize">Dung lượng tệp</span>
                                             <span class="pricing-quota-value" id="freeMaxFileSize">20 MB / tệp</span>
                                         </div>
                                         <div class="pricing-quota-box">
-                                            <span class="pricing-quota-label">Số trang OCR</span>
+                                            <span class="pricing-quota-label" data-i18n="pricing_quota_ocrpages">Số trang OCR</span>
                                             <span class="pricing-quota-value" id="freeMaxOcrPages">100 trang</span>
                                         </div>
                                     </div>
@@ -1841,7 +1821,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Tải lên tệp PDF tối đa 20 MB</span>
+                                            <span data-i18n="pricing_free_f1">Tải lên tệp PDF tối đa 20 MB</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1851,7 +1831,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Nhận diện OCR tối đa 100 trang</span>
+                                            <span data-i18n="pricing_free_f2">Nhận diện OCR tối đa 100 trang</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1861,7 +1841,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Dịch thuật song ngữ thông minh tiêu chuẩn</span>
+                                            <span data-i18n="pricing_free_f3">Dịch thuật song ngữ thông minh tiêu chuẩn</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1871,7 +1851,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Lưu trữ 5 tài liệu gần đây</span>
+                                            <span data-i18n="pricing_free_f4">Lưu trữ 5 tài liệu gần đây</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1881,18 +1861,17 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Hỗ trợ xuất tệp TXT và PDF Song ngữ</span>
+                                            <span data-i18n="pricing_free_f5">Hỗ trợ xuất tệp TXT và PDF Song ngữ</span>
                                         </li>
                                     </ul>
                                 </div>
 
                                 <div class="pricing-card-footer">
                                     <button type="button" class="btn btn-secondary btn-pricing-cta"
-                                        id="btnSelectFreePlan">
+                                        id="btnSelectFreePlan" data-i18n="pricing_free_cta">
                                         Bắt đầu miễn phí
                                     </button>
-                                    <p class="pricing-cta-Caption" id="freePlanCtaHint">Sẵn sàng sử dụng ngay khi tải
-                                        tệp PDF</p>
+                                    <p class="pricing-cta-Caption" id="freePlanCtaHint" data-i18n="pricing_free_hint">Sẵn sàng sử dụng ngay khi tải tệp PDF</p>
                                 </div>
                             </article>
 
@@ -1901,9 +1880,8 @@
                                 <div class="pricing-card-top">
                                     <div class="pricing-plan-header">
                                         <div>
-                                            <h3 class="pricing-plan-name" id="proPlanName">Gói Pro Hàng Tháng</h3>
-                                            <p class="pricing-plan-tagline">Mở khóa toàn bộ hạn mức 100 MB, 500 trang
-                                                OCR và Trợ lý AI</p>
+                                            <h3 class="pricing-plan-name" id="proPlanName" data-i18n="pricing_pro_name_monthly">Gói Pro Hàng Tháng</h3>
+                                            <p class="pricing-plan-tagline" data-i18n="pricing_pro_tagline">Mở khóa toàn bộ hạn mức 100 MB, 500 trang OCR và Trợ lý AI</p>
                                         </div>
                                         <span class="pricing-popular-ribbon" id="proPopularRibbon">
                                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -1913,20 +1891,19 @@
                                                     points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
                                                 </polygon>
                                             </svg>
-                                            <span>PHỔ BIẾN NHẤT</span>
+                                            <span data-i18n="pricing_pro_ribbon">PHỔ BIẾN NHẤT</span>
                                         </span>
                                     </div>
 
                                     <div class="pricing-price-block">
                                         <div class="pricing-price-row">
                                             <span class="pricing-price-amount" id="proPlanPriceDisplay">49.000đ</span>
-                                            <span class="pricing-price-period" id="proPlanPeriodDisplay">/ tháng</span>
+                                            <span class="pricing-price-period" id="proPlanPeriodDisplay" data-i18n="pricing_pro_period_month">/ tháng</span>
                                             <span class="pricing-price-original" id="proPlanOriginalPrice"
                                                 style="display: none;">588.000đ</span>
                                         </div>
                                         <div class="pricing-price-note-row">
-                                            <span class="pricing-price-subnote" id="proPlanSubnote">Thanh toán linh hoạt
-                                                từng tháng (30 ngày)</span>
+                                            <span class="pricing-price-subnote" id="proPlanSubnote" data-i18n="pricing_pro_subnote_monthly">Thanh toán linh hoạt từng tháng (30 ngày)</span>
                                             <span class="pricing-discount-badge" id="proPlanDiscountBadge"
                                                 style="display: none;">TIẾT KIỆM 32%</span>
                                         </div>
@@ -1952,7 +1929,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Tải lên tệp PDF siêu lớn đến 100 MB</span>
+                                            <span data-i18n="pricing_pro_f1">Tải lên tệp PDF siêu lớn đến 100 MB</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1962,7 +1939,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Nhận dạng OCR chuyên sâu đến 500 trang</span>
+                                            <span data-i18n="pricing_pro_f2">Nhận dạng OCR chuyên sâu đến 500 trang</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1972,7 +1949,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Trợ lý AI Hỏi đáp (AI Copilot) 15 câu / ngày</span>
+                                            <span data-i18n="pricing_pro_f3">Trợ lý AI Hỏi đáp (AI Copilot) 15 câu / ngày</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1982,7 +1959,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Tóm tắt thông minh AI Summary & bảng thuật ngữ</span>
+                                            <span data-i18n="pricing_pro_f4">Tóm tắt thông minh AI Summary & bảng thuật ngữ</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -1992,7 +1969,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Hàng đợi ưu tiên tốc độ cao (Fast-track Worker)</span>
+                                            <span data-i18n="pricing_pro_f5">Hàng đợi ưu tiên tốc độ cao (Fast-track Worker)</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -2002,7 +1979,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Kho lưu trữ tài liệu cá nhân không giới hạn</span>
+                                            <span data-i18n="pricing_pro_f6">Kho lưu trữ tài liệu cá nhân không giới hạn</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -2012,7 +1989,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Huy hiệu VIP trên hồ sơ và giao diện</span>
+                                            <span data-i18n="pricing_pro_f7">Huy hiệu VIP trên hồ sơ và giao diện</span>
                                         </li>
                                         <li class="pricing-feature-item">
                                             <span class="pricing-feature-icon">
@@ -2022,7 +1999,7 @@
                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                 </svg>
                                             </span>
-                                            <span>Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)</span>
+                                            <span data-i18n="pricing_pro_f8">Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2035,10 +2012,9 @@
                                             stroke-linejoin="round">
                                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                         </svg>
-                                        <span id="btnUpgradeProText">Nâng cấp lên Pro ngay</span>
+                                        <span id="btnUpgradeProText" data-i18n="pricing_pro_cta">Nâng cấp lên Pro ngay</span>
                                     </button>
-                                    <p class="pricing-cta-Caption" id="proPlanCtaHint">Kích hoạt tức thì qua mã VietQR
-                                        ngân hàng 24/7</p>
+                                    <p class="pricing-cta-Caption" id="proPlanCtaHint" data-i18n="pricing_pro_hint">Kích hoạt tức thì qua mã VietQR ngân hàng 24/7</p>
                                 </div>
                             </article>
                         </div>
@@ -2046,9 +2022,8 @@
                         <!-- 3. Grouped Capability Clusters (Feature Comparison Matrix) -->
                         <div class="pricing-comparison-wrap" id="pricingComparisonMatrix">
                             <div class="pricing-comparison-header">
-                                <h3 class="pricing-comparison-title">So Sánh Chi Tiết Quyền Lợi Theo Nhóm Tính Năng</h3>
-                                <p class="pricing-comparison-subtitle">Đối chiếu trực quan năng lực xử lý tài liệu, trí
-                                    tuệ nhân tạo và lưu trữ giữa hai gói dịch vụ</p>
+                                <h3 class="pricing-comparison-title" data-i18n="pricing_cmp_title">So Sánh Chi Tiết Quyền Lợi Theo Nhóm Tính Năng</h3>
+                                <p class="pricing-comparison-subtitle" data-i18n="pricing_cmp_sub">Đối chiếu trực quan năng lực xử lý tài liệu, trí tuệ nhân tạo và lưu trữ giữa hai gói dịch vụ</p>
                             </div>
 
                             <div class="pricing-clusters-grid">
@@ -2064,28 +2039,28 @@
                                                 <polyline points="14 2 14 8 20 8"></polyline>
                                             </svg>
                                         </span>
-                                        <h4 class="pricing-cluster-title">Năng lực Xử lý & OCR</h4>
+                                        <h4 class="pricing-cluster-title" data-i18n="pricing_cluster_ocr_title">Năng lực Xử lý & OCR</h4>
                                     </div>
                                     <div class="pricing-cluster-rows">
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Dung lượng tệp PDF tối đa</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_max_filesize">Dung lượng tệp PDF tối đa</span>
                                             <div class="pricing-spec-values">
                                                 <span class="pricing-spec-Badge spec-free">Free: 20 MB</span>
                                                 <span class="pricing-spec-Badge spec-pro">Pro: 100 MB</span>
                                             </div>
                                         </div>
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Giới hạn trang nhận diện OCR</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_max_ocr">Giới hạn trang nhận diện OCR</span>
                                             <div class="pricing-spec-values">
                                                 <span class="pricing-spec-Badge spec-free">Free: 100 trang</span>
                                                 <span class="pricing-spec-Badge spec-pro">Pro: 500 trang</span>
                                             </div>
                                         </div>
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Tốc độ hàng đợi xử lý</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_queue_speed">Tốc độ hàng đợi xử lý</span>
                                             <div class="pricing-spec-values">
-                                                <span class="pricing-spec-Badge spec-free">Tiêu chuẩn</span>
-                                                <span class="pricing-spec-Badge spec-pro">Ưu tiên Fast-track</span>
+                                                <span class="pricing-spec-Badge spec-free" data-i18n="pricing_spec_queue_std">Tiêu chuẩn</span>
+                                                <span class="pricing-spec-Badge spec-pro" data-i18n="pricing_spec_queue_fast">Ưu tiên Fast-track</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2102,25 +2077,25 @@
                                                 </path>
                                             </svg>
                                         </span>
-                                        <h4 class="pricing-cluster-title">Trợ lý AI & Dịch thuật</h4>
+                                        <h4 class="pricing-cluster-title" data-i18n="pricing_cluster_ai_title">Trợ lý AI & Dịch thuật</h4>
                                     </div>
                                     <div class="pricing-cluster-rows">
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Trợ lý hỏi đáp AI Copilot</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_copilot">Trợ lý hỏi đáp AI Copilot</span>
                                             <div class="pricing-spec-values">
-                                                <span class="pricing-spec-Badge spec-free">Không có</span>
-                                                <span class="pricing-spec-Badge spec-pro">15 câu / ngày</span>
+                                                <span class="pricing-spec-Badge spec-free" data-i18n="pricing_spec_none">Không có</span>
+                                                <span class="pricing-spec-Badge spec-pro" data-i18n="pricing_spec_copilot_pro">15 câu / ngày</span>
                                             </div>
                                         </div>
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Tóm tắt AI Summary & Thuật ngữ</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_summary">Tóm tắt AI Summary & Thuật ngữ</span>
                                             <div class="pricing-spec-values">
-                                                <span class="pricing-spec-Badge spec-free">Cơ bản</span>
-                                                <span class="pricing-spec-Badge spec-pro">Chuyên sâu</span>
+                                                <span class="pricing-spec-Badge spec-free" data-i18n="pricing_spec_summary_basic">Cơ bản</span>
+                                                <span class="pricing-spec-Badge spec-pro" data-i18n="pricing_spec_summary_pro">Chuyên sâu</span>
                                             </div>
                                         </div>
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Định dạng tải xuống bản dịch</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_formats">Định dạng tải xuống bản dịch</span>
                                             <div class="pricing-spec-values">
                                                 <span class="pricing-spec-Badge spec-free">PDF, TXT</span>
                                                 <span class="pricing-spec-Badge spec-pro">PDF, Word, TXT</span>
@@ -2141,28 +2116,28 @@
                                                 </path>
                                             </svg>
                                         </span>
-                                        <h4 class="pricing-cluster-title">Lưu trữ & Đặc quyền Hồ sơ</h4>
+                                        <h4 class="pricing-cluster-title" data-i18n="pricing_cluster_storage_title">Lưu trữ & Đặc quyền Hồ sơ</h4>
                                     </div>
                                     <div class="pricing-cluster-rows">
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Kho tài liệu cá nhân</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_docs_store">Kho tài liệu cá nhân</span>
                                             <div class="pricing-spec-values">
-                                                <span class="pricing-spec-Badge spec-free">5 tệp gần đây</span>
-                                                <span class="pricing-spec-Badge spec-pro">Không giới hạn</span>
+                                                <span class="pricing-spec-Badge spec-free" data-i18n="pricing_spec_docs_free">5 tệp gần đây</span>
+                                                <span class="pricing-spec-Badge spec-pro" data-i18n="pricing_spec_docs_pro">Không giới hạn</span>
                                             </div>
                                         </div>
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Huy hiệu nhận diện tài khoản</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_badge">Huy hiệu nhận diện tài khoản</span>
                                             <div class="pricing-spec-values">
-                                                <span class="pricing-spec-Badge spec-free">Không có huy hiệu</span>
-                                                <span class="pricing-spec-Badge spec-pro">Huy hiệu VIP</span>
+                                                <span class="pricing-spec-Badge spec-free" data-i18n="pricing_spec_badge_free">Không có huy hiệu</span>
+                                                <span class="pricing-spec-Badge spec-pro" data-i18n="pricing_spec_badge_pro">Huy hiệu VIP</span>
                                             </div>
                                         </div>
                                         <div class="pricing-spec-row">
-                                            <span class="pricing-spec-name">Gia hạn & Quản lý gói</span>
+                                            <span class="pricing-spec-name" data-i18n="pricing_spec_renew">Gia hạn & Quản lý gói</span>
                                             <div class="pricing-spec-values">
-                                                <span class="pricing-spec-Badge spec-free">Mặc định</span>
-                                                <span class="pricing-spec-Badge spec-pro">Hủy bất cứ lúc nào</span>
+                                                <span class="pricing-spec-Badge spec-free" data-i18n="pricing_spec_renew_free">Mặc định</span>
+                                                <span class="pricing-spec-Badge spec-pro" data-i18n="pricing_spec_renew_pro">Hủy bất cứ lúc nào</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2182,17 +2157,15 @@
                                 <div class="admin-badge-row">
                                     <span class="admin-live-badge">
                                         <span class="admin-live-dot"></span>
-                                        HỆ THỐNG QUẢN TRỊ
+                                        <span data-i18n="admin_badge_live">HỆ THỐNG QUẢN TRỊ</span>
                                     </span>
-                                    <span class="admin-tag-pill font-mono">Bảng điều khiển v1.0</span>
+                                    <span class="admin-tag-pill font-mono" data-i18n="admin_tag_dashboard">Bảng điều khiển v1.0</span>
                                 </div>
-                                <h2 class="admin-title">Bảng Điều Khiển Quản Trị Hệ Thống</h2>
-                                <p class="admin-subtitle">Giám sát tổng quan số liệu tài nguyên, lưu trữ và điều phối
-                                    quyền hạn tài khoản theo thời gian thực</p>
+                                <h2 class="admin-title" data-i18n="admin_title">Bảng Điều Khiển Quản Trị Hệ Thống</h2>
+                                <p class="admin-subtitle" data-i18n="admin_subtitle">Giám sát tổng quan số liệu tài nguyên, lưu trữ và điều phối quyền hạn tài khoản theo thời gian thực</p>
                             </div>
                             <div class="admin-header-actions">
-                                <button type="button" class="btn btn-admin-secondary" id="btnRefreshAdminData"
-                                    title="Làm mới dữ liệu">
+                                <button type="button" class="btn btn-admin-secondary" id="btnRefreshAdminData" title="Làm mới dữ liệu" data-i18n-attr="title:admin_btn_refresh">
                                     <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round">
@@ -2201,17 +2174,17 @@
                                         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
                                         </path>
                                     </svg>
-                                    <span>Làm mới</span>
+                                    <span data-i18n="admin_btn_refresh">Làm mới</span>
                                 </button>
                                 <button type="button" class="btn btn-admin-secondary btn-admin-close"
-                                    id="btnCloseAdminView" title="Đóng bảng quản trị">
+                                    id="btnCloseAdminView" title="Đóng bảng quản trị" data-i18n-attr="title:admin_btn_close">
                                     <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
-                                    <span>Đóng Quản trị</span>
+                                    <span data-i18n="admin_btn_close">Đóng Quản trị</span>
                                 </button>
                             </div>
                         </div>
@@ -2231,11 +2204,11 @@
                                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                                         </svg>
                                     </div>
-                                    <span class="bento-cell-label">Cộng đồng Người dùng</span>
+                                    <span class="bento-cell-label" data-i18n="admin_metric_users">Cộng đồng Người dùng</span>
                                 </div>
                                 <div class="bento-hero-metric">
                                     <span class="stat-value font-mono" id="statTotalUsers">--</span>
-                                    <span class="stat-unit">tài khoản</span>
+                                    <span class="stat-unit" data-i18n="admin_metric_users_unit">tài khoản</span>
                                 </div>
                                 <!-- Proportional Distribution Bar -->
                                 <div class="bento-dist-bar" id="statUsersDistBar">
@@ -2264,7 +2237,7 @@
                                             <polyline points="9 12 11 14 15 10"></polyline>
                                         </svg>
                                     </div>
-                                    <span class="bento-cell-label">Tỷ lệ Hoạt động</span>
+                                    <span class="bento-cell-label" data-i18n="admin_metric_security">Tỷ lệ Hoạt động</span>
                                 </div>
                                 <div class="stat-value font-mono" id="statActiveRatio">--</div>
                                 <div class="stat-breakdown">
@@ -2286,14 +2259,14 @@
                                             <line x1="16" y1="17" x2="8" y2="17"></line>
                                         </svg>
                                     </div>
-                                    <span class="bento-cell-label">Tài liệu đã lưu</span>
+                                    <span class="bento-cell-label" data-i18n="admin_metric_docs">Tài liệu đã lưu</span>
                                 </div>
                                 <div class="bento-hero-metric">
                                     <span class="stat-value font-mono" id="statTotalDocs">--</span>
-                                    <span class="stat-unit">hồ sơ</span>
+                                    <span class="stat-unit" data-i18n="admin_metric_docs_unit">hồ sơ</span>
                                 </div>
                                 <div class="stat-breakdown">
-                                    <span class="stat-sub-text">Lưu trữ tài liệu xử lý trong cơ sở dữ liệu</span>
+                                    <span class="stat-sub-text" data-i18n="admin_metric_docs_sub">Lưu trữ tài liệu xử lý trong cơ sở dữ liệu</span>
                                 </div>
                             </div>
 
@@ -2309,7 +2282,7 @@
                                             <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
                                         </svg>
                                     </div>
-                                    <span class="bento-cell-label">Dung lượng máy chủ</span>
+                                    <span class="bento-cell-label" data-i18n="admin_metric_storage">Dung lượng máy chủ</span>
                                 </div>
                                 <div class="stat-value font-mono" id="statTotalStorage">--</div>
                                 <div class="stat-breakdown">
@@ -2334,9 +2307,8 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="table-title">Danh bạ Tài khoản Người dùng</h3>
-                                        <p class="table-subtitle">Tra cứu, phân quyền hạn và kiểm soát trạng thái hoạt
-                                            động tài khoản</p>
+                                        <h3 class="table-title" data-i18n="admin_table_title">Danh bạ Tài khoản Người dùng</h3>
+                                        <p class="table-subtitle" data-i18n="admin_table_subtitle">Tra cứu, phân quyền hạn và kiểm soát trạng thái hoạt động tài khoản</p>
                                     </div>
                                     <span class="table-count-badge font-mono" id="adminUsersCountBadge">0 tài
                                         khoản</span>
@@ -2351,24 +2323,23 @@
                                             <circle cx="11" cy="11" r="8"></circle>
                                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                         </svg>
-                                        <input type="text" id="adminSearchInput" class="admin-search-input"
-                                            placeholder="Tìm theo email hoặc họ tên...">
+                                        <input type="text" id="adminSearchInput" class="admin-search-input" placeholder="Tìm theo email hoặc họ tên..." data-i18n-attr="placeholder:admin_search_placeholder">
                                     </div>
 
                                     <div class="admin-filter-wrap">
                                         <select id="adminRoleFilter" class="admin-filter-select">
-                                            <option value="all">Tất cả vai trò</option>
-                                            <option value="free">Người dùng Miễn phí</option>
-                                            <option value="pro">Tài khoản Pro</option>
-                                            <option value="admin">Quản trị viên</option>
+                                            <option value="all" data-i18n="admin_filter_role_all">Tất cả vai trò</option>
+                                            <option value="free" data-i18n="admin_filter_role_free">Người dùng Miễn phí</option>
+                                            <option value="pro" data-i18n="admin_filter_role_pro">Tài khoản Pro</option>
+                                            <option value="admin" data-i18n="admin_filter_role_admin">Quản trị viên</option>
                                         </select>
                                     </div>
 
                                     <div class="admin-filter-wrap">
                                         <select id="adminStatusFilter" class="admin-filter-select">
-                                            <option value="all">Tất cả trạng thái</option>
-                                            <option value="true">Đang hoạt động</option>
-                                            <option value="false">Đã bị khóa</option>
+                                            <option value="all" data-i18n="admin_filter_status_all">Tất cả trạng thái</option>
+                                            <option value="true" data-i18n="admin_filter_status_active">Đang hoạt động</option>
+                                            <option value="false" data-i18n="admin_filter_status_locked">Đã bị khóa</option>
                                         </select>
                                     </div>
                                 </div>
@@ -2379,13 +2350,13 @@
                                 <table class="admin-users-table" id="adminUsersTable">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Người dùng</th>
-                                            <th>Vai trò</th>
-                                            <th>Trạng thái</th>
-                                            <th>Tài liệu</th>
-                                            <th>Ngày tham gia</th>
-                                            <th class="text-right">Thao tác</th>
+                                            <th data-i18n="admin_th_id">ID</th>
+                                            <th data-i18n="admin_th_user">Người dùng</th>
+                                            <th data-i18n="admin_th_role">Vai trò</th>
+                                            <th data-i18n="admin_th_status">Trạng thái</th>
+                                            <th data-i18n="admin_th_docs">Tài liệu</th>
+                                            <th data-i18n="admin_th_created">Ngày tham gia</th>
+                                            <th class="text-right" data-i18n="admin_th_actions">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody id="adminUsersTableBody">
@@ -2402,9 +2373,8 @@
                                             <line x1="8" y1="11" x2="14" y2="11"></line>
                                         </svg>
                                     </div>
-                                    <h4 class="empty-title">Không tìm thấy tài khoản</h4>
-                                    <p class="empty-text">Không có tài khoản người dùng nào khớp với bộ lọc hoặc từ khóa
-                                        tìm kiếm hiện tại.</p>
+                                    <h4 class="empty-title" data-i18n="admin_empty_users_title">Không tìm thấy tài khoản</h4>
+                                    <p class="empty-text" data-i18n="admin_empty_users_desc">Không có tài khoản người dùng nào khớp với bộ lọc hoặc từ khóa tìm kiếm hiện tại.</p>
                                 </div>
                             </div>
 
@@ -2443,10 +2413,10 @@
                     <div class="progress-card-header">
                         <span class="progress-badge">
                             <span class="pulse-dot"></span>
-                            Tác vụ nền
+                            <span data-i18n="proc_badge_bg">Tác vụ nền</span>
                         </span>
                         <div class="progress-header-actions">
-                            <button type="button" class="btn-modal-action" id="btnMinimizeProgress" title="Thu nhỏ / Chạy nền (Esc)" aria-label="Thu nhỏ">
+                            <button type="button" class="btn-modal-action" id="btnMinimizeProgress" title="Thu nhỏ / Chạy nền (Esc)" aria-label="Thu nhỏ" data-i18n-attr="title:proc_minimize_title,aria-label:proc_minimize_aria">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="4 14 10 14 10 20"></polyline>
                                     <polyline points="20 10 14 10 14 4"></polyline>
@@ -2454,7 +2424,7 @@
                                     <line x1="3" y1="21" x2="10" y2="14"></line>
                                 </svg>
                             </button>
-                            <button type="button" class="btn-modal-action" id="btnCloseProgressModal" title="Đóng modal (Chạy ngầm)" aria-label="Đóng">
+                            <button type="button" class="btn-modal-action" id="btnCloseProgressModal" title="Đóng modal (Chạy ngầm)" aria-label="Đóng" data-i18n-attr="title:proc_close_title,aria-label:proc_close_aria">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2463,27 +2433,27 @@
                         </div>
                     </div>
                     <div class="progress-spinner"></div>
-                    <h3 class="progress-title" id="progressTitle">Đang xử lý tài liệu</h3>
-                    <p class="progress-desc" id="progressDesc">Đang chuẩn bị...</p>
+                    <h3 class="progress-title" id="progressTitle" data-i18n="proc_title">Đang xử lý tài liệu</h3>
+                    <p class="progress-desc" id="progressDesc" data-i18n="proc_desc_prep">Đang chuẩn bị...</p>
                     <div class="progress-bar-wrap">
                         <div class="progress-bar-fill" id="progressBarFill"></div>
                     </div>
                     <div class="steps-list">
                         <div class="step-item active" id="stepItem1">
                             <span class="step-circle">1</span>
-                            <span>Tải tệp PDF lên máy chủ</span>
+                            <span data-i18n="proc_step_1">Tải tệp PDF lên máy chủ</span>
                         </div>
                         <div class="step-item" id="stepItem2">
                             <span class="step-circle">2</span>
-                            <span>Phân tích văn bản PDF (Kiểm tra OCR)</span>
+                            <span data-i18n="proc_step_2">Phân tích văn bản PDF (Kiểm tra OCR)</span>
                         </div>
                         <div class="step-item" id="stepItem3">
                             <span class="step-circle">3</span>
-                            <span>Dịch thuật văn bản đa ngôn ngữ</span>
+                            <span data-i18n="proc_step_3">Dịch thuật văn bản đa ngôn ngữ</span>
                         </div>
                         <div class="step-item" id="stepItem4">
                             <span class="step-circle">4</span>
-                            <span>Hoàn tất & Chuẩn bị không gian làm việc</span>
+                            <span data-i18n="proc_step_4">Hoàn tất & Chuẩn bị không gian làm việc</span>
                         </div>
                     </div>
                     <div class="progress-card-footer">
@@ -2493,7 +2463,7 @@
                                 <line x1="15" y1="9" x2="9" y2="15"></line>
                                 <line x1="9" y1="9" x2="15" y2="15"></line>
                             </svg>
-                            <span>Hủy tác vụ</span>
+                            <span data-i18n="proc_btn_cancel">Hủy tác vụ</span>
                         </button>
                     </div>
                 </div>
@@ -2552,19 +2522,17 @@
                         </svg>
                     </div>
                     <div class="confirm-content">
-                        <h3 class="confirm-title" id="confirmModalTitle">Xác nhận thao tác trọng yếu</h3>
-                        <p class="confirm-desc" id="confirmModalDesc">Thao tác này sẽ làm thay đổi quyền hạn hoặc quyền
-                            truy cập của tài khoản.</p>
+                        <h3 class="confirm-title" id="confirmModalTitle" data-i18n="admin_confirm_title">Xác nhận thao tác trọng yếu</h3>
+                        <p class="confirm-desc" id="confirmModalDesc" data-i18n="admin_confirm_desc">Thao tác này sẽ làm thay đổi quyền hạn hoặc quyền truy cập của tài khoản.</p>
                         <div class="confirm-target-box" id="confirmModalTargetBox">
-                            <span class="target-label">Tài khoản mục tiêu:</span>
+                            <span class="target-label" data-i18n="admin_confirm_target">Tài khoản mục tiêu:</span>
                             <strong class="target-email font-mono"
                                 id="confirmModalTargetEmail">user@example.com</strong>
                         </div>
                     </div>
                     <div class="confirm-actions">
-                        <button type="button" class="btn btn-secondary" id="btnCancelAdminConfirm">Hủy bỏ</button>
-                        <button type="button" class="btn btn-danger" id="btnProceedAdminConfirm">Xác nhận thực
-                            hiện</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelAdminConfirm" data-i18n="common_cancel">Hủy bỏ</button>
+                        <button type="button" class="btn btn-danger" id="btnProceedAdminConfirm" data-i18n="admin_confirm_proceed">Xác nhận thực hiện</button>
                     </div>
                 </div>
             </div>
@@ -2593,7 +2561,7 @@
                                 <span class="badge-pro-pill">PRO VIP</span>
                                 <span class="copilot-doc-badge" id="copilotDocBadge">tai-lieu.pdf</span>
                             </div>
-                            <div class="copilot-header-status" id="copilotStatusText">Sẵn sàng hỗ trợ tài liệu</div>
+                            <div class="copilot-header-status" id="copilotStatusText" data-i18n="copilot_status_ready">Sẵn sàng hỗ trợ tài liệu</div>
                         </div>
                     </div>
 
@@ -2617,8 +2585,8 @@
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                         </div>
-                        <h1 class="copilot-hero-title">Bạn muốn tìm hiểu gì về tài liệu?</h1>
-                        <p class="copilot-hero-subtitle">Đặt câu hỏi, trích xuất số liệu quan trọng hoặc giải thích thuật ngữ trong văn bản.</p>
+                        <h1 class="copilot-hero-title" data-i18n="copilot_hero_title">Bạn muốn tìm hiểu gì về tài liệu?</h1>
+                        <p class="copilot-hero-subtitle" data-i18n="copilot_hero_subtitle">Đặt câu hỏi, trích xuất số liệu quan trọng hoặc giải thích thuật ngữ trong văn bản.</p>
                         <div class="copilot-quick-prompts-grid" id="copilotQuickPrompts">
                             <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?">
                                 <span class="prompt-icon-svg" aria-hidden="true">
@@ -2632,8 +2600,8 @@
                                     </svg>
                                 </span>
                                 <span class="prompt-card-content">
-                                    <strong class="prompt-card-title">Tóm tắt 3 ý chính</strong>
-                                    <span class="prompt-card-desc">Khái quát nội dung cốt lõi</span>
+                                    <strong class="prompt-card-title" data-i18n="copilot_prompt_summary_label">Tóm tắt 3 ý chính</strong>
+                                    <span class="prompt-card-desc" data-i18n="copilot_prompt_summary_desc">Khái quát nội dung cốt lõi</span>
                                 </span>
                             </button>
                             <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?">
@@ -2645,8 +2613,8 @@
                                     </svg>
                                 </span>
                                 <span class="prompt-card-content">
-                                    <strong class="prompt-card-title">Số liệu quan trọng</strong>
-                                    <span class="prompt-card-desc">Thống kê & mốc thời gian</span>
+                                    <strong class="prompt-card-title" data-i18n="copilot_prompt_metrics_label">Số liệu quan trọng</strong>
+                                    <span class="prompt-card-desc" data-i18n="copilot_prompt_metrics_desc">Thống kê & mốc thời gian</span>
                                 </span>
                             </button>
                             <button type="button" class="copilot-prompt-chip copilot-prompt-card" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?">
@@ -2657,8 +2625,8 @@
                                     </svg>
                                 </span>
                                 <span class="prompt-card-content">
-                                    <strong class="prompt-card-title">Giải thích thuật ngữ</strong>
-                                    <span class="prompt-card-desc">Làm rõ khái niệm chuyên ngành</span>
+                                    <strong class="prompt-card-title" data-i18n="copilot_prompt_terms_label">Giải thích thuật ngữ</strong>
+                                    <span class="prompt-card-desc" data-i18n="copilot_prompt_terms_desc">Làm rõ khái niệm chuyên ngành</span>
                                 </span>
                             </button>
                         </div>
@@ -2673,7 +2641,7 @@
                                 </svg>
                             </div>
                             <div class="copilot-msg-content">
-                                <p>Xin chào! Tôi là <strong>AI Copilot</strong>. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
+                                <p data-i18n="copilot_welcome_msg">Xin chào! Tôi là AI Copilot. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
                             </div>
                         </div>
                     </div>
@@ -2704,14 +2672,14 @@
                         <textarea class="copilot-input" id="copilotInput" rows="1"
                             placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)"
                             maxlength="2000"></textarea>
-                        <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
+                        <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" data-i18n-attr="title:copilot_send_title" disabled>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
                                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                             </svg>
                         </button>
                     </form>
-                    <div class="copilot-footer-tip">Nhấn Enter để gửi (Shift+Enter xuống dòng) • Giới hạn 15 câu/ngày (Gói Pro VIP)</div>
+                    <div class="copilot-footer-tip" data-i18n="copilot_footer_tip_full">Nhấn Enter để gửi (Shift+Enter xuống dòng) • Giới hạn 15 câu/ngày (Gói Pro VIP)</div>
                 </div>
             </aside>
 
@@ -2961,10 +2929,10 @@
         <div class="modal-dialog account-modal-dialog">
             <div class="modal-header">
                 <div>
-                    <h2 class="modal-title" id="accountModalTitle">Thông tin tài khoản</h2>
-                    <p class="modal-subtitle">Chi tiết hồ sơ và gói dịch vụ PDF-Lingua của bạn</p>
+                    <h2 class="modal-title" id="accountModalTitle" data-i18n="account_modal_title">Thông tin tài khoản</h2>
+                    <p class="modal-subtitle" data-i18n="account_modal_subtitle">Chi tiết hồ sơ và gói dịch vụ PDF-Lingua của bạn</p>
                 </div>
-                <button type="button" class="modal-close" id="btnCloseAccountModal" aria-label="Đóng cửa sổ">
+                <button type="button" class="modal-close" id="btnCloseAccountModal" aria-label="Đóng cửa sổ" data-i18n-attr="aria-label:common_close">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2980,19 +2948,18 @@
                 <!-- Loading State -->
                 <div class="account-loading-wrap" id="accountLoading" style="display: none;">
                     <span class="account-spinner" aria-hidden="true"></span>
-                    <p class="account-loading-text">Đang tải thông tin tài khoản...</p>
+                    <p class="account-loading-text" data-i18n="account_loading_text">Đang tải thông tin tài khoản...</p>
                 </div>
 
                 <!-- Account Info Content -->
                 <div class="account-info-card" id="accountInfoContent">
                     <div class="account-header-hero">
                         <div class="account-avatar-preview-area">
-                            <div class="account-avatar-large" id="accountAvatarLarge" role="img" aria-label="Ảnh đại diện tài khoản">
+                            <div class="account-avatar-large" id="accountAvatarLarge" role="img" aria-label="Ảnh đại diện tài khoản" data-i18n-attr="aria-label:account_avatar_label">
                                 <span class="account-avatar-initial" id="accountAvatarInitial">U</span>
                                 <img src="" alt="Ảnh đại diện người dùng" class="account-avatar-img" id="accountAvatarImg" style="display: none;">
                             </div>
-                            <button type="button" class="account-avatar-camera-btn" id="btnSelectAvatar"
-                                aria-label="Đổi ảnh đại diện" title="Chọn ảnh đại diện mới">
+                            <button type="button" class="account-avatar-camera-btn" id="btnSelectAvatar" aria-label="Đổi ảnh đại diện" title="Chọn ảnh đại diện mới" data-i18n-attr="title:account_avatar_camera_title,aria-label:account_avatar_camera_title">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -3007,14 +2974,13 @@
                             <h3 class="account-hero-name" id="accountFullNameDisplay">---</h3>
                             <p class="account-hero-email" id="accountEmailSubDisplay">---</p>
                             <div class="account-avatar-actions" id="accountAvatarActions">
-                                <button type="button" class="btn-avatar-action btn-avatar-upload" id="btnTriggerAvatarUpload"
-                                    title="Chọn tệp ảnh từ thiết bị" aria-label="Tải ảnh đại diện mới">
+                                <button type="button" class="btn-avatar-action btn-avatar-upload" id="btnTriggerAvatarUpload" title="Chọn tệp ảnh từ thiết bị" aria-label="Tải ảnh đại diện mới" data-i18n-attr="title:account_avatar_camera_title,aria-label:account_avatar_camera_title">
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                         <polyline points="17 8 12 3 7 8"></polyline>
                                         <line x1="12" y1="3" x2="12" y2="15"></line>
                                     </svg>
-                                    <span>Đổi ảnh</span>
+                                    <span data-i18n="account_btn_change_avatar">Đổi ảnh</span>
                                 </button>
                                 <button type="button" class="btn-avatar-action btn-avatar-delete" id="btnDeleteAvatar"
                                     title="Xóa ảnh đại diện" aria-label="Xóa ảnh đại diện" style="display: none;">
@@ -3022,15 +2988,15 @@
                                         <polyline points="3 6 5 6 21 6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                     </svg>
-                                    <span>Xóa ảnh</span>
+                                    <span data-i18n="account_btn_delete_avatar">Xóa ảnh</span>
                                 </button>
                             </div>
                             <div class="account-avatar-confirm-box" id="avatarDeleteConfirmBox" style="display: none;"
                                 role="alertdialog" aria-labelledby="avatarConfirmDesc">
-                                <span class="avatar-confirm-text" id="avatarConfirmDesc">Xác nhận gỡ ảnh đại diện?</span>
+                                <span class="avatar-confirm-text" id="avatarConfirmDesc" data-i18n="account_avatar_confirm_desc">Xác nhận gỡ ảnh đại diện?</span>
                                 <div class="avatar-confirm-btns">
-                                    <button type="button" class="btn btn-secondary btn-xs" id="btnCancelDeleteAvatar">Hủy</button>
-                                    <button type="button" class="btn btn-danger btn-xs" id="btnConfirmDeleteAvatar">Gỡ ảnh</button>
+                                    <button type="button" class="btn btn-secondary btn-xs" id="btnCancelDeleteAvatar" data-i18n="common_cancel">Hủy</button>
+                                    <button type="button" class="btn btn-danger btn-xs" id="btnConfirmDeleteAvatar" data-i18n="account_avatar_btn_remove">Gỡ ảnh</button>
                                 </div>
                             </div>
                         </div>
@@ -3039,15 +3005,14 @@
                     <div class="account-details-grid">
                         <div class="account-detail-item account-detail-editable">
                             <div class="account-detail-header">
-                                <span class="account-detail-label">Họ và tên</span>
-                                <button type="button" class="btn-edit-toggle" id="btnToggleEditFullName"
-                                    title="Chỉnh sửa họ tên">
+                                <span class="account-detail-label" data-i18n="account_field_fullname">Họ và tên</span>
+                                <button type="button" class="btn-edit-toggle" id="btnToggleEditFullName" title="Chỉnh sửa họ tên" data-i18n-attr="title:account_btn_edit">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
-                                    <span>Chỉnh sửa</span>
+                                    <span data-i18n="account_btn_edit">Chỉnh sửa</span>
                                 </button>
                             </div>
 
@@ -3060,22 +3025,21 @@
                             <form id="accountEditForm" class="account-edit-form" style="display: none;" novalidate>
                                 <div class="input-wrap">
                                     <input type="text" id="editFullNameInput" name="full_name" class="form-input"
-                                        placeholder="Nhập họ và tên mới" maxlength="150" autocomplete="name">
+                                        placeholder="Nhập họ và tên mới" data-i18n-attr="placeholder:account_input_fullname_placeholder" maxlength="150" autocomplete="name">
                                 </div>
                                 <p class="field-error" id="editFullNameInputError" role="alert" aria-live="polite"></p>
                                 <div class="account-edit-actions">
-                                    <button type="button" class="btn btn-secondary btn-sm"
-                                        id="btnCancelEditFullName">Hủy</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditFullName" data-i18n="common_cancel">Hủy</button>
                                     <button type="submit" class="btn btn-gradient btn-sm" id="btnSaveFullName">
                                         <span class="btn-spinner" id="editFullNameSpinner" aria-hidden="true"
                                             style="display: none;"></span>
-                                        <span id="editFullNameBtnText">Lưu</span>
+                                        <span id="editFullNameBtnText" data-i18n="common_save">Lưu</span>
                                     </button>
                                 </div>
                             </form>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Địa chỉ Email</span>
+                            <span class="account-detail-label" data-i18n="account_field_email">Địa chỉ Email</span>
                             <span class="account-detail-value" id="accountDetailEmail">---</span>
                         </div>
                         <div class="account-detail-item">
@@ -3088,14 +3052,14 @@
                                         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                     </svg>
-                                    <span>Nâng cấp gói Pro</span>
+                                    <span data-i18n="account_btn_upgrade_pro">Nâng cấp gói Pro</span>
                                 </button>
                             </span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Trạng thái</span>
+                            <span class="account-detail-label" data-i18n="account_field_status">Trạng thái</span>
                             <span class="account-detail-value">
-                                <span class="badge-status" id="accountDetailStatus">Hoạt động</span>
+                                <span class="badge-status" id="accountDetailStatus" data-i18n="account_status_active">Hoạt động</span>
                             </span>
                         </div>
                     </div>
@@ -3104,8 +3068,8 @@
                     <div class="account-security-section">
                         <div class="account-security-header">
                             <div>
-                                <h4 class="security-title">Bảo mật tài khoản</h4>
-                                <p class="security-subtitle">Thay đổi mật khẩu đăng nhập của bạn</p>
+                                <h4 class="security-title" data-i18n="account_security_title">Bảo mật tài khoản</h4>
+                                <p class="security-subtitle" data-i18n="account_security_subtitle">Thay đổi mật khẩu đăng nhập của bạn</p>
                             </div>
                             <button type="button" class="btn btn-secondary btn-sm" id="btnToggleChangePassword"
                                 aria-expanded="false" aria-controls="changePasswordForm">
@@ -3114,7 +3078,7 @@
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
-                                <span id="toggleChangePasswordText">Đổi mật khẩu</span>
+                                <span id="toggleChangePasswordText" data-i18n="account_btn_change_pw">Đổi mật khẩu</span>
                             </button>
                         </div>
 
@@ -3124,9 +3088,7 @@
 
                             <!-- Current Password -->
                             <div class="form-group">
-                                <label for="currentPasswordInput" class="form-label">
-                                    Mật khẩu hiện tại <span class="label-required">*</span>
-                                </label>
+                                <label for="currentPasswordInput" class="form-label"><span data-i18n="account_lbl_curr_pw">Mật khẩu hiện tại</span> <span class="label-required">*</span></label>
                                 <div class="input-wrap">
                                     <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3160,9 +3122,7 @@
 
                             <!-- New Password -->
                             <div class="form-group">
-                                <label for="newPasswordInput" class="form-label">
-                                    Mật khẩu mới <span class="label-required">*</span>
-                                </label>
+                                <label for="newPasswordInput" class="form-label"><span data-i18n="account_lbl_new_pw">Mật khẩu mới</span> <span class="label-required">*</span></label>
                                 <div class="input-wrap">
                                     <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3195,9 +3155,7 @@
 
                             <!-- Confirm New Password -->
                             <div class="form-group">
-                                <label for="confirmNewPasswordInput" class="form-label">
-                                    Xác nhận mật khẩu mới <span class="label-required">*</span>
-                                </label>
+                                <label for="confirmNewPasswordInput" class="form-label"><span data-i18n="account_lbl_confirm_pw">Xác nhận mật khẩu mới</span> <span class="label-required">*</span></label>
                                 <div class="input-wrap">
                                     <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3231,12 +3189,11 @@
 
                             <!-- Actions -->
                             <div class="account-edit-actions">
-                                <button type="button" class="btn btn-secondary btn-sm"
-                                    id="btnCancelChangePassword">Hủy</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnCancelChangePassword" data-i18n="common_cancel">Hủy</button>
                                 <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitChangePassword">
                                     <span class="btn-spinner" id="changePasswordSpinner" aria-hidden="true"
                                         style="display: none;"></span>
-                                    <span id="changePasswordBtnText">Cập nhật mật khẩu</span>
+                                    <span id="changePasswordBtnText" data-i18n="account_btn_update_pw">Cập nhật mật khẩu</span>
                                 </button>
                             </div>
                         </form>
@@ -3245,7 +3202,7 @@
             </div>
 
             <div class="account-modal-footer">
-                <button type="button" class="btn btn-secondary btn-block" id="btnCloseAccountModalBtn">Đóng</button>
+                <button type="button" class="btn btn-secondary btn-block" id="btnCloseAccountModalBtn" data-i18n="common_close">Đóng</button>
             </div>
         </div>
     </div>
@@ -3256,8 +3213,8 @@
         <div class="modal-dialog avatar-crop-dialog">
             <div class="modal-header">
                 <div>
-                    <h2 class="modal-title" id="avatarCropModalTitle">Cắt ảnh đại diện</h2>
-                    <p class="modal-subtitle">Điều chỉnh khung hình vuông tròn cho ảnh đại diện của bạn</p>
+                    <h2 class="modal-title" id="avatarCropModalTitle" data-i18n="avatar_crop_title">Cắt ảnh đại diện</h2>
+                    <p class="modal-subtitle" data-i18n="avatar_crop_subtitle">Điều chỉnh khung hình vuông tròn cho ảnh đại diện của bạn</p>
                 </div>
                 <button type="button" class="modal-close" id="btnCloseAvatarCropModal" aria-label="Đóng cửa sổ cắt ảnh">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -3312,15 +3269,15 @@
                         <span class="crop-zoom-label" id="cropZoomValue">100%</span>
                     </div>
 
-                    <p class="avatar-crop-helper-text">Kéo chuột để di chuyển ảnh hoặc dùng phím mũi tên để căn chỉnh chi tiết</p>
+                    <p class="avatar-crop-helper-text" data-i18n="avatar_crop_helper">Kéo chuột để di chuyển ảnh hoặc dùng phím mũi tên để căn chỉnh chi tiết</p>
                 </div>
             </div>
 
             <div class="avatar-crop-footer">
-                <button type="button" class="btn btn-secondary" id="btnCancelAvatarCrop">Hủy bỏ</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelAvatarCrop" data-i18n="common_cancel">Hủy bỏ</button>
                 <button type="button" class="btn btn-gradient" id="btnConfirmAvatarCrop">
                     <span class="btn-spinner" id="cropConfirmSpinner" aria-hidden="true" style="display: none;"></span>
-                    <span id="cropConfirmBtnText">Áp dụng ảnh</span>
+                    <span id="cropConfirmBtnText" data-i18n="avatar_crop_btn_apply">Áp dụng ảnh</span>
                 </button>
             </div>
         </div>
@@ -3329,8 +3286,7 @@
     <!-- VietQR Checkout & Instant Pro Upgrade Modal -->
     <div class="modal-overlay checkout-modal-overlay" id="pricingCheckoutModal" hidden aria-hidden="true">
         <div class="checkout-modal-card" role="dialog" aria-modal="true" aria-labelledby="checkoutModalTitle">
-            <button type="button" class="modal-close checkout-modal-close" id="btnCloseCheckoutModal"
-                aria-label="Đóng cổng thanh toán" title="Đóng">
+            <button type="button" class="modal-close checkout-modal-close" id="btnCloseCheckoutModal" aria-label="Đóng cổng thanh toán" title="Đóng" data-i18n-attr="title:common_close,aria-label:common_close">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -3342,21 +3298,20 @@
                 <!-- Left Column: Order Summary & Plan Switcher -->
                 <div class="checkout-summary-col">
                     <div class="checkout-summary-top">
-                        <h3 class="checkout-modal-title" id="checkoutModalTitle">Nâng Cấp Tài Khoản Pro VIP</h3>
-                        <p class="checkout-modal-subtitle">Mở khóa hạn mức 100 MB mỗi tệp, 500 trang OCR chuyên sâu và
-                            Trợ lý AI Copilot 15 câu / ngày.</p>
+                        <h3 class="checkout-modal-title" id="checkoutModalTitle" data-i18n="checkout_modal_title">Nâng Cấp Tài Khoản Pro VIP</h3>
+                        <p class="checkout-modal-subtitle" data-i18n="checkout_modal_subtitle">Mở khóa hạn mức 100 MB mỗi tệp, 500 trang OCR chuyên sâu và Trợ lý AI Copilot 15 câu / ngày.</p>
 
                         <!-- Quick Billing Cycle Switcher inside Checkout -->
                         <div class="checkout-cycle-switch" role="group" aria-label="Đổi chu kỳ gói Pro">
                             <button type="button" class="checkout-cycle-btn active" id="btnCheckoutCycleMonthly"
                                 data-plan-code="pro_monthly">
-                                <span class="checkout-cycle-label">Theo Tháng</span>
+                                <span class="checkout-cycle-label" data-i18n="checkout_cycle_monthly">Theo Tháng</span>
                                 <span class="checkout-cycle-price">49.000đ</span>
                             </button>
                             <button type="button" class="checkout-cycle-btn" id="btnCheckoutCycleYearly"
                                 data-plan-code="pro_yearly">
                                 <div class="checkout-cycle-top-row">
-                                    <span class="checkout-cycle-label">Theo Năm</span>
+                                    <span class="checkout-cycle-label" data-i18n="checkout_cycle_yearly">Theo Năm</span>
                                     <span class="checkout-cycle-badge">-32%</span>
                                 </div>
                                 <span class="checkout-cycle-price">399.000đ</span>
@@ -3366,32 +3321,31 @@
                         <!-- Order Breakdown Box -->
                         <div class="checkout-summary-card" id="checkoutSummaryCard">
                             <div class="checkout-summary-row">
-                                <span class="checkout-summary-label">Gói đăng ký</span>
-                                <strong class="checkout-summary-val" id="checkoutPlanName">Gói Pro Hàng Tháng</strong>
+                                <span class="checkout-summary-label" data-i18n="checkout_plan_label">Gói đăng ký</span>
+                                <strong class="checkout-summary-val" id="checkoutPlanName" data-i18n="pricing_pro_name_monthly">Gói Pro Hàng Tháng</strong>
                             </div>
                             <div class="checkout-summary-row">
-                                <span class="checkout-summary-label">Chu kỳ hiệu lực</span>
-                                <span class="checkout-summary-val checkout-mono" id="checkoutDurationDays">30
-                                    ngày</span>
+                                <span class="checkout-summary-label" data-i18n="checkout_duration_label">Chu kỳ hiệu lực</span>
+                                <span class="checkout-summary-val checkout-mono" id="checkoutDurationDays" data-i18n="checkout_days_val">30 ngày</span>
                             </div>
                             <div class="checkout-summary-row">
-                                <span class="checkout-summary-label">Hạn mức mở khóa</span>
+                                <span class="checkout-summary-label" data-i18n="checkout_limit_label">Hạn mức mở khóa</span>
                                 <span class="checkout-summary-val checkout-mono">100 MB / 500 trang</span>
                             </div>
                             <div class="checkout-summary-row">
-                                <span class="checkout-summary-label">Hiệu lực dự kiến đến</span>
+                                <span class="checkout-summary-label" data-i18n="checkout_expiry_label">Hiệu lực dự kiến đến</span>
                                 <span class="checkout-summary-val checkout-mono"
                                     id="checkoutExpiryPreview">--/--/----</span>
                             </div>
                             <div class="checkout-summary-row checkout-savings-row" id="checkoutSavingsRow"
                                 style="display: none;">
-                                <span class="checkout-summary-label">Ưu đãi chu kỳ năm</span>
+                                <span class="checkout-summary-label" data-i18n="checkout_savings_label">Ưu đãi chu kỳ năm</span>
                                 <strong class="checkout-savings-val" id="checkoutSavingsAmount">-189.000đ (Tiết kiệm
                                     32%)</strong>
                             </div>
                             <div class="checkout-summary-divider"></div>
                             <div class="checkout-summary-total-row">
-                                <span class="checkout-total-label">Tổng thanh toán</span>
+                                <span class="checkout-total-label" data-i18n="checkout_total_label">Tổng thanh toán</span>
                                 <strong class="checkout-total-amount" id="checkoutTotalAmount">49.000 VNĐ</strong>
                             </div>
                         </div>
@@ -3403,14 +3357,14 @@
                                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                             </svg>
-                            <span>Đối soát tự động 24/7 qua chuẩn VietQR Napas247</span>
+                            <span data-i18n="checkout_trust_1">Đối soát tự động 24/7 qua chuẩn VietQR Napas247</span>
                         </div>
                         <div class="checkout-trust-item">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                             </svg>
-                            <span>Cộng dồn ngày sử dụng nếu gia hạn sớm</span>
+                            <span data-i18n="checkout_trust_2">Cộng dồn ngày sử dụng nếu gia hạn sớm</span>
                         </div>
                     </div>
                 </div>
@@ -3422,10 +3376,9 @@
                         <div class="checkout-status-bar">
                             <div class="checkout-radar-pill" id="checkoutPollingStatus">
                                 <span class="checkout-radar-dot"></span>
-                                <span id="checkoutPollingStatusText">Đang chờ thanh toán từ ngân hàng...</span>
+                                <span id="checkoutPollingStatusText" data-i18n="checkout_polling_text">Đang chờ thanh toán từ ngân hàng...</span>
                             </div>
-                            <div class="checkout-countdown-pill" id="checkoutCountdownBadge"
-                                title="Thời gian giữ mã giao dịch">
+                            <div class="checkout-countdown-pill" id="checkoutCountdownBadge" title="Thời gian giữ mã giao dịch" data-i18n-attr="title:checkout_countdown_title">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -3465,47 +3418,46 @@
                                         <rect x="90" y="74" width="12" height="12" fill="#4F46E5" />
                                         <rect x="90" y="92" width="12" height="10" fill="#0F172A" />
                                     </svg>
-                                    <span class="checkout-qr-fallback-label">Mã VietQR Napas247</span>
+                                    <span class="checkout-qr-fallback-label" data-i18n="checkout_qr_fallback_lbl">Mã VietQR Napas247</span>
                                 </div>
                             </div>
-                            <p class="checkout-qr-caption">Mở ứng dụng Ngân hàng hoặc Ví điện tử bất kỳ để quét mã
-                                VietQR</p>
+                            <p class="checkout-qr-caption" data-i18n="checkout_scan_caption">Mở ứng dụng Ngân hàng hoặc Ví điện tử bất kỳ để quét mã VietQR</p>
                         </div>
 
                         <!-- Bank Transfer Details with 1-Click Copy -->
                         <div class="checkout-bank-card" id="checkoutBankBox">
                             <div class="checkout-bank-row">
-                                <span class="checkout-bank-label">Ngân hàng</span>
+                                <span class="checkout-bank-label" data-i18n="checkout_bank_label">Ngân hàng</span>
                                 <strong class="checkout-bank-val" id="checkoutBankName">VietinBank (CN Thủ Thiêm - Hội
                                     Sở)</strong>
                             </div>
                             <div class="checkout-bank-row">
-                                <span class="checkout-bank-label">Chủ tài khoản</span>
+                                <span class="checkout-bank-label" data-i18n="checkout_account_name_label">Chủ tài khoản</span>
                                 <strong class="checkout-bank-val" id="checkoutAccountName">NGUYEN LE HUY TAM</strong>
                             </div>
                             <div class="checkout-bank-row">
-                                <span class="checkout-bank-label">Số tài khoản</span>
+                                <span class="checkout-bank-label" data-i18n="checkout_account_num_label">Số tài khoản</span>
                                 <div class="checkout-bank-copy-group">
                                     <code class="checkout-bank-code" id="checkoutAccountNumber">0779562608</code>
                                     <button type="button" class="btn-checkout-copy" id="btnCopyCheckoutAccount"
-                                        data-copy-target="checkoutAccountNumber">Sao chép</button>
+                                        data-copy-target="checkoutAccountNumber" data-i18n="common_copy">Sao chép</button>
                                 </div>
                             </div>
                             <div class="checkout-bank-row">
-                                <span class="checkout-bank-label">Số tiền</span>
+                                <span class="checkout-bank-label" data-i18n="checkout_amount_label">Số tiền</span>
                                 <div class="checkout-bank-copy-group">
                                     <code class="checkout-bank-code" id="checkoutTransferAmount">49.000đ</code>
                                     <button type="button" class="btn-checkout-copy" id="btnCopyCheckoutAmount"
-                                        data-copy-target="checkoutTransferAmount">Sao chép</button>
+                                        data-copy-target="checkoutTransferAmount" data-i18n="common_copy">Sao chép</button>
                                 </div>
                             </div>
                             <div class="checkout-bank-row checkout-bank-row-memo">
-                                <span class="checkout-bank-label">Nội dung CK</span>
+                                <span class="checkout-bank-label" data-i18n="checkout_memo_label">Nội dung CK</span>
                                 <div class="checkout-bank-copy-group">
                                     <code class="checkout-bank-code checkout-memo-highlight"
                                         id="checkoutTransferNote">PDL SUB 0000</code>
                                     <button type="button" class="btn-checkout-copy" id="btnCopyCheckoutNote"
-                                        data-copy-target="checkoutTransferNote">Sao chép</button>
+                                        data-copy-target="checkoutTransferNote" data-i18n="common_copy">Sao chép</button>
                                 </div>
                             </div>
                         </div>
@@ -3515,7 +3467,7 @@
                             <div class="checkout-action-buttons">
                                 <button type="button" class="btn btn-secondary btn-sm checkout-btn-verify"
                                     id="btnCheckTransactionNow">
-                                    <span>Tôi đã chuyển khoản</span>
+                                    <span data-i18n="checkout_btn_transferred">Tôi đã chuyển khoản</span>
                                 </button>
                                 <button type="button" class="btn btn-gradient btn-sm checkout-btn-simulate"
                                     id="btnSimulatePaymentSuccess">
@@ -3523,11 +3475,11 @@
                                         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                     </svg>
-                                    <span id="btnSimulatePaymentText">Giả lập thanh toán thành công</span>
+                                    <span id="btnSimulatePaymentText" data-i18n="checkout_btn_simulate">Giả lập thanh toán thành công</span>
                                 </button>
                             </div>
                             <div class="checkout-tx-meta">
-                                <span>Mã giao dịch: <code id="checkoutTransactionCode">---</code></span>
+                                <span><span data-i18n="checkout_tx_label">Mã giao dịch:</span> <code id="checkoutTransactionCode">---</code></span>
                             </div>
                         </div>
                     </div>
@@ -3543,32 +3495,31 @@
                                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
                             </svg>
                         </div>
-                        <span class="checkout-success-pill">KÍCH HOẠT THÀNH CÔNG</span>
-                        <h4 class="checkout-success-title">Chúc mừng! Bạn đã nâng cấp lên Gói Pro VIP</h4>
-                        <p class="checkout-success-desc" id="checkoutSuccessMessage">Tài khoản của bạn đã mở khóa toàn
-                            bộ đặc quyền xử lý PDF 100 MB, 500 trang OCR và Trợ lý AI Copilot 15 câu / ngày.</p>
+                        <span class="checkout-success-pill" data-i18n="checkout_success_pill">KÍCH HOẠT THÀNH CÔNG</span>
+                        <h4 class="checkout-success-title" data-i18n="checkout_success_title">Chúc mừng! Bạn đã nâng cấp lên Gói Pro VIP</h4>
+                        <p class="checkout-success-desc" id="checkoutSuccessMessage" data-i18n="checkout_success_desc">Tài khoản của bạn đã mở khóa toàn bộ đặc quyền xử lý PDF 100 MB, 500 trang OCR và Trợ lý AI Copilot 15 câu / ngày.</p>
 
                         <div class="checkout-receipt-box">
                             <div class="checkout-receipt-row">
-                                <span>Mã giao dịch</span>
+                                <span data-i18n="checkout_tx_title">Mã giao dịch</span>
                                 <code id="checkoutSuccessTxCode">---</code>
                             </div>
                             <div class="checkout-receipt-row">
-                                <span>Gói kích hoạt</span>
-                                <strong id="checkoutSuccessPlanName">Gói Pro Hàng Tháng</strong>
+                                <span data-i18n="checkout_plan_activated_title">Gói kích hoạt</span>
+                                <strong id="checkoutSuccessPlanName" data-i18n="pricing_pro_name_monthly">Gói Pro Hàng Tháng</strong>
                             </div>
                             <div class="checkout-receipt-row">
-                                <span>Số tiền đã thanh toán</span>
+                                <span data-i18n="checkout_amount_paid_title">Số tiền đã thanh toán</span>
                                 <strong class="checkout-mono" id="checkoutSuccessAmount">49.000 VNĐ</strong>
                             </div>
                             <div class="checkout-receipt-row">
-                                <span>Hiệu lực đến ngày</span>
+                                <span data-i18n="checkout_valid_until_title">Hiệu lực đến ngày</span>
                                 <strong class="checkout-mono" id="checkoutSuccessExpiresAt">--/--/----</strong>
                             </div>
                         </div>
 
                         <button type="button" class="btn btn-gradient btn-lg checkout-success-cta" id="btnCheckoutDone">
-                            <span>Bắt đầu sử dụng đặc quyền Pro ngay</span>
+                            <span data-i18n="checkout_btn_done">Bắt đầu sử dụng đặc quyền Pro ngay</span>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -3587,11 +3538,10 @@
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
                         </div>
-                        <h4 class="checkout-expired-title">Mã Thanh Toán VietQR Đã Hết Hạn</h4>
-                        <p class="checkout-expired-desc">Phiên giao dịch 15 phút đã kết thúc để đảm bảo an toàn đối
-                            soát. Hãy tạo mã mới để tiếp tục nâng cấp gói Pro.</p>
+                        <h4 class="checkout-expired-title" data-i18n="checkout_expired_title">Mã Thanh Toán VietQR Đã Hết Hạn</h4>
+                        <p class="checkout-expired-desc" data-i18n="checkout_expired_desc">Phiên giao dịch 15 phút đã kết thúc để đảm bảo an toàn đối soát. Hãy tạo mã mới để tiếp tục nâng cấp gói Pro.</p>
                         <button type="button" class="btn btn-gradient" id="btnRetryCheckout">
-                            <span>Tạo mã VietQR mới</span>
+                            <span data-i18n="checkout_btn_retry">Tạo mã VietQR mới</span>
                         </button>
                     </div>
                 </div>
@@ -3602,8 +3552,7 @@
     <!-- Quota Exceeded Upsell Modal -->
     <div class="modal-overlay quota-modal-overlay" id="quotaExceededModal" hidden aria-hidden="true">
         <div class="quota-modal-card" role="dialog" aria-modal="true" aria-labelledby="quotaModalTitle">
-            <button type="button" class="modal-close quota-modal-close" id="btnCloseQuotaModal"
-                aria-label="Đóng thông báo hạn mức" title="Đóng">
+            <button type="button" class="modal-close quota-modal-close" id="btnCloseQuotaModal" aria-label="Đóng thông báo hạn mức" title="Đóng" data-i18n-attr="title:common_close,aria-label:common_close">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -3618,37 +3567,35 @@
                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
                 </div>
-                <span class="quota-modal-eyebrow">GIỚI HẠN GÓI MIỄN PHÍ</span>
-                <h3 class="quota-modal-title" id="quotaModalTitle">Tài Liệu Vượt Quá Hạn Mức Hiện Tại</h3>
-                <p class="quota-modal-reason" id="quotaExceededReason">Tệp PDF bạn vừa chọn vượt quá giới hạn 20 MB hoặc
-                    100 trang OCR của gói Miễn phí.</p>
+                <span class="quota-modal-eyebrow" data-i18n="quota_eyebrow">GIỚI HẠN GÓI MIỄN PHÍ</span>
+                <h3 class="quota-modal-title" id="quotaModalTitle" data-i18n="quota_modal_title">Tài Liệu Vượt Quá Hạn Mức Hiện Tại</h3>
+                <p class="quota-modal-reason" id="quotaExceededReason" data-i18n="quota_modal_reason">Tệp PDF bạn vừa chọn vượt quá giới hạn 20 MB hoặc 100 trang OCR của gói Miễn phí.</p>
             </div>
 
             <div class="quota-compare-grid">
                 <div class="quota-compare-box quota-box-free">
-                    <span class="quota-box-tag">Gói hiện tại</span>
-                    <strong class="quota-box-name">Gói Miễn Phí</strong>
-                    <span class="quota-box-spec">Tối đa 20 MB / tệp</span>
-                    <span class="quota-box-spec">Tối đa 100 trang OCR</span>
+                    <span class="quota-box-tag" data-i18n="quota_current_tag">Gói hiện tại</span>
+                    <strong class="quota-box-name" data-i18n="pricing_free_name">Gói Miễn Phí</strong>
+                    <span class="quota-box-spec" data-i18n="quota_spec_free_size">Tối đa 20 MB / tệp</span>
+                    <span class="quota-box-spec" data-i18n="quota_spec_free_pages">Tối đa 100 trang OCR</span>
                 </div>
                 <div class="quota-compare-box quota-box-pro">
-                    <span class="quota-box-tag quota-tag-pro">Mở khóa gấp 5 lần</span>
-                    <strong class="quota-box-name">Gói Pro VIP</strong>
-                    <span class="quota-box-spec">Tối đa 100 MB / tệp</span>
-                    <span class="quota-box-spec">Tối đa 500 trang OCR</span>
+                    <span class="quota-box-tag quota-tag-pro" data-i18n="quota_pro_tag">Mở khóa gấp 5 lần</span>
+                    <strong class="quota-box-name" data-i18n="quota_pro_name">Gói Pro VIP</strong>
+                    <span class="quota-box-spec" data-i18n="quota_spec_pro_size">Tối đa 100 MB / tệp</span>
+                    <span class="quota-box-spec" data-i18n="quota_spec_pro_pages">Tối đa 500 trang OCR</span>
                 </div>
             </div>
 
             <div class="quota-modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaModalDismiss">Để sau</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaModalViewPricing">Xem gói Pro
-                    49k/tháng</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaModalDismiss" data-i18n="quota_btn_dismiss">Để sau</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaModalViewPricing" data-i18n="quota_btn_view_pricing">Xem gói Pro 49k/tháng</button>
                 <button type="button" class="btn btn-gradient btn-sm" id="btnQuotaModalUpgradeNow">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
-                    <span>Nâng cấp ngay (49.000đ)</span>
+                    <span data-i18n="quota_btn_upgrade">Nâng cấp ngay (49.000đ)</span>
                 </button>
             </div>
         </div>
@@ -3898,10 +3845,10 @@
         <div class="modal-dialog account-modal-dialog document-detail-modal-dialog">
             <div class="modal-header">
                 <div>
-                    <h2 class="modal-title" id="documentDetailModalTitle">Chi tiết tài liệu</h2>
-                    <p class="modal-subtitle">Thông tin kỹ thuật và trạng thái xử lý tệp PDF</p>
+                    <h2 class="modal-title" id="documentDetailModalTitle" data-i18n="doc_detail_title">Chi tiết tài liệu</h2>
+                    <p class="modal-subtitle" data-i18n="doc_detail_subtitle">Thông tin kỹ thuật và trạng thái xử lý tệp PDF</p>
                 </div>
-                <button type="button" class="modal-close" id="btnCloseDocumentDetailModal" aria-label="Đóng cửa sổ">
+                <button type="button" class="modal-close" id="btnCloseDocumentDetailModal" aria-label="Đóng cửa sổ" data-i18n-attr="aria-label:common_close">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -3918,7 +3865,7 @@
                 <!-- Loading State -->
                 <div class="account-loading-wrap" id="documentDetailLoading" style="display: none;">
                     <span class="account-spinner" aria-hidden="true"></span>
-                    <p class="account-loading-text">Đang tải thông tin chi tiết tài liệu...</p>
+                    <p class="account-loading-text" data-i18n="doc_detail_loading">Đang tải thông tin chi tiết tài liệu...</p>
                 </div>
 
                 <div class="account-info-card" id="documentDetailContent">
@@ -3928,38 +3875,38 @@
                         <div class="account-hero-meta" style="min-width: 0; flex: 1;">
                             <h3 class="account-hero-name" id="docDetailHeroFilename" style="word-break: break-word;">---
                             </h3>
-                            <p class="account-hero-email font-mono" id="docDetailHeroSub">Mã tài liệu: #---</p>
+                            <p class="account-hero-email font-mono" id="docDetailHeroSub"><span data-i18n="doc_detail_code_prefix">Mã tài liệu: #</span>---</p>
                         </div>
                     </div>
 
                     <div class="account-details-grid">
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Tên tài liệu</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_name">Tên tài liệu</span>
                             <span class="account-detail-value" id="docDetailFilename"
                                 style="text-align: right; word-break: break-word; max-width: 65%;">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">ID tài liệu</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_id">ID tài liệu</span>
                             <span class="account-detail-value font-mono" id="docDetailId">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Dung lượng</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_size">Dung lượng</span>
                             <span class="account-detail-value font-mono" id="docDetailSize">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Số trang</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_pages">Số trang</span>
                             <span class="account-detail-value" id="docDetailPageCount">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Ngôn ngữ đích</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_target_lang">Ngôn ngữ đích</span>
                             <span class="account-detail-value" id="docDetailTargetLang">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Trạng thái OCR</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_ocr">Trạng thái OCR</span>
                             <span class="account-detail-value" id="docDetailOcrStatus">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Ngày tải lên</span>
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_created">Ngày tải lên</span>
                             <span class="account-detail-value font-mono" id="docDetailCreatedAt">---</span>
                         </div>
                     </div>
@@ -3968,19 +3915,18 @@
 
             <div class="account-modal-footer"
                 style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-danger btn-sm" id="btnDocDetailDelete" title="Xóa tài liệu">
+                <button type="button" class="btn btn-danger btn-sm" id="btnDocDetailDelete" title="Xóa tài liệu" data-i18n-attr="title:doc_detail_btn_delete">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    <span>Xóa tài liệu</span>
+                    <span data-i18n="doc_detail_btn_delete">Xóa tài liệu</span>
                 </button>
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
                     <button type="button" class="btn btn-secondary btn-sm"
-                        id="btnCloseDocumentDetailFooter">Đóng</button>
-                    <button type="button" class="btn btn-gradient btn-sm" id="btnDocDetailDownload"
-                        title="Tải xuống PDF">
+                        id="btnCloseDocumentDetailFooter" data-i18n="common_close">Đóng</button>
+                    <button type="button" class="btn btn-gradient btn-sm" id="btnDocDetailDownload" title="Tải xuống PDF" data-i18n-attr="title:doc_detail_btn_download">
                         <span class="btn-spinner" id="docDetailDownloadSpinner" aria-hidden="true"
                             style="display: none;"></span>
                         <svg id="docDetailDownloadIcon" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -3989,7 +3935,7 @@
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span id="docDetailDownloadText">Tải xuống PDF</span>
+                        <span id="docDetailDownloadText" data-i18n="doc_detail_btn_download">Tải xuống PDF</span>
                     </button>
                 </div>
             </div>
@@ -4010,21 +3956,20 @@
                 </svg>
             </div>
             <div class="confirm-content">
-                <h3 class="confirm-title" id="docDeleteConfirmTitle">Xác nhận xóa tài liệu</h3>
-                <p class="confirm-desc" id="docDeleteConfirmDesc">Thao tác này không thể hoàn tác. Tài liệu và tệp PDF
-                    lưu trữ sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
+                <h3 class="confirm-title" id="docDeleteConfirmTitle" data-i18n="doc_delete_title">Xác nhận xóa tài liệu</h3>
+                <p class="confirm-desc" id="docDeleteConfirmDesc" data-i18n="doc_delete_desc">Thao tác này không thể hoàn tác. Tài liệu và tệp PDF lưu trữ sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
                 <div class="confirm-target-box" id="docDeleteConfirmTargetBox">
-                    <span class="target-label">Tài liệu sẽ xóa:</span>
+                    <span class="target-label" data-i18n="doc_delete_target">Tài liệu sẽ xóa:</span>
                     <strong class="target-email font-mono" id="docDeleteConfirmFilename">---</strong>
                 </div>
                 <div class="form-alert alert-error" id="docDeleteConfirmAlert" role="alert"
                     style="display: none; margin-top: 0.75rem; text-align: left;"></div>
             </div>
             <div class="confirm-actions">
-                <button type="button" class="btn btn-secondary" id="btnCancelDocDelete">Hủy bỏ</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelDocDelete" data-i18n="common_cancel">Hủy bỏ</button>
                 <button type="button" class="btn btn-danger" id="btnConfirmDocDelete">
                     <span class="btn-spinner" id="docDeleteSpinner" aria-hidden="true" style="display: none;"></span>
-                    <span id="docDeleteBtnText">Xác nhận xóa</span>
+                    <span id="docDeleteBtnText" data-i18n="doc_delete_btn_confirm">Xác nhận xóa</span>
                 </button>
             </div>
         </div>
@@ -4044,10 +3989,10 @@
                     </svg>
                 </div>
                 <div class="account-header-info">
-                    <h2 class="account-modal-title" id="historyErrorModalTitle">Chi tiết sự cố xử lý</h2>
-                    <p class="account-modal-desc font-mono" id="historyErrorModalSub">Mã bản ghi lịch sử: #---</p>
+                    <h2 class="account-modal-title" id="historyErrorModalTitle" data-i18n="history_error_title">Chi tiết sự cố xử lý</h2>
+                    <p class="account-modal-desc font-mono" id="historyErrorModalSub"><span data-i18n="history_error_code_prefix">Mã bản ghi lịch sử: #</span>---</p>
                 </div>
-                <button type="button" class="modal-close-btn" id="btnCloseHistoryErrorModal" aria-label="Đóng cửa sổ">
+                <button type="button" class="modal-close-btn" id="btnCloseHistoryErrorModal" aria-label="Đóng cửa sổ" data-i18n-attr="aria-label:common_close">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -4060,30 +4005,29 @@
                 <div class="account-info-card history-diagnostic-meta-card">
                     <div class="account-details-grid">
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Tài liệu</span>
+                            <span class="account-detail-label" data-i18n="history_error_lbl_doc">Tài liệu</span>
                             <span class="account-detail-value font-mono history-docname-val"
                                 id="historyErrorDocName">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Thao tác</span>
+                            <span class="account-detail-label" data-i18n="history_error_lbl_action">Thao tác</span>
                             <span class="account-detail-value" id="historyErrorActionType">---</span>
                         </div>
                         <div class="account-detail-item">
-                            <span class="account-detail-label">Thời điểm phát sinh</span>
+                            <span class="account-detail-label" data-i18n="history_error_lbl_time">Thời điểm phát sinh</span>
                             <span class="account-detail-value font-mono" id="historyErrorTimestamp">---</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="history-error-console-wrap">
-                    <label class="account-detail-label history-error-console-label">Thông báo lỗi hệ thống:</label>
-                    <div class="history-error-box font-mono" id="historyErrorMessage">Không có thông tin lỗi chi tiết.
-                    </div>
+                    <label class="account-detail-label history-error-console-label" data-i18n="history_error_lbl_msg">Thông báo lỗi hệ thống:</label>
+                    <div class="history-error-box font-mono" id="historyErrorMessage" data-i18n="history_error_no_detail">Không có thông tin lỗi chi tiết.</div>
                 </div>
             </div>
 
             <div class="account-modal-footer history-error-modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" id="btnCloseHistoryErrorFooter">Đóng</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnCloseHistoryErrorFooter" data-i18n="common_close">Đóng</button>
             </div>
         </div>
     </div>
@@ -4102,22 +4046,21 @@
                 </svg>
             </div>
             <div class="confirm-content">
-                <h3 class="confirm-title" id="historyDeleteConfirmTitle">Xác nhận xóa lịch sử</h3>
-                <p class="confirm-desc" id="historyDeleteConfirmDesc">Thao tác này không thể hoàn tác. Bản ghi lịch sử
-                    và kết quả xử lý đã lưu sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
+                <h3 class="confirm-title" id="historyDeleteConfirmTitle" data-i18n="history_delete_title">Xác nhận xóa lịch sử</h3>
+                <p class="confirm-desc" id="historyDeleteConfirmDesc" data-i18n="history_delete_desc">Thao tác này không thể hoàn tác. Bản ghi lịch sử và kết quả xử lý đã lưu sẽ bị xóa vĩnh viễn khỏi hệ thống.</p>
                 <div class="confirm-target-box" id="historyDeleteConfirmTargetBox">
-                    <span class="target-label" id="historyDeleteTargetLabel">Bản ghi sẽ xóa:</span>
+                    <span class="target-label" id="historyDeleteTargetLabel" data-i18n="history_delete_target">Bản ghi sẽ xóa:</span>
                     <strong class="target-email font-mono" id="historyDeleteConfirmTarget">---</strong>
                 </div>
                 <div class="form-alert alert-error" id="historyDeleteConfirmAlert" role="alert" style="display: none;">
                 </div>
             </div>
             <div class="confirm-actions">
-                <button type="button" class="btn btn-secondary" id="btnCancelHistoryDelete">Hủy bỏ</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelHistoryDelete" data-i18n="common_cancel">Hủy bỏ</button>
                 <button type="button" class="btn btn-danger" id="btnConfirmHistoryDelete">
                     <span class="btn-spinner" id="historyDeleteSpinner" aria-hidden="true"
                         style="display: none;"></span>
-                    <span id="historyDeleteBtnText">Xác nhận xóa</span>
+                    <span id="historyDeleteBtnText" data-i18n="history_delete_btn_confirm">Xác nhận xóa</span>
                 </button>
             </div>
         </div>
@@ -4129,13 +4072,11 @@
             <div class="modal-header">
                 <div class="modal-pro-badge">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon
-                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                        </polygon>
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
-                    <span>GÓI PRO VIP</span>
+                    <span data-i18n="ai_pro_badge">GÓI PRO VIP</span>
                 </div>
-                <button type="button" class="modal-close" id="btnCloseAiProModal" title="Đóng">
+                <button type="button" class="modal-close" id="btnCloseAiProModal" title="Đóng" data-i18n-attr="title:common_close">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -4143,31 +4084,27 @@
                 </button>
             </div>
             <div class="modal-body modal-pro-body">
-                <h3 class="modal-pro-title">Mở Khóa Tính Năng Tóm Tắt AI</h3>
-                <p class="modal-pro-desc">
-                    Tính năng Tóm tắt thông minh bằng AI được thiết kế độc quyền cho gói <strong>Pro VIP</strong>.
-                    Đúc kết văn bản dài hàng trăm trang chỉ trong tích tắc, hỗ trợ 3 phong cách chuyên nghiệp và tối ưu
-                    hóa thời gian nghiên cứu.
-                </p>
+                <h3 class="modal-pro-title" data-i18n="ai_pro_title">Mở Khóa Tính Năng Tóm Tắt AI</h3>
+                <p class="modal-pro-desc" data-i18n="ai_pro_desc">Tính năng Tóm tắt thông minh bằng AI được thiết kế độc quyền cho gói Pro VIP. Đúc kết văn bản dài hàng trăm trang chỉ trong tích tắc, hỗ trợ 3 phong cách chuyên nghiệp và tối ưu hóa thời gian nghiên cứu.</p>
                 <div class="modal-pro-features">
                     <div class="pro-feature-item">
                         <span class="pro-feature-icon">✓</span>
-                        <span>Tóm tắt tức thì 3 phong cách: Ngắn gọn, Ý chính, Chi tiết</span>
+                        <span data-i18n="ai_pro_feature_1">Tóm tắt tức thì 3 phong cách: Ngắn gọn, Ý chính, Chi tiết</span>
                     </div>
                     <div class="pro-feature-item">
                         <span class="pro-feature-icon">✓</span>
-                        <span>Xử lý tài liệu lớn lên tới 500 trang / 100 MB với Map-Reduce</span>
+                        <span data-i18n="ai_pro_feature_2">Xử lý tài liệu lớn lên tới 500 trang / 100 MB với Map-Reduce</span>
                     </div>
                     <div class="pro-feature-item">
                         <span class="pro-feature-icon">✓</span>
-                        <span>Trợ lý AI Copilot hỏi đáp tài liệu chuyên sâu</span>
+                        <span data-i18n="ai_pro_feature_3">Trợ lý AI Copilot hỏi đáp tài liệu chuyên sâu</span>
                     </div>
                 </div>
             </div>
             <div class="modal-footer modal-pro-footer">
-                <button type="button" class="btn btn-secondary" id="btnDismissAiProModal">Để sau</button>
+                <button type="button" class="btn btn-secondary" id="btnDismissAiProModal" data-i18n="ai_pro_btn_dismiss">Để sau</button>
                 <button type="button" class="btn btn-gradient btn-upgrade-pro" id="btnGoToPricingFromAi">
-                    <span>Nâng cấp Pro ngay</span>
+                    <span data-i18n="ai_pro_btn_upgrade">Nâng cấp Pro ngay</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
@@ -4196,8 +4133,7 @@
             </div>
 
             <div class="copilot-header-actions">
-                <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay">15/15 câu
-                    hỏi</span>
+                <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay" data-i18n-attr="title:copilot_quota_title">15/15 câu hỏi</span>
                 <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat"
                     title="Xóa toàn bộ lịch sử trò chuyện">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -4219,18 +4155,9 @@
 
         <!-- Suggested Quick Prompts -->
         <div class="copilot-quick-prompts" id="copilotQuickPrompts">
-            <button type="button" class="copilot-prompt-chip"
-                data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?">
-                Tóm tắt 3 ý chính
-            </button>
-            <button type="button" class="copilot-prompt-chip"
-                data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?">
-                Số liệu quan trọng
-            </button>
-            <button type="button" class="copilot-prompt-chip"
-                data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?">
-                Giải thích thuật ngữ
-            </button>
+            <button type="button" class="copilot-prompt-chip" data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?" data-i18n="copilot_prompt_summary_label">Tóm tắt 3 ý chính</button>
+            <button type="button" class="copilot-prompt-chip" data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?" data-i18n="copilot_prompt_metrics_label">Số liệu quan trọng</button>
+            <button type="button" class="copilot-prompt-chip" data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?" data-i18n="copilot_prompt_terms_label">Giải thích thuật ngữ</button>
         </div>
 
         <!-- Message Thread Container -->
@@ -4244,8 +4171,7 @@
                         </svg>
                     </div>
                     <div class="copilot-msg-content">
-                        <p>Xin chào! Tôi là <strong>AI Copilot</strong>. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện
-                            hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
+                        <p data-i18n="copilot_welcome_msg">Xin chào! Tôi là AI Copilot. Bạn có thể hỏi tôi bất kỳ thông tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
                     </div>
                 </div>
             </div>
@@ -4268,8 +4194,7 @@
         <!-- Footer: Chat Input and Send -->
         <div class="copilot-drawer-footer">
             <form class="copilot-input-form" id="copilotChatForm">
-                <textarea class="copilot-input" id="copilotInput" rows="1"
-                    placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)" maxlength="2000"></textarea>
+                <textarea class="copilot-input" id="copilotInput" rows="1" placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)" maxlength="2000" data-i18n-attr="placeholder:copilot_input_placeholder"></textarea>
                 <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -4278,7 +4203,7 @@
                     </svg>
                 </button>
             </form>
-            <div class="copilot-footer-tip">Mô hình AI B.AI Gateway · Giới hạn 15 câu/ngày cho gói Pro</div>
+            <div class="copilot-footer-tip" data-i18n="copilot_footer_tip_short">Mô hình AI B.AI Gateway · Giới hạn 15 câu/ngày cho gói Pro</div>
         </div>
     </aside>
 

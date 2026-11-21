@@ -315,6 +315,47 @@ runTest('Index.html strictly contains zero en-dash and zero em-dash characters',
     assert.strictEqual(emDashes, 0, `Forbidden em-dash character found in index.html: ${emDashes}`);
 });
 
+// -----------------------------------------------------------------------------
+// Part 9: Index.html All Sections & Modals Multilingual Verification
+// -----------------------------------------------------------------------------
+console.log('\n--- 9. Index.html All Sections & Modals Multilingual Verification ---');
+
+runTest('Pricing section dictionary keys exist and render correctly in VI and EN', () => {
+    i18n.setLanguage('vi');
+    assert.strictEqual(i18n.t('pricing_section_title'), 'Bảng giá gói dịch vụ');
+    assert.strictEqual(i18n.t('billing_monthly_opt'), 'Theo tháng (49k/tháng)');
+    assert.strictEqual(i18n.t('billing_yearly_opt'), 'Theo năm (399k/năm)');
+    assert.strictEqual(i18n.t('pricing_free_name'), 'Gói Miễn Phí');
+    assert.strictEqual(i18n.t('pricing_pro_name_monthly'), 'Gói Pro Hàng Tháng');
+
+    i18n.setLanguage('en');
+    assert.strictEqual(i18n.t('pricing_section_title'), 'Pricing Plans');
+    assert.strictEqual(i18n.t('billing_monthly_opt'), 'Monthly (49k/mo)');
+    assert.strictEqual(i18n.t('billing_yearly_opt'), 'Yearly (399k/yr)');
+    assert.strictEqual(i18n.t('pricing_free_name'), 'Free Plan');
+    assert.strictEqual(i18n.t('pricing_pro_name_monthly'), 'Pro Monthly Plan');
+});
+
+runTest('Documents and History section bindings exist in index.html', () => {
+    const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+    assert.ok(indexHtml.includes('data-i18n="docs_title"'), 'Missing docs_title');
+    assert.ok(indexHtml.includes('data-i18n="docs_empty_title"'), 'Missing docs_empty_title');
+    assert.ok(indexHtml.includes('data-i18n="docs_loading_title"'), 'Missing docs_loading_title');
+    assert.ok(indexHtml.includes('data-i18n="history_title"'), 'Missing history_title');
+    assert.ok(indexHtml.includes('data-i18n="history_empty_title"'), 'Missing history_empty_title');
+    assert.ok(indexHtml.includes('data-i18n="history_th_operation"'), 'Missing history_th_operation');
+});
+
+runTest('Modals and Admin dashboard bindings exist in index.html', () => {
+    const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+    assert.ok(indexHtml.includes('data-i18n="account_modal_title"'), 'Missing account_modal_title');
+    assert.ok(indexHtml.includes('data-i18n="checkout_modal_title"'), 'Missing checkout_modal_title');
+    assert.ok(indexHtml.includes('data-i18n="quota_modal_title"'), 'Missing quota_modal_title');
+    assert.ok(indexHtml.includes('data-i18n="doc_detail_title"'), 'Missing doc_detail_title');
+    assert.ok(indexHtml.includes('data-i18n="admin_title"'), 'Missing admin_title');
+    assert.ok(indexHtml.includes('data-i18n="admin_table_title"'), 'Missing admin_table_title');
+});
+
 console.log('\n================================================================');
 console.log(`Frontend i18n Test Suites Result: ${passedTests}/${totalTests} PASSED`);
 console.log('================================================================\n');
