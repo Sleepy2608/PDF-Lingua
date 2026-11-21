@@ -47,6 +47,11 @@
 
             <!-- Navigation Actions: Login (Ghost) + Start Trial (Primary Red) -->
             <div class="welcome-nav-actions" id="welcomeNavActions">
+                <!-- Language Switcher (VI / EN) -->
+                <div class="lang-switcher" id="welcomeLangSwitcher" role="group" aria-label="Chọn ngôn ngữ">
+                    <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt">VI</button>
+                    <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English">EN</button>
+                </div>
                 <button type="button" class="welcome-btn welcome-btn-ghost" id="navBtnLogin" title="Dang nhap vao he thong">
                     <span>Đăng nhập</span>
                 </button>
@@ -82,6 +87,10 @@
                     <a href="#welcomePricing" class="welcome-mobile-link">Bảng giá</a>
                 </nav>
                 <div class="welcome-mobile-actions">
+                    <div class="lang-switcher" style="margin-bottom: 12px; justify-content: center; width: 100%;" role="group" aria-label="Chọn ngôn ngữ">
+                        <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt" style="flex: 1;">VI</button>
+                        <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English" style="flex: 1;">EN</button>
+                    </div>
                     <button type="button" class="welcome-btn welcome-btn-ghost welcome-btn-block" id="btnWelcomeMobileLogin">Đăng nhập</button>
                     <a href="index.html" class="welcome-btn welcome-btn-primary welcome-btn-block">Bắt đầu miễn phí</a>
                 </div>
@@ -1140,6 +1149,8 @@ DEBUG_MODE=False</div>
         </div>
     </div>
 
+    <!-- Internationalization Engine -->
+    <script src="js/i18n.js"></script>
     <!-- Standalone Welcome Page Script -->
     <script src="js/welcome.js"></script>
 </body>
