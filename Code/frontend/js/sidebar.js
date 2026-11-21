@@ -407,7 +407,7 @@
     const token = getStoredAuthToken();
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng tính năng Tài liệu.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_documents') : 'Vui lòng đăng nhập để sử dụng tính năng Tài liệu.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -458,7 +458,7 @@
     const token = getStoredAuthToken();
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng tính năng Lịch sử xử lý.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_history') : 'Vui lòng đăng nhập để sử dụng tính năng Lịch sử xử lý.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -562,7 +562,7 @@
     // 1. Authentication check
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng Trợ lý Hỏi đáp AI.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_copilot') : 'Vui lòng đăng nhập để sử dụng Trợ lý Hỏi đáp AI.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -665,7 +665,7 @@
     // 1. Authentication check
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng tính năng Tóm tắt văn bản AI.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_ai_summary') : 'Vui lòng đăng nhập để sử dụng tính năng Tóm tắt văn bản AI.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -760,7 +760,7 @@
 
     if (!hasWorkspaceDoc && !hasText) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng mở một tài liệu hoặc tải lên tệp PDF để bắt đầu tóm tắt AI!', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_open_doc_for_summary') : 'Vui lòng mở một tài liệu hoặc tải lên tệp PDF để bắt đầu tóm tắt AI!', 'info');
       }
     }
 
@@ -808,14 +808,16 @@
     }
 
     if (btnToggleSidebar) {
+      const expandText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('sidebar_expand_title') : 'Mở rộng thanh điều hướng';
+      const collapseText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('sidebar_collapse_title') : 'Thu gọn thanh điều hướng';
       btnToggleSidebar.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
       btnToggleSidebar.setAttribute(
         'data-tooltip',
-        isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'
+        isCollapsed ? expandText : collapseText
       );
       btnToggleSidebar.setAttribute(
         'aria-label',
-        isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'
+        isCollapsed ? expandText : collapseText
       );
     }
 
@@ -927,7 +929,7 @@
         } else {
           // If no document has been translated yet, prompt user and stay on Trang chủ
           if (typeof showToast === 'function') {
-            showToast('Chưa có tài liệu dịch thuật nào. Vui lòng tải lên tệp PDF tại Trang chủ để bắt đầu dịch!', 'info');
+            showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_no_translation_doc') : 'Chưa có tài liệu dịch thuật nào. Vui lòng tải lên tệp PDF tại Trang chủ để bắt đầu dịch!', 'info');
           }
           navigateToHome();
         }
@@ -1019,7 +1021,7 @@
           if (workspaceSection) workspaceSection.style.display = 'none';
           if (pricingSection) pricingSection.style.display = 'block';
           if (typeof showToast === 'function') {
-            showToast('Bảng giá gói: Gói Miễn phí (20MB / 100 trang), Gói Pro (49k/tháng hoặc 399k/năm).', 'info');
+            showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_pricing_summary') : 'Bảng giá gói: Gói Miễn phí (20MB / 100 trang), Gói Pro (49k/tháng hoặc 399k/năm).', 'info');
           }
         }
         if (window.innerWidth < 768) closeMobileSidebar();
@@ -1158,7 +1160,7 @@
         sideNavAiCopilot.removeAttribute('title');
       } else {
         sideNavAiCopilot.classList.add('is-dimmed');
-        sideNavAiCopilot.setAttribute('title', 'Tính năng Hỏi đáp AI dành cho Gói Pro');
+        sideNavAiCopilot.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_copilot_pro_only') : 'Tính năng Hỏi đáp AI dành cho Gói Pro');
       }
     }
 
@@ -1168,7 +1170,7 @@
         sideNavAiSummarize.removeAttribute('title');
       } else {
         sideNavAiSummarize.classList.add('is-dimmed');
-        sideNavAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản dành cho Gói Pro');
+        sideNavAiSummarize.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_summary_pro_only') : 'Tính năng Tóm tắt văn bản dành cho Gói Pro');
       }
     }
 
@@ -1181,7 +1183,7 @@
         sideNavDocuments.removeAttribute('title');
       } else {
         sideNavDocuments.classList.add('is-dimmed');
-        sideNavDocuments.setAttribute('title', 'Tính năng Tài liệu (Dành cho người dùng đã đăng nhập)');
+        sideNavDocuments.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_documents_auth_only') : 'Tính năng Tài liệu (Dành cho người dùng đã đăng nhập)');
       }
     }
 
@@ -1191,7 +1193,7 @@
         sideNavHistory.removeAttribute('title');
       } else {
         sideNavHistory.classList.add('is-dimmed');
-        sideNavHistory.setAttribute('title', 'Tính năng Lịch sử xử lý (Dành cho người dùng đã đăng nhập)');
+        sideNavHistory.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_history_auth_only') : 'Tính năng Lịch sử xử lý (Dành cho người dùng đã đăng nhập)');
       }
     }
 
@@ -1201,7 +1203,7 @@
         btnAiSummarize.removeAttribute('title');
       } else {
         btnAiSummarize.classList.add('is-dimmed');
-        btnAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản bằng AI (Dành cho Gói Pro)');
+        btnAiSummarize.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_btn_summary_pro_only') : 'Tính năng Tóm tắt văn bản bằng AI (Dành cho Gói Pro)');
       }
     }
 
@@ -1211,12 +1213,12 @@
         btnAiCopilot.removeAttribute('title');
       } else {
         btnAiCopilot.classList.add('is-dimmed');
-        btnAiCopilot.setAttribute('title', 'Tính năng Hỏi đáp AI về tài liệu (Dành cho Gói Pro)');
+        btnAiCopilot.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_btn_copilot_pro_only') : 'Tính năng Hỏi đáp AI về tài liệu (Dành cho Gói Pro)');
       }
     }
 
     if (currentUser && (currentUser.email || currentUser.id)) {
-      const displayName = currentUser.full_name || currentUser.email || 'Người dùng';
+      const displayName = currentUser.full_name || currentUser.email || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_user') : 'Người dùng');
       const initial = (currentUser.full_name ? currentUser.full_name.trim().charAt(0) : (currentUser.email ? currentUser.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
       if (avatarEl) {

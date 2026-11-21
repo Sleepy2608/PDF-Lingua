@@ -394,13 +394,13 @@
         var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!email) {
           if (loginEmailError) {
-            loginEmailError.textContent = 'Vui lòng nhập địa chỉ email.';
+            loginEmailError.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_email_required') : 'Vui lòng nhập địa chỉ email.';
             loginEmailError.classList.add('active');
           }
           hasError = true;
         } else if (!emailRegex.test(email)) {
           if (loginEmailError) {
-            loginEmailError.textContent = 'Địa chỉ email không đúng định dạng.';
+            loginEmailError.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_email_format') : 'Địa chỉ email không đúng định dạng.';
             loginEmailError.classList.add('active');
           }
           hasError = true;
@@ -408,7 +408,7 @@
 
         if (!password) {
           if (loginPasswordError) {
-            loginPasswordError.textContent = 'Vui lòng nhập mật khẩu.';
+            loginPasswordError.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_password_required') : 'Vui lòng nhập mật khẩu.';
             loginPasswordError.classList.add('active');
           }
           hasError = true;
@@ -418,7 +418,7 @@
 
         if (btnSubmitLogin) btnSubmitLogin.disabled = true;
         if (loginSpinner) loginSpinner.style.display = 'inline-block';
-        if (loginBtnText) loginBtnText.textContent = 'Đang đăng nhập...';
+        if (loginBtnText) loginBtnText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_logging_in') : 'Đang đăng nhập...';
 
         var API_BASE_URL = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
           ? (window.location.protocol === 'https:' ? 'https:' : 'http:') + '//' + ((window.location.hostname && window.location.hostname !== '') ? window.location.hostname : '127.0.0.1') + ':8000'
@@ -442,7 +442,7 @@
           .then(function (result) {
             if (btnSubmitLogin) btnSubmitLogin.disabled = false;
             if (loginSpinner) loginSpinner.style.display = 'none';
-            if (loginBtnText) loginBtnText.textContent = 'Đăng nhập';
+            if (loginBtnText) loginBtnText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_btn_login') : 'Đăng nhập';
 
             if (result.status === 200 && result.data && result.data.data) {
               var token = result.data.data.access_token;
@@ -460,8 +460,8 @@
 
               if (loginAlert) {
                 loginAlert.className = 'form-alert alert-success';
-                loginAlert.textContent = (window.PDFL_i18n && typeof window.PDFL_i18n.t === 'function')
-                  ? window.PDFL_i18n.t('toast_login_success')
+                loginAlert.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                  ? window.i18n.t('auth_login_success_redirect')
                   : 'Đăng nhập thành công! Đang chuyển hướng vào không gian làm việc...';
                 loginAlert.style.display = 'flex';
               }
@@ -470,7 +470,7 @@
                 window.location.href = 'index.html';
               }, 700);
             } else {
-              var errorMsg = (result.data && result.data.message) ? result.data.message : 'Email hoặc mật khẩu không chính xác.';
+              var errorMsg = (result.data && result.data.message) ? result.data.message : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_error_invalid_credentials') : 'Email hoặc mật khẩu không chính xác.');
               if (loginAlert) {
                 loginAlert.className = 'form-alert alert-error';
                 loginAlert.textContent = errorMsg;
@@ -482,14 +482,14 @@
             if (btnSubmitLogin) btnSubmitLogin.disabled = false;
             if (loginSpinner) loginSpinner.style.display = 'none';
             if (loginBtnText) {
-              loginBtnText.textContent = (window.PDFL_i18n && typeof window.PDFL_i18n.t === 'function')
-                ? window.PDFL_i18n.t('nav_login')
+              loginBtnText.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                ? window.i18n.t('auth_btn_login')
                 : 'Đăng nhập';
             }
             if (loginAlert) {
               loginAlert.className = 'form-alert alert-error';
-              loginAlert.textContent = (window.PDFL_i18n && typeof window.PDFL_i18n.t === 'function')
-                ? window.PDFL_i18n.t('toast_network_error')
+              loginAlert.textContent = (window.i18n && typeof window.i18n.t === 'function')
+                ? window.i18n.t('auth_error_server_unreachable')
                 : 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ.';
               loginAlert.style.display = 'flex';
             }
@@ -624,7 +624,7 @@
               ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>'
               : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
           }
-          if (fsText) fsText.textContent = isFs ? 'Thu nhỏ' : 'Phóng to';
+          if (fsText) fsText.textContent = isFs ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_exit_fullscreen') : 'Thu nhỏ') : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_fullscreen') : 'Phóng to');
         });
       }
 

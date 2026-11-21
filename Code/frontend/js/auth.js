@@ -244,9 +244,11 @@
           eyeClosed.style.display = isPassword ? 'block' : 'none';
         }
 
+        const hideAria = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_hide_password_aria') : 'Ẩn mật khẩu';
+        const showAria = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_show_password_aria') : 'Hiện mật khẩu';
         btn.setAttribute(
           'aria-label',
-          isPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
+          isPassword ? hideAria : showAria
         );
       });
     }
@@ -316,11 +318,13 @@
     let isValid = true;
     let firstInvalidInput = null;
 
+    const t = (k, fallback) => (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(k) : fallback;
+
     // 0. Full name validation (Optional, max 150 chars)
     if (fullNameInput && fullNameInput.value) {
       const fullNameVal = fullNameInput.value.trim();
       if (fullNameVal.length > 150) {
-        showFieldError(fullNameInput, 'Họ và tên không được vượt quá 150 ký tự.');
+        showFieldError(fullNameInput, t('auth_val_name_max', 'Họ và tên không được vượt quá 150 ký tự.'));
         isValid = false;
         firstInvalidInput = firstInvalidInput || fullNameInput;
       }
@@ -330,11 +334,11 @@
     const emailVal = emailInput ? emailInput.value.trim() : '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailVal) {
-      showFieldError(emailInput, 'Vui lòng nhập địa chỉ email.');
+      showFieldError(emailInput, t('auth_val_email_req', 'Vui lòng nhập địa chỉ email.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || emailInput;
     } else if (!emailRegex.test(emailVal)) {
-      showFieldError(emailInput, 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
+      showFieldError(emailInput, t('auth_val_email_format', 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || emailInput;
     }
@@ -342,23 +346,23 @@
     // 2. Password validation
     const pwdVal = passwordInput ? passwordInput.value : '';
     if (!pwdVal) {
-      showFieldError(passwordInput, 'Vui lòng nhập mật khẩu.');
+      showFieldError(passwordInput, t('auth_val_pass_req', 'Vui lòng nhập mật khẩu.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (pwdVal.length < 8) {
-      showFieldError(passwordInput, 'Mật khẩu phải có tối thiểu 8 ký tự.');
+      showFieldError(passwordInput, t('auth_val_pass_min', 'Mật khẩu phải có tối thiểu 8 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (pwdVal.length > 128) {
-      showFieldError(passwordInput, 'Mật khẩu không được vượt quá 128 ký tự.');
+      showFieldError(passwordInput, t('auth_val_pass_max', 'Mật khẩu không được vượt quá 128 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (!/[a-zA-Z]/.test(pwdVal)) {
-      showFieldError(passwordInput, 'Mật khẩu phải chứa ít nhất một chữ cái.');
+      showFieldError(passwordInput, t('auth_val_pass_letter', 'Mật khẩu phải chứa ít nhất một chữ cái.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (!/[0-9]/.test(pwdVal)) {
-      showFieldError(passwordInput, 'Mật khẩu phải chứa ít nhất một chữ số.');
+      showFieldError(passwordInput, t('auth_val_pass_number', 'Mật khẩu phải chứa ít nhất một chữ số.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     }
@@ -366,15 +370,15 @@
     // 3. Confirm Password validation
     const confirmVal = confirmPasswordInput ? confirmPasswordInput.value : '';
     if (!confirmVal) {
-      showFieldError(confirmPasswordInput, 'Vui lòng nhập lại mật khẩu xác nhận.');
+      showFieldError(confirmPasswordInput, t('auth_val_confirm_req', 'Vui lòng nhập lại mật khẩu xác nhận.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     } else if (confirmVal.length > 128) {
-      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không được vượt quá 128 ký tự.');
+      showFieldError(confirmPasswordInput, t('auth_val_confirm_max', 'Mật khẩu xác nhận không được vượt quá 128 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     } else if (pwdVal && confirmVal !== pwdVal) {
-      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.');
+      showFieldError(confirmPasswordInput, t('auth_val_confirm_mismatch', 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     }
@@ -392,37 +396,38 @@
   function formatValidationErrorMessage(fieldKey, rawMessage) {
     const raw = String(rawMessage || '').trim();
     const lower = raw.toLowerCase();
+    const t = (k, fallback) => (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(k) : fallback;
 
     if (fieldKey === 'email') {
       if (lower.includes('valid email') || lower.includes('email address')) {
-        return 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).';
+        return t('auth_val_email_format', 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
       }
       if (lower.includes('field required') || lower.includes('missing')) {
-        return 'Vui lòng nhập địa chỉ email.';
+        return t('auth_val_email_req', 'Vui lòng nhập địa chỉ email.');
       }
     }
 
     if (fieldKey === 'password') {
       if (lower.includes('at least 8') || lower.includes('min_length')) {
-        return 'Mật khẩu phải có tối thiểu 8 ký tự.';
+        return t('auth_val_pass_min', 'Mật khẩu phải có tối thiểu 8 ký tự.');
       }
       if (lower.includes('at most 128') || lower.includes('max_length') || lower.includes('128 characters')) {
-        return 'Mật khẩu không được vượt quá 128 ký tự.';
+        return t('auth_val_pass_max', 'Mật khẩu không được vượt quá 128 ký tự.');
       }
       if (lower.includes('at least one letter') || lower.includes('one letter')) {
-        return 'Mật khẩu phải chứa ít nhất một chữ cái.';
+        return t('auth_val_pass_letter', 'Mật khẩu phải chứa ít nhất một chữ cái.');
       }
       if (lower.includes('at least one digit') || lower.includes('one digit') || lower.includes('one number')) {
-        return 'Mật khẩu phải chứa ít nhất một chữ số.';
+        return t('auth_val_pass_number', 'Mật khẩu phải chứa ít nhất một chữ số.');
       }
       if (lower.includes('field required') || lower.includes('missing')) {
-        return 'Vui lòng nhập mật khẩu.';
+        return t('auth_val_pass_req', 'Vui lòng nhập mật khẩu.');
       }
     }
 
     if (fieldKey === 'full_name') {
       if (lower.includes('at most 150') || lower.includes('max_length') || lower.includes('150 characters')) {
-        return 'Họ và tên không được vượt quá 150 ký tự.';
+        return t('auth_val_name_max', 'Họ và tên không được vượt quá 150 ký tự.');
       }
     }
 
