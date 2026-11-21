@@ -312,6 +312,11 @@ function createPricingTestEnv(initialStorage = {}, customFetch = null) {
     toasts,
     wasLoginModalOpened: () => loginModalOpened,
     getClipboardCopied: () => clipboardCopied,
+    dispatchDocEvent: (event) => {
+      if (docListeners[event]) {
+        docListeners[event].forEach((fn) => fn());
+      }
+    },
   };
 }
 
@@ -667,6 +672,50 @@ async function main() {
     env.elements.btnQuotaModalViewPricing.click();
     assert.strictEqual(env.elements.quotaExceededModal.hasAttribute('hidden'), true);
     assert.strictEqual(env.elements.pricingSection.style.display, 'block');
+  });
+
+  await runTest('i18n: Pricing card, cycle switcher, and catalog update dynamically on language change', () => {
+    let currentLang = 'vi';
+    const mockI18n = {
+      getLanguage: () => currentLang,
+      t: (key, params) => {
+        if (key === 'pricing_pro_name_yearly') return currentLang === 'en' ? 'Pro Yearly Plan' : 'Gói Pro Hàng Năm';
+        if (key === 'pricing_pro_period_year') return currentLang === 'en' ? '/ year' : '/ năm';
+        if (key === 'pricing_pro_discount_badge') return currentLang === 'en' ? 'SAVE 32%' : 'TIẾT KIỆM 32%';
+        if (key === 'pricing_pro_subnote_yearly') return currentLang === 'en' ? `Equivalent to ${params && params.eq} (Valid 365 days)` : `Tương đương ${params && params.eq} (Hiệu lực 365 ngày)`;
+        if (key === 'pricing_btn_current_plan') return currentLang === 'en' ? 'Your current plan' : 'Gói hiện tại của bạn';
+        return key;
+      },
+    };
+
+    const env = createPricingTestEnv({
+      pdfl_token: 'mock-jwt-free',
+      pdfl_user: JSON.stringify({ id: 5, email: 'free@test.com', role: 'free' }),
+    });
+    env.sandbox.window.i18n = mockI18n;
+
+    // Switch to yearly in Vietnamese
+    env.elements.btnBillingYearly.click();
+    assert.strictEqual(env.elements.proPlanName.textContent, 'Gói Pro Hàng Năm');
+    assert.strictEqual(env.elements.btnSelectFreePlan.textContent, 'Gói hiện tại của bạn');
+
+    // Switch to English
+    currentLang = 'en';
+    env.dispatchDocEvent('languageChanged');
+
+    assert.strictEqual(env.elements.proPlanName.textContent, 'Pro Yearly Plan');
+    assert.strictEqual(env.elements.proPlanPeriodDisplay.textContent, '/ year');
+    assert.strictEqual(env.elements.proPlanDiscountBadge.textContent, 'SAVE 32%');
+    assert.strictEqual(env.elements.btnSelectFreePlan.textContent, 'Your current plan');
+    assert.ok(env.elements.proPlanSubnote.textContent.includes('Valid 365 days'));
+
+    // Switch back to Vietnamese
+    currentLang = 'vi';
+    env.dispatchDocEvent('languageChanged');
+    assert.strictEqual(env.elements.proPlanName.textContent, 'Gói Pro Hàng Năm');
+    assert.strictEqual(env.elements.proPlanPeriodDisplay.textContent, '/ năm');
+    assert.strictEqual(env.elements.proPlanDiscountBadge.textContent, 'TIẾT KIỆM 32%');
+    assert.strictEqual(env.elements.btnSelectFreePlan.textContent, 'Gói hiện tại của bạn');
   });
 
   console.log('\n================================================================');
