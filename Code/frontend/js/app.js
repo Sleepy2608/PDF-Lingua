@@ -318,8 +318,7 @@ function initModalScrollLock() {
         '.modal-backdrop',
         '.modal-overlay',
         '.legal-modal-overlay',
-        '.avatar-crop-modal-backdrop',
-        '[role="dialog"]'
+        '.avatar-crop-modal-backdrop'
     ];
 
     let savedScrollY = 0;
@@ -328,15 +327,20 @@ function initModalScrollLock() {
     function isElementVisibleModal(el) {
         if (!el || el.id === 'sidebarBackdrop') return false;
         if (el.hasAttribute('hidden')) return false;
-        if (el.style && el.style.display === 'none') return false;
+        if (el.style && (el.style.display === 'none' || el.style.visibility === 'hidden')) return false;
         if (el.classList.contains('legal-modal-overlay')) {
             return el.classList.contains('active') || (el.style && el.style.display === 'flex');
         }
+        if (typeof el.checkVisibility === 'function') {
+            return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+        }
         if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
             const comp = window.getComputedStyle(el);
-            return comp.display !== 'none' && comp.visibility !== 'hidden';
+            if (comp.display === 'none' || comp.visibility === 'hidden' || comp.opacity === '0') {
+                return false;
+            }
         }
-        return true;
+        return el.offsetWidth > 0 || el.offsetHeight > 0 || (typeof el.getClientRects === 'function' && el.getClientRects().length > 0);
     }
 
     function hasAnyOpenModal() {

@@ -675,8 +675,7 @@
   function initWelcomeModalScrollLock() {
     var MODAL_SELECTORS = [
       '.modal-backdrop',
-      '.legal-modal-overlay',
-      '[role="dialog"]'
+      '.legal-modal-overlay'
     ];
 
     var savedScrollY = 0;
@@ -685,15 +684,20 @@
     function isElementVisibleModal(el) {
       if (!el) return false;
       if (el.hasAttribute('hidden')) return false;
-      if (el.style && el.style.display === 'none') return false;
+      if (el.style && (el.style.display === 'none' || el.style.visibility === 'hidden')) return false;
       if (el.classList.contains('legal-modal-overlay')) {
         return el.classList.contains('active') || (el.style && el.style.display === 'flex');
       }
+      if (typeof el.checkVisibility === 'function') {
+        return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+      }
       if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
         var comp = window.getComputedStyle(el);
-        return comp.display !== 'none' && comp.visibility !== 'hidden';
+        if (comp.display === 'none' || comp.visibility === 'hidden' || comp.opacity === '0') {
+          return false;
+        }
       }
-      return true;
+      return el.offsetWidth > 0 || el.offsetHeight > 0 || (typeof el.getClientRects === 'function' && el.getClientRects().length > 0);
     }
 
     function hasAnyOpenModal() {
