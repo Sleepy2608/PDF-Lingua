@@ -279,7 +279,7 @@ def test_register_response_has_no_sensitive_fields(client):
     assert response.status_code == 201
     user_data = response.json()["data"]
 
-    allowed_keys = {"id", "email", "full_name", "role", "is_active", "created_at", "updated_at"}
+    allowed_keys = {"id", "email", "full_name", "role", "is_active", "avatar_url", "created_at", "updated_at"}
     assert set(user_data.keys()) == allowed_keys
     assert "password" not in user_data
     assert "hashed_password" not in user_data

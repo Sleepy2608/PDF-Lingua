@@ -3,7 +3,7 @@ Unit & Integration Tests for Pricing Plans & Subscription API (`Code/backend/app
 -------------------------------------------------------------------------------------------------
 Verifies:
 - `GET /api/pricing/plans`: Publicly returns Free tier (0 VND, 20MB, 100 pages) and Pro tiers
-  (Monthly 49,000 VND / 30 days, Yearly 399,000 VND / 365 days / 32% discount / 33.250đ/tháng).
+  (Monthly 39,000 VND / 30 days, Yearly 350,000 VND / 365 days / 25% discount / 29.167đ/tháng).
 - `GET /api/pricing/my-subscription`: Requires auth, returns Free/Pro quotas and active subscription.
 - `POST /api/pricing/subscribe`: Validates plan_code & payment_method, creates pending transaction,
   and generates valid Napas247 VietQR URL.
@@ -129,7 +129,7 @@ def pricing_test_env():
 # ==============================================================================
 
 def test_get_pricing_plans_public_returns_free_and_pro_tiers(pricing_test_env):
-    """Public endpoint returns Free (0đ), Pro Monthly (49.000đ), and Pro Yearly (399.000đ, -32%)."""
+    """Public endpoint returns Free (0đ), Pro Monthly (39.000đ), and Pro Yearly (350.000đ, -25%)."""
     res = client.get("/api/pricing/plans")
     assert res.status_code == 200
 
@@ -147,23 +147,23 @@ def test_get_pricing_plans_public_returns_free_and_pro_tiers(pricing_test_env):
     pro_tier = data["pro_tier"]
     monthly = pro_tier["monthly"]
     assert monthly["code"] == "pro_monthly"
-    assert monthly["price_vnd"] == 49000
-    assert monthly["original_price_vnd"] == 49000
+    assert monthly["price_vnd"] == 39000
+    assert monthly["original_price_vnd"] == 39000
     assert monthly["discount_percent"] == 0
     assert monthly["duration_days"] == 30
-    assert monthly["price_display"] == "49.000đ"
+    assert monthly["price_display"] == "39.000đ"
     assert monthly["period_display"] == "/ tháng"
 
     yearly = pro_tier["yearly"]
     assert yearly["code"] == "pro_yearly"
-    assert yearly["price_vnd"] == 399000
-    assert yearly["original_price_vnd"] == 588000
-    assert yearly["discount_percent"] == 32
+    assert yearly["price_vnd"] == 350000
+    assert yearly["original_price_vnd"] == 468000
+    assert yearly["discount_percent"] == 25
     assert yearly["duration_days"] == 365
-    assert yearly["price_display"] == "399.000đ"
+    assert yearly["price_display"] == "350.000đ"
     assert yearly["period_display"] == "/ năm"
-    assert yearly["monthly_equivalent"] == "33.250đ / tháng"
-    assert yearly["badge"] == "TIẾT KIỆM 32%"
+    assert yearly["monthly_equivalent"] == "29.167đ / tháng"
+    assert yearly["badge"] == "TIẾT KIỆM 25%"
 
     assert len(pro_tier["shared_features"]) >= 6
 
@@ -243,12 +243,12 @@ def test_subscribe_pro_monthly_and_confirm_30_days_upgrade(pricing_test_env):
     tx_code = checkout["transaction_code"]
 
     assert checkout["plan_code"] == "pro_monthly"
-    assert checkout["amount_vnd"] == 49000
-    assert checkout["amount_display"] == "49.000 VNĐ"
+    assert checkout["amount_vnd"] == 39000
+    assert checkout["amount_display"] == "39.000 VNĐ"
     assert checkout["duration_days"] == 30
     assert checkout["payment_status"] == "pending"
     assert "https://img.vietqr.io/image/" in checkout["qr_code_url"]
-    assert "amount=49000" in checkout["qr_code_url"]
+    assert "amount=39000" in checkout["qr_code_url"]
     assert checkout["bank_info"]["account_number"] == settings.VIETQR_ACCOUNT_NUMBER
     assert checkout["expires_in_seconds"] == 900
 
@@ -291,7 +291,7 @@ def test_subscribe_pro_monthly_and_confirm_30_days_upgrade(pricing_test_env):
 
 def test_subscribe_pro_yearly_and_confirm_365_days_upgrade(pricing_test_env):
     """
-    Full flow for `pro_yearly` (399,000 VND):
+    Full flow for `pro_yearly` (350,000 VND):
     Verifies `expires_at = started_at + 365 days` and role upgrade to `pro`.
     """
     headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
@@ -304,9 +304,9 @@ def test_subscribe_pro_yearly_and_confirm_365_days_upgrade(pricing_test_env):
     assert res_sub.status_code == 201
     checkout = res_sub.json()["data"]
     tx_code = checkout["transaction_code"]
-    assert checkout["amount_vnd"] == 399000
-    assert checkout["amount_display"] == "399.000 VNĐ"
-    assert "amount=399000" in checkout["qr_code_url"]
+    assert checkout["amount_vnd"] == 350000
+    assert checkout["amount_display"] == "350.000 VNĐ"
+    assert "amount=350000" in checkout["qr_code_url"]
 
     res_sim = client.post(f"/api/pricing/transactions/{tx_code}/simulate", headers=headers)
     assert res_sim.status_code == 200
@@ -349,7 +349,7 @@ def test_payment_confirmation_is_idempotent_and_does_not_double_extend(pricing_t
     # Third confirmation via webhook
     res_webhook = client.post(
         "/api/pricing/webhook",
-        json={"transaction_code": tx_code, "transfer_amount": 49000, "status": "completed"},
+        json={"transaction_code": tx_code, "transfer_amount": 39000, "status": "completed"},
         headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
     )
     assert res_webhook.status_code == 200
@@ -462,7 +462,7 @@ def test_webhook_matches_by_transfer_note_content_and_validates_amount(pricing_t
         "/api/pricing/webhook",
         json={
             "content": f"MBVCB.123456.Chuyen tien {transfer_note} tai MB",
-            "transfer_amount": 49000,
+            "transfer_amount": 39000,
             "status": "completed",
         },
         headers={"Authorization": f"Apikey {settings.PAYMENT_WEBHOOK_SECRET}"},

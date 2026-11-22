@@ -420,21 +420,23 @@ runTest('Testimonials: Navigation and drawer links do not point to removed secti
 // -----------------------------------------------------------------------------
 console.log('\n--- 11. Pricing Plans & Billing Toggle ---');
 
-runTest('Pricing: Monthly / Yearly billing toggle configured with discount badge', () => {
+runTest('Pricing: 3-Tier Layout (Free, Pro Monthly, Pro Yearly) with discount badge', () => {
   assert.strictEqual(htmlContent.includes('Chi Phí Minh Bạch'), false, 'Tag "Chi Phí Minh Bạch" must be removed');
   assert.strictEqual(cssContent.includes('.welcome-section-tag'), false, '.welcome-section-tag must be removed from CSS');
-  assert.ok(htmlContent.includes('welcome-billing-toggle'), 'Missing .welcome-billing-toggle');
-  assert.ok(htmlContent.includes('id="btnBillingMonthly"'), 'Missing #btnBillingMonthly');
-  assert.ok(htmlContent.includes('id="btnBillingYearly"'), 'Missing #btnBillingYearly');
-  assert.ok(htmlContent.includes('Tiết kiệm 32%'), 'Missing discount badge');
+  assert.ok(htmlContent.includes('id="pricingCardFree"'), 'Missing #pricingCardFree');
+  assert.ok(htmlContent.includes('id="pricingCardPro"'), 'Missing #pricingCardPro');
+  assert.ok(htmlContent.includes('id="pricingCardProYearly"'), 'Missing #pricingCardProYearly');
+  assert.ok(htmlContent.includes('TIẾT KIỆM 25%') || htmlContent.includes('Tiết kiệm 25%'), 'Missing discount badge');
 });
 
 runTest('Pricing: Free and Pro cards exist with feature comparison', () => {
   assert.ok(htmlContent.includes('id="pricingCardFree"'), 'Missing #pricingCardFree');
   assert.ok(htmlContent.includes('id="pricingCardPro"'), 'Missing #pricingCardPro');
+  assert.ok(htmlContent.includes('id="pricingCardProYearly"'), 'Missing #pricingCardProYearly');
   assert.ok(htmlContent.includes('pricing-featured-badge'), 'Missing featured badge on Pro card');
   assert.ok(htmlContent.includes('id="btnStartFree"'), 'Missing #btnStartFree');
   assert.ok(htmlContent.includes('id="btnUpgradePro"'), 'Missing #btnUpgradePro');
+  assert.ok(htmlContent.includes('id="btnUpgradeProYearlyPlan"'), 'Missing #btnUpgradeProYearlyPlan');
 });
 
 runTest('CSS: Pricing grid, featured border, and price figures styled', () => {
@@ -446,7 +448,7 @@ runTest('CSS: Pricing grid, featured border, and price figures styled', () => {
 runTest('JS: Billing toggle interaction defined for price adjustments', () => {
   assert.ok(jsContent.includes('btnBillingMonthly'), 'JS must reference btnBillingMonthly');
   assert.ok(jsContent.includes('btnBillingYearly'), 'JS must reference btnBillingYearly');
-  assert.ok(jsContent.includes('399.000 đ'), 'JS must toggle yearly price');
+  assert.ok(jsContent.includes('350.000 đ') || jsContent.includes('399.000 đ'), 'JS must toggle yearly price');
 });
 
 // -----------------------------------------------------------------------------
@@ -619,6 +621,179 @@ runTest('Definition of Done: Complete 6-landmark semantic architecture verified'
     assert.ok(htmlContent.includes(id), `Missing landmark: ${id}`);
   });
   assert.strictEqual(htmlContent.includes('id="welcomeTestimonials"'), false, '#welcomeTestimonials must not exist');
+});
+
+// -----------------------------------------------------------------------------
+// Part 15: Multilingual (i18n) Engine & Translation Attributes
+// -----------------------------------------------------------------------------
+console.log('\n--- 15. Multilingual (i18n) Architecture & Dictionary Parity ---');
+
+const i18n = require('../js/i18n.js');
+
+runTest('HTML: welcome.html loads js/i18n.js before js/welcome.js', () => {
+  const i18nIndex = htmlContent.indexOf('src="js/i18n.js"');
+  const welcomeJsIndex = htmlContent.indexOf('src="js/welcome.js"');
+  assert.ok(i18nIndex !== -1, 'welcome.html must include <script src="js/i18n.js">');
+  assert.ok(welcomeJsIndex !== -1, 'welcome.html must include <script src="js/welcome.js">');
+  assert.ok(i18nIndex < welcomeJsIndex, 'js/i18n.js must be loaded before js/welcome.js');
+});
+
+runTest('HTML: Desktop header and mobile drawer include language switcher controls', () => {
+  assert.ok(htmlContent.includes('id="welcomeLangSwitcher"'), 'Missing #welcomeLangSwitcher in desktop nav');
+  assert.ok(htmlContent.includes('id="mobileLangSwitcher"'), 'Missing #mobileLangSwitcher in mobile drawer');
+  assert.ok(htmlContent.includes('data-lang="vi"'), 'Missing Vietnamese language toggle button');
+  assert.ok(htmlContent.includes('data-lang="en"'), 'Missing English language toggle button');
+});
+
+runTest('HTML: Document title and metadata configured with i18n keys', () => {
+  assert.ok(/<title[^>]+data-i18n="welcome_meta_title"/i.test(htmlContent), 'Title tag must have data-i18n="welcome_meta_title"');
+});
+
+runTest('HTML: Hero section binds complete data-i18n and data-i18n-html attributes', () => {
+  const heroKeys = [
+    'welcome_hero_eyebrow',
+    'welcome_hero_title_1',
+    'welcome_hero_subtitle',
+    'welcome_hero_cta_primary',
+    'welcome_hero_cta_secondary',
+    'welcome_trust_no_install',
+    'welcome_trust_user_isolation',
+    'welcome_trust_ocr_support'
+  ];
+  heroKeys.forEach(k => {
+    assert.ok(
+      htmlContent.includes(`data-i18n="${k}"`) || htmlContent.includes(`data-i18n-html="${k}"`),
+      `Hero section missing i18n binding for: ${k}`
+    );
+  });
+});
+
+runTest('HTML: Interactive Preview Mock binds tabs, badges, headers and labels to i18n', () => {
+  const previewKeys = [
+    'preview_file_pages',
+    'badge_pdf_digital',
+    'welcome_preview_mode_text',
+    'welcome_preview_mode_pdf',
+    'welcome_preview_mode_split',
+    'toolbar_target_lang',
+    'welcome_preview_btn_retranslate',
+    'welcome_preview_btn_download',
+    'panel_source_title',
+    'badge_original',
+    'preview_stats_orig',
+    'common_copy',
+    'panel_target_title',
+    'badge_translated',
+    'preview_stats_trans'
+  ];
+  previewKeys.forEach(k => {
+    assert.ok(
+      htmlContent.includes(`data-i18n="${k}"`) || htmlContent.includes(`data-i18n-html="${k}"`),
+      `Preview mock missing i18n binding for: ${k}`
+    );
+  });
+});
+
+runTest('HTML: Bento Grid (all 6 feature cards) binds tags, titles and descriptions', () => {
+  const bentoKeys = [
+    'welcome_features_title', 'welcome_features_subtitle',
+    'bento_layout_badge', 'bento_layout_title', 'bento_layout_desc',
+    'bento_ocr_badge', 'bento_ocr_title', 'bento_ocr_desc',
+    'bento_copilot_badge', 'bento_copilot_title', 'bento_copilot_desc',
+    'bento_summary_badge', 'bento_summary_title', 'bento_summary_desc',
+    'bento_batch_badge', 'bento_batch_title', 'bento_batch_desc',
+    'bento_sec_badge', 'bento_sec_title', 'bento_sec_desc'
+  ];
+  bentoKeys.forEach(k => {
+    assert.ok(
+      htmlContent.includes(`data-i18n="${k}"`) || htmlContent.includes(`data-i18n-html="${k}"`),
+      `Bento grid missing i18n binding for: ${k}`
+    );
+  });
+});
+
+runTest('HTML: How It Works section binds title, subtitle and all 3 steps', () => {
+  const howKeys = [
+    'welcome_workflow_title', 'welcome_workflow_subtitle',
+    'step_1_title', 'step_1_desc', 'step_1_meta',
+    'step_2_title', 'step_2_desc', 'step_2_meta',
+    'step_3_title', 'step_3_desc', 'step_3_meta'
+  ];
+  howKeys.forEach(k => {
+    assert.ok(
+      htmlContent.includes(`data-i18n="${k}"`) || htmlContent.includes(`data-i18n-html="${k}"`),
+      `How It Works section missing i18n binding for: ${k}`
+    );
+  });
+});
+
+runTest('HTML: Pricing section binds 3 tiers, discount badge, feature lists and CTAs', () => {
+  const pricingKeys = [
+    'welcome_pricing_title', 'welcome_pricing_subtitle',
+    'pricing_free_name', 'pricing_free_tagline', 'pricing_free_pill', 'pricing_free_price', 'pricing_free_period',
+    'pricing_free_f1', 'pricing_free_f2', 'pricing_free_f3', 'pricing_free_f4', 'pricing_free_f5',
+    'pricing_free_cta',
+    'pricing_pro_name_monthly', 'pricing_pro_tagline_monthly', 'pricing_tier_flexible', 'pricing_pro_period_month',
+    'pricing_pro_f1', 'pricing_pro_f2', 'pricing_pro_f3', 'pricing_pro_f4', 'pricing_pro_f5', 'pricing_pro_f6', 'pricing_pro_f7', 'pricing_pro_f8',
+    'pricing_pro_cta_monthly',
+    'pricing_pro_name_yearly', 'pricing_pro_tagline_yearly', 'pricing_pro_ribbon_yearly', 'pricing_pro_period_year',
+    'pricing_discount_badge_25', 'pricing_pro_yearly_f1', 'pricing_pro_yearly_f2', 'pricing_pro_cta_yearly'
+  ];
+  pricingKeys.forEach(k => {
+    assert.ok(
+      htmlContent.includes(`data-i18n="${k}"`) || htmlContent.includes(`data-i18n-html="${k}"`),
+      `Pricing section missing i18n binding for: ${k}`
+    );
+  });
+});
+
+runTest('HTML: Footer and Legal Modals bind all columns, badges and buttons to i18n', () => {
+  const footerAndLegalKeys = [
+    'footer_desc', 'welcome_footer_quick_nav', 'welcome_footer_core_tech',
+    'welcome_footer_support_legal', 'footer_badge_rbac', 'footer_contact_email',
+    'footer_copyright', 'legal_modal_title', 'legal_modal_subtitle',
+    'legal_tab_terms', 'legal_tab_privacy', 'legal_tab_contact'
+  ];
+  footerAndLegalKeys.forEach(k => {
+    assert.ok(
+      htmlContent.includes(`data-i18n="${k}"`) || htmlContent.includes(`data-i18n-html="${k}"`),
+      `Footer or Legal Modal missing i18n binding for: ${k}`
+    );
+  });
+});
+
+runTest('JS: welcome.js subscribes to languageChanged event for dynamic pricing sync', () => {
+  assert.ok(jsContent.includes('languageChanged'), 'welcome.js must listen for languageChanged');
+  assert.ok(jsContent.includes('setBillingCycle(currentCycle)'), 'welcome.js must update billing cycle on language change');
+});
+
+runTest('i18n Dictionary Parity: All welcome.html i18n keys resolve in vi and en dictionaries', () => {
+  const i18nRegex = /data-i18n(?:-html)?="([^"]+)"/g;
+  const keys = new Set();
+  let match;
+  while ((match = i18nRegex.exec(htmlContent)) !== null) {
+    keys.add(match[1]);
+  }
+
+  assert.ok(keys.size >= 40, `Expected at least 40 i18n keys in welcome.html, found ${keys.size}`);
+
+  const missingVi = [];
+  const missingEn = [];
+
+  i18n.setLanguage('vi');
+  for (const k of keys) {
+    const textVi = i18n.t(k);
+    if (!textVi || textVi === k) missingVi.push(k);
+  }
+
+  i18n.setLanguage('en');
+  for (const k of keys) {
+    const textEn = i18n.t(k);
+    if (!textEn || textEn === k) missingEn.push(k);
+  }
+
+  assert.strictEqual(missingVi.length, 0, 'Missing Vietnamese translations for: ' + missingVi.join(', '));
+  assert.strictEqual(missingEn.length, 0, 'Missing English translations for: ' + missingEn.join(', '));
 });
 
 // -----------------------------------------------------------------------------

@@ -38,6 +38,32 @@
     return `${base}/${trimmed}`;
   }
 
+  function t(key, fallback, params) {
+    if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
+      const translated = window.i18n.t(key, params);
+      if (translated && translated !== key) {
+        return translated;
+      }
+    }
+    if (params && typeof fallback === 'string') {
+      let res = fallback;
+      Object.keys(params).forEach((k) => {
+        res = res.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+      });
+      return res;
+    }
+    return fallback;
+  }
+
+  function isEnLanguage() {
+    return (
+      typeof window !== 'undefined' &&
+      window.i18n &&
+      typeof window.i18n.getLanguage === 'function' &&
+      window.i18n.getLanguage() === 'en'
+    );
+  }
+
   let isSubmitting = false;
   let isRestoringSession = false;
 
@@ -115,6 +141,12 @@
     initAccountModal();
     initAvatarCropModal();
     restoreSession();
+    document.addEventListener('languageChanged', () => {
+      const user = getStoredUser();
+      if (user) {
+        renderAccountDetails(user);
+      }
+    });
   });
 
   /**
@@ -238,9 +270,11 @@
           eyeClosed.style.display = isPassword ? 'block' : 'none';
         }
 
+        const hideAria = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_hide_password_aria') : 'Ẩn mật khẩu';
+        const showAria = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('auth_show_password_aria') : 'Hiện mật khẩu';
         btn.setAttribute(
           'aria-label',
-          isPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
+          isPassword ? hideAria : showAria
         );
       });
     }
@@ -310,11 +344,13 @@
     let isValid = true;
     let firstInvalidInput = null;
 
+    const t = (k, fallback) => (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(k) : fallback;
+
     // 0. Full name validation (Optional, max 150 chars)
     if (fullNameInput && fullNameInput.value) {
       const fullNameVal = fullNameInput.value.trim();
       if (fullNameVal.length > 150) {
-        showFieldError(fullNameInput, 'Họ và tên không được vượt quá 150 ký tự.');
+        showFieldError(fullNameInput, t('auth_val_name_max', 'Họ và tên không được vượt quá 150 ký tự.'));
         isValid = false;
         firstInvalidInput = firstInvalidInput || fullNameInput;
       }
@@ -324,11 +360,11 @@
     const emailVal = emailInput ? emailInput.value.trim() : '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailVal) {
-      showFieldError(emailInput, 'Vui lòng nhập địa chỉ email.');
+      showFieldError(emailInput, t('auth_val_email_req', 'Vui lòng nhập địa chỉ email.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || emailInput;
     } else if (!emailRegex.test(emailVal)) {
-      showFieldError(emailInput, 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
+      showFieldError(emailInput, t('auth_val_email_format', 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || emailInput;
     }
@@ -336,23 +372,23 @@
     // 2. Password validation
     const pwdVal = passwordInput ? passwordInput.value : '';
     if (!pwdVal) {
-      showFieldError(passwordInput, 'Vui lòng nhập mật khẩu.');
+      showFieldError(passwordInput, t('auth_val_pass_req', 'Vui lòng nhập mật khẩu.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (pwdVal.length < 8) {
-      showFieldError(passwordInput, 'Mật khẩu phải có tối thiểu 8 ký tự.');
+      showFieldError(passwordInput, t('auth_val_pass_min', 'Mật khẩu phải có tối thiểu 8 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (pwdVal.length > 128) {
-      showFieldError(passwordInput, 'Mật khẩu không được vượt quá 128 ký tự.');
+      showFieldError(passwordInput, t('auth_val_pass_max', 'Mật khẩu không được vượt quá 128 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (!/[a-zA-Z]/.test(pwdVal)) {
-      showFieldError(passwordInput, 'Mật khẩu phải chứa ít nhất một chữ cái.');
+      showFieldError(passwordInput, t('auth_val_pass_letter', 'Mật khẩu phải chứa ít nhất một chữ cái.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     } else if (!/[0-9]/.test(pwdVal)) {
-      showFieldError(passwordInput, 'Mật khẩu phải chứa ít nhất một chữ số.');
+      showFieldError(passwordInput, t('auth_val_pass_number', 'Mật khẩu phải chứa ít nhất một chữ số.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || passwordInput;
     }
@@ -360,15 +396,15 @@
     // 3. Confirm Password validation
     const confirmVal = confirmPasswordInput ? confirmPasswordInput.value : '';
     if (!confirmVal) {
-      showFieldError(confirmPasswordInput, 'Vui lòng nhập lại mật khẩu xác nhận.');
+      showFieldError(confirmPasswordInput, t('auth_val_confirm_req', 'Vui lòng nhập lại mật khẩu xác nhận.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     } else if (confirmVal.length > 128) {
-      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không được vượt quá 128 ký tự.');
+      showFieldError(confirmPasswordInput, t('auth_val_confirm_max', 'Mật khẩu xác nhận không được vượt quá 128 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     } else if (pwdVal && confirmVal !== pwdVal) {
-      showFieldError(confirmPasswordInput, 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.');
+      showFieldError(confirmPasswordInput, t('auth_val_confirm_mismatch', 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmPasswordInput;
     }
@@ -386,37 +422,38 @@
   function formatValidationErrorMessage(fieldKey, rawMessage) {
     const raw = String(rawMessage || '').trim();
     const lower = raw.toLowerCase();
+    const t = (k, fallback) => (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t(k) : fallback;
 
     if (fieldKey === 'email') {
       if (lower.includes('valid email') || lower.includes('email address')) {
-        return 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).';
+        return t('auth_val_email_format', 'Định dạng email không hợp lệ (ví dụ: ten@domain.com).');
       }
       if (lower.includes('field required') || lower.includes('missing')) {
-        return 'Vui lòng nhập địa chỉ email.';
+        return t('auth_val_email_req', 'Vui lòng nhập địa chỉ email.');
       }
     }
 
     if (fieldKey === 'password') {
       if (lower.includes('at least 8') || lower.includes('min_length')) {
-        return 'Mật khẩu phải có tối thiểu 8 ký tự.';
+        return t('auth_val_pass_min', 'Mật khẩu phải có tối thiểu 8 ký tự.');
       }
       if (lower.includes('at most 128') || lower.includes('max_length') || lower.includes('128 characters')) {
-        return 'Mật khẩu không được vượt quá 128 ký tự.';
+        return t('auth_val_pass_max', 'Mật khẩu không được vượt quá 128 ký tự.');
       }
       if (lower.includes('at least one letter') || lower.includes('one letter')) {
-        return 'Mật khẩu phải chứa ít nhất một chữ cái.';
+        return t('auth_val_pass_letter', 'Mật khẩu phải chứa ít nhất một chữ cái.');
       }
       if (lower.includes('at least one digit') || lower.includes('one digit') || lower.includes('one number')) {
-        return 'Mật khẩu phải chứa ít nhất một chữ số.';
+        return t('auth_val_pass_number', 'Mật khẩu phải chứa ít nhất một chữ số.');
       }
       if (lower.includes('field required') || lower.includes('missing')) {
-        return 'Vui lòng nhập mật khẩu.';
+        return t('auth_val_pass_req', 'Vui lòng nhập mật khẩu.');
       }
     }
 
     if (fieldKey === 'full_name') {
       if (lower.includes('at most 150') || lower.includes('max_length') || lower.includes('150 characters')) {
-        return 'Họ và tên không được vượt quá 150 ký tự.';
+        return t('auth_val_name_max', 'Họ và tên không được vượt quá 150 ký tự.');
       }
     }
 
@@ -1729,7 +1766,7 @@
         updateHeaderAuthState(user);
         renderAccountDetails(user);
 
-        showAccountAlert('Đã xóa ảnh đại diện thành công.', 'success');
+        showAccountAlert(t('auth_avatar_delete_success', 'Đã xóa ảnh đại diện thành công.'), 'success');
         return true;
       } else if (response.status === 400) {
         const msg = (resData && resData.message) || 'Tài khoản chưa thiết lập ảnh đại diện để xóa.';
@@ -2270,7 +2307,7 @@
           fileInput.value = '';
         }
 
-        showAccountAlert('Cập nhật ảnh đại diện thành công.', 'success');
+        showAccountAlert(t('auth_avatar_update_success', 'Cập nhật ảnh đại diện thành công.'), 'success');
         return true;
       } else if (response.status === 401) {
         clearStoredSession();
@@ -2502,14 +2539,14 @@
           renderAccountDetails(updatedUser);
         }
         toggleAccountEditMode(false);
-        showAccountAlert('Cập nhật thông tin tài khoản thành công!', 'success');
+        showAccountAlert(t('auth_profile_update_success', 'Cập nhật thông tin tài khoản thành công!'), 'success');
       } else if (response.status === 401 || response.status === 403) {
         clearStoredSession();
         updateHeaderAuthState(null);
         toggleAccountEditMode(false);
         const card = document.getElementById('accountInfoContent');
         if (card) card.style.display = 'none';
-        showAccountAlert('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.', 'error');
+        showAccountAlert(t('auth_session_expired', 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.'), 'error');
       } else if (response.status === 422) {
         const details = resData && resData.details;
         let msg = (resData && resData.message) ? resData.message : 'Dữ liệu không hợp lệ.';
@@ -2522,12 +2559,12 @@
       } else {
         const errorMsg = (resData && resData.message)
           ? resData.message
-          : 'Không thể cập nhật thông tin lúc này. Vui lòng thử lại sau.';
+          : t('auth_profile_update_error', 'Không thể cập nhật thông tin lúc này. Vui lòng thử lại sau.');
         showAccountAlert(errorMsg, 'error');
       }
     } catch (networkError) {
       console.warn('[PDF-Lingua Auth Update Error]', networkError);
-      showAccountAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền.', 'error');
+      showAccountAlert(t('auth_net_error', 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền.'), 'error');
     } finally {
       setSavingState(false);
     }
@@ -2536,7 +2573,7 @@
       if (btnSave) btnSave.disabled = saving;
       if (btnCancel) btnCancel.disabled = saving;
       if (spinner) spinner.style.display = saving ? 'inline-block' : 'none';
-      if (btnText) btnText.textContent = saving ? 'Đang lưu...' : 'Lưu';
+      if (btnText) btnText.textContent = saving ? t('auth_saving', 'Đang lưu...') : t('auth_save', 'Lưu');
     }
   }
 
@@ -2577,45 +2614,45 @@
 
     // 1. Current password
     if (!currentVal) {
-      showFieldError(currentPasswordInput, 'Vui lòng nhập mật khẩu hiện tại.');
+      showFieldError(currentPasswordInput, t('auth_pwd_req_current', 'Vui lòng nhập mật khẩu hiện tại.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || currentPasswordInput;
     }
 
     // 2. New password
     if (!newVal) {
-      showFieldError(newPasswordInput, 'Vui lòng nhập mật khẩu mới.');
+      showFieldError(newPasswordInput, t('auth_pwd_req_new', 'Vui lòng nhập mật khẩu mới.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || newPasswordInput;
     } else if (newVal.length < 8) {
-      showFieldError(newPasswordInput, 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      showFieldError(newPasswordInput, t('auth_pwd_min_new', 'Mật khẩu mới phải có tối thiểu 8 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || newPasswordInput;
     } else if (newVal.length > 128) {
-      showFieldError(newPasswordInput, 'Mật khẩu mới không được vượt quá 128 ký tự.');
+      showFieldError(newPasswordInput, t('auth_pwd_max_new', 'Mật khẩu mới không được vượt quá 128 ký tự.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || newPasswordInput;
     } else if (!/[a-zA-Z]/.test(newVal)) {
-      showFieldError(newPasswordInput, 'Mật khẩu mới phải chứa ít nhất một chữ cái.');
+      showFieldError(newPasswordInput, t('auth_pwd_letter_new', 'Mật khẩu mới phải chứa ít nhất một chữ cái.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || newPasswordInput;
     } else if (!/\d/.test(newVal)) {
-      showFieldError(newPasswordInput, 'Mật khẩu mới phải chứa ít nhất một chữ số.');
+      showFieldError(newPasswordInput, t('auth_pwd_digit_new', 'Mật khẩu mới phải chứa ít nhất một chữ số.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || newPasswordInput;
     } else if (currentVal && newVal === currentVal) {
-      showFieldError(newPasswordInput, 'Mật khẩu mới không được trùng với mật khẩu hiện tại.');
+      showFieldError(newPasswordInput, t('auth_pwd_same_as_old', 'Mật khẩu mới không được trùng với mật khẩu hiện tại.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || newPasswordInput;
     }
 
     // 3. Confirm new password
     if (!confirmVal) {
-      showFieldError(confirmNewPasswordInput, 'Vui lòng xác nhận mật khẩu mới.');
+      showFieldError(confirmNewPasswordInput, t('auth_pwd_confirm_req', 'Vui lòng xác nhận mật khẩu mới.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmNewPasswordInput;
     } else if (newVal && confirmVal !== newVal) {
-      showFieldError(confirmNewPasswordInput, 'Mật khẩu xác nhận không khớp với mật khẩu mới.');
+      showFieldError(confirmNewPasswordInput, t('auth_pwd_confirm_mismatch', 'Mật khẩu xác nhận không khớp với mật khẩu mới.'));
       isValid = false;
       firstInvalidInput = firstInvalidInput || confirmNewPasswordInput;
     }
@@ -2756,8 +2793,8 @@
       } catch (e) {}
 
       if (response.status === 200) {
-        showChangePasswordAlert('Đổi mật khẩu thành công!', 'success');
-        showAccountAlert('Đổi mật khẩu thành công!', 'success');
+        showChangePasswordAlert(t('auth_pwd_change_success', 'Đổi mật khẩu thành công!'), 'success');
+        showAccountAlert(t('auth_pwd_change_success', 'Đổi mật khẩu thành công!'), 'success');
         if (form) form.reset();
         resetChangePasswordToggles();
         setTimeout(() => {
@@ -2766,14 +2803,14 @@
       } else if (response.status === 400) {
         const errCode = responseData && responseData.error_code;
         if (errCode === 'INCORRECT_CURRENT_PASSWORD') {
-          showFieldError(currentPasswordInput, 'Mật khẩu hiện tại không chính xác.');
-          showChangePasswordAlert('Mật khẩu hiện tại không chính xác.', 'error');
+          showFieldError(currentPasswordInput, t('auth_pwd_current_incorrect', 'Mật khẩu hiện tại không chính xác.'));
+          showChangePasswordAlert(t('auth_pwd_current_incorrect', 'Mật khẩu hiện tại không chính xác.'), 'error');
           if (currentPasswordInput && typeof currentPasswordInput.focus === 'function') {
             currentPasswordInput.focus();
           }
         } else if (errCode === 'PASSWORD_SAME_AS_OLD') {
-          showFieldError(newPasswordInput, 'Mật khẩu mới không được trùng với mật khẩu hiện tại.');
-          showChangePasswordAlert('Mật khẩu mới không được trùng với mật khẩu hiện tại.', 'error');
+          showFieldError(newPasswordInput, t('auth_pwd_same_as_old', 'Mật khẩu mới không được trùng với mật khẩu hiện tại.'));
+          showChangePasswordAlert(t('auth_pwd_same_as_old', 'Mật khẩu mới không được trùng với mật khẩu hiện tại.'), 'error');
           if (newPasswordInput && typeof newPasswordInput.focus === 'function') {
             newPasswordInput.focus();
           }
@@ -2820,7 +2857,7 @@
       if (btnSubmit) btnSubmit.disabled = loading;
       if (btnCancel) btnCancel.disabled = loading;
       if (spinner) spinner.style.display = loading ? 'inline-block' : 'none';
-      if (btnText) btnText.textContent = loading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu';
+      if (btnText) btnText.textContent = loading ? t('auth_updating', 'Đang cập nhật...') : t('auth_update_pwd_btn', 'Cập nhật mật khẩu');
     }
   }
 
@@ -2854,7 +2891,7 @@
     const detailRole = document.getElementById('accountDetailRole');
     const detailStatus = document.getElementById('accountDetailStatus');
 
-    const name = user.full_name || 'Chưa đặt tên';
+    const name = user.full_name || t('auth_unnamed', 'Chưa đặt tên');
     const email = user.email || '';
     const initial = (user.full_name ? user.full_name.trim().charAt(0) : (email ? email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
@@ -2899,12 +2936,16 @@
 
     if (detailRole) {
       const roleStr = (user.role || 'free').toLowerCase();
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+
       const roleLabels = {
-        admin: 'Quản trị viên',
-        pro: 'Gói Pro VIP',
-        free: 'Gói Miễn phí',
+        admin: isEn ? 'Admin' : 'Quản trị viên',
+        pro: isEn ? 'Pro User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Pro' : 'Gói Pro VIP'),
+        free: isEn ? 'Free User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Free' : 'Gói Miễn phí'),
       };
-      detailRole.textContent = roleLabels[roleStr] || 'Gói Miễn phí';
+      detailRole.textContent = roleLabels[roleStr] || (isEn ? 'Free User' : 'Gói Miễn phí');
       detailRole.className = `badge-role role-${roleStr}`;
 
       const btnAccountUpgradePro = document.getElementById('btnAccountUpgradePro');
@@ -2915,7 +2956,7 @@
 
     if (detailStatus) {
       if (user.is_active === false) {
-        detailStatus.textContent = 'Bị vô hiệu';
+        detailStatus.textContent = t('auth_status_disabled', 'Bị vô hiệu');
         detailStatus.className = 'badge-status status-inactive';
         if (detailStatus.classList) {
           detailStatus.classList.remove('status-active');
@@ -2925,7 +2966,7 @@
         detailStatus.style.color = '#DC2626';
         detailStatus.style.borderColor = '#FCA5A5';
       } else {
-        detailStatus.textContent = 'Hoạt động';
+        detailStatus.textContent = t('auth_status_active', 'Hoạt động');
         detailStatus.className = 'badge-status status-active';
         if (detailStatus.classList) {
           detailStatus.classList.remove('status-inactive');

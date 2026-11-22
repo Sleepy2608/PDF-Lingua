@@ -61,8 +61,8 @@ def test_seed_pricing_plans_creates_monthly_and_yearly_tiers(in_memory_db):
     monthly = plans_by_code["pro_monthly"]
     assert monthly.name == "Gói Pro Hàng Tháng"
     assert monthly.billing_cycle == BillingCycle.MONTHLY.value
-    assert monthly.price_vnd == 49000
-    assert monthly.original_price_vnd == 49000
+    assert monthly.price_vnd == 39000
+    assert monthly.original_price_vnd == 39000
     assert monthly.discount_percent == 0
     assert monthly.duration_days == 30
     assert monthly.max_file_size_mb == 100
@@ -74,9 +74,9 @@ def test_seed_pricing_plans_creates_monthly_and_yearly_tiers(in_memory_db):
     yearly = plans_by_code["pro_yearly"]
     assert yearly.name == "Gói Pro Hàng Năm"
     assert yearly.billing_cycle == BillingCycle.YEARLY.value
-    assert yearly.price_vnd == 399000
-    assert yearly.original_price_vnd == 588000
-    assert yearly.discount_percent == 32
+    assert yearly.price_vnd == 350000
+    assert yearly.original_price_vnd == 468000
+    assert yearly.discount_percent == 25
     assert yearly.duration_days == 365
     assert yearly.max_file_size_mb == 100
     assert yearly.max_ocr_pages == 500
@@ -99,7 +99,7 @@ def test_seed_pricing_plans_is_idempotent_and_restores_canonical_values(in_memor
     assert len(all_plans) == 2
 
     refreshed_monthly = in_memory_db.query(PricingPlan).filter_by(code="pro_monthly").first()
-    assert refreshed_monthly.price_vnd == 49000
+    assert refreshed_monthly.price_vnd == 39000
 
 
 def test_pricing_plan_features_property_handles_empty_and_invalid_json(in_memory_db):
@@ -129,7 +129,7 @@ def test_pricing_plan_unique_code_constraint(in_memory_db):
         code="pro_monthly",
         name="Duplicate Monthly",
         billing_cycle="monthly",
-        price_vnd=49000,
+        price_vnd=39000,
         duration_days=30,
     )
     in_memory_db.add(duplicate)
@@ -188,7 +188,7 @@ def test_user_subscription_and_payment_transaction_relationships(in_memory_db):
     in_memory_db.refresh(user)
 
     assert tx.id is not None
-    assert tx.amount_vnd == 399000
+    assert tx.amount_vnd == 350000
     assert "<PaymentTransaction id=" in repr(tx)
 
     # Verify bidirectional ORM relationships
@@ -222,7 +222,7 @@ def test_payment_transaction_unique_code_and_foreign_key_constraints(in_memory_d
         transaction_code="UNIQUE-TX-100",
         user_id=user.id,
         plan_id=monthly_plan.id,
-        amount_vnd=49000,
+        amount_vnd=39000,
     )
     in_memory_db.add(tx1)
     in_memory_db.commit()
@@ -232,7 +232,7 @@ def test_payment_transaction_unique_code_and_foreign_key_constraints(in_memory_d
         transaction_code="UNIQUE-TX-100",
         user_id=user.id,
         plan_id=monthly_plan.id,
-        amount_vnd=49000,
+        amount_vnd=39000,
     )
     in_memory_db.add(tx_dup)
     with pytest.raises(IntegrityError):
@@ -244,7 +244,7 @@ def test_payment_transaction_unique_code_and_foreign_key_constraints(in_memory_d
         transaction_code="UNIQUE-TX-200",
         user_id=999999,
         plan_id=monthly_plan.id,
-        amount_vnd=49000,
+        amount_vnd=39000,
     )
     in_memory_db.add(tx_bad_fk)
     with pytest.raises(IntegrityError):
@@ -280,7 +280,7 @@ def test_cascade_delete_user_and_set_null_on_subscription_delete(in_memory_db):
         user_id=user.id,
         plan_id=monthly_plan.id,
         subscription_id=sub.id,
-        amount_vnd=49000,
+        amount_vnd=39000,
     )
     in_memory_db.add(tx)
     in_memory_db.commit()

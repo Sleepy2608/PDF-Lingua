@@ -4,7 +4,7 @@ Pricing Plans & Subscription API Endpoints
 Exposes RESTful endpoints for browsing pricing tiers, initiating VietQR checkout,
 polling transaction status, simulating dev payments, receiving bank webhooks,
 and managing user subscriptions:
-- GET  /api/pricing/plans                     : Public pricing catalog (Free vs Pro 49k/399k)
+- GET  /api/pricing/plans                     : Public pricing catalog (Free vs Pro 39k/350k)
 - GET  /api/pricing/my-subscription           : Current user's role, quotas, and active subscription
 - POST /api/pricing/subscribe                 : Create pending transaction & generate Napas247 VietQR
 - GET  /api/pricing/transactions/{code}/status: Poll transaction status (owner or admin)
@@ -85,7 +85,7 @@ async def subscribe_to_plan(
     db: Session = Depends(get_db),
 ):
     """
-    Initiate a subscription upgrade order for `pro_monthly` (49,000 VND) or `pro_yearly` (399,000 VND)
+    Initiate a subscription upgrade order for `pro_monthly` (39,000 VND) or `pro_yearly` (350,000 VND)
     and generate a dynamic Napas247 VietQR payment payload.
     """
     logger.info(

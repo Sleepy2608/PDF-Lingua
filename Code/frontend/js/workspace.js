@@ -6,6 +6,27 @@ const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
 const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
 const VIEW_MODE_STORAGE_KEY = 'pdfl_workspace_view_mode';
 
+function t(key, fallback = '', params = null) {
+  if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
+    const val = window.i18n.t(key, params);
+    if (val && val !== key) return val;
+  }
+  let res = fallback || key;
+  if (params && typeof params === 'object') {
+    Object.keys(params).forEach((p) => {
+      res = res.replace(new RegExp(`\\{${p}\\}`, 'g'), params[p]);
+    });
+  }
+  return res;
+}
+
+function isEnLanguage() {
+  if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.getLanguage === 'function') {
+    return window.i18n.getLanguage() === 'en';
+  }
+  return false;
+}
+
 let currentDocData = null;
 let currentViewMode = 'split';
 let currentSplitMobileTab = 'pdf';
@@ -105,7 +126,7 @@ function showPreviewErrorState(msg) {
   const errorMsgEl = document.getElementById('pdfPreviewErrorMsg');
   const canvasWrap = document.getElementById('pdfCanvasWrap');
   if (errorEl) errorEl.style.display = 'flex';
-  if (errorMsgEl) errorMsgEl.textContent = msg || 'Không thể hiển thị bản xem trước tệp PDF.';
+  if (errorMsgEl) errorMsgEl.textContent = msg || (isEnLanguage() ? 'Unable to display PDF preview.' : 'Không thể hiển thị bản xem trước tệp PDF.');
   if (canvasWrap) canvasWrap.style.opacity = '1';
 }
 
@@ -127,7 +148,7 @@ async function fetchDocumentPreview(documentId, filename) {
   if (loadingEl) {
     loadingEl.style.display = 'flex';
     const textEl = loadingEl.querySelector('.preview-loading-text');
-    if (textEl) textEl.textContent = 'Đang tải tệp PDF xem trước từ máy chủ...';
+    if (textEl) textEl.textContent = isEnLanguage() ? 'Loading PDF preview from server...' : 'Đang tải tệp PDF xem trước từ máy chủ...';
   }
   if (errorEl) errorEl.style.display = 'none';
   if (canvasWrap) canvasWrap.style.opacity = '0.5';
@@ -165,21 +186,21 @@ async function fetchDocumentPreview(documentId, filename) {
         errData = await response.json();
       } catch (_e) {}
       handleAuthError(errData);
-      showPreviewErrorState('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xem trước PDF.');
+      showPreviewErrorState((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_preview_auth_expired') : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để xem trước PDF.');
     } else if (response.status === 403) {
-      showToast('Bạn không có quyền xem trước tài liệu này.', 'error');
-      showPreviewErrorState('Bạn không có quyền truy cập tệp PDF này.');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_preview_forbidden') : 'Bạn không có quyền xem trước tài liệu này.', 'error');
+      showPreviewErrorState((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_error_forbidden') : 'Bạn không có quyền truy cập tệp PDF này.');
     } else if (response.status === 404) {
-      showToast('Không tìm thấy tệp PDF gốc trên hệ thống.', 'error');
-      showPreviewErrorState('Tệp tin PDF không tồn tại trên hệ thống lưu trữ.');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_preview_not_found') : 'Không tìm thấy tệp PDF gốc trên hệ thống.', 'error');
+      showPreviewErrorState((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_error_not_found') : 'Tệp tin PDF không tồn tại trên hệ thống lưu trữ.');
     } else {
-      showToast('Không thể tải tệp PDF xem trước.', 'error');
-      showPreviewErrorState('Đã xảy ra lỗi khi tải tệp tin PDF.');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_preview_load_failed') : 'Không thể tải tệp PDF xem trước.', 'error');
+      showPreviewErrorState((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_error_load_failed') : 'Đã xảy ra lỗi khi tải tệp tin PDF.');
     }
   } catch (err) {
     console.error('[PDFPreview] Fetch preview failed:', err);
-    showToast('Lỗi kết nối khi tải bản xem trước PDF.', 'error');
-    showPreviewErrorState('Lỗi kết nối khi tải bản xem trước.');
+    showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_preview_conn_error') : 'Lỗi kết nối khi tải bản xem trước PDF.', 'error');
+    showPreviewErrorState((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('preview_error_conn_error') : 'Lỗi kết nối khi tải bản xem trước.');
   } finally {
     if (loadingEl) loadingEl.style.display = 'none';
     if (canvasWrap) canvasWrap.style.opacity = '1';
@@ -369,7 +390,7 @@ function validatePageSelection() {
     return {
       valid: false,
       mode: 'custom',
-      error: 'Vui lòng nhập số trang hoặc khoảng trang cần xử lý (ví dụ: 1-5, 8).',
+      error: (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('error_page_range_empty') : 'Vui lòng nhập số trang hoặc khoảng trang cần xử lý (ví dụ: 1-5, 8).',
     };
   }
 
@@ -377,7 +398,7 @@ function validatePageSelection() {
     return {
       valid: false,
       mode: 'custom',
-      error: 'Dải trang không hợp lệ. Vui lòng nhập số trang (ví dụ: 1-5, 8).',
+      error: (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('error_page_range_invalid') : 'Dải trang không hợp lệ. Vui lòng nhập số trang (ví dụ: 1-5, 8).',
     };
   }
 
@@ -385,7 +406,7 @@ function validatePageSelection() {
     return {
       valid: false,
       mode: 'custom',
-      error: 'Dải trang chứa ký tự không hợp lệ. Chỉ chấp nhận số, dấu phẩy và dấu gạch ngang.',
+      error: (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('error_page_range_chars') : 'Dải trang chứa ký tự không hợp lệ. Chỉ chấp nhận số, dấu phẩy và dấu gạch ngang.',
     };
   }
 
@@ -485,6 +506,31 @@ function initWorkspace() {
     syncWorkspaceAiRoles(e.detail ? e.detail.user : null);
   });
 
+  document.addEventListener('languageChanged', () => {
+    updateCounters();
+    if (currentDocData) {
+      const docPages = document.getElementById('docPagesDisplay');
+      const docType = document.getElementById('docTypeDisplay');
+      const pageUnit = t('docs_unit_page', ' trang');
+      if (docPages) docPages.textContent = `${currentDocData.page_count || 1}${pageUnit}`;
+      if (docType) {
+        if (currentDocData.is_ocr_used) {
+          docType.textContent = isEnLanguage() ? 'OCR Scan' : 'Quét OCR';
+        } else {
+          docType.textContent = isEnLanguage() ? 'Digital PDF' : 'PDF Số';
+        }
+      }
+    }
+    const btnRetranslateSpan = document.querySelector('#btnRetranslate span');
+    if (btnRetranslateSpan) {
+      btnRetranslateSpan.textContent = t('workspace_btn_retranslate', 'Dịch lại');
+    }
+    const btnCancelSpan = document.querySelector('#btnCancelJob span');
+    if (btnCancelSpan && btnCancelSpan.textContent !== 'Đang hủy...' && btnCancelSpan.textContent !== 'Cancelling...') {
+      btnCancelSpan.textContent = t('workspace_cancel_task', 'Hủy tác vụ');
+    }
+  });
+
   if (btnProcessPdf) {
     btnProcessPdf.addEventListener('click', handleProcessPdf);
   }
@@ -564,13 +610,13 @@ function initWorkspace() {
         const editorTranslated = document.getElementById('editorTranslated');
         const text = editorTranslated ? (editorTranslated.innerText || editorTranslated.value || '') : '';
         if (!text.trim()) {
-          showToast('Chưa có nội dung bản dịch để sao chép!', 'error');
+          showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_copy_translation_empty') : 'Chưa có nội dung bản dịch để sao chép!', 'error');
           return;
         }
         navigator.clipboard.writeText(text.trim()).then(() => {
-          showToast('Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!', 'success');
+          showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_copy_translation_success') : 'Đã sao chép toàn bộ bản dịch vào bộ nhớ tạm!', 'success');
         }).catch(() => {
-          showToast('Không thể sao chép văn bản.', 'error');
+          showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_copy_text_failed') : 'Không thể sao chép văn bản.', 'error');
         });
       });
     }
@@ -908,10 +954,10 @@ function notifyJobCompleted(jobData) {
 
   // 3. Hiển thị Toast thông báo với hành động "Xem ngay"
   const isOtherViewActive = checkIsOtherViewActive();
-  const toastMessage = `🎉 Xử lý hoàn tất tài liệu ${filename}! Bấm để xem kết quả.`;
+  const toastMessage = `🎉 ${(window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_process_completed', { name: filename }) : `Xử lý hoàn tất tài liệu ${filename}! Bấm để xem kết quả.`}`;
 
   const action = {
-    text: 'Xem ngay',
+    text: (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_view_now') : 'Xem ngay',
     duration: 6500,
     onClick: () => {
       if (docResult) {
@@ -1438,10 +1484,10 @@ async function handleRetranslate() {
     }
     updateCounters();
     updateExportUIState();
-    showToast(`Đã dịch xong sang ${getLangName(newTargetLang)}!`, 'success');
+    showToast(isEnLanguage() ? `Translated to ${getLangName(newTargetLang)} successfully!` : `Đã dịch xong sang ${getLangName(newTargetLang)}!`, 'success');
 
   } catch (error) {
-    showToast(error.message || 'Lỗi khi dịch lại văn bản!', 'error');
+    showToast(error.message || t('workspace_retranslate_failed', 'Lỗi khi dịch lại văn bản!'), 'error');
   } finally {
     if (btnRetranslate) {
       btnRetranslate.disabled = false;
@@ -1451,7 +1497,7 @@ async function handleRetranslate() {
           <polyline points="1 4 1 10 7 10"></polyline>
           <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
         </svg>
-        <span>Dịch lại</span>
+        <span>${t('workspace_btn_retranslate', 'Dịch lại')}</span>
       `;
     }
   }
@@ -1649,7 +1695,7 @@ function updateSummaryExportState() {
 
 async function triggerDownload(format = 'txt', exportType = 'translated') {
   if (!currentDocData) {
-    showToast('Chưa có tài liệu để tải về!', 'error');
+    showToast(t('workspace_no_doc_download', 'Chưa có tài liệu để tải về!'), 'error');
     return;
   }
 
@@ -1658,7 +1704,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   // Pro Guard cho định dạng DOCX (Chặn trước ở client cho Guest / Free)
   if (cleanFormat === 'docx') {
     if (!isProOrAdminUser()) {
-      showToast('Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!', 'warning');
+      showToast(t('workspace_docx_pro_only', 'Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!'), 'warning');
       if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.showUpgradeModal === 'function') {
         window.pdfLinguaAuth.showUpgradeModal();
       } else if (typeof window !== 'undefined' && window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
@@ -1686,7 +1732,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   switch (exportType) {
     case 'original':
       if (!currentOriginal || !currentOriginal.trim()) {
-        showToast('Chưa có nội dung văn bản gốc để tải về!', 'error');
+        showToast(t('workspace_copy_orig_empty', 'Chưa có nội dung văn bản gốc để tải về!'), 'error');
         return;
       }
       targetContent = currentOriginal.trim();
@@ -1695,7 +1741,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
     case 'summary': {
       const summaryText = getSummaryContent();
       if (!summaryText || !summaryText.trim()) {
-        showToast('Chưa có nội dung tóm tắt. Vui lòng tạo bản tóm tắt trước khi tải về!', 'error');
+        showToast(t('workspace_no_summary_download', 'Chưa có nội dung tóm tắt. Vui lòng tạo bản tóm tắt trước khi tải về!'), 'error');
         return;
       }
       targetContent = summaryText.trim();
@@ -1704,11 +1750,11 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
 
     case 'bilingual':
       if (!currentOriginal || !currentOriginal.trim()) {
-        showToast('Thiếu nội dung văn bản gốc để xuất song ngữ!', 'error');
+        showToast(t('workspace_missing_orig_bilingual', 'Thiếu nội dung văn bản gốc để xuất song ngữ!'), 'error');
         return;
       }
       if (!currentTranslated || !currentTranslated.trim()) {
-        showToast('Thiếu nội dung bản dịch để xuất song ngữ!', 'error');
+        showToast(t('workspace_missing_trans_bilingual', 'Thiếu nội dung bản dịch để xuất song ngữ!'), 'error');
         return;
       }
       targetContent = currentTranslated.trim();
@@ -1718,7 +1764,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
     case 'translated':
     default:
       if (!currentTranslated || !currentTranslated.trim()) {
-        showToast('Chưa có nội dung bản dịch để tải về!', 'error');
+        showToast(t('workspace_missing_trans_download', 'Chưa có nội dung bản dịch để tải về!'), 'error');
         return;
       }
       targetContent = currentTranslated.trim();
@@ -1752,7 +1798,7 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
   };
   const title = titleMap[exportType] || `PDF-Lingua - ${cleanName}`;
 
-  showToast(`Đang chuẩn bị tệp .${cleanFormat.toUpperCase()}...`, 'info');
+  showToast(t('workspace_download_prep', `Đang chuẩn bị tệp .${cleanFormat.toUpperCase()}...`, { format: cleanFormat.toUpperCase() }), 'info');
 
   try {
     const authHeaders = getAuthHeaders();
@@ -1826,9 +1872,9 @@ async function triggerDownload(format = 'txt', exportType = 'translated') {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(downloadUrl);
 
-    showToast(`Đã tải xuống thành công tệp .${cleanFormat.toUpperCase()}!`, 'success');
+    showToast(t('workspace_download_success', `Đã tải xuống thành công tệp .${cleanFormat.toUpperCase()}!`, { format: cleanFormat.toUpperCase() }), 'success');
   } catch (error) {
-    showToast(error.message || 'Tải tệp thất bại!', 'error');
+    showToast(error.message || t('workspace_download_failed', 'Tải tệp thất bại!'), 'error');
   }
 }
 
@@ -1869,18 +1915,19 @@ function renderWorkspace(data) {
   const paneOriginal = document.getElementById('paneOriginal');
   const paneTranslated = document.getElementById('paneTranslated');
 
-  const filename = data.filename || data.document_filename || 'Tài liệu không tên';
+  const filename = data.filename || data.document_filename || (isEnLanguage() ? 'Untitled Document' : 'Tài liệu không tên');
   if (docName) docName.textContent = filename;
-  if (docPages) docPages.textContent = `${data.page_count || 1} trang`;
+  const pageUnit = t('docs_unit_page', ' trang');
+  if (docPages) docPages.textContent = `${data.page_count || 1}${pageUnit}`;
   if (docSize) docSize.textContent = data.file_size_mb ? `${data.file_size_mb} MB` : '--';
 
   if (docType) {
     if (data.is_ocr_used) {
       docType.className = 'meta-pill ocr';
-      docType.textContent = 'Quét OCR';
+      docType.textContent = isEnLanguage() ? 'OCR Scan' : 'Quét OCR';
     } else {
       docType.className = 'meta-pill digital';
-      docType.textContent = 'PDF Số';
+      docType.textContent = isEnLanguage() ? 'Digital PDF' : 'PDF Số';
     }
   }
 
@@ -2032,19 +2079,23 @@ function updateCounters() {
   if (paneOriginal && countOriginal) {
     const chars = paneOriginal.innerText.length;
     const words = paneOriginal.innerText.trim() ? paneOriginal.innerText.trim().split(/\s+/).length : 0;
-    countOriginal.textContent = `${words.toLocaleString()} từ (${chars.toLocaleString()} ký tự)`;
+    countOriginal.textContent = isEnLanguage()
+      ? `${words.toLocaleString()} words (${chars.toLocaleString()} chars)`
+      : `${words.toLocaleString()} từ (${chars.toLocaleString()} ký tự)`;
   }
 
   if (paneTranslated && countTranslated) {
     const chars = paneTranslated.innerText.length;
     const words = paneTranslated.innerText.trim() ? paneTranslated.innerText.trim().split(/\s+/).length : 0;
-    countTranslated.textContent = `${words.toLocaleString()} từ (${chars.toLocaleString()} ký tự)`;
+    countTranslated.textContent = isEnLanguage()
+      ? `${words.toLocaleString()} words (${chars.toLocaleString()} chars)`
+      : `${words.toLocaleString()} từ (${chars.toLocaleString()} ký tự)`;
   }
 }
 
 function copyText(text, btnElement) {
   if (!text) {
-    showToast('Không có nội dung để sao chép!', 'error');
+    showToast(t('workspace_copy_empty', 'Không có nội dung để sao chép!'), 'error');
     return;
   }
 
@@ -2054,14 +2105,14 @@ function copyText(text, btnElement) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5">
         <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
-      <span style="color:#10B981;">Đã chép!</span>
+      <span style="color:#10B981;">${t('workspace_copied_pill', 'Đã chép!')}</span>
     `;
-    showToast('Đã sao chép vào bộ nhớ tạm!', 'success');
+    showToast(t('toast_copy_translation_success', 'Đã sao chép vào bộ nhớ tạm!'), 'success');
     setTimeout(() => {
       btnElement.innerHTML = originalHtml;
     }, 2000);
   }).catch(() => {
-    showToast('Không thể sao chép văn bản.', 'error');
+    showToast(t('workspace_copy_failed', 'Không thể sao chép văn bản.'), 'error');
   });
 }
 
@@ -2072,7 +2123,7 @@ function showProgressModal(show) {
   const widget = document.getElementById('bgJobWidget');
   if (show) {
     if (widget) widget.style.display = 'none';
-    updateProgress(10, 'Đang chuẩn bị...', 1);
+    updateProgress(10, t('workspace_step_preparing', 'Đang chuẩn bị...'), 1);
   } else {
     if (widget) widget.style.display = 'none';
     cleanupProgressTracking();
@@ -2106,7 +2157,7 @@ function minimizeProgressModal() {
         bgFileNameEl.textContent = currentJobFileName;
       }
     }
-    showToast('Tác vụ đang tiếp tục xử lý ở chế độ nền.', 'info');
+    showToast(t('workspace_bg_continue', 'Tác vụ đang tiếp tục xử lý ở chế độ nền.'), 'info');
   }
 }
 
@@ -2159,7 +2210,7 @@ async function cancelActiveJob() {
       <svg class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
       </svg>
-      <span>Đang hủy...</span>
+      <span>${t('workspace_cancelling', 'Đang hủy...')}</span>
     `;
   }
 
@@ -2177,9 +2228,9 @@ async function cancelActiveJob() {
     } catch (_e) {}
 
     if (response.ok && result && result.success) {
-      handleJobCancelled(result.message || 'Đã hủy tác vụ xử lý thành công.');
+      handleJobCancelled(result.message || t('workspace_cancelled_success', 'Đã hủy tác vụ xử lý thành công.'));
     } else {
-      const errMsg = (result && (result.detail || result.message)) || 'Không thể hủy tác vụ xử lý.';
+      const errMsg = (result && (result.detail || result.message)) || t('workspace_cancelled_fail', 'Không thể hủy tác vụ xử lý.');
       showToast(errMsg, 'warning');
       if (response.status === 400 || response.status === 404) {
         handleJobCancelled(errMsg);
@@ -2196,7 +2247,7 @@ async function cancelActiveJob() {
           <line x1="15" y1="9" x2="9" y2="15"></line>
           <line x1="9" y1="9" x2="15" y2="15"></line>
         </svg>
-        <span>Hủy tác vụ</span>
+        <span>${t('workspace_cancel_task', 'Hủy tác vụ')}</span>
       `;
     }
   }
@@ -2219,7 +2270,7 @@ function handleJobCancelled(message) {
   const btnProcessPdf = document.getElementById('btnProcessPdf');
   if (btnProcessPdf) btnProcessPdf.disabled = false;
 
-  showToast(message || 'Đã hủy tác vụ xử lý thành công.', 'info');
+  showToast(message || t('workspace_cancelled_success', 'Đã hủy tác vụ xử lý thành công.'), 'info');
 }
 
 /**
@@ -2292,8 +2343,12 @@ function updateProgress(percentage, text, currentStep) {
   const bar = document.getElementById('progressBarFill');
   const desc = document.getElementById('progressDesc');
 
+  const localizedText = (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function' && text)
+    ? window.i18n.t(text)
+    : text;
+
   if (bar) bar.style.width = `${percentage}%`;
-  if (desc) desc.textContent = text;
+  if (desc) desc.textContent = localizedText;
 
   for (let i = 1; i <= 4; i++) {
     const stepEl = document.getElementById(`stepItem${i}`);
@@ -2314,13 +2369,17 @@ function updateProgress(percentage, text, currentStep) {
 
   if (bgBar) bgBar.style.width = `${percentage}%`;
   if (bgPercent) bgPercent.textContent = `${Math.round(percentage)}%`;
-  if (bgStatus && text) bgStatus.textContent = text;
+  if (bgStatus && localizedText) bgStatus.textContent = localizedText;
   if (bgFileName && currentJobFileName) bgFileName.textContent = currentJobFileName;
 }
 
 function showToast(message, type = 'info', action = null) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
+
+  const localizedMessage = (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function')
+    ? window.i18n.t(message)
+    : message;
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -2329,7 +2388,7 @@ function showToast(message, type = 'info', action = null) {
   }
 
   const textSpan = document.createElement('span');
-  textSpan.textContent = message;
+  textSpan.textContent = localizedMessage;
   if (typeof toast.appendChild === 'function') {
     toast.appendChild(textSpan);
   } else {
