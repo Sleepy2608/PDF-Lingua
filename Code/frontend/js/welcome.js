@@ -165,13 +165,13 @@
         if (cycle === 'yearly') {
           btnYearly.classList.add('active');
           btnMonthly.classList.remove('active');
-          if (priceValuePro) priceValuePro.textContent = isEn ? '399,000 VND' : '399.000 đ';
+          if (priceValuePro) priceValuePro.textContent = isEn ? '350,000 VND' : '350.000 đ';
           if (pricePeriodPro) pricePeriodPro.textContent = isEn ? '/ year' : '/ năm';
           if (pricePeriodFree) pricePeriodFree.textContent = isEn ? '/ year' : '/ năm';
         } else {
           btnMonthly.classList.add('active');
           btnYearly.classList.remove('active');
-          if (priceValuePro) priceValuePro.textContent = isEn ? '49,000 VND' : '49.000 đ';
+          if (priceValuePro) priceValuePro.textContent = isEn ? '39,000 VND' : '39.000 đ';
           if (pricePeriodPro) pricePeriodPro.textContent = isEn ? '/ month' : '/ tháng';
           if (pricePeriodFree) pricePeriodFree.textContent = isEn ? '/ month' : '/ tháng';
         }
