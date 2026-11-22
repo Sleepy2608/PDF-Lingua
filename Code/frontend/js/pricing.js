@@ -1447,7 +1447,7 @@
     if (!stage || typeof document.createElement !== 'function') return;
 
     stage.innerHTML = '';
-    const palette = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#3B82F6'];
+    const palette = ['#DC2626', '#F59E0B', '#10B981', '#EF4444', '#3B82F6'];
     const pieceCount = 24;
 
     for (let i = 0; i < pieceCount; i++) {
