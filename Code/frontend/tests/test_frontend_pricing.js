@@ -388,6 +388,13 @@ async function main() {
     assert.ok(env.elements.proYearlyPlanDiscountBadge.textContent.includes('25%'));
     assert.strictEqual(env.elements.btnUpgradeProPlan.getAttribute('data-plan-code'), 'pro_monthly');
     assert.strictEqual(env.elements.btnUpgradeProYearlyPlan.getAttribute('data-plan-code'), 'pro_yearly');
+
+    // Verify Pro Yearly specific perks & tagline
+    assert.ok(htmlSource.includes('Gói Pro theo năm, tiết kiệm hơn 25%'), 'Pro Yearly tagline in index.html');
+    assert.ok(htmlSource.includes('Tiết kiệm 25% so với gói Pro hàng tháng'), 'Pro Yearly perk 1 in index.html');
+    assert.ok(htmlSource.includes('Có các quyền lợi của gói Pro hàng tháng'), 'Pro Yearly perk 2 in index.html');
+    assert.ok(env.elements.proYearlyFeatureList.innerHTML.includes('Tiết kiệm 25% so với gói Pro hàng tháng'), 'Pro Yearly perk 1 rendered dynamically');
+    assert.ok(env.elements.proYearlyFeatureList.innerHTML.includes('Có các quyền lợi của gói Pro hàng tháng'), 'Pro Yearly perk 2 rendered dynamically');
   });
 
   await runTest('Billing Toggle: Cycle switcher updates Yearly to 350.000đ / năm with 25% discount badge', () => {
