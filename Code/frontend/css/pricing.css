@@ -357,16 +357,19 @@
 .pricing-price-note-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  min-height: 1.35rem;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-height: 1.5rem;
 }
 
 .pricing-price-subnote {
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-muted, #64748B);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pricing-discount-badge {
@@ -382,6 +385,8 @@
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Quota Highlights Strip */
