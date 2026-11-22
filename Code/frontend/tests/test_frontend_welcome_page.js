@@ -420,21 +420,23 @@ runTest('Testimonials: Navigation and drawer links do not point to removed secti
 // -----------------------------------------------------------------------------
 console.log('\n--- 11. Pricing Plans & Billing Toggle ---');
 
-runTest('Pricing: Monthly / Yearly billing toggle configured with discount badge', () => {
+runTest('Pricing: 3-Tier Layout (Free, Pro Monthly, Pro Yearly) with discount badge', () => {
   assert.strictEqual(htmlContent.includes('Chi Phí Minh Bạch'), false, 'Tag "Chi Phí Minh Bạch" must be removed');
   assert.strictEqual(cssContent.includes('.welcome-section-tag'), false, '.welcome-section-tag must be removed from CSS');
-  assert.ok(htmlContent.includes('welcome-billing-toggle'), 'Missing .welcome-billing-toggle');
-  assert.ok(htmlContent.includes('id="btnBillingMonthly"'), 'Missing #btnBillingMonthly');
-  assert.ok(htmlContent.includes('id="btnBillingYearly"'), 'Missing #btnBillingYearly');
-  assert.ok(htmlContent.includes('Tiết kiệm 25%') || htmlContent.includes('Tiết kiệm 32%'), 'Missing discount badge');
+  assert.ok(htmlContent.includes('id="pricingCardFree"'), 'Missing #pricingCardFree');
+  assert.ok(htmlContent.includes('id="pricingCardPro"'), 'Missing #pricingCardPro');
+  assert.ok(htmlContent.includes('id="pricingCardProYearly"'), 'Missing #pricingCardProYearly');
+  assert.ok(htmlContent.includes('TIẾT KIỆM 25%') || htmlContent.includes('Tiết kiệm 25%'), 'Missing discount badge');
 });
 
 runTest('Pricing: Free and Pro cards exist with feature comparison', () => {
   assert.ok(htmlContent.includes('id="pricingCardFree"'), 'Missing #pricingCardFree');
   assert.ok(htmlContent.includes('id="pricingCardPro"'), 'Missing #pricingCardPro');
+  assert.ok(htmlContent.includes('id="pricingCardProYearly"'), 'Missing #pricingCardProYearly');
   assert.ok(htmlContent.includes('pricing-featured-badge'), 'Missing featured badge on Pro card');
   assert.ok(htmlContent.includes('id="btnStartFree"'), 'Missing #btnStartFree');
   assert.ok(htmlContent.includes('id="btnUpgradePro"'), 'Missing #btnUpgradePro');
+  assert.ok(htmlContent.includes('id="btnUpgradeProYearlyPlan"'), 'Missing #btnUpgradeProYearlyPlan');
 });
 
 runTest('CSS: Pricing grid, featured border, and price figures styled', () => {
@@ -725,16 +727,17 @@ runTest('HTML: How It Works section binds title, subtitle and all 3 steps', () =
   });
 });
 
-runTest('HTML: Pricing section binds billing toggles, discount badge, 12 features and CTAs', () => {
+runTest('HTML: Pricing section binds 3 tiers, discount badge, feature lists and CTAs', () => {
   const pricingKeys = [
     'welcome_pricing_title', 'welcome_pricing_subtitle',
-    'welcome_billing_monthly', 'welcome_billing_yearly', 'welcome_billing_save',
-    'tier_free_name', 'tier_free_desc', 'tier_free_price', 'tier_free_period_month',
-    'tier_free_item_1', 'tier_free_item_2', 'tier_free_item_3', 'tier_free_item_4', 'tier_free_item_5', 'tier_free_item_6',
-    'tier_free_btn',
-    'tier_pro_badge', 'tier_pro_name', 'tier_pro_desc', 'tier_pro_price', 'tier_pro_period_month',
-    'tier_pro_item_1', 'tier_pro_item_2', 'tier_pro_item_3', 'tier_pro_item_4', 'tier_pro_item_5', 'tier_pro_item_6',
-    'tier_pro_btn'
+    'pricing_free_name', 'pricing_free_tagline', 'pricing_free_pill', 'pricing_free_price', 'pricing_free_period',
+    'pricing_free_f1', 'pricing_free_f2', 'pricing_free_f3', 'pricing_free_f4', 'pricing_free_f5',
+    'pricing_free_cta',
+    'pricing_pro_name_monthly', 'pricing_pro_tagline_monthly', 'pricing_tier_flexible', 'pricing_pro_period_month',
+    'pricing_pro_f1', 'pricing_pro_f2', 'pricing_pro_f3', 'pricing_pro_f4', 'pricing_pro_f5', 'pricing_pro_f6', 'pricing_pro_f7', 'pricing_pro_f8',
+    'pricing_pro_cta_monthly',
+    'pricing_pro_name_yearly', 'pricing_pro_tagline_yearly', 'pricing_pro_ribbon_yearly', 'pricing_pro_period_year',
+    'pricing_discount_badge_25', 'pricing_pro_yearly_f1', 'pricing_pro_yearly_f2', 'pricing_pro_cta_yearly'
   ];
   pricingKeys.forEach(k => {
     assert.ok(
