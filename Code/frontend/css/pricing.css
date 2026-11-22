@@ -239,6 +239,7 @@
 .pricing-popular-ribbon {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
@@ -247,8 +248,11 @@
   color: #DC2626;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .pricing-card-top {
@@ -262,6 +266,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+  min-height: 4.5rem;
+}
+
+.pricing-plan-header > div:first-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .pricing-plan-name {
@@ -282,14 +292,17 @@
 .pricing-tier-pill {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
+  justify-content: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
   background-color: #F1F5F9;
   border: 1px solid var(--border-subtle, #E2E8F0);
   color: #475569;
   font-size: 0.72rem;
   font-weight: 600;
   white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 /* Price Display Block */
@@ -297,7 +310,9 @@
   padding: 0.25rem 0 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  min-height: 4.6rem;
 }
 
 .pricing-price-row {
@@ -305,6 +320,7 @@
   align-items: baseline;
   gap: 0.45rem;
   flex-wrap: wrap;
+  min-height: 2.5rem;
 }
 
 .pricing-price-amount {
@@ -373,6 +389,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
+  min-height: 4.25rem;
 }
 
 .pricing-quota-box {
@@ -430,6 +447,7 @@
   font-size: 0.8125rem;
   color: #334155;
   line-height: 1.45;
+  min-height: 1.45rem;
 }
 
 .pricing-feature-icon {

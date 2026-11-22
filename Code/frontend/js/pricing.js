@@ -478,7 +478,7 @@
       }
     }
     if (proYearlyPlanSubnote) {
-      proYearlyPlanSubnote.textContent = t('pricing_pro_subnote_yearly_card', 'Tương đương ~29.100đ / tháng (Hiệu lực 365 ngày)');
+      proYearlyPlanSubnote.textContent = t('pricing_pro_subnote_yearly_card', 'Tương đương ~29.100đ / tháng');
     }
     if (proYearlyPlanDiscountBadge) {
       proYearlyPlanDiscountBadge.textContent = isEn
@@ -549,20 +549,20 @@
         btnUpgradeProYearly.disabled = false;
       }
       if (btnUpgradeProYearlyText) {
-        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp gói Năm');
+        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp ngay');
       }
       if (proYearlyPlanCtaHint) {
-        proYearlyPlanCtaHint.textContent = t('pricing_pro_hint_yearly', 'Tiết kiệm 25% - Kích hoạt tức thì 24/7');
+        proYearlyPlanCtaHint.textContent = '';
       }
       if (btnUpgradeProText) {
         btnUpgradeProText.textContent = btnUpgradeProYearly
-          ? t('pricing_pro_cta_monthly', 'Nâng cấp gói Tháng')
+          ? t('pricing_pro_cta_monthly', 'Nâng cấp ngay')
           : (currentCycle === 'yearly'
               ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)')
               : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay'));
       }
       if (proPlanCtaHint) {
-        proPlanCtaHint.textContent = t('pricing_pro_hint_guest', 'Đăng nhập để kích hoạt qua mã VietQR ngân hàng 24/7');
+        proPlanCtaHint.textContent = '';
       }
       return;
     }
@@ -703,20 +703,20 @@
         btnUpgradeProYearly.disabled = false;
       }
       if (btnUpgradeProYearlyText) {
-        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp gói Năm');
+        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp ngay');
       }
       if (proYearlyPlanCtaHint) {
-        proYearlyPlanCtaHint.textContent = t('pricing_pro_hint_yearly', 'Tiết kiệm 25% - Kích hoạt tức thì 24/7');
+        proYearlyPlanCtaHint.textContent = '';
       }
       if (btnUpgradeProText) {
         btnUpgradeProText.textContent = btnUpgradeProYearly
-          ? t('pricing_pro_cta_monthly', 'Nâng cấp gói Tháng')
+          ? t('pricing_pro_cta_monthly', 'Nâng cấp ngay')
           : (currentCycle === 'yearly'
               ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)')
               : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay'));
       }
       if (proPlanCtaHint) {
-        proPlanCtaHint.textContent = t('pricing_pro_hint_free', 'Kích hoạt tức thì qua mã VietQR ngân hàng 24/7');
+        proPlanCtaHint.textContent = '';
       }
     }
   }
