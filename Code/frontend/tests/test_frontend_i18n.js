@@ -323,17 +323,19 @@ console.log('\n--- 9. Index.html All Sections & Modals Multilingual Verification
 runTest('Pricing section dictionary keys exist and render correctly in VI and EN', () => {
     i18n.setLanguage('vi');
     assert.strictEqual(i18n.t('pricing_section_title'), 'Bảng giá gói dịch vụ');
-    assert.strictEqual(i18n.t('billing_monthly_opt'), 'Theo tháng (49k/tháng)');
-    assert.strictEqual(i18n.t('billing_yearly_opt'), 'Theo năm (399k/năm)');
+    assert.strictEqual(i18n.t('billing_monthly_opt'), 'Theo tháng (39k/tháng)');
+    assert.strictEqual(i18n.t('billing_yearly_opt'), 'Theo năm (350k/năm)');
     assert.strictEqual(i18n.t('pricing_free_name'), 'Gói Miễn Phí');
     assert.strictEqual(i18n.t('pricing_pro_name_monthly'), 'Gói Pro Hàng Tháng');
+    assert.strictEqual(i18n.t('pricing_pro_ribbon_yearly'), 'TIẾT KIỆM NHẤT');
 
     i18n.setLanguage('en');
     assert.strictEqual(i18n.t('pricing_section_title'), 'Pricing Plans');
-    assert.strictEqual(i18n.t('billing_monthly_opt'), 'Monthly (49k/mo)');
-    assert.strictEqual(i18n.t('billing_yearly_opt'), 'Yearly (399k/yr)');
+    assert.strictEqual(i18n.t('billing_monthly_opt'), 'Monthly (39k/mo)');
+    assert.strictEqual(i18n.t('billing_yearly_opt'), 'Yearly (350k/yr)');
     assert.strictEqual(i18n.t('pricing_free_name'), 'Free Plan');
     assert.strictEqual(i18n.t('pricing_pro_name_monthly'), 'Pro Monthly Plan');
+    assert.strictEqual(i18n.t('pricing_pro_ribbon_yearly'), 'BEST VALUE');
 });
 
 runTest('Documents and History section bindings exist in index.html', () => {

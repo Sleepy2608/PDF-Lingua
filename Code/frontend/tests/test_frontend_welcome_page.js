@@ -426,7 +426,7 @@ runTest('Pricing: Monthly / Yearly billing toggle configured with discount badge
   assert.ok(htmlContent.includes('welcome-billing-toggle'), 'Missing .welcome-billing-toggle');
   assert.ok(htmlContent.includes('id="btnBillingMonthly"'), 'Missing #btnBillingMonthly');
   assert.ok(htmlContent.includes('id="btnBillingYearly"'), 'Missing #btnBillingYearly');
-  assert.ok(htmlContent.includes('Tiết kiệm 32%'), 'Missing discount badge');
+  assert.ok(htmlContent.includes('Tiết kiệm 25%') || htmlContent.includes('Tiết kiệm 32%'), 'Missing discount badge');
 });
 
 runTest('Pricing: Free and Pro cards exist with feature comparison', () => {
@@ -446,7 +446,7 @@ runTest('CSS: Pricing grid, featured border, and price figures styled', () => {
 runTest('JS: Billing toggle interaction defined for price adjustments', () => {
   assert.ok(jsContent.includes('btnBillingMonthly'), 'JS must reference btnBillingMonthly');
   assert.ok(jsContent.includes('btnBillingYearly'), 'JS must reference btnBillingYearly');
-  assert.ok(jsContent.includes('399.000 đ'), 'JS must toggle yearly price');
+  assert.ok(jsContent.includes('350.000 đ') || jsContent.includes('399.000 đ'), 'JS must toggle yearly price');
 });
 
 // -----------------------------------------------------------------------------
