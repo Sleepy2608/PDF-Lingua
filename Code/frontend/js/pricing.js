@@ -493,7 +493,11 @@
       proYearlyMaxOcrPages.textContent = t('pricing_quota_ocrpages_val', '500 trang', { pages: 500 });
     }
     if (proYearlyFeatureList) {
-      renderFeatureItems(proYearlyFeatureList, proFeatures);
+      const yearlyFeatures = [
+        t('pricing_pro_yearly_f1', 'Tiết kiệm 25% so với gói Pro hàng tháng'),
+        t('pricing_pro_yearly_f2', 'Có các quyền lợi của gói Pro hàng tháng'),
+      ];
+      renderFeatureItems(proYearlyFeatureList, yearlyFeatures);
     }
 
     if (billingSavePill) {
