@@ -508,7 +508,6 @@
     var footerLinkPrivacy = document.getElementById('footerLinkPrivacy');
 
     var btnToggleFullscreenLegal = document.getElementById('btnToggleFullscreenLegal');
-    var btnPrintLegal = document.getElementById('btnPrintLegal');
     var btnScrollToTop = document.getElementById('btnScrollToTop');
     var btnAcceptLegal = document.getElementById('btnAcceptLegal');
     var btnCopySupportEmail = document.getElementById('btnCopySupportEmail');
@@ -625,13 +624,6 @@
               : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
           }
           if (fsText) fsText.textContent = isFs ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_exit_fullscreen') : 'Thu nhỏ') : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_fullscreen') : 'Phóng to');
-        });
-      }
-
-      if (btnPrintLegal) {
-        btnPrintLegal.addEventListener('click', function (e) {
-          e.preventDefault();
-          window.print();
         });
       }
 

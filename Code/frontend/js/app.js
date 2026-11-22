@@ -246,14 +246,6 @@ function initLegalModal() {
         });
     });
 
-    // Print Legal Document Button
-    const btnPrintLegal = document.getElementById('btnPrintLegal');
-    if (btnPrintLegal) {
-        btnPrintLegal.addEventListener('click', () => {
-            window.print();
-        });
-    }
-
     // Scroll to Top Button
     const btnScrollToTop = document.getElementById('btnScrollToTop');
     if (btnScrollToTop) {
