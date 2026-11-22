@@ -123,7 +123,7 @@ def test_e2e_free_to_pro_monthly_syncs_auth_me_and_quotas(sub_e2e_env):
     )
     assert checkout_res.status_code == 201
     tx_code = checkout_res.json()["data"]["transaction_code"]
-    assert checkout_res.json()["data"]["amount_vnd"] == 49000
+    assert checkout_res.json()["data"]["amount_vnd"] == 39000
 
     # 3. Complete payment via simulator
     sim_res = client.post(
@@ -178,7 +178,7 @@ def test_e2e_monthly_plus_yearly_cumulative_stacking(sub_e2e_env):
         "/api/pricing/webhook",
         json={
             "content": f"CHUYEN KHOAN {note2}",
-            "transfer_amount": 399000,
+            "transfer_amount": 350000,
             "status": "completed",
         },
         headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},

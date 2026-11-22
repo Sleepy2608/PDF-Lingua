@@ -48,10 +48,10 @@
 
   function formatStyleLabel(styleKey) {
     switch (styleKey) {
-      case 'brief': return 'Ngắn gọn';
-      case 'bullets': return 'Ý chính';
-      case 'detailed': return 'Chi tiết';
-      default: return styleKey || 'Tự động';
+      case 'brief': return (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('ai_summary_style_brief') : 'Ngắn gọn';
+      case 'bullets': return (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('ai_summary_style_bullets') : 'Ý chính';
+      case 'detailed': return (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('ai_summary_style_detailed') : 'Chi tiết';
+      default: return styleKey || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_auto') : 'Tự động');
     }
   }
 
@@ -172,7 +172,7 @@
     const user = getStoredUser();
 
     if (!token || !user) {
-      showToast('Vui lòng đăng nhập để sử dụng tính năng tóm tắt AI.', 'error');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_ai_summary') : 'Vui lòng đăng nhập để sử dụng tính năng tóm tắt AI.', 'error');
       if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
       }
@@ -204,7 +204,7 @@
 
     const token = getAuthToken();
     if (!token) {
-      showToast('Vui lòng đăng nhập để sử dụng AI.', 'error');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_ai') : 'Vui lòng đăng nhập để sử dụng AI.', 'error');
       return;
     }
 
@@ -233,7 +233,7 @@
     }
 
     if (!textToSummarize || !textToSummarize.trim()) {
-      showToast('Chưa có nội dung văn bản để tóm tắt. Vui lòng mở hoặc tải lên một tệp PDF.', 'error');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_no_text_to_summarize') : 'Chưa có nội dung văn bản để tóm tắt. Vui lòng mở hoặc tải lên một tệp PDF.', 'error');
       return;
     }
 
@@ -260,7 +260,7 @@
     if (loadingEl) loadingEl.style.display = 'block';
     if (resultEl) resultEl.style.display = 'none';
     if (btnExecute) btnExecute.disabled = true;
-    if (btnText) btnText.textContent = 'Đang phân tích...';
+    if (btnText) btnText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('ai_summary_analyzing') : 'Đang phân tích...';
 
     try {
       const payload = {
@@ -289,7 +289,7 @@
           return;
         }
         if (response.status === 401) {
-          showToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+          showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_session_expired') : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
           if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
             window.pdfLinguaAuth.openLoginModal();
           }
@@ -309,7 +309,7 @@
 
       if (modelBadge) modelBadge.textContent = data.model_used || 'gpt-5-mini';
       if (styleBadge) styleBadge.textContent = formatStyleLabel(data.style || style);
-      if (wordBadge) wordBadge.textContent = `${data.word_count || 0} từ`;
+      if (wordBadge) wordBadge.textContent = `${data.word_count || 0} ${(window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_words') : 'từ'}`;
       if (timeBadge) timeBadge.textContent = `${data.execution_time_ms || 0}ms`;
 
       // Render Markdown output
@@ -335,19 +335,19 @@
       if (resultEl) resultEl.style.display = 'block';
 
       if (data.fallback_used) {
-        showToast('Đã tạo bản tóm tắt nội dung (chế độ ngoại tuyến).', 'success');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_summary_offline_success') : 'Đã tạo bản tóm tắt nội dung (chế độ ngoại tuyến).', 'success');
       } else {
-        showToast('Tóm tắt tài liệu thành công!', 'success');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_summary_success') : 'Tóm tắt tài liệu thành công!', 'success');
       }
 
     } catch (err) {
       console.error('[AI Summary Error]', err);
-      showToast(err.message || 'Không thể tạo bản tóm tắt. Vui lòng thử lại sau.', 'error');
+      showToast(err.message || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_summary_failed') : 'Không thể tạo bản tóm tắt. Vui lòng thử lại sau.'), 'error');
     } finally {
       isSummarizing = false;
       if (loadingEl) loadingEl.style.display = 'none';
       if (btnExecute) btnExecute.disabled = false;
-      if (btnText) btnText.textContent = 'Bắt đầu tóm tắt';
+      if (btnText) btnText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('ai_summary_start_btn') : 'Bắt đầu tóm tắt';
     }
   }
 
@@ -363,7 +363,7 @@
     }
 
     if (!lastSummaryText) {
-      showToast('Chưa có nội dung tóm tắt để sao chép.', 'error');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_no_summary_to_copy') : 'Chưa có nội dung tóm tắt để sao chép.', 'error');
       return;
     }
 
@@ -385,15 +385,15 @@
       const btnCopyText = document.getElementById('btnCopyAiSummaryText');
       if (btnCopyText) {
         const originalText = btnCopyText.textContent;
-        btnCopyText.textContent = 'Đã sao chép!';
+        btnCopyText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copied') : 'Đã sao chép!';
         setTimeout(() => {
           btnCopyText.textContent = originalText;
         }, 2000);
       }
 
-      showToast('Đã sao chép nội dung tóm tắt vào clipboard!', 'success');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_summary_copied') : 'Đã sao chép nội dung tóm tắt vào clipboard!', 'success');
     } catch (_err) {
-      showToast('Không thể sao chép văn bản vào clipboard.', 'error');
+      showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_copy_clipboard_failed') : 'Không thể sao chép văn bản vào clipboard.', 'error');
     }
   }
 

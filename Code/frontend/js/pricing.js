@@ -4,7 +4,7 @@
  * Manages:
  * - Fetching live pricing catalog (`GET /api/pricing/plans`) with graceful offline fallback
  * - Fetching current user's subscription state (`GET /api/pricing/my-subscription`)
- * - Segmented billing cycle toggle (`monthly`: 49.000đ/tháng vs `yearly`: 399.000đ/năm - Tiết kiệm 32%)
+ * - Segmented billing cycle toggle (`monthly`: 39.000đ/tháng vs `yearly`: 350.000đ/năm - Tiết kiệm 25%)
  * - Dynamic CTA state synchronization for Guest, Free, Pro, and Admin accounts
  * - View switching between `#pricingSection`, `#heroSection`, `#workspaceSection`, and `#adminSection`
  */
@@ -40,12 +40,12 @@
       monthly: {
         code: 'pro_monthly',
         name: 'Gói Pro Hàng Tháng',
-        price_vnd: 49000,
-        original_price_vnd: 49000,
+        price_vnd: 39000,
+        original_price_vnd: 39000,
         discount_percent: 0,
         billing_cycle: 'monthly',
         duration_days: 30,
-        price_display: '49.000đ',
+        price_display: '39.000đ',
         period_display: '/ tháng',
         monthly_equivalent: null,
         badge: null,
@@ -53,15 +53,15 @@
       yearly: {
         code: 'pro_yearly',
         name: 'Gói Pro Hàng Năm',
-        price_vnd: 399000,
-        original_price_vnd: 588000,
-        discount_percent: 32,
+        price_vnd: 350000,
+        original_price_vnd: 468000,
+        discount_percent: 25,
         billing_cycle: 'yearly',
         duration_days: 365,
-        price_display: '399.000đ',
+        price_display: '350.000đ',
         period_display: '/ năm',
-        monthly_equivalent: '33.250đ / tháng',
-        badge: 'TIẾT KIỆM 32%',
+        monthly_equivalent: '29.100đ / tháng',
+        badge: 'TIẾT KIỆM 25%',
       },
       shared_features: [
         'Tải lên tệp PDF siêu lớn đến 100 MB',
@@ -154,11 +154,38 @@
     }
   }
 
+  function t(key, fallback, params) {
+    if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
+      const translated = window.i18n.t(key, params);
+      if (translated && translated !== key) {
+        return translated;
+      }
+    }
+    if (params && typeof fallback === 'string') {
+      let res = fallback;
+      Object.keys(params).forEach((k) => {
+        res = res.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+      });
+      return res;
+    }
+    return fallback;
+  }
+
+  function isEnLanguage() {
+    return (
+      typeof window !== 'undefined' &&
+      window.i18n &&
+      typeof window.i18n.getLanguage === 'function' &&
+      window.i18n.getLanguage() === 'en'
+    );
+  }
+
   function initPricingModule() {
     const btnMonthly = document.getElementById('btnBillingMonthly');
     const btnYearly = document.getElementById('btnBillingYearly');
     const btnSelectFree = document.getElementById('btnSelectFreePlan');
     const btnUpgradePro = document.getElementById('btnUpgradeProPlan');
+    const btnUpgradeProYearly = document.getElementById('btnUpgradeProYearlyPlan');
     const btnCancelAutoRenew = document.getElementById('btnCancelAutoRenew');
     const topNavPricing = document.getElementById('topNavPricing');
     const topNavTranslate = document.getElementById('topNavTranslate');
@@ -187,7 +214,14 @@
     if (btnUpgradePro) {
       btnUpgradePro.addEventListener('click', (e) => {
         e.preventDefault();
-        handleUpgradeProAction();
+        handleUpgradeProAction('pro_monthly');
+      });
+    }
+
+    if (btnUpgradeProYearly) {
+      btnUpgradeProYearly.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleUpgradeProAction('pro_yearly');
       });
     }
 
@@ -206,6 +240,15 @@
         closePricingView();
       });
     }
+
+    document.addEventListener('languageChanged', () => {
+      renderPricingCatalog();
+      renderUserSubscriptionState(getStoredUser(), mySubscriptionData);
+      if (currentTransaction) {
+        renderCheckoutOrderSummary(currentTransaction.plan_code);
+        renderTransactionDetails(currentTransaction);
+      }
+    });
 
     if (topNavPricing) {
       topNavPricing.addEventListener('click', (e) => {
@@ -270,8 +313,13 @@
     const proPlanDiscountBadge = document.getElementById('proPlanDiscountBadge');
     const btnUpgradePro = document.getElementById('btnUpgradeProPlan');
 
+    const isEn = isEnLanguage();
+
     if (proPlanName) {
-      proPlanName.textContent = activePlan.name || (currentCycle === 'yearly' ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng');
+      const defaultName = currentCycle === 'yearly'
+        ? t('pricing_pro_name_yearly', 'Gói Pro Hàng Năm')
+        : t('pricing_pro_name_monthly', 'Gói Pro Hàng Tháng');
+      proPlanName.textContent = isEn ? defaultName : (activePlan.name || defaultName);
     }
 
     if (proPlanPriceDisplay) {
@@ -280,8 +328,10 @@
     }
 
     if (proPlanPeriodDisplay) {
-      proPlanPeriodDisplay.textContent =
-        activePlan.period_display || (currentCycle === 'yearly' ? '/ năm' : '/ tháng');
+      const defaultPeriod = currentCycle === 'yearly'
+        ? t('pricing_pro_period_year', '/ năm')
+        : t('pricing_pro_period_month', '/ tháng');
+      proPlanPeriodDisplay.textContent = isEn ? defaultPeriod : (activePlan.period_display || defaultPeriod);
     }
 
     if (proPlanOriginalPrice) {
@@ -299,17 +349,18 @@
 
     if (proPlanSubnote) {
       if (currentCycle === 'yearly') {
-        const eq = activePlan.monthly_equivalent || '33.250đ / tháng';
-        proPlanSubnote.textContent = `Tương đương ${eq} (Hiệu lực 365 ngày)`;
+        const eq = activePlan.monthly_equivalent || '29.100đ / tháng';
+        proPlanSubnote.textContent = t('pricing_pro_subnote_yearly', `Tương đương ${eq} (Hiệu lực 365 ngày)`, { eq });
       } else {
-        proPlanSubnote.textContent = 'Thanh toán linh hoạt từng tháng (30 ngày)';
+        proPlanSubnote.textContent = t('pricing_pro_subnote_monthly', 'Thanh toán linh hoạt từng tháng (30 ngày)');
       }
     }
 
     if (proPlanDiscountBadge) {
       if (currentCycle === 'yearly' && (activePlan.discount_percent > 0 || activePlan.badge)) {
-        proPlanDiscountBadge.textContent =
-          activePlan.badge || `TIẾT KIỆM ${activePlan.discount_percent}%`;
+        proPlanDiscountBadge.textContent = isEn
+          ? t('pricing_pro_discount_badge', 'SAVE 25%')
+          : (activePlan.badge || t('pricing_pro_discount_badge', `TIẾT KIỆM ${activePlan.discount_percent}%`));
         proPlanDiscountBadge.style.display = 'inline-flex';
       } else {
         proPlanDiscountBadge.style.display = 'none';
@@ -351,20 +402,101 @@
     const proFeatureList = document.getElementById('proFeatureList');
     const billingSavePill = document.getElementById('billingSavePill');
 
+    const proYearlyPlanName = document.getElementById('proYearlyPlanName');
+    const proYearlyPlanPriceDisplay = document.getElementById('proYearlyPlanPriceDisplay');
+    const proYearlyPlanPeriodDisplay = document.getElementById('proYearlyPlanPeriodDisplay');
+    const proYearlyPlanOriginalPrice = document.getElementById('proYearlyPlanOriginalPrice');
+    const proYearlyPlanSubnote = document.getElementById('proYearlyPlanSubnote');
+    const proYearlyPlanDiscountBadge = document.getElementById('proYearlyPlanDiscountBadge');
+    const proYearlyMaxFileSize = document.getElementById('proYearlyMaxFileSize');
+    const proYearlyMaxOcrPages = document.getElementById('proYearlyMaxOcrPages');
+    const proYearlyFeatureList = document.getElementById('proYearlyFeatureList');
+
+    const isEn = isEnLanguage();
+
     if (freeMaxFileSize && freeTier.max_file_size_mb) {
-      freeMaxFileSize.textContent = `${freeTier.max_file_size_mb} MB / tệp`;
+      freeMaxFileSize.textContent = t('pricing_quota_filesize_val', `${freeTier.max_file_size_mb} MB / tệp`, { size: freeTier.max_file_size_mb });
     }
     if (freeMaxOcrPages && freeTier.max_ocr_pages) {
-      freeMaxOcrPages.textContent = `${freeTier.max_ocr_pages} trang`;
+      freeMaxOcrPages.textContent = t('pricing_quota_ocrpages_val', `${freeTier.max_ocr_pages} trang`, { pages: freeTier.max_ocr_pages });
     }
-    if (freeFeatureList && Array.isArray(freeTier.features)) {
-      renderFeatureItems(freeFeatureList, freeTier.features);
+
+    const freeFeatures = isEn
+      ? [
+          t('pricing_free_f1', 'Tải lên tệp PDF tối đa 20 MB'),
+          t('pricing_free_f2', 'Nhận diện OCR tối đa 100 trang'),
+          t('pricing_free_f3', 'Dịch thuật song ngữ thông minh tiêu chuẩn'),
+          t('pricing_free_f4', 'Lưu trữ 5 tài liệu gần đây'),
+          t('pricing_free_f5', 'Hỗ trợ xuất tệp TXT và PDF Song ngữ'),
+        ]
+      : (Array.isArray(freeTier.features) ? freeTier.features : DEFAULT_CATALOG.free_tier.features);
+
+    const proFeatures = isEn
+      ? [
+          t('pricing_pro_f1', 'Tải lên tệp PDF siêu lớn đến 100 MB'),
+          t('pricing_pro_f2', 'Nhận dạng OCR chuyên sâu đến 500 trang'),
+          t('pricing_pro_f3', 'Trợ lý AI Hỏi đáp (AI Copilot) 15 câu / ngày'),
+          t('pricing_pro_f4', 'Tóm tắt thông minh AI Summary & bảng thuật ngữ'),
+          t('pricing_pro_f5', 'Hàng đợi ưu tiên tốc độ cao (Fast-track Worker)'),
+          t('pricing_pro_f6', 'Kho lưu trữ tài liệu cá nhân không giới hạn'),
+          t('pricing_pro_f7', 'Huy hiệu VIP trên hồ sơ và giao diện'),
+          t('pricing_pro_f8', 'Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)'),
+        ]
+      : (Array.isArray(proTier.shared_features) ? proTier.shared_features : DEFAULT_CATALOG.pro_tier.shared_features);
+
+    if (freeFeatureList) {
+      renderFeatureItems(freeFeatureList, freeFeatures);
     }
-    if (proFeatureList && Array.isArray(proTier.shared_features)) {
-      renderFeatureItems(proFeatureList, proTier.shared_features);
+    if (proFeatureList) {
+      renderFeatureItems(proFeatureList, proFeatures);
     }
-    if (billingSavePill && proTier.yearly && proTier.yearly.badge) {
-      billingSavePill.textContent = proTier.yearly.badge;
+
+    // Render Card 3 (Pro Yearly) in 3-card layout if present in DOM
+    if (proYearlyPlanName) {
+      const defaultYearlyName = t('pricing_pro_name_yearly', 'Gói Pro Hàng Năm');
+      proYearlyPlanName.textContent = isEn ? defaultYearlyName : (proTier.yearly.name || defaultYearlyName);
+    }
+    if (proYearlyPlanPriceDisplay) {
+      proYearlyPlanPriceDisplay.textContent =
+        proTier.yearly.price_display || formatVnd(proTier.yearly.price_vnd);
+    }
+    if (proYearlyPlanPeriodDisplay) {
+      const defaultPeriodYear = t('pricing_pro_period_year', '/ năm');
+      proYearlyPlanPeriodDisplay.textContent = isEn ? defaultPeriodYear : (proTier.yearly.period_display || defaultPeriodYear);
+    }
+    if (proYearlyPlanOriginalPrice) {
+      if (proTier.yearly.original_price_vnd && proTier.yearly.original_price_vnd > proTier.yearly.price_vnd) {
+        proYearlyPlanOriginalPrice.textContent = formatVnd(proTier.yearly.original_price_vnd);
+        proYearlyPlanOriginalPrice.style.display = 'inline';
+      }
+    }
+    if (proYearlyPlanSubnote) {
+      proYearlyPlanSubnote.textContent = t('pricing_pro_subnote_yearly_card', 'Tương đương ~29.100đ / tháng');
+    }
+    if (proYearlyPlanDiscountBadge) {
+      proYearlyPlanDiscountBadge.textContent = isEn
+        ? t('pricing_discount_badge_25', 'SAVE 25%')
+        : (proTier.yearly.badge || t('pricing_discount_badge_25', 'TIẾT KIỆM 25%'));
+      proYearlyPlanDiscountBadge.style.display = 'inline-flex';
+    }
+    if (proYearlyMaxFileSize) {
+      proYearlyMaxFileSize.textContent = t('pricing_quota_filesize_val', '100 MB / tệp', { size: 100 });
+    }
+    if (proYearlyMaxOcrPages) {
+      proYearlyMaxOcrPages.textContent = t('pricing_quota_ocrpages_val', '500 trang', { pages: 500 });
+    }
+    if (proYearlyFeatureList) {
+      const yearlyFeatures = [
+        t('pricing_pro_yearly_f1', 'Tiết kiệm 25% so với gói Pro hàng tháng'),
+        t('pricing_pro_yearly_f2', 'Có các quyền lợi của gói Pro hàng tháng'),
+      ];
+      renderFeatureItems(proYearlyFeatureList, yearlyFeatures);
+    }
+
+    if (billingSavePill) {
+      billingSavePill.textContent = isEn
+        ? t('pricing_pro_discount_badge', 'SAVE 25%')
+        : ((proTier.yearly && proTier.yearly.badge) || t('pricing_pro_discount_badge', 'TIẾT KIỆM 25%'));
     }
 
     renderProCardForCycle();
@@ -376,6 +508,9 @@
     const btnUpgradePro = document.getElementById('btnUpgradeProPlan');
     const btnUpgradeProText = document.getElementById('btnUpgradeProText');
     const proPlanCtaHint = document.getElementById('proPlanCtaHint');
+    const btnUpgradeProYearly = document.getElementById('btnUpgradeProYearlyPlan');
+    const btnUpgradeProYearlyText = document.getElementById('btnUpgradeProYearlyText');
+    const proYearlyPlanCtaHint = document.getElementById('proYearlyPlanCtaHint');
     const activeBanner = document.getElementById('pricingActiveBanner');
     const activeBannerTitle = document.getElementById('pricingActiveBannerTitle');
     const activeBannerSub = document.getElementById('pricingActiveBannerSub');
@@ -387,6 +522,8 @@
       (subData && subData.current_role) ||
       (user && user.role ? String(user.role).toLowerCase() : null);
     const activeSub = subData ? subData.active_subscription : null;
+
+    const isEn = isEnLanguage();
 
     if (!user && !effectiveRole) {
       // Guest state
@@ -401,23 +538,32 @@
       }
       if (btnSelectFree) {
         btnSelectFree.disabled = false;
-        btnSelectFree.textContent = 'Bắt đầu miễn phí';
+        btnSelectFree.textContent = t('pricing_free_cta', 'Bắt đầu miễn phí');
       }
       if (freePlanCtaHint) {
-        freePlanCtaHint.textContent = 'Sẵn sàng sử dụng ngay khi tải tệp PDF';
+        freePlanCtaHint.textContent = t('pricing_free_hint', 'Sẵn sàng sử dụng ngay khi tải tệp PDF');
       }
       if (btnUpgradePro) {
         btnUpgradePro.disabled = false;
       }
+      if (btnUpgradeProYearly) {
+        btnUpgradeProYearly.disabled = false;
+      }
+      if (btnUpgradeProYearlyText) {
+        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp ngay');
+      }
+      if (proYearlyPlanCtaHint) {
+        proYearlyPlanCtaHint.textContent = '';
+      }
       if (btnUpgradeProText) {
-        btnUpgradeProText.textContent =
-          currentCycle === 'yearly'
-            ? 'Nâng cấp gói Năm (399.000đ)'
-            : 'Nâng cấp lên Pro ngay';
+        btnUpgradeProText.textContent = btnUpgradeProYearly
+          ? t('pricing_pro_cta_monthly', 'Nâng cấp ngay')
+          : (currentCycle === 'yearly'
+              ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)')
+              : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay'));
       }
       if (proPlanCtaHint) {
-        proPlanCtaHint.textContent =
-          'Đăng nhập để kích hoạt qua mã VietQR ngân hàng 24/7';
+        proPlanCtaHint.textContent = '';
       }
       return;
     }
@@ -433,25 +579,33 @@
 
       if (effectiveRole === 'admin') {
         if (activeBannerTitle) {
-          activeBannerTitle.textContent =
-            'Tài khoản Quản trị viên: Đã mở khóa toàn bộ đặc quyền Pro';
+          activeBannerTitle.textContent = isEn
+            ? t('pricing_active_admin_title', 'Admin Account: All Pro privileges unlocked')
+            : t('pricing_active_admin_title', 'Tài khoản Quản trị viên: Đã mở khóa toàn bộ đặc quyền Pro');
         }
         if (activeBannerSub) {
-          activeBannerSub.textContent =
-            'Hạn mức tối đa: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.';
+          activeBannerSub.textContent = isEn
+            ? t('pricing_active_admin_sub', 'Maximum limit: 100 MB per file and 500 deep OCR pages.')
+            : t('pricing_active_admin_sub', 'Hạn mức tối đa: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.');
         }
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = 'none';
         }
       } else if (activeSub) {
         const expDateStr = formatShortDate(activeSub.expires_at);
+        const subPlanName = isEn
+          ? (activeSub.plan_code === 'pro_yearly' ? t('pricing_pro_name_yearly', 'Pro Yearly Plan') : t('pricing_pro_name_monthly', 'Pro Monthly Plan'))
+          : (activeSub.plan_name || 'Gói Pro');
         if (activeBannerTitle) {
-          activeBannerTitle.textContent = `Đang sử dụng: ${activeSub.plan_name || 'Gói Pro'} (Còn ${activeSub.days_remaining} ngày)`;
+          activeBannerTitle.textContent = t('pricing_active_using_title', `Đang sử dụng: ${subPlanName} (Còn ${activeSub.days_remaining} ngày)`, {
+            name: subPlanName,
+            days: activeSub.days_remaining,
+          });
         }
         if (activeBannerSub) {
           activeBannerSub.textContent = activeSub.auto_renew
-            ? `Hiệu lực đến ngày ${expDateStr}. Tự động gia hạn đang bật.`
-            : `Hiệu lực đến ngày ${expDateStr}. Đã tắt gia hạn tự động.`;
+            ? t('pricing_active_renew_on', `Hiệu lực đến ngày ${expDateStr}. Tự động gia hạn đang bật.`, { date: expDateStr })
+            : t('pricing_active_renew_off', `Hiệu lực đến ngày ${expDateStr}. Đã tắt gia hạn tự động.`, { date: expDateStr });
         }
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = activeSub.auto_renew
@@ -493,12 +647,10 @@
         });
       } else {
         if (activeBannerTitle) {
-          activeBannerTitle.textContent =
-            'Tài khoản của bạn đang kích hoạt đặc quyền Gói Pro';
+          activeBannerTitle.textContent = t('pricing_active_fallback_title', 'Tài khoản của bạn đang kích hoạt đặc quyền Gói Pro');
         }
         if (activeBannerSub) {
-          activeBannerSub.textContent =
-            'Hạn mức: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.';
+          activeBannerSub.textContent = t('pricing_active_fallback_sub', 'Hạn mức: 100 MB mỗi tệp và 500 trang OCR chuyên sâu.');
         }
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = 'none';
@@ -525,32 +677,60 @@
 
       if (btnSelectFree) {
         btnSelectFree.disabled = true;
-        btnSelectFree.textContent = 'Đã bao gồm trong gói Pro';
+        btnSelectFree.textContent = t('pricing_btn_included_pro', 'Đã bao gồm trong gói Pro');
       }
       if (freePlanCtaHint) {
-        freePlanCtaHint.textContent =
-          'Bạn đang sở hữu hạn mức cao hơn gói Miễn phí';
+        freePlanCtaHint.textContent = t('pricing_hint_higher_quota', 'Bạn đang sở hữu hạn mức cao hơn gói Miễn phí');
       }
 
-      const selectedCode =
-        currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
-      if (activeSub && activeSub.plan_code === selectedCode) {
-        if (btnUpgradePro) btnUpgradePro.disabled = false;
-        if (btnUpgradeProText) {
-          btnUpgradeProText.textContent = 'Đang sử dụng gói này (Gia hạn thêm)';
+      if (btnUpgradePro) btnUpgradePro.disabled = false;
+      if (btnUpgradeProYearly) btnUpgradeProYearly.disabled = false;
+
+      if (btnUpgradeProYearly) {
+        if (activeSub && activeSub.plan_code === 'pro_yearly') {
+          if (btnUpgradeProYearlyText) {
+            btnUpgradeProYearlyText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+          }
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (39.000đ)');
+          }
+        } else if (activeSub && activeSub.plan_code === 'pro_monthly') {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+          }
+          if (btnUpgradeProYearlyText) {
+            btnUpgradeProYearlyText.textContent = t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)');
+          }
+        } else {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (39.000đ)');
+          }
+          if (btnUpgradeProYearlyText) {
+            btnUpgradeProYearlyText.textContent = t('pricing_btn_extend_yearly', 'Gia hạn thêm gói Năm (350.000đ)');
+          }
         }
       } else {
-        if (btnUpgradePro) btnUpgradePro.disabled = false;
-        if (btnUpgradeProText) {
-          btnUpgradeProText.textContent =
-            currentCycle === 'yearly'
-              ? 'Gia hạn thêm gói Năm (399.000đ)'
-              : 'Gia hạn thêm gói Tháng (49.000đ)';
+        const selectedCode =
+          currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+        if (activeSub && activeSub.plan_code === selectedCode) {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+          }
+        } else {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent =
+              currentCycle === 'yearly'
+                ? t('pricing_btn_extend_yearly', 'Gia hạn thêm gói Năm (350.000đ)')
+                : t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (39.000đ)');
+          }
         }
       }
+
       if (proPlanCtaHint) {
-        proPlanCtaHint.textContent =
-          'Số ngày gia hạn mới sẽ được cộng dồn vào thời hạn hiện tại';
+        proPlanCtaHint.textContent = t('pricing_hint_extend_accumulate', 'Số ngày gia hạn mới sẽ được cộng dồn vào thời hạn hiện tại');
+      }
+      if (proYearlyPlanCtaHint) {
+        proYearlyPlanCtaHint.textContent = t('pricing_hint_extend_accumulate', 'Số ngày gia hạn mới sẽ được cộng dồn vào thời hạn hiện tại');
       }
     } else {
       // Authenticated Free user
@@ -563,24 +743,32 @@
       }
       if (btnSelectFree) {
         btnSelectFree.disabled = true;
-        btnSelectFree.textContent = 'Gói hiện tại của bạn';
+        btnSelectFree.textContent = t('pricing_btn_current_plan', 'Gói hiện tại của bạn');
       }
       if (freePlanCtaHint) {
-        freePlanCtaHint.textContent =
-          'Bạn đang sử dụng gói Miễn phí (20 MB / 100 trang)';
+        freePlanCtaHint.textContent = t('pricing_hint_free_using', 'Bạn đang sử dụng gói Miễn phí (20 MB / 100 trang)');
       }
       if (btnUpgradePro) {
         btnUpgradePro.disabled = false;
       }
+      if (btnUpgradeProYearly) {
+        btnUpgradeProYearly.disabled = false;
+      }
+      if (btnUpgradeProYearlyText) {
+        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp ngay');
+      }
+      if (proYearlyPlanCtaHint) {
+        proYearlyPlanCtaHint.textContent = '';
+      }
       if (btnUpgradeProText) {
-        btnUpgradeProText.textContent =
-          currentCycle === 'yearly'
-            ? 'Nâng cấp gói Năm (399.000đ)'
-            : 'Nâng cấp lên Pro ngay';
+        btnUpgradeProText.textContent = btnUpgradeProYearly
+          ? t('pricing_pro_cta_monthly', 'Nâng cấp ngay')
+          : (currentCycle === 'yearly'
+              ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)')
+              : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay'));
       }
       if (proPlanCtaHint) {
-        proPlanCtaHint.textContent =
-          'Kích hoạt tức thì qua mã VietQR ngân hàng 24/7';
+        proPlanCtaHint.textContent = '';
       }
       const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 100;
       const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 20;
@@ -762,14 +950,14 @@
     }
   }
 
-  function handleUpgradeProAction() {
+  function handleUpgradeProAction(requestedPlanCode) {
     const user = getStoredUser();
     const token = getStoredToken();
-    const planCode = currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+    const planCode = requestedPlanCode || (currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
 
     if (!user || !token) {
       notifyUser(
-        'Vui lòng đăng nhập hoặc đăng ký tài khoản để nâng cấp gói Pro!',
+        t('toast_checkout_login_required', 'Vui lòng đăng nhập hoặc đăng ký tài khoản để nâng cấp gói Pro!'),
         'info'
       );
       if (
@@ -936,16 +1124,16 @@
     } catch (_e) {}
 
     if (btnEl) {
-      const prevText = btnEl.textContent || 'Sao chép';
-      btnEl.textContent = 'Đã chép';
+      const prevText = btnEl.textContent || t('common_copy', 'Sao chép');
+      btnEl.textContent = t('common_copied', 'Đã chép');
       btnEl.classList.add('copied');
       setTimeout(() => {
-        btnEl.textContent = prevText === 'Đã chép' ? 'Sao chép' : prevText;
+        btnEl.textContent = prevText === t('common_copied', 'Đã chép') ? t('common_copy', 'Sao chép') : prevText;
         btnEl.classList.remove('copied');
       }, 1600);
     }
 
-    notifyUser(`Đã sao chép: ${cleanText}`, 'success');
+    notifyUser(t('toast_copied_detail', `Đã sao chép: ${cleanText}`, { text: cleanText }), 'success');
   }
 
   function computeEstimatedExpiryDate(durationDays) {
@@ -1006,14 +1194,18 @@
     }
 
     const durationDays = planObj.duration_days || (isYearly ? 365 : 30);
-    const amountVnd = planObj.price_vnd || (isYearly ? 399000 : 49000);
+    const amountVnd = planObj.price_vnd || (isYearly ? 350000 : 39000);
+
+    const isEn = isEnLanguage();
 
     if (planNameEl) {
-      planNameEl.textContent =
-        planObj.name || (isYearly ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng');
+      const defaultName = isYearly
+        ? t('pricing_pro_name_yearly', 'Gói Pro Hàng Năm')
+        : t('pricing_pro_name_monthly', 'Gói Pro Hàng Tháng');
+      planNameEl.textContent = isEn ? defaultName : (planObj.name || defaultName);
     }
     if (durationEl) {
-      durationEl.textContent = `${durationDays} ngày`;
+      durationEl.textContent = t('checkout_days_format', `${durationDays} ngày`, { days: durationDays });
     }
     if (expiryPreviewEl) {
       expiryPreviewEl.textContent = computeEstimatedExpiryDate(durationDays);
@@ -1021,10 +1213,13 @@
     if (savingsRowEl) {
       if (isYearly) {
         const savedVnd =
-          (planObj.original_price_vnd || 588000) - amountVnd;
-        const pct = planObj.discount_percent || 32;
+          (planObj.original_price_vnd || 468000) - amountVnd;
+        const pct = planObj.discount_percent || 25;
         if (savingsAmountEl) {
-          savingsAmountEl.textContent = `-${formatVnd(savedVnd)} (Tiết kiệm ${pct}%)`;
+          savingsAmountEl.textContent = t('checkout_savings_format', `-${formatVnd(savedVnd)} (Tiết kiệm ${pct}%)`, {
+            amount: formatVnd(savedVnd),
+            pct,
+          });
         }
         savingsRowEl.style.display = 'flex';
       } else {
@@ -1045,7 +1240,7 @@
 
   function buildFallbackCheckoutData(planCode) {
     const isYearly = planCode === 'pro_yearly';
-    const amountVnd = isYearly ? 399000 : 49000;
+    const amountVnd = isYearly ? 350000 : 39000;
     const durationDays = isYearly ? 365 : 30;
     const txCode = `PDL-SUB-${String(Date.now()).slice(-6)}`;
     const transferNote = txCode.replace(/-/g, ' ');
@@ -1095,7 +1290,7 @@
       accountNumEl.textContent = bank.account_number || DEFAULT_BANK_INFO.account_number;
     }
     if (transferAmountEl) {
-      transferAmountEl.textContent = formatVnd(txData.amount_vnd || 49000);
+      transferAmountEl.textContent = formatVnd(txData.amount_vnd || 39000);
     }
     if (transferNoteEl) {
       transferNoteEl.textContent =
@@ -1105,7 +1300,7 @@
       txCodeEl.textContent = txData.transaction_code || '---';
     }
     if (pollingTextEl) {
-      pollingTextEl.textContent = 'Đang chờ thanh toán từ ngân hàng...';
+      pollingTextEl.textContent = t('checkout_polling_text', 'Đang chờ thanh toán từ ngân hàng...');
     }
 
     if (qrImg) {
@@ -1322,7 +1517,7 @@
           handlePaymentExpired();
         } else if (isManualCheck) {
           notifyUser(
-            'Giao dịch đang chờ ngân hàng xác nhận. Bạn có thể bấm "Giả lập thanh toán thành công" để kiểm thử ngay.',
+            t('toast_checkout_pending_check', 'Giao dịch đang chờ ngân hàng xác nhận. Bạn có thể bấm "Giả lập thanh toán thành công" để kiểm thử ngay.'),
             'info'
           );
         }
@@ -1331,7 +1526,7 @@
     } catch (_err) {
       if (isManualCheck) {
         notifyUser(
-          'Không thể kiểm tra trạng thái từ máy chủ lúc này.',
+          t('toast_checkout_server_error', 'Không thể kiểm tra trạng thái từ máy chủ lúc này.'),
           'error'
         );
       }
@@ -1351,7 +1546,7 @@
     const btnSimulate = document.getElementById('btnSimulatePaymentSuccess');
     const btnSimulateText = document.getElementById('btnSimulatePaymentText');
     if (btnSimulate) btnSimulate.disabled = true;
-    if (btnSimulateText) btnSimulateText.textContent = 'Đang xác nhận...';
+    if (btnSimulateText) btnSimulateText.textContent = t('checkout_btn_confirming', 'Đang xác nhận...');
 
     const code = currentTransaction.transaction_code;
     const token = getStoredToken();
@@ -1417,7 +1612,7 @@
       isSimulatingPayment = false;
       if (btnSimulate) btnSimulate.disabled = false;
       if (btnSimulateText) {
-        btnSimulateText.textContent = 'Giả lập thanh toán thành công';
+        btnSimulateText.textContent = t('checkout_btn_simulate', 'Giả lập thanh toán thành công');
       }
     }
   }
@@ -1502,7 +1697,7 @@
     const amountVnd =
       (txData && txData.amount_vnd) ||
       (currentTransaction && currentTransaction.amount_vnd) ||
-      49000;
+      39000;
 
     if (receiptCodeEl) {
       receiptCodeEl.textContent =
@@ -1535,7 +1730,7 @@
     setCheckoutViewState('success');
     triggerCheckoutConfetti();
     notifyUser(
-      'Chúc mừng! Tài khoản của bạn đã nâng cấp lên Gói Pro VIP thành công.',
+      t('toast_checkout_success', 'Chúc mừng! Tài khoản của bạn đã nâng cấp lên Gói Pro VIP thành công.'),
       'success'
     );
   }
@@ -1545,7 +1740,7 @@
     if (!stage || typeof document.createElement !== 'function') return;
 
     stage.innerHTML = '';
-    const palette = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#3B82F6'];
+    const palette = ['#DC2626', '#F59E0B', '#10B981', '#EF4444', '#3B82F6'];
     const pieceCount = 24;
 
     for (let i = 0; i < pieceCount; i++) {
@@ -1576,18 +1771,18 @@
       const body = await res.json();
       if (res.ok && body && body.success) {
         notifyUser(
-          body.message || 'Đã hủy gia hạn tự động gói dịch vụ Pro thành công.',
+          body.message || t('toast_cancel_auto_renew_success', 'Đã hủy gia hạn tự động gói dịch vụ Pro thành công.'),
           'success'
         );
         await fetchMySubscription();
       } else {
         notifyUser(
-          (body && body.message) || 'Không thể hủy gia hạn tự động lúc này.',
+          (body && body.message) || t('toast_cancel_auto_renew_error', 'Không thể hủy gia hạn tự động lúc này.'),
           'error'
         );
       }
     } catch (_err) {
-      notifyUser('Lỗi kết nối khi gửi yêu cầu hủy gia hạn.', 'error');
+      notifyUser(t('toast_cancel_auto_renew_net_error', 'Lỗi kết nối khi gửi yêu cầu hủy gia hạn.'), 'error');
     }
   }
 
@@ -1853,8 +2048,10 @@
     const modal = document.getElementById('quotaExceededModal');
     const reasonEl = document.getElementById('quotaExceededReason');
 
-    if (reasonEl && reasonMessage) {
-      reasonEl.textContent = String(reasonMessage);
+    if (reasonEl) {
+      reasonEl.textContent = reasonMessage
+        ? String(reasonMessage)
+        : t('quota_modal_reason', 'Tệp PDF bạn vừa chọn vượt quá giới hạn 20 MB hoặc 100 trang OCR của gói Miễn phí.');
     }
 
     if (modal) {

@@ -31,6 +31,32 @@
   let inFlightDocsPromise = null;
   let inFlightToken = null;
 
+  function t(key, fallback, params) {
+    if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
+      const translated = window.i18n.t(key, params);
+      if (translated && translated !== key) {
+        return translated;
+      }
+    }
+    if (params && typeof fallback === 'string') {
+      let res = fallback;
+      Object.keys(params).forEach((k) => {
+        res = res.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+      });
+      return res;
+    }
+    return fallback;
+  }
+
+  function isEnLanguage() {
+    return (
+      typeof window !== 'undefined' &&
+      window.i18n &&
+      typeof window.i18n.getLanguage === 'function' &&
+      window.i18n.getLanguage() === 'en'
+    );
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
   });
@@ -280,6 +306,19 @@
       }
     });
 
+    // Listen to languageChanged events from i18n.js
+    document.addEventListener('languageChanged', () => {
+      syncUserProfile();
+      const isLoggedIn = !!getStoredAuthToken();
+      updateSidebarEmptyDocsContent(isLoggedIn);
+      if (cachedDocuments && cachedDocuments.length > 0) {
+        renderDocumentsTable(cachedDocuments);
+      }
+      if (cachedHistories && cachedHistories.length > 0) {
+        renderHistoryTable(cachedHistories);
+      }
+    });
+
     // Listen to document processed events from workspace.js for auto-refresh
     window.addEventListener('pdfl:document-processed', () => {
       fetchRecentDocuments();
@@ -402,7 +441,7 @@
     const token = getStoredAuthToken();
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng tính năng Tài liệu.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_documents') : 'Vui lòng đăng nhập để sử dụng tính năng Tài liệu.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -455,7 +494,7 @@
     const token = getStoredAuthToken();
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng tính năng Lịch sử xử lý.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_history') : 'Vui lòng đăng nhập để sử dụng tính năng Lịch sử xử lý.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -559,7 +598,7 @@
     // 1. Authentication check
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng Trợ lý Hỏi đáp AI.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_copilot') : 'Vui lòng đăng nhập để sử dụng Trợ lý Hỏi đáp AI.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -662,7 +701,7 @@
     // 1. Authentication check
     if (!token || !user) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để sử dụng tính năng Tóm tắt văn bản AI.', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_login_required_ai_summary') : 'Vui lòng đăng nhập để sử dụng tính năng Tóm tắt văn bản AI.', 'info');
       }
       if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
         window.pdfLinguaAuth.openLoginModal();
@@ -757,7 +796,7 @@
 
     if (!hasWorkspaceDoc && !hasText) {
       if (typeof showToast === 'function') {
-        showToast('Vui lòng mở một tài liệu hoặc tải lên tệp PDF để bắt đầu tóm tắt AI!', 'info');
+        showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_open_doc_for_summary') : 'Vui lòng mở một tài liệu hoặc tải lên tệp PDF để bắt đầu tóm tắt AI!', 'info');
       }
     }
 
@@ -805,14 +844,16 @@
     }
 
     if (btnToggleSidebar) {
+      const expandText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('sidebar_expand_title') : 'Mở rộng thanh điều hướng';
+      const collapseText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('sidebar_collapse_title') : 'Thu gọn thanh điều hướng';
       btnToggleSidebar.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
       btnToggleSidebar.setAttribute(
         'data-tooltip',
-        isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'
+        isCollapsed ? expandText : collapseText
       );
       btnToggleSidebar.setAttribute(
         'aria-label',
-        isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'
+        isCollapsed ? expandText : collapseText
       );
     }
 
@@ -924,7 +965,7 @@
         } else {
           // If no document has been translated yet, prompt user and stay on Trang chủ
           if (typeof showToast === 'function') {
-            showToast('Chưa có tài liệu dịch thuật nào. Vui lòng tải lên tệp PDF tại Trang chủ để bắt đầu dịch!', 'info');
+            showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_no_translation_doc') : 'Chưa có tài liệu dịch thuật nào. Vui lòng tải lên tệp PDF tại Trang chủ để bắt đầu dịch!', 'info');
           }
           navigateToHome();
         }
@@ -1237,7 +1278,13 @@
     }
 
     if (profileCard) {
-      profileCard.setAttribute('data-tooltip', currentUser && (currentUser.email || currentUser.id) ? 'Tài khoản cá nhân' : 'Khách');
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+      const tooltip = currentUser && (currentUser.email || currentUser.id)
+        ? (isEn ? 'Personal Account' : 'Tài khoản cá nhân')
+        : (isEn ? 'Guest' : 'Khách');
+      profileCard.setAttribute('data-tooltip', tooltip);
     }
 
     const role = currentUser ? (currentUser.role || 'free') : 'guest';
@@ -1250,7 +1297,7 @@
         sideNavAiCopilot.removeAttribute('title');
       } else {
         sideNavAiCopilot.classList.add('is-dimmed');
-        sideNavAiCopilot.setAttribute('title', 'Tính năng Hỏi đáp AI dành cho Gói Pro');
+        sideNavAiCopilot.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_copilot_pro_only') : 'Tính năng Hỏi đáp AI dành cho Gói Pro');
       }
     }
 
@@ -1260,7 +1307,7 @@
         sideNavAiSummarize.removeAttribute('title');
       } else {
         sideNavAiSummarize.classList.add('is-dimmed');
-        sideNavAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản dành cho Gói Pro');
+        sideNavAiSummarize.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_summary_pro_only') : 'Tính năng Tóm tắt văn bản dành cho Gói Pro');
       }
     }
 
@@ -1273,7 +1320,7 @@
         sideNavDocuments.removeAttribute('title');
       } else {
         sideNavDocuments.classList.add('is-dimmed');
-        sideNavDocuments.setAttribute('title', 'Tính năng Tài liệu (Dành cho người dùng đã đăng nhập)');
+        sideNavDocuments.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_documents_auth_only') : 'Tính năng Tài liệu (Dành cho người dùng đã đăng nhập)');
       }
     }
 
@@ -1283,7 +1330,7 @@
         sideNavHistory.removeAttribute('title');
       } else {
         sideNavHistory.classList.add('is-dimmed');
-        sideNavHistory.setAttribute('title', 'Tính năng Lịch sử xử lý (Dành cho người dùng đã đăng nhập)');
+        sideNavHistory.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_history_auth_only') : 'Tính năng Lịch sử xử lý (Dành cho người dùng đã đăng nhập)');
       }
     }
 
@@ -1293,7 +1340,7 @@
         btnAiSummarize.removeAttribute('title');
       } else {
         btnAiSummarize.classList.add('is-dimmed');
-        btnAiSummarize.setAttribute('title', 'Tính năng Tóm tắt văn bản bằng AI (Dành cho Gói Pro)');
+        btnAiSummarize.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_btn_summary_pro_only') : 'Tính năng Tóm tắt văn bản bằng AI (Dành cho Gói Pro)');
       }
     }
 
@@ -1303,12 +1350,12 @@
         btnAiCopilot.removeAttribute('title');
       } else {
         btnAiCopilot.classList.add('is-dimmed');
-        btnAiCopilot.setAttribute('title', 'Tính năng Hỏi đáp AI về tài liệu (Dành cho Gói Pro)');
+        btnAiCopilot.setAttribute('title', (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('tooltip_btn_copilot_pro_only') : 'Tính năng Hỏi đáp AI về tài liệu (Dành cho Gói Pro)');
       }
     }
 
     if (currentUser && (currentUser.email || currentUser.id)) {
-      const displayName = currentUser.full_name || currentUser.email || 'Người dùng';
+      const displayName = currentUser.full_name || currentUser.email || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_user') : 'Người dùng');
       const initial = (currentUser.full_name ? currentUser.full_name.trim().charAt(0) : (currentUser.email ? currentUser.email.trim().charAt(0) : 'U')).toUpperCase() || 'U';
 
       if (avatarEl) {
@@ -1352,14 +1399,18 @@
 
       if (roleEl) {
         roleEl.style.display = '';
+        const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+          ? i18n.getLanguage() === 'en'
+          : false;
+
         if (role === 'admin') {
-          roleEl.textContent = 'Quản trị viên';
+          roleEl.textContent = isEn ? 'Admin' : 'Quản trị viên';
           roleEl.style.color = '#C9201C';
         } else if (role === 'pro') {
-          roleEl.textContent = 'Gói Pro';
+          roleEl.textContent = isEn ? 'Pro User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Pro' : 'Gói Pro');
           roleEl.style.color = '#F59E0B';
         } else {
-          roleEl.textContent = 'Gói Miễn phí';
+          roleEl.textContent = isEn ? 'Free User' : (typeof i18n !== 'undefined' && typeof i18n.t === 'function' && i18n.getLanguage() === 'vi' ? 'Người dùng Free' : 'Gói Miễn phí');
           roleEl.style.color = '#64748B';
         }
       }
@@ -1381,7 +1432,10 @@
         avatarEl.style.borderColor = '#CBD5E1';
       }
 
-      if (nameEl) nameEl.textContent = 'Khách';
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+      if (nameEl) nameEl.textContent = isEn ? 'Guest' : 'Khách';
       if (roleEl) {
         roleEl.textContent = '';
         roleEl.style.display = 'none';
@@ -1456,7 +1510,7 @@
       if (tbodyEl && state !== 'loading') tbodyEl.innerHTML = '';
       if (countBadge && (state === 'unauthenticated' || state === 'error' || state === 'empty')) {
         if (state !== 'empty') {
-          countBadge.textContent = '0 tài liệu';
+          countBadge.textContent = isEnLanguage() ? '0 documents' : '0 tài liệu';
         }
       }
     }
@@ -1479,21 +1533,27 @@
         ? emptyStateEl.querySelector('.empty-state-desc')
         : null;
 
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+
       if (!isLoggedIn) {
-        if (titleEl) titleEl.textContent = 'Đăng nhập để lưu tài liệu';
+        if (titleEl) titleEl.textContent = isEn ? 'Sign in to save documents' : 'Đăng nhập để lưu tài liệu';
         if (descEl) {
-          descEl.innerHTML = 'Tài liệu đã dịch sẽ được lưu tự động tại đây.<br><span class="empty-state-action" id="emptyStateLoginAction">Đăng nhập ngay &rarr;</span>';
+          descEl.innerHTML = isEn
+            ? 'Translated documents will be saved automatically here.<br><span class="empty-state-action" id="emptyStateLoginAction">Sign in now &rarr;</span>'
+            : 'Tài liệu đã dịch sẽ được lưu tự động tại đây.<br><span class="empty-state-action" id="emptyStateLoginAction">Đăng nhập ngay &rarr;</span>';
         }
         if (typeof emptyStateEl.setAttribute === 'function') {
-          emptyStateEl.setAttribute('data-tooltip', 'Bấm để đăng nhập');
+          emptyStateEl.setAttribute('data-tooltip', isEn ? 'Click to sign in' : 'Bấm để đăng nhập');
         }
       } else {
-        if (titleEl) titleEl.textContent = 'Bạn chưa có tài liệu nào.';
+        if (titleEl) titleEl.textContent = isEn ? 'You have no documents yet.' : 'Bạn chưa có tài liệu nào.';
         if (descEl) {
-          descEl.textContent = 'Hãy tải tài liệu đầu tiên của bạn!';
+          descEl.textContent = isEn ? 'Upload your first document to get started!' : 'Hãy tải tài liệu đầu tiên của bạn!';
         }
         if (typeof emptyStateEl.setAttribute === 'function') {
-          emptyStateEl.setAttribute('data-tooltip', 'Bấm để tải tệp PDF lên');
+          emptyStateEl.setAttribute('data-tooltip', isEn ? 'Click to upload PDF' : 'Bấm để tải tệp PDF lên');
         }
       }
     } catch (_e) {}
@@ -1535,7 +1595,7 @@
         docListEl.innerHTML = '';
       }
       const countBadge = document.getElementById('documentsCountBadge');
-      if (countBadge) countBadge.textContent = '0 tài liệu';
+      if (countBadge) countBadge.textContent = isEnLanguage() ? '0 documents' : '0 tài liệu';
       setDocumentsSectionState('unauthenticated');
       return Promise.resolve([]);
     }
@@ -1563,13 +1623,13 @@
             docListEl.innerHTML = '';
           }
           const countBadge = document.getElementById('documentsCountBadge');
-          if (countBadge) countBadge.textContent = '0 tài liệu';
+          if (countBadge) countBadge.textContent = isEnLanguage() ? '0 documents' : '0 tài liệu';
           setDocumentsSectionState('unauthenticated');
           return [];
         }
 
         if (!response.ok) {
-          let errMsg = 'Không thể tải danh sách tài liệu từ máy chủ.';
+          let errMsg = t('docs_load_error', 'Không thể tải danh sách tài liệu từ máy chủ.');
           try {
             const errData = await response.json();
             if (errData && errData.detail) errMsg = errData.detail;
@@ -1616,7 +1676,7 @@
         if (docListEl) docListEl.style.display = 'none';
         const errorMsg = (err && err.message && err.message !== 'Failed to fetch')
           ? err.message
-          : 'Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.';
+          : t('docs_net_error', 'Đã xảy ra lỗi kết nối khi tải dữ liệu từ máy chủ. Vui lòng thử lại.');
         setDocumentsSectionState('error', errorMsg);
         return [];
       } finally {
@@ -1639,7 +1699,10 @@
 
     const allDocs = Array.isArray(docs) ? docs : [];
     if (countBadge) {
-      countBadge.textContent = `${allDocs.length} tài liệu`;
+      const isEn = isEnLanguage();
+      countBadge.textContent = isEn
+        ? (allDocs.length === 1 ? '1 document' : `${allDocs.length} documents`)
+        : `${allDocs.length} tài liệu`;
     }
 
     if (!tableEl || !tbodyEl) return;
@@ -1676,12 +1739,21 @@
     const formattedSize = formatFileSize(doc.file_size_bytes) || '0 B';
     const pageCount = doc.page_count !== undefined && doc.page_count !== null ? doc.page_count : 1;
     const formattedLang = formatTargetLang(doc.target_lang);
+    const isEn = isEnLanguage();
     const isOcr = Boolean(doc.is_ocr_used);
+    const ocrText = isOcr ? (isEn ? 'OCR Scan' : 'Quét OCR') : (isEn ? 'Digital PDF' : 'PDF Số');
     const ocrBadgeHtml = isOcr
-      ? '<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>Quét OCR</span>'
-      : '<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>PDF Số</span>';
+      ? `<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>${ocrText}</span>`
+      : `<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>${ocrText}</span>`;
     const formattedDate = formatDate(doc.created_at) || '--';
     const rowNumber = typeof index === 'number' ? index + 1 : 1;
+    const pageUnit = isEn ? (pageCount === 1 ? ' page' : ' pages') : ' trang';
+    const detailTitle = isEn ? 'View document details' : 'Xem chi tiết tài liệu';
+    const detailLabel = isEn ? `Details of ${escapeHtml(filename)}` : `Chi tiết ${escapeHtml(filename)}`;
+    const detailBtnText = isEn ? 'Details' : 'Chi tiết';
+    const downloadTitle = isEn ? 'Download PDF' : 'Tải xuống PDF';
+    const downloadLabel = isEn ? `Download ${escapeHtml(filename)}` : `Tải xuống ${escapeHtml(filename)}`;
+    const downloadBtnText = isEn ? 'Download' : 'Tải xuống';
 
     tr.innerHTML = `
       <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
@@ -1691,26 +1763,26 @@
         </div>
       </td>
       <td class="font-mono doc-cell-size">${escapeHtml(formattedSize)}</td>
-      <td class="doc-cell-pages"><span class="doc-count-mono">${escapeHtml(String(pageCount))}</span><span class="doc-unit"> trang</span></td>
+      <td class="doc-cell-pages"><span class="doc-count-mono">${escapeHtml(String(pageCount))}</span><span class="doc-unit">${pageUnit}</span></td>
       <td class="doc-cell-lang">${escapeHtml(formattedLang)}</td>
       <td class="doc-cell-ocr">${ocrBadgeHtml}</td>
       <td class="date-mono doc-cell-date">${escapeHtml(formattedDate)}</td>
       <td class="text-right">
         <div class="doc-row-actions user-actions-group">
-          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-detail-btn" title="Xem chi tiết tài liệu" aria-label="Chi tiết ${escapeHtml(filename)}">
+          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-detail-btn" title="${detailTitle}" aria-label="${detailLabel}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
-            <span>Chi tiết</span>
+            <span>${detailBtnText}</span>
           </button>
-          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-download-btn" title="Tải xuống PDF" aria-label="Tải xuống ${escapeHtml(filename)}">
+          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-download-btn" title="${downloadTitle}" aria-label="${downloadLabel}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            <span>Tải xuống</span>
+            <span>${downloadBtnText}</span>
           </button>
         </div>
       </td>
@@ -1798,7 +1870,10 @@
 
     if (spinnerEl) spinnerEl.style.display = isDetailDownloading ? 'inline-block' : 'none';
     if (iconEl) iconEl.style.display = isDetailDownloading ? 'none' : '';
-    if (textEl) textEl.textContent = isDetailDownloading ? 'Đang tải xuống...' : 'Tải xuống PDF';
+    const isEn = isEnLanguage();
+    if (textEl) textEl.textContent = isDetailDownloading
+      ? (isEn ? 'Downloading...' : 'Đang tải xuống...')
+      : (isEn ? 'Download PDF' : 'Tải xuống PDF');
 
     if (btnDownload) {
       if (isDetailDownloading) {
@@ -1831,9 +1906,10 @@
       : null;
 
     if (docId === null) {
-      setDocumentDetailModalState('error', 'Không xác định được ID tài liệu để tải xuống.');
+      const errMsg = t('docs_download_id_error', 'Không xác định được ID tài liệu để tải xuống.');
+      setDocumentDetailModalState('error', errMsg);
       if (typeof showToast === 'function') {
-        showToast('Không xác định được ID tài liệu để tải xuống.', 'error');
+        showToast(errMsg, 'error');
       }
       return false;
     }
@@ -1841,12 +1917,13 @@
     const token = getStoredAuthToken();
     if (!token) {
       const alertEl = document.getElementById('documentDetailAlert');
+      const authErrMsg = t('docs_download_auth_error', 'Vui lòng đăng nhập để tải xuống tài liệu PDF.');
       if (alertEl) {
         alertEl.style.display = 'flex';
-        alertEl.textContent = 'Vui lòng đăng nhập để tải xuống tài liệu PDF.';
+        alertEl.textContent = authErrMsg;
       }
       if (typeof showToast === 'function') {
-        showToast('Vui lòng đăng nhập để tải xuống tài liệu PDF.', 'error');
+        showToast(authErrMsg, 'error');
       }
       return false;
     }
@@ -1864,7 +1941,7 @@
           const alertEl = document.getElementById('documentDetailAlert');
           if (alertEl) {
             alertEl.style.display = 'flex';
-            alertEl.textContent = 'Không thể tải xuống tệp PDF. Vui lòng thử lại sau.';
+            alertEl.textContent = t('docs_download_failed', 'Không thể tải xuống tệp PDF. Vui lòng thử lại sau.');
           }
         }
       }
@@ -1959,7 +2036,10 @@
     if (btnConfirm) btnConfirm.disabled = isDocDeleting;
     if (btnCancel) btnCancel.disabled = isDocDeleting;
     if (spinnerEl) spinnerEl.style.display = isDocDeleting ? 'inline-block' : 'none';
-    if (btnTextEl) btnTextEl.textContent = isDocDeleting ? 'Đang xóa...' : 'Xác nhận xóa';
+    const isEn = isEnLanguage();
+    if (btnTextEl) btnTextEl.textContent = isDocDeleting
+      ? (isEn ? 'Deleting...' : 'Đang xóa...')
+      : (isEn ? 'Confirm Delete' : 'Xác nhận xóa');
   }
 
   /**
@@ -2093,7 +2173,11 @@
       sessionStorage.setItem(ACTIVE_VIEW_KEY, 'documents');
       sessionStorage.setItem(
         PENDING_TOAST_KEY,
-        JSON.stringify({ msg: `Đã xóa tài liệu "${targetFilename}" thành công.`, type: 'success', ts: Date.now() })
+        JSON.stringify({
+          msg: t('docs_delete_success', `Đã xóa tài liệu "${targetFilename}" thành công.`, { name: targetFilename }),
+          type: 'success',
+          ts: Date.now()
+        })
       );
     } catch (_err) { }
 

@@ -131,6 +131,22 @@ function createPricingTestEnv(initialStorage = {}, customFetch = null) {
     btnUpgradeProPlan: new MockElement('btnUpgradeProPlan', 'button', [], { 'data-plan-code': 'pro_monthly' }),
     btnUpgradeProText: new MockElement('btnUpgradeProText', 'span'),
     proPlanCtaHint: new MockElement('proPlanCtaHint', 'p'),
+
+    // 3rd Card: Pro Yearly elements
+    pricingCardProYearly: new MockElement('pricingCardProYearly', 'article'),
+    proYearlyPlanName: new MockElement('proYearlyPlanName', 'h3'),
+    proYearlyPlanPriceDisplay: new MockElement('proYearlyPlanPriceDisplay', 'span'),
+    proYearlyPlanPeriodDisplay: new MockElement('proYearlyPlanPeriodDisplay', 'span'),
+    proYearlyPlanOriginalPrice: new MockElement('proYearlyPlanOriginalPrice', 'span'),
+    proYearlyPlanSubnote: new MockElement('proYearlyPlanSubnote', 'span'),
+    proYearlyPlanDiscountBadge: new MockElement('proYearlyPlanDiscountBadge', 'span'),
+    proYearlyMaxFileSize: new MockElement('proYearlyMaxFileSize', 'span'),
+    proYearlyMaxOcrPages: new MockElement('proYearlyMaxOcrPages', 'span'),
+    proYearlyFeatureList: new MockElement('proYearlyFeatureList', 'ul'),
+    btnUpgradeProYearlyPlan: new MockElement('btnUpgradeProYearlyPlan', 'button', [], { 'data-plan-code': 'pro_yearly' }),
+    btnUpgradeProYearlyText: new MockElement('btnUpgradeProYearlyText', 'span'),
+    proYearlyPlanCtaHint: new MockElement('proYearlyPlanCtaHint', 'p'),
+
     sideNavHome: new MockElement('sideNavHome', 'a', ['sidebar-nav-item']),
     sideNavTranslate: new MockElement('sideNavTranslate', 'a', ['sidebar-nav-item', 'active']),
     sideNavPricing: new MockElement('sideNavPricing', 'a', ['sidebar-nav-item']),
@@ -312,6 +328,11 @@ function createPricingTestEnv(initialStorage = {}, customFetch = null) {
     toasts,
     wasLoginModalOpened: () => loginModalOpened,
     getClipboardCopied: () => clipboardCopied,
+    dispatchDocEvent: (event) => {
+      if (docListeners[event]) {
+        docListeners[event].forEach((fn) => fn());
+      }
+    },
   };
 }
 
@@ -335,14 +356,16 @@ async function main() {
   console.log('PDF-Lingua Pricing Plans, Toggle & VietQR Checkout Test Suite');
   console.log('================================================================\n');
 
-  await runTest('HTML & CSS: Pricing section, toggle controls, cards, and VietQR checkout modal exist', () => {
+  await runTest('HTML & CSS: Pricing section, 3-card grid, controls, and VietQR checkout modal exist', () => {
     assert.ok(htmlSource.includes('href="css/pricing.css"'), 'index.html must link css/pricing.css');
     assert.ok(htmlSource.includes('src="js/pricing.js"'), 'index.html must include js/pricing.js');
     assert.ok(htmlSource.includes('id="pricingSection"'), 'pricingSection must exist');
-    assert.ok(htmlSource.includes('id="btnBillingMonthly"'), 'btnBillingMonthly must exist');
-    assert.ok(htmlSource.includes('id="btnBillingYearly"'), 'btnBillingYearly must exist');
     assert.ok(htmlSource.includes('id="pricingCardFree"'), 'pricingCardFree must exist');
     assert.ok(htmlSource.includes('id="pricingCardPro"'), 'pricingCardPro must exist');
+    assert.ok(htmlSource.includes('id="pricingCardProYearly"'), 'pricingCardProYearly must exist');
+    assert.ok(htmlSource.includes('id="btnUpgradeProYearlyPlan"'), 'btnUpgradeProYearlyPlan must exist');
+    assert.ok(htmlSource.includes('id="btnCheckoutCycleMonthly"'), 'btnCheckoutCycleMonthly must exist');
+    assert.ok(htmlSource.includes('id="btnCheckoutCycleYearly"'), 'btnCheckoutCycleYearly must exist');
     assert.ok(htmlSource.includes('id="pricingComparisonMatrix"'), 'pricingComparisonMatrix must exist');
     assert.ok(htmlSource.includes('id="pricingCheckoutModal"'), 'pricingCheckoutModal must exist');
     assert.ok(htmlSource.includes('id="checkoutQrImage"'), 'checkoutQrImage must exist');
@@ -354,30 +377,40 @@ async function main() {
     assert.ok(pricingCssSource.includes('prefers-reduced-motion: reduce'), 'pricing.css must support prefers-reduced-motion');
   });
 
-  await runTest('Billing Toggle: Default cycle is monthly (49.000đ / tháng)', () => {
+  await runTest('3-Tier Pricing Layout: Default prices are 39.000đ / tháng and 350.000đ / năm', () => {
     const env = createPricingTestEnv();
     assert.strictEqual(env.sandbox.window.PDFLinguaPricing.getBillingCycle(), 'monthly');
-    assert.strictEqual(env.elements.proPlanPriceDisplay.textContent, '49.000đ');
+    assert.strictEqual(env.elements.proPlanPriceDisplay.textContent, '39.000đ');
     assert.strictEqual(env.elements.proPlanPeriodDisplay.textContent, '/ tháng');
-    assert.strictEqual(env.elements.proPlanOriginalPrice.style.display, 'none');
-    assert.strictEqual(env.elements.proPlanDiscountBadge.style.display, 'none');
+    assert.strictEqual(env.elements.proYearlyPlanPriceDisplay.textContent, '350.000đ');
+    assert.strictEqual(env.elements.proYearlyPlanPeriodDisplay.textContent, '/ năm');
+    assert.strictEqual(env.elements.proYearlyPlanOriginalPrice.textContent, '468.000đ');
+    assert.ok(env.elements.proYearlyPlanDiscountBadge.textContent.includes('25%'));
     assert.strictEqual(env.elements.btnUpgradeProPlan.getAttribute('data-plan-code'), 'pro_monthly');
+    assert.strictEqual(env.elements.btnUpgradeProYearlyPlan.getAttribute('data-plan-code'), 'pro_yearly');
+
+    // Verify Pro Yearly specific perks & tagline
+    assert.ok(htmlSource.includes('Gói Pro theo năm, tiết kiệm hơn 25%'), 'Pro Yearly tagline in index.html');
+    assert.ok(htmlSource.includes('Tiết kiệm 25% so với gói Pro hàng tháng'), 'Pro Yearly perk 1 in index.html');
+    assert.ok(htmlSource.includes('Có các quyền lợi của gói Pro hàng tháng'), 'Pro Yearly perk 2 in index.html');
+    assert.ok(env.elements.proYearlyFeatureList.innerHTML.includes('Tiết kiệm 25% so với gói Pro hàng tháng'), 'Pro Yearly perk 1 rendered dynamically');
+    assert.ok(env.elements.proYearlyFeatureList.innerHTML.includes('Có các quyền lợi của gói Pro hàng tháng'), 'Pro Yearly perk 2 rendered dynamically');
   });
 
-  await runTest('Billing Toggle: Clicking Yearly switches to 399.000đ / năm with 32% discount badge', () => {
+  await runTest('Billing Toggle: Cycle switcher updates Yearly to 350.000đ / năm with 25% discount badge', () => {
     const env = createPricingTestEnv();
     env.elements.btnBillingYearly.click();
 
     assert.strictEqual(env.sandbox.window.PDFLinguaPricing.getBillingCycle(), 'yearly');
     assert.strictEqual(env.elements.btnBillingYearly.classList.contains('active'), true);
     assert.strictEqual(env.elements.btnBillingMonthly.classList.contains('active'), false);
-    assert.strictEqual(env.elements.proPlanPriceDisplay.textContent, '399.000đ');
+    assert.strictEqual(env.elements.proPlanPriceDisplay.textContent, '350.000đ');
     assert.strictEqual(env.elements.proPlanPeriodDisplay.textContent, '/ năm');
     assert.strictEqual(env.elements.proPlanOriginalPrice.style.display, 'inline');
-    assert.strictEqual(env.elements.proPlanOriginalPrice.textContent, '588.000đ');
+    assert.strictEqual(env.elements.proPlanOriginalPrice.textContent, '468.000đ');
     assert.strictEqual(env.elements.proPlanDiscountBadge.style.display, 'inline-flex');
-    assert.strictEqual(env.elements.proPlanDiscountBadge.textContent, 'TIẾT KIỆM 32%');
-    assert.ok(env.elements.proPlanSubnote.textContent.includes('33.250đ / tháng'));
+    assert.strictEqual(env.elements.proPlanDiscountBadge.textContent, 'TIẾT KIỆM 25%');
+    assert.ok(env.elements.proPlanSubnote.textContent.includes('29.100đ / tháng'));
     assert.strictEqual(env.elements.btnUpgradeProPlan.getAttribute('data-plan-code'), 'pro_yearly');
   });
 
@@ -484,8 +517,8 @@ async function main() {
                 plan_code: 'pro_monthly',
                 plan_name: 'Gói Pro Hàng Tháng',
                 duration_days: 30,
-                amount_vnd: 49000,
-                amount_display: '49.000 VNĐ',
+                amount_vnd: 39000,
+                amount_display: '39.000 VNĐ',
                 payment_method: 'vietqr',
                 payment_status: 'pending',
                 qr_code_url: 'assets/images/vietqr-pro.png',
@@ -513,12 +546,12 @@ async function main() {
     assert.strictEqual(env.elements.checkoutAccountNumber.textContent, '0779562608');
     assert.strictEqual(env.elements.checkoutAccountName.textContent, 'NGUYEN LE HUY TAM');
     assert.strictEqual(env.elements.checkoutTransferNote.textContent, 'PDL SUB 202611 8899');
-    assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '49.000 VNĐ');
+    assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '39.000 VNĐ');
     assert.strictEqual(env.elements.checkoutCountdownTimer.textContent, '15:00');
     assert.ok(env.elements.checkoutQrImage.src.includes('vietqr-pro.png'));
   });
 
-  await runTest('VietQR Checkout Modal: In-modal cycle switcher updates breakdown to 399.000 VNĐ (365 ngày) & -189.000đ savings', async () => {
+  await runTest('VietQR Checkout Modal: In-modal cycle switcher updates breakdown to 350.000 VNĐ (365 ngày) & -118.000đ savings', async () => {
     const env = createPricingTestEnv({
       pdfl_token: 'mock-jwt-free',
       pdfl_user: JSON.stringify({ id: 12, email: 'buyer@test.com', role: 'free' }),
@@ -532,8 +565,8 @@ async function main() {
     assert.strictEqual(env.elements.checkoutPlanName.textContent, 'Gói Pro Hàng Năm');
     assert.strictEqual(env.elements.checkoutDurationDays.textContent, '365 ngày');
     assert.strictEqual(env.elements.checkoutSavingsRow.style.display, 'flex');
-    assert.ok(env.elements.checkoutSavingsAmount.textContent.includes('189.000đ'));
-    assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '399.000 VNĐ');
+    assert.ok(env.elements.checkoutSavingsAmount.textContent.includes('118.000đ'));
+    assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '350.000 VNĐ');
   });
 
   await runTest('VietQR Checkout Modal: 1-Click Copy buttons copy bank account, amount, and transfer memo', async () => {
@@ -567,7 +600,7 @@ async function main() {
                 transaction_code: 'PDL-SUB-202611-7777',
                 plan_code: 'pro_yearly',
                 plan_name: 'Gói Pro Hàng Năm',
-                amount_vnd: 399000,
+                amount_vnd: 350000,
                 payment_method: 'test_simulator',
                 payment_status: 'completed',
                 user_role: 'pro',
@@ -599,7 +632,7 @@ async function main() {
     assert.strictEqual(env.elements.checkoutSuccessView.style.display, 'flex');
     assert.strictEqual(env.elements.checkoutSuccessTxCode.textContent, 'PDL-SUB-202611-7777');
     assert.strictEqual(env.elements.checkoutSuccessPlanName.textContent, 'Gói Pro Hàng Năm');
-    assert.strictEqual(env.elements.checkoutSuccessAmount.textContent, '399.000 VNĐ');
+    assert.strictEqual(env.elements.checkoutSuccessAmount.textContent, '350.000 VNĐ');
 
     // 2. Confetti particles generated
     assert.strictEqual(env.elements.checkoutConfettiStage.children.length, 24);
@@ -663,10 +696,54 @@ async function main() {
     assert.strictEqual(env.elements.quotaExceededModal.style.display, 'flex');
     assert.strictEqual(env.elements.quotaExceededReason.textContent, errMsg);
 
-    // Clicking "Xem gói Pro 49k/tháng" closes modal and opens Pricing view
+    // Clicking "Xem gói Pro 39k/tháng" closes modal and opens Pricing view
     env.elements.btnQuotaModalViewPricing.click();
     assert.strictEqual(env.elements.quotaExceededModal.hasAttribute('hidden'), true);
     assert.strictEqual(env.elements.pricingSection.style.display, 'block');
+  });
+
+  await runTest('i18n: Pricing card, cycle switcher, and catalog update dynamically on language change', () => {
+    let currentLang = 'vi';
+    const mockI18n = {
+      getLanguage: () => currentLang,
+      t: (key, params) => {
+        if (key === 'pricing_pro_name_yearly') return currentLang === 'en' ? 'Pro Yearly Plan' : 'Gói Pro Hàng Năm';
+        if (key === 'pricing_pro_period_year') return currentLang === 'en' ? '/ year' : '/ năm';
+        if (key === 'pricing_pro_discount_badge') return currentLang === 'en' ? 'SAVE 25%' : 'TIẾT KIỆM 25%';
+        if (key === 'pricing_pro_subnote_yearly') return currentLang === 'en' ? `Equivalent to ${params && params.eq} (Valid 365 days)` : `Tương đương ${params && params.eq} (Hiệu lực 365 ngày)`;
+        if (key === 'pricing_btn_current_plan') return currentLang === 'en' ? 'Your current plan' : 'Gói hiện tại của bạn';
+        return key;
+      },
+    };
+
+    const env = createPricingTestEnv({
+      pdfl_token: 'mock-jwt-free',
+      pdfl_user: JSON.stringify({ id: 5, email: 'free@test.com', role: 'free' }),
+    });
+    env.sandbox.window.i18n = mockI18n;
+
+    // Switch to yearly in Vietnamese
+    env.elements.btnBillingYearly.click();
+    assert.strictEqual(env.elements.proPlanName.textContent, 'Gói Pro Hàng Năm');
+    assert.strictEqual(env.elements.btnSelectFreePlan.textContent, 'Gói hiện tại của bạn');
+
+    // Switch to English
+    currentLang = 'en';
+    env.dispatchDocEvent('languageChanged');
+
+    assert.strictEqual(env.elements.proPlanName.textContent, 'Pro Yearly Plan');
+    assert.strictEqual(env.elements.proPlanPeriodDisplay.textContent, '/ year');
+    assert.strictEqual(env.elements.proPlanDiscountBadge.textContent, 'SAVE 25%');
+    assert.strictEqual(env.elements.btnSelectFreePlan.textContent, 'Your current plan');
+    assert.ok(env.elements.proPlanSubnote.textContent.includes('Valid 365 days'));
+
+    // Switch back to Vietnamese
+    currentLang = 'vi';
+    env.dispatchDocEvent('languageChanged');
+    assert.strictEqual(env.elements.proPlanName.textContent, 'Gói Pro Hàng Năm');
+    assert.strictEqual(env.elements.proPlanPeriodDisplay.textContent, '/ năm');
+    assert.strictEqual(env.elements.proPlanDiscountBadge.textContent, 'TIẾT KIỆM 25%');
+    assert.strictEqual(env.elements.btnSelectFreePlan.textContent, 'Gói hiện tại của bạn');
   });
 
   console.log('\n================================================================');

@@ -4412,3 +4412,54 @@
     transform: none !important;
   }
 }
+
+/* ==========================================================================
+   LANGUAGE SWITCHER COMPONENT (Anti-Slop Segmented Pill)
+   ========================================================================== */
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  gap: 2px;
+  user-select: none;
+}
+
+.lang-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  min-height: 28px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  line-height: 1;
+}
+
+.lang-switcher-btn:hover:not(.active) {
+  color: #1e293b;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.lang-switcher-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(200, 30, 30, 0.3);
+}
+
+.lang-switcher-btn.active {
+  background-color: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  cursor: default;
+}

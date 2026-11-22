@@ -43,6 +43,14 @@ if (typeof window !== 'undefined') {
   window.addEventListener('pdfl:auth-change', (e) => {
     updateUploadLimitsUI(e && e.detail ? e.detail.user : null);
   });
+  if (typeof document !== 'undefined') {
+    document.addEventListener('languageChanged', () => {
+      updateUploadLimitsUI();
+      if (typeof renderBatchQueueUI === 'function') {
+        renderBatchQueueUI();
+      }
+    });
+  }
 }
 
 /**
@@ -77,13 +85,20 @@ function getCurrentUserLimits(user) {
   }
 
   const config = ROLE_LIMITS[role] || DEFAULT_LIMITS;
+  let label = config.label;
+  if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
+    if (role === 'guest') label = window.i18n.t('role_guest');
+    else if (role === 'free') label = window.i18n.t('role_free');
+    else if (role === 'pro') label = window.i18n.t('role_pro');
+    else if (role === 'admin') label = window.i18n.t('role_admin');
+  }
   return {
     role: role,
     maxFileSizeMb: config.maxFileSizeMb,
     maxFileSizeBytes: config.maxFileSizeMb * 1024 * 1024,
     maxPages: config.maxPages || 100,
     maxOcrPages: config.maxOcrPages || 100,
-    label: config.label,
+    label: label,
   };
 }
 
@@ -96,15 +111,27 @@ function updateUploadLimitsUI(user) {
   const limits = getCurrentUserLimits(user);
 
   if (dropzoneLimitEl) {
+    const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+      ? i18n.getLanguage() === 'en'
+      : false;
+
     if (limits.role === 'pro') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
+      dropzoneLimitEl.innerHTML = isEn
+        ? '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Max <strong>100 MB</strong>, up to <strong>500 pages</strong> / file'
+        : '<span class="badge-role role-pro" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">PRO</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
     } else if (limits.role === 'admin') {
-      dropzoneLimitEl.innerHTML = '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">QUẢN TRỊ VIÊN</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
+      dropzoneLimitEl.innerHTML = isEn
+        ? '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">ADMIN</span> Max <strong>100 MB</strong>, up to <strong>500 pages</strong> / file'
+        : '<span class="badge-role role-admin" style="font-size: 0.6875rem; padding: 0.1rem 0.4rem; vertical-align: middle; margin-right: 4px;">QUẢN TRỊ VIÊN</span> Tệp tối đa <strong>100 MB</strong>, xử lý tối đa <strong>500 trang</strong> / tệp';
     } else if (limits.role === 'free') {
-      dropzoneLimitEl.innerHTML = 'Tệp miễn phí tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
+      dropzoneLimitEl.innerHTML = isEn
+        ? 'Free tier max <strong>20 MB</strong>, up to <strong>100 pages</strong> / file (Upgrade to Pro for 100 MB / 500 pages)'
+        : 'Tệp miễn phí tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     } else {
       // Guest (unauthenticated)
-      dropzoneLimitEl.innerHTML = 'Tệp tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
+      dropzoneLimitEl.innerHTML = isEn
+        ? 'Max <strong>20 MB</strong>, up to <strong>100 pages</strong> / file (Upgrade to Pro for 100 MB / 500 pages)'
+        : 'Tệp tối đa <strong>20 MB</strong>, xử lý tối đa <strong>100 trang</strong> / tệp (Nâng cấp Pro để hỗ trợ 100 MB / 500 trang)';
     }
   }
 
@@ -113,7 +140,9 @@ function updateUploadLimitsUI(user) {
   if (oversizedItem || (selectedFile && selectedFile.size > limits.maxFileSizeBytes)) {
     const prevSize = formatFileSize(oversizedItem ? oversizedItem.size : selectedFile.size);
     resetFileSelection();
-    const msg = `Tệp đã chọn (${prevSize}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản hiện tại nên đã được hủy chọn.`;
+    const msg = (window.i18n && typeof window.i18n.t === 'function')
+      ? window.i18n.t('upload_file_deselected_toast', { size: prevSize, max: limits.maxFileSizeMb })
+      : `Tệp đã chọn (${prevSize}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản hiện tại nên đã được hủy chọn.`;
     if (typeof showToast === 'function') {
       showToast(msg, 'info');
     } else if (typeof alert === 'function') {
@@ -144,7 +173,7 @@ function initDropzone() {
 
   function validateFileForQueue(file, currentLimits) {
     if (!file) {
-      return { valid: false, reason: 'empty', message: 'Tệp không hợp lệ.' };
+      return { valid: false, reason: 'empty', message: (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_error') : 'Tệp không hợp lệ.' };
     }
     const isPdf = Boolean(
       (file.name && file.name.toLowerCase().endsWith('.pdf')) ||
@@ -154,7 +183,9 @@ function initDropzone() {
       return {
         valid: false,
         reason: 'format',
-        message: `Tệp "${file.name || 'Không rõ'}" không phải định dạng PDF (.pdf)!`,
+        message: (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('upload_error_not_pdf', { name: file.name || 'Unknown' })
+          : `Tệp "${file.name || 'Không rõ'}" không phải định dạng PDF (.pdf)!`,
       };
     }
     const limits = currentLimits || getCurrentUserLimits();
@@ -162,14 +193,18 @@ function initDropzone() {
       return {
         valid: false,
         reason: 'size',
-        message: `Dung lượng tệp (${formatFileSize(file.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!`,
+        message: (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('upload_error_size_limit', { size: formatFileSize(file.size), max: limits.maxFileSizeMb })
+          : `Dung lượng tệp (${formatFileSize(file.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!`,
       };
     }
     if (isDuplicateFile(file)) {
       return {
         valid: false,
         reason: 'duplicate',
-        message: `Tệp "${file.name}" đã có trong hàng đợi.`,
+        message: (window.i18n && typeof window.i18n.t === 'function')
+          ? window.i18n.t('upload_error_duplicate', { name: file.name })
+          : `Tệp "${file.name}" đã có trong hàng đợi.`,
       };
     }
     return { valid: true };
@@ -183,7 +218,10 @@ function initDropzone() {
 
     const count = batchQueue.length;
     if (countBadge) {
-      countBadge.textContent = `${count} tệp`;
+      const isEn = (typeof i18n !== 'undefined' && typeof i18n.getLanguage === 'function')
+        ? i18n.getLanguage() === 'en'
+        : false;
+      countBadge.textContent = isEn ? `${count} ${count === 1 ? 'file' : 'files'}` : `${count} tệp`;
     }
 
     if (emptyEl) {
@@ -224,7 +262,7 @@ function initDropzone() {
             <div class="queue-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
             <div class="queue-item-meta">
               <span class="queue-item-size">${formattedSize}</span>
-              <span class="queue-item-status status-${item.status}">${escapeHtml(item.statusText || 'Sẵn sàng')}</span>
+              <span class="queue-item-status status-${item.status}">${escapeHtml(item.statusText || ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('upload_status_ready') : 'Sẵn sàng'))}</span>
               ${showProgress ? `<span class="queue-item-percent">${pct}%</span>` : ''}
             </div>
             ${showProgress ? `
@@ -232,7 +270,7 @@ function initDropzone() {
               <div class="queue-item-progress-fill status-fill-${item.status}" style="width: ${pct}%;"></div>
             </div>` : ''}
           </div>
-          <button type="button" class="btn-queue-remove" data-id="${item.id}" title="Xóa tệp ${escapeHtml(item.name)} khỏi hàng đợi" aria-label="Xóa tệp khỏi hàng đợi" ${isBatchActive ? 'disabled' : ''}>
+          <button type="button" class="btn-queue-remove" data-id="${item.id}" title="${(window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('upload_remove_queue_title', { name: escapeHtml(item.name) }) : `Xóa tệp ${escapeHtml(item.name)} khỏi hàng đợi`}" aria-label="${(window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('upload_remove_queue_aria') : 'Xóa tệp khỏi hàng đợi'}" ${isBatchActive ? 'disabled' : ''}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -465,19 +503,7 @@ if (typeof window !== 'undefined') {
     clearQueue: () => clearBatchQueue(),
     renderQueueUI: () => renderBatchQueueUI(),
     isDuplicate: (file) => (batchQueue.some(item => item.name === file.name && item.size === file.size)),
-    validateFile: (file) => {
-      if (!file) return { valid: false, reason: 'empty', message: 'Tệp không hợp lệ.' };
-      const isPdf = Boolean((file.name && file.name.toLowerCase().endsWith('.pdf')) || file.type === 'application/pdf');
-      if (!isPdf) return { valid: false, reason: 'format', message: `Tệp "${file.name || 'Không rõ'}" không phải định dạng PDF (.pdf)!` };
-      const limits = getCurrentUserLimits();
-      if (file.size > limits.maxFileSizeBytes) {
-        return { valid: false, reason: 'size', message: `Dung lượng tệp (${formatFileSize(file.size)}) vượt quá giới hạn ${limits.maxFileSizeMb}MB của tài khoản!` };
-      }
-      if (batchQueue.some(item => item.name === file.name && item.size === file.size)) {
-        return { valid: false, reason: 'duplicate', message: `Tệp "${file.name}" đã có trong hàng đợi.` };
-      }
-      return { valid: true };
-    },
+    validateFile: (file) => validateFileForQueue(file),
     updateItem: (id, updates) => {
       const item = batchQueue.find(i => i.id === id);
       if (item && updates) {
@@ -505,7 +531,9 @@ if (typeof window !== 'undefined') {
           name: f.name || 'manual.pdf',
           size: f.size || 0,
           status: 'ready',
-          statusText: 'Sẵn sàng',
+          statusText: (window.i18n && typeof window.i18n.t === 'function')
+            ? window.i18n.t('upload_status_ready')
+            : 'Sẵn sàng',
         }];
         renderBatchQueueUI();
       }

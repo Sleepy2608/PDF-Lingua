@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="description" content="PDF-Lingua - Nen tang dich thuat PDF song ngu thong minh va tro ly AI chuyen sau toi uu thu tu doc va co lap du lieu nguoi dung.">
-    <title>PDF-Lingua | Dịch Thuật PDF Song Ngữ Thông Minh & Trợ Lý AI Chuyên Sâu</title>
+    <title data-i18n="welcome_meta_title">PDF-Lingua | Dịch Thuật PDF Song Ngữ Thông Minh & Trợ Lý AI Chuyên Sâu</title>
 
     <!-- Favicon / App Icon -->
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon.png">
@@ -22,6 +22,8 @@
 
     <!-- Standalone Welcome Landing Page Styles -->
     <link rel="stylesheet" href="css/welcome.css">
+    <!-- Pricing Card & Tier Comparison Styles -->
+    <link rel="stylesheet" href="css/pricing.css">
 </head>
 
 <body>
@@ -29,7 +31,7 @@
     <header class="welcome-navbar" id="welcomeNavbar" role="banner">
         <div class="welcome-container welcome-navbar-inner">
             <!-- Brand Logo -->
-            <a href="#welcomeHero" class="welcome-brand-link" id="welcomeBrandLink" title="PDF-Lingua - Trang chu">
+            <a href="#welcomeHero" class="welcome-brand-link" id="welcomeBrandLink" title="PDF-Lingua - Trang chủ" data-i18n-attr="title:nav_home">
                 <img src="assets/images/logo-app-transparent.png" alt="PDF-Lingua Logo" class="welcome-brand-img" width="34" height="34" loading="eager">
                 <span class="welcome-brand-name">
                     <span class="welcome-brand-badge">PDF</span>
@@ -38,27 +40,32 @@
             </a>
 
             <!-- Desktop Navigation Menu -->
-            <nav class="welcome-nav-menu" id="welcomeNavMenu" aria-label="Menu dieu huong chinh">
-                <a href="#welcomeHero" class="welcome-nav-link is-active" id="navLinkHero">Trang chủ</a>
-                <a href="#welcomeFeatures" class="welcome-nav-link" id="navLinkFeatures">Tính năng</a>
-                <a href="#welcomeHowItWorks" class="welcome-nav-link" id="navLinkHowItWorks">Quy trình</a>
-                <a href="#welcomePricing" class="welcome-nav-link" id="navLinkPricing">Bảng giá</a>
+            <nav class="welcome-nav-menu" id="welcomeNavMenu" aria-label="Menu điều hướng chính" data-i18n-attr="aria-label:welcome_aria_main_nav">
+                <a href="#welcomeHero" class="welcome-nav-link is-active" id="navLinkHero" data-i18n="nav_home">Trang chủ</a>
+                <a href="#welcomeFeatures" class="welcome-nav-link" id="navLinkFeatures" data-i18n="nav_features">Tính năng</a>
+                <a href="#welcomeHowItWorks" class="welcome-nav-link" id="navLinkHowItWorks" data-i18n="nav_how_it_works">Quy trình</a>
+                <a href="#welcomePricing" class="welcome-nav-link" id="navLinkPricing" data-i18n="nav_pricing">Bảng giá</a>
             </nav>
 
-            <!-- Navigation Actions: Login (Ghost) + Start Trial (Primary Red) -->
+            <!-- Navigation Actions: Login (Ghost) + Start Trial (Primary Red) + Language Switcher -->
             <div class="welcome-nav-actions" id="welcomeNavActions">
-                <button type="button" class="welcome-btn welcome-btn-ghost" id="navBtnLogin" title="Dang nhap vao he thong">
-                    <span>Đăng nhập</span>
+                <button type="button" class="welcome-btn welcome-btn-ghost" id="navBtnLogin" title="Đăng nhập vào hệ thống" data-i18n-attr="title:auth_btn_login">
+                    <span data-i18n="nav_login">Đăng nhập</span>
                 </button>
-                <a href="index.html" class="welcome-btn welcome-btn-primary" id="navBtnTrial" title="Bat dau trai nghiem khong gian lam viec">
-                    <span>Bắt đầu miễn phí</span>
+                <a href="index.html" class="welcome-btn welcome-btn-primary" id="navBtnTrial" title="Bắt đầu trải nghiệm không gian làm việc" data-i18n-attr="title:nav_start_free">
+                    <span data-i18n="nav_start_free">Bắt đầu miễn phí</span>
                     <svg class="welcome-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </a>
+                <!-- Language Switcher (VI / EN) on the outside -->
+                <div class="lang-switcher" id="welcomeLangSwitcher" role="group" aria-label="Chọn ngôn ngữ" data-i18n-attr="aria-label:lang_select_aria">
+                    <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt" data-i18n-attr="title:lang_vi_title">VI</button>
+                    <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English" data-i18n-attr="title:lang_en_title">EN</button>
+                </div>
                 <!-- Mobile Menu Button -->
-                <button type="button" class="welcome-mobile-toggle" id="btnWelcomeMobileMenu" aria-label="Mo menu dieu huong" aria-expanded="false" aria-controls="welcomeMobileDrawer">
+                <button type="button" class="welcome-mobile-toggle" id="btnWelcomeMobileMenu" aria-label="Mở menu điều hướng" aria-expanded="false" aria-controls="welcomeMobileDrawer" data-i18n-attr="aria-label:welcome_aria_mobile_menu">
                     <svg class="icon-menu-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -75,15 +82,19 @@
         <!-- Mobile Drawer Navigation -->
         <div class="welcome-mobile-drawer" id="welcomeMobileDrawer" aria-hidden="true">
             <div class="welcome-mobile-drawer-inner">
-                <nav class="welcome-mobile-nav" aria-label="Menu dieu huong di dong">
-                    <a href="#welcomeHero" class="welcome-mobile-link">Trang chủ</a>
-                    <a href="#welcomeFeatures" class="welcome-mobile-link">Tính năng</a>
-                    <a href="#welcomeHowItWorks" class="welcome-mobile-link">Quy trình</a>
-                    <a href="#welcomePricing" class="welcome-mobile-link">Bảng giá</a>
+                <nav class="welcome-mobile-nav" aria-label="Menu điều hướng di động" data-i18n-attr="aria-label:welcome_aria_mobile_nav">
+                    <a href="#welcomeHero" class="welcome-mobile-link" data-i18n="nav_home">Trang chủ</a>
+                    <a href="#welcomeFeatures" class="welcome-mobile-link" data-i18n="nav_features">Tính năng</a>
+                    <a href="#welcomeHowItWorks" class="welcome-mobile-link" data-i18n="nav_how_it_works">Quy trình</a>
+                    <a href="#welcomePricing" class="welcome-mobile-link" data-i18n="nav_pricing">Bảng giá</a>
                 </nav>
                 <div class="welcome-mobile-actions">
-                    <button type="button" class="welcome-btn welcome-btn-ghost welcome-btn-block" id="btnWelcomeMobileLogin">Đăng nhập</button>
-                    <a href="index.html" class="welcome-btn welcome-btn-primary welcome-btn-block">Bắt đầu miễn phí</a>
+                    <button type="button" class="welcome-btn welcome-btn-ghost welcome-btn-block" id="btnWelcomeMobileLogin" data-i18n="nav_login">Đăng nhập</button>
+                    <a href="index.html" class="welcome-btn welcome-btn-primary welcome-btn-block" data-i18n="nav_start_free">Bắt đầu miễn phí</a>
+                    <div class="lang-switcher" id="mobileLangSwitcher" style="margin-top: 12px; justify-content: center; width: 100%;" role="group" aria-label="Chọn ngôn ngữ" data-i18n-attr="aria-label:lang_select_aria">
+                        <button type="button" class="lang-switcher-btn active" data-lang="vi" aria-pressed="true" title="Tiếng Việt" style="flex: 1;" data-i18n-attr="title:lang_vi_title">VI</button>
+                        <button type="button" class="lang-switcher-btn" data-lang="en" aria-pressed="false" title="English" style="flex: 1;" data-i18n-attr="title:lang_en_title">EN</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -91,18 +102,18 @@
 
     <main id="mainContent">
         <!-- 2. HERO SECTION & INTERACTIVE PRODUCT PREVIEW -->
-        <section class="welcome-section welcome-hero-section" id="welcomeHero" aria-label="Giới thiệu PDF-Lingua">
+        <section class="welcome-section welcome-hero-section" id="welcomeHero" aria-label="Giới thiệu PDF-Lingua" data-i18n-attr="aria-label:welcome_aria_hero">
             <div class="welcome-container">
                 <!-- Hero Header -->
                 <div class="welcome-section-header welcome-hero-header welcome-reveal">
                     <div class="welcome-eyebrow-badge">
-                        <span>Nền Tảng Dịch Thuật Học Thuật &amp; Kỹ Thuật</span>
+                        <span data-i18n="welcome_hero_eyebrow">Nền Tảng Dịch Thuật Học Thuật &amp; Kỹ Thuật</span>
                     </div>
-                    <h1 class="welcome-hero-title">Dịch Thuật PDF Song Ngữ Thông Minh &amp; Trợ Lý AI Chuyên Sâu</h1>
-                    <p class="welcome-hero-desc">Bảo tồn nguyên vẹn cấu trúc bảng biểu, khử lệch dòng đa cột và tương tác hỏi đáp RAG trực tiếp trên ngữ cảnh tài liệu gốc.</p>
+                    <h1 class="welcome-hero-title" data-i18n="welcome_hero_title_1">Dịch Thuật PDF Song Ngữ Thông Minh &amp; Trợ Lý AI Chuyên Sâu</h1>
+                    <p class="welcome-hero-desc" data-i18n="welcome_hero_subtitle">Bảo tồn nguyên vẹn cấu trúc bảng biểu, khử lệch dòng đa cột và tương tác hỏi đáp RAG trực tiếp trên ngữ cảnh tài liệu gốc.</p>
                     <div class="welcome-hero-cta-group">
                         <a href="index.html" class="welcome-btn welcome-btn-primary welcome-btn-lg" id="heroBtnStart">
-                            <span>Bắt đầu miễn phí</span>
+                            <span data-i18n="welcome_hero_cta_primary">Bắt đầu miễn phí</span>
                             <svg class="welcome-btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                                 <polyline points="12 5 19 12 12 19"></polyline>
@@ -112,7 +123,7 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polygon points="5 3 19 12 5 21 5 3"></polygon>
                             </svg>
-                            <span>Xem bản dịch mẫu</span>
+                            <span data-i18n="welcome_hero_cta_secondary">Xem bản dịch mẫu</span>
                         </a>
                     </div>
 
@@ -122,7 +133,7 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
-                            <span>Không cần cài đặt</span>
+                            <span data-i18n="welcome_trust_no_install">Không cần cài đặt</span>
                         </div>
                         <div class="welcome-trust-divider" aria-hidden="true">•</div>
                         <div class="welcome-trust-item">
@@ -130,14 +141,14 @@
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
-                            <span>Cô lập thư mục User ID riêng biệt</span>
+                            <span data-i18n="welcome_trust_user_isolation">Cô lập thư mục User ID riêng biệt</span>
                         </div>
                         <div class="welcome-trust-divider" aria-hidden="true">•</div>
                         <div class="welcome-trust-item">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
-                            <span>Hỗ trợ PDF quét scan & OCR Tiếng Việt</span>
+                            <span data-i18n="welcome_trust_ocr_support">Hỗ trợ PDF quét scan & OCR Tiếng Việt</span>
                         </div>
                     </div>
                 </div>
@@ -150,9 +161,9 @@
                             <div class="welcome-preview-fileinfo">
                                 <span class="welcome-file-badge-pdf">PDF</span>
                                 <span class="welcome-preview-filename">test_pdfl2.pdf</span>
-                                <span class="welcome-file-meta-pill">1 trang</span>
+                                <span class="welcome-file-meta-pill" data-i18n="preview_file_pages">1 trang</span>
                                 <span class="welcome-file-meta-pill">0.2 MB</span>
-                                <span class="welcome-file-type-pill">PDF Số</span>
+                                <span class="welcome-file-type-pill" data-i18n="badge_pdf_digital">PDF Số</span>
                             </div>
                             <div class="welcome-preview-actions">
                                 <div class="welcome-preview-mode-group">
@@ -162,26 +173,26 @@
                                             <line x1="3" y1="12" x2="21" y2="12"></line>
                                             <line x1="3" y1="18" x2="21" y2="18"></line>
                                         </svg>
-                                        <span>Văn bản</span>
+                                        <span data-i18n="welcome_preview_mode_text">Văn bản</span>
                                     </span>
                                     <span class="preview-mode-btn">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                             <polyline points="14 2 14 8 20 8"></polyline>
                                         </svg>
-                                        <span>PDF gốc</span>
+                                        <span data-i18n="welcome_preview_mode_pdf">PDF gốc</span>
                                     </span>
                                     <span class="preview-mode-btn">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                             <line x1="12" y1="3" x2="12" y2="21"></line>
                                         </svg>
-                                        <span>Song song</span>
+                                        <span data-i18n="welcome_preview_mode_split">Song song</span>
                                     </span>
                                 </div>
 
                                 <div class="welcome-preview-lang">
-                                    <span class="preview-lang-label">Dịch sang:</span>
+                                    <span class="preview-lang-label" data-i18n="toolbar_target_lang">Dịch sang:</span>
                                     <div class="preview-lang-select">
                                         <span>English (en)</span>
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -195,7 +206,7 @@
                                         <polyline points="1 4 1 10 7 10"></polyline>
                                         <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                                     </svg>
-                                    <span>Dịch lại</span>
+                                    <span data-i18n="welcome_preview_btn_retranslate">Dịch lại</span>
                                 </div>
 
                                 <div class="welcome-preview-btn-download">
@@ -204,7 +215,7 @@
                                         <polyline points="7 10 12 15 17 10"></polyline>
                                         <line x1="12" y1="15" x2="12" y2="3"></line>
                                     </svg>
-                                    <span>Tải xuống</span>
+                                    <span data-i18n="welcome_preview_btn_download">Tải xuống</span>
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <polyline points="6 9 12 15 18 9"></polyline>
                                     </svg>
@@ -226,17 +237,17 @@
                             <div class="welcome-pane welcome-pane-original" id="paneOriginal">
                                 <div class="welcome-pane-header">
                                     <div class="welcome-pane-title-wrap">
-                                        <span class="welcome-pane-title">Văn bản gốc</span>
-                                        <span class="welcome-pane-badge original-badge">GỐC</span>
+                                        <span class="welcome-pane-title" data-i18n="panel_source_title">Văn bản gốc</span>
+                                        <span class="welcome-pane-badge original-badge" data-i18n="badge_original">GỐC</span>
                                     </div>
                                     <div class="welcome-pane-meta-group">
-                                        <span class="welcome-pane-stats">95 từ (580 ký tự)</span>
-                                        <button type="button" class="welcome-pane-copy" title="Sao chép văn bản">
+                                        <span class="welcome-pane-stats" data-i18n="preview_stats_orig">95 từ (580 ký tự)</span>
+                                        <button type="button" class="welcome-pane-copy" title="Sao chép văn bản" data-i18n-attr="title:welcome_copy_source_title">
                                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                             </svg>
-                                            <span>Sao chép</span>
+                                            <span data-i18n="common_copy">Sao chép</span>
                                         </button>
                                     </div>
                                 </div>
@@ -263,17 +274,17 @@ DEBUG_MODE=False</div>
                             <div class="welcome-pane welcome-pane-translated" id="paneTranslated">
                                 <div class="welcome-pane-header">
                                     <div class="welcome-pane-title-wrap">
-                                        <span class="welcome-pane-title">Bản dịch</span>
-                                        <span class="welcome-pane-badge translated-badge">BẢN DỊCH</span>
+                                        <span class="welcome-pane-title" data-i18n="panel_target_title">Bản dịch</span>
+                                        <span class="welcome-pane-badge translated-badge" data-i18n="badge_translated">BẢN DỊCH</span>
                                     </div>
                                     <div class="welcome-pane-meta-group">
-                                        <span class="welcome-pane-stats">75 từ (603 ký tự)</span>
-                                        <button type="button" class="welcome-pane-copy" title="Sao chép bản dịch">
+                                        <span class="welcome-pane-stats" data-i18n="preview_stats_trans">75 từ (603 ký tự)</span>
+                                        <button type="button" class="welcome-pane-copy" title="Sao chép bản dịch" data-i18n-attr="title:welcome_copy_target_title">
                                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                             </svg>
-                                            <span>Sao chép</span>
+                                            <span data-i18n="common_copy">Sao chép</span>
                                         </button>
                                     </div>
                                 </div>
@@ -302,11 +313,11 @@ DEBUG_MODE=False</div>
         </section>
 
         <!-- 3. FEATURES BENTO GRID -->
-        <section class="welcome-section welcome-features-section" id="welcomeFeatures" aria-label="Tính năng nổi bật">
+        <section class="welcome-section welcome-features-section" id="welcomeFeatures" aria-label="Tính năng nổi bật" data-i18n-attr="aria-label:welcome_aria_features">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <h2 class="welcome-section-title">Các Tính Năng Chính Của Hệ Thống PDF-Lingua</h2>
-                    <p class="welcome-section-subtitle">Giải quyết triệt để tình trạng lệch dòng, vỡ khung bảng biểu và ảo giác dữ liệu khi dịch thuật tài liệu kỹ thuật.</p>
+                    <h2 class="welcome-section-title" data-i18n="welcome_features_title">Các Tính Năng Chính Của Hệ Thống PDF-Lingua</h2>
+                    <p class="welcome-section-subtitle" data-i18n="welcome_features_subtitle">Giải quyết triệt để tình trạng lệch dòng, vỡ khung bảng biểu và ảo giác dữ liệu khi dịch thuật tài liệu kỹ thuật.</p>
                 </div>
 
                 <div class="welcome-bento-grid">
@@ -314,34 +325,34 @@ DEBUG_MODE=False</div>
                     <div class="welcome-bento-card welcome-bento-span-2 welcome-reveal" id="bentoCardLayout">
                         <div class="bento-card-content">
                             <div class="bento-badge-group">
-                                <span class="bento-badge bento-badge-red">Smart Layout</span>
+                                <span class="bento-badge bento-badge-red" data-i18n="bento_layout_badge">Smart Layout</span>
                             </div>
-                            <h3 class="bento-card-title">Tối Ưu Thứ Tự Đọc &amp; Bố Cục Đa Cột</h3>
-                            <p class="bento-card-desc">Tự động phát hiện khoảng hở lề (gutter gap) và gom dòng thông minh theo toạ độ dọc. Tối ưu thứ tự đọc tự nhiên cho tài liệu 2 cột và hỗ trợ đối chiếu song ngữ trực quan.</p>
+                            <h3 class="bento-card-title" data-i18n="bento_layout_title">Tối Ưu Thứ Tự Đọc &amp; Bố Cục Đa Cột</h3>
+                            <p class="bento-card-desc" data-i18n="bento_layout_desc">Tự động phát hiện khoảng hở lề (gutter gap) và gom dòng thông minh theo toạ độ dọc. Tối ưu thứ tự đọc tự nhiên cho tài liệu 2 cột và hỗ trợ đối chiếu song ngữ trực quan.</p>
                         </div>
                         <div class="bento-card-visual bento-visual-dual-sync">
                             <div class="mini-sync-box">
                                 <div class="mini-sync-header">
                                     <div class="mini-sync-col-header">
-                                        <span class="mini-sync-pill en">Original (EN)</span>
+                                        <span class="mini-sync-pill en" data-i18n="bento_sync_original">Original (EN)</span>
                                         <span class="mini-sync-arrow">↔</span>
                                     </div>
                                     <div class="mini-sync-col-header vi-col-header">
-                                        <span class="mini-sync-pill vi">Bản Dịch (VI)</span>
+                                        <span class="mini-sync-pill vi" data-i18n="bento_sync_translated">Bản Dịch (VI)</span>
                                     </div>
                                 </div>
                                 <div class="mini-sync-body">
                                     <div class="mini-sync-row active">
                                         <div class="mini-sync-col">Multi-head attention mechanisms</div>
-                                        <div class="mini-sync-col">Cơ chế tập trung đa đầu</div>
+                                        <div class="mini-sync-col" data-i18n="bento_sync_row1_vi">Cơ chế tập trung đa đầu</div>
                                     </div>
                                     <div class="mini-sync-row">
                                         <div class="mini-sync-col">Preserving tabular topology</div>
-                                        <div class="mini-sync-col">Bảo tồn hình thái bảng biểu</div>
+                                        <div class="mini-sync-col" data-i18n="bento_sync_row2_vi">Bảo tồn hình thái bảng biểu</div>
                                     </div>
                                     <div class="mini-sync-row">
                                         <div class="mini-sync-col">Two-column reading flow</div>
-                                        <div class="mini-sync-col">Luồng đọc chuẩn hai cột</div>
+                                        <div class="mini-sync-col" data-i18n="bento_sync_row3_vi">Luồng đọc chuẩn hai cột</div>
                                     </div>
                                 </div>
                             </div>
@@ -352,15 +363,15 @@ DEBUG_MODE=False</div>
                     <div class="welcome-bento-card welcome-bento-span-1 welcome-reveal welcome-reveal-delay-1" id="bentoCardOcr">
                         <div class="bento-card-content">
                             <div class="bento-badge-group">
-                                <span class="bento-badge bento-badge-blue">Tesseract OCR</span>
+                                <span class="bento-badge bento-badge-blue" data-i18n="bento_ocr_badge">Tesseract OCR</span>
                             </div>
-                            <h3 class="bento-card-title">Xử Lý Trang Quét &amp; Khử Nghiêng Deskew</h3>
-                            <p class="bento-card-desc">Tích hợp Tesseract OCR (vie+eng), tự động nhận diện hướng xoay 90&deg;/180&deg;/270&deg; qua OSD và thuật toán Deskew cân chỉnh góc nghiêng lệch trong phạm vi [-15&deg;, +15&deg;].</p>
+                            <h3 class="bento-card-title" data-i18n="bento_ocr_title">Xử Lý Trang Quét &amp; Khử Nghiêng Deskew</h3>
+                            <p class="bento-card-desc" data-i18n="bento_ocr_desc">Tích hợp Tesseract OCR (vie+eng), tự động nhận diện hướng xoay 90&deg;/180&deg;/270&deg; qua OSD và thuật toán Deskew cân chỉnh góc nghiêng lệch trong phạm vi [-15&deg;, +15&deg;].</p>
                         </div>
                         <div class="bento-card-visual bento-visual-deskew">
                             <div class="mini-gauge-box">
                                 <div class="mini-gauge-metric">
-                                    <span class="mini-gauge-lbl">Phạm vi cân chỉnh</span>
+                                    <span class="mini-gauge-lbl" data-i18n="bento_ocr_range_lbl">Phạm vi cân chỉnh</span>
                                     <span class="mini-gauge-num">[-15&deg; .. +15&deg;]</span>
                                 </div>
                                 <div class="mini-gauge-track-wrap">
@@ -369,13 +380,13 @@ DEBUG_MODE=False</div>
                                     </div>
                                     <div class="mini-gauge-scale">
                                         <span>-15&deg;</span>
-                                        <span class="scale-zero">0&deg; (Chuẩn)</span>
+                                        <span class="scale-zero" data-i18n="bento_ocr_scale_zero">0&deg; (Chuẩn)</span>
                                         <span>+15&deg;</span>
                                     </div>
                                 </div>
                                 <div class="mini-deskew-status">
                                     <span class="mini-deskew-dot"></span>
-                                    <span>OSD xoay 90&deg;/180&deg;/270&deg; &amp; Cân bằng Deskew</span>
+                                    <span data-i18n="bento_ocr_status">OSD xoay 90&deg;/180&deg;/270&deg; &amp; Cân bằng Deskew</span>
                                 </div>
                             </div>
                         </div>
@@ -385,23 +396,23 @@ DEBUG_MODE=False</div>
                     <div class="welcome-bento-card welcome-bento-span-2 welcome-reveal" id="bentoCardCopilot">
                         <div class="bento-card-content">
                             <div class="bento-badge-group">
-                                <span class="bento-badge bento-badge-green">Ngăn Ngừa Ảo Giác</span>
+                                <span class="bento-badge bento-badge-green" data-i18n="bento_copilot_badge">Ngăn Ngừa Ảo Giác</span>
                             </div>
-                            <h3 class="bento-card-title">Trợ Lý AI Copilot Hỏi Đáp Tài Liệu</h3>
-                            <p class="bento-card-desc">Hỏi đáp trực tiếp dựa trên nội dung tài liệu bằng cơ chế RAG phân đoạn ngữ cảnh. Guardrail nghiêm ngặt buộc AI từ chối suy diễn nếu văn bản không đề cập.</p>
+                            <h3 class="bento-card-title" data-i18n="bento_copilot_title">Trợ Lý AI Copilot Hỏi Đáp Tài Liệu</h3>
+                            <p class="bento-card-desc" data-i18n="bento_copilot_desc">Hỏi đáp trực tiếp dựa trên nội dung tài liệu bằng cơ chế RAG phân đoạn ngữ cảnh. Guardrail nghiêm ngặt buộc AI từ chối suy diễn nếu văn bản không đề cập.</p>
                         </div>
                         <div class="bento-card-visual bento-visual-chat">
                             <div class="mini-chat-preview">
                                 <div class="mini-chat-bubble user">
-                                    <span class="mini-chat-role">Câu hỏi:</span>
-                                    <span>Phương pháp đánh giá độ trễ trong bài báo là gì?</span>
+                                    <span class="mini-chat-role" data-i18n="bento_chat_q_lbl">Câu hỏi:</span>
+                                    <span data-i18n="bento_chat_q_txt">Phương pháp đánh giá độ trễ trong bài báo là gì?</span>
                                 </div>
                                 <div class="mini-chat-bubble bot">
                                     <div class="mini-chat-bot-header">
                                         <span class="mini-bot-name">PDF-Lingua Copilot</span>
-                                        <span class="mini-bot-source">Ngữ cảnh tài liệu</span>
+                                        <span class="mini-bot-source" data-i18n="bento_chat_context">Ngữ cảnh tài liệu</span>
                                     </div>
-                                    <span>Đo lường thời gian xử lý trung bình qua các lần thử nghiệm trên tệp đa cột, phản hồi trực tiếp từ dữ liệu văn bản gốc.</span>
+                                    <span data-i18n="bento_chat_ans">Đo lường thời gian xử lý trung bình qua các lần thử nghiệm trên tệp đa cột, phản hồi trực tiếp từ dữ liệu văn bản gốc.</span>
                                 </div>
                             </div>
                         </div>
@@ -411,28 +422,28 @@ DEBUG_MODE=False</div>
                     <div class="welcome-bento-card welcome-bento-span-1 welcome-reveal welcome-reveal-delay-1" id="bentoCardSummary">
                         <div class="bento-card-content">
                             <div class="bento-badge-group">
-                                <span class="bento-badge bento-badge-gold">Thuật Toán Map-Reduce</span>
+                                <span class="bento-badge bento-badge-gold" data-i18n="bento_summary_badge">Thuật Toán Map-Reduce</span>
                             </div>
-                            <h3 class="bento-card-title">Tóm Tắt Phân Tán Map-Reduce</h3>
-                            <p class="bento-card-desc">Chia nhỏ tài liệu dài thành các khối 1500 từ, xử lý tóm tắt song song (Map phase) bằng asyncio và tổng hợp báo cáo cô đọng (Reduce phase) theo 3 phong cách tùy chọn.</p>
+                            <h3 class="bento-card-title" data-i18n="bento_summary_title">Tóm Tắt Phân Tán Map-Reduce</h3>
+                            <p class="bento-card-desc" data-i18n="bento_summary_desc">Chia nhỏ tài liệu dài thành các khối 1500 từ, xử lý tóm tắt song song (Map phase) bằng asyncio và tổng hợp báo cáo cô đọng (Reduce phase) theo 3 phong cách tùy chọn.</p>
                         </div>
                         <div class="bento-card-visual bento-visual-compression">
                             <div class="mini-reduction-box">
                                 <div class="mini-reduction-flow">
                                     <div class="reduction-step">
-                                        <span class="reduction-val">Khối 1..N</span>
-                                        <span class="reduction-sub">1500 từ (Async)</span>
+                                        <span class="reduction-val" data-i18n="bento_summary_chunk">Khối 1..N</span>
+                                        <span class="reduction-sub" data-i18n="bento_summary_async">1500 từ (Async)</span>
                                     </div>
                                     <span class="reduction-arrow">&rarr;</span>
                                     <div class="reduction-step highlight">
-                                        <span class="reduction-val">Báo cáo</span>
+                                        <span class="reduction-val" data-i18n="bento_summary_report">Báo cáo</span>
                                         <span class="reduction-sub">Reduce Phase</span>
                                     </div>
                                 </div>
                                 <div class="reduction-styles-group">
-                                    <span class="reduction-style-pill active">Ngắn gọn</span>
-                                    <span class="reduction-style-pill">Gạch đầu dòng</span>
-                                    <span class="reduction-style-pill">Chi tiết</span>
+                                    <span class="reduction-style-pill active" data-i18n="bento_summary_style_concise">Ngắn gọn</span>
+                                    <span class="reduction-style-pill" data-i18n="bento_summary_style_bullet">Gạch đầu dòng</span>
+                                    <span class="reduction-style-pill" data-i18n="bento_summary_style_detail">Chi tiết</span>
                                 </div>
                             </div>
                         </div>
@@ -442,15 +453,15 @@ DEBUG_MODE=False</div>
                     <div class="welcome-bento-card welcome-bento-span-1 welcome-reveal" id="bentoCardBatch">
                         <div class="bento-card-content">
                             <div class="bento-badge-group">
-                                <span class="bento-badge bento-badge-blue">Hàng Đợi Xử Lý</span>
+                                <span class="bento-badge bento-badge-blue" data-i18n="bento_batch_badge">Hàng Đợi Xử Lý</span>
                             </div>
-                            <h3 class="bento-card-title">Xử Lý Hàng Loạt &amp; Xuất DOCX, ZIP</h3>
-                            <p class="bento-card-desc">Tải lên nhiều tệp vào hàng đợi với cơ chế giới hạn concurrency trên trình duyệt. Xuất kết quả song ngữ ra Microsoft Word (.DOCX) và tải trọn bộ qua tệp nén ZIP.</p>
+                            <h3 class="bento-card-title" data-i18n="bento_batch_title">Xử Lý Hàng Loạt &amp; Xuất DOCX, ZIP</h3>
+                            <p class="bento-card-desc" data-i18n="bento_batch_desc">Tải lên nhiều tệp vào hàng đợi với cơ chế giới hạn concurrency trên trình duyệt. Xuất kết quả song ngữ ra Microsoft Word (.DOCX) và tải trọn bộ qua tệp nén ZIP.</p>
                         </div>
                         <div class="bento-card-visual bento-visual-queue">
                             <div class="mini-queue-header">
-                                <span class="queue-header-title">Hàng Đợi Tài Liệu</span>
-                                <span class="queue-header-status">2/3 Đã Xong</span>
+                                <span class="queue-header-title" data-i18n="bento_queue_title">Hàng Đợi Tài Liệu</span>
+                                <span class="queue-header-status" data-i18n="bento_queue_done">2/3 Đã Xong</span>
                             </div>
                             <div class="mini-queue-list">
                                 <div class="mini-queue-item done">
@@ -466,7 +477,7 @@ DEBUG_MODE=False</div>
                                 <div class="mini-queue-item processing">
                                     <span class="queue-spinner"></span>
                                     <span class="queue-name">dataset_table_v2.pdf</span>
-                                    <span class="queue-tag proc">Đang xử lý</span>
+                                    <span class="queue-tag proc" data-i18n="bento_queue_proc">Đang xử lý</span>
                                 </div>
                             </div>
                         </div>
@@ -476,10 +487,10 @@ DEBUG_MODE=False</div>
                     <div class="welcome-bento-card welcome-bento-span-2 welcome-reveal welcome-reveal-delay-1" id="bentoCardSecurity">
                         <div class="bento-card-content">
                             <div class="bento-badge-group">
-                                <span class="bento-badge bento-badge-slate">Phân Quyền RBAC</span>
+                                <span class="bento-badge bento-badge-slate" data-i18n="bento_sec_badge">Phân Quyền RBAC</span>
                             </div>
-                            <h3 class="bento-card-title">Cô Lập Thư Mục &amp; Kiểm Soát Quyền Truy Cập</h3>
-                            <p class="bento-card-desc">Mỗi tài khoản được phân bổ không gian lưu trữ riêng biệt theo User ID. Hệ thống kiểm soát quyền nghiêm ngặt, ngăn chặn tấn công Path Traversal và tự động xóa vĩnh viễn tệp theo yêu cầu.</p>
+                            <h3 class="bento-card-title" data-i18n="bento_sec_title">Cô Lập Thư Mục &amp; Kiểm Soát Quyền Truy Cập</h3>
+                            <p class="bento-card-desc" data-i18n="bento_sec_desc">Mỗi tài khoản được phân bổ không gian lưu trữ riêng biệt theo User ID. Hệ thống kiểm soát quyền nghiêm ngặt, ngăn chặn tấn công Path Traversal và tự động xóa vĩnh viễn tệp theo yêu cầu.</p>
                         </div>
                         <div class="bento-card-visual bento-visual-security">
                             <div class="mini-security-grid">
@@ -490,8 +501,8 @@ DEBUG_MODE=False</div>
                                         </svg>
                                     </div>
                                     <div class="sec-item-text">
-                                        <span class="sec-lbl">Phân Vùng User ID</span>
-                                        <span class="sec-desc">Cô lập thư mục dữ liệu riêng theo định danh tài khoản</span>
+                                        <span class="sec-lbl" data-i18n="bento_sec_user_id">Phân Vùng User ID</span>
+                                        <span class="sec-desc" data-i18n="bento_sec_user_id_desc">Cô lập thư mục dữ liệu riêng theo định danh tài khoản</span>
                                     </div>
                                 </div>
                                 <div class="sec-item">
@@ -501,8 +512,8 @@ DEBUG_MODE=False</div>
                                         </svg>
                                     </div>
                                     <div class="sec-item-text">
-                                        <span class="sec-lbl">Chống Path Traversal</span>
-                                        <span class="sec-desc">Chuẩn hóa đường dẫn tệp và chặn ký tự độc hại</span>
+                                        <span class="sec-lbl" data-i18n="bento_sec_traversal">Chống Path Traversal</span>
+                                        <span class="sec-desc" data-i18n="bento_sec_traversal_desc">Chuẩn hóa đường dẫn tệp và chặn ký tự độc hại</span>
                                     </div>
                                 </div>
                                 <div class="sec-item">
@@ -513,8 +524,8 @@ DEBUG_MODE=False</div>
                                         </svg>
                                     </div>
                                     <div class="sec-item-text">
-                                        <span class="sec-lbl">Tự Động Hủy Tệp</span>
-                                        <span class="sec-desc">Xóa vĩnh viễn tệp tạm sau khi hoàn tất phiên làm việc</span>
+                                        <span class="sec-lbl" data-i18n="bento_sec_purge">Tự Động Hủy Tệp</span>
+                                        <span class="sec-desc" data-i18n="bento_sec_purge_desc">Xóa vĩnh viễn tệp tạm sau khi hoàn tất phiên làm việc</span>
                                     </div>
                                 </div>
                             </div>
@@ -525,11 +536,11 @@ DEBUG_MODE=False</div>
         </section>
 
         <!-- 4. HOW IT WORKS -->
-        <section class="welcome-section welcome-how-it-works-section" id="welcomeHowItWorks" aria-label="Quy trình hoạt động">
+        <section class="welcome-section welcome-how-it-works-section" id="welcomeHowItWorks" aria-label="Quy trình hoạt động" data-i18n-attr="aria-label:welcome_aria_workflow">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <h2 class="welcome-section-title">Quy Trình 3 Bước Tinh Gọn</h2>
-                    <p class="welcome-section-subtitle">Chuyển đổi tài liệu học thuật phức tạp sang bản dịch song ngữ bảo tồn bố cục chỉ trong vài thao tác đơn giản.</p>
+                    <h2 class="welcome-section-title" data-i18n="welcome_workflow_title">Quy Trình 3 Bước Tinh Gọn</h2>
+                    <p class="welcome-section-subtitle" data-i18n="welcome_workflow_subtitle">Chuyển đổi tài liệu học thuật phức tạp sang bản dịch song ngữ bảo tồn bố cục chỉ trong vài thao tác đơn giản.</p>
                 </div>
 
                 <div class="welcome-steps-container">
@@ -549,10 +560,10 @@ DEBUG_MODE=False</div>
                                     </svg>
                                 </div>
                             </div>
-                            <h3 class="welcome-step-title">Tải Lên Tài Liệu</h3>
-                            <p class="welcome-step-desc">Kéo và thả file PDF số hoặc tài liệu quét scan trực tiếp vào không gian làm việc. Hệ thống tự động phân loại và chuẩn bị bóc tách.</p>
+                            <h3 class="welcome-step-title" data-i18n="step_1_title">1. Tải tài liệu PDF</h3>
+                            <p class="welcome-step-desc" data-i18n="step_1_desc">Kéo thả tài liệu PDF từ máy tính hoặc thiết bị của bạn. Hỗ trợ cả file số hóa và bản scan ảnh.</p>
                             <div class="welcome-step-meta">
-                                <span class="step-meta-chip">Hỗ trợ PDF 20MB - 100MB</span>
+                                <span class="step-meta-chip" data-i18n="step_1_meta">Hỗ trợ PDF 20MB - 100MB</span>
                             </div>
                         </div>
 
@@ -566,10 +577,10 @@ DEBUG_MODE=False</div>
                                     </svg>
                                 </div>
                             </div>
-                            <h3 class="welcome-step-title">Bóc Tách &amp; Dịch Thuật</h3>
-                            <p class="welcome-step-desc">Động cơ OCR Tesseract trích xuất văn bản từ trang scan, thuật toán Smart Layout tối ưu thứ tự đọc và chuyển ngữ đối chiếu song song.</p>
+                            <h3 class="welcome-step-title" data-i18n="step_2_title">2. Chọn ngôn ngữ &amp; Chế độ</h3>
+                            <p class="welcome-step-desc" data-i18n="step_2_desc">Lựa chọn ngôn ngữ đích, phạm vi trang cần dịch và kích hoạt nhận dạng OCR nếu cần.</p>
                             <div class="welcome-step-meta">
-                                <span class="step-meta-chip">Hỗ trợ đa luồng xử lý</span>
+                                <span class="step-meta-chip" data-i18n="step_2_meta">Hỗ trợ đa luồng xử lý</span>
                             </div>
                         </div>
 
@@ -585,10 +596,10 @@ DEBUG_MODE=False</div>
                                     </svg>
                                 </div>
                             </div>
-                            <h3 class="welcome-step-title">Đối Chiếu &amp; Xuất Kết Quả</h3>
-                            <p class="welcome-step-desc">Xem song song hai cột cuộn đồng bộ, tương tác hỏi đáp với Trợ lý AI Copilot theo ngữ cảnh tài liệu và tải về file Word .DOCX hoặc ZIP.</p>
+                            <h3 class="welcome-step-title" data-i18n="step_3_title">3. Xem song song &amp; Xuất tệp</h3>
+                            <p class="welcome-step-desc" data-i18n="step_3_desc">So sánh trực quan bản gốc và bản dịch theo từng đoạn văn. Xuất kết quả sang Word hoặc PDF song ngữ.</p>
                             <div class="welcome-step-meta">
-                                <span class="step-meta-chip">Định dạng DOCX, TXT, ZIP</span>
+                                <span class="step-meta-chip" data-i18n="step_3_meta">Định dạng DOCX, TXT, ZIP</span>
                             </div>
                         </div>
                     </div>
@@ -597,151 +608,336 @@ DEBUG_MODE=False</div>
         </section>
 
         <!-- 5. PRICING PLANS -->
-        <section class="welcome-section welcome-pricing-section" id="welcomePricing" aria-label="Bảng giá dịch vụ">
+        <section class="welcome-section welcome-pricing-section" id="welcomePricing" aria-label="Bảng giá dịch vụ" data-i18n-attr="aria-label:welcome_aria_pricing">
             <div class="welcome-container">
                 <div class="welcome-section-header">
-                    <h2 class="welcome-section-title">Bảng Giá Linh Hoạt Cho Mọi Nhu Cầu</h2>
-                    <p class="welcome-section-subtitle">Khởi đầu miễn phí hoàn toàn hoặc nâng cấp gói Pro để mở khóa toàn bộ sức mạnh AI và xử lý hàng loạt.</p>
+                    <h2 class="welcome-section-title" data-i18n="welcome_pricing_title">Bảng Giá Linh Hoạt Cho Mọi Nhu Cầu</h2>
+                    <p class="welcome-section-subtitle" data-i18n="welcome_pricing_subtitle">Khởi đầu miễn phí hoàn toàn hoặc nâng cấp gói Pro để mở khóa toàn bộ sức mạnh AI và xử lý hàng loạt.</p>
 
-                    <!-- Billing Toggle -->
-                    <div class="welcome-billing-toggle" role="group" aria-label="Chu kỳ thanh toán">
-                        <button type="button" class="billing-toggle-btn active" id="btnBillingMonthly" data-billing="monthly">
-                            Hàng tháng
-                        </button>
-                        <button type="button" class="billing-toggle-btn" id="btnBillingYearly" data-billing="yearly">
-                            Hàng năm <span class="billing-discount-badge">Tiết kiệm 32%</span>
-                        </button>
-                    </div>
                 </div>
 
-                <div class="welcome-pricing-grid">
+                <div class="welcome-pricing-grid pricing-bento-grid">
                     <!-- Free Starter Plan -->
-                    <div class="welcome-pricing-card welcome-reveal" id="pricingCardFree">
-                        <div class="pricing-card-header">
-                            <h3 class="pricing-plan-name">Gói Miễn Phí</h3>
-                            <p class="pricing-plan-desc">Phù hợp cho cá nhân làm quen và trải nghiệm dịch thuật tài liệu cơ bản.</p>
-                            <div class="pricing-price-wrap">
-                                <span class="welcome-price-value" id="priceValueFree">0 đ</span>
-                                <span class="pricing-period" id="pricePeriodFree">/ tháng</span>
+                    <article class="welcome-pricing-card welcome-reveal pricing-card pricing-card-free" id="pricingCardFree">
+                        <div class="pricing-card-top">
+                            <div class="pricing-plan-header">
+                                <div>
+                                    <h3 class="pricing-plan-name" id="freePlanName"
+                                        data-i18n="pricing_free_name">Gói Miễn Phí</h3>
+                                    <p class="pricing-plan-tagline" data-i18n="pricing_free_tagline">Dành cho nhu cầu đọc hiểu và dịch thuật PDF cơ bản hàng ngày</p>
+                                </div>
+                                <span class="pricing-tier-pill" data-i18n="pricing_free_pill">Tiêu chuẩn</span>
                             </div>
-                        </div>
 
-                        <ul class="pricing-features-list">
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Xử lý tối đa <strong>5 tài liệu / ngày</strong></span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>OCR Tiếng Việt tối đa <strong>100 trang / tháng</strong></span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Xem song ngữ 2 cột đối chiếu trực quan</span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Lưu trữ lịch sử xử lý 7 ngày</span>
-                            </li>
-                            <li class="feature-disabled">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                <span>Trợ lý AI Copilot hỏi đáp ngữ cảnh tài liệu</span>
-                            </li>
-                            <li class="feature-disabled">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                <span>Xuất tệp Microsoft Word (.DOCX)</span>
-                            </li>
-                        </ul>
+                            <div class="pricing-price-block">
+                                <div class="pricing-price-row">
+                                    <span class="pricing-price-amount" id="freePlanPriceDisplay"
+                                        data-i18n="pricing_free_price">0đ</span>
+                                    <span class="pricing-price-period" id="freePlanPeriodDisplay"
+                                        data-i18n="pricing_free_period">/ vĩnh viễn</span>
+                                </div>
+                                <div class="pricing-price-note-row">
+                                    <span class="pricing-price-subnote" data-i18n="pricing_free_note">Không yêu cầu thẻ thanh toán</span>
+                                </div>
+                            </div>
+
+                            <div class="pricing-quota-strip">
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label" data-i18n="pricing_quota_filesize">Dung lượng tệp</span>
+                                    <span class="pricing-quota-value" id="freeMaxFileSize">20 MB / tệp</span>
+                                </div>
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label" data-i18n="pricing_quota_ocrpages">Số trang OCR</span>
+                                    <span class="pricing-quota-value" id="freeMaxOcrPages">100 trang</span>
+                                </div>
+                            </div>
+
+                            <ul class="pricing-feature-list" id="freeFeatureList">
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_free_f1">Tải lên tệp PDF tối đa 20 MB</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_free_f2">Nhận diện OCR tối đa 100 trang</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_free_f3">Dịch thuật song ngữ thông minh tiêu chuẩn</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_free_f4">Lưu trữ 5 tài liệu gần đây</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_free_f5">Hỗ trợ xuất tệp TXT và PDF Song ngữ</span>
+                                </li>
+                            </ul>
+                        </div>
 
                         <div class="pricing-card-footer">
-                            <a href="index.html" class="welcome-btn welcome-btn-outline welcome-btn-block" id="btnStartFree">
-                                <span>Bắt đầu miễn phí</span>
+                            <a href="index.html" class="btn btn-secondary btn-pricing-cta"
+                                id="btnStartFree" data-i18n="pricing_free_cta">
+                                Bắt đầu miễn phí
                             </a>
+                            <p class="pricing-cta-Caption" id="freePlanCtaHint" data-i18n="pricing_free_hint">
+                                Sẵn sàng sử dụng ngay khi tải tệp PDF</p>
                         </div>
-                    </div>
+                    </article>
 
-                    <!-- Pro Plan (Featured) -->
-                    <div class="welcome-pricing-card pricing-card-featured welcome-reveal welcome-reveal-delay-1" id="pricingCardPro">
-                        <div class="pricing-featured-badge">Phổ Biến Nhất</div>
-                        <div class="pricing-card-header">
-                            <h3 class="pricing-plan-name">Gói Chuyên Nghiệp (PRO)</h3>
-                            <p class="pricing-plan-desc">Giải pháp toàn diện cho sinh viên, giảng viên và kỹ sư cần công suất lớn và AI.</p>
-                            <div class="pricing-price-wrap">
-                                <span class="welcome-price-value" id="priceValuePro">49.000 đ</span>
-                                <span class="pricing-period" id="pricePeriodPro">/ tháng</span>
+                    <!-- Pro Monthly Plan -->
+                    <article class="welcome-pricing-card welcome-reveal welcome-reveal-delay-1 pricing-card pricing-card-pro" id="pricingCardPro">
+                        <div class="pricing-card-top">
+                            <div class="pricing-plan-header">
+                                <div>
+                                    <h3 class="pricing-plan-name" id="proPlanName"
+                                        data-i18n="pricing_pro_name_monthly">Gói Pro Hàng Tháng</h3>
+                                    <p class="pricing-plan-tagline" data-i18n="pricing_pro_tagline_monthly">Linh hoạt theo tháng, mở khóa toàn bộ tính năng AI & OCR</p>
+                                </div>
+                                <span class="pricing-tier-pill" data-i18n="pricing_tier_flexible">Linh hoạt</span>
                             </div>
-                        </div>
 
-                        <ul class="pricing-features-list">
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span><strong>Không giới hạn</strong> số lượng tài liệu tải lên</span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>OCR Tiếng Việt chuyên sâu <strong>500 trang / tháng</strong></span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Trợ lý AI Copilot <strong>hỏi đáp theo ngữ cảnh tài liệu</strong></span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Tóm tắt tài liệu lớn bằng thuật toán Map-Reduce</span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Xuất tệp <strong>Microsoft Word (.DOCX) &amp; nén ZIP</strong></span>
-                            </li>
-                            <li>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5322D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <span>Hỗ trợ kỹ thuật ưu tiên &amp; Cô lập thư mục User ID</span>
-                            </li>
-                        </ul>
+                            <div class="pricing-price-block">
+                                <div class="pricing-price-row">
+                                    <span class="pricing-price-amount" id="proPlanPriceDisplay">39.000đ</span>
+                                    <span class="pricing-price-period" id="proPlanPeriodDisplay"
+                                        data-i18n="pricing_pro_period_month">/ tháng</span>
+                                </div>
+                                <div class="pricing-price-note-row">
+                                    <span class="pricing-price-subnote" id="proPlanSubnote"
+                                        data-i18n="pricing_pro_subnote_monthly">Thanh toán linh hoạt từng tháng (30 ngày)</span>
+                                </div>
+                            </div>
+
+                            <div class="pricing-quota-strip">
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label" data-i18n="pricing_quota_filesize">Dung lượng tệp</span>
+                                    <span class="pricing-quota-value" id="proMaxFileSize">100 MB / tệp</span>
+                                </div>
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label" data-i18n="pricing_quota_ocrpages">Số trang OCR</span>
+                                    <span class="pricing-quota-value" id="proMaxOcrPages">500 trang</span>
+                                </div>
+                            </div>
+
+                            <ul class="pricing-feature-list" id="proFeatureList">
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f1">Tải lên tệp PDF siêu lớn đến 100 MB</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f2">Nhận dạng OCR chuyên sâu đến 500 trang</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f3">Trợ lý AI Hỏi đáp (AI Copilot) không giới hạn</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f4">Tóm tắt thông minh AI Summary & bảng thuật ngữ</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f5">Hàng đợi ưu tiên tốc độ cao (Fast-track Worker)</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f6">Kho lưu trữ tài liệu cá nhân không giới hạn</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f7">Huy hiệu Pro VIP ánh kim trên hồ sơ và giao diện</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_f8">Hỗ trợ xuất tài liệu sang Microsoft Word (.docx)</span>
+                                </li>
+                            </ul>
+                        </div>
 
                         <div class="pricing-card-footer">
-                            <a href="index.html#pricing" class="welcome-btn welcome-btn-primary welcome-btn-block" id="btnUpgradePro">
-                                <span>Nâng cấp gói Pro ngay</span>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
+                            <a href="index.html#pricing" class="btn btn-secondary btn-pricing-cta"
+                                id="btnUpgradePro">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                 </svg>
+                                <span id="btnUpgradeProText" data-i18n="pricing_pro_cta_monthly">Nâng cấp ngay</span>
                             </a>
                         </div>
-                    </div>
+                    </article>
+
+                    <!-- Pro Yearly Plan (Featured) -->
+                    <article class="welcome-pricing-card welcome-reveal welcome-reveal-delay-2 pricing-card pricing-card-pro pricing-card-featured" id="pricingCardProYearly">
+                        <div class="pricing-card-top">
+                            <div class="pricing-plan-header">
+                                <div>
+                                    <h3 class="pricing-plan-name" id="proYearlyPlanName"
+                                        data-i18n="pricing_pro_name_yearly">Gói Pro Hàng Năm</h3>
+                                    <p class="pricing-plan-tagline" data-i18n="pricing_pro_tagline_yearly">Gói Pro theo năm, tiết kiệm hơn 25%</p>
+                                </div>
+                                <span class="pricing-featured-badge pricing-popular-ribbon" id="proYearlyPopularRibbon">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polygon
+                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                        </polygon>
+                                    </svg>
+                                    <span data-i18n="pricing_pro_ribbon_yearly">TIẾT KIỆM NHẤT</span>
+                                </span>
+                            </div>
+
+                            <div class="pricing-price-block">
+                                <div class="pricing-price-row">
+                                    <span class="pricing-price-amount" id="proYearlyPlanPriceDisplay">350.000đ</span>
+                                    <span class="pricing-price-period" id="proYearlyPlanPeriodDisplay"
+                                        data-i18n="pricing_pro_period_year">/ năm</span>
+                                    <span class="pricing-price-original" id="proYearlyPlanOriginalPrice">468.000đ</span>
+                                </div>
+                                <div class="pricing-price-note-row">
+                                    <span class="pricing-price-subnote" id="proYearlyPlanSubnote"
+                                        data-i18n="pricing_pro_subnote_yearly_card">Tương đương ~29.100đ / tháng</span>
+                                    <span class="pricing-discount-badge" id="proYearlyPlanDiscountBadge"
+                                        data-i18n="pricing_discount_badge_25">TIẾT KIỆM 25%</span>
+                                </div>
+                            </div>
+
+                            <div class="pricing-quota-strip">
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label" data-i18n="pricing_quota_filesize">Dung lượng tệp</span>
+                                    <span class="pricing-quota-value" id="proYearlyMaxFileSize">100 MB / tệp</span>
+                                </div>
+                                <div class="pricing-quota-box">
+                                    <span class="pricing-quota-label" data-i18n="pricing_quota_ocrpages">Số trang OCR</span>
+                                    <span class="pricing-quota-value" id="proYearlyMaxOcrPages">500 trang</span>
+                                </div>
+                            </div>
+
+                            <ul class="pricing-feature-list" id="proYearlyFeatureList">
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_yearly_f1">Tiết kiệm 25% so với gói Pro hàng tháng</span>
+                                </li>
+                                <li class="pricing-feature-item">
+                                    <span class="pricing-feature-icon">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span data-i18n="pricing_pro_yearly_f2">Có các quyền lợi của gói Pro hàng tháng</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="pricing-card-footer">
+                            <a href="index.html#pricing" class="btn btn-gradient btn-pricing-cta"
+                                id="btnUpgradeProYearlyPlan">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                </svg>
+                                <span id="btnUpgradeProYearlyText" data-i18n="pricing_pro_cta_yearly">Nâng cấp ngay</span>
+                            </a>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
     </main>
 
     <!-- 6. COMPREHENSIVE FOOTER -->
-    <footer class="welcome-footer-section" id="welcomeFooter" role="contentinfo" aria-label="Chân trang">
+    <footer class="welcome-footer-section" id="welcomeFooter" role="contentinfo" aria-label="Chân trang" data-i18n-attr="aria-label:welcome_aria_footer">
         <div class="welcome-container">
             <div class="welcome-footer-grid">
                 <!-- Column 1: Brand & Security -->
@@ -753,54 +949,54 @@ DEBUG_MODE=False</div>
                             <span class="welcome-brand-text">Lingua</span>
                         </span>
                     </a>
-                    <p class="welcome-footer-desc">
+                    <p class="welcome-footer-desc" data-i18n="footer_desc">
                         Nền tảng dịch thuật PDF song ngữ và trợ lý AI thông minh, tối ưu hóa thứ tự đọc bố cục và cô lập dữ liệu người dùng.
                     </p>
                     <div class="welcome-footer-badges">
-                        <span class="footer-cert-badge">Cô Lập Dữ Liệu User ID</span>
-                        <span class="footer-cert-badge">Kiểm Soát Quyền RBAC</span>
+                        <span class="footer-cert-badge" data-i18n="welcome_trust_user_isolation">Cô Lập Dữ Liệu User ID</span>
+                        <span class="footer-cert-badge" data-i18n="footer_badge_rbac">Kiểm Soát Quyền RBAC</span>
                     </div>
                 </div>
 
                 <!-- Column 2: Navigation Links -->
                 <div class="welcome-footer-col">
-                    <h4 class="welcome-footer-title">Điều Hướng Nhanh</h4>
+                    <h4 class="welcome-footer-title" data-i18n="welcome_footer_quick_nav">Điều Hướng Nhanh</h4>
                     <ul class="welcome-footer-links">
-                        <li><a href="#welcomeHero">Trang chủ</a></li>
-                        <li><a href="#welcomeFeatures">Tính năng nổi bật</a></li>
-                        <li><a href="#welcomeHowItWorks">Quy trình 3 bước</a></li>
-                        <li><a href="#welcomePricing">Bảng giá dịch vụ</a></li>
-                        <li><a href="index.html">Bắt đầu miễn phí</a></li>
+                        <li><a href="#welcomeHero" data-i18n="nav_home">Trang chủ</a></li>
+                        <li><a href="#welcomeFeatures" data-i18n="nav_features">Tính năng nổi bật</a></li>
+                        <li><a href="#welcomeHowItWorks" data-i18n="nav_how_it_works">Quy trình 3 bước</a></li>
+                        <li><a href="#welcomePricing" data-i18n="nav_pricing">Bảng giá dịch vụ</a></li>
+                        <li><a href="index.html" data-i18n="nav_start_free">Bắt đầu miễn phí</a></li>
                     </ul>
                 </div>
 
                 <!-- Column 3: Core Technology -->
                 <div class="welcome-footer-col">
-                    <h4 class="welcome-footer-title">Công Nghệ Cốt Lõi</h4>
+                    <h4 class="welcome-footer-title" data-i18n="welcome_footer_core_tech">Công Nghệ Cốt Lõi</h4>
                     <ul class="welcome-footer-links">
-                        <li><a href="#welcomeFeatures">OCR Tiếng Việt &amp; Khử Nghiêng</a></li>
-                        <li><a href="#welcomeFeatures">Tối ưu thứ tự đọc Smart Layout</a></li>
-                        <li><a href="#welcomeFeatures">Tóm tắt phân tán Map-Reduce</a></li>
-                        <li><a href="#welcomeFeatures">Trợ lý Copilot hỏi đáp tài liệu</a></li>
-                        <li><a href="#welcomeFeatures">Xuất tệp Word .DOCX &amp; ZIP</a></li>
+                        <li><a href="#welcomeFeatures" data-i18n="footer_tech_ocr">OCR Tiếng Việt &amp; Khử Nghiêng</a></li>
+                        <li><a href="#welcomeFeatures" data-i18n="footer_tech_layout">Tối ưu thứ tự đọc Smart Layout</a></li>
+                        <li><a href="#welcomeFeatures" data-i18n="footer_tech_mapreduce">Tóm tắt phân tán Map-Reduce</a></li>
+                        <li><a href="#welcomeFeatures" data-i18n="footer_tech_copilot">Trợ lý Copilot hỏi đáp tài liệu</a></li>
+                        <li><a href="#welcomeFeatures" data-i18n="footer_tech_export">Xuất tệp Word .DOCX &amp; ZIP</a></li>
                     </ul>
                 </div>
 
                 <!-- Column 4: Support & Legal -->
                 <div class="welcome-footer-col">
-                    <h4 class="welcome-footer-title">Hỗ Trợ &amp; Pháp Lý</h4>
+                    <h4 class="welcome-footer-title" data-i18n="welcome_footer_support_legal">Hỗ Trợ &amp; Pháp Lý</h4>
                     <ul class="welcome-footer-links">
-                        <li><a href="#tabTerms" id="footerLinkTerms">Điều khoản sử dụng</a></li>
-                        <li><a href="#tabPrivacy" id="footerLinkPrivacy">Chính sách bảo mật</a></li>
-                        <li><a href="mailto:huytamnguyenle2608@gmail.com">Liên hệ: huytamnguyenle2608@gmail.com</a></li>
-                        <li><a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener noreferrer">Kho mã nguồn GitHub</a></li>
+                        <li><a href="#tabTerms" id="footerLinkTerms" data-i18n="legal_tab_terms">Điều khoản sử dụng</a></li>
+                        <li><a href="#tabPrivacy" id="footerLinkPrivacy" data-i18n="legal_tab_privacy">Chính sách bảo mật</a></li>
+                        <li><a href="mailto:huytamnguyenle2608@gmail.com" data-i18n="footer_contact_email">Liên hệ: huytamnguyenle2608@gmail.com</a></li>
+                        <li><a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener noreferrer" data-i18n="welcome_footer_github">Kho mã nguồn GitHub</a></li>
                     </ul>
                 </div>
             </div>
 
             <!-- Bottom Copyright -->
             <div class="welcome-footer-bottom">
-                <p class="welcome-footer-copy">Bản quyền &copy; 2026 PDF-Lingua. Toàn bộ quyền được bảo lưu.</p>
+                <p class="welcome-footer-copy" data-i18n="footer_copyright">Bản quyền &copy; 2026 PDF-Lingua. Toàn bộ quyền được bảo lưu.</p>
             </div>
         </div>
     </footer>
@@ -810,10 +1006,10 @@ DEBUG_MODE=False</div>
         <div class="modal-dialog">
             <div class="modal-header">
                 <div>
-                    <h2 class="modal-title" id="loginModalTitle">Đăng nhập</h2>
-                    <p class="modal-subtitle">Truy cập không gian làm việc PDF-Lingua của bạn</p>
+                    <h2 class="modal-title" id="loginModalTitle" data-i18n="auth_login_title">Đăng nhập</h2>
+                    <p class="modal-subtitle" data-i18n="auth_login_subtitle">Truy cập không gian làm việc PDF-Lingua của bạn</p>
                 </div>
-                <button type="button" class="modal-close" id="btnCloseLoginModal" aria-label="Đóng cửa sổ">
+                <button type="button" class="modal-close" id="btnCloseLoginModal" aria-label="Đóng cửa sổ" data-i18n-attr="aria-label:common_close">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -828,7 +1024,7 @@ DEBUG_MODE=False</div>
                 <!-- Email -->
                 <div class="form-group">
                     <label for="loginEmail" class="form-label">
-                        Địa chỉ Email <span class="label-required">*</span>
+                        <span data-i18n="auth_email_label">Địa chỉ Email</span> <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
                         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -843,15 +1039,15 @@ DEBUG_MODE=False</div>
                 <!-- Password -->
                 <div class="form-group">
                     <label for="loginPassword" class="form-label">
-                        Mật khẩu <span class="label-required">*</span>
+                        <span data-i18n="auth_password_label">Mật khẩu</span> <span class="label-required">*</span>
                     </label>
                     <div class="input-wrap">
                         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128">
-                        <button type="button" class="btn-toggle-eye" id="toggleLoginPassword" aria-label="Hiện mật khẩu">
+                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="Nhập mật khẩu" required autocomplete="current-password" maxlength="128" data-i18n-attr="placeholder:auth_login_password_placeholder">
+                        <button type="button" class="btn-toggle-eye" id="toggleLoginPassword" aria-label="Hiện mật khẩu" data-i18n-attr="aria-label:auth_show_password_aria">
                             <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
@@ -868,11 +1064,11 @@ DEBUG_MODE=False</div>
                 <!-- Submit Button -->
                 <button type="submit" class="btn btn-gradient btn-block" id="btnSubmitLogin">
                     <span class="btn-spinner" id="loginSpinner" aria-hidden="true" style="display: none;"></span>
-                    <span id="loginBtnText">Đăng nhập</span>
+                    <span id="loginBtnText" data-i18n="auth_btn_login">Đăng nhập</span>
                 </button>
 
                 <!-- Modal Footer -->
-                <div class="modal-footer-text">
+                <div class="modal-footer-text" data-i18n-html="auth_no_account_register">
                     Chưa có tài khoản? <a href="index.html#register" id="linkSwitchRegister">Đăng ký ngay</a>
                 </div>
             </form>
@@ -885,21 +1081,17 @@ DEBUG_MODE=False</div>
             <div class="legal-modal-header">
                 <div class="legal-modal-title-group">
                     <div class="legal-title-badge-row">
-                        <h3 class="legal-modal-title" id="legalModalTitle">Thông Tin &amp; Chính Sách</h3>
+                        <h3 class="legal-modal-title" id="legalModalTitle" data-i18n="legal_modal_title">Thông Tin &amp; Chính Sách</h3>
                         <span class="legal-version-badge">v1.0.0</span>
                     </div>
-                    <p class="legal-modal-subtitle">Quy định sử dụng, cam kết bảo mật &amp; thông tin hỗ trợ PDF-Lingua</p>
+                    <p class="legal-modal-subtitle" data-i18n="legal_modal_subtitle">Quy định sử dụng, cam kết bảo mật &amp; thông tin hỗ trợ PDF-Lingua</p>
                 </div>
                 <div class="legal-header-actions">
                     <button type="button" class="legal-action-btn" id="btnToggleFullscreenLegal"
-                        title="Phóng to / Thu nhỏ modal">
-                        <span class="btn-icon" id="fullscreenIcon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span> <span id="fullscreenText">Phóng to</span>
+                        title="Phóng to / Thu nhỏ modal" data-i18n-attr="title:legal_toggle_fullscreen_title">
+                        <span class="btn-icon" id="fullscreenIcon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span> <span id="fullscreenText" data-i18n="common_fullscreen">Phóng to</span>
                     </button>
-                    <button type="button" class="legal-action-btn" id="btnPrintLegal" title="In hoặc lưu tệp PDF">
-                        <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></span> In
-                    </button>
-                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng"
-                        title="Đóng"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="button" class="legal-modal-close" id="legalModalCloseBtn" aria-label="Đóng" title="Đóng" data-i18n-attr="aria-label:common_close,title:common_close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                 </div>
             </div>
 
@@ -908,17 +1100,17 @@ DEBUG_MODE=False</div>
                 <button type="button" class="legal-tab-btn active" id="tabBtnTerms" role="tab" aria-selected="true"
                     data-tab="tabTerms">
                     <span class="tab-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span>
-                    <span class="tab-label">Điều khoản</span>
+                    <span class="tab-label" data-i18n="legal_tab_terms">Điều khoản</span>
                 </button>
                 <button type="button" class="legal-tab-btn" id="tabBtnPrivacy" role="tab" aria-selected="false"
                     data-tab="tabPrivacy">
                     <span class="tab-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-                    <span class="tab-label">Bảo mật</span>
+                    <span class="tab-label" data-i18n="legal_tab_privacy">Bảo mật</span>
                 </button>
                 <button type="button" class="legal-tab-btn" id="tabBtnContact" role="tab" aria-selected="false"
                     data-tab="tabContact">
                     <span class="tab-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
-                    <span class="tab-label">Liên hệ</span>
+                    <span class="tab-label" data-i18n="legal_tab_contact">Liên hệ</span>
                 </button>
             </div>
 
@@ -930,45 +1122,33 @@ DEBUG_MODE=False</div>
                         <div class="legal-callout-box info">
                             <span class="callout-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
                             <div class="callout-body">
-                                <strong>Tóm tắt quyền lợi:</strong> Bạn giữ toàn bộ quyền sở hữu đối với tài liệu PDF
-                                tải lên. Bản dịch máy móc mang tính chất tham khảo học thuật.
+                                <strong data-i18n="terms_callout_title">Tóm tắt quyền lợi:</strong> <span data-i18n="terms_callout_desc">Bạn giữ toàn bộ quyền sở hữu đối với tài liệu PDF tải lên. Bản dịch máy móc mang tính chất tham khảo học thuật.</span>
                             </div>
                         </div>
 
                         <!-- Quick Jump Index -->
                         <div class="legal-toc-chips">
-                            <span class="toc-label">Mục lục:</span>
-                            <a href="#terms-section-1" class="toc-chip">1. Bản quyền</a>
-                            <a href="#terms-section-2" class="toc-chip">2. Quy định</a>
-                            <a href="#terms-section-3" class="toc-chip">3. Hạn mức</a>
-                            <a href="#terms-section-4" class="toc-chip">4. Miễn trừ</a>
+                            <span class="toc-label" data-i18n="legal_toc_label">Mục lục:</span>
+                            <a href="#terms-section-1" class="toc-chip" data-i18n="terms_toc_1">1. Bản quyền</a>
+                            <a href="#terms-section-2" class="toc-chip" data-i18n="terms_toc_2">2. Quy định</a>
+                            <a href="#terms-section-3" class="toc-chip" data-i18n="terms_toc_3">3. Hạn mức</a>
+                            <a href="#terms-section-4" class="toc-chip" data-i18n="terms_toc_4">4. Miễn trừ</a>
                         </div>
 
-                        <h4 id="terms-section-1">1. Quyền sở hữu trí tuệ &amp; Bản quyền</h4>
-                        <p>Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng
-                            như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân
-                            phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu
-                            cầu.</p>
+                        <h4 id="terms-section-1" data-i18n="terms_h1">1. Quyền sở hữu trí tuệ &amp; Bản quyền</h4>
+                        <p data-i18n="terms_p1">Người dùng giữ toàn quyền sở hữu và bản quyền đối với tệp tài liệu PDF tải lên hệ thống cũng như các kết quả trích xuất và bản dịch. PDF-Lingua cam kết không sở hữu, sao chép hoặc phân phối tài liệu của bạn cho bất kỳ bên thứ ba nào ngoài mục đích xử lý phiên dịch theo yêu cầu.</p>
 
-                        <h4 id="terms-section-2">2. Quy định sử dụng dịch vụ</h4>
-                        <p>Người dùng cam kết không sử dụng hệ thống để xử lý, phát tán các tài liệu chứa mã độc, nội
-                            dung vi phạm pháp luật, xâm phạm quyền riêng tư của cá nhân hoặc tổ chức khác. Không thực
-                            hiện các hành vi can thiệp trái phép, đảo ngược mã nguồn hoặc tấn công làm quá tải máy chủ.
-                        </p>
+                        <h4 id="terms-section-2" data-i18n="terms_h2">2. Quy định sử dụng dịch vụ</h4>
+                        <p data-i18n="terms_p2">Người dùng cam kết không sử dụng hệ thống để xử lý, phát tán các tài liệu chứa mã độc, nội dung vi phạm pháp luật, xâm phạm quyền riêng tư của cá nhân hoặc tổ chức khác. Không thực hiện các hành vi can thiệp trái phép, đảo ngược mã nguồn hoặc tấn công làm quá tải máy chủ.</p>
 
-                        <h4 id="terms-section-3">3. Giới hạn gói dịch vụ (Tiers)</h4>
+                        <h4 id="terms-section-3" data-i18n="terms_h3">3. Giới hạn gói dịch vụ (Tiers)</h4>
                         <ul>
-                            <li><strong>Gói Miễn phí (Khách &amp; Người dùng cơ bản):</strong> Hạn mức xử lý tối đa 20
-                                MB/tệp và tối đa 100 trang/tài liệu. Hỗ trợ trích xuất văn bản số và OCR cơ bản.</li>
-                            <li><strong>Gói Pro:</strong> Hạn mức xử lý mở rộng lên đến 100 MB/tệp cùng các tính năng AI
-                                nâng cao (Tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu).</li>
+                            <li data-i18n-html="terms_p3_free"><strong>Gói Miễn phí (Khách &amp; Người dùng cơ bản):</strong> Hạn mức xử lý tối đa 20 MB/tệp và tối đa 100 trang/tài liệu. Hỗ trợ trích xuất văn bản số và OCR cơ bản.</li>
+                            <li data-i18n-html="terms_p3_pro"><strong>Gói Pro:</strong> Hạn mức xử lý mở rộng lên đến 100 MB/tệp cùng các tính năng AI nâng cao (Tóm tắt văn bản, Trợ lý AI hỏi đáp tài liệu).</li>
                         </ul>
 
-                        <h4 id="terms-section-4">4. Miễn trừ trách nhiệm (Disclaimer)</h4>
-                        <p>Các tính năng trích xuất văn bản, nhận dạng OCR và dịch thuật tự động được thực hiện dựa trên
-                            các mô hình máy học và dịch máy. Hệ thống nỗ lực mang lại kết quả chuẩn xác nhất nhưng không
-                            đảm bảo tính hoàn hảo 100% về mặt ngữ nghĩa và không thể thay thế cho bản dịch công chứng có
-                            tính pháp lý.</p>
+                        <h4 id="terms-section-4" data-i18n="terms_h4">4. Miễn trừ trách nhiệm (Disclaimer)</h4>
+                        <p data-i18n="terms_p4">Các tính năng trích xuất văn bản, nhận dạng OCR và dịch thuật tự động được thực hiện dựa trên các mô hình máy học và dịch máy. Hệ thống nỗ lực mang lại kết quả chuẩn xác nhất nhưng không đảm bảo tính hoàn hảo 100% về mặt ngữ nghĩa và không thể thay thế cho bản dịch công chứng có tính pháp lý.</p>
                     </div>
                 </div>
 
@@ -978,60 +1158,49 @@ DEBUG_MODE=False</div>
                         <div class="legal-callout-box success">
                             <span class="callout-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></span>
                             <div class="callout-body">
-                                <strong>Cam kết bảo mật:</strong> Tệp PDF được xử lý trong phiên cô lập và tự động xóa
-                                sạch. Mật khẩu được mã hóa an toàn bằng Bcrypt.
+                                <strong data-i18n="privacy_callout_title">Cam kết bảo mật:</strong> <span data-i18n="privacy_callout_desc">Tệp PDF được xử lý trong phiên cô lập và tự động xóa sạch. Mật khẩu được mã hóa an toàn bằng Bcrypt.</span>
                             </div>
                         </div>
 
                         <!-- Quick Jump Index -->
                         <div class="legal-toc-chips">
-                            <span class="toc-label">Mục lục:</span>
-                            <a href="#privacy-section-1" class="toc-chip">1. Thu thập dữ liệu</a>
-                            <a href="#privacy-section-2" class="toc-chip">2. Tự động xóa</a>
-                            <a href="#privacy-section-3" class="toc-chip">3. Tiêu chuẩn mã hóa</a>
-                            <a href="#privacy-section-4" class="toc-chip">4. Cam kết bảo vệ</a>
+                            <span class="toc-label" data-i18n="legal_toc_label">Mục lục:</span>
+                            <a href="#privacy-section-1" class="toc-chip" data-i18n="privacy_toc_1">1. Thu thập dữ liệu</a>
+                            <a href="#privacy-section-2" class="toc-chip" data-i18n="privacy_toc_2">2. Tự động xóa</a>
+                            <a href="#privacy-section-3" class="toc-chip" data-i18n="privacy_toc_3">3. Tiêu chuẩn mã hóa</a>
+                            <a href="#privacy-section-4" class="toc-chip" data-i18n="privacy_toc_4">4. Cam kết bảo vệ</a>
                         </div>
 
-                        <h4 id="privacy-section-1">1. Thu thập dữ liệu &amp; Phạm vi sử dụng</h4>
-                        <p>PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch
-                            thuật tài liệu:</p>
+                        <h4 id="privacy-section-1" data-i18n="privacy_h1">1. Thu thập dữ liệu &amp; Phạm vi sử dụng</h4>
+                        <p data-i18n="privacy_p1">PDF-Lingua chỉ thu thập các dữ liệu tối thiểu cần thiết để phục vụ quy trình bóc tách và dịch thuật tài liệu:</p>
                         <ul>
-                            <li>Tệp PDF tải lên tạm thời trong phiên làm việc.</li>
-                            <li>Thông tin tài khoản đăng ký (Địa chỉ email, Tên hiển thị). Mật khẩu được mã hóa một
-                                chiều tuyệt đối không lưu plaintext.</li>
-                            <li>Dữ liệu kỹ thuật ẩn danh (IP, thời gian gửi yêu cầu) phục vụ cho cơ chế bảo vệ chống tấn
-                                công quá tải (Rate Limiting).</li>
+                            <li data-i18n="privacy_p1_item1">Tệp PDF tải lên tạm thời trong phiên làm việc.</li>
+                            <li data-i18n="privacy_p1_item2">Thông tin tài khoản đăng ký (Địa chỉ email, Tên hiển thị). Mật khẩu được mã hóa một chiều tuyệt đối không lưu plaintext.</li>
+                            <li data-i18n="privacy_p1_item3">Dữ liệu kỹ thuật ẩn danh (IP, thời gian gửi yêu cầu) phục vụ cho cơ chế bảo vệ chống tấn công quá tải (Rate Limiting).</li>
                         </ul>
 
-                        <h4 id="privacy-section-2">2. Chính sách lưu trữ &amp; Tự động xóa (Auto-Cleanup)</h4>
-                        <p>Mọi tệp tài liệu PDF và file tạm thời phát sinh trong quá trình xử lý đều được lưu trữ trong
-                            thư mục tạm có bảo vệ và được tự động dọn dẹp, xóa sạch sau khi hoàn tất phiên làm việc.
-                            Người dùng có toàn quyền xóa lịch sử xử lý tài liệu bất cứ khi nào.</p>
+                        <h4 id="privacy-section-2" data-i18n="privacy_h2">2. Chính sách lưu trữ &amp; Tự động xóa (Auto-Cleanup)</h4>
+                        <p data-i18n="privacy_p2">Mọi tệp tài liệu PDF và file tạm thời phát sinh trong quá trình xử lý đều được lưu trữ trong thư mục tạm có bảo vệ và được tự động dọn dẹp, xóa sạch sau khi hoàn tất phiên làm việc. Người dùng có toàn quyền xóa lịch sử xử lý tài liệu bất cứ khi nào.</p>
 
-                        <h4 id="privacy-section-3">3. Tiêu chuẩn mã hóa &amp; An toàn hệ thống</h4>
+                        <h4 id="privacy-section-3" data-i18n="privacy_h3">3. Tiêu chuẩn mã hóa &amp; An toàn hệ thống</h4>
                         <ul>
-                            <li><strong>Mật khẩu:</strong> Sử dụng thuật toán băm chuẩn công nghiệp <code>bcrypt</code>
-                                với 12 rounds muối ngẫu nhiên.</li>
-                            <li><strong>Phiên làm việc:</strong> Bảo mật thông qua mã xác thực JSON Web Token (JWT) có
-                                thời hạn.</li>
-                            <li><strong>Tính cô lập (Data Isolation):</strong> Tài liệu và dữ liệu của người dùng được
-                                phân tách biệt lập, ngăn chặn hoàn toàn việc người khác truy cập trái phép.</li>
+                            <li data-i18n-html="privacy_h3_item1"><strong>Mật khẩu:</strong> Sử dụng thuật toán băm chuẩn công nghiệp <code>bcrypt</code> với 12 rounds muối ngẫu nhiên.</li>
+                            <li data-i18n-html="privacy_h3_item2"><strong>Phiên làm việc:</strong> Bảo mật thông qua mã xác thực JSON Web Token (JWT) có thời hạn.</li>
+                            <li data-i18n-html="privacy_h3_item3"><strong>Tính cô lập (Data Isolation):</strong> Tài liệu và dữ liệu của người dùng được phân tách biệt lập, ngăn chặn hoàn toàn việc người khác truy cập trái phép.</li>
                         </ul>
 
-                        <h4 id="privacy-section-4">4. Cam kết bảo vệ dữ liệu</h4>
-                        <p>Chúng tôi tuyệt đối không bán, cho thuê, trao đổi hoặc tiết lộ thông tin cá nhân và dữ liệu
-                            tài liệu của người dùng cho bất kỳ bên thứ ba nào.</p>
+                        <h4 id="privacy-section-4" data-i18n="privacy_h4">4. Cam kết bảo vệ dữ liệu</h4>
+                        <p data-i18n="privacy_p4">Chúng tôi tuyệt đối không bán, cho thuê, trao đổi hoặc tiết lộ thông tin cá nhân và dữ liệu tài liệu của người dùng cho bất kỳ bên thứ ba nào.</p>
                     </div>
                 </div>
 
                 <!-- Panel 3: Liên hệ -->
                 <div class="legal-tab-panel" id="tabContact" role="tabpanel">
                     <div class="legal-content">
-                        <h4>Thông tin đồ án</h4>
-                        <p><strong>Dự án:</strong> PDF-Lingua - Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa
-                            ngôn ngữ và tích hợp AI.</p>
+                        <h4 data-i18n="feedback_section_project">Thông tin đồ án</h4>
+                        <p data-i18n-html="feedback_project_desc"><strong>Dự án:</strong> PDF-Lingua - Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI.</p>
 
-                        <h4>Thành viên nhóm</h4>
+                        <h4 data-i18n="feedback_section_team">Thành viên nhóm</h4>
                         <div class="team-cards-grid">
                             <div class="team-member-card">
                                 <a href="https://github.com/Sleepy2608" target="_blank" rel="noopener"
@@ -1065,63 +1234,63 @@ DEBUG_MODE=False</div>
                             </div>
                         </div>
 
-                        <h4>Thông tin liên hệ</h4>
+                        <h4 data-i18n="feedback_section_contact">Thông tin liên hệ</h4>
                         <div class="contact-channels-box">
                             <div class="contact-channel-item">
                                 <img src="assets/icons/contacts/gmail-icon.webp" alt="Gmail" class="channel-icon-img">
                                 <div class="channel-text">
-                                    <strong>Email hỗ trợ:</strong>
+                                    <strong data-i18n="feedback_contact_email_lbl">Email hỗ trợ:</strong>
                                     <span id="supportEmailText">huytamnguyenle2608@gmail.com</span>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-secondary" id="btnCopySupportEmail"
-                                    title="Sao chép email">
+                                    title="Sao chép email" data-i18n="feedback_copy_btn" data-i18n-attr="title:feedback_copy_email_title">
                                     Sao chép
                                 </button>
                             </div>
                             <div class="contact-channel-item">
                                 <img src="assets/icons/contacts/github-icon.png" alt="GitHub" class="channel-icon-img">
                                 <div class="channel-text">
-                                    <strong>Mã nguồn</strong>
+                                    <strong data-i18n="feedback_contact_source_lbl">Mã nguồn</strong>
                                     <span>github.com/Sleepy2608/PDF-Lingua</span>
                                 </div>
                                 <a href="https://github.com/Sleepy2608/PDF-Lingua" target="_blank" rel="noopener"
-                                    class="btn btn-sm btn-secondary">
+                                    class="btn btn-sm btn-secondary" data-i18n="feedback_goto_repo">
                                     Đi tới repo
                                 </a>
                             </div>
                         </div>
 
-                        <h4>Gửi phản hồi cho nhóm</h4>
+                        <h4 data-i18n="feedback_section_feedback">Gửi phản hồi cho nhóm</h4>
                         <form class="feedback-form" id="feedbackForm">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="feedbackName">Họ và tên <span class="text-danger">*</span></label>
-                                    <input type="text" id="feedbackName" class="form-control" placeholder="Họ và tên"
+                                    <label for="feedbackName" data-i18n-html="feedback_lbl_name_req">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" id="feedbackName" class="form-control" placeholder="Họ và tên" data-i18n-attr="placeholder:feedback_lbl_name"
                                         required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="feedbackEmail">Email liên hệ <span class="text-danger">*</span></label>
-                                    <input type="email" id="feedbackEmail" class="form-control" placeholder="Email"
+                                    <label for="feedbackEmail" data-i18n-html="feedback_lbl_email_req">Email liên hệ <span class="text-danger">*</span></label>
+                                    <input type="email" id="feedbackEmail" class="form-control" placeholder="Email" data-i18n-attr="placeholder:feedback_lbl_email"
                                         required>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="feedbackTopic">Chủ đề đóng góp</label>
+                                <label for="feedbackTopic" data-i18n="feedback_lbl_topic">Chủ đề đóng góp</label>
                                 <select id="feedbackTopic" class="form-control">
-                                    <option value="bug">Báo cáo lỗi dịch thuật / OCR</option>
-                                    <option value="feature">Đề xuất tính năng mới</option>
-                                    <option value="support">Câu hỏi / Hỗ trợ sử dụng</option>
-                                    <option value="other">Ý kiến đóng góp khác</option>
+                                    <option value="bug" data-i18n="feedback_topic_bug">Báo cáo lỗi dịch thuật / OCR</option>
+                                    <option value="feature" data-i18n="feedback_topic_feature">Đề xuất tính năng mới</option>
+                                    <option value="support" data-i18n="feedback_topic_support">Câu hỏi / Hỗ trợ sử dụng</option>
+                                    <option value="other" data-i18n="feedback_topic_other">Ý kiến đóng góp khác</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="feedbackMessage">Nội dung phản hồi <span
+                                <label for="feedbackMessage" data-i18n-html="feedback_lbl_message_req">Nội dung phản hồi <span
                                         class="text-danger">*</span></label>
                                 <textarea id="feedbackMessage" class="form-control" rows="3"
-                                    placeholder="Mô tả chi tiết ý kiến hoặc lỗi bạn gặp phải..." required></textarea>
+                                    placeholder="Mô tả chi tiết ý kiến hoặc lỗi bạn gặp phải..." data-i18n-attr="placeholder:feedback_placeholder_message" required></textarea>
                             </div>
                             <button type="submit" class="btn btn-gradient btn-sm" id="btnSubmitFeedback">
-                                <span>Gửi phản hồi</span>
+                                <span data-i18n="feedback_btn_submit">Gửi phản hồi</span>
                             </button>
                         </form>
                     </div>
@@ -1130,16 +1299,18 @@ DEBUG_MODE=False</div>
 
             <div class="legal-modal-footer">
                 <div class="legal-footer-left">
-                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="footer-btn-icon"><polyline points="18 15 12 9 6 15"></polyline></svg> Lên đầu trang</button>
-                    <span class="legal-footer-meta">Phiên bản: v1.0.0 • Hiệu lực từ: 28/10/2026</span>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnScrollToTop" title="Cuộn lên đầu trang" data-i18n-attr="title:common_scroll_top_title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="footer-btn-icon"><polyline points="18 15 12 9 6 15"></polyline></svg> <span data-i18n="common_scroll_top">Lên đầu trang</span></button>
+                    <span class="legal-footer-meta" data-i18n="feedback_legal_meta">Phiên bản: v1.0.0 • Hiệu lực từ: 28/10/2026</span>
                 </div>
                 <div class="legal-footer-right">
-                    <button type="button" class="btn btn-primary btn-sm" id="btnAcceptLegal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="footer-btn-icon"><polyline points="20 6 9 17 4 12"></polyline></svg> Tôi đã hiểu &amp; Đồng ý</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnAcceptLegal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="footer-btn-icon"><polyline points="20 6 9 17 4 12"></polyline></svg> <span data-i18n="common_understood_agree">Tôi đã hiểu &amp; Đồng ý</span></button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Internationalization Engine -->
+    <script src="js/i18n.js"></script>
     <!-- Standalone Welcome Page Script -->
     <script src="js/welcome.js"></script>
 </body>

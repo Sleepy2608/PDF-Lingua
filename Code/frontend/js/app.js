@@ -84,7 +84,7 @@ function initLegalModal() {
             const fullscreenIcon = document.getElementById('fullscreenIcon');
             const fullscreenText = document.getElementById('fullscreenText');
             if (fullscreenIcon) fullscreenIcon.textContent = '⛶';
-            if (fullscreenText) fullscreenText.textContent = 'Phóng to';
+            if (fullscreenText) fullscreenText.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_fullscreen') : 'Phóng to';
         }
     }
 
@@ -161,16 +161,17 @@ function initLegalModal() {
                     document.execCommand('copy');
                     document.body.removeChild(tempInput);
                 }
-                btnCopyEmail.innerHTML = '<span>✓ Đã sao chép</span>';
+                btnCopyEmail.innerHTML = '<span>✓ ' + ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copied') : 'Đã sao chép') + '</span>';
                 setTimeout(() => {
-                    btnCopyEmail.innerHTML = 'Sao chép';
+                    btnCopyEmail.innerHTML = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copy') : 'Sao chép';
                 }, 2000);
                 if (typeof showToast === 'function') {
-                    showToast('Đã sao chép địa chỉ email vào clipboard!', 'success');
+                    const msg = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_email_copied') : 'Đã sao chép địa chỉ email vào clipboard!';
+                    showToast(msg, 'success');
                 }
             } catch (_err) {
                 if (typeof showToast === 'function') {
-                    showToast('Địa chỉ email: ' + email, 'info');
+                    showToast(((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_email_address_prefix') : 'Địa chỉ email: ') + email, 'info');
                 }
             }
         });
@@ -182,7 +183,7 @@ function initLegalModal() {
         feedbackForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmitFeedback');
-            const originalText = btnSubmit ? btnSubmit.innerHTML : 'Gửi phản hồi';
+            const originalText = btnSubmit ? btnSubmit.innerHTML : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('feedback_btn_submit') : 'Gửi phản hồi');
 
             const nameInput = document.getElementById('feedbackName');
             const emailInput = document.getElementById('feedbackEmail');
@@ -198,7 +199,7 @@ function initLegalModal() {
 
             if (btnSubmit) {
                 btnSubmit.disabled = true;
-                btnSubmit.innerHTML = '<span>Đang gửi...</span>';
+                btnSubmit.innerHTML = '<span>' + ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('feedback_sending') : 'Đang gửi...') + '</span>';
             }
 
             try {
@@ -210,13 +211,15 @@ function initLegalModal() {
                 const result = await response.json();
                 feedbackForm.reset();
                 if (typeof showToast === 'function') {
-                    showToast(result.message || 'Cảm ơn bạn! Phản hồi đã được gửi đến nhóm phát triển.', 'success');
+                    const msg = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_feedback_sent') : (result.message || 'Cảm ơn bạn! Phản hồi đã được gửi đến nhóm phát triển.');
+                    showToast(msg, 'success');
                 }
             } catch (_err) {
                 // Fallback graceful success
                 feedbackForm.reset();
                 if (typeof showToast === 'function') {
-                    showToast('Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.', 'success');
+                    const msg = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_feedback_sent') : 'Cảm ơn bạn! Phản hồi đã được ghi nhận và gửi đến nhóm phát triển.';
+                    showToast(msg, 'success');
                 }
             } finally {
                 if (btnSubmit) {
@@ -242,14 +245,6 @@ function initLegalModal() {
             }
         });
     });
-
-    // Print Legal Document Button
-    const btnPrintLegal = document.getElementById('btnPrintLegal');
-    if (btnPrintLegal) {
-        btnPrintLegal.addEventListener('click', () => {
-            window.print();
-        });
-    }
 
     // Scroll to Top Button
     const btnScrollToTop = document.getElementById('btnScrollToTop');
@@ -278,8 +273,8 @@ function initLegalModal() {
                     ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>'
                     : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
             }
-            if (fullscreenText) fullscreenText.textContent = isFull ? 'Thu nhỏ' : 'Phóng to';
-            btnFullscreen.setAttribute('title', isFull ? 'Thu nhỏ cửa sổ' : 'Phóng to toàn màn hình');
+            if (fullscreenText) fullscreenText.textContent = isFull ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_exit_fullscreen') : 'Thu nhỏ') : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_fullscreen') : 'Phóng to');
+            btnFullscreen.setAttribute('title', isFull ? ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('legal_exit_fullscreen_title') : 'Thu nhỏ cửa sổ') : ((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('legal_fullscreen_title') : 'Phóng to toàn màn hình'));
         };
     }
 
@@ -296,7 +291,7 @@ function initLegalModal() {
             }
             closeModal();
             if (typeof showToast === 'function') {
-                showToast('Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.', 'success');
+                showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_terms_agreed') : 'Cảm ơn bạn! Đã ghi nhận đồng ý Điều khoản & Bảo mật của PDF-Lingua.', 'success');
             }
         };
     }
@@ -315,8 +310,7 @@ function initModalScrollLock() {
         '.modal-backdrop',
         '.modal-overlay',
         '.legal-modal-overlay',
-        '.avatar-crop-modal-backdrop',
-        '[role="dialog"]'
+        '.avatar-crop-modal-backdrop'
     ];
 
     let savedScrollY = 0;
@@ -325,15 +319,20 @@ function initModalScrollLock() {
     function isElementVisibleModal(el) {
         if (!el || el.id === 'sidebarBackdrop') return false;
         if (el.hasAttribute('hidden')) return false;
-        if (el.style && el.style.display === 'none') return false;
+        if (el.style && (el.style.display === 'none' || el.style.visibility === 'hidden')) return false;
         if (el.classList.contains('legal-modal-overlay')) {
             return el.classList.contains('active') || (el.style && el.style.display === 'flex');
         }
+        if (typeof el.checkVisibility === 'function') {
+            return el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+        }
         if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
             const comp = window.getComputedStyle(el);
-            return comp.display !== 'none' && comp.visibility !== 'hidden';
+            if (comp.display === 'none' || comp.visibility === 'hidden' || comp.opacity === '0') {
+                return false;
+            }
         }
-        return true;
+        return el.offsetWidth > 0 || el.offsetHeight > 0 || (typeof el.getClientRects === 'function' && el.getClientRects().length > 0);
     }
 
     function hasAnyOpenModal() {
