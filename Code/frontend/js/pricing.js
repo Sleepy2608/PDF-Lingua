@@ -4,7 +4,7 @@
  * Manages:
  * - Fetching live pricing catalog (`GET /api/pricing/plans`) with graceful offline fallback
  * - Fetching current user's subscription state (`GET /api/pricing/my-subscription`)
- * - Segmented billing cycle toggle (`monthly`: 49.000đ/tháng vs `yearly`: 399.000đ/năm - Tiết kiệm 32%)
+ * - Segmented billing cycle toggle (`monthly`: 39.000đ/tháng vs `yearly`: 350.000đ/năm - Tiết kiệm 25%)
  * - Dynamic CTA state synchronization for Guest, Free, Pro, and Admin accounts
  * - View switching between `#pricingSection`, `#heroSection`, `#workspaceSection`, and `#adminSection`
  */
@@ -40,12 +40,12 @@
       monthly: {
         code: 'pro_monthly',
         name: 'Gói Pro Hàng Tháng',
-        price_vnd: 49000,
-        original_price_vnd: 49000,
+        price_vnd: 39000,
+        original_price_vnd: 39000,
         discount_percent: 0,
         billing_cycle: 'monthly',
         duration_days: 30,
-        price_display: '49.000đ',
+        price_display: '39.000đ',
         period_display: '/ tháng',
         monthly_equivalent: null,
         badge: null,
@@ -53,15 +53,15 @@
       yearly: {
         code: 'pro_yearly',
         name: 'Gói Pro Hàng Năm',
-        price_vnd: 399000,
-        original_price_vnd: 588000,
-        discount_percent: 32,
+        price_vnd: 350000,
+        original_price_vnd: 468000,
+        discount_percent: 25,
         billing_cycle: 'yearly',
         duration_days: 365,
-        price_display: '399.000đ',
+        price_display: '350.000đ',
         period_display: '/ năm',
-        monthly_equivalent: '33.250đ / tháng',
-        badge: 'TIẾT KIỆM 32%',
+        monthly_equivalent: '29.100đ / tháng',
+        badge: 'TIẾT KIỆM 25%',
       },
       shared_features: [
         'Tải lên tệp PDF siêu lớn đến 100 MB',
@@ -181,6 +181,7 @@
     const btnYearly = document.getElementById('btnBillingYearly');
     const btnSelectFree = document.getElementById('btnSelectFreePlan');
     const btnUpgradePro = document.getElementById('btnUpgradeProPlan');
+    const btnUpgradeProYearly = document.getElementById('btnUpgradeProYearlyPlan');
     const btnCancelAutoRenew = document.getElementById('btnCancelAutoRenew');
     const topNavPricing = document.getElementById('topNavPricing');
     const topNavTranslate = document.getElementById('topNavTranslate');
@@ -209,7 +210,14 @@
     if (btnUpgradePro) {
       btnUpgradePro.addEventListener('click', (e) => {
         e.preventDefault();
-        handleUpgradeProAction();
+        handleUpgradeProAction('pro_monthly');
+      });
+    }
+
+    if (btnUpgradeProYearly) {
+      btnUpgradeProYearly.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleUpgradeProAction('pro_yearly');
       });
     }
 
@@ -348,7 +356,7 @@
 
     if (proPlanSubnote) {
       if (currentCycle === 'yearly') {
-        const eq = activePlan.monthly_equivalent || '33.250đ / tháng';
+        const eq = activePlan.monthly_equivalent || '29.100đ / tháng';
         proPlanSubnote.textContent = t('pricing_pro_subnote_yearly', `Tương đương ${eq} (Hiệu lực 365 ngày)`, { eq });
       } else {
         proPlanSubnote.textContent = t('pricing_pro_subnote_monthly', 'Thanh toán linh hoạt từng tháng (30 ngày)');
@@ -358,7 +366,7 @@
     if (proPlanDiscountBadge) {
       if (currentCycle === 'yearly' && (activePlan.discount_percent > 0 || activePlan.badge)) {
         proPlanDiscountBadge.textContent = isEn
-          ? t('pricing_pro_discount_badge', 'SAVE 32%')
+          ? t('pricing_pro_discount_badge', 'SAVE 25%')
           : (activePlan.badge || t('pricing_pro_discount_badge', `TIẾT KIỆM ${activePlan.discount_percent}%`));
         proPlanDiscountBadge.style.display = 'inline-flex';
       } else {
@@ -401,6 +409,16 @@
     const proFeatureList = document.getElementById('proFeatureList');
     const billingSavePill = document.getElementById('billingSavePill');
 
+    const proYearlyPlanName = document.getElementById('proYearlyPlanName');
+    const proYearlyPlanPriceDisplay = document.getElementById('proYearlyPlanPriceDisplay');
+    const proYearlyPlanPeriodDisplay = document.getElementById('proYearlyPlanPeriodDisplay');
+    const proYearlyPlanOriginalPrice = document.getElementById('proYearlyPlanOriginalPrice');
+    const proYearlyPlanSubnote = document.getElementById('proYearlyPlanSubnote');
+    const proYearlyPlanDiscountBadge = document.getElementById('proYearlyPlanDiscountBadge');
+    const proYearlyMaxFileSize = document.getElementById('proYearlyMaxFileSize');
+    const proYearlyMaxOcrPages = document.getElementById('proYearlyMaxOcrPages');
+    const proYearlyFeatureList = document.getElementById('proYearlyFeatureList');
+
     const isEn = isEnLanguage();
 
     if (freeMaxFileSize && freeTier.max_file_size_mb) {
@@ -439,10 +457,49 @@
     if (proFeatureList) {
       renderFeatureItems(proFeatureList, proFeatures);
     }
+
+    // Render Card 3 (Pro Yearly) in 3-card layout if present in DOM
+    if (proYearlyPlanName) {
+      const defaultYearlyName = t('pricing_pro_name_yearly', 'Gói Pro Hàng Năm');
+      proYearlyPlanName.textContent = isEn ? defaultYearlyName : (proTier.yearly.name || defaultYearlyName);
+    }
+    if (proYearlyPlanPriceDisplay) {
+      proYearlyPlanPriceDisplay.textContent =
+        proTier.yearly.price_display || formatVnd(proTier.yearly.price_vnd);
+    }
+    if (proYearlyPlanPeriodDisplay) {
+      const defaultPeriodYear = t('pricing_pro_period_year', '/ năm');
+      proYearlyPlanPeriodDisplay.textContent = isEn ? defaultPeriodYear : (proTier.yearly.period_display || defaultPeriodYear);
+    }
+    if (proYearlyPlanOriginalPrice) {
+      if (proTier.yearly.original_price_vnd && proTier.yearly.original_price_vnd > proTier.yearly.price_vnd) {
+        proYearlyPlanOriginalPrice.textContent = formatVnd(proTier.yearly.original_price_vnd);
+        proYearlyPlanOriginalPrice.style.display = 'inline';
+      }
+    }
+    if (proYearlyPlanSubnote) {
+      proYearlyPlanSubnote.textContent = t('pricing_pro_subnote_yearly_card', 'Tương đương ~29.100đ / tháng (Hiệu lực 365 ngày)');
+    }
+    if (proYearlyPlanDiscountBadge) {
+      proYearlyPlanDiscountBadge.textContent = isEn
+        ? t('pricing_discount_badge_25', 'SAVE 25%')
+        : (proTier.yearly.badge || t('pricing_discount_badge_25', 'TIẾT KIỆM 25%'));
+      proYearlyPlanDiscountBadge.style.display = 'inline-flex';
+    }
+    if (proYearlyMaxFileSize) {
+      proYearlyMaxFileSize.textContent = t('pricing_quota_filesize_val', '100 MB / tệp', { size: 100 });
+    }
+    if (proYearlyMaxOcrPages) {
+      proYearlyMaxOcrPages.textContent = t('pricing_quota_ocrpages_val', '500 trang', { pages: 500 });
+    }
+    if (proYearlyFeatureList) {
+      renderFeatureItems(proYearlyFeatureList, proFeatures);
+    }
+
     if (billingSavePill) {
       billingSavePill.textContent = isEn
-        ? t('pricing_pro_discount_badge', 'SAVE 32%')
-        : ((proTier.yearly && proTier.yearly.badge) || t('pricing_pro_discount_badge', 'TIẾT KIỆM 32%'));
+        ? t('pricing_pro_discount_badge', 'SAVE 25%')
+        : ((proTier.yearly && proTier.yearly.badge) || t('pricing_pro_discount_badge', 'TIẾT KIỆM 25%'));
     }
 
     renderProCardForCycle();
@@ -454,6 +511,9 @@
     const btnUpgradePro = document.getElementById('btnUpgradeProPlan');
     const btnUpgradeProText = document.getElementById('btnUpgradeProText');
     const proPlanCtaHint = document.getElementById('proPlanCtaHint');
+    const btnUpgradeProYearly = document.getElementById('btnUpgradeProYearlyPlan');
+    const btnUpgradeProYearlyText = document.getElementById('btnUpgradeProYearlyText');
+    const proYearlyPlanCtaHint = document.getElementById('proYearlyPlanCtaHint');
     const activeBanner = document.getElementById('pricingActiveBanner');
     const activeBannerTitle = document.getElementById('pricingActiveBannerTitle');
     const activeBannerSub = document.getElementById('pricingActiveBannerSub');
@@ -485,11 +545,21 @@
       if (btnUpgradePro) {
         btnUpgradePro.disabled = false;
       }
+      if (btnUpgradeProYearly) {
+        btnUpgradeProYearly.disabled = false;
+      }
+      if (btnUpgradeProYearlyText) {
+        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp gói Năm');
+      }
+      if (proYearlyPlanCtaHint) {
+        proYearlyPlanCtaHint.textContent = t('pricing_pro_hint_yearly', 'Tiết kiệm 25% - Kích hoạt tức thì 24/7');
+      }
       if (btnUpgradeProText) {
-        btnUpgradeProText.textContent =
-          currentCycle === 'yearly'
-            ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (399.000đ)')
-            : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay');
+        btnUpgradeProText.textContent = btnUpgradeProYearly
+          ? t('pricing_pro_cta_monthly', 'Nâng cấp gói Tháng')
+          : (currentCycle === 'yearly'
+              ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)')
+              : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay'));
       }
       if (proPlanCtaHint) {
         proPlanCtaHint.textContent = t('pricing_pro_hint_guest', 'Đăng nhập để kích hoạt qua mã VietQR ngân hàng 24/7');
@@ -561,24 +631,54 @@
         freePlanCtaHint.textContent = t('pricing_hint_higher_quota', 'Bạn đang sở hữu hạn mức cao hơn gói Miễn phí');
       }
 
-      const selectedCode =
-        currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
-      if (activeSub && activeSub.plan_code === selectedCode) {
-        if (btnUpgradePro) btnUpgradePro.disabled = false;
-        if (btnUpgradeProText) {
-          btnUpgradeProText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+      if (btnUpgradePro) btnUpgradePro.disabled = false;
+      if (btnUpgradeProYearly) btnUpgradeProYearly.disabled = false;
+
+      if (btnUpgradeProYearly) {
+        if (activeSub && activeSub.plan_code === 'pro_yearly') {
+          if (btnUpgradeProYearlyText) {
+            btnUpgradeProYearlyText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+          }
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (39.000đ)');
+          }
+        } else if (activeSub && activeSub.plan_code === 'pro_monthly') {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+          }
+          if (btnUpgradeProYearlyText) {
+            btnUpgradeProYearlyText.textContent = t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)');
+          }
+        } else {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (39.000đ)');
+          }
+          if (btnUpgradeProYearlyText) {
+            btnUpgradeProYearlyText.textContent = t('pricing_btn_extend_yearly', 'Gia hạn thêm gói Năm (350.000đ)');
+          }
         }
       } else {
-        if (btnUpgradePro) btnUpgradePro.disabled = false;
-        if (btnUpgradeProText) {
-          btnUpgradeProText.textContent =
-            currentCycle === 'yearly'
-              ? t('pricing_btn_extend_yearly', 'Gia hạn thêm gói Năm (399.000đ)')
-              : t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (49.000đ)');
+        const selectedCode =
+          currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+        if (activeSub && activeSub.plan_code === selectedCode) {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent = t('pricing_btn_extend_current', 'Đang sử dụng gói này (Gia hạn thêm)');
+          }
+        } else {
+          if (btnUpgradeProText) {
+            btnUpgradeProText.textContent =
+              currentCycle === 'yearly'
+                ? t('pricing_btn_extend_yearly', 'Gia hạn thêm gói Năm (350.000đ)')
+                : t('pricing_btn_extend_monthly', 'Gia hạn thêm gói Tháng (39.000đ)');
+          }
         }
       }
+
       if (proPlanCtaHint) {
         proPlanCtaHint.textContent = t('pricing_hint_extend_accumulate', 'Số ngày gia hạn mới sẽ được cộng dồn vào thời hạn hiện tại');
+      }
+      if (proYearlyPlanCtaHint) {
+        proYearlyPlanCtaHint.textContent = t('pricing_hint_extend_accumulate', 'Số ngày gia hạn mới sẽ được cộng dồn vào thời hạn hiện tại');
       }
     } else {
       // Authenticated Free user
@@ -599,11 +699,21 @@
       if (btnUpgradePro) {
         btnUpgradePro.disabled = false;
       }
+      if (btnUpgradeProYearly) {
+        btnUpgradeProYearly.disabled = false;
+      }
+      if (btnUpgradeProYearlyText) {
+        btnUpgradeProYearlyText.textContent = t('pricing_pro_cta_yearly', 'Nâng cấp gói Năm');
+      }
+      if (proYearlyPlanCtaHint) {
+        proYearlyPlanCtaHint.textContent = t('pricing_pro_hint_yearly', 'Tiết kiệm 25% - Kích hoạt tức thì 24/7');
+      }
       if (btnUpgradeProText) {
-        btnUpgradeProText.textContent =
-          currentCycle === 'yearly'
-            ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (399.000đ)')
-            : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay');
+        btnUpgradeProText.textContent = btnUpgradeProYearly
+          ? t('pricing_pro_cta_monthly', 'Nâng cấp gói Tháng')
+          : (currentCycle === 'yearly'
+              ? t('pricing_btn_upgrade_pro_yearly', 'Nâng cấp gói Năm (350.000đ)')
+              : t('pricing_btn_upgrade_pro_monthly', 'Nâng cấp lên Pro ngay'));
       }
       if (proPlanCtaHint) {
         proPlanCtaHint.textContent = t('pricing_pro_hint_free', 'Kích hoạt tức thì qua mã VietQR ngân hàng 24/7');
@@ -681,10 +791,10 @@
     }
   }
 
-  function handleUpgradeProAction() {
+  function handleUpgradeProAction(requestedPlanCode) {
     const user = getStoredUser();
     const token = getStoredToken();
-    const planCode = currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+    const planCode = requestedPlanCode || (currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
 
     if (!user || !token) {
       notifyUser(
@@ -915,7 +1025,7 @@
     }
 
     const durationDays = planObj.duration_days || (isYearly ? 365 : 30);
-    const amountVnd = planObj.price_vnd || (isYearly ? 399000 : 49000);
+    const amountVnd = planObj.price_vnd || (isYearly ? 350000 : 39000);
 
     const isEn = isEnLanguage();
 
@@ -934,8 +1044,8 @@
     if (savingsRowEl) {
       if (isYearly) {
         const savedVnd =
-          (planObj.original_price_vnd || 588000) - amountVnd;
-        const pct = planObj.discount_percent || 32;
+          (planObj.original_price_vnd || 468000) - amountVnd;
+        const pct = planObj.discount_percent || 25;
         if (savingsAmountEl) {
           savingsAmountEl.textContent = t('checkout_savings_format', `-${formatVnd(savedVnd)} (Tiết kiệm ${pct}%)`, {
             amount: formatVnd(savedVnd),
@@ -961,7 +1071,7 @@
 
   function buildFallbackCheckoutData(planCode) {
     const isYearly = planCode === 'pro_yearly';
-    const amountVnd = isYearly ? 399000 : 49000;
+    const amountVnd = isYearly ? 350000 : 39000;
     const durationDays = isYearly ? 365 : 30;
     const txCode = `PDL-SUB-${String(Date.now()).slice(-6)}`;
     const transferNote = txCode.replace(/-/g, ' ');
@@ -1011,7 +1121,7 @@
       accountNumEl.textContent = bank.account_number || DEFAULT_BANK_INFO.account_number;
     }
     if (transferAmountEl) {
-      transferAmountEl.textContent = formatVnd(txData.amount_vnd || 49000);
+      transferAmountEl.textContent = formatVnd(txData.amount_vnd || 39000);
     }
     if (transferNoteEl) {
       transferNoteEl.textContent =
@@ -1404,7 +1514,7 @@
     const amountVnd =
       (txData && txData.amount_vnd) ||
       (currentTransaction && currentTransaction.amount_vnd) ||
-      49000;
+      39000;
 
     if (receiptCodeEl) {
       receiptCodeEl.textContent =
