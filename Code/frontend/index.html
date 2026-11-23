@@ -131,9 +131,11 @@
                             <a href="#ai-copilot" class="sidebar-nav-item is-dimmed" id="sideNavAiCopilot"
                                 data-tooltip="Hỏi đáp AI" data-i18n-attr="data-tooltip:toolbar_btn_ai_chat">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                                        </path>
                                     </svg>
                                 </span>
                                 <span class="nav-item-text" data-i18n="toolbar_btn_ai_chat">Hỏi đáp AI</span>
@@ -143,8 +145,9 @@
                             <a href="#ai-summarize" class="sidebar-nav-item is-dimmed" id="sideNavAiSummarize"
                                 data-tooltip="Tóm tắt văn bản" data-i18n-attr="data-tooltip:toolbar_btn_ai_summary">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
                                         <path
                                             d="M12 3c0 4.97-4.03 9-9 9 4.97 0 9 4.03 9 9 0-4.97 4.03-9 9-9-4.97 0-9-4.03-9-9z">
                                         </path>
@@ -153,18 +156,52 @@
                                 <span class="nav-item-text" data-i18n="toolbar_btn_ai_summary">Tóm tắt văn bản</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="#pricing" class="sidebar-nav-item" id="sideNavPricing" data-tooltip="Bảng giá gói"
-                                data-i18n-attr="data-tooltip:nav_pricing">
+                        <li class="sidebar-nav-group" id="sideNavPricingGroup">
+                            <a href="#pricing" class="sidebar-nav-item sidebar-nav-group-toggle"
+                                id="sideNavPricing" data-tooltip="Bảng giá gói dịch vụ"
+                                data-i18n-attr="data-tooltip:nav_pricing" aria-expanded="false"
+                                aria-controls="sideNavPricingSubmenu">
                                 <span class="nav-item-icon">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
                                         <rect x="2" y="5" width="20" height="14" rx="2"></rect>
                                         <line x1="2" y1="10" x2="22" y2="10"></line>
                                     </svg>
                                 </span>
-                                <span class="nav-item-text" data-i18n="nav_pricing">Bảng giá gói</span>
+                                <span class="nav-item-text" data-i18n="nav_pricing">Bảng giá gói dịch vụ</span>
+                                <span class="nav-group-chevron" id="sideNavPricingChevron" aria-hidden="true">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </span>
                             </a>
+                            <ul class="sidebar-submenu" id="sideNavPricingSubmenu" role="menu"
+                                aria-label="Chức năng Bảng giá gói dịch vụ">
+                                <li role="none">
+                                    <a href="#pricing-plans" class="sidebar-submenu-item"
+                                        id="sideNavPricingPlans" data-pricing-tab="plans" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="pricing_nav_plans">Bảng giá gói</span>
+                                    </a>
+                                </li>
+                                <li role="none">
+                                    <a href="#pricing-billing" class="sidebar-submenu-item"
+                                        id="sideNavPricingBilling" data-pricing-tab="history" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="pricing_nav_billing_history">Hóa đơn</span>
+                                    </a>
+                                </li>
+                                <li role="none">
+                                    <a href="#pricing-quota" class="sidebar-submenu-item"
+                                        id="sideNavPricingQuota" data-pricing-tab="quota" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="pricing_nav_quota_dashboard">Quản lý gói</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         <li id="sideNavAdminItem" style="display: none;">
                             <a href="#admin" class="sidebar-nav-item" id="sideNavAdmin" data-tooltip="Quản trị hệ thống"
@@ -1847,15 +1884,23 @@
                 <!-- Pricing Plans Section (Initially Hidden) -->
                 <section class="pricing-section" id="pricingSection" style="display: none;">
                     <div class="container pricing-container">
-                        <!-- 1. Section Header & Segmented Billing Switch -->
-                        <div class="pricing-header pricing-page-header">
+                        <!-- 1. Section Header & Page Actions -->
+                        <div class="pricing-header pricing-page-header" id="pricingMainHeader">
                             <div class="pricing-header-text">
-                                <h2 class="pricing-title" data-i18n="pricing_section_title">Bảng giá gói dịch vụ</h2>
-                                <p class="pricing-subtitle" data-i18n="pricing_section_subtitle">Khám phá sức mạnh xử lý
-                                    tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với
-                                    nhu cầu học tập và nghiên cứu của bạn.</p>
+                                <h2 class="pricing-title" id="pricingMainTitle" data-i18n="pricing_section_title">Bảng giá gói dịch vụ</h2>
+                                <p class="pricing-subtitle" id="pricingMainSubtitle" data-i18n="pricing_section_subtitle">Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.</p>
                             </div>
                             <div class="pricing-header-actions">
+                                <button type="button" class="doc-header-back-btn" id="btnPricingBackToPlans"
+                                    style="display: none;" title="Quay lại Bảng giá gói dịch vụ"
+                                    data-i18n-attr="title:pricing_title_back_to_plans">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                                        <polyline points="12 19 5 12 12 5"></polyline>
+                                    </svg>
+                                    <span data-i18n="pricing_btn_back_to_plans">Quay lại Bảng giá</span>
+                                </button>
                                 <button type="button" class="doc-header-back-btn" id="btnPricingBackToWorkspace"
                                     title="Quay lại không gian làm việc"
                                     data-i18n-attr="title:pricing_btn_back_workspace">
@@ -1869,6 +1914,8 @@
                             </div>
                         </div>
 
+                        <!-- 1. Pricing Plans Sub-view Container -->
+                        <div class="pricing-plans-container" id="pricingPlansContainer">
                         <!-- Active Subscription Status Banner (Visible when user holds Pro/Admin) -->
                         <div class="pricing-active-banner" id="pricingActiveBanner" style="display: none;">
                             <div class="pricing-active-banner-info">
@@ -2374,6 +2421,414 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
+                        <!-- End of #pricingPlansContainer -->
+
+                        <!-- 2. Billing History Sub-view Container -->
+                        <div class="billing-history-container" id="billingHistoryContainer" style="display: none;">
+                            <!-- Data Card -->
+                            <div class="documents-card billing-history-card" id="billingHistoryCard">
+                                <!-- Card Toolbar -->
+                                <div class="documents-card-toolbar billing-history-toolbar">
+                                    <div class="billing-toolbar-left">
+                                        <div class="documents-count-chip font-mono" id="billingHistoryCountChip">
+                                            0 giao dịch
+                                        </div>
+                                    </div>
+                                    <div class="billing-toolbar-right">
+                                        <div class="billing-filter-wrap">
+                                            <label for="billingStatusFilter" class="billing-filter-label"
+                                                data-i18n="billing_filter_label">Trạng thái:</label>
+                                            <select id="billingStatusFilter" class="billing-status-select"
+                                                aria-label="Lọc theo trạng thái thanh toán"
+                                                data-i18n-attr="aria-label:billing_filter_aria">
+                                                <option value="all" data-i18n="billing_status_all">Tất cả trạng thái</option>
+                                                <option value="completed" data-i18n="billing_status_completed_opt">Hoàn tất (Completed)</option>
+                                                <option value="pending" data-i18n="billing_status_pending_opt">Đang chờ xử lý (Pending)</option>
+                                                <option value="failed" data-i18n="billing_status_failed_opt">Thất bại (Failed)</option>
+                                                <option value="expired" data-i18n="billing_status_expired_opt">Đã hết hạn (Expired)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Table Wrap -->
+                                <div class="billing-table-responsive">
+                                    <table class="billing-table" id="billingHistoryTable">
+                                        <thead>
+                                            <tr>
+                                                <th class="billing-th-stt" data-i18n="billing_th_stt">STT</th>
+                                                <th data-i18n="billing_th_tx_code">MÃ GIAO DỊCH</th>
+                                                <th data-i18n="billing_th_plan">GÓI DỊCH VỤ</th>
+                                                <th data-i18n="billing_th_date">NGÀY THANH TOÁN</th>
+                                                <th class="text-right" data-i18n="billing_th_amount">SỐ TIỀN</th>
+                                                <th data-i18n="billing_th_method">PHƯƠNG THỨC</th>
+                                                <th data-i18n="billing_th_status">TRẠNG THÁI</th>
+                                                <th class="text-center" data-i18n="billing_th_invoice">HÓA ĐƠN</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="billingHistoryTableBody">
+                                            <!-- Rendered dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Loading State -->
+                                <div class="billing-card-state" id="billingHistoryLoadingState" style="display: none;">
+                                    <div class="billing-state-spinner"></div>
+                                    <div class="billing-state-title" data-i18n="billing_loading_title">Đang tải lịch sử giao dịch...</div>
+                                    <div class="billing-state-desc" data-i18n="billing_loading_desc">Vui lòng chờ trong giây lát</div>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div class="billing-card-state" id="billingHistoryEmptyState" style="display: none;">
+                                    <div class="billing-state-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="billing-state-title" data-i18n="billing_empty_title">Chưa có giao dịch thanh toán nào</div>
+                                    <div class="billing-state-desc" data-i18n="billing_empty_desc">Các giao dịch đăng ký gói Pro và biên lai hóa đơn sẽ
+                                        xuất hiện tại đây.</div>
+                                </div>
+
+                                <!-- Error State -->
+                                <div class="billing-card-state" id="billingHistoryErrorState" style="display: none;">
+                                    <div class="billing-state-icon error-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="billing-state-title" data-i18n="billing_error_title">Không thể tải lịch sử giao dịch</div>
+                                    <div class="billing-state-desc" id="billingHistoryErrorMessage" data-i18n="billing_error_desc">Đã có lỗi xảy ra
+                                        trong quá trình tải dữ liệu.</div>
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        id="btnRetryBillingHistory" data-i18n="billing_btn_retry">Thử lại</button>
+                                </div>
+
+                                <!-- Pagination Footer -->
+                                <div class="billing-pagination-footer" id="billingPaginationFooter">
+                                    <div class="pagination-info" id="billingPaginationInfo">
+                                        Hiển thị 0 / 0 giao dịch
+                                    </div>
+                                    <div class="pagination-controls" id="billingPaginationControls">
+                                        <button type="button" class="btn-pagination" id="btnBillingPrevPage"
+                                            aria-label="Trang trước" data-i18n-attr="aria-label:billing_pagination_prev_aria" disabled>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="15 18 9 12 15 6"></polyline>
+                                            </svg>
+                                        </button>
+                                        <div class="pagination-page-numbers" id="billingPageNumbers">
+                                            <!-- Dynamic page numbers -->
+                                        </div>
+                                        <button type="button" class="btn-pagination" id="btnBillingNextPage"
+                                            aria-label="Trang sau" data-i18n-attr="aria-label:billing_pagination_next_aria">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="9 18 15 12 9 6"></polyline>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End of #billingHistoryContainer -->
+
+                        <!-- 3. Quota Usage & Pro VIP Subscription Sub-view Container -->
+                        <div class="quota-dashboard-container" id="quotaDashboardContainer" style="display: none;">
+                            <!-- Unauthenticated Guest State for Quota Page -->
+                            <div class="quota-guest-state-card" id="quotaGuestState" style="display: none;">
+                                <div class="billing-state-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </div>
+                                <div class="billing-state-title" data-i18n="quota_guest_title">Vui lòng đăng nhập để theo dõi gói dịch vụ & hạn mức</div>
+                                <div class="billing-state-desc" data-i18n="quota_guest_desc">Đăng nhập tài khoản PDF-Lingua để xem trạng thái gói
+                                    cước, ngày hết hạn, hạn mức trang OCR, dung lượng tệp PDF và lượt hỏi đáp Trợ lý AI
+                                    Copilot.</div>
+                                <div class="quota-guest-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnQuotaGuestLogin"
+                                        data-i18n="quota_guest_btn_login">Đăng nhập ngay</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaGuestViewPlans"
+                                        data-i18n="quota_guest_btn_plans">Xem Bảng giá gói</button>
+                                </div>
+                            </div>
+
+                            <!-- Quota Usage Dashboard & Pro VIP Status Card -->
+                            <div class="quota-dashboard-card" id="quotaDashboardCard" style="display: none;">
+                                <!-- Subscription Warning Banner (Shown for expiring_soon or expired states) -->
+                                <div class="quota-warning-banner" id="quotaWarningBanner" style="display: none;">
+                                    <div class="quota-warning-icon" id="quotaWarningIcon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="quota-warning-content">
+                                        <strong class="quota-warning-title" id="quotaWarningTitle"
+                                            data-i18n="quota_warn_expiring_title">Gói dịch vụ sắp hết hạn</strong>
+                                        <p class="quota-warning-desc" id="quotaWarningDesc"
+                                            data-i18n="quota_warn_expiring_desc">Gói Pro của bạn sẽ hết hạn
+                                            trong vài ngày tới. Vui lòng gia hạn để không bị gián đoạn quyền lợi.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-warning-action btn-sm"
+                                        id="btnQuotaWarningRenew" data-i18n="quota_warn_expiring_cta">Gia hạn ngay</button>
+                                </div>
+
+                                <!-- Pro VIP Header -->
+                                <div class="quota-header-row" id="quotaProHeader">
+                                    <div class="quota-header-left">
+                                        <div class="quota-title-badge-wrap">
+                                            <span class="badge-pro-vip" id="badgeProVip">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon
+                                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                                    </polygon>
+                                                </svg>
+                                                <span data-i18n="quota_badge_pro_vip">PRO VIP</span>
+                                            </span>
+                                            <h3 class="quota-plan-name" id="quotaPlanName">Gói Pro Hàng Tháng</h3>
+                                            <span class="quota-countdown-pill font-mono"
+                                                id="quotaDaysRemainingBadge">Còn 28 ngày</span>
+                                        </div>
+                                        <div class="quota-meta-dates">
+                                            <span class="quota-meta-item">
+                                                <span data-i18n="quota_lbl_activated">Kích hoạt:</span>
+                                                <strong class="font-mono" id="quotaStartedAt">20/10/2026</strong>
+                                            </span>
+                                            <span class="quota-meta-sep">•</span>
+                                            <span class="quota-meta-item">
+                                                <span data-i18n="quota_lbl_expires">Hết hạn:</span>
+                                                <strong class="font-mono" id="quotaExpiresAt">20/11/2026</strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="quota-header-right">
+                                        <button type="button" class="btn btn-primary btn-sm" id="btnQuotaRenew">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="23 4 23 10 17 10"></polyline>
+                                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                            </svg>
+                                            <span data-i18n="quota_btn_renew">Gia hạn gói cước</span>
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm"
+                                            id="btnQuotaUpgradeYearly">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="18 15 12 9 6 15"></polyline>
+                                            </svg>
+                                            <span data-i18n="quota_btn_upgrade_yearly">Nâng cấp gói năm</span>
+                                            <span class="quota-mini-save-pill font-mono" data-i18n="quota_save_yearly_pill">-25%</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Free Account Header -->
+                                <div class="quota-header-row" id="quotaFreeHeader" style="display: none;">
+                                    <div class="quota-header-left">
+                                        <div class="quota-title-badge-wrap">
+                                            <span class="badge-free-tier font-mono" data-i18n="quota_badge_free_tier">GÓI TIÊU CHUẨN</span>
+                                            <h3 class="quota-plan-name" id="quotaFreePlanName" data-i18n="quota_free_plan_name">Tài Khoản Miễn Phí</h3>
+                                        </div>
+                                        <p class="quota-free-desc" data-i18n="quota_free_desc">Bạn đang sử dụng các hạn mức mặc định của gói Miễn
+                                            phí. Nâng cấp Pro để mở khóa 100 MB mỗi tệp và AI Copilot.</p>
+                                    </div>
+                                    <div class="quota-header-right">
+                                        <button type="button" class="btn btn-primary btn-sm"
+                                            id="btnQuotaUpgradeFreeCta">
+                                            <span data-i18n="quota_btn_upgrade_free_cta">Nâng cấp Pro ngay</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polyline points="9 18 15 12 9 6"></polyline>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Quota Usage Meter Bars Grid -->
+                                <div class="quota-meters-grid" id="quotaMetersGrid">
+                                    <!-- Meter 1: OCR Pages -->
+                                    <div class="quota-meter-item quota-meter-ring-card" id="meterOcrPages">
+                                        <div class="quota-meter-header">
+                                            <div class="quota-meter-title-wrap">
+                                                <div class="quota-meter-icon">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <path
+                                                            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                        </path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                    </svg>
+                                                </div>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_ocr_title">Trang OCR Chuyên Sâu</span>
+                                            </div>
+                                            <div class="quota-meter-badge-group">
+                                                <span class="quota-threshold-badge" id="quotaOcrThresholdBadge"
+                                                    style="display: none;"></span>
+                                            </div>
+                                        </div>
+                                        <div class="quota-meter-body">
+                                            <div class="quota-meter-details">
+                                                <div class="quota-meter-values">
+                                                    <div class="quota-value-numbers font-mono">
+                                                        <strong id="quotaOcrUsed">142</strong> / <span
+                                                            id="quotaOcrLimit">500</span> <span id="quotaOcrUnit" data-i18n="quota_unit_pages">trang</span>
+                                                    </div>
+                                                </div>
+                                                <div class="quota-meter-note" id="quotaOcrNote" data-i18n="quota_meter_ocr_note">Đã sử dụng trong chu kỳ hiện tại</div>
+                                                <div class="quota-meter-cta-wrap" id="quotaOcrCtaWrap" style="display: none;">
+                                                    <button type="button" class="btn-quota-meter-cta" id="btnQuotaOcrCta"
+                                                        data-i18n="quota_meter_ocr_cta">Gia hạn hạn mức</button>
+                                                </div>
+                                            </div>
+                                            <div class="quota-ring-wrapper" id="quotaOcrRingProgress" role="progressbar"
+                                                aria-valuenow="28" aria-valuemin="0" aria-valuemax="100"
+                                                aria-label="Tiến độ sử dụng trang OCR"
+                                                data-i18n-attr="aria-label:quota_ocr_progress_aria">
+                                                <svg class="quota-ring-svg" viewBox="0 0 68 68" width="68" height="68" aria-hidden="true">
+                                                    <circle class="quota-ring-track" cx="34" cy="34" r="28"></circle>
+                                                    <circle class="quota-ring-fill" id="quotaOcrRingFill" cx="34" cy="34" r="28" stroke-dasharray="175.93" stroke-dashoffset="126.67"></circle>
+                                                </svg>
+                                                <div class="quota-ring-center">
+                                                    <span class="quota-percent-pill font-mono" id="quotaOcrPercent">28%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Accessible & test compatibility track -->
+                                        <div class="quota-progress-track" style="display: none;" aria-hidden="true">
+                                            <div class="quota-progress-fill" id="quotaOcrProgressFill"
+                                                role="progressbar" aria-valuenow="28" aria-valuemin="0"
+                                                aria-valuemax="100" aria-label="Tiến độ sử dụng trang OCR"
+                                                data-i18n-attr="aria-label:quota_ocr_progress_aria"
+                                                style="width: 28%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Meter 2: PDF File Upload Limit -->
+                                    <div class="quota-meter-item" id="meterFileSize">
+                                        <div class="quota-meter-header">
+                                            <div class="quota-meter-title-wrap">
+                                                <div class="quota-meter-icon">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                                    </svg>
+                                                </div>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_filesize_title">Dung Lượng Tệp Tối Đa</span>
+                                            </div>
+                                            <div class="quota-meter-badge-group">
+                                                <span class="quota-threshold-badge" id="quotaFileSizeThresholdBadge"
+                                                    style="display: none;"></span>
+                                                <span class="quota-percent-pill font-mono quota-pill-active"
+                                                    id="quotaFileSizePercent">100 MB</span>
+                                            </div>
+                                        </div>
+                                        <div class="quota-meter-values">
+                                            <div class="quota-value-numbers font-mono">
+                                                <strong id="quotaFileSizeUsed">100 MB</strong> <span id="quotaFileSizeUnit" data-i18n="quota_unit_per_file">/ tệp</span>
+                                            </div>
+                                        </div>
+                                        <div class="quota-progress-track">
+                                            <div class="quota-progress-fill quota-fill-full"
+                                                id="quotaFileSizeProgressFill" role="progressbar" aria-valuenow="100"
+                                                aria-valuemin="0" aria-valuemax="100"
+                                                aria-label="Hạn mức dung lượng tệp tải lên"
+                                                data-i18n-attr="aria-label:quota_filesize_progress_aria" style="width: 100%;"></div>
+                                        </div>
+                                        <div class="quota-meter-note" id="quotaFileSizeNote" data-i18n="quota_meter_filesize_note">Gấp 5 lần gói Miễn phí (tối
+                                            đa 100 MB/tệp)</div>
+                                    </div>
+
+                                    <!-- Meter 3: Daily AI Copilot -->
+                                    <div class="quota-meter-item quota-meter-ring-card" id="meterAiCopilot">
+                                        <div class="quota-meter-header">
+                                            <div class="quota-meter-title-wrap">
+                                                <div class="quota-meter-icon">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <path
+                                                            d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                                        </path>
+                                                    </svg>
+                                                </div>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_copilot_title">Trợ Lý AI Copilot</span>
+                                            </div>
+                                            <div class="quota-meter-badge-group">
+                                                <span class="quota-threshold-badge" id="quotaCopilotThresholdBadge"
+                                                    style="display: none;"></span>
+                                            </div>
+                                        </div>
+                                        <div class="quota-meter-body">
+                                            <div class="quota-meter-details">
+                                                <div class="quota-meter-values">
+                                                    <div class="quota-value-numbers font-mono">
+                                                        <strong id="quotaCopilotUsed">4</strong> / <span
+                                                            id="quotaCopilotLimit">15</span> <span id="quotaCopilotUnit" data-i18n="quota_unit_queries">câu</span>
+                                                    </div>
+                                                </div>
+                                                <div class="quota-meter-note" id="quotaCopilotNote" data-i18n="quota_meter_copilot_note">Hồi phục 15 câu sau mỗi 24
+                                                    giờ</div>
+                                                <div class="quota-meter-cta-wrap" id="quotaCopilotCtaWrap"
+                                                    style="display: none;">
+                                                    <button type="button" class="btn-quota-meter-cta"
+                                                        id="btnQuotaCopilotCta" data-i18n="quota_meter_copilot_cta">Nâng cấp để thêm câu hỏi</button>
+                                                </div>
+                                            </div>
+                                            <div class="quota-ring-wrapper" id="quotaCopilotRingProgress" role="progressbar"
+                                                aria-valuenow="27" aria-valuemin="0" aria-valuemax="100"
+                                                aria-label="Tiến độ sử dụng AI Copilot trong ngày"
+                                                data-i18n-attr="aria-label:quota_copilot_progress_aria">
+                                                <svg class="quota-ring-svg" viewBox="0 0 68 68" width="68" height="68" aria-hidden="true">
+                                                    <circle class="quota-ring-track" cx="34" cy="34" r="28"></circle>
+                                                    <circle class="quota-ring-fill" id="quotaCopilotRingFill" cx="34" cy="34" r="28" stroke-dasharray="175.93" stroke-dashoffset="128.43"></circle>
+                                                </svg>
+                                                <div class="quota-ring-center">
+                                                    <span class="quota-percent-pill font-mono" id="quotaCopilotPercent">27%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Accessible & test compatibility track -->
+                                        <div class="quota-progress-track" style="display: none;" aria-hidden="true">
+                                            <div class="quota-progress-fill" id="quotaCopilotProgressFill"
+                                                role="progressbar" aria-valuenow="27" aria-valuemin="0"
+                                                aria-valuemax="100" aria-label="Tiến độ sử dụng AI Copilot trong ngày"
+                                                data-i18n-attr="aria-label:quota_copilot_progress_aria"
+                                                style="width: 27%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End of #quotaDashboardContainer -->
                     </div>
                 </section>
 
@@ -2525,6 +2980,107 @@
                                 <div class="stat-breakdown">
                                     <span class="stat-sub-text font-mono text-xs" id="statStorageRaw">0 byte dữ
                                         liệu</span>
+                                </div>
+                            </div>
+
+                            <!-- Cell 5: Service Usage Breakdown -->
+                            <div class="admin-bento-cell cell-services" id="cellAdminServices">
+                                <div class="bento-cell-header bento-cell-header-flex">
+                                    <div class="bento-header-left">
+                                        <div class="bento-icon-pill icon-purple">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                                <polyline points="2 17 12 22 22 17"></polyline>
+                                                <polyline points="2 12 12 17 22 12"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <span class="bento-cell-label">Phân Bổ Mức Độ Sử Dụng Dịch Vụ</span>
+                                            <p class="bento-cell-desc">Thống kê tỷ trọng các tính năng cốt lõi được
+                                                người dùng thực hiện thành công</p>
+                                        </div>
+                                    </div>
+                                    <div class="services-total-pill font-mono">
+                                        <span>Tổng cộng:</span>
+                                        <strong id="statServicesTotal">0</strong>
+                                        <span>lượt</span>
+                                    </div>
+                                </div>
+
+                                <!-- Multi-segment Distribution Track -->
+                                <div class="bento-services-track-wrap">
+                                    <div class="bento-dist-bar bento-services-dist-bar" id="statServicesDistBar"
+                                        role="progressbar" aria-label="Phân bổ mức độ sử dụng dịch vụ" aria-valuenow="0"
+                                        aria-valuemin="0" aria-valuemax="100">
+                                        <div class="dist-seg dist-extract" id="distSegExtract" style="width: 0%;"
+                                            title="Trích xuất: 0 lượt (0%)" data-service="extract"></div>
+                                        <div class="dist-seg dist-translate" id="distSegTranslate" style="width: 0%;"
+                                            title="Dịch thuật: 0 lượt (0%)" data-service="translate"></div>
+                                        <div class="dist-seg dist-summarize" id="distSegSummarize" style="width: 0%;"
+                                            title="Tóm tắt AI: 0 lượt (0%)" data-service="summarize"></div>
+                                        <div class="dist-seg dist-chat" id="distSegChat" style="width: 0%;"
+                                            title="Trợ lý AI Copilot: 0 lượt (0%)" data-service="chat"></div>
+                                    </div>
+                                    <div class="bento-services-empty-hint" id="statServicesEmptyHint"
+                                        style="display: none;">
+                                        Chưa có lượt xử lý dịch vụ nào được ghi nhận
+                                    </div>
+                                </div>
+
+                                <!-- 4 Detailed Service Metric Cards -->
+                                <div class="bento-services-grid">
+                                    <div class="service-stat-item" id="serviceStatExtract">
+                                        <div class="service-stat-head">
+                                            <span class="service-dot dot-extract"></span>
+                                            <span class="service-name">Trích xuất văn bản</span>
+                                        </div>
+                                        <div class="service-stat-body">
+                                            <span class="service-count font-mono tabular-nums"
+                                                id="statExtractCount">0</span>
+                                            <span class="service-pct font-mono tabular-nums"
+                                                id="statExtractPct">0%</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="service-stat-item" id="serviceStatTranslate">
+                                        <div class="service-stat-head">
+                                            <span class="service-dot dot-translate"></span>
+                                            <span class="service-name">Dịch thuật tài liệu</span>
+                                        </div>
+                                        <div class="service-stat-body">
+                                            <span class="service-count font-mono tabular-nums"
+                                                id="statTranslateCount">0</span>
+                                            <span class="service-pct font-mono tabular-nums"
+                                                id="statTranslatePct">0%</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="service-stat-item" id="serviceStatSummarize">
+                                        <div class="service-stat-head">
+                                            <span class="service-dot dot-summarize"></span>
+                                            <span class="service-name">Tóm tắt AI</span>
+                                        </div>
+                                        <div class="service-stat-body">
+                                            <span class="service-count font-mono tabular-nums"
+                                                id="statSummarizeCount">0</span>
+                                            <span class="service-pct font-mono tabular-nums"
+                                                id="statSummarizePct">0%</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="service-stat-item" id="serviceStatChat">
+                                        <div class="service-stat-head">
+                                            <span class="service-dot dot-chat"></span>
+                                            <span class="service-name">Trợ lý AI Copilot</span>
+                                        </div>
+                                        <div class="service-stat-body">
+                                            <span class="service-count font-mono tabular-nums"
+                                                id="statChatCount">0</span>
+                                            <span class="service-pct font-mono tabular-nums" id="statChatPct">0%</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3976,6 +4532,197 @@
         </div>
     </div>
 
+    <!-- Electronic Billing Invoice Receipt Modal -->
+    <div class="modal-overlay invoice-modal-overlay" id="billingInvoiceModal" hidden aria-hidden="true"
+        style="display: none;">
+        <div class="invoice-modal-card" role="dialog" aria-modal="true" aria-labelledby="invoiceModalTitle">
+            <!-- Modal Header -->
+            <div class="invoice-modal-header">
+                <div class="invoice-header-title-wrap">
+                    <div class="invoice-header-badge-row">
+                        <span class="invoice-eyebrow font-mono" data-i18n="invoice_eyebrow">BIÊN LAI ĐIỆN TỬ</span>
+                        <span class="billing-status-badge status-badge-completed" id="invoiceStatusBadge">
+                            <span class="billing-status-dot"></span>
+                            <span id="invoiceStatusText" data-i18n="billing_status_completed">Hoàn tất</span>
+                        </span>
+                    </div>
+                    <h3 class="invoice-modal-title" id="invoiceModalTitle" data-i18n="invoice_modal_title">Hóa Đơn Thanh Toán Dịch Vụ</h3>
+                    <p class="invoice-modal-subtitle" data-i18n="invoice_modal_subtitle">Biên lai xác nhận giao dịch thanh toán gói Pro dịch vụ PDF-Lingua</p>
+                </div>
+                <button type="button" class="modal-close invoice-modal-close" id="btnCloseInvoiceModal"
+                    aria-label="Đóng hóa đơn" title="Đóng"
+                    data-i18n-attr="aria-label:invoice_close_aria,title:invoice_close_title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Loading State -->
+            <div class="billing-card-state" id="invoiceModalLoadingState"
+                style="display: none; padding: 3.5rem 1.5rem;">
+                <div class="billing-state-spinner"></div>
+                <div class="billing-state-title" data-i18n="invoice_loading_title">Đang tải chi tiết hóa đơn...</div>
+                <div class="billing-state-desc" data-i18n="invoice_loading_desc">Vui lòng chờ trong giây lát</div>
+            </div>
+
+            <!-- Modal Body (Printable Receipt Area) -->
+            <div class="invoice-modal-body" id="invoicePrintableArea">
+                <!-- Receipt Brand Header -->
+                <div class="invoice-receipt-brand">
+                    <div class="invoice-brand-left">
+                        <div class="invoice-brand-logo">
+                            <span class="brand-badge">PDF</span>-Lingua
+                        </div>
+                        <div class="invoice-brand-meta" data-i18n="invoice_brand_meta">Nền tảng OCR & Dịch thuật PDF Song Ngữ Chuyên Sâu</div>
+                    </div>
+                    <div class="invoice-brand-right">
+                        <div class="invoice-number-label" data-i18n="invoice_lbl_number">SỐ HÓA ĐƠN</div>
+                        <div class="invoice-number-val font-mono" id="invoiceNumber">INV-TXN-20261117-001</div>
+                        <div class="invoice-code-val font-mono" id="invoiceTxCode">Mã GD: TXN-20261117-001</div>
+                    </div>
+                </div>
+
+                <!-- Buyer & Service Meta Information Grid -->
+                <div class="invoice-meta-grid">
+                    <div class="invoice-meta-card">
+                        <div class="invoice-meta-title" data-i18n="invoice_lbl_customer_info">THÔNG TIN KHÁCH HÀNG</div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_buyer">Người mua:</span>
+                            <span class="invoice-meta-val" id="invoiceBuyerName">Nguyễn Văn Mua</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_email">Email:</span>
+                            <span class="invoice-meta-val font-mono" id="invoiceBuyerEmail">buyer@example.com</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_method">Phương thức:</span>
+                            <span class="invoice-meta-val" id="invoicePaymentMethod">VietQR Napas247</span>
+                        </div>
+                    </div>
+
+                    <div class="invoice-meta-card">
+                        <div class="invoice-meta-title" data-i18n="invoice_lbl_service_details">CHI TIẾT DỊCH VỤ</div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_plan">Gói đăng ký:</span>
+                            <strong class="invoice-meta-val" id="invoicePlanName">Gói Pro Hàng Tháng</strong>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_cycle_duration">Chu kỳ & Thời hạn:</span>
+                            <span class="invoice-meta-val" id="invoiceCycleDuration">Theo tháng (30 ngày)</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_created_at">Ngày tạo:</span>
+                            <span class="invoice-meta-val font-mono" id="invoiceCreatedAt">16:28 17/11/2026</span>
+                        </div>
+                        <div class="invoice-meta-row">
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_paid_at">Ngày thanh toán:</span>
+                            <span class="invoice-meta-val font-mono" id="invoicePaidAt">16:30 17/11/2026</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Settlement Breakdown Table -->
+                <div class="invoice-breakdown-card">
+                    <div class="invoice-breakdown-title" data-i18n="invoice_breakdown_title">BẢNG KÊ QUYẾT TOÁN THANH TOÁN</div>
+                    <table class="invoice-items-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="invoice_th_item_desc">MÔ TẢ KHOẢN MỤC</th>
+                                <th class="text-center" data-i18n="invoice_th_duration">THỜI HẠN</th>
+                                <th class="text-right" data-i18n="invoice_th_unit_price">ĐƠN GIÁ</th>
+                                <th class="text-right" data-i18n="invoice_th_tax_rate">THUẾ SUẤT</th>
+                                <th class="text-right" data-i18n="invoice_th_item_total">THÀNH TIỀN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="invoice-item-name" id="invoiceItemDesc">Đặc quyền Gói Pro (100 MB / 500
+                                        trang OCR / AI Copilot)</div>
+                                    <div class="invoice-item-sub font-mono" id="invoiceItemSub">Mã gói: pro_monthly
+                                    </div>
+                                </td>
+                                <td class="text-center" id="invoiceItemCycle">30 ngày</td>
+                                <td class="text-right font-mono" id="invoiceItemPrice">49.000 VNĐ</td>
+                                <td class="text-right font-mono" id="invoiceItemTaxRate">0% (VAT)</td>
+                                <td class="text-right font-mono invoice-item-total" id="invoiceItemAmount">49.000 VNĐ
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="invoice-summary-rows">
+                        <div class="invoice-sum-row">
+                            <span class="invoice-sum-label" data-i18n="invoice_lbl_subtotal">Giá trị dịch vụ (Tạm tính):</span>
+                            <span class="invoice-sum-val font-mono" id="invoiceSubtotal">49.000 VNĐ</span>
+                        </div>
+                        <div class="invoice-sum-row">
+                            <span class="invoice-sum-label" data-i18n="invoice_lbl_tax_vat">Thuế suất GTGT (0%):</span>
+                            <span class="invoice-sum-val font-mono" id="invoiceTaxAmount">0 VNĐ</span>
+                        </div>
+                        <div class="invoice-sum-row invoice-grand-total">
+                            <span class="invoice-sum-label" data-i18n="invoice_lbl_grand_total">Tổng thanh toán:</span>
+                            <span class="invoice-sum-val font-mono" id="invoiceTotalAmount">49.000 VNĐ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reconciliation & QR Verification Section -->
+                <div class="invoice-reconcile-card" id="invoiceReconcileSection">
+                    <div class="invoice-reconcile-left">
+                        <div class="invoice-reconcile-label" data-i18n="invoice_reconcile_label">NỘI DUNG CHUYỂN KHOẢN ĐỐI SOÁT:</div>
+                        <div class="invoice-reconcile-memo font-mono" id="invoicePaymentNote">PDFL PRO MONTHLY NOV</div>
+                        <div class="invoice-reconcile-hint" data-i18n="invoice_reconcile_hint">
+                            Giao dịch điện tử được bảo vệ và tự động đối soát qua Napas247 / VietQR.
+                        </div>
+                    </div>
+                    <div class="invoice-reconcile-right" id="invoiceQrWrap" style="display: none;">
+                        <img id="invoiceQrImage" class="invoice-qr-img" src="" alt="VietQR Thanh toán">
+                        <span class="invoice-qr-caption font-mono" data-i18n="invoice_qr_caption">Quét để kiểm tra</span>
+                    </div>
+                </div>
+
+                <!-- Receipt Legal Note -->
+                <div class="invoice-receipt-footer">
+                    <p data-i18n="invoice_receipt_note_1">Hóa đơn điện tử khởi tạo tự động từ hệ thống PDF-Lingua. Miễn thuế GTGT theo Thông tư 219/2013/TT-BTC.</p>
+                    <p data-i18n="invoice_receipt_note_2">Mọi thắc mắc về biên lai thanh toán, vui lòng liên hệ bộ phận hỗ trợ khách hàng: support@pdf-lingua.vn</p>
+                </div>
+            </div>
+
+            <!-- Modal Action Footer -->
+            <div class="invoice-modal-footer">
+                <div class="invoice-footer-left">
+                    <button type="button" class="btn btn-secondary btn-print-invoice" id="btnPrintInvoice">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                        <span data-i18n="invoice_btn_print">In hóa đơn</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-download-invoice" id="btnDownloadInvoice">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span data-i18n="invoice_btn_download">Tải hóa đơn (PDF)</span>
+                    </button>
+                </div>
+                <div class="invoice-footer-right">
+                    <button type="button" class="btn btn-primary" id="btnInvoiceModalCloseFooter">
+                        <span data-i18n="invoice_btn_close_footer">Đóng biên lai</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Legal & Contact Modal (Terms, Privacy, Contact) -->
     <div class="legal-modal-overlay" id="legalModalOverlay" aria-hidden="true" style="display: none;">
         <div class="legal-modal-container" role="dialog" aria-labelledby="legalModalTitle">
@@ -4597,111 +5344,6 @@
             </div>
         </div>
     </div>
-
-    <!-- AI Copilot Chat Drawer (Collapsible Right Sidebar / Floating Drawer) -->
-    <div class="ai-copilot-backdrop" id="aiCopilotBackdrop" style="display: none;"></div>
-    <aside class="ai-copilot-drawer" id="aiCopilotDrawer" style="display: none;" aria-label="AI Copilot Chat">
-        <div class="copilot-drawer-header">
-            <div class="copilot-header-info">
-                <div class="copilot-avatar-icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z" />
-                    </svg>
-                </div>
-                <div>
-                    <div class="copilot-header-title">
-                        <span>AI Copilot</span>
-                        <span class="badge-pro-pill">PRO VIP</span>
-                    </div>
-                    <div class="copilot-header-status" id="copilotStatusText" data-i18n="copilot_status_ready">Sẵn sàng hỗ trợ tài liệu</div>
-                </div>
-            </div>
-
-            <div class="copilot-header-actions">
-                <span class="copilot-quota-pill" id="copilotQuotaBadge" title="Hạn ngạch hỏi đáp hôm nay"
-                    data-i18n-attr="title:copilot_quota_title">15/15 câu hỏi</span>
-                <button type="button" class="btn-copilot-icon" id="btnClearCopilotChat"
-                    title="Xóa toàn bộ lịch sử trò chuyện" data-i18n-attr="title:copilot_clear_chat_title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-                <button type="button" class="btn-copilot-icon btn-copilot-close" id="btnCloseCopilotDrawer"
-                    title="Đóng trợ lý AI">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Suggested Quick Prompts -->
-        <div class="copilot-quick-prompts" id="copilotQuickPrompts">
-            <button type="button" class="copilot-prompt-chip"
-                data-prompt="Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?"
-                data-i18n="copilot_prompt_summary_label">Tóm tắt 3 ý chính</button>
-            <button type="button" class="copilot-prompt-chip"
-                data-prompt="Tìm các mốc thời gian, số liệu quan trọng trong tài liệu?"
-                data-i18n="copilot_prompt_metrics_label">Số liệu quan trọng</button>
-            <button type="button" class="copilot-prompt-chip"
-                data-prompt="Giải thích các thuật ngữ chuyên môn xuất hiện trong tài liệu?"
-                data-i18n="copilot_prompt_terms_label">Giải thích thuật ngữ</button>
-        </div>
-
-        <!-- Message Thread Container -->
-        <div class="copilot-messages-container" id="copilotMessagesContainer" tabindex="0">
-            <div class="copilot-messages-list" id="copilotMessagesList">
-                <!-- Initial Assistant Greeting -->
-                <div class="copilot-msg copilot-msg-assistant" id="copilotWelcomeMsg">
-                    <div class="copilot-msg-avatar">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z" />
-                        </svg>
-                    </div>
-                    <div class="copilot-msg-content">
-                        <p data-i18n="copilot_welcome_msg">Xin chào! Tôi là AI Copilot. Bạn có thể hỏi tôi bất kỳ thông
-                            tin, dữ kiện hoặc yêu cầu giải thích về nội dung tài liệu hiện tại.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Typing Indicator (Animated 3 Dots) -->
-            <div class="copilot-typing-indicator" id="copilotTypingIndicator" style="display: none;">
-                <div class="copilot-msg-avatar">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z" />
-                    </svg>
-                </div>
-                <div class="typing-bubble">
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer: Chat Input and Send -->
-        <div class="copilot-drawer-footer">
-            <form class="copilot-input-form" id="copilotChatForm">
-                <textarea class="copilot-input" id="copilotInput" rows="1"
-                    placeholder="Hỏi bất kỳ điều gì về tài liệu... (Enter để gửi)" maxlength="2000"
-                    data-i18n-attr="placeholder:copilot_input_placeholder"></textarea>
-                <button type="submit" class="btn-copilot-send" id="btnSendCopilot" title="Gửi câu hỏi" disabled>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
-                </button>
-            </form>
-            <div class="copilot-footer-tip" data-i18n="copilot_footer_tip_short">Mô hình AI B.AI Gateway · Giới hạn 15
-                câu/ngày cho gói Pro</div>
-        </div>
-    </aside>
 
     <!-- Toast Notification Container (Root level to float above all modal backdrops) -->
     <div class="toast-container" id="toastContainer"></div>

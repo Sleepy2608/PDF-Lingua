@@ -11,12 +11,14 @@ and managing user subscriptions:
 - POST /api/pricing/transactions/{code}/simulate: Dev/test endpoint to simulate immediate payment
 - POST /api/pricing/webhook                   : Payment gateway webhook receiver (secret header protected)
 - POST /api/pricing/cancel                    : Cancel automatic renewal on active subscription
+- GET  /api/pricing/billing/history           : Paginated user billing transactions with status filtering
+- GET  /api/pricing/billing/invoices/{code}   : Electronic invoice receipt details with ownership check
 """
 
 import secrets
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, Header, Path, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -27,6 +29,8 @@ from app.models.subscription import PaymentMethod
 from app.models.user import User
 from app.schemas.common import ApiResponse
 from app.schemas.pricing import (
+    BillingHistoryResponse,
+    BillingInvoiceDetailSchema,
     MySubscriptionResponse,
     PaymentWebhookRequest,
     PricingCatalogResponse,
@@ -208,4 +212,82 @@ async def cancel_my_subscription(
         data=cancelled_sub,
         message="Đã hủy gia hạn tự động gói dịch vụ Pro thành công.",
     )
+
+
+# ── User Billing History & Invoices Endpoints ─────────────────────────
+
+
+@router.get(
+    "/billing/history",
+    response_model=ApiResponse[BillingHistoryResponse],
+)
+async def get_my_billing_history(
+    status: Optional[str] = Query(
+        None,
+        description="Filter transactions by lifecycle status: pending | completed | failed | expired | all.",
+    ),
+    page: int = Query(
+        1,
+        ge=1,
+        description="Page number for pagination (1-based, default 1).",
+    ),
+    page_size: int = Query(
+        10,
+        ge=1,
+        le=50,
+        description="Number of transaction items per page (default 10, max 50).",
+    ),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve paginated payment and billing transaction history for the authenticated user.
+    Supports filtering by payment status and chronologically sorts from newest to oldest.
+    """
+    logger.info(
+        f"[Pricing] User {current_user.email} retrieving billing history "
+        f"(status={status}, page={page}, page_size={page_size})."
+    )
+    result = SubscriptionService.get_user_billing_history(
+        db=db,
+        user_id=current_user.id,
+        status_filter=status,
+        page=page,
+        page_size=page_size,
+    )
+    return ApiResponse(
+        data=result,
+        message="Lấy danh sách lịch sử giao dịch thanh toán thành công.",
+    )
+
+
+@router.get(
+    "/billing/invoices/{transaction_code}",
+    response_model=ApiResponse[BillingInvoiceDetailSchema],
+)
+async def get_billing_invoice(
+    transaction_code: str = Path(
+        ...,
+        description="Unique reference code of the payment transaction (e.g. TXN-...).",
+    ),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve detailed electronic invoice receipt for a specific payment transaction.
+    Access is strictly restricted to the transaction owner or system administrators.
+    """
+    logger.info(
+        f"[Pricing] User {current_user.email} requesting invoice for transaction={transaction_code}."
+    )
+    invoice = SubscriptionService.get_user_invoice_detail(
+        db=db,
+        user=current_user,
+        transaction_code=transaction_code,
+    )
+    return ApiResponse(
+        data=invoice,
+        message="Lấy chi tiết hóa đơn thanh toán thành công.",
+    )
+
 

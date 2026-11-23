@@ -16,6 +16,18 @@ from app.models.user import UserRole
 
 # ── System Overview Stats ─────────────────────────────────────────
 
+class AdminServiceUsageStats(BaseModel):
+    """Breakdown of successful document processing actions across system services."""
+
+    extract_count: int = Field(default=0, description="Total successful text extraction operations.")
+    translate_count: int = Field(default=0, description="Total successful document translation operations.")
+    summarize_count: int = Field(default=0, description="Total successful AI summary operations.")
+    chat_count: int = Field(default=0, description="Total successful AI copilot chat interactions.")
+    total_actions: int = Field(default=0, description="Total successful processing actions across all services.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AdminStatsResponse(BaseModel):
     """Aggregated system metrics for the administrative dashboard."""
 
@@ -27,6 +39,10 @@ class AdminStatsResponse(BaseModel):
     admin_users: int = Field(..., description="Number of Administrator tier accounts.")
     total_documents: int = Field(..., description="Total document records stored in database.")
     total_storage_bytes: int = Field(..., description="Total storage consumed by uploaded PDFs.")
+    services: AdminServiceUsageStats = Field(
+        default_factory=AdminServiceUsageStats,
+        description="Aggregated usage metrics categorized by service type.",
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
