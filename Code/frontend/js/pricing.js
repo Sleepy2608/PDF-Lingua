@@ -2716,7 +2716,7 @@
     }
 
     if (btnBackToPlans) {
-      btnBackToPlans.style.display = billingTab === 'plans' ? 'none' : 'inline-flex';
+      btnBackToPlans.style.display = 'none';
     }
 
     const pricingSection = document.getElementById('pricingSection');

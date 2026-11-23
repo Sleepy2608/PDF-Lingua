@@ -349,6 +349,12 @@ async function runAllTests() {
     assert(htmlSource.includes('id="meterFileSize"'), 'Missing #meterFileSize in index.html');
     assert(htmlSource.includes('id="meterAiCopilot"'), 'Missing #meterAiCopilot in index.html');
 
+    // Meter card sequence: OCR Pages -> AI Copilot -> File Size
+    const ocrPos = htmlSource.indexOf('id="meterOcrPages"');
+    const copilotPos = htmlSource.indexOf('id="meterAiCopilot"');
+    const fileSizePos = htmlSource.indexOf('id="meterFileSize"');
+    assert(ocrPos < copilotPos && copilotPos < fileSizePos, 'Meter cards must follow sequence: OCR Pages -> AI Copilot -> File Size');
+
     // CSS classes
     assert(pricingCssSource.includes('.quota-dashboard-card'), 'Missing .quota-dashboard-card CSS');
     assert(pricingCssSource.includes('.badge-pro-vip'), 'Missing .badge-pro-vip CSS');
@@ -1502,7 +1508,7 @@ async function runAllTests() {
     assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'none', 'Plans container hides on Billing page');
     assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'block', 'Billing container visible on Billing page');
     assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'none', 'Quota container hidden on Billing page');
-    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'inline-flex', 'Back-to-plans button shows on Billing page');
+    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'none', 'Back-to-plans button hidden on Billing page');
     assert.strictEqual(env.elements.sideNavPricingBilling.classList.contains('active'), true, 'Sidebar Billing sub-item active');
     assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), false, 'Sidebar Plans sub-item deactivated');
     assert.strictEqual(env.elements.pricingMainTitle.textContent, 'Lịch sử thanh toán & Hóa đơn', 'Dynamic header title updates on Billing page');
@@ -1512,7 +1518,7 @@ async function runAllTests() {
     assert.strictEqual(env.elements.pricingPlansContainer.style.display, 'none', 'Plans container hides on Quota page');
     assert.strictEqual(env.elements.billingHistoryContainer.style.display, 'none', 'Billing container hides on Quota page');
     assert.strictEqual(env.elements.quotaDashboardContainer.style.display, 'block', 'Quota container visible on Quota page');
-    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'inline-flex', 'Back-to-plans button shows on Quota page');
+    assert.strictEqual(env.elements.btnPricingBackToPlans.style.display, 'none', 'Back-to-plans button hidden on Quota page');
     assert.strictEqual(env.elements.sideNavPricingQuota.classList.contains('active'), true, 'Sidebar Quota sub-item active');
     assert.strictEqual(env.elements.sideNavPricingQuota.getAttribute('aria-current'), 'page', 'Sidebar Quota sub-item sets aria-current');
     assert.strictEqual(env.elements.pricingMainTitle.textContent, 'Quản lý gói & Hạn mức', 'Dynamic header title updates on Quota page');

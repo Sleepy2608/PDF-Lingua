@@ -2434,7 +2434,8 @@ function showToast(message, type = 'info', action = null) {
 }
 
 function getLangName(code) {
-  const names = {
+  const isEn = typeof isEnLanguage === 'function' ? isEnLanguage() : false;
+  const namesVi = {
     vi: 'Tiếng Việt',
     en: 'Tiếng Anh',
     fr: 'Tiếng Pháp',
@@ -2446,6 +2447,19 @@ function getLangName(code) {
     es: 'Tiếng Tây Ban Nha',
     ru: 'Tiếng Nga',
   };
+  const namesEn = {
+    vi: 'Vietnamese',
+    en: 'English',
+    fr: 'French',
+    zh: 'Chinese',
+    'zh-CN': 'Chinese',
+    ja: 'Japanese',
+    ko: 'Korean',
+    de: 'German',
+    es: 'Spanish',
+    ru: 'Russian',
+  };
+  const names = isEn ? namesEn : namesVi;
   return names[code] || code;
 }
 

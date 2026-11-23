@@ -837,13 +837,13 @@
                                             sang:</span>
                                         <select class="lang-select" id="targetLangSelect">
                                             <option value="vi" selected data-i18n="lang_vi">Tiếng Việt (vi)</option>
-                                            <option value="en" data-i18n="lang_en">English (en)</option>
-                                            <option value="ja" data-i18n="lang_ja">日本語 (ja)</option>
-                                            <option value="ko" data-i18n="lang_ko">한국어 (ko)</option>
-                                            <option value="zh-CN" data-i18n="lang_zh">中文 (zh)</option>
-                                            <option value="fr" data-i18n="lang_fr">Français (fr)</option>
-                                            <option value="de" data-i18n="lang_de">Deutsch (de)</option>
-                                            <option value="es" data-i18n="lang_es">Español (es)</option>
+                                            <option value="en" data-i18n="lang_en">Tiếng Anh (en)</option>
+                                            <option value="ja" data-i18n="lang_ja">Tiếng Nhật (ja)</option>
+                                            <option value="ko" data-i18n="lang_ko">Tiếng Hàn (ko)</option>
+                                            <option value="zh-CN" data-i18n="lang_zh">Tiếng Trung (zh)</option>
+                                            <option value="fr" data-i18n="lang_fr">Tiếng Pháp (fr)</option>
+                                            <option value="de" data-i18n="lang_de">Tiếng Đức (de)</option>
+                                            <option value="es" data-i18n="lang_es">Tiếng Tây Ban Nha (es)</option>
                                             <option value="ru" data-i18n="lang_ru">Русский (ru)</option>
                                         </select>
                                     </div>
@@ -1892,7 +1892,7 @@
                             </div>
                             <div class="pricing-header-actions">
                                 <button type="button" class="doc-header-back-btn" id="btnPricingBackToPlans"
-                                    style="display: none;" title="Quay lại Bảng giá gói dịch vụ"
+                                    style="display: none !important;" title="Quay lại Bảng giá gói dịch vụ"
                                     data-i18n-attr="title:pricing_title_back_to_plans">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2729,45 +2729,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Meter 2: PDF File Upload Limit -->
-                                    <div class="quota-meter-item" id="meterFileSize">
-                                        <div class="quota-meter-header">
-                                            <div class="quota-meter-title-wrap">
-                                                <div class="quota-meter-icon">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                        stroke-linejoin="round">
-                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                                        <polyline points="17 8 12 3 7 8"></polyline>
-                                                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                                                    </svg>
-                                                </div>
-                                                <span class="quota-meter-title" data-i18n="quota_meter_filesize_title">Dung Lượng Tệp Tối Đa</span>
-                                            </div>
-                                            <div class="quota-meter-badge-group">
-                                                <span class="quota-threshold-badge" id="quotaFileSizeThresholdBadge"
-                                                    style="display: none;"></span>
-                                                <span class="quota-percent-pill font-mono quota-pill-active"
-                                                    id="quotaFileSizePercent">100 MB</span>
-                                            </div>
-                                        </div>
-                                        <div class="quota-meter-values">
-                                            <div class="quota-value-numbers font-mono">
-                                                <strong id="quotaFileSizeUsed">100 MB</strong> <span id="quotaFileSizeUnit" data-i18n="quota_unit_per_file">/ tệp</span>
-                                            </div>
-                                        </div>
-                                        <div class="quota-progress-track">
-                                            <div class="quota-progress-fill quota-fill-full"
-                                                id="quotaFileSizeProgressFill" role="progressbar" aria-valuenow="100"
-                                                aria-valuemin="0" aria-valuemax="100"
-                                                aria-label="Hạn mức dung lượng tệp tải lên"
-                                                data-i18n-attr="aria-label:quota_filesize_progress_aria" style="width: 100%;"></div>
-                                        </div>
-                                        <div class="quota-meter-note" id="quotaFileSizeNote" data-i18n="quota_meter_filesize_note">Gấp 5 lần gói Miễn phí (tối
-                                            đa 100 MB/tệp)</div>
-                                    </div>
-
-                                    <!-- Meter 3: Daily AI Copilot -->
+                                    <!-- Meter 2: Daily AI Copilot -->
                                     <div class="quota-meter-item quota-meter-ring-card" id="meterAiCopilot">
                                         <div class="quota-meter-header">
                                             <div class="quota-meter-title-wrap">
@@ -2824,6 +2786,44 @@
                                                 data-i18n-attr="aria-label:quota_copilot_progress_aria"
                                                 style="width: 27%;"></div>
                                         </div>
+                                    </div>
+
+                                    <!-- Meter 3: PDF File Upload Limit -->
+                                    <div class="quota-meter-item" id="meterFileSize">
+                                        <div class="quota-meter-header">
+                                            <div class="quota-meter-title-wrap">
+                                                <div class="quota-meter-icon">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                                    </svg>
+                                                </div>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_filesize_title">Dung Lượng Tệp Tối Đa</span>
+                                            </div>
+                                            <div class="quota-meter-badge-group">
+                                                <span class="quota-threshold-badge" id="quotaFileSizeThresholdBadge"
+                                                    style="display: none;"></span>
+                                                <span class="quota-percent-pill font-mono quota-pill-active"
+                                                    id="quotaFileSizePercent">100 MB</span>
+                                            </div>
+                                        </div>
+                                        <div class="quota-meter-values">
+                                            <div class="quota-value-numbers font-mono">
+                                                <strong id="quotaFileSizeUsed">100 MB</strong> <span id="quotaFileSizeUnit" data-i18n="quota_unit_per_file">/ tệp</span>
+                                            </div>
+                                        </div>
+                                        <div class="quota-progress-track">
+                                            <div class="quota-progress-fill quota-fill-full"
+                                                id="quotaFileSizeProgressFill" role="progressbar" aria-valuenow="100"
+                                                aria-valuemin="0" aria-valuemax="100"
+                                                aria-label="Hạn mức dung lượng tệp tải lên"
+                                                data-i18n-attr="aria-label:quota_filesize_progress_aria" style="width: 100%;"></div>
+                                        </div>
+                                        <div class="quota-meter-note" id="quotaFileSizeNote" data-i18n="quota_meter_filesize_note">Gấp 5 lần gói Miễn phí (tối
+                                            đa 100 MB/tệp)</div>
                                     </div>
                                 </div>
                             </div>
