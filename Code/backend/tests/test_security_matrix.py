@@ -174,11 +174,11 @@ def test_matrix_role_and_page_limits_sync_endpoint(
     # Mock text extraction & translation to focus strictly on page limit enforcement without heavy OCR
     monkeypatch.setattr(
         "app.api.process.pdf_service.is_scanned_pdf",
-        lambda path, max_pages=None: False,
+        lambda path, max_pages=None, selected_pages=None: False,
     )
     monkeypatch.setattr(
         "app.api.process.pdf_service.extract_text",
-        lambda path, max_pages=None: "Nội dung văn bản hợp lệ phục vụ kiểm thử bảo mật.",
+        lambda path, max_pages=None, selected_pages=None: "Nội dung văn bản hợp lệ phục vụ kiểm thử bảo mật.",
     )
     monkeypatch.setattr(
         "app.api.process.translation_service.translate_text",
@@ -218,6 +218,50 @@ def test_matrix_role_and_page_limits_sync_endpoint(
         assert "vượt quá giới hạn" in msg
 
 
+@pytest.fixture()
+def isolated_async_worker(monkeypatch):
+    """
+    Isolates background job execution in async endpoint security tests.
+    Prevents real OS thread spawning and `_execute_pdf_background_job` execution,
+    records dispatched job metadata for assertions, and removes temp PDF files.
+    """
+    dispatched: list[dict] = []
+
+    def stub_execute_background_job(*args, **kwargs):
+        return None
+
+    class IsolatedWorkerThread:
+        def __init__(self, target=None, args=(), kwargs=None, daemon=None):
+            self.target = target
+            self.args = args
+            self.kwargs = kwargs or {}
+            self.daemon = daemon
+            self.started = False
+
+        def start(self):
+            self.started = True
+            job_id = self.args[0] if len(self.args) > 0 else None
+            tmp_path = self.args[1] if len(self.args) > 1 else None
+            max_allowed_pages = self.args[4] if len(self.args) > 4 else None
+            user_id = self.args[6] if len(self.args) > 6 else None
+            dispatched.append({
+                "target": self.target,
+                "job_id": job_id,
+                "max_allowed_pages": max_allowed_pages,
+                "user_id": user_id,
+                "daemon": self.daemon,
+            })
+            if isinstance(tmp_path, Path) and tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except OSError:
+                    pass
+
+    monkeypatch.setattr("app.api.process._execute_pdf_background_job", stub_execute_background_job)
+    monkeypatch.setattr("app.api.process.threading.Thread", IsolatedWorkerThread)
+    return dispatched
+
+
 @pytest.mark.parametrize("case", ROLE_PAGE_LIMIT_MATRIX, ids=lambda c: f"async_{c.role_label}_{c.page_count}p")
 def test_matrix_role_and_page_limits_async_job_endpoint(
     security_client,
@@ -225,21 +269,26 @@ def test_matrix_role_and_page_limits_async_job_endpoint(
     free_user: AuthUserFixture,
     pro_user: AuthUserFixture,
     admin_user: AuthUserFixture,
+    isolated_async_worker,
     case,
 ):
     """
     Verifies HTTP 202 vs 413 on POST /api/process/jobs
-    according to the Role Page Limit Matrix.
+    according to the Role Page Limit Matrix with an isolated background worker.
     """
     pdf_bytes = pdf_factory(case.page_count)
     headers = {}
+    expected_user_id = None
 
     if case.role_label == "FREE":
         headers = free_user.headers
+        expected_user_id = free_user.user.id
     elif case.role_label == "PRO":
         headers = pro_user.headers
+        expected_user_id = pro_user.user.id
     elif case.role_label == "ADMIN":
         headers = admin_user.headers
+        expected_user_id = admin_user.user.id
 
     res = security_client.post(
         "/api/process/jobs",
@@ -250,13 +299,20 @@ def test_matrix_role_and_page_limits_async_job_endpoint(
 
     if case.expected_allowed:
         assert res.status_code == 202, f"Expected 202 for {case.role_label} with {case.page_count} pages: {res.text}"
-        assert res.json()["success"] is True
-        assert "job_id" in res.json()["data"]
+        body = res.json()
+        assert body["success"] is True
+        assert "job_id" in body["data"]
+        assert len(isolated_async_worker) == 1
+        assert isolated_async_worker[0]["job_id"] == body["data"]["job_id"]
+        expected_max_pages = 500 if case.role_label in ("PRO", "ADMIN") else 100
+        assert isolated_async_worker[0]["max_allowed_pages"] == expected_max_pages
+        assert isolated_async_worker[0]["user_id"] == expected_user_id
     else:
         assert res.status_code == 413, f"Expected 413 for {case.role_label} with {case.page_count} pages: {res.text}"
         msg = res.json().get("message", "") or res.json().get("detail", "")
         assert str(case.page_count) in msg
         assert "vượt quá giới hạn" in msg
+        assert len(isolated_async_worker) == 0
 
 
 # ── 3. Security Test Matrix: File Size Limits ────────────────────────────────
@@ -274,18 +330,18 @@ def test_matrix_role_and_file_size_limits(case):
 # ── 4. Security Test Matrix: Upload Validation Hardening ─────────────────────
 
 @pytest.mark.parametrize("case", UPLOAD_VALIDATION_MATRIX, ids=lambda c: c.case_name)
-def test_matrix_upload_validation(security_client, monkeypatch, case):
+def test_matrix_upload_validation(security_client, monkeypatch, isolated_async_worker, case):
     """
     Verifies that the upload pipeline safely accepts valid PDFs and rejects all
     malicious/invalid formats with HTTP 400 without crashing (preventing HTTP 500).
     """
     monkeypatch.setattr(
         "app.api.process.pdf_service.is_scanned_pdf",
-        lambda path, max_pages=None: False,
+        lambda path, max_pages=None, selected_pages=None: False,
     )
     monkeypatch.setattr(
         "app.api.process.pdf_service.extract_text",
-        lambda path, max_pages=None: "Nội dung văn bản hợp lệ phục vụ kiểm thử bảo mật.",
+        lambda path, max_pages=None, selected_pages=None: "Nội dung văn bản hợp lệ phục vụ kiểm thử bảo mật.",
     )
     monkeypatch.setattr(
         "app.api.process.translation_service.translate_text",
@@ -308,6 +364,8 @@ def test_matrix_upload_validation(security_client, monkeypatch, case):
         if case.expected_status == 200:
             expected_code = 200 if "upload-and-translate" in endpoint else 202
             assert res.status_code == expected_code
+            if endpoint == "/api/process/jobs":
+                assert len(isolated_async_worker) == 1
         else:
             assert res.status_code == case.expected_status, (
                 f"Expected {case.expected_status} for {case.case_name} on {endpoint}, got {res.status_code}: {res.text}"
@@ -315,6 +373,8 @@ def test_matrix_upload_validation(security_client, monkeypatch, case):
             msg = res.json().get("message", "") or res.json().get("detail", "")
             if case.error_keyword:
                 assert case.error_keyword.lower() in msg.lower()
+            if endpoint == "/api/process/jobs":
+                assert len(isolated_async_worker) == 0
 
 
 # ── 5. Security Test Matrix: Path Traversal Protection ───────────────────────

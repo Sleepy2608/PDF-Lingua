@@ -2,6 +2,7 @@ import json
 import re
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from typing import Any
 
 from deep_translator import GoogleTranslator, MyMemoryTranslator
@@ -231,4 +232,118 @@ class TranslationService:
             "target_lang": target,
             "chunk_count": len(chunks),
             "engine_used": ", ".join(sorted(engines_used)),
+        }
+
+    def translate_pages(
+        self,
+        pages: list[dict[str, Any]],
+        target_lang: str | None = None,
+        source_lang: str = "auto",
+        max_chars: int = 2500,
+    ) -> dict[str, Any]:
+        """
+        Dịch độc lập từng trang tài liệu có nội dung, bỏ qua trang trống
+        nhưng vẫn giữ nguyên số thứ tự trang gốc và thông tin OCR.
+        """
+        target = target_lang or self.default_target_lang
+        if not pages:
+            return {
+                "pages": [],
+                "original_text": "",
+                "translated_text": "",
+                "source_lang": source_lang,
+                "target_lang": target,
+                "chunk_count": 0,
+                "engine_used": "none",
+            }
+
+        translated_pages: list[dict[str, Any]] = []
+        engines_used: set[str] = set()
+        total_chunks = 0
+
+        for idx, page_item in enumerate(pages):
+            raw_page_num = page_item.get("page_number")
+            if raw_page_num is None:
+                raw_page_num = page_item.get("page", idx + 1)
+            try:
+                page_number = max(1, int(raw_page_num))
+            except (TypeError, ValueError):
+                page_number = idx + 1
+
+            if "original_text" in page_item and page_item.get("original_text") is not None:
+                original_text = str(page_item.get("original_text") or "")
+            else:
+                original_text = str(page_item.get("text") or "")
+
+            is_ocr_used = bool(page_item.get("is_ocr_used", False))
+            raw_is_blank = bool(page_item.get("is_blank", False))
+            is_empty = not original_text.strip()
+            is_blank = raw_is_blank or is_empty
+            updated_at = datetime.now(timezone.utc).isoformat()
+
+            if is_blank:
+                translated_pages.append({
+                    "page_number": page_number,
+                    "original_text": original_text,
+                    "translated_text": "",
+                    "is_ocr_used": is_ocr_used,
+                    "is_blank": True,
+                    "target_lang": target,
+                    "engine_used": "none",
+                    "status": "blank",
+                    "updated_at": updated_at,
+                })
+                continue
+
+            if max_chars != 2500:
+                page_res = self.translate_text(
+                    original_text,
+                    target_lang=target,
+                    source_lang=source_lang,
+                    max_chars=max_chars,
+                )
+            else:
+                page_res = self.translate_text(
+                    original_text,
+                    target_lang=target,
+                    source_lang=source_lang,
+                )
+
+            page_translated = str(page_res.get("translated_text") or "")
+            page_engine = str(page_res.get("engine_used") or "none")
+            total_chunks += int(page_res.get("chunk_count", 1) or 0)
+
+            for part in page_engine.split(","):
+                cleaned_engine = part.strip()
+                if cleaned_engine and cleaned_engine != "none":
+                    engines_used.add(cleaned_engine)
+
+            translated_pages.append({
+                "page_number": page_number,
+                "original_text": original_text,
+                "translated_text": page_translated,
+                "is_ocr_used": is_ocr_used,
+                "is_blank": False,
+                "target_lang": target,
+                "engine_used": page_engine,
+                "status": "completed",
+                "updated_at": updated_at,
+            })
+
+        combined_original = "\n\n".join(
+            item["original_text"] for item in translated_pages if item["original_text"].strip()
+        )
+        combined_translated = "\n\n".join(
+            item["translated_text"] for item in translated_pages if item["translated_text"].strip()
+        )
+        merged_engine = ", ".join(sorted(engines_used)) if engines_used else "none"
+
+        return {
+            "pages": translated_pages,
+            "original_text": combined_original,
+            "translated_text": combined_translated,
+            "source_lang": source_lang,
+            "target_lang": target,
+            "chunk_count": total_chunks,
+            "engine_used": merged_engine,
         }
