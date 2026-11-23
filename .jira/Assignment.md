@@ -36,7 +36,7 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 - **Tuần 2 (Sprint 2: 20/10 - 27/10/2026) - Hệ thống tài khoản, xác thực & cốt lõi xử lý PDF/OCR**: User schema, bcrypt password hashing, đăng ký, đăng nhập, JWT token, tải PDF an toàn, trích xuất text số PyMuPDF/pdfplumber, nhận dạng scan OCR Tesseract, Workspace UI, bộ test suite nền tảng (Services, Auth, API, E2E, Bcrypt, Injection).
 - **Tuần 3 (Sprint 3: 27/10 - 03/11/2026) - Quản lý tài liệu, OCR nâng cao, dịch thuật cốt lõi & kiểm thử đo lường**: Quản lý kho file cá nhân, tiền xử lý OCR (deskew, rotate, blank page), động cơ dịch thuật `deep-translator`, chia đoạn chống timeout, xuất file TXT/PDF Unicode, kéo thả file, điều khoản dịch vụ; bộ test đánh giá độ chính xác tiếng Việt, layout metrics, benchmark hiệu năng, tối ưu bộ nhớ và xử lý song song.
 - **Tuần 4 (Sprint 4: 03/11 - 10/11/2026) - Dịch thuật fallback, xuất file, lịch sử, admin cơ bản & quyền lợi gói**: Xử lý lỗi dịch thuật đa tầng, kiểm thử file xuất, thiết kế bảng dữ liệu lịch sử, API xem/mở lại/xóa lịch sử, quyền lợi Free (20MB) vs Pro (100MB), Dashboard admin cơ bản, bộ test ma trận bảo mật (Security Matrix), giới hạn tải lên và tài liệu kiến trúc.
-- **Tuần 5 (Sprint 5: 10/11 - 17/11/2026) - Lịch sử Pro, Quản trị Admin, Hạn mức Free/Pro, Mở rộng, Thiết kế đồ án, Avatar/Billing & Thống kê/Truy xuất AI**: Lịch sử Pro, Admin Console nâng cao, phân quyền RBAC, Batch ZIP, DOCX export, PDF preview inline, nộp hồ sơ thiết kế đồ án (Kiến trúc `PDFL-269`, Use Case `PDFL-270`, Class Diagram `PDFL-271`), khởi động Avatar người dùng (`PDFL-272`, `PDFL-273`), Billing (`PDFL-274`, `PDFL-275`, `PDFL-276`), Bổ sung thống kê sử dụng dịch vụ (`PDFL-262` - Chấn) và Cải thiện truy xuất nguồn câu trả lời AI (`PDFL-263` - Tâm).
+- **Tuần 5 (Sprint 5: 10/11 - 17/11/2026) - Lịch sử Pro, Quản trị Admin, Hạn mức Free/Pro, Mở rộng, Thiết kế đồ án, Avatar & Quản lý gói/Hóa đơn (Billing)**: Lịch sử Pro, Admin Console nâng cao, phân quyền RBAC, Batch ZIP, DOCX export, PDF preview inline, nộp hồ sơ thiết kế đồ án (Kiến trúc `PDFL-269`, Use Case `PDFL-270`, Class Diagram `PDFL-271`), Avatar người dùng (`PDFL-272`, `PDFL-273`), Lịch sử thanh toán & hóa đơn (`PDFL-274`, `PDFL-275`), Quản lý gói & hạn mức (`PDFL-276`) và Thống kê sử dụng dịch vụ (`PDFL-262`). Đã hoàn thành trọn vẹn 41/41 work items (123 SP - 100% Done) đúng theo Jira Board.
 - **Tuần 6 (Sprint 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu**: Tích hợp mô hình ngôn ngữ lớn (LLM API), prompt tóm tắt, Map-Reduce cho tài liệu dài, Trợ lý AI chat hỏi đáp theo ngữ cảnh (RAG QA Chatbot), anti-hallucination guardrails, giao diện chat, hoàn thành trọn vẹn 26 work items (74 SP - 100% Done) đúng theo Jira Board.
 - **Tuần 7 (Sprint 7: 22/11 - 29/11/2026) - Kiểm thử toàn diện, Triển khai, Tài liệu bàn giao & Nghiệm thu đồ án**: Triển khai trọn gói 45 work items (98 Story Points: 69 SP Done / 29 SP To Do), hoàn tất báo cáo kỹ thuật (`PDFL-248`), slide thuyết trình (`PDFL-249`), kịch bản demo (`PDFL-250`), hướng dẫn sử dụng web (`PDFL-279`), bộ test case chức năng (`PDFL-199`), hình ảnh hướng dẫn (`PDFL-246`), rà soát an toàn repo (`PDFL-251`), phương án triển khai (`PDFL-228`) và tổng duyệt bảo vệ đồ án.
 
@@ -272,8 +272,8 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 ---
 
 ### 📅 TUẦN 5 (Sprint 5: 10/11/2026 - 17/11/2026)
-- **Trọng tâm**: Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng (DOCX, ZIP, Preview), Nộp hồ sơ thuyết minh thiết kế đồ án (`PDFL-269`, `PDFL-270`, `PDFL-271`), khởi động tính năng Avatar người dùng và giao dịch thanh toán (Billing).
-- **Trạng thái**: 🚀 **Đang triển khai** - **42 Work Items** (35 Done / 2 In Progress / 5 To Do - **126 Story Points**) - *Đồng bộ 100% Jira Board*
+- **Trọng tâm**: Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng (DOCX, ZIP, Preview), Nộp hồ sơ thuyết minh thiết kế đồ án (`PDFL-269`, `PDFL-270`, `PDFL-271`), tính năng Avatar người dùng (`PDFL-272`, `PDFL-273`), lịch sử giao dịch thanh toán & hạn mức gói Pro (`PDFL-274`, `PDFL-275`, `PDFL-276`) và thống kê dịch vụ (`PDFL-262`).
+- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)** - **41 Work Items** (41 Done / 0 In Progress / 0 To Do - **123 Story Points**) - *Đồng bộ 100% Jira Board*
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Người thực hiện | File / Minh chứng thực tế | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :--- | :---: |
@@ -290,12 +290,12 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-181` | Xây dựng trang so sánh quyền lợi Free và Pro | EPIC 13 | 3 | Nguyễn Lê Huy Tâm | `pricing.html` comparison table | **Done** |
 | `PDFL-182` | Xây dựng luồng yêu cầu nâng cấp lên Pro | EPIC 13 | 3 | Nguyễn Lê Huy Tâm | Upgrade modal & form | **Done** |
 | `PDFL-183` | Cập nhật quyền sử dụng khi tài khoản được nâng cấp hoặc hạ cấp | EPIC 13 | 3 | Nguyễn Lê Huy Tâm | Immediate role synchronization | **Done** |
-| `PDFL-184` | Hiển thị thông báo nâng cấp tới người dùng truy cập tính năng Pro | EPIC 13 | 3 | Nguyễn Lê Huy Tâm | Feature lock banner UI | **Done** |
+| `PDFL-184` | Hiển thị thông báo nâng cấp tới người dùng truy cập tính năng dành cho Pro | EPIC 13 | 3 | Nguyễn Lê Huy Tâm | Feature lock banner UI | **Done** |
 | `PDFL-187` | Thiết lập cách khởi tạo tài khoản Admin an toàn | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | Seed admin CLI script | **Done** |
 | `PDFL-190` | Tìm kiếm và lọc tài khoản theo thông tin phù hợp | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | Search & filter users in Admin UI | **Done** |
 | `PDFL-191` | Xem thông tin và trạng thái tài khoản | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | User details modal | **Done** |
 | `PDFL-192` | Theo dõi trạng thái gói Free/Pro | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | Subscription filter & metrics | **Done** |
-| `PDFL-193` | Cấp, gia hạn, hạ cấp hoặc thu hồi quyền Pro theo quy định | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | Role assignment endpoints | **Done** |
+| `PDFL-193` | Cấp, gia hạn, hạ cấp hoặc thu hồi quyền Pro theo quy định của hệ thống | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | Role assignment endpoints | **Done** |
 | `PDFL-195` | Kiểm soát quyền Admin ở backend | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | `test_admin_management.py` | **Done** |
 | `PDFL-196` | Ghi nhận nhật ký các thao tác quản trị quan trọng | EPIC 14 | 3 | Nguyễn Lê Huy Tâm | Admin action audit logger | **Done** |
 | `PDFL-247` | Chuẩn bị dữ liệu PDF mẫu phục vụ demo | EPIC 16 | 3 | Huỳnh Đình Chấn | `tests/dataset/demo_samples/` | **Done** |
@@ -304,25 +304,24 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-255` | Cho phép chọn các trang cụ thể cần trích xuất hoặc dịch | EPIC 17 | 3 | Huỳnh Đình Chấn | `test_page_selection.py` | **Done** |
 | `PDFL-256` | Hỗ trợ xem trước PDF và chuyển trang ngay trên ứng dụng | EPIC 17 | 3 | Huỳnh Đình Chấn | `test_pdf_inline_preview.py` (14/11) | **Done** |
 | `PDFL-67` | Xây dựng API kiểm tra giới hạn upload, AI và các hạn mức khác | EPIC 04 | 3 | Nguyễn Lê Huy Tâm | `GET /api/users/limits` | **Done** |
-| `PDFL-74` | Xử lý các tác vụ mất nhiều thời gian mà không khóa toàn bộ ứng dụng | EPIC 04 | 3 | Nguyễn Lê Huy Tâm | `test_background_jobs_api.py` | **Done** |
-| `PDFL-44` | Xây dựng giao diện lịch sử xử lý tài liệu | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | History view layout in UI | **Done** |
+| `PDFL-74` | Xử lý các tác vụ mất nhiều thời gian mà không khóa toàn bộ ứng dụng | EPIC 04 | 3 | Huỳnh Đình Chấn | `test_background_jobs_api.py` | **Done** |
+| `PDFL-44` | Xây dựng giao diện lịch sử xử lý tài liệu | EPIC 03 | 3 | Huỳnh Đình Chấn | History view layout in UI | **Done** |
 | `PDFL-49` | Xây dựng trang giới thiệu và so sánh gói Free/Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Pricing comparison layout | **Done** |
 | `PDFL-52` | Xây dựng giao diện nâng cấp gói Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Upgrade checkout UI | **Done** |
 | `PDFL-56` | Xây dựng giao diện quản trị Admin | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Admin dashboard UI | **Done** |
-| `PDFL-269` | Kiến trúc hệ thống (Thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | `kien_truc_he_thong.md` (15/11/2026) | **Done** |
-| `PDFL-270` | Lược đồ usecase (Thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Huỳnh Đình Chấn | `Docs/diagrams/use_case_diagram.png` | **Done** |
-| `PDFL-271` | Lược đồ lớp (Thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Huỳnh Đình Chấn | `luoc_do_lop.md`, `luoc_do_lop.png` | **Done** |
-| `PDFL-272` | Thiết kế tính năng tải lên ảnh đại diện cho người dùng | EPIC 17 | 3 | Huỳnh Đình Chấn | Data schema avatar upload | **In Progress** |
-| `PDFL-273` | Xây dựng giao diện tải lên, cắt ảnh và hiển thị avatar người dùng | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Frontend crop avatar modal | **In Progress** |
-| `PDFL-274` | Xây dựng API lấy danh sách lịch sử giao dịch thanh toán (Billing) | EPIC 13 | 3 | Huỳnh Đình Chấn | Billing transaction API schema | **To Do** |
-| `PDFL-275` | Xây dựng giao diện xem Lịch sử giao dịch, hóa đơn và thanh toán Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Billing invoice history UI | **To Do** |
-| `PDFL-276` | Xây dựng giao diện hiển thị mức độ sử dụng, trạng thái gói cho Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Quota usage meter bar | **To Do** |
-| `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | EPIC 17 | 3 | Huỳnh Đình Chấn | `admin_service.py`, `admin.js` | **To Do** *(Đã có code)* |
-| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan | EPIC 17 | 3 | Nguyễn Lê Huy Tâm | `ai_service.py`, `schemas/ai.py`, `api/ai.py`, `ai_copilot.js`, `test_ai_citations.py` | **To Do** *(Đã hoàn thiện & kiểm thử 27/27 ca)* |
+| `PDFL-269` | Kiến trúc hệ thống (Deadline cho đồ án: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | `kien_truc_he_thong.md` (15/11/2026) | **Done** |
+| `PDFL-270` | Lược đồ usecase (Deadline cho đồ án: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Huỳnh Đình Chấn | `Docs/diagrams/use_case_diagram.png` | **Done** |
+| `PDFL-271` | Lược đồ lớp (Deadline cho đồ án: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Huỳnh Đình Chấn | `luoc_do_lop.md`, `luoc_do_lop.png` | **Done** |
+| `PDFL-272` | Thiết kế tính năng tải lên ảnh đại diện cho người dùng | EPIC 17 | 3 | Huỳnh Đình Chấn | Data schema avatar upload | **Done** |
+| `PDFL-273` | Xây dựng giao diện tải lên, cắt ảnh và hiển thị avatar người dùng | EPIC 03 | 3 | Huỳnh Đình Chấn | Frontend crop avatar modal | **Done** |
+| `PDFL-274` | Xây dựng API lấy danh sách lịch sử giao dịch thanh toán của người dùng (Billing) | EPIC 13 | 3 | Huỳnh Đình Chấn | Billing transaction API schema | **Done** |
+| `PDFL-275` | Xây dựng giao diện xem Lịch sử giao dịch, hóa đơn và trạng thái thanh toán Pro (Billing) | EPIC 03 | 3 | Huỳnh Đình Chấn | Billing invoice history UI | **Done** |
+| `PDFL-276` | Xây dựng giao diện hiển thị mức độ sử dụng, trạng thái gói cho Pro | EPIC 03 | 3 | Huỳnh Đình Chấn | Quota usage meter bar & Circular rings | **Done** |
+| `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | EPIC 17 | 3 | Huỳnh Đình Chấn | `admin_service.py`, `admin.js` | **Done** |
 
 > **Thống kê Tuần 5**:
-> - **Tổng số công việc**: 42 work items (35 Done / 2 In Progress / 5 To Do)
-> - **Tổng Story Points**: 126 SP (Nguyễn Lê Huy Tâm: 84 SP | Huỳnh Đình Chấn: 42 SP)
+> - **Tổng số công việc**: 41 work items (41 Done / 0 In Progress / 0 To Do - **100% Done**)
+> - **Tổng Story Points**: 123 SP (Nguyễn Lê Huy Tâm: 66 SP | Huỳnh Đình Chấn: 57 SP)
 
 ---
 
@@ -431,9 +430,9 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | Chỉ số đánh giá | Nguyễn Lê Huy Tâm (Trưởng nhóm) | Huỳnh Đình Chấn (Thành viên) | Cả hai thành viên | Tổng toàn dự án |
 | :--- | :---: | :---: | :---: | :---: |
 | **Tổng số Commit trên Git** | **204 commits** (58.0%) | **148 commits** (42.0%) | 352 commits | **352 commits** (100%) |
-| **Tổng Story Points đảm trách (Tuần 1 - 7)** | **441 SP** (57.6%) | **311 SP** (40.6%) | **14 SP** (1.8%) | **766 SP** (100%) |
-| **Số lượng Work Items Jira đảm trách** | **147 tasks** | **105 tasks** | 8 tasks | **260 tasks** |
-| **Tỷ lệ hoàn thành công việc được giao** | **96.6%** (142 Done / 2 In Prog / 3 To Do) | **96.2%** (101 Done / 1 In Prog / 3 To Do) | 75.0% (6 Done / 2 To Do) | **95.8%** (249 Done / 3 In Prog / 8 To Do) |
+| **Tổng Story Points đảm trách (Tuần 1 - 7)** | **423 SP** (55.4%) | **326 SP** (42.7%) | **14 SP** (1.8%) | **763 SP** (100%) |
+| **Số lượng Work Items Jira đảm trách** | **152 tasks** | **110 tasks** | 25 tasks | **287 tasks** |
+| **Tỷ lệ hoàn thành công việc được giao** | **98.0%** (149 Done / 0 In Prog / 3 To Do) | **97.3%** (107 Done / 0 In Prog / 3 To Do) | 92.0% (23 Done / 2 To Do) | **97.2%** (279 Done / 0 In Prog / 8 To Do) |
 | **Số file Test Suite tự động xây dựng** | 14 test suites | 18 test suites | 4 test suites chung | **36 test files** |
 
 ---

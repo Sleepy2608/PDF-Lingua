@@ -11,10 +11,10 @@
   - Bảng phân công nhiệm vụ chi tiết: [Assignment.md](./Assignment.md)
   - Báo cáo phân công thực hiện EPIC 15 & 16: [phan_cong_thuc_hien_epic15_epic16.md](../.plan/.extra/phan_cong_thuc_hien_epic15_epic16.md)
 - **Ngày khởi tạo kế hoạch**: `15/10/2026` (Bắt đầu chu kỳ Sprint 1)
-- **Ngày cập nhật lần cuối**: `16/11/2026` (Đồng bộ hóa 100% Sprint 1 đến Sprint 6 theo tiến độ thực tế Git commit và Jira Board)
+- **Ngày cập nhật lần cuối**: `23/11/2026` (Đồng bộ hóa 100% Sprint 1 đến Sprint 6 theo tiến độ thực tế Git commit và Jira Board)
 - **Tiến độ tổng quan**:
   - **Sprint 1, 2, 3, 4**: Đã hoàn thành 100% (Khung kiến trúc, Tài khoản/Auth, Trích xuất PDF & OCR, Dịch thuật đa ngôn ngữ, Xuất file và toàn bộ các test suite nền tảng).
-  - **Sprint 5 (10/11 - 17/11/2026)**: Triển khai 42 work items (35 Done / 2 In Progress / 5 To Do) bao gồm bổ sung PDFL-262 và PDFL-263.
+  - **Sprint 5 (10/11 - 17/11/2026)**: Đã hoàn thành 100% trọn vẹn 41 work items (123 Story Points Done) đồng bộ chính xác theo Jira Board.
   - **Sprint 6 (17/11 - 24/11/2026)**: Đã hoàn thành 100% 26 work items AI (74 Story Points Done) đúng theo bảng Jira Board.
   - **Sprint 7 (22/11 - 29/11/2026)**: Kế hoạch và nghiệm thu 45 work items (37 Done - 69 SP / 8 To Do - 29 SP - tổng 98 Story Points) gồm kiểm thử toàn diện EPIC 15, tài liệu bàn giao EPIC 16 và hướng dẫn sử dụng web PDFL-279 đúng theo Jira Board.
 
@@ -45,12 +45,12 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
    - Thiết lập quyền lợi gói Free vs Pro (20MB vs 100MB, hạn mức số trang, hạn mức dịch vụ).
    - Xây dựng Dashboard quản trị Admin cơ bản (danh sách tài khoản, khóa/mở khóa tài khoản, phân quyền RBAC).
    - Bộ test ma trận bảo mật (Security Matrix), kiểm thử giới hạn dung lượng tải lên và kiểm tra ranh giới truy cập an toàn.
-5. **Sprint 5 (Tuần 5: 10/11 - 17/11/2026) - Lịch Sử Pro, Quản Trị Admin Nâng Cao, Hạn Mức Free/Pro, Mở Rộng & Hồ Sơ Thiết Kế**:
+5. **Sprint 5 (Tuần 5: 10/11 - 17/11/2026) - Lịch Sử Pro, Quản Trị Admin Nâng Cao, Hạn Mức Free/Pro, Mở Rộng, Thiết Kế Đồ Án, Avatar & Quản Lý Gói/Hóa Đơn (Billing)**:
    - Lịch sử Pro: Lưu trữ kết quả trích xuất, dịch và tóm tắt; API mở lại kết quả cũ; kiểm soát truy cập lịch sử nghiêm ngặt.
    - Admin Console nâng cao: Quản lý người dùng, cấp/hạ quyền Pro, theo dõi thống kê, nhật ký thao tác (Audit log).
    - Tính năng mở rộng: Xử lý tệp theo lô (Batch Processing), tải file nén ZIP, xuất kết quả Microsoft Word (.docx), xem trước PDF trực tiếp (PDF Inline Preview), chọn trang cụ thể (Page Selection).
    - Nộp hồ sơ thiết kế đồ án giữa kỳ: Kiến trúc hệ thống (`PDFL-269`), Lược đồ usecase (`PDFL-270`), Lược đồ lớp (`PDFL-271`).
-   - Khởi động tính năng Avatar người dùng (`PDFL-272`, `PDFL-273`) và lịch sử giao dịch thanh toán Billing (`PDFL-274`, `PDFL-275`, `PDFL-276`).
+   - Hoàn thiện tính năng Avatar người dùng (`PDFL-272`, `PDFL-273`), lịch sử giao dịch và hạn mức sử dụng gói Pro (`PDFL-274`, `PDFL-275`, `PDFL-276`) và thống kê dịch vụ (`PDFL-262`).
 6. **Sprint 6 (Tuần 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu Theo Ngữ Cảnh**:
    - Tích hợp mô hình ngôn ngữ lớn (LLM API), quản lý an toàn API key qua biến môi trường.
    - AI Tóm tắt tài liệu: Tùy chọn kiểu tóm tắt (ngắn gọn, chi tiết, bullet points), kỹ thuật Map-Reduce chia đoạn tóm tắt cho tài liệu dài.
@@ -70,7 +70,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | **Sprint 2** | 20/10 - 27/10/2026 | Hệ thống tài khoản, xác thực bcrypt, cốt lõi xử lý PDF/OCR & test suite nền tảng | **EPIC 03, EPIC 04, EPIC 05, EPIC 06, EPIC 07, EPIC 15** | 32 tasks backlog + 6 tasks test/security | 90 + 17 SP | ✅ **Đã hoàn thành** (100% Done) |
 | **Sprint 3** | 27/10 - 03/11/2026 | Quản lý tài liệu, OCR nâng cao, dịch thuật cốt lõi, xuất file & kiểm thử hiệu năng | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, EPIC 15, EPIC 16, EPIC 17** | 39 tasks backlog + 13 tasks test/measure | 105 + 36 SP | ✅ **Đã hoàn thành** (100% Done) |
 | **Sprint 4** | 03/11 - 10/11/2026 | Dịch thuật fallback, xuất file, lịch sử, admin cơ bản, quyền lợi Free/Pro & bảo mật | **EPIC 08, EPIC 11, EPIC 12, EPIC 13, EPIC 14, EPIC 15, EPIC 16, EPIC 17** | 31 tasks backlog + 13 tasks test/security | 84 + 35 SP | ✅ **Đã hoàn thành** (100% Done) |
-| **Sprint 5** | 10/11 - 17/11/2026 | Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng, Thiết kế đồ án, Avatar/Billing & Thống kê/Truy xuất AI | **EPIC 03, EPIC 04, EPIC 12, EPIC 13, EPIC 14, EPIC 16, EPIC 17** | 42 work items | 126 SP | 🚀 **Đang triển khai** (35 Done / 2 In Progress / 5 To Do) |
+| **Sprint 5** | 10/11 - 17/11/2026 | Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng, Thiết kế đồ án, Avatar/Billing & Thống kê | **EPIC 03, EPIC 04, EPIC 12, EPIC 13, EPIC 14, EPIC 16, EPIC 17** | 41 work items | 123 SP | ✅ **Đã hoàn thành** (41/41 Done - 100%) |
 | **Sprint 6** | 17/11 - 24/11/2026 | Tích hợp AI - Tóm tắt văn bản & Trợ lý hỏi đáp tài liệu theo ngữ cảnh | **EPIC 03, EPIC 09, EPIC 10** | 26 work items | 74 SP | ✅ **Đã hoàn thành** (26/26 Done - 74 SP) |
 | **Sprint 7** | 22/11 - 29/11/2026 | Kiểm thử toàn diện, Triển khai, Tài liệu bàn giao & Nghiệm thu | **EPIC 15, EPIC 16** | 45 work items | 98 SP | 📋 **Kế hoạch & Nghiệm thu** (69 SP Done / 29 SP To Do) |
 
@@ -320,7 +320,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 ### 🔹 Sprint 5: Quản Trị Hệ Thống Admin, Gói Dịch Vụ Pro, Tính Năng Mở Rộng, Thiết Kế Đồ Án & Avatar/Billing
 - **Thời gian**: 10/11/2026 - 17/11/2026 (Tuần 5)
 - **Mục tiêu**: Hoàn thiện toàn diện hệ sinh thái gói dịch vụ Free/Pro, phân quyền tài khoản, bảng điều khiển quản trị Admin, xử lý tác vụ nền, các tính năng mở rộng nâng cao trải nghiệm người dùng, hoàn thiện hồ sơ thiết kế kiến trúc hệ thống, lược đồ use case, lược đồ lớp, tính năng avatar người dùng và giao dịch thanh toán (Billing).
-- **Trạng thái**: 🚀 **Đang triển khai** - **42 Work Items** (35 Done / 2 In Progress / 5 To Do - **126 Story Points**) - *Đồng bộ 100% Jira Board*
+- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)** - **41 Work Items** (41 Done / 0 In Progress / 0 To Do - **123 Story Points**) - *Đồng bộ 100% Jira Board*
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Người thực hiện | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :---: |
@@ -351,21 +351,24 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-255` | Cho phép chọn các trang cụ thể cần trích xuất hoặc dịch | EPIC 17 | 3 | Huỳnh Đình Chấn | **Done** |
 | `PDFL-256` | Hỗ trợ xem trước PDF và chuyển trang ngay trên ứng dụng | EPIC 17 | 3 | Huỳnh Đình Chấn | **Done** |
 | `PDFL-67` | Xây dựng API kiểm tra giới hạn upload, AI và các hạn mức khác | EPIC 04 | 3 | Nguyễn Lê Huy Tâm | **Done** |
-| `PDFL-74` | Xử lý các tác vụ mất nhiều thời gian mà không khóa toàn bộ ứng dụng | EPIC 04 | 3 | Nguyễn Lê Huy Tâm | **Done** |
-| `PDFL-44` | Xây dựng giao diện lịch sử xử lý tài liệu | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-74` | Xử lý các tác vụ mất nhiều thời gian mà không khóa toàn bộ ứng dụng | EPIC 04 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-44` | Xây dựng giao diện lịch sử xử lý tài liệu | EPIC 03 | 3 | Huỳnh Đình Chấn | **Done** |
 | `PDFL-49` | Xây dựng trang giới thiệu và so sánh gói Free/Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-52` | Xây dựng giao diện nâng cấp gói Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-56` | Xây dựng giao diện quản trị Admin | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-269` | Kiến trúc hệ thống (Deadline cho đề tài 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-270` | Lược đồ usecase (Deadline cho đề tài 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Huỳnh Đình Chấn | **Done** |
 | `PDFL-271` | Lược đồ lớp (Deadline cho đề tài 3: Nộp thuyết minh chi tiết thiết kế) | EPIC 16 | 3 | Huỳnh Đình Chấn | **Done** |
-| `PDFL-272` | Thiết kế tính năng tải lên ảnh đại diện cho người dùng | EPIC 17 | 3 | Huỳnh Đình Chấn | **In Progress** |
-| `PDFL-273` | Xây dựng giao diện tải lên, cắt ảnh và hiển thị avatar người dùng | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **In Progress** |
-| `PDFL-274` | Xây dựng API lấy danh sách lịch sử giao dịch thanh toán của người dùng (Billing) | EPIC 13 | 3 | Huỳnh Đình Chấn | **To Do** |
-| `PDFL-275` | Xây dựng giao diện xem Lịch sử giao dịch, hóa đơn và trạng thái thanh toán Pro (Billing) | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **To Do** |
-| `PDFL-276` | Xây dựng giao diện hiển thị mức độ sử dụng, trạng thái gói cho Pro | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **To Do** |
-| `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | EPIC 17 | 3 | Huỳnh Đình Chấn | **To Do** |
-| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan | EPIC 17 | 3 | Nguyễn Lê Huy Tâm | **To Do** |
+| `PDFL-272` | Thiết kế tính năng tải lên ảnh đại diện cho người dùng | EPIC 17 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-273` | Xây dựng giao diện tải lên, cắt ảnh và hiển thị avatar người dùng | EPIC 03 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-274` | Xây dựng API lấy danh sách lịch sử giao dịch thanh toán của người dùng (Billing) | EPIC 13 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-275` | Xây dựng giao diện xem Lịch sử giao dịch, hóa đơn và trạng thái thanh toán Pro (Billing) | EPIC 03 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-276` | Xây dựng giao diện hiển thị mức độ sử dụng, trạng thái gói cho Pro | EPIC 03 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-262` | Bổ sung thống kê mức sử dụng dịch vụ | EPIC 17 | 3 | Huỳnh Đình Chấn | **Done** |
+
+> **Thống kê Sprint 5**:
+> - **Tổng số công việc**: 41 work items (41 Done / 0 In Progress / 0 To Do - **100% Done**)
+> - **Tổng Story Points**: 123 SP (Nguyễn Lê Huy Tâm: 66 SP | Huỳnh Đình Chấn: 57 SP)
 
 ---
 

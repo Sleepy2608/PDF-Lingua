@@ -1,7 +1,3 @@
-# Personal stuffs
-.agents
-.plan
-
 # Python
 __pycache__/
 *.py[cod]
@@ -71,4 +67,10 @@ Code/backend/storage/
 *.db
 *.sqlite
 *.sqlite3
+
+# Personal stuffs & workspace
+graphify-out/
+.agents
+.plan
+Code/backend/supabase/
 
