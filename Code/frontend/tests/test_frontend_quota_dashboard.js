@@ -1515,6 +1515,78 @@ async function runAllTests() {
     assert.strictEqual(env.elements.sideNavPricingPlans.classList.contains('active'), true, 'Sidebar Plans sub-item re-activated');
   });
 
+  // --------------------------------------------------------------------------
+  // TEST 27: Bilingual i18n and Red Color Theme Compliance for Quota Dashboard
+  // --------------------------------------------------------------------------
+  await runTest('Bilingual i18n and Red Color Theme Compliance for Quota Dashboard', async () => {
+    const fs = require('fs');
+    const path = require('path');
+    const i18nContent = fs.readFileSync(path.join(__dirname, '../js/i18n.js'), 'utf8');
+
+    const requiredQuotaKeys = [
+      'pricing_nav_quota_dashboard',
+      'pricing_quota_dashboard_title',
+      'pricing_quota_dashboard_subtitle',
+      'quota_guest_title',
+      'quota_guest_desc',
+      'quota_guest_btn_login',
+      'quota_guest_btn_plans',
+      'quota_warn_expiring_title',
+      'quota_warn_expiring_desc',
+      'quota_warn_expiring_cta',
+      'quota_warn_expired_title',
+      'quota_warn_expired_desc',
+      'quota_badge_pro_vip',
+      'quota_pill_remaining_days',
+      'quota_pill_expired',
+      'quota_pill_active',
+      'quota_lbl_activated',
+      'quota_lbl_expires',
+      'quota_btn_renew',
+      'quota_btn_upgrade_yearly',
+      'quota_save_yearly_pill',
+      'quota_badge_free_tier',
+      'quota_free_plan_name',
+      'quota_free_desc',
+      'quota_btn_upgrade_free_cta',
+      'quota_meter_ocr_title',
+      'quota_meter_ocr_note',
+      'quota_meter_ocr_cta',
+      'quota_meter_filesize_title',
+      'quota_meter_filesize_note',
+      'quota_meter_copilot_title',
+      'quota_meter_copilot_note',
+      'quota_unit_pages',
+      'quota_unit_per_file',
+      'quota_unit_queries',
+      'quota_threshold_near_limit',
+      'quota_threshold_almost_out',
+      'quota_threshold_reached',
+    ];
+
+    for (const k of requiredQuotaKeys) {
+      assert.ok(i18nContent.includes(`"${k}"`), `i18n.js must define key ${k}`);
+    }
+
+    const pricingCss = fs.readFileSync(path.join(__dirname, '../css/pricing.css'), 'utf8');
+    assert.strictEqual(
+      (pricingCss.match(/#4F46E5/gi) || []).length,
+      0,
+      'pricing.css must have zero #4F46E5 purple/indigo tokens'
+    );
+    assert.strictEqual(
+      (pricingCss.match(/#C7D2FE/gi) || []).length,
+      0,
+      'pricing.css must have zero #C7D2FE purple/indigo tokens'
+    );
+    assert.strictEqual(
+      (pricingCss.match(/#EEF2FF/gi) || []).length,
+      0,
+      'pricing.css must have zero #EEF2FF purple/indigo tokens'
+    );
+    assert.ok(pricingCss.includes('#DC2626'), 'pricing.css must use brand red #DC2626');
+  });
+
   console.log('\n================================================================');
   console.log(`SUMMARY: ${passedCount}/${passedCount + failedCount} tests passed (${failedCount} failed).`);
   console.log('================================================================');

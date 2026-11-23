@@ -1233,8 +1233,67 @@ async function runAllTests() {
   assert.ok(receiptHtml.includes('@media print'));
   console.log('[PASS] 14. Print & Download: Verified loading state lockout, window.print() and clean HTML receipt blob generation.');
 
+  // Part 15: Bilingual i18n and Red Color Theme Compliance
+  const i18nContent = fs.readFileSync(path.join(__dirname, '../js/i18n.js'), 'utf8');
+  const requiredBillingKeys = [
+    'pricing_nav_billing_history',
+    'pricing_btn_back_to_plans',
+    'pricing_history_title',
+    'pricing_history_subtitle',
+    'billing_history_count_chip',
+    'billing_filter_label',
+    'billing_status_all',
+    'billing_th_stt',
+    'billing_th_tx_code',
+    'billing_th_plan',
+    'billing_th_date',
+    'billing_th_amount',
+    'billing_th_method',
+    'billing_th_status',
+    'billing_th_invoice',
+    'billing_cycle_yearly',
+    'billing_cycle_monthly',
+    'billing_status_completed',
+    'billing_status_pending',
+    'billing_status_failed',
+    'billing_status_expired',
+    'billing_btn_view_invoice',
+    'billing_loading_title',
+    'billing_empty_title',
+    'billing_error_title',
+    'billing_pagination_info',
+    'invoice_eyebrow',
+    'invoice_modal_title',
+    'invoice_modal_subtitle',
+    'invoice_brand_meta',
+    'invoice_lbl_number',
+    'invoice_lbl_customer_info',
+    'invoice_lbl_service_details',
+    'invoice_breakdown_title',
+    'invoice_btn_print',
+    'invoice_btn_download',
+  ];
+  for (const k of requiredBillingKeys) {
+    assert.ok(i18nContent.includes(`"${k}"`), `i18n.js must define key ${k}`);
+  }
+
+  // Theme check in pricing.css
+  const pricingCss = fs.readFileSync(path.join(__dirname, '../css/pricing.css'), 'utf8');
+  assert.strictEqual(
+    (pricingCss.match(/#4F46E5/gi) || []).length,
+    0,
+    'pricing.css must have zero #4F46E5 purple/indigo tokens'
+  );
+  assert.strictEqual(
+    (pricingCss.match(/#6366F1/gi) || []).length,
+    0,
+    'pricing.css must have zero #6366F1 purple/indigo tokens'
+  );
+  assert.ok(pricingCss.includes('#DC2626'), 'pricing.css must use brand red #DC2626');
+  console.log('[PASS] 15. Bilingual i18n & Red Color Theme: All billing history keys in VI/EN and theme rules verified.');
+
   console.log('\n================================================================');
-  console.log('SUMMARY: All 14/14 real API integration tests passed (0 failed).');
+  console.log('SUMMARY: All 15/15 real API integration tests passed (0 failed).');
   console.log('================================================================');
 }
 
