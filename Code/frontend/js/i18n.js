@@ -727,8 +727,9 @@
             "pricing_pro_hint_free": "",
 
             // Pricing Navigation & Sub-views (Billing History & Quota Dashboard)
-            "pricing_nav_billing_history": "Lịch sử thanh toán & Hóa đơn",
-            "pricing_nav_quota_dashboard": "Quản lý gói & Hạn mức",
+            "pricing_nav_plans": "Bảng giá gói",
+            "pricing_nav_billing_history": "Hóa đơn",
+            "pricing_nav_quota_dashboard": "Quản lý gói",
             "pricing_btn_back_to_plans": "Quay lại Bảng giá",
             "pricing_title_back_to_plans": "Quay lại Bảng giá gói dịch vụ",
             "pricing_history_title": "Lịch sử thanh toán & Hóa đơn",
@@ -2029,8 +2030,9 @@
             "pricing_pro_hint_free": "",
 
             // Pricing Navigation & Sub-views (Billing History & Quota Dashboard)
-            "pricing_nav_billing_history": "Billing History & Invoices",
-            "pricing_nav_quota_dashboard": "Plan & Quota Management",
+            "pricing_nav_plans": "Pricing Plans",
+            "pricing_nav_billing_history": "Invoices",
+            "pricing_nav_quota_dashboard": "Plan Management",
             "pricing_btn_back_to_plans": "Back to Plans",
             "pricing_title_back_to_plans": "Back to Pricing Plans",
             "pricing_history_title": "Billing History & Invoices",

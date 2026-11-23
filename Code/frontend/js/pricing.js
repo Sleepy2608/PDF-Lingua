@@ -1804,6 +1804,11 @@
       if (toggle && typeof toggle.setAttribute === 'function') {
         toggle.setAttribute('aria-expanded', 'true');
       }
+    } else {
+      if (group && group.classList) group.classList.remove('is-expanded');
+      if (toggle && typeof toggle.setAttribute === 'function') {
+        toggle.setAttribute('aria-expanded', 'false');
+      }
     }
 
     const map = {

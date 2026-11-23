@@ -1224,6 +1224,7 @@
     const sideNavPricing = document.getElementById('sideNavPricing');
     if (!targetItem || targetItem !== sideNavPricing) {
       setActivePricingSubmenu(null);
+      setPricingGroupExpanded(false);
     }
 
     if (typeof document.querySelectorAll === 'function') {

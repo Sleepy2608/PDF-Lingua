@@ -2296,6 +2296,8 @@ async function main() {
     assert.strictEqual(elements.sideNavPricingBilling.classList.contains('active'), false, 'Billing submenu active state clears on exit');
     assert.strictEqual(elements.sideNavPricingQuota.classList.contains('active'), false, 'Quota submenu active state clears on exit');
     assert.strictEqual(elements.sideNavPricingQuota.getAttribute('aria-current'), null, 'Quota submenu removes aria-current on exit');
+    assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), false, 'Pricing group collapses on exit');
+    assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'false', 'Pricing parent aria-expanded collapses on exit');
   });
 
   console.log('\n================================================================');
