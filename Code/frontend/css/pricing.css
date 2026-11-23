@@ -684,11 +684,16 @@
   position: relative;
   width: 100%;
   max-width: 900px;
+  max-height: calc(100vh - 2.5rem);
+  max-height: calc(100dvh - 2.5rem);
   background-color: #FFFFFF;
   border: 1px solid var(--border-light, #E2E8F0);
   border-radius: 18px;
   box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.04);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   animation: checkoutModalAppear 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -1640,23 +1645,50 @@
 
 @media (max-width: 1080px) {
   .pricing-bento-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pricing-card {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .pricing-clusters-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 860px) {
+  .checkout-modal-overlay {
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .checkout-modal-card {
+    max-height: calc(100dvh - 1.5rem);
+    border-radius: 14px;
+  }
+
+  .checkout-modal-close {
+    top: 0.85rem;
+    right: 0.85rem;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
   .checkout-split-grid {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .checkout-summary-col {
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
     padding: 1.5rem 1.25rem;
+  }
+
+  .checkout-summary-top {
+    padding-right: 2.5rem;
   }
 
   .checkout-payment-col {
@@ -1667,6 +1699,10 @@
 @media (max-width: 768px) {
   .pricing-section {
     padding: 2rem 0 3rem;
+  }
+
+  .pricing-container {
+    padding: 0 0.85rem;
   }
 
   .pricing-title {
@@ -1686,7 +1722,7 @@
   }
 
   .pricing-card {
-    padding: 1.5rem 1.25rem;
+    padding: 1.25rem 1rem;
   }
 
   .pricing-active-banner {
@@ -1700,6 +1736,17 @@
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .quota-modal-card {
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .quota-modal-footer .btn {
+    min-height: 38px;
   }
 }
 

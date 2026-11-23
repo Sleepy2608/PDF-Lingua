@@ -898,11 +898,12 @@
 @media (max-width: 767px) {
   .btn-mobile-sidebar-toggle {
     display: inline-flex;
-    margin-right: 0.5rem;
+    margin-right: 0.25rem;
   }
 
   .header-collapsed-brand {
     display: inline-flex;
+    min-width: 0;
   }
 
   .app-sidebar {
