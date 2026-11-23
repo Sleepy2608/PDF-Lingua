@@ -2670,7 +2670,7 @@
                                 <!-- Quota Usage Meter Bars Grid -->
                                 <div class="quota-meters-grid" id="quotaMetersGrid">
                                     <!-- Meter 1: OCR Pages -->
-                                    <div class="quota-meter-item" id="meterOcrPages">
+                                    <div class="quota-meter-item quota-meter-ring-card" id="meterOcrPages">
                                         <div class="quota-meter-header">
                                             <div class="quota-meter-title-wrap">
                                                 <div class="quota-meter-icon">
@@ -2690,27 +2690,42 @@
                                             <div class="quota-meter-badge-group">
                                                 <span class="quota-threshold-badge" id="quotaOcrThresholdBadge"
                                                     style="display: none;"></span>
-                                                <span class="quota-percent-pill font-mono"
-                                                    id="quotaOcrPercent">28%</span>
                                             </div>
                                         </div>
-                                        <div class="quota-meter-values">
-                                            <div class="quota-value-numbers font-mono">
-                                                <strong id="quotaOcrUsed">142</strong> / <span
-                                                    id="quotaOcrLimit">500</span> <span id="quotaOcrUnit" data-i18n="quota_unit_pages">trang</span>
+                                        <div class="quota-meter-body">
+                                            <div class="quota-meter-details">
+                                                <div class="quota-meter-values">
+                                                    <div class="quota-value-numbers font-mono">
+                                                        <strong id="quotaOcrUsed">142</strong> / <span
+                                                            id="quotaOcrLimit">500</span> <span id="quotaOcrUnit" data-i18n="quota_unit_pages">trang</span>
+                                                    </div>
+                                                </div>
+                                                <div class="quota-meter-note" id="quotaOcrNote" data-i18n="quota_meter_ocr_note">Đã sử dụng trong chu kỳ hiện tại</div>
+                                                <div class="quota-meter-cta-wrap" id="quotaOcrCtaWrap" style="display: none;">
+                                                    <button type="button" class="btn-quota-meter-cta" id="btnQuotaOcrCta"
+                                                        data-i18n="quota_meter_ocr_cta">Gia hạn hạn mức</button>
+                                                </div>
+                                            </div>
+                                            <div class="quota-ring-wrapper" id="quotaOcrRingProgress" role="progressbar"
+                                                aria-valuenow="28" aria-valuemin="0" aria-valuemax="100"
+                                                aria-label="Tiến độ sử dụng trang OCR"
+                                                data-i18n-attr="aria-label:quota_ocr_progress_aria">
+                                                <svg class="quota-ring-svg" viewBox="0 0 68 68" width="68" height="68" aria-hidden="true">
+                                                    <circle class="quota-ring-track" cx="34" cy="34" r="28"></circle>
+                                                    <circle class="quota-ring-fill" id="quotaOcrRingFill" cx="34" cy="34" r="28" stroke-dasharray="175.93" stroke-dashoffset="126.67"></circle>
+                                                </svg>
+                                                <div class="quota-ring-center">
+                                                    <span class="quota-percent-pill font-mono" id="quotaOcrPercent">28%</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="quota-progress-track">
+                                        <!-- Accessible & test compatibility track -->
+                                        <div class="quota-progress-track" style="display: none;" aria-hidden="true">
                                             <div class="quota-progress-fill" id="quotaOcrProgressFill"
                                                 role="progressbar" aria-valuenow="28" aria-valuemin="0"
                                                 aria-valuemax="100" aria-label="Tiến độ sử dụng trang OCR"
                                                 data-i18n-attr="aria-label:quota_ocr_progress_aria"
                                                 style="width: 28%;"></div>
-                                        </div>
-                                        <div class="quota-meter-note" id="quotaOcrNote" data-i18n="quota_meter_ocr_note">Đã sử dụng trong chu kỳ hiện tại</div>
-                                        <div class="quota-meter-cta-wrap" id="quotaOcrCtaWrap" style="display: none;">
-                                            <button type="button" class="btn-quota-meter-cta" id="btnQuotaOcrCta"
-                                                data-i18n="quota_meter_ocr_cta">Gia hạn hạn mức</button>
                                         </div>
                                     </div>
 
@@ -2753,7 +2768,7 @@
                                     </div>
 
                                     <!-- Meter 3: Daily AI Copilot -->
-                                    <div class="quota-meter-item" id="meterAiCopilot">
+                                    <div class="quota-meter-item quota-meter-ring-card" id="meterAiCopilot">
                                         <div class="quota-meter-header">
                                             <div class="quota-meter-title-wrap">
                                                 <div class="quota-meter-icon">
@@ -2770,29 +2785,44 @@
                                             <div class="quota-meter-badge-group">
                                                 <span class="quota-threshold-badge" id="quotaCopilotThresholdBadge"
                                                     style="display: none;"></span>
-                                                <span class="quota-percent-pill font-mono"
-                                                    id="quotaCopilotPercent">27%</span>
                                             </div>
                                         </div>
-                                        <div class="quota-meter-values">
-                                            <div class="quota-value-numbers font-mono">
-                                                <strong id="quotaCopilotUsed">4</strong> / <span
-                                                    id="quotaCopilotLimit">15</span> <span id="quotaCopilotUnit" data-i18n="quota_unit_queries">câu</span>
+                                        <div class="quota-meter-body">
+                                            <div class="quota-meter-details">
+                                                <div class="quota-meter-values">
+                                                    <div class="quota-value-numbers font-mono">
+                                                        <strong id="quotaCopilotUsed">4</strong> / <span
+                                                            id="quotaCopilotLimit">15</span> <span id="quotaCopilotUnit" data-i18n="quota_unit_queries">câu</span>
+                                                    </div>
+                                                </div>
+                                                <div class="quota-meter-note" id="quotaCopilotNote" data-i18n="quota_meter_copilot_note">Hồi phục 15 câu sau mỗi 24
+                                                    giờ</div>
+                                                <div class="quota-meter-cta-wrap" id="quotaCopilotCtaWrap"
+                                                    style="display: none;">
+                                                    <button type="button" class="btn-quota-meter-cta"
+                                                        id="btnQuotaCopilotCta" data-i18n="quota_meter_copilot_cta">Nâng cấp để thêm câu hỏi</button>
+                                                </div>
+                                            </div>
+                                            <div class="quota-ring-wrapper" id="quotaCopilotRingProgress" role="progressbar"
+                                                aria-valuenow="27" aria-valuemin="0" aria-valuemax="100"
+                                                aria-label="Tiến độ sử dụng AI Copilot trong ngày"
+                                                data-i18n-attr="aria-label:quota_copilot_progress_aria">
+                                                <svg class="quota-ring-svg" viewBox="0 0 68 68" width="68" height="68" aria-hidden="true">
+                                                    <circle class="quota-ring-track" cx="34" cy="34" r="28"></circle>
+                                                    <circle class="quota-ring-fill" id="quotaCopilotRingFill" cx="34" cy="34" r="28" stroke-dasharray="175.93" stroke-dashoffset="128.43"></circle>
+                                                </svg>
+                                                <div class="quota-ring-center">
+                                                    <span class="quota-percent-pill font-mono" id="quotaCopilotPercent">27%</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="quota-progress-track">
+                                        <!-- Accessible & test compatibility track -->
+                                        <div class="quota-progress-track" style="display: none;" aria-hidden="true">
                                             <div class="quota-progress-fill" id="quotaCopilotProgressFill"
                                                 role="progressbar" aria-valuenow="27" aria-valuemin="0"
                                                 aria-valuemax="100" aria-label="Tiến độ sử dụng AI Copilot trong ngày"
                                                 data-i18n-attr="aria-label:quota_copilot_progress_aria"
                                                 style="width: 27%;"></div>
-                                        </div>
-                                        <div class="quota-meter-note" id="quotaCopilotNote" data-i18n="quota_meter_copilot_note">Hồi phục 15 câu sau mỗi 24
-                                            giờ</div>
-                                        <div class="quota-meter-cta-wrap" id="quotaCopilotCtaWrap"
-                                            style="display: none;">
-                                            <button type="button" class="btn-quota-meter-cta"
-                                                id="btnQuotaCopilotCta" data-i18n="quota_meter_copilot_cta">Nâng cấp để thêm câu hỏi</button>
                                         </div>
                                     </div>
                                 </div>

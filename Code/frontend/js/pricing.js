@@ -2281,6 +2281,29 @@
     }
   }
 
+  function updateQuotaRingStroke(percent, ringFillEl, isZeroLimit) {
+    if (!ringFillEl) return;
+    const radius = 28;
+    const circumference = 2 * Math.PI * radius; // ~175.929
+    const validPercent = isZeroLimit ? 0 : Math.min(100, Math.max(0, Number(percent) || 0));
+    const offset = circumference * (1 - validPercent / 100);
+
+    if (ringFillEl.style) {
+      ringFillEl.style.strokeDashoffset = String(offset);
+    }
+    if (typeof ringFillEl.setAttribute === 'function') {
+      ringFillEl.setAttribute('stroke-dashoffset', String(offset));
+    }
+    if (ringFillEl.classList) {
+      ringFillEl.classList.remove('ring-fill-warning', 'ring-fill-danger');
+      if (validPercent > 90) {
+        ringFillEl.classList.add('ring-fill-danger');
+      } else if (validPercent >= 70) {
+        ringFillEl.classList.add('ring-fill-warning');
+      }
+    }
+  }
+
   function renderQuotaUsageDashboard(stateOrData, overrides) {
     let targetData;
     if (typeof stateOrData === 'string' && DEFAULT_QUOTA_MOCK[stateOrData]) {
@@ -2417,6 +2440,12 @@
       }
     }
     applyQuotaThresholdStyles(ocrPercent, quotaOcrProgressFill, quotaOcrPercent, quotaOcrThresholdBadge, quotaOcrCtaWrap, ocrLimit <= 0);
+    const quotaOcrRingFill = document.getElementById('quotaOcrRingFill');
+    const quotaOcrRingProgress = document.getElementById('quotaOcrRingProgress');
+    if (quotaOcrRingProgress && typeof quotaOcrRingProgress.setAttribute === 'function') {
+      quotaOcrRingProgress.setAttribute('aria-valuenow', String(ocrPercent));
+    }
+    updateQuotaRingStroke(ocrPercent, quotaOcrRingFill, ocrLimit <= 0);
     if (quotaOcrNote && targetData.ocr && targetData.ocr.note) {
       quotaOcrNote.textContent = targetData.ocr.note;
     }
@@ -2482,6 +2511,12 @@
       }
     }
     applyQuotaThresholdStyles(copilotPercent, quotaCopilotProgressFill, quotaCopilotPercent, quotaCopilotThresholdBadge, quotaCopilotCtaWrap, copilotLimit <= 0);
+    const quotaCopilotRingFill = document.getElementById('quotaCopilotRingFill');
+    const quotaCopilotRingProgress = document.getElementById('quotaCopilotRingProgress');
+    if (quotaCopilotRingProgress && typeof quotaCopilotRingProgress.setAttribute === 'function') {
+      quotaCopilotRingProgress.setAttribute('aria-valuenow', String(copilotPercent));
+    }
+    updateQuotaRingStroke(copilotPercent, quotaCopilotRingFill, copilotLimit <= 0);
     if (quotaCopilotNote && targetData.ai_copilot && targetData.ai_copilot.note) {
       quotaCopilotNote.textContent = targetData.ai_copilot.note;
     }

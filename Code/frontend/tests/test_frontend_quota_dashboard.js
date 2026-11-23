@@ -151,6 +151,8 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     quotaOcrPercent: new MockElement('quotaOcrPercent', 'span', ['quota-percent-pill']),
     quotaOcrUsed: new MockElement('quotaOcrUsed', 'strong'),
     quotaOcrLimit: new MockElement('quotaOcrLimit', 'span'),
+    quotaOcrRingFill: new MockElement('quotaOcrRingFill', 'circle', ['quota-ring-fill']),
+    quotaOcrRingProgress: new MockElement('quotaOcrRingProgress', 'div', ['quota-ring-wrapper']),
     quotaOcrProgressFill: new MockElement('quotaOcrProgressFill', 'div', ['quota-progress-fill'], {
       role: 'progressbar',
       'aria-valuenow': '28',
@@ -180,6 +182,8 @@ function createQuotaTestEnv(initialStorage = {}, customFetch = null) {
     quotaCopilotPercent: new MockElement('quotaCopilotPercent', 'span', ['quota-percent-pill']),
     quotaCopilotUsed: new MockElement('quotaCopilotUsed', 'strong'),
     quotaCopilotLimit: new MockElement('quotaCopilotLimit', 'span'),
+    quotaCopilotRingFill: new MockElement('quotaCopilotRingFill', 'circle', ['quota-ring-fill']),
+    quotaCopilotRingProgress: new MockElement('quotaCopilotRingProgress', 'div', ['quota-ring-wrapper']),
     quotaCopilotProgressFill: new MockElement('quotaCopilotProgressFill', 'div', ['quota-progress-fill'], {
       role: 'progressbar',
       'aria-valuenow': '27',
@@ -357,6 +361,15 @@ async function runAllTests() {
     assert(htmlSource.includes('role="progressbar"'), 'Missing role="progressbar" in quota progress bars');
     assert(htmlSource.includes('aria-valuemin="0"'), 'Missing aria-valuemin="0"');
     assert(htmlSource.includes('aria-valuemax="100"'), 'Missing aria-valuemax="100"');
+
+    // Circular Progress Ring SVG & CSS validation
+    assert(htmlSource.includes('id="quotaOcrRingFill"'), 'Missing #quotaOcrRingFill in index.html');
+    assert(htmlSource.includes('id="quotaCopilotRingFill"'), 'Missing #quotaCopilotRingFill in index.html');
+    assert(htmlSource.includes('class="quota-ring-svg"'), 'Missing .quota-ring-svg in index.html');
+    assert(pricingCssSource.includes('.quota-ring-wrapper'), 'Missing .quota-ring-wrapper CSS');
+    assert(pricingCssSource.includes('.quota-ring-svg'), 'Missing .quota-ring-svg CSS');
+    assert(pricingCssSource.includes('.quota-ring-track'), 'Missing .quota-ring-track CSS');
+    assert(pricingCssSource.includes('.quota-ring-fill'), 'Missing .quota-ring-fill CSS');
   });
 
   // 2. Pro VIP State Rendering
@@ -481,6 +494,8 @@ async function runAllTests() {
     });
     assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
     assert(!env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+    assert(!env.elements.quotaOcrRingFill.classList.contains('ring-fill-warning'));
+    assert(!env.elements.quotaOcrRingFill.classList.contains('ring-fill-danger'));
     assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-active'));
 
     // Custom data with 75% OCR (warning)
@@ -491,6 +506,7 @@ async function runAllTests() {
       ai_copilot: { used: 2, limit: 15 },
     });
     assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-warning'));
+    assert(env.elements.quotaOcrRingFill.classList.contains('ring-fill-warning'));
     assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-warning'));
 
     // Custom data with 95% OCR (danger)
@@ -501,6 +517,7 @@ async function runAllTests() {
       ai_copilot: { used: 2, limit: 15 },
     });
     assert(env.elements.quotaOcrProgressFill.classList.contains('quota-fill-danger'));
+    assert(env.elements.quotaOcrRingFill.classList.contains('ring-fill-danger'));
     assert(env.elements.quotaOcrPercent.classList.contains('quota-pill-danger'));
   });
 
