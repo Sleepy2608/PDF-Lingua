@@ -248,6 +248,12 @@
         renderCheckoutOrderSummary(currentTransaction.plan_code);
         renderTransactionDetails(currentTransaction);
       }
+      if (billingTab === 'history') {
+        renderBillingHistoryData();
+      } else if (billingTab === 'quota') {
+        renderQuotaUsageDashboard(currentQuotaData || currentQuotaStateKey);
+      }
+      switchPricingTab(billingTab);
     });
 
     if (topNavPricing) {
@@ -2240,7 +2246,9 @@
       if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-danger');
       if (badgeEl) {
         badgeEl.style.display = 'inline-flex';
-        badgeEl.textContent = percent >= 100 ? 'Đã đạt giới hạn' : 'Sắp hết hạn mức';
+        badgeEl.textContent = percent >= 100
+          ? t('quota_threshold_reached', 'Đã đạt giới hạn')
+          : t('quota_threshold_almost_out', 'Sắp hết hạn mức');
         badgeEl.className = 'quota-threshold-badge badge-threshold-danger';
       }
       if (ctaWrapEl) {
@@ -2251,7 +2259,7 @@
       if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-warning');
       if (badgeEl) {
         badgeEl.style.display = 'inline-flex';
-        badgeEl.textContent = 'Sắp đạt hạn mức';
+        badgeEl.textContent = t('quota_threshold_near_limit', 'Sắp đạt hạn mức');
         badgeEl.className = 'quota-threshold-badge badge-threshold-warning';
       }
       if (ctaWrapEl) {
@@ -2365,16 +2373,16 @@
         const remaining = targetData.days_remaining;
         if (typeof remaining === 'number') {
           if (remaining <= 0) {
-            quotaDaysRemainingBadge.textContent = 'Đã hết hạn';
+            quotaDaysRemainingBadge.textContent = t('quota_pill_expired', 'Đã hết hạn');
             if (quotaDaysRemainingBadge.classList) quotaDaysRemainingBadge.classList.add('pill-expired');
           } else if (remaining <= 3) {
-            quotaDaysRemainingBadge.textContent = `Còn ${remaining} ngày`;
+            quotaDaysRemainingBadge.textContent = t('quota_pill_remaining_days', `Còn ${remaining} ngày`, { days: remaining });
             if (quotaDaysRemainingBadge.classList) quotaDaysRemainingBadge.classList.add('pill-expiring');
           } else {
-            quotaDaysRemainingBadge.textContent = `Còn ${remaining} ngày`;
+            quotaDaysRemainingBadge.textContent = t('quota_pill_remaining_days', `Còn ${remaining} ngày`, { days: remaining });
           }
         } else {
-          quotaDaysRemainingBadge.textContent = 'Đang kích hoạt';
+          quotaDaysRemainingBadge.textContent = t('quota_pill_active', 'Đang kích hoạt');
         }
       }
     }
@@ -2647,17 +2655,23 @@
 
     if (mainTitle && mainSubtitle) {
       if (billingTab === 'history') {
-        mainTitle.textContent = 'Lịch sử thanh toán & Hóa đơn';
-        mainSubtitle.textContent =
-          'Theo dõi tất cả giao dịch nạp tiền, nâng cấp gói Pro và kiểm tra trạng thái thanh toán, biên lai hóa đơn điện tử.';
+        mainTitle.textContent = t('pricing_history_title', 'Lịch sử thanh toán & Hóa đơn');
+        mainSubtitle.textContent = t(
+          'pricing_history_subtitle',
+          'Theo dõi tất cả giao dịch nạp tiền, nâng cấp gói Pro và kiểm tra trạng thái thanh toán, biên lai hóa đơn điện tử.'
+        );
       } else if (billingTab === 'quota') {
-        mainTitle.textContent = 'Quản lý gói & Hạn mức';
-        mainSubtitle.textContent =
-          'Theo dõi trạng thái gói Pro VIP, thời hạn hiệu lực, gia hạn gói cước và giám sát hạn mức OCR, dung lượng tệp PDF, Trợ lý AI Copilot.';
+        mainTitle.textContent = t('pricing_quota_dashboard_title', 'Quản lý gói & Hạn mức');
+        mainSubtitle.textContent = t(
+          'pricing_quota_dashboard_subtitle',
+          'Theo dõi trạng thái gói Pro VIP, thời hạn hiệu lực, gia hạn gói cước và giám sát hạn mức OCR, dung lượng tệp PDF, Trợ lý AI Copilot.'
+        );
       } else {
-        mainTitle.textContent = 'Bảng giá gói dịch vụ';
-        mainSubtitle.textContent =
-          'Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.';
+        mainTitle.textContent = t('pricing_section_title', 'Bảng giá gói dịch vụ');
+        mainSubtitle.textContent = t(
+          'pricing_section_subtitle',
+          'Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.'
+        );
       }
     }
 
@@ -2717,13 +2731,13 @@
     const s = String(status || '').toLowerCase();
     switch (s) {
       case 'completed':
-        return '<span class="billing-status-badge status-badge-completed"><span class="billing-status-dot"></span>Hoàn tất</span>';
+        return `<span class="billing-status-badge status-badge-completed"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_completed', 'Hoàn tất'))}</span>`;
       case 'pending':
-        return '<span class="billing-status-badge status-badge-pending"><span class="billing-status-dot"></span>Đang xử lý</span>';
+        return `<span class="billing-status-badge status-badge-pending"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_pending', 'Đang xử lý'))}</span>`;
       case 'failed':
-        return '<span class="billing-status-badge status-badge-failed"><span class="billing-status-dot"></span>Thất bại</span>';
+        return `<span class="billing-status-badge status-badge-failed"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_failed', 'Thất bại'))}</span>`;
       case 'expired':
-        return '<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>Hết hạn</span>';
+        return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_expired', 'Hết hạn'))}</span>`;
       default:
         return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${escapeHtml(status)}</span>`;
     }
@@ -2877,7 +2891,7 @@
     if (errorState) errorState.style.display = 'none';
 
     if (countChip) {
-      countChip.textContent = `${billingTotalCount} giao dịch`;
+      countChip.textContent = t('billing_history_count_chip', `${billingTotalCount} giao dịch`, { count: billingTotalCount });
     }
 
     if (billingTotalCount === 0 || billingTransactions.length === 0) {
@@ -2902,7 +2916,9 @@
           const methodDisplay =
             tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR');
           const cycleLabel =
-            tx.billing_cycle === 'yearly' ? 'Chu kỳ 1 năm (365 ngày)' : 'Chu kỳ 1 tháng (30 ngày)';
+            tx.billing_cycle === 'yearly'
+              ? t('billing_cycle_yearly', 'Chu kỳ 1 năm (365 ngày)')
+              : t('billing_cycle_monthly', 'Chu kỳ 1 tháng (30 ngày)');
 
           return `
             <tr>
@@ -2917,14 +2933,14 @@
               <td class="billing-cell-method">${escapeHtml(methodDisplay)}</td>
               <td>${renderStatusBadge(tx.payment_status)}</td>
               <td class="text-center">
-                <button type="button" class="btn-view-invoice" data-tx="${escapeHtml(tx.transaction_code)}" title="Xem hóa đơn điện tử">
+                <button type="button" class="btn-view-invoice" data-tx="${escapeHtml(tx.transaction_code)}" title="${escapeHtml(t('billing_title_view_invoice', 'Xem hóa đơn điện tử'))}">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                     <line x1="16" y1="13" x2="8" y2="13"></line>
                     <line x1="16" y1="17" x2="8" y2="17"></line>
                   </svg>
-                  <span>Xem hóa đơn</span>
+                  <span>${escapeHtml(t('billing_btn_view_invoice', 'Xem hóa đơn'))}</span>
                 </button>
               </td>
             </tr>
@@ -2945,7 +2961,11 @@
     if (paginationInfo) {
       const fromItem = startIndex + 1;
       const toItem = Math.min(startIndex + billingTransactions.length, billingTotalCount);
-      paginationInfo.textContent = `Hiển thị ${fromItem} - ${toItem} / ${billingTotalCount} giao dịch`;
+      paginationInfo.textContent = t('billing_pagination_info', `Hiển thị ${fromItem} - ${toItem} / ${billingTotalCount} giao dịch`, {
+        from: fromItem,
+        to: toItem,
+        total: billingTotalCount,
+      });
     }
 
     if (btnPrev) {

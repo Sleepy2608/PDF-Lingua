@@ -191,14 +191,14 @@
                                     <a href="#pricing-billing" class="sidebar-submenu-item"
                                         id="sideNavPricingBilling" data-pricing-tab="history" role="menuitem">
                                         <span class="submenu-dot" aria-hidden="true"></span>
-                                        <span class="submenu-item-text">Lịch sử thanh toán & Hóa đơn</span>
+                                        <span class="submenu-item-text" data-i18n="pricing_nav_billing_history">Lịch sử thanh toán & Hóa đơn</span>
                                     </a>
                                 </li>
                                 <li role="none">
                                     <a href="#pricing-quota" class="sidebar-submenu-item"
                                         id="sideNavPricingQuota" data-pricing-tab="quota" role="menuitem">
                                         <span class="submenu-dot" aria-hidden="true"></span>
-                                        <span class="submenu-item-text">Quản lý gói & Hạn mức</span>
+                                        <span class="submenu-item-text" data-i18n="pricing_nav_quota_dashboard">Quản lý gói & Hạn mức</span>
                                     </a>
                                 </li>
                             </ul>
@@ -1892,13 +1892,14 @@
                             </div>
                             <div class="pricing-header-actions">
                                 <button type="button" class="doc-header-back-btn" id="btnPricingBackToPlans"
-                                    style="display: none;" title="Quay lại Bảng giá gói dịch vụ">
+                                    style="display: none;" title="Quay lại Bảng giá gói dịch vụ"
+                                    data-i18n-attr="title:pricing_title_back_to_plans">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="19" y1="12" x2="5" y2="12"></line>
                                         <polyline points="12 19 5 12 12 5"></polyline>
                                     </svg>
-                                    <span>Quay lại Bảng giá</span>
+                                    <span data-i18n="pricing_btn_back_to_plans">Quay lại Bảng giá</span>
                                 </button>
                                 <button type="button" class="doc-header-back-btn" id="btnPricingBackToWorkspace"
                                     title="Quay lại không gian làm việc"
@@ -2436,15 +2437,16 @@
                                     </div>
                                     <div class="billing-toolbar-right">
                                         <div class="billing-filter-wrap">
-                                            <label for="billingStatusFilter" class="billing-filter-label">Trạng
-                                                thái:</label>
+                                            <label for="billingStatusFilter" class="billing-filter-label"
+                                                data-i18n="billing_filter_label">Trạng thái:</label>
                                             <select id="billingStatusFilter" class="billing-status-select"
-                                                aria-label="Lọc theo trạng thái thanh toán">
-                                                <option value="all">Tất cả trạng thái</option>
-                                                <option value="completed">Hoàn tất (Completed)</option>
-                                                <option value="pending">Đang chờ xử lý (Pending)</option>
-                                                <option value="failed">Thất bại (Failed)</option>
-                                                <option value="expired">Đã hết hạn (Expired)</option>
+                                                aria-label="Lọc theo trạng thái thanh toán"
+                                                data-i18n-attr="aria-label:billing_filter_aria">
+                                                <option value="all" data-i18n="billing_status_all">Tất cả trạng thái</option>
+                                                <option value="completed" data-i18n="billing_status_completed_opt">Hoàn tất (Completed)</option>
+                                                <option value="pending" data-i18n="billing_status_pending_opt">Đang chờ xử lý (Pending)</option>
+                                                <option value="failed" data-i18n="billing_status_failed_opt">Thất bại (Failed)</option>
+                                                <option value="expired" data-i18n="billing_status_expired_opt">Đã hết hạn (Expired)</option>
                                             </select>
                                         </div>
                                     </div>
@@ -2455,14 +2457,14 @@
                                     <table class="billing-table" id="billingHistoryTable">
                                         <thead>
                                             <tr>
-                                                <th class="billing-th-stt">STT</th>
-                                                <th>MÃ GIAO DỊCH</th>
-                                                <th>GÓI DỊCH VỤ</th>
-                                                <th>NGÀY THANH TOÁN</th>
-                                                <th class="text-right">SỐ TIỀN</th>
-                                                <th>PHƯƠNG THỨC</th>
-                                                <th>TRẠNG THÁI</th>
-                                                <th class="text-center">HÓA ĐƠN</th>
+                                                <th class="billing-th-stt" data-i18n="billing_th_stt">STT</th>
+                                                <th data-i18n="billing_th_tx_code">MÃ GIAO DỊCH</th>
+                                                <th data-i18n="billing_th_plan">GÓI DỊCH VỤ</th>
+                                                <th data-i18n="billing_th_date">NGÀY THANH TOÁN</th>
+                                                <th class="text-right" data-i18n="billing_th_amount">SỐ TIỀN</th>
+                                                <th data-i18n="billing_th_method">PHƯƠNG THỨC</th>
+                                                <th data-i18n="billing_th_status">TRẠNG THÁI</th>
+                                                <th class="text-center" data-i18n="billing_th_invoice">HÓA ĐƠN</th>
                                             </tr>
                                         </thead>
                                         <tbody id="billingHistoryTableBody">
@@ -2474,8 +2476,8 @@
                                 <!-- Loading State -->
                                 <div class="billing-card-state" id="billingHistoryLoadingState" style="display: none;">
                                     <div class="billing-state-spinner"></div>
-                                    <div class="billing-state-title">Đang tải lịch sử giao dịch...</div>
-                                    <div class="billing-state-desc">Vui lòng chờ trong giây lát</div>
+                                    <div class="billing-state-title" data-i18n="billing_loading_title">Đang tải lịch sử giao dịch...</div>
+                                    <div class="billing-state-desc" data-i18n="billing_loading_desc">Vui lòng chờ trong giây lát</div>
                                 </div>
 
                                 <!-- Empty State -->
@@ -2490,8 +2492,8 @@
                                             <line x1="16" y1="17" x2="8" y2="17"></line>
                                         </svg>
                                     </div>
-                                    <div class="billing-state-title">Chưa có giao dịch thanh toán nào</div>
-                                    <div class="billing-state-desc">Các giao dịch đăng ký gói Pro và biên lai hóa đơn sẽ
+                                    <div class="billing-state-title" data-i18n="billing_empty_title">Chưa có giao dịch thanh toán nào</div>
+                                    <div class="billing-state-desc" data-i18n="billing_empty_desc">Các giao dịch đăng ký gói Pro và biên lai hóa đơn sẽ
                                         xuất hiện tại đây.</div>
                                 </div>
 
@@ -2506,11 +2508,11 @@
                                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                         </svg>
                                     </div>
-                                    <div class="billing-state-title">Không thể tải lịch sử giao dịch</div>
-                                    <div class="billing-state-desc" id="billingHistoryErrorMessage">Đã có lỗi xảy ra
+                                    <div class="billing-state-title" data-i18n="billing_error_title">Không thể tải lịch sử giao dịch</div>
+                                    <div class="billing-state-desc" id="billingHistoryErrorMessage" data-i18n="billing_error_desc">Đã có lỗi xảy ra
                                         trong quá trình tải dữ liệu.</div>
                                     <button type="button" class="btn btn-secondary btn-sm"
-                                        id="btnRetryBillingHistory">Thử lại</button>
+                                        id="btnRetryBillingHistory" data-i18n="billing_btn_retry">Thử lại</button>
                                 </div>
 
                                 <!-- Pagination Footer -->
@@ -2520,7 +2522,7 @@
                                     </div>
                                     <div class="pagination-controls" id="billingPaginationControls">
                                         <button type="button" class="btn-pagination" id="btnBillingPrevPage"
-                                            aria-label="Trang trước" disabled>
+                                            aria-label="Trang trước" data-i18n-attr="aria-label:billing_pagination_prev_aria" disabled>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -2531,7 +2533,7 @@
                                             <!-- Dynamic page numbers -->
                                         </div>
                                         <button type="button" class="btn-pagination" id="btnBillingNextPage"
-                                            aria-label="Trang sau">
+                                            aria-label="Trang sau" data-i18n-attr="aria-label:billing_pagination_next_aria">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -2555,16 +2557,15 @@
                                         <circle cx="12" cy="7" r="4"></circle>
                                     </svg>
                                 </div>
-                                <div class="billing-state-title">Vui lòng đăng nhập để theo dõi gói dịch vụ & hạn mức
-                                </div>
-                                <div class="billing-state-desc">Đăng nhập tài khoản PDF-Lingua để xem trạng thái gói
+                                <div class="billing-state-title" data-i18n="quota_guest_title">Vui lòng đăng nhập để theo dõi gói dịch vụ & hạn mức</div>
+                                <div class="billing-state-desc" data-i18n="quota_guest_desc">Đăng nhập tài khoản PDF-Lingua để xem trạng thái gói
                                     cước, ngày hết hạn, hạn mức trang OCR, dung lượng tệp PDF và lượt hỏi đáp Trợ lý AI
                                     Copilot.</div>
                                 <div class="quota-guest-actions">
-                                    <button type="button" class="btn btn-primary btn-sm" id="btnQuotaGuestLogin">Đăng
-                                        nhập ngay</button>
-                                    <button type="button" class="btn btn-secondary btn-sm"
-                                        id="btnQuotaGuestViewPlans">Xem Bảng giá gói</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnQuotaGuestLogin"
+                                        data-i18n="quota_guest_btn_login">Đăng nhập ngay</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnQuotaGuestViewPlans"
+                                        data-i18n="quota_guest_btn_plans">Xem Bảng giá gói</button>
                                 </div>
                             </div>
 
@@ -2582,13 +2583,14 @@
                                         </svg>
                                     </div>
                                     <div class="quota-warning-content">
-                                        <strong class="quota-warning-title" id="quotaWarningTitle">Gói dịch vụ sắp hết
-                                            hạn</strong>
-                                        <p class="quota-warning-desc" id="quotaWarningDesc">Gói Pro của bạn sẽ hết hạn
+                                        <strong class="quota-warning-title" id="quotaWarningTitle"
+                                            data-i18n="quota_warn_expiring_title">Gói dịch vụ sắp hết hạn</strong>
+                                        <p class="quota-warning-desc" id="quotaWarningDesc"
+                                            data-i18n="quota_warn_expiring_desc">Gói Pro của bạn sẽ hết hạn
                                             trong vài ngày tới. Vui lòng gia hạn để không bị gián đoạn quyền lợi.</p>
                                     </div>
                                     <button type="button" class="btn btn-warning-action btn-sm"
-                                        id="btnQuotaWarningRenew">Gia hạn ngay</button>
+                                        id="btnQuotaWarningRenew" data-i18n="quota_warn_expiring_cta">Gia hạn ngay</button>
                                 </div>
 
                                 <!-- Pro VIP Header -->
@@ -2601,7 +2603,7 @@
                                                         points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
                                                     </polygon>
                                                 </svg>
-                                                <span>PRO VIP</span>
+                                                <span data-i18n="quota_badge_pro_vip">PRO VIP</span>
                                             </span>
                                             <h3 class="quota-plan-name" id="quotaPlanName">Gói Pro Hàng Tháng</h3>
                                             <span class="quota-countdown-pill font-mono"
@@ -2609,12 +2611,12 @@
                                         </div>
                                         <div class="quota-meta-dates">
                                             <span class="quota-meta-item">
-                                                <span>Kích hoạt:</span>
+                                                <span data-i18n="quota_lbl_activated">Kích hoạt:</span>
                                                 <strong class="font-mono" id="quotaStartedAt">20/10/2026</strong>
                                             </span>
                                             <span class="quota-meta-sep">•</span>
                                             <span class="quota-meta-item">
-                                                <span>Hết hạn:</span>
+                                                <span data-i18n="quota_lbl_expires">Hết hạn:</span>
                                                 <strong class="font-mono" id="quotaExpiresAt">20/11/2026</strong>
                                             </span>
                                         </div>
@@ -2627,7 +2629,7 @@
                                                 <polyline points="23 4 23 10 17 10"></polyline>
                                                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                                             </svg>
-                                            <span>Gia hạn gói cước</span>
+                                            <span data-i18n="quota_btn_renew">Gia hạn gói cước</span>
                                         </button>
                                         <button type="button" class="btn btn-secondary btn-sm"
                                             id="btnQuotaUpgradeYearly">
@@ -2636,8 +2638,8 @@
                                                 stroke-linejoin="round">
                                                 <polyline points="18 15 12 9 6 15"></polyline>
                                             </svg>
-                                            <span>Nâng cấp gói năm</span>
-                                            <span class="quota-mini-save-pill font-mono">-32%</span>
+                                            <span data-i18n="quota_btn_upgrade_yearly">Nâng cấp gói năm</span>
+                                            <span class="quota-mini-save-pill font-mono" data-i18n="quota_save_yearly_pill">-25%</span>
                                         </button>
                                     </div>
                                 </div>
@@ -2646,16 +2648,16 @@
                                 <div class="quota-header-row" id="quotaFreeHeader" style="display: none;">
                                     <div class="quota-header-left">
                                         <div class="quota-title-badge-wrap">
-                                            <span class="badge-free-tier font-mono">GÓI TIÊU CHUẨN</span>
-                                            <h3 class="quota-plan-name" id="quotaFreePlanName">Tài Khoản Miễn Phí</h3>
+                                            <span class="badge-free-tier font-mono" data-i18n="quota_badge_free_tier">GÓI TIÊU CHUẨN</span>
+                                            <h3 class="quota-plan-name" id="quotaFreePlanName" data-i18n="quota_free_plan_name">Tài Khoản Miễn Phí</h3>
                                         </div>
-                                        <p class="quota-free-desc">Bạn đang sử dụng các hạn mức mặc định của gói Miễn
+                                        <p class="quota-free-desc" data-i18n="quota_free_desc">Bạn đang sử dụng các hạn mức mặc định của gói Miễn
                                             phí. Nâng cấp Pro để mở khóa 100 MB mỗi tệp và AI Copilot.</p>
                                     </div>
                                     <div class="quota-header-right">
                                         <button type="button" class="btn btn-primary btn-sm"
                                             id="btnQuotaUpgradeFreeCta">
-                                            <span>Nâng cấp Pro ngay</span>
+                                            <span data-i18n="quota_btn_upgrade_free_cta">Nâng cấp Pro ngay</span>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                                 stroke-linejoin="round">
@@ -2683,7 +2685,7 @@
                                                         <line x1="16" y1="17" x2="8" y2="17"></line>
                                                     </svg>
                                                 </div>
-                                                <span class="quota-meter-title">Trang OCR Chuyên Sâu</span>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_ocr_title">Trang OCR Chuyên Sâu</span>
                                             </div>
                                             <div class="quota-meter-badge-group">
                                                 <span class="quota-threshold-badge" id="quotaOcrThresholdBadge"
@@ -2695,20 +2697,20 @@
                                         <div class="quota-meter-values">
                                             <div class="quota-value-numbers font-mono">
                                                 <strong id="quotaOcrUsed">142</strong> / <span
-                                                    id="quotaOcrLimit">500</span> trang
+                                                    id="quotaOcrLimit">500</span> <span id="quotaOcrUnit" data-i18n="quota_unit_pages">trang</span>
                                             </div>
                                         </div>
                                         <div class="quota-progress-track">
                                             <div class="quota-progress-fill" id="quotaOcrProgressFill"
                                                 role="progressbar" aria-valuenow="28" aria-valuemin="0"
                                                 aria-valuemax="100" aria-label="Tiến độ sử dụng trang OCR"
+                                                data-i18n-attr="aria-label:quota_ocr_progress_aria"
                                                 style="width: 28%;"></div>
                                         </div>
-                                        <div class="quota-meter-note" id="quotaOcrNote">Đã sử dụng trong chu kỳ hiện tại
-                                        </div>
+                                        <div class="quota-meter-note" id="quotaOcrNote" data-i18n="quota_meter_ocr_note">Đã sử dụng trong chu kỳ hiện tại</div>
                                         <div class="quota-meter-cta-wrap" id="quotaOcrCtaWrap" style="display: none;">
-                                            <button type="button" class="btn-quota-meter-cta" id="btnQuotaOcrCta">Gia
-                                                hạn hạn mức</button>
+                                            <button type="button" class="btn-quota-meter-cta" id="btnQuotaOcrCta"
+                                                data-i18n="quota_meter_ocr_cta">Gia hạn hạn mức</button>
                                         </div>
                                     </div>
 
@@ -2725,7 +2727,7 @@
                                                         <line x1="12" y1="3" x2="12" y2="15"></line>
                                                     </svg>
                                                 </div>
-                                                <span class="quota-meter-title">Dung Lượng Tệp Tối Đa</span>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_filesize_title">Dung Lượng Tệp Tối Đa</span>
                                             </div>
                                             <div class="quota-meter-badge-group">
                                                 <span class="quota-threshold-badge" id="quotaFileSizeThresholdBadge"
@@ -2736,16 +2738,17 @@
                                         </div>
                                         <div class="quota-meter-values">
                                             <div class="quota-value-numbers font-mono">
-                                                <strong id="quotaFileSizeUsed">100 MB</strong> / tệp
+                                                <strong id="quotaFileSizeUsed">100 MB</strong> <span id="quotaFileSizeUnit" data-i18n="quota_unit_per_file">/ tệp</span>
                                             </div>
                                         </div>
                                         <div class="quota-progress-track">
                                             <div class="quota-progress-fill quota-fill-full"
                                                 id="quotaFileSizeProgressFill" role="progressbar" aria-valuenow="100"
                                                 aria-valuemin="0" aria-valuemax="100"
-                                                aria-label="Hạn mức dung lượng tệp tải lên" style="width: 100%;"></div>
+                                                aria-label="Hạn mức dung lượng tệp tải lên"
+                                                data-i18n-attr="aria-label:quota_filesize_progress_aria" style="width: 100%;"></div>
                                         </div>
-                                        <div class="quota-meter-note" id="quotaFileSizeNote">Gấp 5 lần gói Miễn phí (tối
+                                        <div class="quota-meter-note" id="quotaFileSizeNote" data-i18n="quota_meter_filesize_note">Gấp 5 lần gói Miễn phí (tối
                                             đa 100 MB/tệp)</div>
                                     </div>
 
@@ -2762,7 +2765,7 @@
                                                         </path>
                                                     </svg>
                                                 </div>
-                                                <span class="quota-meter-title">Trợ Lý AI Copilot</span>
+                                                <span class="quota-meter-title" data-i18n="quota_meter_copilot_title">Trợ Lý AI Copilot</span>
                                             </div>
                                             <div class="quota-meter-badge-group">
                                                 <span class="quota-threshold-badge" id="quotaCopilotThresholdBadge"
@@ -2774,21 +2777,22 @@
                                         <div class="quota-meter-values">
                                             <div class="quota-value-numbers font-mono">
                                                 <strong id="quotaCopilotUsed">4</strong> / <span
-                                                    id="quotaCopilotLimit">15</span> câu
+                                                    id="quotaCopilotLimit">15</span> <span id="quotaCopilotUnit" data-i18n="quota_unit_queries">câu</span>
                                             </div>
                                         </div>
                                         <div class="quota-progress-track">
                                             <div class="quota-progress-fill" id="quotaCopilotProgressFill"
                                                 role="progressbar" aria-valuenow="27" aria-valuemin="0"
                                                 aria-valuemax="100" aria-label="Tiến độ sử dụng AI Copilot trong ngày"
+                                                data-i18n-attr="aria-label:quota_copilot_progress_aria"
                                                 style="width: 27%;"></div>
                                         </div>
-                                        <div class="quota-meter-note" id="quotaCopilotNote">Hồi phục 15 câu sau mỗi 24
+                                        <div class="quota-meter-note" id="quotaCopilotNote" data-i18n="quota_meter_copilot_note">Hồi phục 15 câu sau mỗi 24
                                             giờ</div>
                                         <div class="quota-meter-cta-wrap" id="quotaCopilotCtaWrap"
                                             style="display: none;">
                                             <button type="button" class="btn-quota-meter-cta"
-                                                id="btnQuotaCopilotCta">Nâng cấp để thêm câu hỏi</button>
+                                                id="btnQuotaCopilotCta" data-i18n="quota_meter_copilot_cta">Nâng cấp để thêm câu hỏi</button>
                                         </div>
                                     </div>
                                 </div>
@@ -4506,18 +4510,18 @@
             <div class="invoice-modal-header">
                 <div class="invoice-header-title-wrap">
                     <div class="invoice-header-badge-row">
-                        <span class="invoice-eyebrow font-mono">BIÊN LAI ĐIỆN TỬ</span>
+                        <span class="invoice-eyebrow font-mono" data-i18n="invoice_eyebrow">BIÊN LAI ĐIỆN TỬ</span>
                         <span class="billing-status-badge status-badge-completed" id="invoiceStatusBadge">
                             <span class="billing-status-dot"></span>
-                            <span id="invoiceStatusText">Hoàn tất</span>
+                            <span id="invoiceStatusText" data-i18n="billing_status_completed">Hoàn tất</span>
                         </span>
                     </div>
-                    <h3 class="invoice-modal-title" id="invoiceModalTitle">Hóa Đơn Thanh Toán Dịch Vụ</h3>
-                    <p class="invoice-modal-subtitle">Biên lai xác nhận giao dịch thanh toán gói Pro dịch vụ PDF-Lingua
-                    </p>
+                    <h3 class="invoice-modal-title" id="invoiceModalTitle" data-i18n="invoice_modal_title">Hóa Đơn Thanh Toán Dịch Vụ</h3>
+                    <p class="invoice-modal-subtitle" data-i18n="invoice_modal_subtitle">Biên lai xác nhận giao dịch thanh toán gói Pro dịch vụ PDF-Lingua</p>
                 </div>
                 <button type="button" class="modal-close invoice-modal-close" id="btnCloseInvoiceModal"
-                    aria-label="Đóng hóa đơn" title="Đóng">
+                    aria-label="Đóng hóa đơn" title="Đóng"
+                    data-i18n-attr="aria-label:invoice_close_aria,title:invoice_close_title">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -4530,8 +4534,8 @@
             <div class="billing-card-state" id="invoiceModalLoadingState"
                 style="display: none; padding: 3.5rem 1.5rem;">
                 <div class="billing-state-spinner"></div>
-                <div class="billing-state-title">Đang tải chi tiết hóa đơn...</div>
-                <div class="billing-state-desc">Vui lòng chờ trong giây lát</div>
+                <div class="billing-state-title" data-i18n="invoice_loading_title">Đang tải chi tiết hóa đơn...</div>
+                <div class="billing-state-desc" data-i18n="invoice_loading_desc">Vui lòng chờ trong giây lát</div>
             </div>
 
             <!-- Modal Body (Printable Receipt Area) -->
@@ -4542,10 +4546,10 @@
                         <div class="invoice-brand-logo">
                             <span class="brand-badge">PDF</span>-Lingua
                         </div>
-                        <div class="invoice-brand-meta">Nền tảng OCR & Dịch thuật PDF Song Ngữ Chuyên Sâu</div>
+                        <div class="invoice-brand-meta" data-i18n="invoice_brand_meta">Nền tảng OCR & Dịch thuật PDF Song Ngữ Chuyên Sâu</div>
                     </div>
                     <div class="invoice-brand-right">
-                        <div class="invoice-number-label">SỐ HÓA ĐƠN</div>
+                        <div class="invoice-number-label" data-i18n="invoice_lbl_number">SỐ HÓA ĐƠN</div>
                         <div class="invoice-number-val font-mono" id="invoiceNumber">INV-TXN-20261117-001</div>
                         <div class="invoice-code-val font-mono" id="invoiceTxCode">Mã GD: TXN-20261117-001</div>
                     </div>
@@ -4554,37 +4558,37 @@
                 <!-- Buyer & Service Meta Information Grid -->
                 <div class="invoice-meta-grid">
                     <div class="invoice-meta-card">
-                        <div class="invoice-meta-title">THÔNG TIN KHÁCH HÀNG</div>
+                        <div class="invoice-meta-title" data-i18n="invoice_lbl_customer_info">THÔNG TIN KHÁCH HÀNG</div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Người mua:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_buyer">Người mua:</span>
                             <span class="invoice-meta-val" id="invoiceBuyerName">Nguyễn Văn Mua</span>
                         </div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Email:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_email">Email:</span>
                             <span class="invoice-meta-val font-mono" id="invoiceBuyerEmail">buyer@example.com</span>
                         </div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Phương thức:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_method">Phương thức:</span>
                             <span class="invoice-meta-val" id="invoicePaymentMethod">VietQR Napas247</span>
                         </div>
                     </div>
 
                     <div class="invoice-meta-card">
-                        <div class="invoice-meta-title">CHI TIẾT DỊCH VỤ</div>
+                        <div class="invoice-meta-title" data-i18n="invoice_lbl_service_details">CHI TIẾT DỊCH VỤ</div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Gói đăng ký:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_plan">Gói đăng ký:</span>
                             <strong class="invoice-meta-val" id="invoicePlanName">Gói Pro Hàng Tháng</strong>
                         </div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Chu kỳ & Thời hạn:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_cycle_duration">Chu kỳ & Thời hạn:</span>
                             <span class="invoice-meta-val" id="invoiceCycleDuration">Theo tháng (30 ngày)</span>
                         </div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Ngày tạo:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_created_at">Ngày tạo:</span>
                             <span class="invoice-meta-val font-mono" id="invoiceCreatedAt">16:28 17/11/2026</span>
                         </div>
                         <div class="invoice-meta-row">
-                            <span class="invoice-meta-label">Ngày thanh toán:</span>
+                            <span class="invoice-meta-label" data-i18n="invoice_lbl_paid_at">Ngày thanh toán:</span>
                             <span class="invoice-meta-val font-mono" id="invoicePaidAt">16:30 17/11/2026</span>
                         </div>
                     </div>
@@ -4592,15 +4596,15 @@
 
                 <!-- Financial Settlement Breakdown Table -->
                 <div class="invoice-breakdown-card">
-                    <div class="invoice-breakdown-title">BẢNG KÊ QUYẾT TOÁN THANH TOÁN</div>
+                    <div class="invoice-breakdown-title" data-i18n="invoice_breakdown_title">BẢNG KÊ QUYẾT TOÁN THANH TOÁN</div>
                     <table class="invoice-items-table">
                         <thead>
                             <tr>
-                                <th>MÔ TẢ KHOẢN MỤC</th>
-                                <th class="text-center">THỜI HẠN</th>
-                                <th class="text-right">ĐƠN GIÁ</th>
-                                <th class="text-right">THUẾ SUẤT</th>
-                                <th class="text-right">THÀNH TIỀN</th>
+                                <th data-i18n="invoice_th_item_desc">MÔ TẢ KHOẢN MỤC</th>
+                                <th class="text-center" data-i18n="invoice_th_duration">THỜI HẠN</th>
+                                <th class="text-right" data-i18n="invoice_th_unit_price">ĐƠN GIÁ</th>
+                                <th class="text-right" data-i18n="invoice_th_tax_rate">THUẾ SUẤT</th>
+                                <th class="text-right" data-i18n="invoice_th_item_total">THÀNH TIỀN</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -4622,15 +4626,15 @@
 
                     <div class="invoice-summary-rows">
                         <div class="invoice-sum-row">
-                            <span class="invoice-sum-label">Giá trị dịch vụ (Tạm tính):</span>
+                            <span class="invoice-sum-label" data-i18n="invoice_lbl_subtotal">Giá trị dịch vụ (Tạm tính):</span>
                             <span class="invoice-sum-val font-mono" id="invoiceSubtotal">49.000 VNĐ</span>
                         </div>
                         <div class="invoice-sum-row">
-                            <span class="invoice-sum-label">Thuế suất GTGT (0%):</span>
+                            <span class="invoice-sum-label" data-i18n="invoice_lbl_tax_vat">Thuế suất GTGT (0%):</span>
                             <span class="invoice-sum-val font-mono" id="invoiceTaxAmount">0 VNĐ</span>
                         </div>
                         <div class="invoice-sum-row invoice-grand-total">
-                            <span class="invoice-sum-label">Tổng thanh toán:</span>
+                            <span class="invoice-sum-label" data-i18n="invoice_lbl_grand_total">Tổng thanh toán:</span>
                             <span class="invoice-sum-val font-mono" id="invoiceTotalAmount">49.000 VNĐ</span>
                         </div>
                     </div>
@@ -4639,24 +4643,22 @@
                 <!-- Reconciliation & QR Verification Section -->
                 <div class="invoice-reconcile-card" id="invoiceReconcileSection">
                     <div class="invoice-reconcile-left">
-                        <div class="invoice-reconcile-label">NỘI DUNG CHUYỂN KHOẢN ĐỐI SOÁT:</div>
+                        <div class="invoice-reconcile-label" data-i18n="invoice_reconcile_label">NỘI DUNG CHUYỂN KHOẢN ĐỐI SOÁT:</div>
                         <div class="invoice-reconcile-memo font-mono" id="invoicePaymentNote">PDFL PRO MONTHLY NOV</div>
-                        <div class="invoice-reconcile-hint">
+                        <div class="invoice-reconcile-hint" data-i18n="invoice_reconcile_hint">
                             Giao dịch điện tử được bảo vệ và tự động đối soát qua Napas247 / VietQR.
                         </div>
                     </div>
                     <div class="invoice-reconcile-right" id="invoiceQrWrap" style="display: none;">
                         <img id="invoiceQrImage" class="invoice-qr-img" src="" alt="VietQR Thanh toán">
-                        <span class="invoice-qr-caption font-mono">Quét để kiểm tra</span>
+                        <span class="invoice-qr-caption font-mono" data-i18n="invoice_qr_caption">Quét để kiểm tra</span>
                     </div>
                 </div>
 
                 <!-- Receipt Legal Note -->
                 <div class="invoice-receipt-footer">
-                    <p>Hóa đơn điện tử khởi tạo tự động từ hệ thống PDF-Lingua. Miễn thuế GTGT theo Thông tư
-                        219/2013/TT-BTC.</p>
-                    <p>Mọi thắc mắc về biên lai thanh toán, vui lòng liên hệ bộ phận hỗ trợ khách hàng:
-                        support@pdf-lingua.vn</p>
+                    <p data-i18n="invoice_receipt_note_1">Hóa đơn điện tử khởi tạo tự động từ hệ thống PDF-Lingua. Miễn thuế GTGT theo Thông tư 219/2013/TT-BTC.</p>
+                    <p data-i18n="invoice_receipt_note_2">Mọi thắc mắc về biên lai thanh toán, vui lòng liên hệ bộ phận hỗ trợ khách hàng: support@pdf-lingua.vn</p>
                 </div>
             </div>
 
@@ -4670,7 +4672,7 @@
                             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                             <rect x="6" y="14" width="12" height="8"></rect>
                         </svg>
-                        <span>In hóa đơn</span>
+                        <span data-i18n="invoice_btn_print">In hóa đơn</span>
                     </button>
                     <button type="button" class="btn btn-secondary btn-download-invoice" id="btnDownloadInvoice">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -4679,12 +4681,12 @@
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>Tải biên lai</span>
+                        <span data-i18n="invoice_btn_download">Tải hóa đơn (PDF)</span>
                     </button>
                 </div>
                 <div class="invoice-footer-right">
                     <button type="button" class="btn btn-primary" id="btnInvoiceModalCloseFooter">
-                        <span>Đóng</span>
+                        <span data-i18n="invoice_btn_close_footer">Đóng biên lai</span>
                     </button>
                 </div>
             </div>
