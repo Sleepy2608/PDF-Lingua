@@ -34,6 +34,7 @@ Bảng điều hướng tổng hợp toàn bộ các tài liệu kỹ thuật, k
 | **11** | **Bảng Giá & Gói Cước** | [`Docs/pricing-plans/pricing-plans.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/pricing-plans/pricing-plans.md) | Quy định chi tiết quyền lợi gói Miễn Phí (0đ) và Gói Chuyên Nghiệp (49.000đ/tháng, 399.000đ/năm). |
 | **12** | **Tệp PDF Kiểm Thử** | [`Docs/test-examples/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/test-examples/README.md) | Danh mục 5 tệp PDF thực tế đánh giá các trường hợp biên: đa ngôn ngữ, ký hiệu code, tiền tệ và bảng chữ cái tiếng Việt. |
 | **13** | **Quy Chuẩn Màu Sắc** | [`Docs/color-theme/pdf-lingua-color-theme.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/color-theme/pdf-lingua-color-theme.md) | Hệ thống bảng màu chuẩn, mã màu Hex/RGBA và quy chuẩn tương phản giao diện UI/UX. |
+| **14** | **Phân Tích An Toàn Bảo Mật** | [`Docs/security-and-threat-modeling/security-analysis.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/security-analysis.md) | Mô hình đe dọa STRIDE, phòng chống IDOR (404), PDF Bombs (magic bytes), Prompt Injection và xác thực Webhook SePay. |
 
 ---
 
