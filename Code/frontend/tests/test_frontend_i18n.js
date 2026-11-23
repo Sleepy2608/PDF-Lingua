@@ -377,6 +377,17 @@ runTest('Documents, Profile, and Workspace dictionary keys exist and render corr
     assert.strictEqual(i18n.t('workspace_docx_pro_only'), 'Tính năng tải tệp Word (.docx) chỉ dành riêng cho tài khoản Pro VIP!');
     assert.strictEqual(i18n.t('workspace_download_prep', { format: 'PDF' }), 'Đang chuẩn bị tệp .PDF...');
     assert.strictEqual(i18n.t('workspace_download_success', { format: 'PDF' }), 'Đã tải xuống thành công tệp .PDF!');
+    assert.strictEqual(i18n.t('common_prev'), 'Trước');
+    assert.strictEqual(i18n.t('common_next'), 'Sau');
+    assert.strictEqual(i18n.t('lang_vi'), 'Tiếng Việt (vi)');
+    assert.strictEqual(i18n.t('lang_en'), 'Tiếng Anh (en)');
+    assert.strictEqual(i18n.t('lang_ja'), 'Tiếng Nhật (ja)');
+    assert.strictEqual(i18n.t('lang_ko'), 'Tiếng Hàn (ko)');
+    assert.strictEqual(i18n.t('lang_zh'), 'Tiếng Trung (zh)');
+    assert.strictEqual(i18n.t('lang_fr'), 'Tiếng Pháp (fr)');
+    assert.strictEqual(i18n.t('lang_de'), 'Tiếng Đức (de)');
+    assert.strictEqual(i18n.t('lang_es'), 'Tiếng Tây Ban Nha (es)');
+    assert.strictEqual(i18n.t('lang_ru'), 'Tiếng Nga (ru)');
 
     i18n.setLanguage('en');
     assert.strictEqual(i18n.t('docs_btn_download'), 'Download');
@@ -391,6 +402,17 @@ runTest('Documents, Profile, and Workspace dictionary keys exist and render corr
     assert.strictEqual(i18n.t('workspace_docx_pro_only'), 'Exporting Word (.docx) is exclusive to Pro VIP accounts!');
     assert.strictEqual(i18n.t('workspace_download_prep', { format: 'PDF' }), 'Preparing .PDF file...');
     assert.strictEqual(i18n.t('workspace_download_success', { format: 'PDF' }), 'Downloaded .PDF file successfully!');
+    assert.strictEqual(i18n.t('common_prev'), 'Previous');
+    assert.strictEqual(i18n.t('common_next'), 'Next');
+    assert.strictEqual(i18n.t('lang_vi'), 'Vietnamese (vi)');
+    assert.strictEqual(i18n.t('lang_en'), 'English (en)');
+    assert.strictEqual(i18n.t('lang_ja'), 'Japanese (ja)');
+    assert.strictEqual(i18n.t('lang_ko'), 'Korean (ko)');
+    assert.strictEqual(i18n.t('lang_zh'), 'Chinese (zh)');
+    assert.strictEqual(i18n.t('lang_fr'), 'French (fr)');
+    assert.strictEqual(i18n.t('lang_de'), 'German (de)');
+    assert.strictEqual(i18n.t('lang_es'), 'Spanish (es)');
+    assert.strictEqual(i18n.t('lang_ru'), 'Russian (ru)');
 });
 
 console.log('\n================================================================');

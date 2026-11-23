@@ -2538,8 +2538,9 @@
   }
 
   function formatTargetLang(code) {
-    if (!code) return 'Tiếng Việt (vi)';
-    const names = {
+    if (!code) code = 'vi';
+    const isEn = typeof window !== 'undefined' && window.i18n && typeof window.i18n.getLanguage === 'function' && window.i18n.getLanguage() === 'en';
+    const namesVi = {
       vi: 'Tiếng Việt',
       en: 'Tiếng Anh',
       fr: 'Tiếng Pháp',
@@ -2551,6 +2552,19 @@
       es: 'Tiếng Tây Ban Nha',
       ru: 'Tiếng Nga',
     };
+    const namesEn = {
+      vi: 'Vietnamese',
+      en: 'English',
+      fr: 'French',
+      zh: 'Chinese',
+      'zh-CN': 'Chinese',
+      ja: 'Japanese',
+      ko: 'Korean',
+      de: 'German',
+      es: 'Spanish',
+      ru: 'Russian',
+    };
+    const names = isEn ? namesEn : namesVi;
     const label = names[code];
     return label ? `${label} (${code})` : String(code);
   }

@@ -52,6 +52,8 @@
             "common_print_save_pdf": "In hoặc lưu tệp PDF",
             "common_fullscreen": "Phóng to",
             "common_exit_fullscreen": "Thu nhỏ",
+            "common_prev": "Trước",
+            "common_next": "Sau",
 
             // Navigation
             "nav_home": "Trang chủ",
@@ -352,6 +354,15 @@
 
             // Workspace Action Toolbar
             "toolbar_target_lang": "Dịch sang:",
+            "lang_vi": "Tiếng Việt (vi)",
+            "lang_en": "Tiếng Anh (en)",
+            "lang_ja": "Tiếng Nhật (ja)",
+            "lang_ko": "Tiếng Hàn (ko)",
+            "lang_zh": "Tiếng Trung (zh)",
+            "lang_fr": "Tiếng Pháp (fr)",
+            "lang_de": "Tiếng Đức (de)",
+            "lang_es": "Tiếng Tây Ban Nha (es)",
+            "lang_ru": "Tiếng Nga (ru)",
             "toolbar_btn_translate": "Dịch văn bản",
             "toolbar_btn_extract": "Trích xuất văn bản",
             "toolbar_btn_ocr": "Quét OCR",
@@ -1355,6 +1366,8 @@
             "common_print_save_pdf": "Print or Save as PDF",
             "common_fullscreen": "Fullscreen",
             "common_exit_fullscreen": "Exit Fullscreen",
+            "common_prev": "Previous",
+            "common_next": "Next",
 
             // Navigation
             "nav_home": "Home",
@@ -1655,6 +1668,15 @@
 
             // Workspace Action Toolbar
             "toolbar_target_lang": "Translate to:",
+            "lang_vi": "Vietnamese (vi)",
+            "lang_en": "English (en)",
+            "lang_ja": "Japanese (ja)",
+            "lang_ko": "Korean (ko)",
+            "lang_zh": "Chinese (zh)",
+            "lang_fr": "French (fr)",
+            "lang_de": "German (de)",
+            "lang_es": "Spanish (es)",
+            "lang_ru": "Russian (ru)",
             "toolbar_btn_translate": "Translate",
             "toolbar_btn_extract": "Extract Text",
             "toolbar_btn_ocr": "Run OCR",
@@ -2706,7 +2728,16 @@
             textElements.forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (key) {
-                    el.textContent = this.t(key);
+                    if (el.tagName === 'OPTION') {
+                        const select = el.parentElement;
+                        const prevVal = select ? select.value : null;
+                        el.textContent = this.t(key);
+                        if (select && prevVal) {
+                            select.value = prevVal;
+                        }
+                    } else {
+                        el.textContent = this.t(key);
+                    }
                 }
             });
 
