@@ -2963,7 +2963,7 @@
           return `
             <tr>
               <td class="billing-cell-stt font-mono">${stt}</td>
-              <td class="billing-cell-code font-mono">${escapeHtml(tx.transaction_code)}</td>
+              <td class="billing-td-code"><span class="billing-cell-code font-mono">${escapeHtml(tx.transaction_code)}</span></td>
               <td>
                 <span class="billing-cell-plan">${escapeHtml(tx.plan_name)}</span>
                 <span class="billing-cell-cycle">${cycleLabel}</span>
