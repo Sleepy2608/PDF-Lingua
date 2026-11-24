@@ -27,6 +27,10 @@
       "destination": "https://pdf-lingua.onrender.com/api/:path*"
     },
     {
+      "source": "/",
+      "destination": "/Code/frontend/welcome.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/Code/frontend/$1"
     }

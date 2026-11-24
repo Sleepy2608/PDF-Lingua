@@ -25,6 +25,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://pdf-lingua.onrender.com/api/:path*"
+    },
+    {
+      "source": "/",
+      "destination": "/welcome.html"
     }
   ]
 }
