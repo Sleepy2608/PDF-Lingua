@@ -9,7 +9,12 @@
 (function () {
   'use strict';
 
-  const AI_API_ENDPOINT = 'http://localhost:8000/api/ai/summarize';
+  const API_BASE_ROOT = (typeof window !== 'undefined' && window.__API_BASE_URL__)
+    ? window.__API_BASE_URL__
+    : ((typeof window !== 'undefined' && window.location && (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000')))
+      ? 'http://127.0.0.1:8000'
+      : '');
+  const AI_API_ENDPOINT = `${API_BASE_ROOT}/api/ai/summarize`;
 
   // State cache for latest summary
   let lastSummaryText = '';

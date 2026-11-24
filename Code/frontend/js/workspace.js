@@ -1,4 +1,9 @@
-const API_BASE_URL = 'http://localhost:8000/api/process';
+const API_BASE_ROOT = (typeof window !== 'undefined' && window.__API_BASE_URL__)
+  ? window.__API_BASE_URL__
+  : ((typeof window !== 'undefined' && window.location && (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000')))
+    ? 'http://127.0.0.1:8000'
+    : '');
+const API_BASE_URL = `${API_BASE_ROOT}/api/process`;
 const WORKSPACE_DOC_STORAGE_KEY = 'pdfl_workspace_doc_data';
 const ACTIVE_JOB_STORAGE_KEY = 'pdfl_active_job_id';
 const BG_MINIMIZED_STORAGE_KEY = 'pdfl_bg_minimized';
@@ -154,9 +159,11 @@ async function fetchDocumentPreview(documentId, filename) {
   if (canvasWrap) canvasWrap.style.opacity = '0.5';
 
   const authHeaders = getAuthHeaders();
-  const rootBase = (typeof API_BASE_URL === 'string')
-    ? API_BASE_URL.replace(/\/api\/process\/?$/, '').replace(/\/process\/?$/, '')
-    : 'http://localhost:8000';
+  const rootBase = (typeof API_BASE_ROOT !== 'undefined')
+    ? API_BASE_ROOT
+    : ((typeof API_BASE_URL === 'string')
+      ? API_BASE_URL.replace(/\/api\/process\/?$/, '').replace(/\/process\/?$/, '')
+      : '');
   const fileUrl = `${rootBase}/api/documents/${encodeURIComponent(documentId)}/file`;
 
   try {
