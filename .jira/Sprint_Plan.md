@@ -313,7 +313,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-238` | Phương án sao lưu và phục hồi database | EPIC 16 | `kien_truc_he_thong.md` (11/11/2026) | Nguyễn Lê Huy Tâm | **In Progress** |
 | `PDFL-244` | Mô tả cấu trúc thư mục và kiến trúc hệ thống | EPIC 16 | `kien_truc_he_thong.md` (11/11/2026) | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-213` | Kiểm thử tài liệu dài khi dịch, tóm tắt và hỏi đáp AI | EPIC 15 | `Code/backend/tests/test_ai_summary_quality.py` (12/11/2026) | Nguyễn Lê Huy Tâm | **Done** |
-| `PDFL-222` | Hạn chế nội dung không đáng tin cậy ảnh hưởng trợ lý AI | EPIC 15 | `Code/backend/tests/test_ai_chat_api.py` (12/11/2026) | Nguyễn Lê Huy Tâm | **In Progress** |
+| `PDFL-222` | Hạn chế nội dung không đáng tin cậy ảnh hưởng trợ lý AI | EPIC 15 | `Code/backend/tests/test_ai_service.py`, `test_ai_chat_api.py` (24/11/2026) | Nguyễn Lê Huy Tâm | **Done** |
 
 ---
 
