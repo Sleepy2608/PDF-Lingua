@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   # ============================================================================
-  # Job 1: Frontend Test Suites (21 Standalone Suites in Pure Node.js)
+  # Job 1: Frontend Test Suites (Dynamic Discovery in Pure Node.js)
   # ============================================================================
   frontend-tests:
     name: Frontend Test Suites (Node.js)
@@ -138,7 +138,7 @@ jobs:
           console.log('\nAll ' + files.length + ' CSS stylesheets are balanced.');
           "
 
-      - name: Run 21 Frontend Test Suites
+      - name: Run All Frontend Test Suites (Dynamic Discovery)
         run: |
           node -e "
           const fs = require('fs');
@@ -207,6 +207,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Check Fatal Python Errors (Ruff)
+        run: |
+          ruff check app --select=E9,F63,F7,F82
+
+      - name: Scan Repository Secrets and Credentials
+        run: |
+          python scripts/scan_secrets.py
+
       - name: Initialize Database Schema
         env:
           DATABASE_URL: "sqlite:///./ci_test.db"
@@ -240,4 +248,6 @@ jobs:
             tests/test_deskew.py \
             tests/test_text_metrics.py \
             tests/test_layout_metrics.py \
+            tests/test_ai_service.py \
+            tests/test_ai_chat_api.py \
             -o testpaths="" -v

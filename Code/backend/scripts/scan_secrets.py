@@ -30,7 +30,7 @@ SAFE_PLACEHOLDERS = [
 # Directories to skip during scanning
 IGNORE_DIRS = {
     '.git', '.venv', 'venv', '__pycache__', '.pytest_cache',
-    '.ruff_cache', 'node_modules', 'graphify-out', 'storage', 'logs'
+    '.ruff_cache', 'node_modules', 'graphify-out', 'storage', 'logs', 'tests'
 }
 
 # Binary and non-source extensions to skip
