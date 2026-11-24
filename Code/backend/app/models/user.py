@@ -142,3 +142,68 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email!r} role={self.role.value}>"
+
+
+def seed_default_admin(db: Any) -> User | None:
+    """
+    Seed or elevate the initial system administrator account from environment variables.
+
+    If `ADMIN_EMAIL` and `ADMIN_PASSWORD` are provided via environment variables,
+    this function ensures that an account with that email exists, possesses `UserRole.ADMIN`,
+    is active, and has its password synchronized.
+    If either variable is not provided, this function safely no-ops.
+    """
+    from app.core.config import settings
+    from app.core.logger import logger
+    from app.core.security import hash_password, verify_password
+
+    admin_email_raw = getattr(settings, "ADMIN_EMAIL", None)
+    admin_password = getattr(settings, "ADMIN_PASSWORD", None)
+
+    if not admin_email_raw or not admin_password:
+        return None
+
+    admin_email = admin_email_raw.strip().lower()
+    if not admin_email:
+        return None
+
+    existing = db.query(User).filter(User.email == admin_email).first()
+    if existing is None:
+        logger.info(f"[Admin Seeding] Creating initial system administrator for {admin_email}...")
+        admin_user = User(
+            email=admin_email,
+            hashed_password=hash_password(admin_password),
+            full_name="Quản Trị Viên",
+            role=UserRole.ADMIN,
+            is_active=True,
+        )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
+        logger.info(f"[Admin Seeding] Initial administrator {admin_email} successfully created.")
+        return admin_user
+
+    # Elevate role if currently free or pro
+    updated = False
+    if existing.role != UserRole.ADMIN:
+        logger.info(f"[Admin Seeding] Elevating existing user {admin_email} to UserRole.ADMIN...")
+        existing.role = UserRole.ADMIN
+        updated = True
+
+    if not existing.is_active:
+        existing.is_active = True
+        updated = True
+
+    # Synchronize password if different
+    if not verify_password(admin_password, existing.hashed_password):
+        logger.info(f"[Admin Seeding] Updating administrator password for {admin_email}...")
+        existing.hashed_password = hash_password(admin_password)
+        updated = True
+
+    if updated:
+        db.commit()
+        db.refresh(existing)
+        logger.info(f"[Admin Seeding] Administrator {admin_email} updated successfully.")
+
+    return existing
+
