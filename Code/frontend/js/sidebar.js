@@ -12,7 +12,11 @@
   const STORAGE_KEY = 'pdf_lingua_sidebar_collapsed';
   const ACTIVE_VIEW_KEY = 'pdfl_active_view';
   const PENDING_TOAST_KEY = 'pdfl_pending_toast';
-  const API_BASE_URL = 'http://localhost:8000';
+  const API_BASE_URL = (typeof window !== 'undefined' && window.__API_BASE_URL__)
+    ? window.__API_BASE_URL__
+    : ((typeof window !== 'undefined' && window.location && (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000')))
+      ? 'http://127.0.0.1:8000'
+      : '');
 
   let isCollapsed = false;
   let isMobileOpen = false;

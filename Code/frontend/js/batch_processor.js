@@ -15,7 +15,11 @@
 
   const BATCH_API_BASE_URL = (typeof API_BASE_URL !== 'undefined')
     ? API_BASE_URL
-    : 'http://localhost:8000/api';
+    : ((typeof window !== 'undefined' && window.__API_BASE_URL__)
+      ? `${window.__API_BASE_URL__}/api`
+      : ((typeof window !== 'undefined' && window.location && (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000')))
+        ? 'http://127.0.0.1:8000/api'
+        : '/api'));
 
   class BatchOrchestrator {
     constructor() {

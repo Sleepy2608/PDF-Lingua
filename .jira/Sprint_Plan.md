@@ -418,7 +418,9 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Mức độ ưu tiên | Người thực hiện | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
+| `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-229` | Chọn nền tảng triển khai Backend Python | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-288` | Triển khai trên website | EPIC 16 | 5 | Highest | Cả hai thành viên | **Done** |
 | `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực và kiểm thử phần mềm | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
 | `PDFL-249` | Chuẩn bị slide thuyết trình | EPIC 16 | - | Lowest | Cả hai thành viên | **To Do** |
 | `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Lowest | Cả hai thành viên | **Done** |

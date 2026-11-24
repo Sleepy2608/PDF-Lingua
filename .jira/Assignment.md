@@ -370,7 +370,9 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Người thực hiện | File / Minh chứng thực tế | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :--- | :---: |
-| `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Nguyễn Lê Huy Tâm | Đề xuất triển khai Vercel / Netlify / Nginx | **To Do** |
+| `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Nguyễn Lê Huy Tâm | Đề xuất Vercel Global Edge & cấu hình `vercel.json` | **Done** |
+| `PDFL-229` | Chọn nền tảng triển khai Backend Python | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Đóng gói `Dockerfile` & đề xuất Render.com Web Service | **Done** |
+| `PDFL-288` | Triển khai trên website | EPIC 16 | 5 | Cả hai thành viên | Kiến trúc Decoupled Cloud (`Docs/installation-guide/cloud-deployment-guide.md`) | **Done** |
 | `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực và kiểm thử phần mềm | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Báo cáo đồ án môn học hoàn chỉnh | **To Do** |
 | `PDFL-249` | Chuẩn bị slide thuyết trình | EPIC 16 | - | Cả hai thành viên | Slide trình chiếu báo cáo bảo vệ trước hội đồng | **To Do** |
 | `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Cả hai thành viên | Kịch bản trình diễn mượt mà (`Docs/demo-script/README.md`) | **Done** |
