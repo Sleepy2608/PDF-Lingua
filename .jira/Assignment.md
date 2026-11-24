@@ -263,7 +263,7 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-238` | Phương án sao lưu và phục hồi database | EPIC 16 | Nguyễn Lê Huy Tâm | 2 | `kien_truc_he_thong.md` (11/11/2026) | **In Progress** |
 | `PDFL-244` | Mô tả cấu trúc thư mục và kiến trúc hệ thống | EPIC 16 | Nguyễn Lê Huy Tâm | 3 | `kien_truc_he_thong.md` (11/11/2026) | **Done** |
 | `PDFL-213` | Kiểm thử tài liệu dài khi dịch, tóm tắt và hỏi đáp AI | EPIC 15 | Nguyễn Lê Huy Tâm | 3 | `test_ai_summary_quality.py` (12/11) | **Done** |
-| `PDFL-222` | Hạn chế nội dung không đáng tin cậy ảnh hưởng trợ lý AI | EPIC 15 | Nguyễn Lê Huy Tâm | 2 | `test_ai_chat_api.py` (12/11/2026) | **In Progress** |
+| `PDFL-222` | Hạn chế nội dung không đáng tin cậy ảnh hưởng trợ lý AI | EPIC 15 | Nguyễn Lê Huy Tâm | 2 | `test_ai_service.py`, `test_ai_chat_api.py` (24/11/2026) | **Done** |
 
 > **Thống kê Tuần 4**:
 > - **Tổng số công việc hoàn thành**: 41 tasks (31 tasks Backlog + 10 tasks Bảo mật/Kiểm thử/Tài liệu)
