@@ -24,7 +24,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://pdf-lingua-api.onrender.com/api/:path*"
+      "destination": "https://pdf-lingua.onrender.com/api/:path*"
     }
   ]
 }

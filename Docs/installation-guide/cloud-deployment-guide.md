@@ -112,7 +112,7 @@ Tại mục **Environment Variables** trên Render, thêm các biến sau:
 | `BAI_BASE_URL` | `https://api.b.ai/v1` | Cổng gateway AI |
 
 6. Bấm nút **Create Web Service**. Render sẽ tự động kéo Dockerfile, build image và khởi chạy.  
-Khi hoàn tất, bạn nhận được đường dẫn API có dạng: `https://pdf-lingua-api.onrender.com`.
+Khi hoàn tất, bạn nhận được đường dẫn API chính thức: `https://pdf-lingua.onrender.com`.
 
 ---
 
@@ -128,7 +128,7 @@ Dự án đã tích hợp sẵn tệp cấu hình [Code/frontend/vercel.json](fi
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://pdf-lingua-api.onrender.com/api/:path*"
+      "destination": "https://pdf-lingua.onrender.com/api/:path*"
     }
   ]
 }
