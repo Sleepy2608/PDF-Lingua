@@ -8,9 +8,9 @@
 | **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
 | **Loại tài liệu** | Master Documentation Index & Thesis Mapping |
 | **Viết tắt** | PDF-Lingua |
-| **Phiên bản tài liệu** | 1.2 |
+| **Phiên bản tài liệu** | 1.3 |
 | **Ngày tạo** | 15/09/2026 |
-| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Ngày chỉnh sửa lần cuối** | 24/11/2026 |
 | **Trạng thái** | Hoàn thành (Release) |
 
 ---
@@ -36,6 +36,8 @@ Bảng điều hướng tổng hợp toàn bộ các tài liệu kỹ thuật, k
 | **13** | **Quy Chuẩn Màu Sắc** | [`Docs/color-theme/pdf-lingua-color-theme.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/color-theme/pdf-lingua-color-theme.md) | Hệ thống bảng màu chuẩn, mã màu Hex/RGBA và quy chuẩn tương phản giao diện UI/UX. |
 | **14** | **Phân Tích An Toàn Bảo Mật** | [`Docs/security-and-threat-modeling/security-analysis.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/security-analysis.md) | Mô hình đe dọa STRIDE, phòng chống IDOR (404), PDF Bombs (magic bytes), Prompt Injection và xác thực Webhook SePay. |
 | **15** | **Chiến Lược Doanh Thu Kép** | [`Docs/monetization-strategy/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/monetization-strategy/README.md) | Kế hoạch kinh doanh 2 động cơ: Thuê bao Pro VIP (B2C) và Cho thuê quảng cáo/Tài trợ (B2B), kèm bảng so sánh đối chiếu và bánh đà cộng hưởng doanh thu. |
+| **16** | **Kịch Bản Thuyết Minh & Demo Đồ Án** | [`Docs/demo-script/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/demo-script/README.md) | Kịch bản chi tiết 7 phân đoạn (12-15 phút) trình diễn hội đồng: Guest mode, trích xuất 2 cột, dual-pane workspace, AI Copilot, VietQR và Admin dashboard. |
+| **17** | **Rà Soát An Toàn & Bàn Giao Repository** | [`Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md) | Báo cáo kiểm định an toàn 6 tầng, xác thực 0 rò rỉ khóa API/secret trên toàn bộ Git và mã nguồn, tích hợp công cụ quét tự động scan_secrets.py. |
 
 ---
 

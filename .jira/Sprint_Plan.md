@@ -421,8 +421,8 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
 | `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực và kiểm thử phần mềm | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
 | `PDFL-249` | Chuẩn bị slide thuyết trình | EPIC 16 | - | Lowest | Cả hai thành viên | **To Do** |
-| `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Lowest | Cả hai thành viên | **To Do** |
-| `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
+| `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Lowest | Cả hai thành viên | **Done** |
+| `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng | EPIC 15 | 5 | High | Huỳnh Đình Chấn | **To Do** |
 | `PDFL-246` | Cung cấp hình ảnh giao diện và hướng dẫn sử dụng | EPIC 16 | 8 | High | Huỳnh Đình Chấn | **To Do** |
 | `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
