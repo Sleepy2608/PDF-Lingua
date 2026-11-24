@@ -38,6 +38,7 @@ Bảng điều hướng tổng hợp toàn bộ các tài liệu kỹ thuật, k
 | **15** | **Chiến Lược Doanh Thu Kép** | [`Docs/monetization-strategy/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/monetization-strategy/README.md) | Kế hoạch kinh doanh 2 động cơ: Thuê bao Pro VIP (B2C) và Cho thuê quảng cáo/Tài trợ (B2B), kèm bảng so sánh đối chiếu và bánh đà cộng hưởng doanh thu. |
 | **16** | **Kịch Bản Thuyết Minh & Demo Đồ Án** | [`Docs/demo-script/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/demo-script/README.md) | Kịch bản chi tiết 7 phân đoạn (12-15 phút) trình diễn hội đồng: Guest mode, trích xuất 2 cột, dual-pane workspace, AI Copilot, VietQR và Admin dashboard. |
 | **17** | **Rà Soát An Toàn & Bàn Giao Repository** | [`Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md) | Báo cáo kiểm định an toàn 6 tầng, xác thực 0 rò rỉ khóa API/secret trên toàn bộ Git và mã nguồn, tích hợp công cụ quét tự động scan_secrets.py. |
+| **18** | **Hướng Dẫn Triển Khai Cloud** | [`Docs/installation-guide/cloud-deployment-guide.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/cloud-deployment-guide.md) | Kiến trúc triển khai đám mây phân tán: Frontend trên Vercel, Backend Docker trên Render, proxy hóa CORS và hướng dẫn tên miền .id.vn/.com. |
 
 ---
 
