@@ -54,6 +54,11 @@ class AIService:
         r"(?i)\bdeveloper\s+mode\s+(enabled|activated|on)\b",
         r"(?i)\bpretend\s+(you\s+are|to\s+be)\s+(an?\s+)?(evil|unrestricted|jailbroken)\b",
         r"(?i)\[system\s*(prompt)?\s*:\s*.*?\]",
+        r"(?i)<(?:system|instructions?|developer_mode|admin_override)>",
+        r"(?i)<!--\s*system\s*:.*?-->",
+        r"(?i)\[(?:ADMIN|SYSTEM|OVERRIDE|INSTRUCTION)\s*:?.*?\]",
+        r"(?i)!\[.*?\]\(https?:\/\/[^\s\)]+(?:\?|&)(?:leak|data|token|prompt|key)=.*?\)",
+        r"(?i)\[base64:(?:[A-Za-z0-9+/]{4}){4,}={0,2}\]",
         # Vietnamese injection vectors
         r"(?i)\bbo\s+qua\s+(tat\s+ca\s+)?(cac\s+)?(chi\s+dan|cau\s+lenh|huong\s+dan|quy\s+tac)\s+(truoc|he\s+thong)\b",
         r"(?i)\bbỏ\s+qua\s+(tất\s+cả\s+)?(các\s+)?(chỉ\s+dẫn|câu\s+lệnh|hướng\s+dẫn|quy\s+tắc)\s+(trước|hệ\s+thống)\b",
@@ -86,6 +91,38 @@ class AIService:
         (r"(?i)\b(reveal|leak|print|show\s+me)\s+(your\s+)?(system\s+prompt|internal\s+instructions)\b", "Co tinh trich xuat chi dan he thong"),
         (r"(?i)\b(tiet\s+lo|in\s+ra|hien\s+thi)\s+(system\s+prompt|chi\s+dan\s+he\s+thong)\b", "Co tinh trich xuat chi dan he thong"),
         (r"(?i)\b(tiết\s+lộ|in\s+ra|hiển\s+thị)\s+(system\s+prompt|chỉ\s+dẫn\s+hệ\s+thống)\b", "Co tinh trich xuat chi dan he thong"),
+        (r"(?i)\b(repeat|output|print|dump)\s+(the\s+)?(words|text|instructions)\s+above\b", "Co tinh trich xuat chi dan he thong"),
+        (r"(?i)\b(lap\s+lai|in\s+ra|doc\s+lai)\s+(cac\s+)?(tu|chi\s+dan|cau\s+lenh)\s+(o\s+tren|khoi\s+tao)\b", "Co tinh trich xuat chi dan he thong"),
+        (r"(?i)\b(lặp\s+lại|in\s+ra|đọc\s+lại)\s+(các\s+)?(từ|chỉ\s+dẫn|câu\s+lệnh)\s+(ở\s+trên|khởi\s+tạo)\b", "Co tinh trich xuat chi dan he thong"),
+        # Sensitive credentials and secrets harvesting
+        (r"(?i)\b(trich\s+xuat|liet\s+ke|lay|in\s+ra|tiet\s+lo)\s+(tat\s+ca\s+)?(api\s+keys?|mat\s+khau|secret\s+keys?|token\s+jwt|connection\s+strings?|database\s+credentials)\b", "Khai thac bi mat he thong va ma khoa"),
+        (r"(?i)\b(trích\s+xuất|liệt\s+kê|lấy|in\s+ra|tiết\s+lộ)\s+(tất\s+cả\s+)?(api\s+keys?|mật\s+khẩu|secret\s+keys?|token\s+jwt|connection\s+strings?|database\s+credentials)\b", "Khai thac bi mat he thong va ma khoa"),
+        (r"(?i)\b(dump|extract|leak|show|print)\s+(all\s+)?(api\s+keys?|passwords?|secret\s+keys?|jwt\s+tokens?|connection\s+strings?|env\s+variables?)\b", "System secrets and credentials extraction"),
+        # PII and financial information extraction
+        (r"(?i)\b(trich\s+xuat|liet\s+ke|lay|in\s+ra)\s+(tat\s+ca\s+)?(so\s+)?(the\s+tin\s+dung|the\s+ngan\s+hang|ma\s+cvv|ma\s+pin|ma\s+otp)\b", "Khai thac thong tin the tin dung va tai chinh"),
+        (r"(?i)\b(trích\s+xuất|liệt\s+kê|lấy|in\s+ra)\s+(tất\s+cả\s+)?(số\s+)?(thẻ\s+tín\s+dụng|thẻ\s+ngân\s+hàng|mã\s+cvv|mã\s+pin|mã\s+otp)\b", "Khai thac thong tin the tin dung va tai chinh"),
+        (r"(?i)\b(extract|dump|list|show)\s+(all\s+)?(credit\s+cards?|debit\s+cards?|cvv|card\s+numbers?|bank\s+pins?|otps?)\b", "Financial credentials extraction"),
+        (r"(?i)\b(trich\s+xuat|liet\s+ke|lay|in\s+ra)\s+(tat\s+ca\s+)?(so\s+)?(cccd|cmnd|the\s+can\s+cuoc|so\s+dinh\s+danh)\b", "Khai thac thong tin dinh danh ca nhan CCCD/CMND"),
+        (r"(?i)\b(trích\s+xuất|liệt\s+kê|lấy|in\s+ra)\s+(tất\s+cả\s+)?(số\s+)?(cccd|cmnd|thẻ\s+căn\s+cước|số\s+định\s+danh)\b", "Khai thac thong tin dinh danh ca nhan CCCD/CMND"),
+        (r"(?i)\b(extract|dump|list|show)\s+(all\s+)?(social\s+security|ssn|national\s+ids?|passports?)\b", "PII and national identification extraction"),
+    ]
+
+    REDACTION_PATTERNS: list[tuple[str, str]] = [
+        # Private RSA / SSH / PGP Keys
+        (r"-----BEGIN [A-Z ]+ PRIVATE KEY-----[\s\S]*?-----END [A-Z ]+ PRIVATE KEY-----", "[PRIVATE_KEY_REDACTED]"),
+        # OpenAI, Google, AWS, GitHub API Keys
+        (r"\b(?:sk|pk|api|key)-[a-zA-Z0-9_-]{20,}\b", "[API_KEY_REDACTED]"),
+        (r"\bAIza[0-9A-Za-z-_]{35}\b", "[API_KEY_REDACTED]"),
+        (r"\bAKIA[0-9A-Z]{16}\b", "[AWS_KEY_REDACTED]"),
+        (r"\bghp_[a-zA-Z0-9]{36}\b", "[GITHUB_TOKEN_REDACTED]"),
+        # JWT Bearer tokens
+        (r"\beyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\b", "[JWT_TOKEN_REDACTED]"),
+        # Database connection strings with credentials
+        (r"\b(?:mysql|postgresql|postgres|mongodb|redis):\/\/[^:\s]+:[^@\s]+@[^\s]+\b", "[DB_CONNECTION_REDACTED]"),
+        # Credit Card Numbers (16-digit format with spaces or hyphens)
+        (r"\b(?:\d{4}[ -]?){3}\d{4}\b", "[CARD_NUMBER_REDACTED]"),
+        # Plaintext password assignments
+        (r"(?i)\b(password|mat_khau|passwd|secret_key)\s*[:=]\s*[\"']?([^\s\"']{6,})[\"']?", r"\1: [PASSWORD_REDACTED]"),
     ]
 
     STYLE_PROMPTS = {
@@ -160,7 +197,8 @@ class AIService:
         if not text:
             return "", False
 
-        sanitized = text
+        # Loai bo cac ky tu dieu khien vo hinh tranh che giau chuoi injection
+        sanitized = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", text)
         detected = False
         replacement = "[NOI DUNG BI VO HIEU HOA DO VI PHAM AN TOAN]"
 
@@ -185,6 +223,24 @@ class AIService:
                 return False, reason
 
         return True, ""
+
+    def redact_sensitive_output(self, text: str) -> tuple[str, bool]:
+        """
+        Kiem tra va che giau cac thong tin bi mat hoac du lieu dinh danh ca nhan trong ket qua dau ra.
+        Tra ve tuple (van_ban_da_che, co_du_lieu_nhay_cam).
+        """
+        if not text:
+            return "", False
+
+        redacted = text
+        detected = False
+
+        for pattern, replacement in self.REDACTION_PATTERNS:
+            if re.search(pattern, redacted):
+                detected = True
+                redacted = re.sub(pattern, replacement, redacted)
+
+        return redacted, detected
 
     def _build_summarize_prompt(
         self,
@@ -621,17 +677,22 @@ class AIService:
                 ):
                     fallback_used = True
                     fallback_reason = "b.ai credit balance is 0 or deposit required"
-                    summary_result = self._generate_mock_summary(text, style=style, length=length)
+                    summary_result = self._generate_mock_summary(sanitized_text, style=style, length=length)
                 else:
                     fallback_used = True
                     fallback_reason = f"B.AI HTTP {status_code}: {error_body}"
-                    summary_result = self._generate_mock_summary(text, style=style, length=length)
+                    summary_result = self._generate_mock_summary(sanitized_text, style=style, length=length)
 
             except (httpx.TimeoutException, httpx.ConnectError, Exception) as e:
                 logger.warning(f"[AIService] Network or API exception ({e}). Activating fallback.")
                 fallback_used = True
                 fallback_reason = str(e)
                 summary_result = self._generate_mock_summary(sanitized_text, style=style, length=length)
+
+        # Che giau du lieu nhay cam hoac bi mat trong ket qua tom tat
+        summary_result, sensitive_redacted = self.redact_sensitive_output(summary_result)
+        if sensitive_redacted:
+            logger.warning("[AIService Summarize] Sensitive data or credentials redacted from summary output.")
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 
@@ -1058,6 +1119,11 @@ class AIService:
             fallback_used = True
             fallback_reason = str(e)
             answer_text = self._generate_mock_chat_response(query, relevant_chunks, lang=lang)
+
+        # Che giau du lieu nhay cam hoac bi mat trong cau tra loi tro ly AI
+        answer_text, sensitive_redacted = self.redact_sensitive_output(answer_text)
+        if sensitive_redacted:
+            logger.warning("[AIService Chat] Sensitive credentials or secrets redacted from copilot answer.")
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 
