@@ -35,6 +35,7 @@ Bảng điều hướng tổng hợp toàn bộ các tài liệu kỹ thuật, k
 | **12** | **Tệp PDF Kiểm Thử** | [`Docs/test-examples/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/test-examples/README.md) | Danh mục 5 tệp PDF thực tế đánh giá các trường hợp biên: đa ngôn ngữ, ký hiệu code, tiền tệ và bảng chữ cái tiếng Việt. |
 | **13** | **Quy Chuẩn Màu Sắc** | [`Docs/color-theme/pdf-lingua-color-theme.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/color-theme/pdf-lingua-color-theme.md) | Hệ thống bảng màu chuẩn, mã màu Hex/RGBA và quy chuẩn tương phản giao diện UI/UX. |
 | **14** | **Phân Tích An Toàn Bảo Mật** | [`Docs/security-and-threat-modeling/security-analysis.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/security-analysis.md) | Mô hình đe dọa STRIDE, phòng chống IDOR (404), PDF Bombs (magic bytes), Prompt Injection và xác thực Webhook SePay. |
+| **15** | **Chiến Lược Doanh Thu Kép** | [`Docs/monetization-strategy/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/monetization-strategy/README.md) | Kế hoạch kinh doanh 2 động cơ: Thuê bao Pro VIP (B2C) và Cho thuê quảng cáo/Tài trợ (B2B), kèm bảng so sánh đối chiếu và bánh đà cộng hưởng doanh thu. |
 
 ---
 
