@@ -86,11 +86,15 @@
   let checkoutCountdownInterval = null;
   let remainingSeconds = 900;
   let isSimulatingPayment = false;
+  let lastCheckoutTrigger = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     initPricingModule();
     initCheckoutModal();
     initMultiTouchpointsAndQuotaModal();
+    initQuotaUsageDashboard();
+    initBillingHistory();
+    initInvoiceModal();
   });
 
   function getStoredToken() {
@@ -244,6 +248,12 @@
         renderCheckoutOrderSummary(currentTransaction.plan_code);
         renderTransactionDetails(currentTransaction);
       }
+      if (billingTab === 'history') {
+        renderBillingHistoryData();
+      } else if (billingTab === 'quota') {
+        renderQuotaUsageDashboard(currentQuotaData || currentQuotaStateKey);
+      }
+      switchPricingTab(billingTab);
     });
 
     if (topNavPricing) {
@@ -260,20 +270,9 @@
       });
     }
 
-    // Listen to auth changes to refresh subscription & CTA state
-    if (typeof window !== 'undefined') {
-      window.addEventListener('pdfl:auth-change', (e) => {
-        const user = e && e.detail ? e.detail.user : null;
-        if (!user) {
-          mySubscriptionData = null;
-          renderUserSubscriptionState(null, null);
-        } else {
-          fetchMySubscription();
-        }
-      });
-    }
-
     // Initial render & background fetch
+    bindGlobalSyncEvents();
+    initQuotaUsageDashboard();
     renderPricingCatalog();
     renderUserSubscriptionState(getStoredUser(), mySubscriptionData);
     fetchPricingCatalog();
@@ -535,6 +534,10 @@
     if (!user && !effectiveRole) {
       // Guest state
       if (activeBanner) activeBanner.style.display = 'none';
+      const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+      if (quotaDashboardCard) quotaDashboardCard.style.display = 'none';
+      const quotaGuestState = document.getElementById('quotaGuestState');
+      if (quotaGuestState) quotaGuestState.style.display = 'flex';
       if (btnAccountUpgradePro) btnAccountUpgradePro.style.display = 'none';
       if (dropzoneLimitText && dropzoneLimitText.classList) {
         dropzoneLimitText.classList.add('dropzone-upgrade-clickable');
@@ -615,6 +618,39 @@
             ? 'inline-flex'
             : 'none';
         }
+
+        const days = typeof activeSub.days_remaining === 'number' ? activeSub.days_remaining : 30;
+        let qState = 'pro';
+        if (days <= 0 || activeSub.status === 'expired') {
+          qState = 'expired';
+        } else if (days <= 3) {
+          qState = 'expiring';
+        }
+
+        const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 500;
+        const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 100;
+
+        renderQuotaUsageDashboard(qState, {
+          plan_name: activeSub.plan_name || (currentCycle === 'yearly' ? 'Gói Pro Hàng Năm' : 'Gói Pro Hàng Tháng'),
+          plan_code: activeSub.plan_code || (currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly'),
+          days_remaining: days,
+          started_at: activeSub.started_at || null,
+          expires_at: activeSub.expires_at || null,
+          ocr: {
+            limit: maxOcr,
+            note: `Tối đa ${maxOcr} trang OCR / tài liệu theo gói Pro`,
+          },
+          file_size: {
+            limit: maxFile,
+            display_limit: `${maxFile} MB`,
+            display_used: `${maxFile} MB`,
+            note: `Tối đa ${maxFile} MB / tệp theo gói Pro`,
+          },
+          ai_copilot: {
+            limit: 15,
+            note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+          },
+        });
       } else {
         if (activeBannerTitle) {
           activeBannerTitle.textContent = t('pricing_active_fallback_title', 'Tài khoản của bạn đang kích hoạt đặc quyền Gói Pro');
@@ -625,6 +661,24 @@
         if (btnCancelAutoRenew) {
           btnCancelAutoRenew.style.display = 'none';
         }
+        const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 500;
+        const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 100;
+        renderQuotaUsageDashboard('pro', {
+          ocr: {
+            limit: maxOcr,
+            note: `Tối đa ${maxOcr} trang OCR / tài liệu theo gói Pro`,
+          },
+          file_size: {
+            limit: maxFile,
+            display_limit: `${maxFile} MB`,
+            display_used: `${maxFile} MB`,
+            note: `Tối đa ${maxFile} MB / tệp theo gói Pro`,
+          },
+          ai_copilot: {
+            limit: 15,
+            note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+          },
+        });
       }
 
       if (btnSelectFree) {
@@ -722,6 +776,25 @@
       if (proPlanCtaHint) {
         proPlanCtaHint.textContent = '';
       }
+      const maxOcr = (subData && typeof subData.max_ocr_pages === 'number') ? subData.max_ocr_pages : 100;
+      const maxFile = (subData && typeof subData.max_file_size_mb === 'number') ? subData.max_file_size_mb : 20;
+      renderQuotaUsageDashboard('free', {
+        ocr: {
+          limit: maxOcr,
+          note: `Tối đa ${maxOcr} trang OCR / tài liệu cho gói Miễn phí`,
+        },
+        file_size: {
+          limit: maxFile,
+          display_limit: `${maxFile} MB`,
+          display_used: `${maxFile} MB`,
+          note: `Hạn mức tối đa ${maxFile} MB / tệp cho gói Miễn phí`,
+        },
+        ai_copilot: {
+          limit: 0,
+          used: 0,
+          note: 'Nâng cấp lên Pro để mở khóa AI Copilot 15 câu/ngày',
+        },
+      });
     }
   }
 
@@ -758,9 +831,62 @@
     return catalogData;
   }
 
+  let subscriptionRequestId = 0;
+  let subscriptionLoading = false;
+  let subscriptionError = null;
+  let pricingEventsBound = false;
+
+  function bindGlobalSyncEvents() {
+    if (pricingEventsBound || typeof window === 'undefined') return;
+    pricingEventsBound = true;
+
+    window.addEventListener('pdfl:auth-change', (e) => {
+      const user = e && e.detail ? e.detail.user : null;
+      if (!user) {
+        mySubscriptionData = null;
+        renderUserSubscriptionState(null, null);
+      } else {
+        fetchMySubscription();
+      }
+    });
+
+    window.addEventListener('pdfl:job-completed', () => {
+      if (getStoredToken()) {
+        fetchMySubscription();
+      }
+    });
+
+    window.addEventListener('pdfl:document-processed', () => {
+      if (getStoredToken()) {
+        fetchMySubscription();
+      }
+    });
+  }
+
+  function setQuotaDashboardLoading(isLoading) {
+    const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+    if (!quotaDashboardCard) return;
+    if (isLoading) {
+      quotaDashboardCard.setAttribute('aria-busy', 'true');
+      quotaDashboardCard.classList.add('is-loading');
+    } else {
+      quotaDashboardCard.setAttribute('aria-busy', 'false');
+      quotaDashboardCard.classList.remove('is-loading');
+    }
+  }
+
   async function fetchMySubscription() {
     const token = getStoredToken();
-    if (!token || typeof fetch !== 'function') return null;
+    if (!token || typeof fetch !== 'function') {
+      subscriptionLoading = false;
+      return null;
+    }
+
+    const currentReqId = ++subscriptionRequestId;
+    subscriptionLoading = true;
+    subscriptionError = null;
+
+    setQuotaDashboardLoading(true);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/pricing/my-subscription`, {
@@ -770,17 +896,52 @@
           Accept: 'application/json',
         },
       });
-      if (!res || !res.ok) return null;
+
+      if (currentReqId !== subscriptionRequestId) {
+        return null;
+      }
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          subscriptionError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          mySubscriptionData = null;
+          renderUserSubscriptionState(null, null);
+          notifyUser(subscriptionError, 'warning');
+          return null;
+        } else if (res.status === 403) {
+          subscriptionError = 'Bạn không có quyền truy cập thông tin gói dịch vụ.';
+          notifyUser(subscriptionError, 'error');
+          return null;
+        } else {
+          subscriptionError = `Lỗi máy chủ (${res.status}). Không thể tải thông tin gói.`;
+          return null;
+        }
+      }
+
       const body = await res.json();
+      if (currentReqId !== subscriptionRequestId) {
+        return null;
+      }
+
       if (body && body.success && body.data) {
         mySubscriptionData = body.data;
         renderUserSubscriptionState(getStoredUser(), mySubscriptionData);
         return mySubscriptionData;
+      } else {
+        subscriptionError = (body && body.message) ? body.message : 'Dữ liệu phản hồi không hợp lệ.';
+        return null;
       }
     } catch (_err) {
-      // Ignore network errors silently
+      if (currentReqId === subscriptionRequestId) {
+        subscriptionError = 'Lỗi kết nối mạng khi tải thông tin gói.';
+      }
+      return null;
+    } finally {
+      if (currentReqId === subscriptionRequestId) {
+        subscriptionLoading = false;
+        setQuotaDashboardLoading(false);
+      }
     }
-    return null;
   }
 
   function handleFreePlanAction() {
@@ -862,6 +1023,16 @@
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
           closeCheckoutModal();
+        }
+      });
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+          if (modal && !modal.hasAttribute('hidden') && modal.style.display !== 'none') {
+            closeCheckoutModal();
+          }
         }
       });
     }
@@ -1214,6 +1385,10 @@
   }
 
   async function openCheckoutModal(planCodeInput) {
+    if (typeof document !== 'undefined' && document.activeElement) {
+      lastCheckoutTrigger = document.activeElement;
+    }
+
     const normalizedCode =
       planCodeInput === 'pro_yearly' ||
       (!planCodeInput && currentCycle === 'yearly')
@@ -1227,6 +1402,10 @@
       modal.removeAttribute('hidden');
       modal.setAttribute('aria-hidden', 'false');
       modal.style.display = 'flex';
+      const btnClose = document.getElementById('btnCloseCheckoutModal');
+      if (btnClose && typeof btnClose.focus === 'function') {
+        btnClose.focus();
+      }
     }
     if (document && document.body && document.body.style) {
       document.body.style.overflow = 'hidden';
@@ -1254,6 +1433,12 @@
     }
     if (document && document.body && document.body.style) {
       document.body.style.overflow = '';
+    }
+    if (lastCheckoutTrigger && typeof lastCheckoutTrigger.focus === 'function') {
+      try {
+        lastCheckoutTrigger.focus();
+      } catch (_e) {}
+      lastCheckoutTrigger = null;
     }
   }
 
@@ -1607,7 +1792,45 @@
     }
   }
 
-  function syncHeaderAndSidebarNav(activeKey) {
+  function syncPricingSidebarSubmenu(subTab) {
+    const group = document.getElementById('sideNavPricingGroup');
+    const toggle = document.getElementById('sideNavPricing');
+    const subPlans = document.getElementById('sideNavPricingPlans');
+    const subBilling = document.getElementById('sideNavPricingBilling');
+    const subQuota = document.getElementById('sideNavPricingQuota');
+
+    if (subTab) {
+      if (group && group.classList) group.classList.add('is-expanded');
+      if (toggle && typeof toggle.setAttribute === 'function') {
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+    } else {
+      if (group && group.classList) group.classList.remove('is-expanded');
+      if (toggle && typeof toggle.setAttribute === 'function') {
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    const map = {
+      plans: subPlans,
+      history: subBilling,
+      quota: subQuota,
+    };
+
+    [subPlans, subBilling, subQuota].forEach((el) => {
+      if (!el) return;
+      if (el.classList) el.classList.remove('active');
+      if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-current');
+    });
+
+    const target = subTab ? map[subTab] : null;
+    if (target) {
+      if (target.classList) target.classList.add('active');
+      if (typeof target.setAttribute === 'function') target.setAttribute('aria-current', 'page');
+    }
+  }
+
+  function syncHeaderAndSidebarNav(activeKey, activeSubTab) {
     const sideNavPricing = document.getElementById('sideNavPricing');
     const sideNavHome = document.getElementById('sideNavHome');
     const sideNavTranslate = document.getElementById('sideNavTranslate');
@@ -1617,12 +1840,17 @@
       allSideItems.forEach((item) => item.classList.remove('active'));
     }
 
-    if (activeKey === 'pricing' && sideNavPricing) {
-      sideNavPricing.classList.add('active');
+    if (activeKey === 'pricing') {
+      if (sideNavPricing) sideNavPricing.classList.add('active');
+      syncPricingSidebarSubmenu(activeSubTab || billingTab || 'plans');
     } else if (activeKey === 'translate' && sideNavTranslate) {
       sideNavTranslate.classList.add('active');
+      syncPricingSidebarSubmenu(null);
     } else if (sideNavHome) {
       sideNavHome.classList.add('active');
+      syncPricingSidebarSubmenu(null);
+    } else {
+      syncPricingSidebarSubmenu(null);
     }
 
     const topLinks = document.querySelectorAll('.nav-menu .nav-link');
@@ -1638,7 +1866,7 @@
     }
   }
 
-  function openPricingView(initialCycle) {
+  function openPricingView(initialCycle, targetTab) {
     if (initialCycle === 'monthly' || initialCycle === 'yearly') {
       setBillingCycle(initialCycle);
     }
@@ -1649,7 +1877,12 @@
     const historySection = document.getElementById('historySection');
     const adminSection = document.getElementById('adminSection');
     const pricingSection = document.getElementById('pricingSection');
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
 
+    if (copilotDrawer) {
+      copilotDrawer.style.display = 'none';
+      if (copilotDrawer.classList) copilotDrawer.classList.remove('open');
+    }
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'none';
@@ -1659,15 +1892,27 @@
       pricingSection.style.display = 'block';
     }
 
-    syncHeaderAndSidebarNav('pricing');
+    try {
+      if (typeof sessionStorage !== 'undefined' && typeof sessionStorage.removeItem === 'function') {
+        sessionStorage.removeItem('pdfl_active_view');
+      }
+    } catch (_e) {}
 
-    if (getStoredToken()) {
-      fetchMySubscription();
-    }
+    const desiredTab =
+      targetTab === 'history' || targetTab === 'quota' ? targetTab : 'plans';
+    switchPricingTab(desiredTab);
 
     if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  function openBillingHistoryView() {
+    openPricingView(undefined, 'history');
+  }
+
+  function openQuotaDashboardView() {
+    openPricingView(undefined, 'quota');
   }
 
   function closePricingView() {
@@ -1836,6 +2081,1469 @@
     }
   }
 
+  // ── Quota Usage Dashboard & Pro VIP Status UI ────────────────────────
+
+  const DEFAULT_QUOTA_MOCK = {
+    pro: {
+      account_state: 'pro',
+      plan_name: 'Gói Pro Hàng Tháng',
+      plan_code: 'pro_monthly',
+      days_remaining: 28,
+      started_at: '2026-10-20T00:00:00Z',
+      expires_at: '2026-11-20T00:00:00Z',
+      warning: null,
+      ocr: {
+        used: 142,
+        limit: 500,
+        unit: 'trang',
+        note: 'Đã dùng 142/500 trang tháng này',
+      },
+      file_size: {
+        used: 100,
+        limit: 100,
+        unit: 'MB/tệp',
+        display_used: '100 MB',
+        display_limit: '100 MB',
+        note: 'Gấp 5 lần gói Miễn phí (tối đa 100 MB/tệp)',
+      },
+      ai_copilot: {
+        used: 4,
+        limit: 15,
+        unit: 'câu',
+        note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+      },
+    },
+    expiring: {
+      account_state: 'expiring',
+      plan_name: 'Gói Pro Hàng Tháng',
+      plan_code: 'pro_monthly',
+      days_remaining: 3,
+      started_at: '2026-10-20T00:00:00Z',
+      expires_at: '2026-11-20T00:00:00Z',
+      warning: {
+        level: 'warning',
+        title: 'Gói dịch vụ sắp hết hạn',
+        description: 'Gói Pro của bạn sẽ hết hạn trong 3 ngày tới. Vui lòng gia hạn để không bị gián đoạn quyền lợi.',
+        action_text: 'Gia hạn ngay',
+      },
+      ocr: {
+        used: 410,
+        limit: 500,
+        unit: 'trang',
+        note: 'Đã dùng 410/500 trang tháng này (82%)',
+      },
+      file_size: {
+        used: 100,
+        limit: 100,
+        unit: 'MB/tệp',
+        display_used: '100 MB',
+        display_limit: '100 MB',
+        note: 'Gấp 5 lần gói Miễn phí (tối đa 100 MB/tệp)',
+      },
+      ai_copilot: {
+        used: 12,
+        limit: 15,
+        unit: 'câu',
+        note: 'Hồi phục 15 câu sau mỗi 24 giờ',
+      },
+    },
+    expired: {
+      account_state: 'expired',
+      plan_name: 'Gói Pro (Đã hết hạn)',
+      plan_code: 'pro_monthly',
+      days_remaining: 0,
+      started_at: '2026-09-20T00:00:00Z',
+      expires_at: '2026-10-20T00:00:00Z',
+      warning: {
+        level: 'danger',
+        title: 'Gói dịch vụ đã hết hạn',
+        description: 'Gói Pro của bạn đã hết hạn. Hạn mức đã tạm chuyển về gói Miễn phí. Gia hạn ngay để kích hoạt lại 500 trang OCR và 100 MB.',
+        action_text: 'Gia hạn ngay',
+      },
+      ocr: {
+        used: 500,
+        limit: 500,
+        unit: 'trang',
+        note: 'Hạn mức Pro đã hết hạn',
+      },
+      file_size: {
+        used: 20,
+        limit: 20,
+        unit: 'MB/tệp',
+        display_used: '20 MB',
+        display_limit: '20 MB',
+        note: 'Đang áp dụng hạn mức gói Miễn phí (20 MB/tệp)',
+      },
+      ai_copilot: {
+        used: 0,
+        limit: 0,
+        unit: 'câu',
+        note: 'AI Copilot yêu cầu tài khoản Pro',
+      },
+    },
+    free: {
+      account_state: 'free',
+      plan_name: 'Gói Miễn Phí',
+      plan_code: 'free',
+      days_remaining: null,
+      started_at: null,
+      expires_at: null,
+      warning: null,
+      ocr: {
+        used: 25,
+        limit: 100,
+        unit: 'trang',
+        note: 'Đã dùng 25/100 trang miễn phí',
+      },
+      file_size: {
+        used: 20,
+        limit: 20,
+        unit: 'MB/tệp',
+        display_used: '20 MB',
+        display_limit: '20 MB',
+        note: 'Hạn mức tối đa 20 MB/tệp cho gói Miễn phí',
+      },
+      ai_copilot: {
+        used: 0,
+        limit: 0,
+        unit: 'câu',
+        note: 'Nâng cấp lên Pro để mở khóa AI Copilot 15 câu/ngày',
+      },
+    },
+  };
+
+  let currentQuotaStateKey = 'pro';
+  let currentQuotaData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK.pro));
+  let isQuotaDashboardInitialized = false;
+
+  function calculateQuotaPercent(usedVal, limitVal) {
+    const used = Number(usedVal);
+    const limit = Number(limitVal);
+    if (isNaN(used) || isNaN(limit) || !isFinite(used) || !isFinite(limit)) {
+      return 0;
+    }
+    if (limit <= 0) {
+      return 0;
+    }
+    const ratio = (used / limit) * 100;
+    if (isNaN(ratio) || !isFinite(ratio)) {
+      return 0;
+    }
+    return Math.min(100, Math.max(0, Math.round(ratio)));
+  }
+
+  function applyQuotaThresholdStyles(percent, fillEl, pillEl, badgeEl, ctaWrapEl, isZeroLimit) {
+    if (fillEl && fillEl.classList) {
+      fillEl.classList.remove('quota-fill-warning', 'quota-fill-danger');
+    }
+    if (pillEl && pillEl.classList) {
+      pillEl.classList.remove('quota-pill-warning', 'quota-pill-danger', 'quota-pill-active');
+    }
+
+    if (isZeroLimit) {
+      if (badgeEl) badgeEl.style.display = 'none';
+      if (ctaWrapEl) ctaWrapEl.style.display = 'none';
+      return;
+    }
+
+    if (percent > 90) {
+      if (fillEl && fillEl.classList) fillEl.classList.add('quota-fill-danger');
+      if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-danger');
+      if (badgeEl) {
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.textContent = percent >= 100
+          ? t('quota_threshold_reached', 'Đã đạt giới hạn')
+          : t('quota_threshold_almost_out', 'Sắp hết hạn mức');
+        badgeEl.className = 'quota-threshold-badge badge-threshold-danger';
+      }
+      if (ctaWrapEl) {
+        ctaWrapEl.style.display = 'flex';
+      }
+    } else if (percent >= 70) {
+      if (fillEl && fillEl.classList) fillEl.classList.add('quota-fill-warning');
+      if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-warning');
+      if (badgeEl) {
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.textContent = t('quota_threshold_near_limit', 'Sắp đạt hạn mức');
+        badgeEl.className = 'quota-threshold-badge badge-threshold-warning';
+      }
+      if (ctaWrapEl) {
+        ctaWrapEl.style.display = 'none';
+      }
+    } else {
+      if (pillEl && pillEl.classList) pillEl.classList.add('quota-pill-active');
+      if (badgeEl) {
+        badgeEl.style.display = 'none';
+      }
+      if (ctaWrapEl) {
+        ctaWrapEl.style.display = 'none';
+      }
+    }
+  }
+
+  function updateQuotaRingStroke(percent, ringFillEl, isZeroLimit) {
+    if (!ringFillEl) return;
+    const radius = 28;
+    const circumference = 2 * Math.PI * radius; // ~175.929
+    const validPercent = isZeroLimit ? 0 : Math.min(100, Math.max(0, Number(percent) || 0));
+    const offset = circumference * (1 - validPercent / 100);
+
+    if (ringFillEl.style) {
+      ringFillEl.style.strokeDashoffset = String(offset);
+    }
+    if (typeof ringFillEl.setAttribute === 'function') {
+      ringFillEl.setAttribute('stroke-dashoffset', String(offset));
+    }
+    if (ringFillEl.classList) {
+      ringFillEl.classList.remove('ring-fill-warning', 'ring-fill-danger');
+      if (validPercent > 90) {
+        ringFillEl.classList.add('ring-fill-danger');
+      } else if (validPercent >= 70) {
+        ringFillEl.classList.add('ring-fill-warning');
+      }
+    }
+  }
+
+  function renderQuotaUsageDashboard(stateOrData, overrides) {
+    let targetData;
+    if (typeof stateOrData === 'string' && DEFAULT_QUOTA_MOCK[stateOrData]) {
+      currentQuotaStateKey = stateOrData;
+      targetData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK[stateOrData]));
+    } else if (stateOrData && typeof stateOrData === 'object') {
+      currentQuotaStateKey = stateOrData.account_state || 'pro';
+      targetData = JSON.parse(JSON.stringify(stateOrData));
+    } else {
+      currentQuotaStateKey = 'pro';
+      targetData = JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK.pro));
+    }
+
+    if (overrides && typeof overrides === 'object') {
+      targetData = Object.assign({}, targetData, overrides);
+      if (overrides.ocr && targetData.ocr) {
+        targetData.ocr = Object.assign({}, targetData.ocr, overrides.ocr);
+      }
+      if (overrides.file_size && targetData.file_size) {
+        targetData.file_size = Object.assign({}, targetData.file_size, overrides.file_size);
+      }
+      if (overrides.ai_copilot && targetData.ai_copilot) {
+        targetData.ai_copilot = Object.assign({}, targetData.ai_copilot, overrides.ai_copilot);
+      }
+    }
+
+    currentQuotaData = targetData;
+
+    const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+    if (quotaDashboardCard) {
+      quotaDashboardCard.style.display = 'flex';
+    }
+    const quotaGuestState = document.getElementById('quotaGuestState');
+    if (quotaGuestState) {
+      quotaGuestState.style.display = 'none';
+    }
+
+    // 1. Warning Banner
+    const quotaWarningBanner = document.getElementById('quotaWarningBanner');
+    const quotaWarningTitle = document.getElementById('quotaWarningTitle');
+    const quotaWarningDesc = document.getElementById('quotaWarningDesc');
+    const btnQuotaWarningRenew = document.getElementById('btnQuotaWarningRenew');
+
+    if (quotaWarningBanner) {
+      if (targetData.warning) {
+        quotaWarningBanner.style.display = 'flex';
+        if (targetData.warning.level === 'danger') {
+          if (quotaWarningBanner.classList) quotaWarningBanner.classList.add('banner-danger');
+        } else {
+          if (quotaWarningBanner.classList) quotaWarningBanner.classList.remove('banner-danger');
+        }
+        if (quotaWarningTitle) {
+          quotaWarningTitle.textContent = targetData.warning.title || '';
+        }
+        if (quotaWarningDesc) {
+          quotaWarningDesc.textContent = targetData.warning.description || '';
+        }
+        if (btnQuotaWarningRenew) {
+          btnQuotaWarningRenew.textContent = targetData.warning.action_text || 'Gia hạn ngay';
+        }
+      } else {
+        quotaWarningBanner.style.display = 'none';
+        if (quotaWarningBanner.classList) quotaWarningBanner.classList.remove('banner-danger');
+      }
+    }
+
+    // 2. Header Rows (Pro vs Free)
+    const quotaProHeader = document.getElementById('quotaProHeader');
+    const quotaFreeHeader = document.getElementById('quotaFreeHeader');
+    const quotaPlanName = document.getElementById('quotaPlanName');
+    const quotaDaysRemainingBadge = document.getElementById('quotaDaysRemainingBadge');
+    const quotaStartedAt = document.getElementById('quotaStartedAt');
+    const quotaExpiresAt = document.getElementById('quotaExpiresAt');
+
+    if (targetData.account_state === 'free') {
+      if (quotaProHeader) quotaProHeader.style.display = 'none';
+      if (quotaFreeHeader) quotaFreeHeader.style.display = 'flex';
+    } else {
+      if (quotaFreeHeader) quotaFreeHeader.style.display = 'none';
+      if (quotaProHeader) quotaProHeader.style.display = 'flex';
+
+      if (quotaPlanName) {
+        quotaPlanName.textContent = targetData.plan_name || 'Gói Pro Hàng Tháng';
+      }
+      if (quotaStartedAt) {
+        quotaStartedAt.textContent = formatShortDate(targetData.started_at);
+      }
+      if (quotaExpiresAt) {
+        quotaExpiresAt.textContent = formatShortDate(targetData.expires_at);
+      }
+      if (quotaDaysRemainingBadge) {
+        if (quotaDaysRemainingBadge.classList) {
+          quotaDaysRemainingBadge.classList.remove('pill-expiring', 'pill-expired');
+        }
+        const remaining = targetData.days_remaining;
+        if (typeof remaining === 'number') {
+          if (remaining <= 0) {
+            quotaDaysRemainingBadge.textContent = t('quota_pill_expired', 'Đã hết hạn');
+            if (quotaDaysRemainingBadge.classList) quotaDaysRemainingBadge.classList.add('pill-expired');
+          } else if (remaining <= 3) {
+            quotaDaysRemainingBadge.textContent = t('quota_pill_remaining_days', `Còn ${remaining} ngày`, { days: remaining });
+            if (quotaDaysRemainingBadge.classList) quotaDaysRemainingBadge.classList.add('pill-expiring');
+          } else {
+            quotaDaysRemainingBadge.textContent = t('quota_pill_remaining_days', `Còn ${remaining} ngày`, { days: remaining });
+          }
+        } else {
+          quotaDaysRemainingBadge.textContent = t('quota_pill_active', 'Đang kích hoạt');
+        }
+      }
+    }
+
+    // 3. Quota Meter 1: OCR Pages
+    const quotaOcrPercent = document.getElementById('quotaOcrPercent');
+    const quotaOcrUsed = document.getElementById('quotaOcrUsed');
+    const quotaOcrLimit = document.getElementById('quotaOcrLimit');
+    const quotaOcrProgressFill = document.getElementById('quotaOcrProgressFill');
+    const quotaOcrNote = document.getElementById('quotaOcrNote');
+    const quotaOcrThresholdBadge = document.getElementById('quotaOcrThresholdBadge');
+    const quotaOcrCtaWrap = document.getElementById('quotaOcrCtaWrap');
+
+    const rawOcrUsed = targetData.ocr ? targetData.ocr.used : 0;
+    const rawOcrLimit = targetData.ocr ? targetData.ocr.limit : 500;
+    const ocrUsed = (isNaN(Number(rawOcrUsed)) || !isFinite(Number(rawOcrUsed)) || Number(rawOcrUsed) < 0) ? 0 : Number(rawOcrUsed);
+    const ocrLimit = (isNaN(Number(rawOcrLimit)) || !isFinite(Number(rawOcrLimit)) || Number(rawOcrLimit) < 0) ? 0 : Number(rawOcrLimit);
+    const ocrPercent = calculateQuotaPercent(ocrUsed, ocrLimit);
+
+    if (quotaOcrUsed) quotaOcrUsed.textContent = String(ocrUsed);
+    if (quotaOcrLimit) quotaOcrLimit.textContent = String(ocrLimit);
+    if (quotaOcrPercent) quotaOcrPercent.textContent = `${ocrPercent}%`;
+    if (quotaOcrProgressFill) {
+      quotaOcrProgressFill.style.width = `${ocrPercent}%`;
+      if (typeof quotaOcrProgressFill.setAttribute === 'function') {
+        quotaOcrProgressFill.setAttribute('aria-valuenow', String(ocrPercent));
+      }
+    }
+    applyQuotaThresholdStyles(ocrPercent, quotaOcrProgressFill, quotaOcrPercent, quotaOcrThresholdBadge, quotaOcrCtaWrap, ocrLimit <= 0);
+    const quotaOcrRingFill = document.getElementById('quotaOcrRingFill');
+    const quotaOcrRingProgress = document.getElementById('quotaOcrRingProgress');
+    if (quotaOcrRingProgress && typeof quotaOcrRingProgress.setAttribute === 'function') {
+      quotaOcrRingProgress.setAttribute('aria-valuenow', String(ocrPercent));
+    }
+    updateQuotaRingStroke(ocrPercent, quotaOcrRingFill, ocrLimit <= 0);
+    if (quotaOcrNote && targetData.ocr && targetData.ocr.note) {
+      quotaOcrNote.textContent = targetData.ocr.note;
+    }
+
+    // 4. Quota Meter 2: File Size
+    const quotaFileSizePercent = document.getElementById('quotaFileSizePercent');
+    const quotaFileSizeUsed = document.getElementById('quotaFileSizeUsed');
+    const quotaFileSizeProgressFill = document.getElementById('quotaFileSizeProgressFill');
+    const quotaFileSizeNote = document.getElementById('quotaFileSizeNote');
+    const quotaFileSizeThresholdBadge = document.getElementById('quotaFileSizeThresholdBadge');
+
+    const rawFileUsed = targetData.file_size ? targetData.file_size.used : 100;
+    const rawFileLimit = targetData.file_size ? targetData.file_size.limit : 100;
+    const fileUsed = (isNaN(Number(rawFileUsed)) || !isFinite(Number(rawFileUsed)) || Number(rawFileUsed) < 0) ? 0 : Number(rawFileUsed);
+    const fileLimit = (isNaN(Number(rawFileLimit)) || !isFinite(Number(rawFileLimit)) || Number(rawFileLimit) < 0) ? 0 : Number(rawFileLimit);
+    const filePercent = calculateQuotaPercent(fileLimit, 100);
+
+    if (quotaFileSizeUsed) {
+      quotaFileSizeUsed.textContent = (targetData.file_size && targetData.file_size.display_used)
+        ? targetData.file_size.display_used
+        : `${fileUsed} MB`;
+    }
+    if (quotaFileSizePercent) {
+      quotaFileSizePercent.textContent = (targetData.file_size && targetData.file_size.display_limit)
+        ? targetData.file_size.display_limit
+        : `${fileLimit} MB`;
+    }
+    if (quotaFileSizeProgressFill) {
+      quotaFileSizeProgressFill.style.width = `${filePercent}%`;
+      if (typeof quotaFileSizeProgressFill.setAttribute === 'function') {
+        quotaFileSizeProgressFill.setAttribute('aria-valuenow', String(filePercent));
+      }
+    }
+    if (quotaFileSizeNote && targetData.file_size && targetData.file_size.note) {
+      quotaFileSizeNote.textContent = targetData.file_size.note;
+    }
+    if (quotaFileSizeThresholdBadge) {
+      quotaFileSizeThresholdBadge.style.display = 'none';
+    }
+
+    // 5. Quota Meter 3: AI Copilot
+    const quotaCopilotPercent = document.getElementById('quotaCopilotPercent');
+    const quotaCopilotUsed = document.getElementById('quotaCopilotUsed');
+    const quotaCopilotLimit = document.getElementById('quotaCopilotLimit');
+    const quotaCopilotProgressFill = document.getElementById('quotaCopilotProgressFill');
+    const quotaCopilotNote = document.getElementById('quotaCopilotNote');
+    const quotaCopilotThresholdBadge = document.getElementById('quotaCopilotThresholdBadge');
+    const quotaCopilotCtaWrap = document.getElementById('quotaCopilotCtaWrap');
+
+    const rawCopilotUsed = targetData.ai_copilot ? targetData.ai_copilot.used : 0;
+    const rawCopilotLimit = targetData.ai_copilot ? targetData.ai_copilot.limit : 0;
+    const copilotUsed = (isNaN(Number(rawCopilotUsed)) || !isFinite(Number(rawCopilotUsed)) || Number(rawCopilotUsed) < 0) ? 0 : Number(rawCopilotUsed);
+    const copilotLimit = (isNaN(Number(rawCopilotLimit)) || !isFinite(Number(rawCopilotLimit)) || Number(rawCopilotLimit) < 0) ? 0 : Number(rawCopilotLimit);
+    const copilotPercent = calculateQuotaPercent(copilotUsed, copilotLimit);
+
+    if (quotaCopilotUsed) quotaCopilotUsed.textContent = String(copilotUsed);
+    if (quotaCopilotLimit) quotaCopilotLimit.textContent = String(copilotLimit);
+    if (quotaCopilotPercent) quotaCopilotPercent.textContent = `${copilotPercent}%`;
+    if (quotaCopilotProgressFill) {
+      quotaCopilotProgressFill.style.width = `${copilotPercent}%`;
+      if (typeof quotaCopilotProgressFill.setAttribute === 'function') {
+        quotaCopilotProgressFill.setAttribute('aria-valuenow', String(copilotPercent));
+      }
+    }
+    applyQuotaThresholdStyles(copilotPercent, quotaCopilotProgressFill, quotaCopilotPercent, quotaCopilotThresholdBadge, quotaCopilotCtaWrap, copilotLimit <= 0);
+    const quotaCopilotRingFill = document.getElementById('quotaCopilotRingFill');
+    const quotaCopilotRingProgress = document.getElementById('quotaCopilotRingProgress');
+    if (quotaCopilotRingProgress && typeof quotaCopilotRingProgress.setAttribute === 'function') {
+      quotaCopilotRingProgress.setAttribute('aria-valuenow', String(copilotPercent));
+    }
+    updateQuotaRingStroke(copilotPercent, quotaCopilotRingFill, copilotLimit <= 0);
+    if (quotaCopilotNote && targetData.ai_copilot && targetData.ai_copilot.note) {
+      quotaCopilotNote.textContent = targetData.ai_copilot.note;
+    }
+  }
+
+  function initQuotaUsageDashboard() {
+    if (isQuotaDashboardInitialized) return;
+    isQuotaDashboardInitialized = true;
+
+    const btnQuotaRenew = document.getElementById('btnQuotaRenew');
+    const btnQuotaUpgradeYearly = document.getElementById('btnQuotaUpgradeYearly');
+    const btnQuotaUpgradeFreeCta = document.getElementById('btnQuotaUpgradeFreeCta');
+    const btnQuotaWarningRenew = document.getElementById('btnQuotaWarningRenew');
+
+    if (btnQuotaRenew) {
+      btnQuotaRenew.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    if (btnQuotaUpgradeYearly) {
+      btnQuotaUpgradeYearly.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal('pro_yearly');
+      });
+    }
+
+    if (btnQuotaUpgradeFreeCta) {
+      btnQuotaUpgradeFreeCta.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    if (btnQuotaWarningRenew) {
+      btnQuotaWarningRenew.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    const btnQuotaOcrCta = document.getElementById('btnQuotaOcrCta');
+    const btnQuotaCopilotCta = document.getElementById('btnQuotaCopilotCta');
+
+    if (btnQuotaOcrCta) {
+      btnQuotaOcrCta.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+
+    if (btnQuotaCopilotCta) {
+      btnQuotaCopilotCta.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openCheckoutModal(currentCycle === 'yearly' ? 'pro_yearly' : 'pro_monthly');
+      });
+    }
+  }
+
+  // ── User Billing Transaction History & Invoice API Integration ───────
+
+  let billingTab = 'plans';
+  let billingStatusFilter = 'all';
+  let billingCurrentPage = 1;
+  const billingPageSize = 10;
+  let billingTotalCount = 0;
+  let billingTotalPages = 1;
+  let billingTransactions = [];
+  let billingLoading = false;
+  let billingRequestId = 0;
+  let currentInvoiceRequestId = 0;
+  let currentInvoiceTransaction = null;
+  let lastActiveElementBeforeInvoiceModal = null;
+
+  function initBillingHistory() {
+    const btnBackToPlans = document.getElementById('btnPricingBackToPlans');
+    const btnQuotaGuestLogin = document.getElementById('btnQuotaGuestLogin');
+    const btnQuotaGuestViewPlans = document.getElementById('btnQuotaGuestViewPlans');
+    const statusSelect = document.getElementById('billingStatusFilter');
+    const btnPrev = document.getElementById('btnBillingPrevPage');
+    const btnNext = document.getElementById('btnBillingNextPage');
+    const btnRetry = document.getElementById('btnRetryBillingHistory');
+
+    if (btnBackToPlans) {
+      btnBackToPlans.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('plans');
+      });
+    }
+
+    if (btnQuotaGuestLogin) {
+      btnQuotaGuestLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (
+          typeof window !== 'undefined' &&
+          window.pdfLinguaAuth &&
+          typeof window.pdfLinguaAuth.openLoginModal === 'function'
+        ) {
+          window.pdfLinguaAuth.openLoginModal();
+        } else {
+          const btnLogin = document.getElementById('btnLogin');
+          if (btnLogin && typeof btnLogin.click === 'function') {
+            btnLogin.click();
+          }
+        }
+      });
+    }
+
+    if (btnQuotaGuestViewPlans) {
+      btnQuotaGuestViewPlans.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchPricingTab('plans');
+      });
+    }
+
+    if (statusSelect) {
+      statusSelect.addEventListener('change', (e) => {
+        filterBillingHistory(e.target.value);
+      });
+    }
+
+    if (btnPrev) {
+      btnPrev.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (billingCurrentPage > 1 && !billingLoading) {
+          goToBillingHistoryPage(billingCurrentPage - 1);
+        }
+      });
+    }
+
+    if (btnNext) {
+      btnNext.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (billingCurrentPage < billingTotalPages && !billingLoading) {
+          goToBillingHistoryPage(billingCurrentPage + 1);
+        }
+      });
+    }
+
+    if (btnRetry) {
+      btnRetry.addEventListener('click', (e) => {
+        e.preventDefault();
+        fetchBillingHistory(billingCurrentPage, billingStatusFilter);
+      });
+    }
+  }
+
+  function switchPricingTab(tab) {
+    if (tab === 'history') {
+      billingTab = 'history';
+    } else if (tab === 'quota') {
+      billingTab = 'quota';
+    } else {
+      billingTab = 'plans';
+    }
+
+    const plansContainer = document.getElementById('pricingPlansContainer');
+    const historyContainer = document.getElementById('billingHistoryContainer');
+    const quotaContainer = document.getElementById('quotaDashboardContainer');
+    const mainTitle = document.getElementById('pricingMainTitle');
+    const mainSubtitle = document.getElementById('pricingMainSubtitle');
+    const btnBackToPlans = document.getElementById('btnPricingBackToPlans');
+
+    if (plansContainer) {
+      plansContainer.style.display = billingTab === 'plans' ? 'block' : 'none';
+    }
+
+    if (historyContainer) {
+      historyContainer.style.display = billingTab === 'history' ? 'block' : 'none';
+    }
+
+    if (quotaContainer) {
+      quotaContainer.style.display = billingTab === 'quota' ? 'block' : 'none';
+    }
+
+    if (mainTitle && mainSubtitle) {
+      if (billingTab === 'history') {
+        mainTitle.textContent = t('pricing_history_title', 'Lịch sử thanh toán & Hóa đơn');
+        mainSubtitle.textContent = t(
+          'pricing_history_subtitle',
+          'Theo dõi tất cả giao dịch nạp tiền, nâng cấp gói Pro và kiểm tra trạng thái thanh toán, biên lai hóa đơn điện tử.'
+        );
+      } else if (billingTab === 'quota') {
+        mainTitle.textContent = t('pricing_quota_dashboard_title', 'Quản lý gói & Hạn mức');
+        mainSubtitle.textContent = t(
+          'pricing_quota_dashboard_subtitle',
+          'Theo dõi trạng thái gói Pro VIP, thời hạn hiệu lực, gia hạn gói cước và giám sát hạn mức OCR, dung lượng tệp PDF, Trợ lý AI Copilot.'
+        );
+      } else {
+        mainTitle.textContent = t('pricing_section_title', 'Bảng giá gói dịch vụ');
+        mainSubtitle.textContent = t(
+          'pricing_section_subtitle',
+          'Khám phá sức mạnh xử lý tài liệu PDF dung lượng lớn cùng Trợ lý AI chuyên sâu. Chọn chu kỳ phù hợp nhất với nhu cầu học tập và nghiên cứu của bạn.'
+        );
+      }
+    }
+
+    if (btnBackToPlans) {
+      btnBackToPlans.style.display = 'none';
+    }
+
+    const pricingSection = document.getElementById('pricingSection');
+    if (pricingSection && pricingSection.style.display !== 'none') {
+      syncHeaderAndSidebarNav('pricing', billingTab);
+    }
+
+    if (billingTab === 'history') {
+      return fetchBillingHistory(1, billingStatusFilter);
+    } else if (billingTab === 'quota' || billingTab === 'plans') {
+      if (getStoredToken()) {
+        fetchMySubscription();
+      } else {
+        const quotaDashboardCard = document.getElementById('quotaDashboardCard');
+        const quotaGuestState = document.getElementById('quotaGuestState');
+        if (quotaDashboardCard) quotaDashboardCard.style.display = 'none';
+        if (quotaGuestState) quotaGuestState.style.display = 'flex';
+      }
+    }
+  }
+
+  function filterBillingHistory(status) {
+    billingStatusFilter = (status || 'all').toLowerCase();
+    billingCurrentPage = 1;
+    return fetchBillingHistory(billingCurrentPage, billingStatusFilter);
+  }
+
+  function goToBillingHistoryPage(page) {
+    const targetPage = Math.max(1, Math.min(page, billingTotalPages || 1));
+    if (targetPage === billingCurrentPage && billingTransactions.length > 0) return Promise.resolve();
+    billingCurrentPage = targetPage;
+    return fetchBillingHistory(billingCurrentPage, billingStatusFilter);
+  }
+
+  function formatDisplayDate(dateStr) {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes} ${day}/${month}/${year}`;
+    } catch (_e) {
+      return dateStr;
+    }
+  }
+
+  function renderStatusBadge(status) {
+    const s = String(status || '').toLowerCase();
+    switch (s) {
+      case 'completed':
+        return `<span class="billing-status-badge status-badge-completed"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_completed', 'Hoàn tất'))}</span>`;
+      case 'pending':
+        return `<span class="billing-status-badge status-badge-pending"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_pending', 'Đang xử lý'))}</span>`;
+      case 'failed':
+        return `<span class="billing-status-badge status-badge-failed"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_failed', 'Thất bại'))}</span>`;
+      case 'expired':
+        return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${escapeHtml(t('billing_status_expired', 'Hết hạn'))}</span>`;
+      default:
+        return `<span class="billing-status-badge status-badge-expired"><span class="billing-status-dot"></span>${escapeHtml(status)}</span>`;
+    }
+  }
+
+  async function fetchBillingHistory(page = 1, status = 'all') {
+    const reqId = ++billingRequestId;
+    billingLoading = true;
+    billingCurrentPage = Math.max(1, page);
+    billingStatusFilter = (status || 'all').toLowerCase();
+
+    const tbody = document.getElementById('billingHistoryTableBody');
+    const tableWrap = document.querySelector('.billing-table-responsive');
+    const emptyState = document.getElementById('billingHistoryEmptyState');
+    const loadingState = document.getElementById('billingHistoryLoadingState');
+    const errorState = document.getElementById('billingHistoryErrorState');
+    const countChip = document.getElementById('billingHistoryCountChip');
+    const paginationFooter = document.getElementById('billingPaginationFooter');
+    const statusSelect = document.getElementById('billingStatusFilter');
+
+    if (statusSelect && statusSelect.value !== billingStatusFilter) {
+      statusSelect.value = billingStatusFilter;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'none';
+    if (paginationFooter) paginationFooter.style.display = 'none';
+    if (loadingState) loadingState.style.display = 'flex';
+
+    const token = getStoredToken();
+    if (!token) {
+      if (loadingState) loadingState.style.display = 'none';
+      if (errorState) {
+        errorState.style.display = 'flex';
+        const msgEl = document.getElementById('billingHistoryErrorMessage');
+        if (msgEl) {
+          msgEl.textContent = 'Vui lòng đăng nhập để xem lịch sử giao dịch thanh toán.';
+        }
+      }
+      if (countChip) countChip.textContent = '0 giao dịch';
+      billingLoading = false;
+      return;
+    }
+
+    try {
+      let url = `${API_BASE_URL}/api/pricing/billing/history?page=${billingCurrentPage}&page_size=${billingPageSize}`;
+      if (billingStatusFilter && billingStatusFilter !== 'all') {
+        url += `&status=${encodeURIComponent(billingStatusFilter)}`;
+      }
+
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (reqId !== billingRequestId) return;
+
+      if (res.status === 401) {
+        if (loadingState) loadingState.style.display = 'none';
+        if (errorState) {
+          errorState.style.display = 'flex';
+          const msgEl = document.getElementById('billingHistoryErrorMessage');
+          if (msgEl) {
+            msgEl.textContent = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+          }
+        }
+        notifyUser('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+          window.pdfLinguaAuth.openLoginModal();
+        }
+        billingLoading = false;
+        return;
+      }
+
+      if (!res.ok) {
+        let errMsg = 'Không thể tải lịch sử giao dịch từ máy chủ.';
+        try {
+          const errBody = await res.json();
+          if (errBody && errBody.detail) {
+            errMsg = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+          } else if (errBody && errBody.message) {
+            errMsg = errBody.message;
+          }
+        } catch (_e) {}
+
+        if (loadingState) loadingState.style.display = 'none';
+        if (errorState) {
+          errorState.style.display = 'flex';
+          const msgEl = document.getElementById('billingHistoryErrorMessage');
+          if (msgEl) msgEl.textContent = errMsg;
+        }
+        notifyUser(errMsg, 'error');
+        billingLoading = false;
+        return;
+      }
+
+      const body = await res.json();
+      if (reqId !== billingRequestId) return;
+
+      if (body && body.success && body.data) {
+        const data = body.data;
+        billingTransactions = Array.isArray(data.items) ? data.items : [];
+        billingTotalCount = typeof data.total_count === 'number' ? data.total_count : billingTransactions.length;
+        billingTotalPages = Math.max(1, typeof data.total_pages === 'number' ? data.total_pages : 1);
+        billingCurrentPage = typeof data.page === 'number' ? data.page : billingCurrentPage;
+
+        renderBillingHistoryData();
+      } else {
+        throw new Error('Dữ liệu trả về không hợp lệ.');
+      }
+    } catch (_err) {
+      if (reqId !== billingRequestId) return;
+      if (loadingState) loadingState.style.display = 'none';
+      const errMsg =
+        _err && _err.message && _err.message !== 'Failed to fetch'
+          ? _err.message
+          : 'Lỗi kết nối mạng đến máy chủ. Vui lòng thử lại.';
+      if (errorState) {
+        errorState.style.display = 'flex';
+        const msgEl = document.getElementById('billingHistoryErrorMessage');
+        if (msgEl) {
+          msgEl.textContent = errMsg;
+        }
+      }
+      notifyUser(errMsg, 'error');
+    } finally {
+      if (reqId === billingRequestId) {
+        billingLoading = false;
+      }
+    }
+  }
+
+  function renderBillingHistoryData() {
+    const tbody = document.getElementById('billingHistoryTableBody');
+    const tableWrap = document.querySelector('.billing-table-responsive');
+    const emptyState = document.getElementById('billingHistoryEmptyState');
+    const loadingState = document.getElementById('billingHistoryLoadingState');
+    const errorState = document.getElementById('billingHistoryErrorState');
+    const countChip = document.getElementById('billingHistoryCountChip');
+    const paginationFooter = document.getElementById('billingPaginationFooter');
+    const paginationInfo = document.getElementById('billingPaginationInfo');
+    const pageNumbersContainer = document.getElementById('billingPageNumbers');
+    const btnPrev = document.getElementById('btnBillingPrevPage');
+    const btnNext = document.getElementById('btnBillingNextPage');
+
+    if (loadingState) loadingState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+
+    if (countChip) {
+      countChip.textContent = t('billing_history_count_chip', `${billingTotalCount} giao dịch`, { count: billingTotalCount });
+    }
+
+    if (billingTotalCount === 0 || billingTransactions.length === 0) {
+      if (tableWrap) tableWrap.style.display = 'none';
+      if (paginationFooter) paginationFooter.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'flex';
+      if (tbody) tbody.innerHTML = '';
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'block';
+    if (paginationFooter) paginationFooter.style.display = 'flex';
+
+    const startIndex = (billingCurrentPage - 1) * billingPageSize;
+
+    if (tbody) {
+      tbody.innerHTML = billingTransactions
+        .map((tx, idx) => {
+          const stt = startIndex + idx + 1;
+          const displayDate = formatDisplayDate(tx.paid_at || tx.created_at);
+          const methodDisplay =
+            tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR');
+          const cycleLabel =
+            tx.billing_cycle === 'yearly'
+              ? t('billing_cycle_yearly', 'Chu kỳ 1 năm (365 ngày)')
+              : t('billing_cycle_monthly', 'Chu kỳ 1 tháng (30 ngày)');
+
+          return `
+            <tr>
+              <td class="billing-cell-stt font-mono">${stt}</td>
+              <td class="billing-td-code"><span class="billing-cell-code font-mono">${escapeHtml(tx.transaction_code)}</span></td>
+              <td>
+                <span class="billing-cell-plan">${escapeHtml(tx.plan_name)}</span>
+                <span class="billing-cell-cycle">${cycleLabel}</span>
+              </td>
+              <td class="billing-cell-date font-mono">${displayDate}</td>
+              <td class="billing-cell-amount font-mono text-right">${escapeHtml(tx.amount_display)}</td>
+              <td class="billing-cell-method">${escapeHtml(methodDisplay)}</td>
+              <td>${renderStatusBadge(tx.payment_status)}</td>
+              <td class="text-center">
+                <button type="button" class="btn-view-invoice" data-tx="${escapeHtml(tx.transaction_code)}" title="${escapeHtml(t('billing_title_view_invoice', 'Xem hóa đơn điện tử'))}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span>${escapeHtml(t('billing_btn_view_invoice', 'Xem hóa đơn'))}</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      const viewInvoiceButtons = tbody.querySelectorAll('.btn-view-invoice');
+      viewInvoiceButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const txCode = btn.getAttribute('data-tx');
+          handleViewInvoiceClick(txCode);
+        });
+      });
+    }
+
+    if (paginationInfo) {
+      const fromItem = startIndex + 1;
+      const toItem = Math.min(startIndex + billingTransactions.length, billingTotalCount);
+      paginationInfo.textContent = t('billing_pagination_info', `Hiển thị ${fromItem} - ${toItem} / ${billingTotalCount} giao dịch`, {
+        from: fromItem,
+        to: toItem,
+        total: billingTotalCount,
+      });
+    }
+
+    if (btnPrev) {
+      btnPrev.disabled = billingCurrentPage <= 1;
+    }
+
+    if (btnNext) {
+      btnNext.disabled = billingCurrentPage >= billingTotalPages;
+    }
+
+    if (pageNumbersContainer) {
+      let pageButtonsHtml = '';
+      for (let p = 1; p <= billingTotalPages; p++) {
+        if (p === billingCurrentPage) {
+          pageButtonsHtml += `<span class="pagination-current-page font-mono">${p}</span>`;
+        } else {
+          pageButtonsHtml += `<button type="button" class="btn-pagination font-mono" data-page="${p}">${p}</button>`;
+        }
+      }
+      pageNumbersContainer.innerHTML = pageButtonsHtml;
+
+      const numberButtons = pageNumbersContainer.querySelectorAll('.btn-pagination');
+      numberButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const page = parseInt(btn.getAttribute('data-page'), 10);
+          if (!isNaN(page)) {
+            goToBillingHistoryPage(page);
+          }
+        });
+      });
+    }
+  }
+
+  function initInvoiceModal() {
+    const modal = document.getElementById('billingInvoiceModal');
+    const btnClose = document.getElementById('btnCloseInvoiceModal');
+    const btnCloseFooter = document.getElementById('btnInvoiceModalCloseFooter');
+    const btnPrint = document.getElementById('btnPrintInvoice');
+    const btnDownload = document.getElementById('btnDownloadInvoice');
+
+    if (btnClose) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeInvoiceModal();
+      });
+    }
+
+    if (btnCloseFooter) {
+      btnCloseFooter.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeInvoiceModal();
+      });
+    }
+
+    if (btnPrint) {
+      btnPrint.addEventListener('click', (e) => {
+        e.preventDefault();
+        printInvoiceReceipt();
+      });
+    }
+
+    if (btnDownload) {
+      btnDownload.addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadInvoiceReceipt();
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeInvoiceModal();
+        }
+      });
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+          if (modal && !modal.hasAttribute('hidden') && modal.style.display !== 'none') {
+            closeInvoiceModal();
+          }
+        }
+      });
+    }
+  }
+
+  async function openInvoiceModal(transactionCode) {
+    if (!transactionCode) return null;
+
+    const modal = document.getElementById('billingInvoiceModal');
+    if (!modal) return null;
+
+    const loadingState = document.getElementById('invoiceModalLoadingState');
+    const printableArea = document.getElementById('invoicePrintableArea');
+    const btnPrint = document.getElementById('btnPrintInvoice');
+    const btnDownload = document.getElementById('btnDownloadInvoice');
+    const statusBadge = document.getElementById('invoiceStatusBadge');
+    const statusText = document.getElementById('invoiceStatusText');
+    const invoiceNumberEl = document.getElementById('invoiceNumber');
+    const invoiceTxCodeEl = document.getElementById('invoiceTxCode');
+    const buyerNameEl = document.getElementById('invoiceBuyerName');
+    const buyerEmailEl = document.getElementById('invoiceBuyerEmail');
+    const paymentMethodEl = document.getElementById('invoicePaymentMethod');
+    const planNameEl = document.getElementById('invoicePlanName');
+    const cycleDurationEl = document.getElementById('invoiceCycleDuration');
+    const createdAtEl = document.getElementById('invoiceCreatedAt');
+    const paidAtEl = document.getElementById('invoicePaidAt');
+    const itemDescEl = document.getElementById('invoiceItemDesc');
+    const itemSubEl = document.getElementById('invoiceItemSub');
+    const itemCycleEl = document.getElementById('invoiceItemCycle');
+    const itemPriceEl = document.getElementById('invoiceItemPrice');
+    const itemTaxRateEl = document.getElementById('invoiceItemTaxRate');
+    const itemAmountEl = document.getElementById('invoiceItemAmount');
+    const subtotalEl = document.getElementById('invoiceSubtotal');
+    const taxAmountEl = document.getElementById('invoiceTaxAmount');
+    const totalAmountEl = document.getElementById('invoiceTotalAmount');
+    const paymentNoteEl = document.getElementById('invoicePaymentNote');
+    const qrWrap = document.getElementById('invoiceQrWrap');
+    const qrImage = document.getElementById('invoiceQrImage');
+
+    // 1. Reset stale data immediately so previous invoice is never visible
+    currentInvoiceTransaction = null;
+    if (invoiceNumberEl) invoiceNumberEl.textContent = '...';
+    if (invoiceTxCodeEl) invoiceTxCodeEl.textContent = `Mã GD: ${transactionCode}`;
+    if (statusText) statusText.textContent = 'Đang tải...';
+    if (statusBadge) statusBadge.className = 'billing-status-badge status-badge-pending';
+    if (buyerNameEl) buyerNameEl.textContent = '...';
+    if (buyerEmailEl) buyerEmailEl.textContent = '...';
+    if (paymentMethodEl) paymentMethodEl.textContent = '...';
+    if (planNameEl) planNameEl.textContent = '...';
+    if (cycleDurationEl) cycleDurationEl.textContent = '...';
+    if (createdAtEl) createdAtEl.textContent = '...';
+    if (paidAtEl) paidAtEl.textContent = '...';
+    if (itemDescEl) itemDescEl.textContent = '...';
+    if (itemSubEl) itemSubEl.textContent = '...';
+    if (itemCycleEl) itemCycleEl.textContent = '...';
+    if (itemPriceEl) itemPriceEl.textContent = '...';
+    if (itemTaxRateEl) itemTaxRateEl.textContent = '0% (VAT)';
+    if (itemAmountEl) itemAmountEl.textContent = '...';
+    if (subtotalEl) subtotalEl.textContent = '...';
+    if (taxAmountEl) taxAmountEl.textContent = '0 VNĐ';
+    if (totalAmountEl) totalAmountEl.textContent = '...';
+    if (paymentNoteEl) paymentNoteEl.textContent = '...';
+    if (qrWrap) qrWrap.style.display = 'none';
+    if (qrImage) qrImage.src = '';
+
+    // 2. Show modal with loading state
+    if (loadingState) loadingState.style.display = 'flex';
+    if (printableArea) printableArea.style.display = 'none';
+    if (btnPrint) btnPrint.disabled = true;
+    if (btnDownload) btnDownload.disabled = true;
+
+    modal.removeAttribute('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.style.display = 'flex';
+
+    if (typeof document !== 'undefined') {
+      if (document.activeElement) {
+        lastActiveElementBeforeInvoiceModal = document.activeElement;
+      }
+      if (document.body) {
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    const closeBtn = document.getElementById('btnCloseInvoiceModal');
+    if (closeBtn && typeof closeBtn.focus === 'function') {
+      try {
+        closeBtn.focus();
+      } catch (_e) {}
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      closeInvoiceModal();
+      notifyUser('Vui lòng đăng nhập để xem chi tiết hóa đơn.', 'warning');
+      if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+        window.pdfLinguaAuth.openLoginModal();
+      }
+      return null;
+    }
+
+    const reqId = ++currentInvoiceRequestId;
+
+    try {
+      const url = `${API_BASE_URL}/api/pricing/billing/invoices/${encodeURIComponent(transactionCode)}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (reqId !== currentInvoiceRequestId) return null;
+
+      if (res.status === 401) {
+        closeInvoiceModal();
+        notifyUser('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+        if (typeof window !== 'undefined' && window.pdfLinguaAuth && typeof window.pdfLinguaAuth.openLoginModal === 'function') {
+          window.pdfLinguaAuth.openLoginModal();
+        }
+        return null;
+      }
+
+      if (res.status === 403) {
+        closeInvoiceModal();
+        notifyUser('Bạn không có quyền truy cập hóa đơn giao dịch này (403 Forbidden).', 'error');
+        return null;
+      }
+
+      if (res.status === 404) {
+        closeInvoiceModal();
+        notifyUser('Không tìm thấy thông tin hóa đơn cho giao dịch này (404 Not Found).', 'error');
+        return null;
+      }
+
+      if (!res.ok) {
+        closeInvoiceModal();
+        notifyUser('Không thể tải chi tiết hóa đơn từ máy chủ.', 'error');
+        return null;
+      }
+
+      const body = await res.json();
+      if (reqId !== currentInvoiceRequestId) return null;
+
+      if (body && body.success && body.data) {
+        const tx = body.data;
+        currentInvoiceTransaction = tx;
+
+        const invoiceNum = tx.invoice_number || `INV-${tx.transaction_code}`;
+        const status = String(tx.payment_status || 'completed').toLowerCase();
+
+        if (invoiceNumberEl) invoiceNumberEl.textContent = invoiceNum;
+        if (invoiceTxCodeEl) invoiceTxCodeEl.textContent = `Mã GD: ${tx.transaction_code}`;
+
+        if (statusBadge) {
+          statusBadge.className = `billing-status-badge status-badge-${status}`;
+        }
+        if (statusText) {
+          switch (status) {
+            case 'completed':
+              statusText.textContent = 'Hoàn tất';
+              break;
+            case 'pending':
+              statusText.textContent = 'Đang xử lý';
+              break;
+            case 'failed':
+              statusText.textContent = 'Thất bại';
+              break;
+            case 'expired':
+              statusText.textContent = 'Hết hạn';
+              break;
+            default:
+              statusText.textContent = tx.payment_status;
+          }
+        }
+
+        if (buyerNameEl) buyerNameEl.textContent = tx.buyer_name || 'Khách hàng PDF-Lingua';
+        if (buyerEmailEl) buyerEmailEl.textContent = tx.buyer_email || 'Chưa cung cấp';
+        if (paymentMethodEl) {
+          paymentMethodEl.textContent =
+            tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR Napas247');
+        }
+
+        if (planNameEl) planNameEl.textContent = tx.plan_name || 'Gói Dịch Vụ Pro';
+        if (cycleDurationEl) {
+          cycleDurationEl.textContent =
+            tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
+        }
+
+        if (createdAtEl) createdAtEl.textContent = formatDisplayDate(tx.issued_at || tx.created_at);
+        if (paidAtEl) {
+          paidAtEl.textContent = tx.paid_at
+            ? formatDisplayDate(tx.paid_at)
+            : (status === 'completed' ? formatDisplayDate(tx.issued_at || tx.created_at) : 'Chưa thanh toán');
+        }
+
+        if (itemDescEl) {
+          itemDescEl.textContent =
+            tx.billing_cycle === 'yearly'
+              ? 'Đặc quyền Gói Pro Hàng Năm (100 MB / 500 trang OCR / AI Copilot)'
+              : 'Đặc quyền Gói Pro Hàng Tháng (100 MB / 500 trang OCR / AI Copilot)';
+        }
+        if (itemSubEl) {
+          itemSubEl.textContent = `Mã gói: ${tx.plan_code || 'pro'}`;
+        }
+        if (itemCycleEl) {
+          itemCycleEl.textContent = tx.duration_days
+            ? `${tx.duration_days} ngày`
+            : (tx.billing_cycle === 'yearly' ? '365 ngày' : '30 ngày');
+        }
+        if (itemPriceEl) itemPriceEl.textContent = tx.amount_display;
+        if (itemTaxRateEl) itemTaxRateEl.textContent = `${tx.tax_rate_percent !== undefined ? tx.tax_rate_percent : 0}% (VAT)`;
+        if (itemAmountEl) itemAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+
+        if (subtotalEl) subtotalEl.textContent = tx.amount_display;
+        if (taxAmountEl) {
+          const taxAmt = typeof tx.tax_amount_vnd === 'number' ? tx.tax_amount_vnd : 0;
+          taxAmountEl.textContent = `${taxAmt.toLocaleString('vi-VN').replace(/,/g, '.')} VNĐ`;
+        }
+        if (totalAmountEl) totalAmountEl.textContent = tx.total_amount_display || tx.amount_display;
+
+        if (paymentNoteEl) {
+          paymentNoteEl.textContent = tx.payment_note || 'Tự động đối soát hệ thống';
+        }
+
+        if (qrWrap && qrImage) {
+          if (tx.qr_code_url) {
+            qrImage.src = tx.qr_code_url;
+            qrWrap.style.display = 'flex';
+          } else {
+            qrImage.src = '';
+            qrWrap.style.display = 'none';
+          }
+        }
+
+        if (loadingState) loadingState.style.display = 'none';
+        if (printableArea) printableArea.style.display = 'flex';
+        if (btnPrint) btnPrint.disabled = false;
+        if (btnDownload) btnDownload.disabled = false;
+
+        if (typeof document !== 'undefined') {
+          const event = new CustomEvent('pdfl:view-invoice', {
+            detail: {
+              transactionCode: tx.transaction_code,
+              transaction: tx,
+            },
+          });
+          document.dispatchEvent(event);
+        }
+
+        return tx;
+      } else {
+        throw new Error('Dữ liệu chi tiết hóa đơn không hợp lệ.');
+      }
+    } catch (_err) {
+      if (reqId !== currentInvoiceRequestId) return null;
+      closeInvoiceModal();
+      const errMsg =
+        _err && _err.message && _err.message !== 'Failed to fetch'
+          ? _err.message
+          : 'Lỗi kết nối khi tải chi tiết hóa đơn. Vui lòng thử lại.';
+      notifyUser(errMsg, 'error');
+      return null;
+    }
+  }
+
+  function closeInvoiceModal() {
+    const modal = document.getElementById('billingInvoiceModal');
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.style.display = 'none';
+    }
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.style.overflow = '';
+    }
+    if (lastActiveElementBeforeInvoiceModal && typeof lastActiveElementBeforeInvoiceModal.focus === 'function') {
+      try {
+        lastActiveElementBeforeInvoiceModal.focus();
+      } catch (_e) {}
+      lastActiveElementBeforeInvoiceModal = null;
+    }
+  }
+
+  function printInvoiceReceipt() {
+    const loadingState = document.getElementById('invoiceModalLoadingState');
+    if (loadingState && loadingState.style.display !== 'none') {
+      notifyUser('Đang tải chi tiết hóa đơn, vui lòng chờ trong giây lát.', 'warning');
+      return;
+    }
+    if (typeof window !== 'undefined' && typeof window.print === 'function') {
+      window.print();
+    } else {
+      notifyUser('Trình duyệt không hỗ trợ in ấn trực tiếp.', 'warning');
+    }
+  }
+
+  function generateReceiptHtml(tx) {
+    const displayDate = formatDisplayDate(tx.paid_at || tx.issued_at || tx.created_at);
+    const cycleLabel = tx.billing_cycle === 'yearly' ? 'Theo năm (365 ngày)' : 'Theo tháng (30 ngày)';
+    const itemDesc =
+      tx.billing_cycle === 'yearly'
+        ? 'Đặc quyền Gói Pro Hàng Năm (100 MB / 500 trang OCR / AI Copilot)'
+        : 'Đặc quyền Gói Pro Hàng Tháng (100 MB / 500 trang OCR / AI Copilot)';
+    const methodDisplay =
+      tx.payment_method === 'vietqr' ? 'VietQR Napas247' : (tx.payment_method || 'VietQR Napas247');
+    const noteDisplay = tx.payment_note || 'Tự động đối soát hệ thống';
+    const invoiceNumber = tx.invoice_number || `INV-${tx.transaction_code}`;
+
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hóa đơn thanh toán - ${escapeHtml(invoiceNumber)}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 40px 20px; }
+  .receipt-box { max-width: 680px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 36px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 24px; margin-bottom: 24px; }
+  .logo { font-size: 24px; font-weight: 800; color: #0f172a; }
+  .logo span { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; }
+  .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .inv-num { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  .inv-num-label { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.05em; }
+  .inv-num-val { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .meta-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+  .meta-title { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
+  .meta-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+  .meta-label { color: #64748b; }
+  .meta-val { font-weight: 600; color: #0f172a; text-align: right; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f1f5f9; color: #475569; font-size: 11px; text-transform: uppercase; }
+  td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .totals { margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+  .tot-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .tot-row.grand { font-size: 16px; font-weight: 800; color: #2563eb; border-top: 2px solid #e2e8f0; padding-top: 10px; margin-top: 6px; }
+  .reconcile { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 14px; margin-top: 24px; font-size: 12px; }
+  .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .receipt-box { border: none; box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="receipt-box">
+  <div class="header">
+    <div>
+      <div class="logo"><span>PDF</span>-Lingua</div>
+      <div class="subtitle">Nền tảng OCR & Dịch thuật PDF Song Ngữ Chuyên Sâu</div>
+    </div>
+    <div class="inv-num">
+      <div class="inv-num-label">SỐ HÓA ĐƠN</div>
+      <div class="inv-num-val">${escapeHtml(invoiceNumber)}</div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Mã GD: ${escapeHtml(tx.transaction_code)}</div>
+    </div>
+  </div>
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="meta-title">Thông tin khách hàng</div>
+      <div class="meta-row"><span class="meta-label">Người mua:</span><span class="meta-val">${escapeHtml(tx.buyer_name || 'Khách hàng')}</span></div>
+      <div class="meta-row"><span class="meta-label">Email:</span><span class="meta-val">${escapeHtml(tx.buyer_email || 'Chưa cung cấp')}</span></div>
+      <div class="meta-row"><span class="meta-label">Phương thức:</span><span class="meta-val">${escapeHtml(methodDisplay)}</span></div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-title">Chi tiết dịch vụ</div>
+      <div class="meta-row"><span class="meta-label">Gói đăng ký:</span><span class="meta-val">${escapeHtml(tx.plan_name)}</span></div>
+      <div class="meta-row"><span class="meta-label">Chu kỳ:</span><span class="meta-val">${escapeHtml(cycleLabel)}</span></div>
+      <div class="meta-row"><span class="meta-label">Thời điểm thanh toán:</span><span class="meta-val">${escapeHtml(displayDate)}</span></div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Mô tả khoản mục</th>
+        <th class="text-center">Thời hạn</th>
+        <th class="text-right">Đơn giá</th>
+        <th class="text-right">Thuế suất</th>
+        <th class="text-right">Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>${escapeHtml(itemDesc)}</strong><br><small style="color: #64748b;">Mã gói: ${escapeHtml(tx.plan_code || 'pro')}</small></td>
+        <td class="text-center">${tx.duration_days ? `${tx.duration_days} ngày` : cycleLabel}</td>
+        <td class="text-right">${escapeHtml(tx.amount_display)}</td>
+        <td class="text-right">${tx.tax_rate_percent !== undefined ? tx.tax_rate_percent : 0}% (VAT)</td>
+        <td class="text-right"><strong>${escapeHtml(tx.total_amount_display || tx.amount_display)}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="totals">
+    <div class="tot-row"><span>Tạm tính:</span><span>${escapeHtml(tx.amount_display)}</span></div>
+    <div class="tot-row"><span>Thuế GTGT (0%):</span><span>0 VNĐ</span></div>
+    <div class="tot-row grand"><span>Tổng thanh toán:</span><span>${escapeHtml(tx.total_amount_display || tx.amount_display)}</span></div>
+  </div>
+  <div class="reconcile">
+    <strong>NỘI DUNG CHUYỂN KHOẢN ĐỐI SOÁT:</strong> <code style="font-weight: 700; color: #2563eb;">${escapeHtml(noteDisplay)}</code>
+    <div style="margin-top: 4px; color: #64748b;">Giao dịch điện tử được bảo vệ và tự động đối soát qua Napas247 / VietQR.</div>
+  </div>
+  <div class="footer">
+    <p>Hóa đơn điện tử khởi tạo tự động từ hệ thống PDF-Lingua. Miễn thuế GTGT theo Thông tư 219/2013/TT-BTC.</p>
+    <p>Hỗ trợ khách hàng: support@pdf-lingua.vn</p>
+  </div>
+</div>
+</body>
+</html>`;
+  }
+
+  function downloadInvoiceReceipt() {
+    const loadingState = document.getElementById('invoiceModalLoadingState');
+    if (loadingState && loadingState.style.display !== 'none') {
+      notifyUser('Đang tải chi tiết hóa đơn, vui lòng chờ trong giây lát.', 'warning');
+      return;
+    }
+
+    if (!currentInvoiceTransaction) {
+      notifyUser('Không có thông tin giao dịch để tải biên lai.', 'warning');
+      return;
+    }
+
+    const tx = currentInvoiceTransaction;
+    const htmlContent = generateReceiptHtml(tx);
+    const invoiceNumber = tx.invoice_number || `INV-${tx.transaction_code}`;
+    const filename = `Bien-lai-${invoiceNumber}.html`;
+
+    try {
+      if (typeof Blob !== 'undefined' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        if (typeof document !== 'undefined' && document.body) {
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(url);
+      }
+      notifyUser(`Đã tải xuống biên lai hóa đơn ${invoiceNumber}`, 'success');
+    } catch (_err) {
+      notifyUser('Không thể tải biên lai trên trình duyệt này.', 'error');
+    }
+  }
+
+  function handleViewInvoiceClick(transactionCode) {
+    if (!transactionCode) return Promise.resolve(null);
+    return openInvoiceModal(transactionCode);
+  }
+
   if (typeof window !== 'undefined') {
     window.PDFLinguaCheckout = {
       openCheckout: openCheckoutModal,
@@ -1852,6 +3560,8 @@
 
     window.PDFLinguaPricing = {
       openPricingView,
+      openBillingHistoryView,
+      openQuotaDashboardView,
       closePricingView,
       setBillingCycle,
       getBillingCycle: () => currentCycle,
@@ -1866,7 +3576,58 @@
       closeQuotaExceededModal,
       simulatePaymentSuccess,
       pollTransactionStatus,
+      switchPricingTab,
+      filterBillingHistory,
+      goToBillingHistoryPage,
+      fetchBillingHistory,
+      renderBillingHistoryData,
+      getBillingHistoryState: () => ({
+        tab: billingTab,
+        statusFilter: billingStatusFilter,
+        page: billingCurrentPage,
+        pageSize: billingPageSize,
+        totalCount: billingTotalCount,
+        totalPages: billingTotalPages,
+        isLoading: billingLoading,
+        items: billingTransactions,
+      }),
+      getBillingTransactions: () => billingTransactions,
+      setMockBillingTransactions: (txs) => {
+        billingTransactions = Array.isArray(txs) ? [...txs] : [];
+        billingTotalCount = billingTransactions.length;
+        billingTotalPages = Math.max(1, Math.ceil(billingTotalCount / billingPageSize));
+        billingCurrentPage = 1;
+        renderBillingHistoryData();
+      },
+      handleViewInvoiceClick,
+      openInvoiceModal,
+      closeInvoiceModal,
+      printInvoiceReceipt,
+      downloadInvoiceReceipt,
+      getCurrentInvoiceTransaction: () => currentInvoiceTransaction,
+      setCurrentInvoiceTransaction: (tx) => {
+        currentInvoiceTransaction = tx;
+      },
+      generateReceiptHtml,
+      calculateQuotaPercent,
+      fetchMySubscription,
+      bindGlobalSyncEvents,
+      setQuotaDashboardLoading,
+      getMySubscriptionData: () => mySubscriptionData,
+      getSubscriptionRequestState: () => ({
+        isLoading: subscriptionLoading,
+        error: subscriptionError,
+        requestId: subscriptionRequestId,
+      }),
+      renderQuotaDashboard: renderQuotaUsageDashboard,
+      getQuotaDashboardState: () => ({
+        stateKey: currentQuotaStateKey,
+        data: JSON.parse(JSON.stringify(currentQuotaData)),
+      }),
+      setQuotaMockState: (stateKey) => {
+        renderQuotaUsageDashboard(stateKey);
+      },
+      getQuotaMockData: () => JSON.parse(JSON.stringify(DEFAULT_QUOTA_MOCK)),
     };
   }
 })();
-

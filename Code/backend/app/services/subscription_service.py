@@ -7,6 +7,8 @@ VietQR checkout generation, payment confirmation, and automatic expiration:
 - `get_user_subscription`: Inspects and enforces expiration on user subscriptions.
 - `create_subscription_transaction`: Creates pending transaction with Napas247 VietQR URL.
 - `get_transaction_status`: Retrieves transaction state for client polling with ownership check.
+- `get_user_billing_history`: Returns paginated user transaction records with status filtering.
+- `get_user_invoice_detail`: Returns electronic invoice receipt with ownership and admin access check.
 - `confirm_transaction_payment`: Idempotently activates or extends Pro subscription (+30d / +365d).
 - `process_payment_webhook`: Reconciles incoming bank transfer webhooks.
 - `cancel_subscription`: Cancels automatic renewal on active subscription.
@@ -41,6 +43,9 @@ from app.models.subscription import (
 from app.models.user import User, UserRole
 from app.schemas.pricing import (
     BankInfoSchema,
+    BillingHistoryResponse,
+    BillingInvoiceDetailSchema,
+    BillingTransactionItemSchema,
     FreeTierPlanSchema,
     MySubscriptionResponse,
     PaymentWebhookRequest,
@@ -428,6 +433,135 @@ class SubscriptionService:
             )
 
         return SubscriptionService._build_transaction_status_response(db, tx)
+
+    # ── User Billing Transaction History & Electronic Invoices ───────────
+
+    @staticmethod
+    def get_user_billing_history(
+        db: Session,
+        user_id: int,
+        status_filter: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 10,
+    ) -> BillingHistoryResponse:
+        """
+        Retrieve paginated billing transaction history for a specific user.
+        Supports status filtering and orders records chronologically descending.
+        """
+        safe_page = max(1, page)
+        safe_page_size = max(1, min(page_size, 100))
+
+        query = (
+            db.query(PaymentTransaction)
+            .filter(PaymentTransaction.user_id == user_id)
+        )
+
+        if status_filter and status_filter.strip().lower() != "all":
+            normalized_status = status_filter.strip().lower()
+            query = query.filter(PaymentTransaction.payment_status == normalized_status)
+
+        total_count = query.count()
+        total_pages = max(1, math.ceil(total_count / safe_page_size)) if total_count > 0 else 1
+
+        transactions = (
+            query.order_by(
+                PaymentTransaction.created_at.desc(),
+                PaymentTransaction.id.desc(),
+            )
+            .offset((safe_page - 1) * safe_page_size)
+            .limit(safe_page_size)
+            .all()
+        )
+
+        items: list[BillingTransactionItemSchema] = []
+        for tx in transactions:
+            plan = tx.plan or db.query(PricingPlan).filter(PricingPlan.id == tx.plan_id).first()
+            invoice_num = f"INV-{tx.transaction_code}"
+            items.append(
+                BillingTransactionItemSchema(
+                    id=tx.id,
+                    transaction_code=tx.transaction_code,
+                    invoice_number=invoice_num,
+                    plan_code=plan.code if plan else "pro_monthly",
+                    plan_name=plan.name if plan else "Gói Pro",
+                    billing_cycle=plan.billing_cycle if plan else BillingCycle.MONTHLY.value,
+                    amount_vnd=tx.amount_vnd,
+                    amount_display=_format_vnd(tx.amount_vnd, suffix=" VNĐ"),
+                    payment_method=tx.payment_method,
+                    payment_status=tx.payment_status,
+                    payment_note=tx.payment_note,
+                    paid_at=_ensure_utc(tx.paid_at) if tx.paid_at else None,
+                    created_at=_ensure_utc(tx.created_at),
+                )
+            )
+
+        return BillingHistoryResponse(
+            items=items,
+            total_count=total_count,
+            page=safe_page,
+            page_size=safe_page_size,
+            total_pages=total_pages,
+        )
+
+    @staticmethod
+    def get_user_invoice_detail(
+        db: Session,
+        user: User,
+        transaction_code: str,
+    ) -> BillingInvoiceDetailSchema:
+        """
+        Retrieve detailed electronic invoice receipt for a specific payment transaction.
+        Enforces ownership authorization (owner or administrator).
+        """
+        code = (transaction_code or "").strip()
+        tx = (
+            db.query(PaymentTransaction)
+            .filter(PaymentTransaction.transaction_code == code)
+            .first()
+        )
+        if tx is None:
+            raise NotFoundException(
+                message=f"Không tìm thấy hóa đơn cho giao dịch '{code}'.",
+                details={"transaction_code": code},
+            )
+
+        user_role = (
+            user.role
+            if isinstance(user.role, UserRole)
+            else UserRole(str(user.role).lower())
+        )
+        if tx.user_id != user.id and user_role != UserRole.ADMIN:
+            raise ForbiddenException(
+                message="Bạn không có quyền truy cập hóa đơn của người dùng khác.",
+                error_code="INVOICE_FORBIDDEN",
+            )
+
+        plan = tx.plan or db.query(PricingPlan).filter(PricingPlan.id == tx.plan_id).first()
+        purchaser = tx.user or db.query(User).filter(User.id == tx.user_id).first() or user
+        invoice_num = f"INV-{tx.transaction_code}"
+
+        return BillingInvoiceDetailSchema(
+            buyer_name=purchaser.full_name or purchaser.email.split("@")[0],
+            buyer_email=purchaser.email,
+            invoice_number=invoice_num,
+            transaction_code=tx.transaction_code,
+            issued_at=_ensure_utc(tx.created_at),
+            paid_at=_ensure_utc(tx.paid_at) if tx.paid_at else None,
+            plan_code=plan.code if plan else "pro_monthly",
+            plan_name=plan.name if plan else "Gói Pro",
+            billing_cycle=plan.billing_cycle if plan else BillingCycle.MONTHLY.value,
+            duration_days=plan.duration_days if plan else 30,
+            payment_method=tx.payment_method,
+            payment_status=tx.payment_status,
+            amount_vnd=tx.amount_vnd,
+            amount_display=_format_vnd(tx.amount_vnd, suffix=" VNĐ"),
+            tax_rate_percent=0,
+            tax_amount_vnd=0,
+            total_amount_vnd=tx.amount_vnd,
+            total_amount_display=_format_vnd(tx.amount_vnd, suffix=" VNĐ"),
+            payment_note=tx.payment_note,
+            qr_code_url=tx.qr_code_url,
+        )
 
     @staticmethod
     def confirm_transaction_payment(

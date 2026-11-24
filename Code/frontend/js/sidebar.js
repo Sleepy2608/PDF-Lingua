@@ -12,7 +12,11 @@
   const STORAGE_KEY = 'pdf_lingua_sidebar_collapsed';
   const ACTIVE_VIEW_KEY = 'pdfl_active_view';
   const PENDING_TOAST_KEY = 'pdfl_pending_toast';
-  const API_BASE_URL = 'http://localhost:8000';
+  const API_BASE_URL = (typeof window !== 'undefined' && window.__API_BASE_URL__)
+    ? window.__API_BASE_URL__
+    : ((typeof window !== 'undefined' && window.location && (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000')))
+      ? 'http://127.0.0.1:8000'
+      : '');
 
   let isCollapsed = false;
   let isMobileOpen = false;
@@ -416,6 +420,7 @@
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
+    const pricingSection = document.getElementById('pricingSection');
     const documentsSection = document.getElementById('documentsSection');
     const historySection = document.getElementById('historySection');
 
@@ -428,6 +433,7 @@
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
+    if (pricingSection) pricingSection.style.display = 'none';
     if (historySection) historySection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'block';
 
@@ -467,6 +473,7 @@
     const heroSection = document.getElementById('heroSection');
     const workspaceSection = document.getElementById('workspaceSection');
     const adminSection = document.getElementById('adminSection');
+    const pricingSection = document.getElementById('pricingSection');
     const documentsSection = document.getElementById('documentsSection');
     const historySection = document.getElementById('historySection');
 
@@ -479,6 +486,7 @@
     if (heroSection) heroSection.style.display = 'none';
     if (workspaceSection) workspaceSection.style.display = 'none';
     if (adminSection) adminSection.style.display = 'none';
+    if (pricingSection) pricingSection.style.display = 'none';
     if (documentsSection) documentsSection.style.display = 'none';
     if (historySection) historySection.style.display = 'block';
 
@@ -1032,33 +1040,51 @@
       });
     }
 
-    if (sideNavPricing) {
-      sideNavPricing.addEventListener('click', (e) => {
-        e.preventDefault();
-        setActiveNavItem(sideNavPricing);
-        if (window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
-          window.PDFLinguaPricing.openPricingView();
-        } else {
-          const adminSection = document.getElementById('adminSection');
-          const heroSection = document.getElementById('heroSection');
-          const workspaceSection = document.getElementById('workspaceSection');
-          const pricingSection = document.getElementById('pricingSection');
-          const copilotDrawer = document.getElementById('aiCopilotDrawer');
-    if (copilotDrawer) {
-      copilotDrawer.style.display = 'none';
-      copilotDrawer.classList.remove('open');
-    }
-    if (adminSection) adminSection.style.display = 'none';
-          if (heroSection) heroSection.style.display = 'none';
-          if (workspaceSection) workspaceSection.style.display = 'none';
-          if (pricingSection) pricingSection.style.display = 'block';
-          if (typeof showToast === 'function') {
-            showToast((window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('toast_pricing_summary') : 'Bảng giá gói: Gói Miễn phí (20MB / 100 trang), Gói Pro (49k/tháng hoặc 399k/năm).', 'info');
-          }
-        }
-        if (window.innerWidth < 768) closeMobileSidebar();
+    const sideNavPricingChevron = document.getElementById('sideNavPricingChevron');
+    const sideNavPricingPlans = document.getElementById('sideNavPricingPlans');
+    const sideNavPricingBilling = document.getElementById('sideNavPricingBilling');
+    const sideNavPricingQuota = document.getElementById('sideNavPricingQuota');
+
+    if (sideNavPricingChevron) {
+      sideNavPricingChevron.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        const pricingGroup = document.getElementById('sideNavPricingGroup');
+        const nextExpanded = pricingGroup ? !pricingGroup.classList.contains('is-expanded') : true;
+        setPricingGroupExpanded(nextExpanded);
       });
     }
+
+    if (sideNavPricing) {
+      sideNavPricing.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        const pricingSection = document.getElementById('pricingSection');
+        const pricingGroup = document.getElementById('sideNavPricingGroup');
+        const appSidebar = document.getElementById('appSidebar');
+        const isPricingVisible = pricingSection && pricingSection.style.display !== 'none';
+        const isSidebarCollapsed = appSidebar && appSidebar.classList.contains('collapsed');
+
+        if (isPricingVisible && !isSidebarCollapsed) {
+          const nextExpanded = pricingGroup ? !pricingGroup.classList.contains('is-expanded') : true;
+          setPricingGroupExpanded(nextExpanded);
+          return;
+        }
+
+        navigateToPricingSubView('plans');
+      });
+    }
+
+    [
+      { el: sideNavPricingPlans, tab: 'plans' },
+      { el: sideNavPricingBilling, tab: 'history' },
+      { el: sideNavPricingQuota, tab: 'quota' },
+    ].forEach(({ el, tab }) => {
+      if (!el) return;
+      el.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        navigateToPricingSubView(tab);
+      });
+    });
 
     if (sideNavAdmin) {
       sideNavAdmin.addEventListener('click', (e) => {
@@ -1116,10 +1142,94 @@
     }
   }
 
+  function setPricingGroupExpanded(expanded) {
+    const group = document.getElementById('sideNavPricingGroup');
+    const toggle = document.getElementById('sideNavPricing');
+    const isExp = Boolean(expanded);
+    if (group && group.classList) {
+      group.classList.toggle('is-expanded', isExp);
+    }
+    if (toggle && typeof toggle.setAttribute === 'function') {
+      toggle.setAttribute('aria-expanded', isExp ? 'true' : 'false');
+    }
+  }
+
+  function setActivePricingSubmenu(subTab) {
+    const subPlans = document.getElementById('sideNavPricingPlans');
+    const subBilling = document.getElementById('sideNavPricingBilling');
+    const subQuota = document.getElementById('sideNavPricingQuota');
+    const map = {
+      plans: subPlans,
+      history: subBilling,
+      quota: subQuota,
+    };
+
+    [subPlans, subBilling, subQuota].forEach((el) => {
+      if (!el) return;
+      if (el.classList) el.classList.remove('active');
+      if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-current');
+    });
+
+    const target = subTab ? map[subTab] : null;
+    if (target) {
+      if (target.classList) target.classList.add('active');
+      if (typeof target.setAttribute === 'function') target.setAttribute('aria-current', 'page');
+    }
+  }
+
+  function navigateToPricingSubView(subTab) {
+    const targetTab = (subTab === 'history' || subTab === 'quota') ? subTab : 'plans';
+    const sideNavPricing = document.getElementById('sideNavPricing');
+    if (sideNavPricing) setActiveNavItem(sideNavPricing);
+    setPricingGroupExpanded(true);
+    setActivePricingSubmenu(targetTab);
+
+    try {
+      sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+    } catch (_err) { }
+
+    if (window.PDFLinguaPricing && typeof window.PDFLinguaPricing.openPricingView === 'function') {
+      window.PDFLinguaPricing.openPricingView(undefined, targetTab);
+    } else {
+      const adminSection = document.getElementById('adminSection');
+      const heroSection = document.getElementById('heroSection');
+      const workspaceSection = document.getElementById('workspaceSection');
+      const documentsSection = document.getElementById('documentsSection');
+      const historySection = document.getElementById('historySection');
+      const pricingSection = document.getElementById('pricingSection');
+      const copilotDrawer = document.getElementById('aiCopilotDrawer');
+      if (copilotDrawer) {
+        copilotDrawer.style.display = 'none';
+        copilotDrawer.classList.remove('open');
+      }
+      if (adminSection) adminSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'none';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (documentsSection) documentsSection.style.display = 'none';
+      if (historySection) historySection.style.display = 'none';
+      if (pricingSection) pricingSection.style.display = 'block';
+
+      const plansContainer = document.getElementById('pricingPlansContainer');
+      const historyContainer = document.getElementById('billingHistoryContainer');
+      const quotaContainer = document.getElementById('quotaDashboardContainer');
+      if (plansContainer) plansContainer.style.display = targetTab === 'plans' ? 'block' : 'none';
+      if (historyContainer) historyContainer.style.display = targetTab === 'history' ? 'block' : 'none';
+      if (quotaContainer) quotaContainer.style.display = targetTab === 'quota' ? 'block' : 'none';
+    }
+
+    if (window.innerWidth < 768) closeMobileSidebar();
+  }
+
   function setActiveNavItem(targetItem) {
     const allItems = document.querySelectorAll('.sidebar-nav-item');
     allItems.forEach((item) => item.classList.remove('active'));
     if (targetItem) targetItem.classList.add('active');
+
+    const sideNavPricing = document.getElementById('sideNavPricing');
+    if (!targetItem || targetItem !== sideNavPricing) {
+      setActivePricingSubmenu(null);
+      setPricingGroupExpanded(false);
+    }
 
     if (typeof document.querySelectorAll === 'function') {
       const headerLinks = document.querySelectorAll('.nav-menu .nav-link');
@@ -2432,8 +2542,9 @@
   }
 
   function formatTargetLang(code) {
-    if (!code) return 'Tiếng Việt (vi)';
-    const names = {
+    if (!code) code = 'vi';
+    const isEn = typeof window !== 'undefined' && window.i18n && typeof window.i18n.getLanguage === 'function' && window.i18n.getLanguage() === 'en';
+    const namesVi = {
       vi: 'Tiếng Việt',
       en: 'Tiếng Anh',
       fr: 'Tiếng Pháp',
@@ -2445,6 +2556,19 @@
       es: 'Tiếng Tây Ban Nha',
       ru: 'Tiếng Nga',
     };
+    const namesEn = {
+      vi: 'Vietnamese',
+      en: 'English',
+      fr: 'French',
+      zh: 'Chinese',
+      'zh-CN': 'Chinese',
+      ja: 'Japanese',
+      ko: 'Korean',
+      de: 'German',
+      es: 'Spanish',
+      ru: 'Russian',
+    };
+    const names = isEn ? namesEn : namesVi;
     const label = names[code];
     return label ? `${label} (${code})` : String(code);
   }
@@ -3626,6 +3750,22 @@
         } else if (navKey === 'ai-summarize' || navKey === 'summarize') {
           const el = document.getElementById('sideNavAiSummarize');
           if (el) setActiveNavItem(el);
+        } else if (
+          navKey === 'pricing' ||
+          navKey === 'pricing-plans' ||
+          navKey === 'pricing-billing' ||
+          navKey === 'pricing-quota'
+        ) {
+          const el = document.getElementById('sideNavPricing');
+          if (el) setActiveNavItem(el);
+          setPricingGroupExpanded(true);
+          const subTab =
+            navKey === 'pricing-billing'
+              ? 'history'
+              : navKey === 'pricing-quota'
+              ? 'quota'
+              : 'plans';
+          setActivePricingSubmenu(subTab);
         }
       }
 
@@ -3645,6 +3785,9 @@
         openAiCopilotView: openAiCopilotView,
         openAiSummarizeView: openAiSummarizeView,
         navigateToHome: navigateToHome,
+        navigateToPricingSubView: navigateToPricingSubView,
+        setPricingGroupExpanded: setPricingGroupExpanded,
+        setActivePricingSubmenu: setActivePricingSubmenu,
         setActiveNav: setActiveNav,
         setActiveNavItem: setActiveNavItem,
         openDocumentDetailModal: openDocumentDetailModal,

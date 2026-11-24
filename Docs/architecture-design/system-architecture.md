@@ -73,14 +73,19 @@ Việc đọc và dịch các tài liệu khoa học định dạng PDF gặp nh
 
 # 2. Quyết định thiết kế kiến trúc (Architectural Decisions)
 
-| Quyết định thiết kế | Phương án được chọn | Lý do lựa chọn & Lợi ích kỹ thuật |
-|---|---|---|
-| **Kiến trúc hệ thống** | **Layered Clean Architecture** | Tách biệt hoàn toàn giữa giao diện, cổng API, tầng nghiệp vụ và tầng lưu trữ dữ liệu; tăng khả năng viết Unit Test độc lập và dễ dàng bảo trì. |
-| **Backend Framework** | **FastAPI (Python 3.12)** | Hỗ trợ lập trình bất đồng bộ (`asyncio`), tự động sinh tài liệu Swagger OpenAPI, hiệu năng cao xấp xỉ Node.js/Go và tương thích hoàn hảo với hệ sinh thái AI/ML của Python. |
-| **Frontend Framework** | **Modern Vanilla JS (SPA)** | Loại bỏ hoàn toàn sự phụ thuộc vào các framework nặng (React, Vue, Angular), giảm thời gian tải ban đầu xuống dưới 1 giây, dễ dàng tích hợp và không phát sinh lỗi phiên bản dependency. |
-| **Động cơ Trích xuất PDF** | **PyMuPDF + Tesseract OCR** | PyMuPDF cho tốc độ bóc tách văn bản số cực nhanh (< 200ms/trang). Khi phát hiện trang quét, hệ thống tự động gọi Tesseract OCR tiếng Việt (`vie.traineddata`) với thuật toán cân chỉnh góc nghiêng tự động. |
-| **Cơ sở dữ liệu** | **SQLite + SQLAlchemy ORM** | Phù hợp tuyệt đối cho môi trường triển khai đồ án và quy mô vừa: không cần cấu hình cụm DBMS phức tạp, tự đóng gói thành 1 tệp duy nhất, hỗ trợ ACID đầy đủ và dễ dàng chuyển dịch sang PostgreSQL khi mở rộng. |
-| **Cổng thanh toán** | **VietQR Napas247 + SePay Webhook** | Giải pháp thanh toán phổ biến nhất tại Việt Nam: không yêu cầu thẻ tín dụng quốc tế, người dùng quét mã VietQR ngân hàng bất kỳ, Webhook tự động kích hoạt tài khoản trong vòng 3 giây. |
+Hệ thống tài liệu quyết định kiến trúc chi tiết (bối cảnh bài toán, các giải pháp đối trọng đã cân nhắc, phân tích ưu nhược điểm và sự đánh đổi kỹ thuật) được quản lý độc lập tại thư mục [Docs/architecture-design/adr/](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/).
+
+Bảng tóm tắt các quyết định kiến trúc then chốt:
+
+| Quyết định thiết kế | Phương án được chọn | Lý do lựa chọn & Lợi ích kỹ thuật | Hồ sơ ADR chi tiết |
+|---|---|---|:---:|
+| **Kiến trúc hệ thống** | **Layered Clean Architecture** | Tách biệt hoàn toàn giữa giao diện, cổng API, tầng nghiệp vụ và tầng lưu trữ dữ liệu; tăng khả năng viết Unit Test độc lập và dễ dàng bảo trì. | Chi tiết tại Mục 3 |
+| **Backend Framework** | **FastAPI (Python 3.12)** | Hỗ trợ lập trình bất đồng bộ (`asyncio`), tự động sinh tài liệu Swagger OpenAPI, hiệu năng cao xấp xỉ Node.js/Go và tương thích hoàn hảo với hệ sinh thái AI/ML của Python. | [ADR-004](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/ADR-004-fastapi-backend-framework.md) |
+| **Frontend Framework** | **Modern Vanilla JS (SPA)** | Loại bỏ hoàn toàn sự phụ thuộc vào các framework nặng (React, Vue, Angular), giảm thời gian tải ban đầu xuống dưới 1 giây, dễ dàng tích hợp và không phát sinh lỗi phiên bản dependency. | [ADR-003](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/ADR-003-modern-vanilla-js-spa.md) |
+| **Động cơ Trích xuất PDF** | **PyMuPDF + Tesseract OCR** | PyMuPDF cho tốc độ bóc tách văn bản số cực nhanh (< 200ms/trang). Khi phát hiện trang quét, hệ thống tự động gọi Tesseract OCR tiếng Việt (`vie.traineddata`) với thuật toán cân chỉnh góc nghiêng tự động. | [ADR-001](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/ADR-001-hybrid-fast-path-extraction.md) |
+| **Tái cấu trúc Luồng đọc** | **Smart Layout 2 cột** | Thuật toán phân tách hình học phân loại cột dựa trên Bounding Box và phân tích khoảng trống, bảo toàn trật tự câu văn học thuật. | [ADR-006](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/ADR-006-smart-layout-reading-flow.md) |
+| **Cơ sở dữ liệu** | **SQLite + SQLAlchemy ORM** | Phù hợp tuyệt đối cho môi trường triển khai đồ án và quy mô vừa: không cần cấu hình cụm DBMS phức tạp, tự đóng gói thành 1 tệp duy nhất, hỗ trợ ACID đầy đủ và dễ dàng chuyển dịch sang PostgreSQL khi mở rộng. | [ADR-005](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/ADR-005-sqlite-sqlalchemy-persistence.md) |
+| **Cổng thanh toán** | **VietQR Napas247 + SePay Webhook** | Giải pháp thanh toán phổ biến nhất tại Việt Nam: không yêu cầu thẻ tín dụng quốc tế, người dùng quét mã VietQR ngân hàng bất kỳ, Webhook tự động kích hoạt tài khoản trong vòng 3 giây. | [ADR-002](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/ADR-002-vietqr-napas247-payment-gateway.md) |
 
 ---
 

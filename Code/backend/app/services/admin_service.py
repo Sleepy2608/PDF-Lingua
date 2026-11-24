@@ -16,8 +16,10 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.models.document import Document
+from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
 from app.models.user import User, UserRole
 from app.schemas.admin import (
+    AdminServiceUsageStats,
     AdminStatsResponse,
     AdminUserListItem,
     AdminUserListResponse,
@@ -49,6 +51,32 @@ class AdminService:
             db.query(func.coalesce(func.sum(Document.file_size_bytes), 0)).scalar() or 0
         )
 
+        service_counts = (
+            db.query(ProcessingHistory.action_type, func.count(ProcessingHistory.id))
+            .filter(ProcessingHistory.status == ProcessingStatus.SUCCESS)
+            .group_by(ProcessingHistory.action_type)
+            .all()
+        )
+
+        counts_map: dict[str, int] = {}
+        for action, count in service_counts:
+            key = action.value if hasattr(action, "value") else str(action)
+            counts_map[key] = int(count)
+
+        extract_count = counts_map.get(ActionType.EXTRACT.value, 0)
+        translate_count = counts_map.get(ActionType.TRANSLATE.value, 0)
+        summarize_count = counts_map.get(ActionType.SUMMARIZE.value, 0)
+        chat_count = counts_map.get(ActionType.CHAT.value, 0)
+        total_actions = extract_count + translate_count + summarize_count + chat_count
+
+        services_stats = AdminServiceUsageStats(
+            extract_count=extract_count,
+            translate_count=translate_count,
+            summarize_count=summarize_count,
+            chat_count=chat_count,
+            total_actions=total_actions,
+        )
+
         return AdminStatsResponse(
             total_users=total_users,
             active_users=active_users,
@@ -58,6 +86,7 @@ class AdminService:
             admin_users=admin_users,
             total_documents=total_documents,
             total_storage_bytes=int(total_storage_bytes),
+            services=services_stats,
         )
 
     @staticmethod

@@ -1,0 +1,38 @@
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+
+# Local databases and runtime logs
+*.db
+*.sqlite
+*.sqlite3
+ci_test.db
+test_ci.db
+pdf_lingua.db
+logs/
+*.log
+
+# Environment variables containing sensitive local keys
+.env
+.env.local
+.env.*.local
+
+# Temporary local storage
+temp_uploads/
+storage/documents/*
+!storage/documents/.gitkeep
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

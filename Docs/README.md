@@ -8,9 +8,9 @@
 | **Tên dự án (VN)** | Nền tảng Dịch thuật PDF Học thuật & Trợ lý Nghiên cứu AI |
 | **Loại tài liệu** | Master Documentation Index & Thesis Mapping |
 | **Viết tắt** | PDF-Lingua |
-| **Phiên bản tài liệu** | 1.2 |
+| **Phiên bản tài liệu** | 1.3 |
 | **Ngày tạo** | 15/09/2026 |
-| **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
+| **Ngày chỉnh sửa lần cuối** | 24/11/2026 |
 | **Trạng thái** | Hoàn thành (Release) |
 
 ---
@@ -22,16 +22,23 @@ Bảng điều hướng tổng hợp toàn bộ các tài liệu kỹ thuật, k
 | STT | Nhóm Tài Liệu | Đường Dẫn Tệp Chi Tiết | Mô Tả Tóm Tắt Nội Dung |
 | :---: | :--- | :--- | :--- |
 | **01** | **Kiến Trúc Hệ Thống** | [`Docs/architecture-design/system-architecture.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/system-architecture.md) | Sơ đồ kiến trúc 4 tầng, mô hình thực thể quan hệ ERD, cơ chế bảo mật Defense-in-Depth và phân vùng lưu trữ. |
-| **02** | **Thuật Toán & AI** | [`Docs/ai-design/pdf-processing-and-ai-pipeline.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/ai-design/pdf-processing-and-ai-pipeline.md) | Cơ chế Hybrid Fast Path (Digital vs Scanned), Smart Layout luồng đọc 2 cột, Smart Chunking và Tóm tắt Map-Reduce. |
-| **03** | **Đặc Tả Yêu Cầu (SRS)**| [`Docs/software-requirement-specification/srs-specification.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/software-requirement-specification/srs-specification.md) | Đặc tả 11 yêu cầu chức năng (FR), 4 yêu cầu phi chức năng (NFR), ma trận phân quyền tác nhân (Guest, Free, Pro, Admin). |
-| **04** | **Kiểm Thử & CI/CD** | [`Docs/testing-documents/test-plan-and-results.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/testing-documents/test-plan-and-results.md) | Báo cáo kết quả 10 test suites Frontend, kiểm thử Backend, ma trận an toàn bảo mật và tự động hóa GitHub Actions. |
-| **05** | **Hướng Dẫn Cài Đặt** | [`Docs/installation-guide/setup-and-installation.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/setup-and-installation.md) | Hướng dẫn cài Tesseract OCR tiếng Việt, cấu hình biến môi trường `.env`, khởi chạy một chạm qua `run.bat` và khắc phục sự cố. |
-| **06** | **Luồng Nghiệp Vụ** | [`Docs/workflows/business-workflows.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/workflows/business-workflows.md) | Sequence Diagrams chi tiết luồng bóc tách dịch thuật PDF, thanh toán nâng cấp Pro qua VietQR Napas247 / SePay Webhook. |
-| **07** | **Hướng Dẫn Sử Dụng** | [`Docs/user-guide/user-guide.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/user-guide/user-guide.md) | Cẩm nang thao tác dành cho người dùng cuối: dịch thuật song ngữ, hỏi đáp Copilot, tóm tắt và tải bản dịch. |
-| **08** | **Mô Tả Use Case** | [`Docs/use-case/pdf-lingua-use-case-overview.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/use-case/pdf-lingua-use-case-overview.md) | Sơ đồ Use case tổng quát, mô tả phạm vi tác nhân và hành vi tương tác hệ thống. |
-| **09** | **Bảng Giá & Gói Cước** | [`Docs/pricing-plans/pricing-plans.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/pricing-plans/pricing-plans.md) | Quy định chi tiết quyền lợi gói Miễn Phí (0đ) và Gói Chuyên Nghiệp (49.000đ/tháng, 399.000đ/năm). |
-| **10** | **Tệp PDF Kiểm Thử** | [`Docs/test-examples/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/test-examples/README.md) | Danh mục 5 tệp PDF thực tế đánh giá các trường hợp biên: đa ngôn ngữ, ký hiệu code, tiền tệ và bảng chữ cái tiếng Việt. |
-| **11** | **Quy Chuẩn Màu Sắc** | [`Docs/color-theme/pdf-lingua-color-theme.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/color-theme/pdf-lingua-color-theme.md) | Hệ thống bảng màu chuẩn, mã màu Hex/RGBA và quy chuẩn tương phản giao diện UI/UX. |
+| **02** | **Quyết Định Kiến Trúc (ADR)** | [`Docs/architecture-design/adr/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/architecture-design/adr/README.md) | Bộ 6 hồ sơ ADR phân tích bối cảnh, phương án đối trọng và đánh đổi kỹ thuật (Hybrid OCR, VietQR, Vanilla JS, FastAPI, SQLite, Smart Layout). |
+| **03** | **Sơ Đồ Tri Thức Mã Nguồn** | [`Docs/codebase-knowledge-graph/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/codebase-knowledge-graph/README.md) | Mạng tri thức tương tác 2D/3D (4.063 nodes, 9.412 edges) và báo cáo kiểm định kiến trúc, God Nodes hệ thống. |
+| **04** | **Thuật Toán & AI** | [`Docs/ai-design/pdf-processing-and-ai-pipeline.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/ai-design/pdf-processing-and-ai-pipeline.md) | Cơ chế Hybrid Fast Path (Digital vs Scanned), Smart Layout luồng đọc 2 cột, Smart Chunking và Tóm tắt Map-Reduce. |
+| **05** | **Đặc Tả Yêu Cầu (SRS)**| [`Docs/software-requirement-specification/srs-specification.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/software-requirement-specification/srs-specification.md) | Đặc tả 11 yêu cầu chức năng (FR), 4 yêu cầu phi chức năng (NFR), ma trận phân quyền tác nhân (Guest, Free, Pro, Admin). |
+| **06** | **Kiểm Thử & CI/CD** | [`Docs/testing-documents/test-plan-and-results.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/testing-documents/test-plan-and-results.md) | Báo cáo kết quả 10 test suites Frontend, kiểm thử Backend, ma trận an toàn bảo mật và tự động hóa GitHub Actions. |
+| **07** | **Hướng Dẫn Cài Đặt** | [`Docs/installation-guide/setup-and-installation.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/setup-and-installation.md) | Hướng dẫn cài Tesseract OCR tiếng Việt, cấu hình biến môi trường `.env`, khởi chạy một chạm qua `run.bat` và khắc phục sự cố. |
+| **08** | **Luồng Nghiệp Vụ** | [`Docs/workflows/business-workflows.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/workflows/business-workflows.md) | Sequence Diagrams chi tiết luồng bóc tách dịch thuật PDF, thanh toán nâng cấp Pro qua VietQR Napas247 / SePay Webhook. |
+| **09** | **Hướng Dẫn Sử Dụng** | [`Docs/user-guide/user-guide.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/user-guide/user-guide.md) | Cẩm nang thao tác dành cho người dùng cuối: dịch thuật song ngữ, hỏi đáp Copilot, tóm tắt và tải bản dịch. |
+| **10** | **Mô Tả Use Case** | [`Docs/use-case/pdf-lingua-use-case-overview.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/use-case/pdf-lingua-use-case-overview.md) | Sơ đồ Use case tổng quát, mô tả phạm vi tác nhân và hành vi tương tác hệ thống. |
+| **11** | **Bảng Giá & Gói Cước** | [`Docs/pricing-plans/pricing-plans.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/pricing-plans/pricing-plans.md) | Quy định chi tiết quyền lợi gói Miễn Phí (0đ) và Gói Chuyên Nghiệp (49.000đ/tháng, 399.000đ/năm). |
+| **12** | **Tệp PDF Kiểm Thử** | [`Docs/test-examples/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/test-examples/README.md) | Danh mục 5 tệp PDF thực tế đánh giá các trường hợp biên: đa ngôn ngữ, ký hiệu code, tiền tệ và bảng chữ cái tiếng Việt. |
+| **13** | **Quy Chuẩn Màu Sắc** | [`Docs/color-theme/pdf-lingua-color-theme.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/color-theme/pdf-lingua-color-theme.md) | Hệ thống bảng màu chuẩn, mã màu Hex/RGBA và quy chuẩn tương phản giao diện UI/UX. |
+| **14** | **Phân Tích An Toàn Bảo Mật** | [`Docs/security-and-threat-modeling/security-analysis.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/security-analysis.md) | Mô hình đe dọa STRIDE, phòng chống IDOR (404), PDF Bombs (magic bytes), Prompt Injection và xác thực Webhook SePay. |
+| **15** | **Chiến Lược Doanh Thu Kép** | [`Docs/monetization-strategy/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/monetization-strategy/README.md) | Kế hoạch kinh doanh 2 động cơ: Thuê bao Pro VIP (B2C) và Cho thuê quảng cáo/Tài trợ (B2B), kèm bảng so sánh đối chiếu và bánh đà cộng hưởng doanh thu. |
+| **16** | **Kịch Bản Thuyết Minh & Demo Đồ Án** | [`Docs/demo-script/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/demo-script/README.md) | Kịch bản chi tiết 7 phân đoạn (12-15 phút) trình diễn hội đồng: Guest mode, trích xuất 2 cột, dual-pane workspace, AI Copilot, VietQR và Admin dashboard. |
+| **17** | **Rà Soát An Toàn & Bàn Giao Repository** | [`Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md) | Báo cáo kiểm định an toàn 6 tầng, xác thực 0 rò rỉ khóa API/secret trên toàn bộ Git và mã nguồn, tích hợp công cụ quét tự động scan_secrets.py. |
+| **18** | **Hướng Dẫn Triển Khai Cloud** | [`Docs/installation-guide/cloud-deployment-guide.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/cloud-deployment-guide.md) | Kiến trúc triển khai đám mây phân tán: Frontend trên Vercel, Backend Docker trên Render, proxy hóa CORS và hướng dẫn tên miền .id.vn/.com. |
 
 ---
 
