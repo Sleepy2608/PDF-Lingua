@@ -373,8 +373,8 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Nguyễn Lê Huy Tâm | Đề xuất triển khai Vercel / Netlify / Nginx | **To Do** |
 | `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực và kiểm thử phần mềm | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Báo cáo đồ án môn học hoàn chỉnh | **To Do** |
 | `PDFL-249` | Chuẩn bị slide thuyết trình | EPIC 16 | - | Cả hai thành viên | Slide trình chiếu báo cáo bảo vệ trước hội đồng | **To Do** |
-| `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Cả hai thành viên | Kịch bản trình diễn mượt mà OCR, dịch thuật & AI | **To Do** |
-| `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key nhạy cảm | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Rà soát an toàn repo, quét secret trước bàn giao | **To Do** |
+| `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Cả hai thành viên | Kịch bản trình diễn mượt mà (`Docs/demo-script/README.md`) | **Done** |
+| `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key nhạy cảm | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Báo cáo rà soát an toàn & script quét secret (`scan_secrets.py`) | **Done** |
 | `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng | EPIC 15 | 5 | Huỳnh Đình Chấn | Bảng đặc tả ma trận test case chức năng | **To Do** |
 | `PDFL-246` | Cung cấp hình ảnh giao diện và hướng dẫn sử dụng | EPIC 16 | 8 | Huỳnh Đình Chấn | Bộ ảnh chụp giao diện và tài liệu hướng dẫn | **To Do** |
 | `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 5 | Nguyễn Lê Huy Tâm | Hướng dẫn thao tác trải nghiệm ứng dụng web | **To Do** |
