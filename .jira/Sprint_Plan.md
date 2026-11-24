@@ -15,7 +15,7 @@
 - **Tiến độ tổng quan**:
   - **Sprint 1, 2, 3, 4**: Đã hoàn thành 100% (Khung kiến trúc, Tài khoản/Auth, Trích xuất PDF & OCR, Dịch thuật đa ngôn ngữ, Xuất file và toàn bộ các test suite nền tảng).
   - **Sprint 5 (10/11 - 17/11/2026)**: Đã hoàn thành 100% trọn vẹn 41 work items (123 Story Points Done) đồng bộ chính xác theo Jira Board.
-  - **Sprint 6 (17/11 - 24/11/2026)**: Đã hoàn thành 100% 26 work items AI (74 Story Points Done) đúng theo bảng Jira Board.
+  - **Sprint 6 (17/11 - 24/11/2026)**: Đã hoàn thành 100% 37 work items (100 Story Points Done) đúng theo bảng Jira Board.
   - **Sprint 7 (22/11 - 29/11/2026)**: Kế hoạch và nghiệm thu 45 work items (37 Done - 69 SP / 8 To Do - 29 SP - tổng 98 Story Points) gồm kiểm thử toàn diện EPIC 15, tài liệu bàn giao EPIC 16 và hướng dẫn sử dụng web PDFL-279 đúng theo Jira Board.
 
 ---
@@ -51,11 +51,11 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
    - Tính năng mở rộng: Xử lý tệp theo lô (Batch Processing), tải file nén ZIP, xuất kết quả Microsoft Word (.docx), xem trước PDF trực tiếp (PDF Inline Preview), chọn trang cụ thể (Page Selection).
    - Nộp hồ sơ thiết kế đồ án giữa kỳ: Kiến trúc hệ thống (`PDFL-269`), Lược đồ usecase (`PDFL-270`), Lược đồ lớp (`PDFL-271`).
    - Hoàn thiện tính năng Avatar người dùng (`PDFL-272`, `PDFL-273`), lịch sử giao dịch và hạn mức sử dụng gói Pro (`PDFL-274`, `PDFL-275`, `PDFL-276`) và thống kê dịch vụ (`PDFL-262`).
-6. **Sprint 6 (Tuần 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu Theo Ngữ Cảnh**:
+6. **Sprint 6 (Tuần 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu Theo Ngữ Cảnh, Tính Năng Mở Rộng & Triển Khai**:
    - Tích hợp mô hình ngôn ngữ lớn (LLM API), quản lý an toàn API key qua biến môi trường.
    - AI Tóm tắt tài liệu: Tùy chọn kiểu tóm tắt (ngắn gọn, chi tiết, bullet points), kỹ thuật Map-Reduce chia đoạn tóm tắt cho tài liệu dài.
    - Trợ lý AI hỏi đáp tài liệu (Contextual Document QA/RAG Chatbot): Trích xuất đoạn liên quan làm ngữ cảnh, trả lời bám sát tài liệu, hạn chế ảo giác (hallucination guardrails), bảo vệ cô lập dữ liệu người dùng.
-   - Hoàn thành xuất sắc 26/26 work items (74 Story Points - 100% Done) đúng theo Jira Board.
+   - Hoàn thành xuất sắc 37/37 work items (100 Story Points - 100% Done) đúng theo Jira Board.
 7. **Sprint 7 (Tuần 7: 22/11 - 29/11/2026) - Kiểm Thử Toàn Diện, Triển Khai Hệ Thống, Tài Liệu Bàn Giao & Nghiệm Thu Đồ Án**:
    - 45 work items (98 Story Points) bao gồm toàn bộ kiểm thử bảo mật/hiệu năng EPIC 15, thiết lập triển khai/tài liệu kỹ thuật EPIC 16, viết báo cáo phân tích thiết kế, chuẩn bị slide/kịch bản demo, hướng dẫn sử dụng web PDFL-279 và rà soát kho mã nguồn trước bàn giao.
    - Đồng bộ 100% Jira Board: 37 công việc đã hoàn thành trong codebase (69 SP Done) và 8 công việc nghiệm thu tài liệu/demo cuối kỳ (29 SP To Do).
@@ -71,7 +71,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | **Sprint 3** | 27/10 - 03/11/2026 | Quản lý tài liệu, OCR nâng cao, dịch thuật cốt lõi, xuất file & kiểm thử hiệu năng | **EPIC 03, EPIC 05, EPIC 06, EPIC 07, EPIC 08, EPIC 11, EPIC 15, EPIC 16, EPIC 17** | 39 tasks backlog + 13 tasks test/measure | 105 + 36 SP | ✅ **Đã hoàn thành** (100% Done) |
 | **Sprint 4** | 03/11 - 10/11/2026 | Dịch thuật fallback, xuất file, lịch sử, admin cơ bản, quyền lợi Free/Pro & bảo mật | **EPIC 08, EPIC 11, EPIC 12, EPIC 13, EPIC 14, EPIC 15, EPIC 16, EPIC 17** | 31 tasks backlog + 13 tasks test/security | 84 + 35 SP | ✅ **Đã hoàn thành** (100% Done) |
 | **Sprint 5** | 10/11 - 17/11/2026 | Lịch sử Pro, Quản trị Admin, Hạn mức gói Free/Pro, Mở rộng, Thiết kế đồ án, Avatar/Billing & Thống kê | **EPIC 03, EPIC 04, EPIC 12, EPIC 13, EPIC 14, EPIC 16, EPIC 17** | 41 work items | 123 SP | ✅ **Đã hoàn thành** (41/41 Done - 100%) |
-| **Sprint 6** | 17/11 - 24/11/2026 | Tích hợp AI - Tóm tắt văn bản & Trợ lý hỏi đáp tài liệu theo ngữ cảnh | **EPIC 03, EPIC 09, EPIC 10** | 26 work items | 74 SP | ✅ **Đã hoàn thành** (26/26 Done - 74 SP) |
+| **Sprint 6** | 17/11 - 24/11/2026 | Tích hợp AI, Tính năng mở rộng, Trang chào mừng & Triển khai CI/CD | **EPIC 03, EPIC 09, EPIC 10, EPIC 11, EPIC 15, EPIC 16** | 37 work items | 100 SP | ✅ **Đã hoàn thành** (37/37 Done - 100 SP) |
 | **Sprint 7** | 22/11 - 29/11/2026 | Kiểm thử toàn diện, Triển khai, Tài liệu bàn giao & Nghiệm thu | **EPIC 15, EPIC 16** | 45 work items | 98 SP | 📋 **Kế hoạch & Nghiệm thu** (69 SP Done / 29 SP To Do) |
 
 ---
@@ -372,10 +372,10 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 
 ---
 
-### 🔹 Sprint 6: Tích Hợp AI - Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu
+### 🔹 Sprint 6: Tích Hợp AI, Tính Năng Mở Rộng, Trang Chào Mừng & Triển Khai CI/CD
 - **Thời gian**: 17/11/2026 - 24/11/2026 (Tuần 6)
-- **Mục tiêu**: Tích hợp các mô hình trí tuệ nhân tạo (LLM API) để tóm tắt ý chính tài liệu PDF và xây dựng Trợ lý ảo chat hỏi đáp trực tiếp dựa trên nội dung văn bản (Document QA/RAG).
-- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)** - **26 Work Items** (26 Done / 0 In Progress / 0 To Do - **74 Story Points**) - *Đồng bộ 100% Jira Board*
+- **Mục tiêu**: Tích hợp các mô hình trí tuệ nhân tạo (LLM API) để tóm tắt ý chính tài liệu PDF, xây dựng Trợ lý ảo chat hỏi đáp trực tiếp (Document QA/RAG), mở rộng tính năng đa ngôn ngữ, trang chào mừng Welcome, thanh toán gói Pro, phân quyền RBAC và thiết lập luồng CI/CD.
+- **Trạng thái**: ✅ **Đã hoàn thành 100% (Completed)** - **37 Work Items** (37 Done / 0 In Progress / 0 To Do - **100 Story Points**) - *Đồng bộ 100% Jira Board*
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Người thực hiện | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :---: |
@@ -405,6 +405,17 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-147` | Xử lý trường hợp tài liệu không có thông tin để trả lời | EPIC 10 | 3 | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-50` | Xây dựng giao diện tóm tắt văn bản bằng AI | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-51` | Xây dựng giao diện trò chuyện với trợ lý AI | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-205` | Kiểm thử giao diện trên các kích thước màn hình khác nhau | EPIC 15 | 2 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-257` | Hỗ trợ lưu hoặc tải lại kết quả dịch theo từng trang | EPIC 11 | 3 | Huỳnh Đình Chấn | **Done** |
+| `PDFL-259` | Tích hợp thanh toán trực tuyến cho gói Pro | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-261` | Cho phép người dùng gửi phản hồi hoặc báo cáo lỗi | EPIC 11 | 2 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan | EPIC 10 | 2 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-264` | Xem xét sử dụng hàng đợi tác vụ cho các file lớn và quy trình OCR/AI kéo dài | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-277` | Trang web hỗ trợ ngôn ngữ Tiếng Anh | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-278` | Welcome Dashboard (Landing page khi người dùng mới lần vào web) | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-283` | RBAC for UI/UX frontend and benefit update | EPIC 03 | 2 | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-284` | Simple CI/CD Workflow | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | **Done** |
 
 ---
 
@@ -427,7 +438,7 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 | `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
 | `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng | EPIC 15 | 5 | High | Huỳnh Đình Chấn | **To Do** |
 | `PDFL-246` | Cung cấp hình ảnh giao diện và hướng dẫn sử dụng | EPIC 16 | 8 | High | Huỳnh Đình Chấn | **To Do** |
-| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
+| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
 
 #### 2. Danh sách các hạng mục kiểm thử & triển khai đã hoàn thành trong codebase (37 Work Items - 69 Story Points)
 *(Bàn giao nghiệm thu tự động qua bộ test suite 36 files và cấu hình triển khai thực tế)*
