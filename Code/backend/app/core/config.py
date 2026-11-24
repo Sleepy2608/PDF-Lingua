@@ -49,6 +49,10 @@ class Settings:
     # Database
     DATABASE_URL: str = _resolve_database_url()
 
+    # Initial Admin Seeding (via environment variables, never hardcoded)
+    ADMIN_EMAIL: str | None = os.getenv("ADMIN_EMAIL", None)
+    ADMIN_PASSWORD: str | None = os.getenv("ADMIN_PASSWORD", None)
+
     # File Upload Constraints
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "temp_uploads/")
     STORAGE_DIR: str = os.getenv("STORAGE_DIR", "storage/documents")

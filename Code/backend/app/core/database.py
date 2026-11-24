@@ -76,6 +76,7 @@ def init_db() -> None:
     db = SessionLocal()
     try:
         app.models.seed_pricing_plans(db)
+        app.models.seed_default_admin(db)
     finally:
         db.close()
     logger.info("[DB] Tables verified / created successfully.")
