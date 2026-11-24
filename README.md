@@ -4,7 +4,8 @@
   <br><br>
   <p><em>
     <b>Đề tài:</b> Web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ và tích hợp AI <br>
-    <b>Môn học:</b> Đồ án thực tế Công nghệ phần mềm
+    <b>Môn học:</b> Đồ án thực tế Công nghệ phần mềm <br>
+    <b>Website trực tuyến (Live Demo):</b> <a href="https://pdflingua.vercel.app"><b>https://pdflingua.vercel.app</b></a>
   </em></p>
   <p>
     <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.12"/>

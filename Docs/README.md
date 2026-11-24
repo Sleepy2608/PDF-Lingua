@@ -9,6 +9,7 @@
 | **Loại tài liệu** | Master Documentation Index & Thesis Mapping |
 | **Viết tắt** | PDF-Lingua |
 | **Phiên bản tài liệu** | 1.3 |
+| **Website trực tuyến (Live Demo)** | [https://pdflingua.vercel.app](https://pdflingua.vercel.app) |
 | **Ngày tạo** | 15/09/2026 |
 | **Ngày chỉnh sửa lần cuối** | 24/11/2026 |
 | **Trạng thái** | Hoàn thành (Release) |

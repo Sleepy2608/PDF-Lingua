@@ -9,6 +9,7 @@
 | **Loại tài liệu** | End-User Guide & Operating Manual |
 | **Viết tắt** | PDF-Lingua |
 | **Phiên bản tài liệu** | 1.2 |
+| **Website trực tuyến (Live Demo)** | [https://pdflingua.vercel.app](https://pdflingua.vercel.app) |
 | **Ngày tạo** | 25/10/2026 |
 | **Ngày chỉnh sửa lần cuối** | 20/11/2026 |
 | **Trạng thái** | Hoàn thành (Release) |
