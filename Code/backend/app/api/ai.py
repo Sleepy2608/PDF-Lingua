@@ -154,6 +154,8 @@ async def summarize_document(
         execution_time_ms=result["execution_time_ms"],
         document_id=payload.document_id,
         history_id=history_record.id if history_record else None,
+        injection_detected=result.get("injection_detected", False),
+        moderation_flagged=result.get("moderation_flagged", False),
     )
 
     return ApiResponse(
@@ -334,6 +336,8 @@ async def chat_copilot(
         document_id=payload.document_id,
         history_id=history_record.id if history_record else None,
         daily_questions_remaining=remaining_questions,
+        injection_detected=result.get("injection_detected", False),
+        moderation_flagged=result.get("moderation_flagged", False),
     )
 
     return ApiResponse(
