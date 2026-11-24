@@ -13,12 +13,13 @@
  */
 
 const assert = require('assert');
+const crypto = require('crypto');
 const fs = require('fs');
 const http = require('http');
 const net = require('net');
 const os = require('os');
 const path = require('path');
-const { spawn } = require('child_process');
+const { execFileSync, spawn } = require('child_process');
 
 const FRONTEND_DIR = path.resolve(__dirname, '..');
 
@@ -52,14 +53,17 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function findBrowserExecutable() {
   const candidates = [
     process.env.CHROME_PATH,
+    process.env.CHROME_BIN,
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/usr/bin/google-chrome-stable',
     '/usr/bin/google-chrome',
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
+    '/snap/bin/chromium',
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   ].filter(Boolean);
 
@@ -70,6 +74,18 @@ function findBrowserExecutable() {
       // Continue checking remaining candidate paths
     }
   }
+
+  if (process.platform !== 'win32') {
+    for (const cmd of ['google-chrome-stable', 'google-chrome', 'chromium', 'chromium-browser']) {
+      try {
+        const resolved = execFileSync('which', [cmd], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+        if (resolved && fs.existsSync(resolved)) return resolved;
+      } catch (_) {
+        // Command not on PATH
+      }
+    }
+  }
+
   return null;
 }
 
@@ -122,6 +138,181 @@ function startStaticServer(rootDir) {
   });
 }
 
+// --- Zero-Dependency RFC 6455 WebSocket Client (Node 20 Compatibility) ---
+
+class RawWebSocket {
+  constructor(wsUrl) {
+    this.url = new URL(wsUrl);
+    this.listeners = { open: [], message: [], error: [], close: [] };
+    this.buffer = Buffer.alloc(0);
+    this.handshakeDone = false;
+    this.fragmentChunks = [];
+    this.socket = null;
+    this._connect();
+  }
+
+  addEventListener(type, fn, opts = {}) {
+    if (!this.listeners[type]) return;
+    const entry = { fn, once: Boolean(opts && opts.once) };
+    this.listeners[type].push(entry);
+  }
+
+  _emit(type, payload) {
+    const list = this.listeners[type] || [];
+    const remaining = [];
+    for (const entry of list) {
+      entry.fn(payload);
+      if (!entry.once) remaining.push(entry);
+    }
+    this.listeners[type] = remaining;
+  }
+
+  _connect() {
+    const key = crypto.randomBytes(16).toString('base64');
+    const port = Number(this.url.port) || 80;
+    const host = this.url.hostname;
+    const reqPath = `${this.url.pathname}${this.url.search}`;
+
+    this.socket = net.createConnection({ host, port }, () => {
+      const headers = [
+        `GET ${reqPath} HTTP/1.1`,
+        `Host: ${host}:${port}`,
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        `Sec-WebSocket-Key: ${key}`,
+        'Sec-WebSocket-Version: 13',
+        '',
+        '',
+      ].join('\r\n');
+      this.socket.write(headers);
+    });
+
+    this.socket.on('error', (err) => this._emit('error', err));
+    this.socket.on('close', () => this._emit('close', {}));
+    this.socket.on('data', (chunk) => this._onData(chunk));
+  }
+
+  _onData(chunk) {
+    this.buffer = Buffer.concat([this.buffer, chunk]);
+
+    if (!this.handshakeDone) {
+      const sepIdx = this.buffer.indexOf('\r\n\r\n');
+      if (sepIdx === -1) return;
+      const headerText = this.buffer.slice(0, sepIdx).toString('utf8');
+      this.buffer = this.buffer.slice(sepIdx + 4);
+      if (!headerText.startsWith('HTTP/1.1 101')) {
+        this._emit('error', new Error(`WebSocket handshake failed: ${headerText.split('\r\n')[0]}`));
+        this.close();
+        return;
+      }
+      this.handshakeDone = true;
+      this._emit('open', {});
+    }
+
+    this._drainFrames();
+  }
+
+  _drainFrames() {
+    while (this.buffer.length >= 2) {
+      const b0 = this.buffer[0];
+      const b1 = this.buffer[1];
+      const fin = (b0 & 0x80) !== 0;
+      const opcode = b0 & 0x0f;
+      const masked = (b1 & 0x80) !== 0;
+      let payloadLen = b1 & 0x7f;
+      let offset = 2;
+
+      if (payloadLen === 126) {
+        if (this.buffer.length < offset + 2) return;
+        payloadLen = this.buffer.readUInt16BE(offset);
+        offset += 2;
+      } else if (payloadLen === 127) {
+        if (this.buffer.length < offset + 8) return;
+        payloadLen = Number(this.buffer.readBigUInt64BE(offset));
+        offset += 8;
+      }
+
+      const maskLen = masked ? 4 : 0;
+      if (this.buffer.length < offset + maskLen + payloadLen) return;
+
+      let payload = this.buffer.slice(offset + maskLen, offset + maskLen + payloadLen);
+      if (masked) {
+        const mask = this.buffer.slice(offset, offset + 4);
+        payload = Buffer.from(payload);
+        for (let i = 0; i < payload.length; i++) payload[i] ^= mask[i & 3];
+      }
+      this.buffer = this.buffer.slice(offset + maskLen + payloadLen);
+
+      if (opcode === 0x8) {
+        this.close();
+        return;
+      }
+      if (opcode === 0x9) {
+        this._sendFrame(0xA, payload);
+        continue;
+      }
+      if (opcode === 0x1 || opcode === 0x0) {
+        this.fragmentChunks.push(payload);
+        if (fin) {
+          const full = Buffer.concat(this.fragmentChunks).toString('utf8');
+          this.fragmentChunks = [];
+          this._emit('message', { data: full });
+        }
+      }
+    }
+  }
+
+  _sendFrame(opcode, payloadBuf) {
+    if (!this.socket || this.socket.destroyed) return;
+    const len = payloadBuf.length;
+    const mask = crypto.randomBytes(4);
+    let header;
+    if (len < 126) {
+      header = Buffer.alloc(2);
+      header[0] = 0x80 | opcode;
+      header[1] = 0x80 | len;
+    } else if (len < 65536) {
+      header = Buffer.alloc(4);
+      header[0] = 0x80 | opcode;
+      header[1] = 0x80 | 126;
+      header.writeUInt16BE(len, 2);
+    } else {
+      header = Buffer.alloc(10);
+      header[0] = 0x80 | opcode;
+      header[1] = 0x80 | 127;
+      header.writeBigUInt64BE(BigInt(len), 2);
+    }
+
+    const maskedPayload = Buffer.allocUnsafe(len);
+    for (let i = 0; i < len; i++) {
+      maskedPayload[i] = payloadBuf[i] ^ mask[i & 3];
+    }
+    this.socket.write(Buffer.concat([header, mask, maskedPayload]));
+  }
+
+  send(text) {
+    this._sendFrame(0x1, Buffer.from(String(text), 'utf8'));
+  }
+
+  close() {
+    if (this.socket && !this.socket.destroyed) {
+      try {
+        this.socket.end();
+        this.socket.destroy();
+      } catch (_) {
+        // Ignore teardown socket error
+      }
+    }
+  }
+}
+
+function createWebSocket(wsUrl) {
+  if (process.env.FORCE_RAW_WS !== '1' && typeof globalThis.WebSocket === 'function') {
+    return new globalThis.WebSocket(wsUrl);
+  }
+  return new RawWebSocket(wsUrl);
+}
+
 // --- Minimal Chrome DevTools Protocol Client ---
 
 class CDPClient {
@@ -133,7 +324,7 @@ class CDPClient {
   }
 
   async connect() {
-    this.ws = new WebSocket(this.wsUrl);
+    this.ws = createWebSocket(this.wsUrl);
     await new Promise((resolve, reject) => {
       this.ws.addEventListener('open', resolve, { once: true });
       this.ws.addEventListener('error', reject, { once: true });
@@ -205,22 +396,47 @@ class CDPClient {
   }
 }
 
-async function waitForCDP(port, timeoutMs = 15000) {
+function httpGetJson(url) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+      let raw = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => { raw += chunk; });
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(raw));
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(3000, () => req.destroy(new Error('HTTP timeout')));
+  });
+}
+
+async function waitForCDP(port, timeoutMs = 25000, getStderr = null) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(`http://127.0.0.1:${port}/json/list`);
-      if (res.ok) {
-        const tabs = await res.json();
-        const page = tabs.find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
-        if (page) return page.webSocketDebuggerUrl;
-      }
+      const tabs = await httpGetJson(`http://127.0.0.1:${port}/json/list`);
+      const page = Array.isArray(tabs)
+        ? tabs.find((t) => t.type === 'page' && t.webSocketDebuggerUrl)
+        : null;
+      if (page) return page.webSocketDebuggerUrl;
     } catch (_) {
       // Chrome debugging port still starting up
     }
     await sleep(200);
   }
-  throw new Error(`Timed out waiting for headless Chrome CDP on port ${port}`);
+  const errTail = getStderr ? getStderr().trim() : '';
+  const extra = errTail ? `\nChrome stderr:\n${errTail}` : '';
+  throw new Error(`Timed out waiting for headless Chrome CDP on port ${port}${extra}`);
 }
 
 async function navigate(cdp, url) {
@@ -368,7 +584,7 @@ class TestRunner {
       stat.fail++;
       const msg = `[${viewportName}] ${label}: ${err.message}`;
       this.failures.push(msg);
-      console.error(`  [FAIL] ${msg}`);
+      console.log(`  [FAIL] ${msg}`);
     }
   }
 }
@@ -1049,27 +1265,38 @@ async function main() {
   const cdpPort = await getFreePort();
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfl-responsive-chrome-'));
 
-  const chrome = spawn(
-    browserBin,
-    [
-      '--headless=new',
-      `--remote-debugging-port=${cdpPort}`,
-      `--user-data-dir=${userDataDir}`,
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--disable-gpu',
-      '--disable-extensions',
-      '--window-size=1440,900',
-      'about:blank',
-    ],
-    { stdio: 'ignore' }
-  );
+  const chromeArgs = [
+    '--headless=new',
+    `--remote-debugging-port=${cdpPort}`,
+    '--remote-allow-origins=*',
+    `--user-data-dir=${userDataDir}`,
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-gpu',
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--mute-audio',
+    '--window-size=1440,900',
+    'about:blank',
+  ];
+
+  const chrome = spawn(browserBin, chromeArgs, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let chromeStderr = '';
+  if (chrome.stderr) {
+    chrome.stderr.setEncoding('utf8');
+    chrome.stderr.on('data', (chunk) => {
+      chromeStderr = (chromeStderr + chunk).slice(-2000);
+    });
+  }
 
   let cdp = null;
   const runner = new TestRunner();
 
   try {
-    const wsUrl = await waitForCDP(cdpPort);
+    const wsUrl = await waitForCDP(cdpPort, 25000, () => chromeStderr);
     cdp = new CDPClient(wsUrl);
     await cdp.connect();
     await cdp.send('Page.enable');
@@ -1156,6 +1383,8 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('RESPONSIVE TEST SUITE CRASHED:', err.message || err);
+  const msg = `RESPONSIVE TEST SUITE CRASHED: ${err.message || err}`;
+  console.log(msg);
+  console.error(msg);
   process.exit(1);
 });
