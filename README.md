@@ -14,6 +14,7 @@
     <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"/>
     <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
     <img src="https://img.shields.io/badge/Tesseract_OCR-5C6BC0?style=for-the-badge&logo=tesseract&logoColor=white" alt="Tesseract OCR"/>
+    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT"/>
   </p>
 </div>
 
@@ -216,6 +217,12 @@ pytest Code/backend/tests -v
 Xem tài liệu hướng dẫn sử dụng chi tiết từng bước (Step-by-step User Manual), quy chuẩn tệp PDF đầu vào và giải quyết sự cố tại:
 
 👉 **[Docs/USER_GUIDE.md](Docs/USER_GUIDE.md)**
+
+---
+
+## Giấy phép (License)
+
+Dự án được phân phối dưới giấy phép mã nguồn mở [MIT License](LICENSE).
 
 ---
 
