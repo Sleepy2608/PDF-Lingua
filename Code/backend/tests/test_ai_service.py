@@ -531,3 +531,269 @@ class TestSensitiveOutputRedaction:
         )
         assert "SecretPassword123" not in result["answer"]
         assert "[PASSWORD_REDACTED]" in result["answer"] or "không đề cập" in result["answer"]
+
+
+class TestMultiKeyRotationAndFailover:
+    """Test suite for B.AI multi-key round-robin rotation and automatic failover on HTTP 429 / 401 / 403."""
+
+    def test_comma_separated_keys_parsed(self):
+        service = AIService(api_key="sk-key1, sk-key2,  sk-key3 ")
+        assert service.api_keys == ["sk-key1", "sk-key2", "sk-key3"]
+        assert service.api_key == "sk-key1"
+
+    def test_semicolon_separated_keys_parsed(self):
+        service = AIService(api_key="sk-alpha;sk-beta;sk-gamma")
+        assert service.api_keys == ["sk-alpha", "sk-beta", "sk-gamma"]
+
+    def test_round_robin_rotation(self):
+        service = AIService(api_key="key-A,key-B,key-C")
+        mock_response_data = {
+            "choices": [{"message": {"content": "ok"}}]
+        }
+        mock_http_response = MagicMock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = mock_response_data
+        mock_http_response.raise_for_status = MagicMock()
+
+        captured_auth_headers = []
+
+        async def fake_post(endpoint, json, headers):
+            captured_auth_headers.append(headers.get("Authorization"))
+            return mock_http_response
+
+        with patch("httpx.AsyncClient.post", side_effect=fake_post):
+            asyncio.run(service._call_bai_api(prompt="test 1"))
+            asyncio.run(service._call_bai_api(prompt="test 2"))
+            asyncio.run(service._call_bai_api(prompt="test 3"))
+            asyncio.run(service._call_bai_api(prompt="test 4"))
+
+        assert captured_auth_headers == [
+            "Bearer key-A",
+            "Bearer key-B",
+            "Bearer key-C",
+            "Bearer key-A",
+        ]
+
+    def test_auto_failover_on_429(self):
+        service = AIService(api_key="key-rate-limited,key-healthy")
+
+        mock_req = httpx.Request("POST", "https://api.b.ai/v1/chat/completions")
+        resp_429 = httpx.Response(status_code=429, text="Rate limit exceeded", request=mock_req)
+        resp_200 = httpx.Response(
+            status_code=200,
+            json={"choices": [{"message": {"content": "Success from failover key"}}]},
+            request=mock_req,
+        )
+
+        call_count = 0
+
+        async def mock_post_failover(endpoint, json, headers):
+            nonlocal call_count
+            call_count += 1
+            if "key-rate-limited" in headers.get("Authorization", ""):
+                raise httpx.HTTPStatusError("429 Too Many Requests", request=mock_req, response=resp_429)
+            return resp_200
+
+        with patch("httpx.AsyncClient.post", side_effect=mock_post_failover):
+            res = asyncio.run(service._call_bai_api(prompt="hello"))
+            assert res == "Success from failover key"
+            assert call_count == 2
+
+    def test_all_keys_exhausted_raises_for_fallback(self):
+        service = AIService(api_key="key-1,key-2")
+        mock_req = httpx.Request("POST", "https://api.b.ai/v1/chat/completions")
+        resp_429 = httpx.Response(status_code=429, text="Quota exhausted", request=mock_req)
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.side_effect = httpx.HTTPStatusError("429 Too Many Requests", request=mock_req, response=resp_429)
+
+            import pytest
+            with pytest.raises(httpx.HTTPStatusError):
+                asyncio.run(service._call_bai_api(prompt="test"))
+
+
+class TestSmartIntentFallback:
+    """Test suite for the 4 smart fallback intent branches: Greeting, Summary, Keyword Match, Out-of-Scope."""
+
+    def test_greeting_intent_vietnamese(self):
+        service = AIService()
+        assert service._is_greeting_intent("Xin chào bạn!")
+        assert service._is_greeting_intent("chào bot")
+        assert service._is_greeting_intent("bạn là ai?")
+
+        response = service._generate_mock_chat_response("Xin chào!", [], lang="vi")
+        assert "Xin chào! Tôi là Trợ lý AI của PDF-Lingua" in response
+
+    def test_greeting_intent_english(self):
+        service = AIService()
+        assert service._is_greeting_intent("hello?")
+        assert service._is_greeting_intent("hi")
+        assert service._is_greeting_intent("who are you")
+
+        response = service._generate_mock_chat_response("hello?", [], lang="en")
+        assert "Hello! I am your PDF-Lingua AI Assistant" in response
+
+    def test_summary_intent_vietnamese_bullets(self):
+        service = AIService()
+        query = "Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?"
+        assert service._is_summary_intent(query)
+
+        mock_chunks = [
+            {"chunk_index": 1, "page_number": 1, "text": "Doan 1: He thong ho tro OCR toc do cao tren moi tai lieu PDF.", "score": 0},
+            {"chunk_index": 2, "page_number": 1, "text": "Doan 2: Co che dich thuat song song giu nguyen bo cuc van ban.", "score": 0},
+            {"chunk_index": 3, "page_number": 2, "text": "Doan 3: Tro ly AI giup nguoi dung tra cuu tai lieu thong minh.", "score": 0},
+        ]
+        response = service._generate_mock_chat_response(query, mock_chunks, lang="vi")
+        assert "Dưới đây là các ý chính được trích xuất từ tài liệu:" in response
+        assert "• [Trang 1, Đoạn 1]:" in response
+        assert "• [Trang 2, Đoạn 3]:" in response
+
+    def test_summary_intent_populates_citations_in_chat(self):
+        service = AIService()
+        doc = (
+            "Trang 1: Cong nghe nhan dang chu viet quang hoc OCR thuc hien nhanh chong.\n\n"
+            "Trang 2: He thong ma hoa du lieu nguoi dung theo chuan AES-256 an toan cao."
+        )
+        query = "Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?"
+        res = asyncio.run(service.chat_with_document(query=query, document_text=doc))
+        assert "Dưới đây là các ý chính được trích xuất từ tài liệu:" in res["answer"]
+        assert len(res["citations"]) > 0
+
+    def test_specific_keyword_match_intent(self):
+        service = AIService()
+        mock_chunks = [
+            {
+                "chunk_index": 1,
+                "page_number": 1,
+                "text": "Tai lieu quy dinh tieu chuan bao mat la ma hoa AES-256 bat buoc cho toan bo may chu.",
+                "matched_terms": ["aes-256", "bao", "mat"],
+                "score": 15,
+            }
+        ]
+        response = service._generate_mock_chat_response("tieu chuan ma hoa bao mat la gi?", mock_chunks, lang="vi")
+        assert "Dựa trên tài liệu [Trang 1, Đoạn 1]:" in response
+        assert "AES-256" in response
+
+    def test_out_of_scope_query_truthful_refusal(self):
+        service = AIService()
+        query = "Thời tiết ngày mai tại Hà Nội có mưa không?"
+        assert not service._is_greeting_intent(query)
+        assert not service._is_summary_intent(query)
+
+        mock_chunks = [
+            {"chunk_index": 1, "page_number": 1, "text": "Tai lieu huong dan lap trinh Python va FastAPI.", "score": 0}
+        ]
+        response = service._generate_mock_chat_response(query, mock_chunks, lang="vi")
+        assert response == service.NO_INFO_RESPONSE
+
+
+class TestGeminiLiveFallback:
+    """Test suite for Tier 2 Google AI Studio Gemini live fallback."""
+
+    def test_gemini_keys_initialization(self):
+        service = AIService(
+            gemini_api_key="AIzaSyAlpha, AIzaSyBeta",
+            gemini_base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            gemini_model="gemini-3.0-flash-lite",
+        )
+        assert service.gemini_api_keys == ["AIzaSyAlpha", "AIzaSyBeta"]
+        assert service.gemini_api_key == "AIzaSyAlpha"
+        assert service.gemini_base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
+        assert service.gemini_model == "gemini-3.0-flash-lite"
+
+    def test_call_gemini_api_success(self):
+        service = AIService(gemini_api_key="AIzaSyTest123")
+        mock_response = httpx.Response(
+            status_code=200,
+            json={"choices": [{"message": {"content": "Phan hoi thanh cong tu Gemini."}}]},
+            request=httpx.Request("POST", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"),
+        )
+
+        with patch("httpx.AsyncClient.post", return_value=mock_response) as mock_post:
+            result = asyncio.run(service._call_gemini_api(prompt="Xin chao"))
+            assert result == "Phan hoi thanh cong tu Gemini."
+            mock_post.assert_called_once()
+            call_kwargs = mock_post.call_args[1]
+            assert "AIzaSyTest123" in call_kwargs["headers"]["Authorization"]
+            assert call_kwargs["headers"]["x-goog-api-key"] == "AIzaSyTest123"
+
+    def test_chat_failover_from_bai_to_gemini(self):
+        service = AIService(
+            api_key="bai-broken-key",
+            gemini_api_key="AIzaSyHealthy",
+        )
+
+        mock_req_bai = httpx.Request("POST", "https://api.b.ai/v1/chat/completions")
+        resp_bai_403 = httpx.Response(status_code=403, text="Deposit required", request=mock_req_bai)
+
+        mock_req_gemini = httpx.Request("POST", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")
+        resp_gemini_200 = httpx.Response(
+            status_code=200,
+            json={"choices": [{"message": {"content": "Giai dap thong minh truc tiep tu mo hinh Google Gemini 3.0 Flash Lite."}}]},
+            request=mock_req_gemini,
+        )
+
+        async def route_post(endpoint, json, headers):
+            if "api.b.ai" in endpoint:
+                raise httpx.HTTPStatusError("403 Deposit required", request=mock_req_bai, response=resp_bai_403)
+            elif "googleapis.com" in endpoint:
+                return resp_gemini_200
+            raise ValueError(f"Unexpected endpoint: {endpoint}")
+
+        with patch("httpx.AsyncClient.post", side_effect=route_post):
+            doc = "Doan 1: Hoc may giup toi uu hoa quy trinh phan tich du lieu."
+            result = asyncio.run(service.chat_with_document(query="Hoc may giup gi?", document_text=doc))
+
+            assert result["fallback_used"] is False
+            assert result["provider"] == "gemini"
+            assert result["model_used"] == "gemini-3.0-flash-lite"
+            assert "Google Gemini 3.0 Flash Lite" in result["answer"]
+
+    def test_summarize_failover_from_bai_to_gemini(self):
+        service = AIService(
+            api_key="bai-zero-balance",
+            gemini_api_key="AIzaSyHealthy",
+        )
+
+        mock_req_bai = httpx.Request("POST", "https://api.b.ai/v1/chat/completions")
+        resp_bai_400 = httpx.Response(status_code=400, text="credit balance is 0", request=mock_req_bai)
+
+        mock_req_gemini = httpx.Request("POST", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")
+        resp_gemini_200 = httpx.Response(
+            status_code=200,
+            json={"choices": [{"message": {"content": "Ban tom tat tong quan van ban tao boi Gemini."}}]},
+            request=mock_req_gemini,
+        )
+
+        async def route_post(endpoint, json, headers):
+            if "api.b.ai" in endpoint:
+                raise httpx.HTTPStatusError("400 credit balance is 0", request=mock_req_bai, response=resp_bai_400)
+            elif "googleapis.com" in endpoint:
+                return resp_gemini_200
+            raise ValueError(f"Unexpected endpoint: {endpoint}")
+
+        with patch("httpx.AsyncClient.post", side_effect=route_post):
+            result = asyncio.run(service.summarize_text(text="Noi dung van ban can phan tich va tom tat."))
+
+            assert result["fallback_used"] is False
+            assert result["provider"] == "gemini"
+            assert result["model_used"] == "gemini-3.0-flash-lite"
+            assert "tao boi Gemini" in result["summary"]
+
+    def test_dual_failure_triggers_smart_offline_fallback(self):
+        service = AIService(
+            api_key="bai-broken",
+            gemini_api_key="gemini-broken",
+        )
+
+        mock_req = httpx.Request("POST", "https://endpoint.com")
+        resp_err = httpx.Response(status_code=500, text="Server error", request=mock_req)
+
+        with patch("httpx.AsyncClient.post", side_effect=httpx.HTTPStatusError("500 Error", request=mock_req, response=resp_err)):
+            result = asyncio.run(service.chat_with_document(query="hello?", document_text="Van ban kiem thu."))
+            assert result["fallback_used"] is True
+            assert "B.AI:" in result["fallback_reason"]
+            assert "Gemini:" in result["fallback_reason"]
+            assert "PDF-Lingua AI Assistant" in result["answer"]
+
+
