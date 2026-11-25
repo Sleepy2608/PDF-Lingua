@@ -644,9 +644,10 @@ class TestSmartIntentFallback:
             {"chunk_index": 3, "page_number": 2, "text": "Doan 3: Tro ly AI giup nguoi dung tra cuu tai lieu thong minh.", "score": 0},
         ]
         response = service._generate_mock_chat_response(query, mock_chunks, lang="vi")
-        assert "Dưới đây là các ý chính được trích xuất từ tài liệu:" in response
+        assert "Dựa trên tài liệu, dưới đây là các ý chính được trích xuất:" in response
         assert "• [Trang 1, Đoạn 1]:" in response
         assert "• [Trang 2, Đoạn 3]:" in response
+        assert "Tóm tắt AI" in response
 
     def test_summary_intent_populates_citations_in_chat(self):
         service = AIService()
@@ -656,7 +657,7 @@ class TestSmartIntentFallback:
         )
         query = "Tóm tắt ý chính của tài liệu này trong 3 gạch đầu dòng?"
         res = asyncio.run(service.chat_with_document(query=query, document_text=doc))
-        assert "Dưới đây là các ý chính được trích xuất từ tài liệu:" in res["answer"]
+        assert "Dựa trên tài liệu, dưới đây là các ý chính được trích xuất:" in res["answer"]
         assert len(res["citations"]) > 0
 
     def test_specific_keyword_match_intent(self):
