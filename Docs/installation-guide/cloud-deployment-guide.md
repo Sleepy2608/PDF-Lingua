@@ -192,3 +192,7 @@ Sau khi hệ thống online, thực hiện kiểm tra theo checklist sau:
 
 ### 2. Tự động hóa CI/CD khi có cập nhật code mới:
 * Cả Vercel và Render đều được kết nối với repository GitHub của bạn. Mỗi khi bạn chạy lệnh `git push` lên nhánh chính, cả Frontend và Backend sẽ tự động build và cập nhật phiên bản mới nhất mà không cần thao tác thủ công.
+
+### 3. Phương án sao lưu & phục hồi cơ sở dữ liệu định kỳ:
+* Hệ thống tích hợp sẵn kịch bản sao lưu nóng trực tuyến [scripts/backup_db.py](file:///c:/University%20Coding%20Project/PDF-Lingua/Code/backend/scripts/backup_db.py) sử dụng SQLite Online Backup C-API (không gây khóa database khi người dùng đang thao tác).
+* Xem hướng dẫn thiết lập chi tiết, chỉ số RPO/RTO và kịch bản phục hồi thảm họa tại tài liệu: [database-backup-and-recovery.md](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/database-backup-and-recovery.md).
