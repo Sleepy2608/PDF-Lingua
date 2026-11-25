@@ -81,6 +81,10 @@ class Settings:
     BAI_MODEL_SUMMARIZE: str = os.getenv("BAI_MODEL_SUMMARIZE", "gpt-5-mini")
     BAI_MODEL_CHAT: str = os.getenv("BAI_MODEL_CHAT", "gpt-5-mini")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_BASE_URL: str = os.getenv(
+        "GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"
+    )
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
     # CORS
