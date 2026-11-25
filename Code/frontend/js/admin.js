@@ -27,6 +27,13 @@
   let searchDebounceTimer = null;
   let pendingConfirmAction = null;
 
+  // Transaction table state
+  let txPage = 1;
+  let txTotalPages = 1;
+  let txSearch = '';
+  let txStatusFilter = 'all';
+  let txSearchDebounceTimer = null;
+
   // ── Helper Utilities ────────────────────────────────────────────────────────
   function getStoredToken() {
     if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
@@ -697,6 +704,164 @@
   function loadAllAdminData() {
     fetchAdminStats();
     fetchAdminUsers(1);
+    fetchAdminTransactions(1);
+  }
+
+  // ── API Fetch & Actions: VietQR Transactions ───────────────────────────────
+  async function fetchAdminTransactions(page = 1) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    txPage = page;
+    const params = new URLSearchParams({
+      page: String(txPage),
+      limit: String(currentLimit),
+    });
+    if (txSearch && txSearch.trim()) params.append('search', txSearch.trim());
+    if (txStatusFilter && txStatusFilter !== 'all') params.append('status', txStatusFilter);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/transactions?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.status === 200) {
+        const json = await res.json();
+        renderAdminTransactions(json.data);
+      }
+    } catch (err) {
+      console.error('[PDF-Lingua Admin] Error loading transactions:', err);
+    }
+  }
+
+  function renderAdminTransactions(data) {
+    if (!data) return;
+
+    const revBadge = document.getElementById('adminTxRevenueBadge');
+    const pendBadge = document.getElementById('adminTxPendingBadge');
+    if (revBadge) revBadge.textContent = `Doanh thu: ${data.total_revenue_display || '0đ'}`;
+    if (pendBadge) pendBadge.textContent = `Chờ duyệt: ${data.pending_count || 0}`;
+
+    const tbody = document.getElementById('adminTxTableBody');
+    const emptyEl = document.getElementById('adminTxTableEmpty');
+    const tableEl = document.getElementById('adminTxTable');
+    const pageInfo = document.getElementById('adminTxPaginationInfo');
+    const pageBadge = document.getElementById('adminTxCurrentPageBadge');
+    const prevBtn = document.getElementById('btnAdminTxPrevPage');
+    const nextBtn = document.getElementById('btnAdminTxNextPage');
+
+    txTotalPages = data.total_pages || 1;
+    if (pageInfo) pageInfo.textContent = `Trang ${data.page || 1} / ${txTotalPages} (Tổng ${data.total_count || 0} giao dịch)`;
+    if (pageBadge) pageBadge.textContent = String(data.page || 1);
+    if (prevBtn) prevBtn.disabled = (data.page || 1) <= 1;
+    if (nextBtn) nextBtn.disabled = (data.page || 1) >= txTotalPages;
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const items = data.items || [];
+    if (items.length === 0) {
+      if (tableEl) tableEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    if (tableEl) tableEl.style.display = 'table';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const statusMap = {
+      pending: { label: 'Chờ duyệt', cls: 'pending' },
+      completed: { label: 'Thành công', cls: 'completed' },
+      failed: { label: 'Đã từ chối', cls: 'failed' },
+      expired: { label: 'Hết hạn', cls: 'expired' },
+    };
+
+    items.forEach((tx) => {
+      const tr = document.createElement('tr');
+      const st = statusMap[tx.payment_status] || { label: tx.payment_status, cls: 'pending' };
+      const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleString('vi-VN') : '-';
+      const safeCode = String(tx.transaction_code || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeEmail = String(tx.user_email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safePlan = String(tx.plan_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      let actionsHtml = '<span class="admin-self-tag font-mono">Đã xử lý</span>';
+      if (tx.payment_status === 'pending') {
+        actionsHtml = `
+          <div style="display:inline-flex; gap:0.4rem; justify-content:flex-end;">
+            <button type="button" class="btn-tx-approve" data-tx-action="approve" data-tx-code="${safeCode}" data-tx-email="${safeEmail}">
+              Duyệt Pro
+            </button>
+            <button type="button" class="btn-tx-reject" data-tx-action="reject" data-tx-code="${safeCode}" data-tx-email="${safeEmail}">
+              Từ chối
+            </button>
+          </div>
+        `;
+      }
+
+      tr.innerHTML = `
+        <td class="font-mono">${safeCode}</td>
+        <td>
+          <div class="user-cell-email">${safeEmail}</div>
+        </td>
+        <td>${safePlan}</td>
+        <td class="font-mono"><strong>${tx.amount_display}</strong></td>
+        <td><span class="tx-status-pill ${st.cls}">${st.label}</span></td>
+        <td class="font-mono" style="font-size:0.78rem; color:#64748B;">${dateStr}</td>
+        <td class="text-right">${actionsHtml}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function executeApproveTransaction(transactionCode) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/transactions/${encodeURIComponent(transactionCode)}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      const json = await res.json();
+      if (res.ok) {
+        notifyUser(json.message || `Đã duyệt giao dịch ${transactionCode} thành công.`, 'success');
+        loadAllAdminData();
+      } else {
+        notifyUser(json.message || 'Không thể duyệt giao dịch.', 'error');
+      }
+    } catch (err) {
+      notifyUser('Lỗi kết nối máy chủ khi duyệt giao dịch.', 'error');
+    }
+  }
+
+  async function executeRejectTransaction(transactionCode) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/transactions/${encodeURIComponent(transactionCode)}/reject`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      const json = await res.json();
+      if (res.ok) {
+        notifyUser(json.message || `Đã từ chối giao dịch ${transactionCode}.`, 'info');
+        fetchAdminTransactions(txPage);
+      } else {
+        notifyUser(json.message || 'Không thể từ chối giao dịch.', 'error');
+      }
+    } catch (err) {
+      notifyUser('Lỗi kết nối máy chủ khi từ chối giao dịch.', 'error');
+    }
   }
 
   // ── Event Bindings ──────────────────────────────────────────────────────────
@@ -850,6 +1015,72 @@
         }
       }
     });
+
+    // 7. VietQR Transaction Toolbar, Pagination & Action Delegation
+    const txSearchInput = document.getElementById('adminTxSearchInput');
+    if (txSearchInput) {
+      txSearchInput.addEventListener('input', (e) => {
+        txSearch = e.target.value;
+        clearTimeout(txSearchDebounceTimer);
+        txSearchDebounceTimer = setTimeout(() => fetchAdminTransactions(1), 350);
+      });
+    }
+
+    const txStatusSelect = document.getElementById('adminTxStatusFilter');
+    if (txStatusSelect) {
+      txStatusSelect.addEventListener('change', (e) => {
+        txStatusFilter = e.target.value;
+        fetchAdminTransactions(1);
+      });
+    }
+
+    const btnTxPrev = document.getElementById('btnAdminTxPrevPage');
+    if (btnTxPrev) {
+      btnTxPrev.addEventListener('click', () => {
+        if (txPage > 1) fetchAdminTransactions(txPage - 1);
+      });
+    }
+
+    const btnTxNext = document.getElementById('btnAdminTxNextPage');
+    if (btnTxNext) {
+      btnTxNext.addEventListener('click', () => {
+        if (txPage < txTotalPages) fetchAdminTransactions(txPage + 1);
+      });
+    }
+
+    const txTableBody = document.getElementById('adminTxTableBody');
+    if (txTableBody) {
+      txTableBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-tx-action]');
+        if (!btn) return;
+        const action = btn.getAttribute('data-tx-action');
+        const txCode = btn.getAttribute('data-tx-code');
+        const email = btn.getAttribute('data-tx-email');
+        if (!txCode) return;
+
+        if (action === 'approve') {
+          openConfirmModal({
+            title: 'Duyệt thanh toán & Kích hoạt gói Pro',
+            desc: `Xác nhận đã nhận chuyển khoản cho mã giao dịch "${txCode}" và nâng cấp tài khoản lên Pro VIP?`,
+            email: email,
+            actionType: 'warning',
+            onConfirm: async () => {
+              await executeApproveTransaction(txCode);
+            },
+          });
+        } else if (action === 'reject') {
+          openConfirmModal({
+            title: 'Từ chối giao dịch thanh toán',
+            desc: `Bạn có chắc muốn đánh dấu giao dịch "${txCode}" là thất bại / từ chối?`,
+            email: email,
+            actionType: 'danger',
+            onConfirm: async () => {
+              await executeRejectTransaction(txCode);
+            },
+          });
+        }
+      });
+    }
   }
 
   // ── Auto Initialization ─────────────────────────────────────────────────────
@@ -871,6 +1102,9 @@
     closeConfirmModal,
     executeStatusUpdate,
     executeRoleUpdate,
+    fetchAdminTransactions,
+    executeApproveTransaction,
+    executeRejectTransaction,
   };
 })();
 

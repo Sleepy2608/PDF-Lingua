@@ -3207,6 +3207,101 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- VietQR Transactions & Pro Approval Card -->
+                        <div class="admin-table-card admin-tx-card" id="adminTxCard">
+                            <div class="admin-table-header">
+                                <div class="table-title-group">
+                                    <div class="table-icon-pill">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                            <line x1="2" y1="10" x2="22" y2="10"></line>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="table-title">Giao dịch & Duyệt nâng cấp Pro (VietQR)</h3>
+                                        <p class="table-subtitle">Theo dõi doanh thu, đối soát mã chuyển khoản và kích hoạt gói Pro cho người dùng</p>
+                                    </div>
+                                </div>
+                                <div class="admin-tx-summary-pills">
+                                    <span class="tx-summary-pill revenue font-mono" id="adminTxRevenueBadge">Doanh thu: 0đ</span>
+                                    <span class="tx-summary-pill pending font-mono" id="adminTxPendingBadge">Chờ duyệt: 0</span>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Toolbar -->
+                            <div class="admin-toolbar">
+                                <div class="admin-search-wrap">
+                                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="admin-search-input" id="adminTxSearchInput"
+                                        placeholder="Tìm theo mã giao dịch, email hoặc nội dung CK...">
+                                </div>
+                                <div class="admin-filter-wrap">
+                                    <select class="admin-filter-select" id="adminTxStatusFilter" aria-label="Lọc trạng thái giao dịch">
+                                        <option value="all">Tất cả trạng thái</option>
+                                        <option value="pending">Chờ duyệt</option>
+                                        <option value="completed">Thành công</option>
+                                        <option value="failed">Đã từ chối</option>
+                                        <option value="expired">Hết hạn</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Transactions Table -->
+                            <div class="admin-table-wrapper">
+                                <table class="admin-users-table" id="adminTxTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã GD</th>
+                                            <th>Người dùng</th>
+                                            <th>Gói cước</th>
+                                            <th>Số tiền</th>
+                                            <th>Trạng thái</th>
+                                            <th>Thời gian</th>
+                                            <th class="text-right">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminTxTableBody">
+                                        <!-- Populated dynamically by admin.js -->
+                                    </tbody>
+                                </table>
+                                <div class="admin-table-empty" id="adminTxTableEmpty" style="display: none;">
+                                    <h4 class="empty-title">Chưa có giao dịch thanh toán nào</h4>
+                                    <p class="empty-text">Các giao dịch nâng cấp gói Pro qua VietQR sẽ hiển thị tại đây để bạn đối soát và duyệt.</p>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Pagination Footer -->
+                            <div class="admin-pagination-footer" id="adminTxPagination">
+                                <div class="pagination-info font-mono" id="adminTxPaginationInfo">Trang 1 / 1</div>
+                                <div class="pagination-controls">
+                                    <button type="button" class="btn btn-admin-pager" id="btnAdminTxPrevPage" disabled>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                        <span>Trước</span>
+                                    </button>
+                                    <span class="pagination-current-page font-mono" id="adminTxCurrentPageBadge">1</span>
+                                    <button type="button" class="btn btn-admin-pager" id="btnAdminTxNextPage" disabled>
+                                        <span>Sau</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
