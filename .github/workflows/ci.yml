@@ -250,4 +250,5 @@ jobs:
             tests/test_layout_metrics.py \
             tests/test_ai_service.py \
             tests/test_ai_chat_api.py \
+            tests/test_admin_seeding.py \
             -o testpaths="" -v
