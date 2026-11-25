@@ -192,7 +192,7 @@ class AIService:
 
     SUMMARY_PATTERNS: list[str] = [
         r"(?i)\b(tóm\s+tắt|tom\s+tat|tổng\s+quát|tong\s+quat|tổng\s+quan|tong\s+quan)\b",
-        r"(?i)\b(ý\s+chính|y\s+chinh|nội\s+dung\s+chính|noi\s+dung\s+chinh|điểm\s+chính|diem\s+chinh)\b",
+        r"(?i)\b(ý\s+chính|y\s+chinh|nội\s+dung\s+chính|noi\s+dung\s+chinh|nội\s+dung\s+bài|noi\s+dung\s+bai|nội\s+dung\s+tài\s+liệu|noi\s+dung\s+tai\s+lieu|điểm\s+chính|diem\s+chinh)\b",
         r"(?i)\b(gạch\s+đầu\s+dòng|gach\s+dau\s+dong|bullet\s+points?)\b",
         r"(?i)\b(summarize|summary|overview|key\s+takeaways|key\s+points|main\s+points)\b",
     ]
@@ -1153,12 +1153,13 @@ class AIService:
         if self._is_greeting_intent(query):
             if lang == "en":
                 return (
-                    "Hello! I am your PDF-Lingua AI Assistant. I am here to help you read, "
-                    "summarize, and answer questions about this document. Feel free to ask anything about its content!"
+                    "Hello! I am your PDF-Lingua AI Assistant. I can help you answer questions, "
+                    "look up details, and summarize the content from your uploaded document. "
+                    "What would you like to find out?"
                 )
             return (
-                "Xin chào! Tôi là Trợ lý AI của PDF-Lingua. Tôi sẵn sàng hỗ trợ bạn đọc hiểu, "
-                "tóm tắt và giải đáp thắc mắc về tài liệu này. Bạn có thể hỏi tôi về bất kỳ nội dung nào trong tài liệu!"
+                "Xin chào! Tôi là Trợ lý AI của PDF-Lingua. Tôi có thể giúp bạn giải đáp, "
+                "tra cứu và tóm tắt nội dung từ tài liệu bạn vừa tải lên. Bạn cần tìm hiểu thông tin gì trong tài liệu này?"
             )
 
         # Case 2: Document Summary / Key Points request
@@ -1183,10 +1184,12 @@ class AIService:
 
                 if bullet_points:
                     if lang == "en":
-                        header = "Here are the key takeaways extracted from the document:"
+                        header = "Based on the document, here are the extracted key takeaways:"
+                        footer = "\n\n(Tip: You can also use the 'AI Summarize' feature on the left sidebar for an in-depth analysis.)"
                     else:
-                        header = "Dưới đây là các ý chính được trích xuất từ tài liệu:"
-                    return f"{header}\n" + "\n".join(bullet_points)
+                        header = "Dựa trên tài liệu, dưới đây là các ý chính được trích xuất:"
+                        footer = "\n\n(Gợi ý: Bạn có thể dùng thêm tính năng 'Tóm tắt AI' ở thanh bên trái để xem bản phân tích chuyên sâu)"
+                    return f"{header}\n" + "\n".join(bullet_points) + footer
 
         # Case 3: Specific Query with Keyword Match (score > 0)
         has_positive_score = any(c.get("score", 0) > 0 for c in (relevant_chunks or []))
