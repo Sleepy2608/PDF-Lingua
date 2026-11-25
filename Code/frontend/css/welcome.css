@@ -825,12 +825,16 @@ body {
   font-family: var(--wl-font-mono);
   font-size: 0.81rem;
   color: #1E293B;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .welcome-para-pre {
   font-family: var(--wl-font-mono);
   font-size: 0.8rem;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   background-color: #F8FAFC;
   border: 1px solid #E2E8F0;
   padding: 6px 10px;
@@ -2290,7 +2294,11 @@ body {
   }
 
   .welcome-preview-panes {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .welcome-pane {
+    min-width: 0;
   }
 
   .welcome-pane-original {
@@ -2343,14 +2351,31 @@ body {
   }
 }
 
-/* Mobile Tier (375px - 640px) */
+/* Mobile Tier (360px - 640px) */
 @media (max-width: 640px) {
   .welcome-navbar-inner {
     height: 64px;
+    gap: 10px;
   }
 
-  .welcome-nav-actions #navBtnLogin {
+  .welcome-brand-link {
+    min-width: 0;
+  }
+
+  /* Primary CTA and language switcher live inside the mobile drawer on compact viewports */
+  .welcome-nav-actions #navBtnLogin,
+  .welcome-nav-actions #navBtnTrial,
+  .welcome-nav-actions #welcomeLangSwitcher {
     display: none;
+  }
+
+  .welcome-mobile-toggle {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  #mobileLangSwitcher .lang-switcher-btn {
+    min-height: 36px;
   }
 
   .welcome-hero-title {
@@ -2383,7 +2408,22 @@ body {
   }
 
   .welcome-pane {
-    padding: 16px 18px;
+    padding: 16px 14px;
+  }
+
+  .welcome-pane-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .welcome-pane-meta-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .welcome-pane-copy {
+    min-height: 32px;
+    white-space: nowrap;
   }
 
   .welcome-hero-trust-bar {

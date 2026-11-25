@@ -10,6 +10,9 @@ const BG_MINIMIZED_STORAGE_KEY = 'pdfl_bg_minimized';
 const ACTIVE_VIEW_STORAGE_KEY = 'pdfl_active_view';
 const PENDING_TOAST_STORAGE_KEY = 'pdfl_pending_toast';
 const VIEW_MODE_STORAGE_KEY = 'pdfl_workspace_view_mode';
+const PAGE_VIEW_MODE_STORAGE_KEY = 'pdfl_workspace_page_mode';
+const PAGE_CURRENT_NUM_STORAGE_KEY = 'pdfl_workspace_current_page';
+const GUEST_PAGES_STORAGE_KEY = 'pdfl_guest_page_translations';
 
 function t(key, fallback = '', params = null) {
   if (typeof window !== 'undefined' && window.i18n && typeof window.i18n.t === 'function') {
@@ -35,6 +38,12 @@ function isEnLanguage() {
 let currentDocData = null;
 let currentViewMode = 'split';
 let currentSplitMobileTab = 'pdf';
+let currentPageViewMode = 'all';
+let currentTranslationPageNum = null;
+let pageTranslationDrafts = {};
+let syncingPreviewTargetPage = null;
+let isPageActionBusy = false;
+let pageTranslationListenersInitialized = false;
 
 /**
  * Switch workspace view modes:
@@ -705,6 +714,7 @@ function initWorkspace() {
 
   // Page Selection UI & Quick Chips
   initPageSelection();
+  initPageTranslationControls();
   // Background Job Controls & Floating Mini-Widget
   initBackgroundJobControls();
 
@@ -747,8 +757,18 @@ function initWorkspace() {
 
     paneOriginal.addEventListener('input', () => {
       if (currentDocData) {
-        currentDocData.original_text = paneOriginal.innerText;
-        saveWorkspaceDocToStorage(currentDocData);
+        if (currentPageViewMode === 'page' && Array.isArray(currentDocData.pages) && currentDocData.pages.length > 0) {
+          const entry = getCurrentPageEntry();
+          if (entry) {
+            entry.original_text = paneOriginal.innerText;
+            const synced = rebuildAggregateDocumentText(currentDocData.pages);
+            currentDocData.original_text = synced.original_text;
+            saveWorkspaceDocToStorage(currentDocData);
+          }
+        } else {
+          currentDocData.original_text = paneOriginal.innerText;
+          saveWorkspaceDocToStorage(currentDocData);
+        }
       }
       updateCounters();
       updateExportUIState();
@@ -756,8 +776,14 @@ function initWorkspace() {
 
     paneTranslated.addEventListener('input', () => {
       if (currentDocData) {
-        currentDocData.translated_text = paneTranslated.innerText;
-        saveWorkspaceDocToStorage(currentDocData);
+        if (currentPageViewMode === 'page' && Array.isArray(currentDocData.pages) && currentDocData.pages.length > 0 && currentTranslationPageNum !== null) {
+          pageTranslationDrafts[currentTranslationPageNum] = paneTranslated.innerText;
+          updatePageStatusBadge('unsaved');
+          updateSaveButtonDirtyState();
+        } else {
+          currentDocData.translated_text = paneTranslated.innerText;
+          saveWorkspaceDocToStorage(currentDocData);
+        }
       }
       updateCounters();
       updateExportUIState();
@@ -1515,6 +1541,16 @@ async function handleRetranslate() {
  * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
  */
 function getOriginalContent() {
+  if (
+    currentPageViewMode === 'page' &&
+    currentDocData &&
+    Array.isArray(currentDocData.pages) &&
+    currentDocData.pages.length > 0 &&
+    typeof currentDocData.original_text === 'string' &&
+    currentDocData.original_text.trim()
+  ) {
+    return currentDocData.original_text.trim();
+  }
   const paneOriginal = document.getElementById('paneOriginal');
   if (paneOriginal && (paneOriginal.innerText || '').trim()) {
     return paneOriginal.innerText.trim();
@@ -1530,6 +1566,16 @@ function getOriginalContent() {
  * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
  */
 function getTranslatedContent() {
+  if (
+    currentPageViewMode === 'page' &&
+    currentDocData &&
+    Array.isArray(currentDocData.pages) &&
+    currentDocData.pages.length > 0 &&
+    typeof currentDocData.translated_text === 'string' &&
+    currentDocData.translated_text.trim()
+  ) {
+    return currentDocData.translated_text.trim();
+  }
   const paneTranslated = document.getElementById('paneTranslated');
   if (paneTranslated && (paneTranslated.innerText || '').trim()) {
     return paneTranslated.innerText.trim();
@@ -1951,6 +1997,7 @@ function renderWorkspace(data) {
   }
 
   // Update currentDocData & persist to session storage so refresh preserves it
+  const normalizedPages = normalizeWorkspacePages(data.pages);
   currentDocData = {
     document_id: data.document_id,
     history_id: data.history_id,
@@ -1963,8 +2010,26 @@ function renderWorkspace(data) {
     translated_text: translatedContent,
     action_type: data.action_type || 'TRANSLATE',
     engine_used: data.engine_used,
+    pages: normalizedPages,
   };
+
+  // For guest sessions with per-page results, save initial snapshot for Reload support
+  pageTranslationDrafts = {};
+  syncingPreviewTargetPage = null;
+  if (normalizedPages.length > 0 && !canUseAuthenticatedPageApi()) {
+    saveGuestPagesSnapshot(currentDocData, normalizedPages);
+  }
   saveWorkspaceDocToStorage(currentDocData);
+
+  currentPageViewMode = 'all';
+  currentTranslationPageNum = normalizedPages.length > 0 ? normalizedPages[0].page_number : null;
+  clearPageBarError();
+  renderPageTranslationBar();
+
+  // For authenticated history records missing embedded pages, fetch page list from server
+  if (normalizedPages.length === 0 && canUseAuthenticatedPageApi()) {
+    loadHistoryPagesFromServer(currentDocData.history_id);
+  }
 
   const store = getWorkspaceSessionStorage();
   if (store) {
@@ -2023,12 +2088,21 @@ function resetToUpload() {
   const widget = document.getElementById('bgJobWidget');
   if (widget) widget.style.display = 'none';
   currentDocData = null;
+  currentPageViewMode = 'all';
+  currentTranslationPageNum = null;
+  pageTranslationDrafts = {};
+  syncingPreviewTargetPage = null;
+  clearPageBarError();
+  const pageBar = document.getElementById('pageTranslationBar');
+  if (pageBar) pageBar.style.display = 'none';
   saveWorkspaceDocToStorage(null);
   resetPageSelection();
   const store = getWorkspaceSessionStorage();
   if (store) {
     try {
       store.removeItem(ACTIVE_VIEW_STORAGE_KEY);
+      store.removeItem(PAGE_VIEW_MODE_STORAGE_KEY);
+      store.removeItem(PAGE_CURRENT_NUM_STORAGE_KEY);
     } catch (_e) {}
   }
   const heroSection = document.getElementById('heroSection');
@@ -2470,6 +2544,918 @@ function getLangName(code) {
   return names[code] || code;
 }
 
+/* ==========================================================================
+   Page-Based Translation Navigation, Sync & Persistence Controls
+   ========================================================================== */
+
+function getHistoryApiBaseUrl() {
+  const rootBase = (typeof API_BASE_URL === 'string')
+    ? API_BASE_URL.replace(/\/api\/process\/?$/, '').replace(/\/process\/?$/, '')
+    : 'http://localhost:8000';
+  return `${rootBase}/api/history`;
+}
+
+function canUseAuthenticatedPageApi() {
+  const authHeaders = getAuthHeaders();
+  return Boolean(
+    authHeaders &&
+    authHeaders.Authorization &&
+    currentDocData &&
+    currentDocData.history_id
+  );
+}
+
+function normalizeWorkspacePages(rawPages) {
+  if (!Array.isArray(rawPages)) return [];
+  const normalized = [];
+  rawPages.forEach((item, idx) => {
+    if (!item || typeof item !== 'object') return;
+    const rawNum = item.page_number !== undefined ? item.page_number : item.page;
+    const parsedNum = parseInt(rawNum, 10);
+    const pageNumber = (!isNaN(parsedNum) && parsedNum >= 1) ? parsedNum : (idx + 1);
+    const origText = typeof item.original_text === 'string'
+      ? item.original_text
+      : (typeof item.text === 'string' ? item.text : '');
+    const transText = typeof item.translated_text === 'string' ? item.translated_text : '';
+    const isBlank = Boolean(item.is_blank) || (!origText.trim() && !transText.trim());
+    normalized.push({
+      page_number: pageNumber,
+      original_text: origText,
+      translated_text: transText,
+      is_ocr_used: Boolean(item.is_ocr_used),
+      is_blank: isBlank,
+      target_lang: item.target_lang || null,
+      engine_used: item.engine_used || null,
+      status: item.status || (isBlank ? 'blank' : 'completed'),
+      updated_at: item.updated_at || null,
+    });
+  });
+  return normalized;
+}
+
+function rebuildAggregateDocumentText(pages) {
+  if (!Array.isArray(pages) || pages.length === 0) {
+    return {
+      original_text: (currentDocData && currentDocData.original_text) || '',
+      translated_text: (currentDocData && currentDocData.translated_text) || '',
+    };
+  }
+  const origParts = [];
+  const transParts = [];
+  pages.forEach((p) => {
+    if (p && typeof p.original_text === 'string' && p.original_text.trim()) {
+      origParts.push(p.original_text);
+    }
+    if (p && typeof p.translated_text === 'string' && p.translated_text.trim()) {
+      transParts.push(p.translated_text);
+    }
+  });
+  return {
+    original_text: origParts.join('\n\n'),
+    translated_text: transParts.join('\n\n'),
+  };
+}
+
+function getGuestPagesDocKey(docData) {
+  if (!docData) return 'default';
+  const name = docData.filename || docData.document_filename || 'untitled';
+  const count = docData.page_count || (Array.isArray(docData.pages) ? docData.pages.length : 0);
+  return `${name}::${count}`;
+}
+
+function saveGuestPagesSnapshot(docData, pages) {
+  const store = getWorkspaceSessionStorage();
+  if (!store || !docData || !Array.isArray(pages)) return;
+  try {
+    const rawMap = store.getItem(GUEST_PAGES_STORAGE_KEY);
+    const parsedMap = rawMap ? JSON.parse(rawMap) : {};
+    const safeMap = (parsedMap && typeof parsedMap === 'object') ? parsedMap : {};
+    safeMap[getGuestPagesDocKey(docData)] = pages.map((p) => ({ ...p }));
+    store.setItem(GUEST_PAGES_STORAGE_KEY, JSON.stringify(safeMap));
+  } catch (_e) {}
+}
+
+function loadGuestPagesSnapshot(docData) {
+  const store = getWorkspaceSessionStorage();
+  if (!store || !docData) return null;
+  try {
+    const rawMap = store.getItem(GUEST_PAGES_STORAGE_KEY);
+    if (!rawMap) return null;
+    const parsedMap = JSON.parse(rawMap);
+    const saved = parsedMap && parsedMap[getGuestPagesDocKey(docData)];
+    return Array.isArray(saved) ? normalizeWorkspacePages(saved) : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
+function getCurrentPageEntry() {
+  if (!currentDocData || !Array.isArray(currentDocData.pages) || currentTranslationPageNum === null) {
+    return null;
+  }
+  return currentDocData.pages.find((p) => Number(p.page_number) === Number(currentTranslationPageNum)) || null;
+}
+
+function hasUnsavedDraftForPage(pageNumber) {
+  if (pageNumber === null || pageNumber === undefined) return false;
+  if (!Object.prototype.hasOwnProperty.call(pageTranslationDrafts, pageNumber)) return false;
+  const entry = currentDocData && Array.isArray(currentDocData.pages)
+    ? currentDocData.pages.find((p) => Number(p.page_number) === Number(pageNumber))
+    : null;
+  if (!entry) return false;
+  return String(pageTranslationDrafts[pageNumber]) !== String(entry.translated_text || '');
+}
+
+function showPageBarError(message) {
+  const banner = document.getElementById('pageBarErrorBanner');
+  const textEl = document.getElementById('pageBarErrorText');
+  if (textEl) textEl.textContent = message || '';
+  if (banner) banner.style.display = message ? 'block' : 'none';
+}
+
+function clearPageBarError() {
+  const banner = document.getElementById('pageBarErrorBanner');
+  const textEl = document.getElementById('pageBarErrorText');
+  if (textEl) textEl.textContent = '';
+  if (banner) banner.style.display = 'none';
+}
+
+function updateSaveButtonDirtyState() {
+  const btnSave = document.getElementById('btnSavePageTranslation');
+  if (!btnSave) return;
+  const isDirty = hasUnsavedDraftForPage(currentTranslationPageNum);
+  btnSave.classList.toggle('is-dirty', isDirty);
+}
+
+function updatePageStatusBadge(stateKey) {
+  const badge = document.getElementById('pageStatusBadge');
+  if (!badge) return;
+
+  let resolvedState = stateKey;
+  if (!resolvedState) {
+    const errBanner = document.getElementById('pageBarErrorBanner');
+    const hasVisibleError = Boolean(errBanner && errBanner.style && errBanner.style.display === 'block');
+    const entry = getCurrentPageEntry();
+    if (hasVisibleError) {
+      resolvedState = 'error';
+    } else if (!entry) {
+      resolvedState = 'saved';
+    } else if (hasUnsavedDraftForPage(entry.page_number)) {
+      resolvedState = 'unsaved';
+    } else if (entry.is_blank) {
+      resolvedState = 'blank';
+    } else {
+      resolvedState = 'saved';
+    }
+  }
+
+  badge.classList.remove('status-saved', 'status-unsaved', 'status-blank', 'status-loading', 'status-error');
+  badge.classList.add(`status-${resolvedState}`);
+
+  if (resolvedState === 'unsaved') {
+    badge.textContent = t('page_status_unsaved', 'Chưa lưu');
+  } else if (resolvedState === 'blank') {
+    badge.textContent = t('page_status_blank', 'Trang trống');
+  } else if (resolvedState === 'loading') {
+    badge.textContent = t('page_status_loading', 'Đang xử lý...');
+  } else if (resolvedState === 'error') {
+    badge.textContent = t('page_status_error', 'Lỗi đồng bộ');
+  } else {
+    badge.textContent = canUseAuthenticatedPageApi()
+      ? t('page_status_saved', 'Đã lưu')
+      : t('page_status_saved_guest', 'Đã lưu tạm');
+  }
+}
+
+function setPageBarLoading(busy, actionType = null) {
+  isPageActionBusy = Boolean(busy);
+  const btnSave = document.getElementById('btnSavePageTranslation');
+  const btnReload = document.getElementById('btnReloadPageTranslation');
+  const btnRetrans = document.getElementById('btnRetranslatePage');
+  const btnPrev = document.getElementById('btnPagePrev');
+  const btnNext = document.getElementById('btnPageNext');
+  const selectEl = document.getElementById('pageSelectDropdown');
+
+  [btnSave, btnReload, btnRetrans].forEach((btn) => {
+    if (!btn) return;
+    btn.disabled = isPageActionBusy;
+    btn.classList.toggle('is-loading', isPageActionBusy);
+  });
+
+  if (selectEl) selectEl.disabled = isPageActionBusy;
+  if (isPageActionBusy) {
+    if (btnPrev) btnPrev.disabled = true;
+    if (btnNext) btnNext.disabled = true;
+    updatePageStatusBadge('loading');
+  }
+
+  const updateBtnLabel = (btn, key, fallback) => {
+    if (!btn) return;
+    const span = btn.querySelector ? btn.querySelector('span') : null;
+    if (span) span.textContent = t(key, fallback);
+  };
+
+  if (isPageActionBusy && actionType === 'save') {
+    updateBtnLabel(btnSave, 'page_btn_saving', 'Đang lưu...');
+  } else {
+    updateBtnLabel(btnSave, 'page_btn_save', 'Lưu trang');
+  }
+
+  if (isPageActionBusy && actionType === 'reload') {
+    updateBtnLabel(btnReload, 'page_btn_reloading', 'Đang tải...');
+  } else {
+    updateBtnLabel(btnReload, 'page_btn_reload', 'Tải lại trang');
+  }
+
+  if (isPageActionBusy && actionType === 'retranslate') {
+    updateBtnLabel(btnRetrans, 'page_btn_retranslating', 'Đang dịch...');
+  } else {
+    updateBtnLabel(btnRetrans, 'page_btn_retranslate', 'Dịch lại trang');
+  }
+
+  if (!isPageActionBusy) {
+    renderPageTranslationBar();
+  }
+}
+
+function renderPageTranslationBar() {
+  const bar = document.getElementById('pageTranslationBar');
+  if (!bar) return;
+
+  if (!currentDocData) {
+    bar.style.display = 'none';
+    return;
+  }
+
+  const pages = Array.isArray(currentDocData.pages) ? currentDocData.pages : [];
+  const hasPages = pages.length > 0;
+  bar.style.display = 'flex';
+  bar.setAttribute('data-page-mode', currentPageViewMode);
+
+  const btnAll = document.getElementById('btnPageModeAll');
+  const btnSingle = document.getElementById('btnPageModeSingle');
+  const navControls = document.getElementById('pageNavControls');
+  const barActions = document.getElementById('pageBarActions');
+
+  if (btnAll) {
+    const isAll = currentPageViewMode === 'all';
+    btnAll.classList.toggle('active', isAll);
+    btnAll.setAttribute('aria-pressed', isAll ? 'true' : 'false');
+  }
+  if (btnSingle) {
+    const isSingle = currentPageViewMode === 'page' && hasPages;
+    btnSingle.disabled = !hasPages;
+    btnSingle.classList.toggle('active', isSingle);
+    btnSingle.setAttribute('aria-pressed', isSingle ? 'true' : 'false');
+    btnSingle.title = hasPages
+      ? t('page_mode_single_title', 'Xem và chỉnh sửa kết quả dịch theo từng trang')
+      : t('page_mode_unavailable_title', 'Bản ghi cũ chưa có dữ liệu tách theo từng trang');
+  }
+
+  const showSingleControls = currentPageViewMode === 'page' && hasPages;
+  if (navControls) navControls.style.display = showSingleControls ? 'inline-flex' : 'none';
+  if (barActions) barActions.style.display = showSingleControls ? 'inline-flex' : 'none';
+
+  if (!showSingleControls) {
+    return;
+  }
+
+  let activeIndex = pages.findIndex((p) => Number(p.page_number) === Number(currentTranslationPageNum));
+  if (activeIndex < 0) {
+    activeIndex = 0;
+    currentTranslationPageNum = pages[0].page_number;
+  }
+
+  const selectEl = document.getElementById('pageSelectDropdown');
+  if (selectEl) {
+    selectEl.innerHTML = '';
+    pages.forEach((p) => {
+      if (typeof document.createElement === 'function' && typeof selectEl.appendChild === 'function') {
+        const opt = document.createElement('option');
+        opt.value = String(p.page_number);
+        const baseLabel = t('page_label_item', `Trang ${p.page_number}`, { page: p.page_number });
+        opt.textContent = p.is_blank
+          ? `${baseLabel}${t('page_label_blank_suffix', ' (Trống)')}`
+          : baseLabel;
+        if (Number(p.page_number) === Number(currentTranslationPageNum)) {
+          opt.selected = true;
+        }
+        selectEl.appendChild(opt);
+      }
+    });
+    selectEl.value = String(currentTranslationPageNum);
+  }
+
+  const posEl = document.getElementById('pagePositionIndicator');
+  if (posEl) {
+    posEl.textContent = `${activeIndex + 1} / ${pages.length}`;
+  }
+
+  const btnPrev = document.getElementById('btnPagePrev');
+  const btnNext = document.getElementById('btnPageNext');
+  if (btnPrev) btnPrev.disabled = isPageActionBusy || activeIndex <= 0;
+  if (btnNext) btnNext.disabled = isPageActionBusy || activeIndex >= pages.length - 1;
+
+  updateSaveButtonDirtyState();
+  if (!isPageActionBusy) {
+    updatePageStatusBadge();
+  }
+}
+
+function syncPreviewToPage(pageNumber) {
+  if (
+    typeof window === 'undefined' ||
+    !window.pdfLinguaPreview ||
+    typeof window.pdfLinguaPreview.goToPage !== 'function'
+  ) {
+    return;
+  }
+  const hasPdfDoc = typeof window.pdfLinguaPreview.getPdfDoc === 'function'
+    ? Boolean(window.pdfLinguaPreview.getPdfDoc())
+    : true;
+  if (!hasPdfDoc) return;
+
+  const targetNum = Number(pageNumber);
+  const currentPreviewPage = typeof window.pdfLinguaPreview.getCurrentPage === 'function'
+    ? Number(window.pdfLinguaPreview.getCurrentPage())
+    : null;
+  if (currentPreviewPage === targetNum) return;
+
+  syncingPreviewTargetPage = targetNum;
+  try {
+    const maybePromise = window.pdfLinguaPreview.goToPage(targetNum);
+    if (maybePromise && typeof maybePromise.finally === 'function') {
+      maybePromise.finally(() => {
+        if (syncingPreviewTargetPage === targetNum) {
+          syncingPreviewTargetPage = null;
+        }
+      });
+    } else {
+      syncingPreviewTargetPage = null;
+    }
+  } catch (_e) {
+    syncingPreviewTargetPage = null;
+  }
+}
+
+function handlePreviewPageChange(previewPageNum) {
+  const num = parseInt(previewPageNum, 10);
+  if (isNaN(num) || num < 1) return;
+  if (syncingPreviewTargetPage === num) {
+    syncingPreviewTargetPage = null;
+    return;
+  }
+  if (!currentDocData || currentPageViewMode !== 'page') return;
+
+  const pages = Array.isArray(currentDocData.pages) ? currentDocData.pages : [];
+  if (pages.length === 0) return;
+
+  const matched = pages.find((p) => Number(p.page_number) === num);
+  if (matched) {
+    if (Number(currentTranslationPageNum) !== num) {
+      selectTranslationPage(num, { fromPreview: true });
+    }
+  } else {
+    showToast(
+      t('page_toast_not_in_selection', `Trang ${num} không nằm trong danh sách trang đã dịch.`, { page: num }),
+      'info'
+    );
+  }
+}
+
+function selectTranslationPage(pageNumber, options = {}) {
+  if (!currentDocData || !Array.isArray(currentDocData.pages) || currentDocData.pages.length === 0) {
+    return false;
+  }
+
+  const targetNum = parseInt(pageNumber, 10);
+  const entry = currentDocData.pages.find((p) => Number(p.page_number) === targetNum);
+  if (!entry) return false;
+
+  currentTranslationPageNum = entry.page_number;
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(PAGE_CURRENT_NUM_STORAGE_KEY, String(entry.page_number));
+    } catch (_e) {}
+  }
+
+  const paneOriginal = document.getElementById('paneOriginal');
+  const paneTranslated = document.getElementById('paneTranslated');
+  if (paneOriginal) paneOriginal.innerText = entry.original_text || '';
+  if (paneTranslated) {
+    const hasDraft = Object.prototype.hasOwnProperty.call(pageTranslationDrafts, entry.page_number);
+    paneTranslated.innerText = hasDraft ? pageTranslationDrafts[entry.page_number] : (entry.translated_text || '');
+  }
+
+  clearPageBarError();
+  updateCounters();
+  renderPageTranslationBar();
+
+  if (!options.fromPreview) {
+    syncPreviewToPage(entry.page_number);
+  }
+  return true;
+}
+
+function setPageViewMode(mode, options = {}) {
+  const pages = (currentDocData && Array.isArray(currentDocData.pages)) ? currentDocData.pages : [];
+  const requested = mode === 'page' ? 'page' : 'all';
+  const targetMode = (requested === 'page' && pages.length > 0) ? 'page' : 'all';
+  currentPageViewMode = targetMode;
+
+  const store = getWorkspaceSessionStorage();
+  if (store) {
+    try {
+      store.setItem(PAGE_VIEW_MODE_STORAGE_KEY, targetMode);
+    } catch (_e) {}
+  }
+
+  if (targetMode === 'all') {
+    const paneOriginal = document.getElementById('paneOriginal');
+    const paneTranslated = document.getElementById('paneTranslated');
+    if (paneOriginal) paneOriginal.innerText = (currentDocData && currentDocData.original_text) || '';
+    if (paneTranslated) paneTranslated.innerText = (currentDocData && currentDocData.translated_text) || '';
+    clearPageBarError();
+    updateCounters();
+    renderPageTranslationBar();
+    return targetMode;
+  }
+
+  const targetPageNum = (
+    currentTranslationPageNum !== null &&
+    pages.some((p) => Number(p.page_number) === Number(currentTranslationPageNum))
+  )
+    ? currentTranslationPageNum
+    : pages[0].page_number;
+
+  selectTranslationPage(targetPageNum, options);
+  return targetMode;
+}
+
+function prevTranslationPage() {
+  if (!currentDocData || !Array.isArray(currentDocData.pages) || currentDocData.pages.length === 0) {
+    return false;
+  }
+  const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(currentTranslationPageNum));
+  if (idx > 0) {
+    return selectTranslationPage(currentDocData.pages[idx - 1].page_number);
+  }
+  return false;
+}
+
+function nextTranslationPage() {
+  if (!currentDocData || !Array.isArray(currentDocData.pages) || currentDocData.pages.length === 0) {
+    return false;
+  }
+  const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(currentTranslationPageNum));
+  if (idx >= 0 && idx < currentDocData.pages.length - 1) {
+    return selectTranslationPage(currentDocData.pages[idx + 1].page_number);
+  }
+  return false;
+}
+
+async function loadHistoryPagesFromServer(historyId) {
+  const targetHistoryId = historyId || (currentDocData && currentDocData.history_id);
+  const authHeaders = getAuthHeaders();
+  if (!targetHistoryId || !authHeaders || !authHeaders.Authorization) {
+    return null;
+  }
+
+  clearPageBarError();
+  setPageBarLoading(true, 'reload');
+
+  try {
+    const response = await fetch(`${getHistoryApiBaseUrl()}/${encodeURIComponent(targetHistoryId)}/pages`, {
+      method: 'GET',
+      headers: authHeaders,
+    });
+
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (_e) {}
+
+    if (response.status === 401) {
+      handleAuthError(result);
+      return null;
+    }
+
+    if (!response.ok || !result || !result.success) {
+      const errMsg = (result && (result.message || result.detail))
+        || t('page_toast_load_pages_failed', 'Không thể tải danh sách kết quả theo từng trang.');
+      showPageBarError(errMsg);
+      updatePageStatusBadge('error');
+      return null;
+    }
+
+    const serverPages = normalizeWorkspacePages(result.data && result.data.pages);
+    if (currentDocData && Number(currentDocData.history_id) === Number(targetHistoryId)) {
+      currentDocData.pages = serverPages;
+      if (serverPages.length > 0) {
+        const synced = rebuildAggregateDocumentText(serverPages);
+        if (synced.translated_text) currentDocData.translated_text = synced.translated_text;
+        if (currentTranslationPageNum === null) {
+          currentTranslationPageNum = serverPages[0].page_number;
+        }
+      }
+      saveWorkspaceDocToStorage(currentDocData);
+    }
+    return serverPages;
+  } catch (err) {
+    const errMsg = (err && err.message)
+      || t('page_toast_load_pages_failed', 'Không thể tải danh sách kết quả theo từng trang.');
+    showPageBarError(errMsg);
+    updatePageStatusBadge('error');
+    return null;
+  } finally {
+    setPageBarLoading(false);
+  }
+}
+
+async function handleSaveCurrentPage() {
+  const entry = getCurrentPageEntry();
+  if (!entry) return false;
+
+  const paneTranslated = document.getElementById('paneTranslated');
+  const editedText = paneTranslated
+    ? paneTranslated.innerText
+    : (Object.prototype.hasOwnProperty.call(pageTranslationDrafts, entry.page_number)
+      ? pageTranslationDrafts[entry.page_number]
+      : entry.translated_text);
+
+  if (!editedText || !String(editedText).trim()) {
+    const emptyMsg = t('page_toast_save_empty', `Nội dung bản dịch trang ${entry.page_number} không được để trống.`, { page: entry.page_number });
+    showPageBarError(emptyMsg);
+    updatePageStatusBadge('error');
+    showToast(emptyMsg, 'error');
+    return false;
+  }
+
+  clearPageBarError();
+
+  // Authenticated user with server-side history_id -> PUT /api/history/{history_id}/pages/{page_number}
+  if (canUseAuthenticatedPageApi()) {
+    setPageBarLoading(true, 'save');
+    try {
+      const authHeaders = getAuthHeaders();
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+      const url = `${getHistoryApiBaseUrl()}/${encodeURIComponent(currentDocData.history_id)}/pages/${encodeURIComponent(entry.page_number)}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          translated_text: editedText,
+          target_lang: currentDocData.target_lang || 'vi',
+        }),
+      });
+
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (_e) {}
+
+      if (response.status === 401) {
+        handleAuthError(result);
+        return false;
+      }
+
+      if (!response.ok || !result || !result.success) {
+        throw new Error(
+          (result && (result.message || result.detail))
+          || t('page_toast_save_failed', `Không thể lưu kết quả dịch trang ${entry.page_number}.`, { page: entry.page_number })
+        );
+      }
+
+      const savedItem = normalizeWorkspacePages([result.data])[0];
+      if (savedItem) {
+        const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(entry.page_number));
+        if (idx >= 0) {
+          currentDocData.pages[idx] = savedItem;
+        }
+      }
+      delete pageTranslationDrafts[entry.page_number];
+      const synced = rebuildAggregateDocumentText(currentDocData.pages);
+      currentDocData.translated_text = synced.translated_text;
+      saveWorkspaceDocToStorage(currentDocData);
+      updateCounters();
+      updateExportUIState();
+      showToast(
+        t('page_toast_save_success', `Đã lưu kết quả dịch trang ${entry.page_number}!`, { page: entry.page_number }),
+        'success'
+      );
+      return true;
+    } catch (err) {
+      const errMsg = (err && err.message)
+        || t('page_toast_save_failed', `Không thể lưu kết quả dịch trang ${entry.page_number}.`, { page: entry.page_number });
+      showPageBarError(errMsg);
+      updatePageStatusBadge('error');
+      showToast(errMsg, 'error');
+      return false;
+    } finally {
+      setPageBarLoading(false);
+    }
+  }
+
+  // Guest persistence via sessionStorage
+  const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(entry.page_number));
+  if (idx >= 0) {
+    currentDocData.pages[idx] = {
+      ...currentDocData.pages[idx],
+      translated_text: editedText,
+      is_blank: false,
+      status: 'edited',
+      updated_at: new Date().toISOString(),
+    };
+  }
+  delete pageTranslationDrafts[entry.page_number];
+  const synced = rebuildAggregateDocumentText(currentDocData.pages);
+  currentDocData.translated_text = synced.translated_text;
+  saveGuestPagesSnapshot(currentDocData, currentDocData.pages);
+  saveWorkspaceDocToStorage(currentDocData);
+  updateCounters();
+  updateExportUIState();
+  renderPageTranslationBar();
+  showToast(
+    t('page_toast_save_guest_success', `Đã lưu tạm bản dịch trang ${entry.page_number} trong phiên hiện tại!`, { page: entry.page_number }),
+    'success'
+  );
+  return true;
+}
+
+async function handleReloadCurrentPage() {
+  const entry = getCurrentPageEntry();
+  if (!entry) return false;
+
+  clearPageBarError();
+
+  // Authenticated user with server-side history_id -> GET /api/history/{history_id}/pages/{page_number}
+  if (canUseAuthenticatedPageApi()) {
+    setPageBarLoading(true, 'reload');
+    try {
+      const url = `${getHistoryApiBaseUrl()}/${encodeURIComponent(currentDocData.history_id)}/pages/${encodeURIComponent(entry.page_number)}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (_e) {}
+
+      if (response.status === 401) {
+        handleAuthError(result);
+        return false;
+      }
+
+      if (!response.ok || !result || !result.success) {
+        throw new Error(
+          (result && (result.message || result.detail))
+          || t('page_toast_reload_failed', `Không thể tải lại bản dịch trang ${entry.page_number}.`, { page: entry.page_number })
+        );
+      }
+
+      const reloadedItem = normalizeWorkspacePages([result.data])[0];
+      if (reloadedItem) {
+        const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(entry.page_number));
+        if (idx >= 0) {
+          currentDocData.pages[idx] = reloadedItem;
+        }
+        delete pageTranslationDrafts[entry.page_number];
+        const paneOriginal = document.getElementById('paneOriginal');
+        const paneTranslated = document.getElementById('paneTranslated');
+        if (paneOriginal) paneOriginal.innerText = reloadedItem.original_text || '';
+        if (paneTranslated) paneTranslated.innerText = reloadedItem.translated_text || '';
+        const synced = rebuildAggregateDocumentText(currentDocData.pages);
+        currentDocData.translated_text = synced.translated_text;
+        saveWorkspaceDocToStorage(currentDocData);
+      }
+      updateCounters();
+      updateExportUIState();
+      showToast(
+        t('page_toast_reload_success', `Đã tải lại bản dịch đã lưu của trang ${entry.page_number}!`, { page: entry.page_number }),
+        'success'
+      );
+      return true;
+    } catch (err) {
+      const errMsg = (err && err.message)
+        || t('page_toast_reload_failed', `Không thể tải lại bản dịch trang ${entry.page_number}.`, { page: entry.page_number });
+      showPageBarError(errMsg);
+      updatePageStatusBadge('error');
+      showToast(errMsg, 'error');
+      return false;
+    } finally {
+      setPageBarLoading(false);
+    }
+  }
+
+  // Guest reload from sessionStorage snapshot
+  const snapshot = loadGuestPagesSnapshot(currentDocData);
+  const restored = (snapshot && snapshot.find((p) => Number(p.page_number) === Number(entry.page_number))) || entry;
+  const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(entry.page_number));
+  if (idx >= 0) {
+    currentDocData.pages[idx] = { ...restored };
+  }
+  delete pageTranslationDrafts[entry.page_number];
+  const paneOriginal = document.getElementById('paneOriginal');
+  const paneTranslated = document.getElementById('paneTranslated');
+  if (paneOriginal) paneOriginal.innerText = restored.original_text || '';
+  if (paneTranslated) paneTranslated.innerText = restored.translated_text || '';
+  const synced = rebuildAggregateDocumentText(currentDocData.pages);
+  currentDocData.translated_text = synced.translated_text;
+  saveWorkspaceDocToStorage(currentDocData);
+  updateCounters();
+  updateExportUIState();
+  renderPageTranslationBar();
+  showToast(
+    t('page_toast_reload_success', `Đã tải lại bản dịch đã lưu của trang ${entry.page_number}!`, { page: entry.page_number }),
+    'success'
+  );
+  return true;
+}
+
+async function handleRetranslateCurrentPage() {
+  const entry = getCurrentPageEntry();
+  if (!entry) return false;
+
+  if (!entry.original_text || !entry.original_text.trim()) {
+    showToast(
+      t('page_toast_retranslate_blank', `Trang ${entry.page_number} không có văn bản gốc để dịch lại.`, { page: entry.page_number }),
+      'info'
+    );
+    return false;
+  }
+
+  const targetLangEl = document.getElementById('targetLangSelect');
+  const newTargetLang = (targetLangEl && targetLangEl.value) || (currentDocData && currentDocData.target_lang) || 'vi';
+  clearPageBarError();
+  setPageBarLoading(true, 'retranslate');
+
+  try {
+    const authHeaders = getAuthHeaders();
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
+    const response = await fetch(`${API_BASE_URL}/retranslate`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        text: entry.original_text,
+        target_lang: newTargetLang,
+        source_lang: 'auto',
+      }),
+    });
+
+    let result = null;
+    try {
+      result = await response.json();
+    } catch (_e) {}
+
+    if (response.status === 401) {
+      handleAuthError(result);
+      return false;
+    }
+
+    if (!response.ok || !result || !result.success) {
+      throw new Error(
+        (result && (result.message || result.detail))
+        || t('page_toast_retranslate_failed', `Không thể dịch lại trang ${entry.page_number}.`, { page: entry.page_number })
+      );
+    }
+
+    const newPageTranslated = (result.data && result.data.translated_text) || '';
+    const idx = currentDocData.pages.findIndex((p) => Number(p.page_number) === Number(entry.page_number));
+    if (idx >= 0) {
+      currentDocData.pages[idx] = {
+        ...currentDocData.pages[idx],
+        translated_text: newPageTranslated,
+        target_lang: newTargetLang,
+        engine_used: (result.data && result.data.engine_used) || currentDocData.pages[idx].engine_used,
+        status: 'edited',
+        is_blank: false,
+        updated_at: new Date().toISOString(),
+      };
+    }
+
+    delete pageTranslationDrafts[entry.page_number];
+    const paneTranslated = document.getElementById('paneTranslated');
+    if (paneTranslated) paneTranslated.innerText = newPageTranslated;
+
+    // Persist retranslated page immediately for Authenticated users or Guest sessionStorage
+    if (canUseAuthenticatedPageApi()) {
+      const saveUrl = `${getHistoryApiBaseUrl()}/${encodeURIComponent(currentDocData.history_id)}/pages/${encodeURIComponent(entry.page_number)}`;
+      const saveRes = await fetch(saveUrl, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          translated_text: newPageTranslated,
+          target_lang: newTargetLang,
+        }),
+      });
+      if (saveRes.ok) {
+        try {
+          const saveJson = await saveRes.json();
+          if (saveJson && saveJson.success && saveJson.data && idx >= 0) {
+            const savedNormalized = normalizeWorkspacePages([saveJson.data])[0];
+            if (savedNormalized) currentDocData.pages[idx] = savedNormalized;
+          }
+        } catch (_e) {}
+      }
+    } else {
+      saveGuestPagesSnapshot(currentDocData, currentDocData.pages);
+    }
+
+    const synced = rebuildAggregateDocumentText(currentDocData.pages);
+    currentDocData.translated_text = synced.translated_text;
+    saveWorkspaceDocToStorage(currentDocData);
+    updateCounters();
+    updateExportUIState();
+
+    showToast(
+      t('page_toast_retranslate_success', `Đã dịch lại trang ${entry.page_number} sang ${getLangName(newTargetLang)}!`, {
+        page: entry.page_number,
+        lang: getLangName(newTargetLang),
+      }),
+      'success'
+    );
+    return true;
+  } catch (err) {
+    const errMsg = (err && err.message)
+      || t('page_toast_retranslate_failed', `Không thể dịch lại trang ${entry.page_number}.`, { page: entry.page_number });
+    showPageBarError(errMsg);
+    updatePageStatusBadge('error');
+    showToast(errMsg, 'error');
+    return false;
+  } finally {
+    setPageBarLoading(false);
+  }
+}
+
+function initPageTranslationControls() {
+  if (pageTranslationListenersInitialized) return;
+  pageTranslationListenersInitialized = true;
+
+  const btnAll = document.getElementById('btnPageModeAll');
+  const btnSingle = document.getElementById('btnPageModeSingle');
+  const btnPrev = document.getElementById('btnPagePrev');
+  const btnNext = document.getElementById('btnPageNext');
+  const selectEl = document.getElementById('pageSelectDropdown');
+  const btnSave = document.getElementById('btnSavePageTranslation');
+  const btnReload = document.getElementById('btnReloadPageTranslation');
+  const btnRetrans = document.getElementById('btnRetranslatePage');
+
+  if (btnAll) {
+    btnAll.addEventListener('click', () => setPageViewMode('all'));
+  }
+  if (btnSingle) {
+    btnSingle.addEventListener('click', () => setPageViewMode('page'));
+  }
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => prevTranslationPage());
+  }
+  if (btnNext) {
+    btnNext.addEventListener('click', () => nextTranslationPage());
+  }
+  if (selectEl) {
+    selectEl.addEventListener('change', () => selectTranslationPage(selectEl.value));
+  }
+  if (btnSave) {
+    btnSave.addEventListener('click', () => handleSaveCurrentPage());
+  }
+  if (btnReload) {
+    btnReload.addEventListener('click', () => handleReloadCurrentPage());
+  }
+  if (btnRetrans) {
+    btnRetrans.addEventListener('click', () => handleRetranslateCurrentPage());
+  }
+
+  // Subscribe to PDF Preview page change events for bidirectional sync
+  if (
+    typeof window !== 'undefined' &&
+    window.pdfLinguaPreview &&
+    typeof window.pdfLinguaPreview.onPageChange === 'function'
+  ) {
+    window.pdfLinguaPreview.onPageChange((pageNum) => {
+      handlePreviewPageChange(pageNum);
+    });
+  } else if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('pdfl:preview-page-change', (evt) => {
+      if (evt && evt.detail && evt.detail.pageNumber) {
+        handlePreviewPageChange(evt.detail.pageNumber);
+      }
+    });
+  }
+
+  // Re-render localized page dropdown labels & status badge on language switch
+  if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('languageChanged', () => {
+      if (currentDocData) {
+        renderPageTranslationBar();
+      }
+    });
+  }
+}
+
 // Expose globals for integration & testing
 if (typeof window !== 'undefined') {
   window.pdfLinguaPageSelection = Object.assign(window.pdfLinguaPageSelection || {}, {
@@ -2534,8 +3520,29 @@ if (typeof window !== 'undefined') {
     resetCompletedJobsCache: () => completedJobIds.clear(),
     ACTIVE_JOB_STORAGE_KEY,
     BG_MINIMIZED_STORAGE_KEY,
+    PAGE_VIEW_MODE_STORAGE_KEY,
+    PAGE_CURRENT_NUM_STORAGE_KEY,
+    GUEST_PAGES_STORAGE_KEY,
     getEventSource: () => activeEventSource,
     getPollTimer: () => activePollTimer,
+    initPageTranslationControls,
+    renderPageTranslationBar,
+    setPageViewMode,
+    getPageViewMode: () => currentPageViewMode,
+    selectTranslationPage,
+    prevTranslationPage,
+    nextTranslationPage,
+    getCurrentTranslationPageNum: () => currentTranslationPageNum,
+    getCurrentPageEntry,
+    handlePreviewPageChange,
+    loadHistoryPagesFromServer,
+    handleSaveCurrentPage,
+    handleReloadCurrentPage,
+    handleRetranslateCurrentPage,
+    normalizeWorkspacePages,
+    rebuildAggregateDocumentText,
+    loadGuestPagesSnapshot,
+    saveGuestPagesSnapshot,
   });
   window.showToast = showToast;
 }

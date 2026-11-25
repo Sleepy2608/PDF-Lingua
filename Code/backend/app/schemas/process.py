@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Any, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -33,6 +34,32 @@ class JobProgressData(BaseModel):
     completed_at: Optional[float] = Field(default=None, description="Thời điểm hoàn thành hoặc thất bại (timestamp)")
 
 
+class PageTranslationItem(BaseModel):
+    page_number: int = Field(..., ge=1, description="Số thứ tự trang gốc trong tài liệu PDF (1-based)")
+    original_text: str = Field(default="", description="Văn bản gốc được trích xuất của trang")
+    translated_text: str = Field(default="", description="Văn bản đã dịch của trang")
+    is_ocr_used: bool = Field(default=False, description="Xác định trang này có sử dụng OCR hay không")
+    is_blank: bool = Field(default=False, description="Xác định trang này có phải trang trống hay không")
+    target_lang: Optional[str] = Field(default=None, description="Mã ngôn ngữ đích của trang")
+    engine_used: Optional[str] = Field(default=None, description="Công cụ dịch thuật đã sử dụng cho trang")
+    status: str = Field(default="completed", description="Trạng thái dịch của trang: completed | blank | edited | failed")
+    updated_at: Optional[str] = Field(default=None, description="Thời điểm cập nhật gần nhất theo chuẩn ISO 8601 UTC")
+
+
+class PageTranslationUpdateRequest(BaseModel):
+    translated_text: str = Field(..., description="Nội dung bản dịch cập nhật cho trang")
+    original_text: Optional[str] = Field(default=None, description="Văn bản gốc tùy chọn của trang")
+    target_lang: Optional[str] = Field(default=None, description="Mã ngôn ngữ đích của bản dịch")
+
+
+class PageTranslationListResponse(BaseModel):
+    history_id: Optional[int] = Field(default=None, description="ID bản ghi lịch sử xử lý")
+    document_id: Optional[int] = Field(default=None, description="ID tài liệu")
+    target_lang: Optional[str] = Field(default="vi", description="Mã ngôn ngữ đích")
+    total_pages: int = Field(default=0, ge=0, description="Tổng số trang trong kết quả")
+    pages: list[PageTranslationItem] = Field(default_factory=list, description="Danh sách kết quả dịch theo từng trang")
+
+
 class ProcessResponseData(BaseModel):
     document_id: Optional[int] = Field(default=None, description="ID tài liệu lưu trong CSDL nếu đã đăng nhập")
     history_id: Optional[int] = Field(default=None, description="ID bản ghi lịch sử xử lý nếu đã đăng nhập")
@@ -45,6 +72,15 @@ class ProcessResponseData(BaseModel):
     translated_text: str
     engine_used: str
     execution_time_ms: Optional[int] = Field(default=None, ge=0, description="Thời gian xử lý tính bằng mili-giây")
+    pages: list[PageTranslationItem] = Field(
+        default_factory=list,
+        description="Danh sách kết quả trích xuất và dịch thuật chi tiết theo từng trang",
+    )
+
+    @field_validator("pages", mode="before")
+    @classmethod
+    def default_pages_list(cls, v: Any) -> Any:
+        return [] if v is None else v
 
 
 class RetranslateRequest(BaseModel):

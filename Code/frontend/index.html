@@ -1254,6 +1254,112 @@
                             </div>
                         </div>
 
+                        <!-- Page Translation Navigation & Persistence Bar -->
+                        <div class="page-translation-bar" id="pageTranslationBar" style="display: none;"
+                            data-page-mode="all">
+                            <div class="page-bar-left">
+                                <div class="page-mode-switcher" id="pageViewModeSwitcher" role="group"
+                                    aria-label="Chế độ xem kết quả dịch"
+                                    data-i18n-attr="aria-label:page_bar_mode_aria">
+                                    <button type="button" class="page-mode-btn active" id="btnPageModeAll"
+                                        data-page-mode="all" aria-pressed="true"
+                                        title="Hiển thị toàn bộ tài liệu"
+                                        data-i18n-attr="title:page_mode_all_title">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        </svg>
+                                        <span data-i18n="page_mode_all">Toàn bộ trang</span>
+                                    </button>
+                                    <button type="button" class="page-mode-btn" id="btnPageModeSingle"
+                                        data-page-mode="page" aria-pressed="false"
+                                        title="Xem và chỉnh sửa kết quả dịch theo từng trang"
+                                        data-i18n-attr="title:page_mode_single_title">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                                            <line x1="8" y1="9" x2="16" y2="9"></line>
+                                            <line x1="8" y1="13" x2="14" y2="13"></line>
+                                        </svg>
+                                        <span data-i18n="page_mode_single">Theo từng trang</span>
+                                    </button>
+                                </div>
+
+                                <div class="page-nav-controls" id="pageNavControls" style="display: none;">
+                                    <button type="button" class="page-nav-btn" id="btnPagePrev"
+                                        title="Trang trước" data-i18n-attr="title:page_nav_prev_title"
+                                        aria-label="Trang trước" disabled>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <select class="page-select-dropdown" id="pageSelectDropdown"
+                                        aria-label="Chọn trang dịch"
+                                        data-i18n-attr="aria-label:page_nav_select_aria"></select>
+                                    <span class="page-position-indicator" id="pagePositionIndicator">1 / 1</span>
+                                    <button type="button" class="page-nav-btn" id="btnPageNext"
+                                        title="Trang sau" data-i18n-attr="title:page_nav_next_title"
+                                        aria-label="Trang sau" disabled>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <span class="page-status-badge status-saved" id="pageStatusBadge"
+                                        data-i18n="page_status_saved">Đã lưu</span>
+                                </div>
+                            </div>
+
+                            <div class="page-bar-actions" id="pageBarActions" style="display: none;">
+                                <button type="button" class="page-action-btn page-action-save"
+                                    id="btnSavePageTranslation" title="Lưu kết quả dịch của trang hiện tại"
+                                    data-i18n-attr="title:page_btn_save_title">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    <span data-i18n="page_btn_save">Lưu trang</span>
+                                </button>
+                                <button type="button" class="page-action-btn" id="btnReloadPageTranslation"
+                                    title="Tải lại kết quả dịch đã lưu gần nhất của trang này"
+                                    data-i18n-attr="title:page_btn_reload_title">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                    </svg>
+                                    <span data-i18n="page_btn_reload">Tải lại trang</span>
+                                </button>
+                                <button type="button" class="page-action-btn" id="btnRetranslatePage"
+                                    title="Dịch lại chỉ riêng trang hiện tại"
+                                    data-i18n-attr="title:page_btn_retranslate_title">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polyline points="1 4 1 10 7 10"></polyline>
+                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                    </svg>
+                                    <span data-i18n="page_btn_retranslate">Dịch lại trang</span>
+                                </button>
+                            </div>
+
+                            <div class="page-bar-error" id="pageBarErrorBanner" style="display: none;" role="alert">
+                                <span class="page-bar-error-text" id="pageBarErrorText"></span>
+                            </div>
+                        </div>
+
                         <!-- Workspace Dynamic Views Wrapper -->
                         <div class="workspace-views-wrapper view-mode-split" id="workspaceViewsWrapper"
                             data-view-mode="split" data-split-tab="pdf">

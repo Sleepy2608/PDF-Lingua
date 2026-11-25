@@ -9,7 +9,7 @@ import time
 import unicodedata
 import zipfile
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
@@ -50,10 +50,60 @@ from app.services.translation_service import TranslationService
 router = APIRouter(prefix="/api/process", tags=["Document Processing"])
 
 pdf_service = PDFService()
+_ORIGINAL_EXTRACT_TEXT = PDFService.extract_text
 ocr_service = OCRService()
 translation_service = TranslationService()
 export_service = ExportService()
 storage_service = StorageService()
+
+
+def _normalize_extracted_pages(
+    raw_pages: Optional[list[dict[str, Any]]],
+    fallback_text: str,
+    is_ocr_used: bool = False,
+    selected_pages: Optional[list[int]] = None,
+) -> list[dict[str, Any]]:
+    """
+    Chuẩn hóa danh sách trang đã trích xuất về định dạng thống nhất trước khi dịch theo trang.
+    Tự động fallback thành một trang duy nhất nếu nguồn trích xuất chỉ trả về chuỗi văn bản phẳng.
+    """
+    normalized: list[dict[str, Any]] = []
+    if raw_pages and isinstance(raw_pages, list):
+        for idx, page in enumerate(raw_pages):
+            if not isinstance(page, dict):
+                continue
+            raw_num = page.get("page_number")
+            if raw_num is None:
+                raw_num = page.get("page", idx + 1)
+            try:
+                page_num = max(1, int(raw_num))
+            except (TypeError, ValueError):
+                page_num = idx + 1
+
+            raw_text = page.get("original_text") if "original_text" in page else page.get("text", "")
+            text = str(raw_text or "")
+            page_ocr = bool(page.get("is_ocr_used", page.get("type") == "scanned"))
+            page_blank = bool(page.get("is_blank", False)) or not text.strip()
+            normalized.append({
+                "page": page_num,
+                "text": text,
+                "is_ocr_used": page_ocr,
+                "is_blank": page_blank,
+            })
+
+    if normalized and any(item["text"].strip() for item in normalized):
+        return normalized
+
+    if fallback_text and fallback_text.strip():
+        first_page_num = (selected_pages[0] + 1) if selected_pages else 1
+        return [{
+            "page": first_page_num,
+            "text": fallback_text,
+            "is_ocr_used": is_ocr_used,
+            "is_blank": False,
+        }]
+
+    return normalized
 
 # Giới hạn số lượng Background Jobs xử lý đồng thời để kiểm soát RAM và CPU
 MAX_CONCURRENT_BACKGROUND_JOBS = 4
@@ -194,23 +244,29 @@ def _execute_pdf_background_job(
                 job_manager.set_failed(job_id, "Không thể trích xuất văn bản từ tài liệu này.")
                 return
 
+            is_ocr_used = bool(
+                extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
+            )
+            pages_to_translate = _normalize_extracted_pages(
+                extract_res.get("pages"),
+                fallback_text=original_text,
+                is_ocr_used=is_ocr_used,
+                selected_pages=selected_pages,
+            )
+
             job_manager.set_translating(job_id, message="Đang dịch thuật văn bản sang ngôn ngữ đích...")
 
             if job_manager.is_job_cancelled(job_id):
                 raise JobCancelledException()
 
-            trans_res = translation_service.translate_text(
-                original_text,
+            trans_res = translation_service.translate_pages(
+                pages_to_translate,
                 target_lang=target_lang,
                 source_lang="auto",
             )
 
             if job_manager.is_job_cancelled(job_id):
                 raise JobCancelledException()
-
-            is_ocr_used = bool(
-                extract_res.get("ocr_pages_count", 0) > 0 or extract_res.get("fast_path_used") is False
-            )
 
             if user_id is not None:
                 db_session = SessionLocal()
@@ -260,6 +316,7 @@ def _execute_pdf_background_job(
                 "translated_text": trans_res["translated_text"],
                 "engine_used": trans_res["engine_used"],
                 "execution_time_ms": execution_time_ms,
+                "pages": trans_res["pages"],
             }
 
             # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập
@@ -688,9 +745,21 @@ async def upload_and_translate(
         is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
         is_ocr_used = False
         original_text = ""
+        extracted_pages: list[dict[str, Any]] = []
 
         if not is_scanned:
-            original_text = pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
+            is_extract_text_patched = (
+                getattr(pdf_service.extract_text, "__func__", None) is not _ORIGINAL_EXTRACT_TEXT
+            )
+            if is_extract_text_patched:
+                original_text = pdf_service.extract_text(
+                    tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages
+                )
+            else:
+                extracted_pages = pdf_service.extract_pages(
+                    tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages
+                )
+                original_text = "\n\n".join(p["text"] for p in extracted_pages if p.get("text"))
 
         if not original_text.strip():
             logger.info(f"[Process] Fallback to OCR / Hybrid for scanned document (max_pages={max_allowed_pages}, selected_pages={selected_pages})...")
@@ -701,6 +770,7 @@ async def upload_and_translate(
                 selected_pages=selected_pages,
             )
             original_text = hybrid_res.get("text", "")
+            extracted_pages = hybrid_res.get("pages") or []
             is_ocr_used = bool(
                 hybrid_res.get("ocr_pages_count", 0) > 0 or hybrid_res.get("fast_path_used") is False
             )
@@ -711,13 +781,20 @@ async def upload_and_translate(
                 detail="Không thể trích xuất văn bản từ tài liệu này (tài liệu rỗng hoặc máy chủ chưa bật OCR).",
             )
 
+        pages_to_translate = _normalize_extracted_pages(
+            extracted_pages,
+            fallback_text=original_text,
+            is_ocr_used=is_ocr_used,
+            selected_pages=selected_pages,
+        )
+
         logger.info(
             f"[Upload-and-Translate Request] file={file.filename!r}, target_lang={target_lang!r}, "
             f"pages={pages!r}, text_len={len(original_text)}, text_preview={original_text[:80]!r}"
         )
 
-        translation_result = translation_service.translate_text(
-            original_text,
+        translation_result = translation_service.translate_pages(
+            pages_to_translate,
             target_lang=target_lang,
             source_lang="auto",
         )
@@ -788,6 +865,7 @@ async def upload_and_translate(
                             "translated_text": translation_result["translated_text"],
                             "engine_used": translation_result["engine_used"],
                             "execution_time_ms": execution_time_ms,
+                            "pages": translation_result["pages"],
                         },
                         execution_time_ms=execution_time_ms,
                     )
@@ -811,6 +889,7 @@ async def upload_and_translate(
             translated_text=translation_result["translated_text"],
             engine_used=translation_result["engine_used"],
             execution_time_ms=execution_time_ms,
+            pages=translation_result["pages"],
         )
 
         return ApiResponse(data=response_data, message="Xử lý và dịch thuật tài liệu thành công.")

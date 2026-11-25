@@ -28,6 +28,7 @@ from app.core.logger import logger
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
 from app.schemas.processing_history import (
+    PageTranslationItem,
     ProcessingHistoryCreate,
     ProcessingHistoryUpdate,
     sanitize_error_message,
@@ -391,6 +392,233 @@ class HistoryService:
         result_data.setdefault("execution_time_ms", record.execution_time_ms)
 
         return result_data
+
+    # ── Per-Page Translation Persistence ────────────────────────
+
+    @classmethod
+    def get_history_pages(
+        cls,
+        db: Session,
+        history_id: int,
+        current_user_id: int,
+        is_admin: bool = False,
+    ) -> dict:
+        """
+        Retrieve the ordered list of per-page translation results for a history record.
+        Reuses `get_history_result` for ownership verification (Anti-IDOR) and state checks.
+        Returns an empty page list for legacy records that predate per-page storage.
+        """
+        result_data = cls.get_history_result(
+            db=db,
+            history_id=history_id,
+            current_user_id=current_user_id,
+            is_admin=is_admin,
+        )
+
+        raw_pages = result_data.get("pages")
+        pages: list[dict] = []
+        if isinstance(raw_pages, list):
+            for entry in raw_pages:
+                if isinstance(entry, dict):
+                    validated = PageTranslationItem.model_validate(entry)
+                    pages.append(validated.model_dump())
+
+        return {
+            "history_id": result_data.get("history_id", history_id),
+            "document_id": result_data.get("document_id"),
+            "target_lang": result_data.get("target_lang", "vi"),
+            "total_pages": len(pages),
+            "pages": pages,
+        }
+
+    @classmethod
+    def get_history_page_result(
+        cls,
+        db: Session,
+        history_id: int,
+        page_number: int,
+        current_user_id: int,
+        is_admin: bool = False,
+    ) -> dict:
+        """
+        Retrieve the translation result for a single original page number within a history record.
+        Enforces multi-tenant ownership via `get_history_pages` and returns 404 when not found.
+        """
+        if page_number < 1:
+            raise BadRequestException(
+                message="page_number phải là số nguyên dương (>= 1).",
+                error_code="INVALID_PAGE_NUMBER",
+                details={"history_id": history_id, "page_number": page_number},
+            )
+
+        pages_payload = cls.get_history_pages(
+            db=db,
+            history_id=history_id,
+            current_user_id=current_user_id,
+            is_admin=is_admin,
+        )
+
+        for page_item in pages_payload["pages"]:
+            if page_item.get("page_number") == page_number:
+                return page_item
+
+        raise NotFoundException(
+            message=f"Trang {page_number} không tồn tại trong bản ghi lịch sử ID {history_id}.",
+            details={
+                "history_id": history_id,
+                "page_number": page_number,
+                "error_code": "PAGE_NOT_FOUND",
+            },
+        )
+
+    @classmethod
+    def save_history_page_result(
+        cls,
+        db: Session,
+        history_id: int,
+        page_number: int,
+        translated_text: str,
+        current_user_id: int,
+        is_admin: bool = False,
+        *,
+        original_text: Optional[str] = None,
+        target_lang: Optional[str] = None,
+    ) -> dict:
+        """
+        Update the translated content of a specific page inside a history record's result JSON.
+        Preserves all other pages, synchronizes the aggregate `translated_text` for Export
+        consistency, updates database `updated_at`, and restores the prior file on DB failure.
+        """
+        if page_number < 1:
+            raise BadRequestException(
+                message="page_number phải là số nguyên dương (>= 1).",
+                error_code="INVALID_PAGE_NUMBER",
+                details={"history_id": history_id, "page_number": page_number},
+            )
+
+        if translated_text is None or not isinstance(translated_text, str) or not translated_text.strip():
+            raise BadRequestException(
+                message="Nội dung bản dịch cập nhật không được để trống.",
+                error_code="EMPTY_TRANSLATED_TEXT",
+                details={"history_id": history_id, "page_number": page_number},
+            )
+
+        # Reuse existing history access checks (ownership, status, file integrity)
+        result_data = cls.get_history_result(
+            db=db,
+            history_id=history_id,
+            current_user_id=current_user_id,
+            is_admin=is_admin,
+        )
+        record = cls.get_history_by_id(
+            db=db,
+            history_id=history_id,
+            current_user_id=current_user_id,
+            is_admin=is_admin,
+        )
+
+        raw_pages = result_data.get("pages")
+        if not isinstance(raw_pages, list) or len(raw_pages) == 0:
+            raise BadRequestException(
+                message="Bản ghi lịch sử này chưa có dữ liệu dịch theo từng trang để cập nhật.",
+                error_code="PAGE_DATA_UNAVAILABLE",
+                details={"history_id": history_id, "page_number": page_number},
+            )
+
+        target_index: Optional[int] = None
+        normalized_pages: list[dict] = []
+        for idx, entry in enumerate(raw_pages):
+            validated = PageTranslationItem.model_validate(entry).model_dump()
+            normalized_pages.append(validated)
+            if validated["page_number"] == page_number:
+                target_index = idx
+
+        if target_index is None:
+            raise NotFoundException(
+                message=f"Trang {page_number} không tồn tại trong bản ghi lịch sử ID {history_id}.",
+                details={
+                    "history_id": history_id,
+                    "page_number": page_number,
+                    "error_code": "PAGE_NOT_FOUND",
+                },
+            )
+
+        now_utc = datetime.now(timezone.utc)
+        target_page = dict(normalized_pages[target_index])
+        target_page["translated_text"] = translated_text
+        if original_text is not None:
+            target_page["original_text"] = original_text
+        if target_lang is not None and target_lang.strip():
+            target_page["target_lang"] = target_lang.strip()
+        target_page["is_blank"] = False
+        target_page["status"] = "edited"
+        target_page["updated_at"] = now_utc.isoformat()
+
+        validated_target = PageTranslationItem.model_validate(target_page).model_dump()
+        normalized_pages[target_index] = validated_target
+
+        # Synchronize document-level translated_text and original_text for export & reopening
+        synced_translated_text = "\n\n".join(
+            str(page.get("translated_text") or "")
+            for page in normalized_pages
+            if str(page.get("translated_text") or "").strip()
+        )
+        updated_result_data = {
+            **result_data,
+            "pages": normalized_pages,
+            "translated_text": synced_translated_text,
+        }
+        if original_text is not None:
+            synced_original_text = "\n\n".join(
+                str(page.get("original_text") or "")
+                for page in normalized_pages
+                if str(page.get("original_text") or "").strip()
+            )
+            updated_result_data["original_text"] = synced_original_text
+
+        if isinstance(updated_result_data.get("created_at"), datetime):
+            created_dt = updated_result_data["created_at"]
+            if created_dt.tzinfo is None:
+                created_dt = created_dt.replace(tzinfo=timezone.utc)
+            updated_result_data["created_at"] = created_dt.isoformat()
+
+        # Back up existing JSON bytes before overwriting so DB rollback restores disk state
+        existing_path = cls.storage_service.get_result_path(
+            user_id=record.user_id,
+            result_path_or_filename=record.result_path,
+        )
+        backup_bytes: Optional[bytes] = None
+        if existing_path is not None and existing_path.is_file():
+            backup_bytes = existing_path.read_bytes()
+
+        rel_path, written_path = cls.storage_service.save_result_file(
+            user_id=record.user_id,
+            history_id=record.id,
+            result_data=updated_result_data,
+        )
+
+        try:
+            record.result_path = rel_path
+            record.updated_at = now_utc
+            db.commit()
+            db.refresh(record)
+            return validated_target
+        except SQLAlchemyError as exc:
+            db.rollback()
+            if backup_bytes is not None:
+                try:
+                    written_path.write_bytes(backup_bytes)
+                    logger.info(
+                        f"[HistoryService] Restored previous result file after DB rollback: {written_path}"
+                    )
+                except Exception as restore_err:
+                    logger.error(
+                        f"[HistoryService] Failed to restore result file {written_path}: {restore_err}"
+                    )
+            logger.error(
+                f"[HistoryService] DB error updating page {page_number} for history_id={history_id}: {exc}"
+            )
+            raise
 
     @classmethod
     def delete_history(
