@@ -524,7 +524,7 @@ async function main() {
                 qr_code_url: 'assets/images/vietqr-pro.png',
                 bank_info: {
                   bank_name: 'VietinBank (CN Thủ Thiêm - Hội Sở)',
-                  account_number: '0779562608',
+                  account_number: '107882760609',
                   account_name: 'NGUYEN LE HUY TAM',
                   transfer_note: 'PDL SUB 202611 8899',
                 },
@@ -543,7 +543,7 @@ async function main() {
     assert.strictEqual(env.elements.pricingCheckoutModal.style.display, 'flex');
     assert.strictEqual(subscribePayload.plan_code, 'pro_monthly');
     assert.strictEqual(env.elements.checkoutTransactionCode.textContent, 'PDL-SUB-202611-8899');
-    assert.strictEqual(env.elements.checkoutAccountNumber.textContent, '0779562608');
+    assert.strictEqual(env.elements.checkoutAccountNumber.textContent, '107882760609');
     assert.strictEqual(env.elements.checkoutAccountName.textContent, 'NGUYEN LE HUY TAM');
     assert.strictEqual(env.elements.checkoutTransferNote.textContent, 'PDL SUB 202611 8899');
     assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '39.000 VNĐ');
