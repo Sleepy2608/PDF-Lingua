@@ -640,7 +640,7 @@
       if (btnCopySupportEmail) {
         btnCopySupportEmail.addEventListener('click', function (e) {
           e.preventDefault();
-          var email = 'huytamnguyenle2608@gmail.com';
+          var email = 'support.pdflingua@gmail.com';
           var notifyCopy = function () {
             btnCopySupportEmail.textContent = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_copied') : 'Đã sao chép!';
             setTimeout(function () {
@@ -650,7 +650,7 @@
 
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(email).then(notifyCopy).catch(function () {
-              btnCopySupportEmail.textContent = 'huytamnguyenle2608@gmail.com';
+              btnCopySupportEmail.textContent = 'support.pdflingua@gmail.com';
             });
           } else {
             notifyCopy();

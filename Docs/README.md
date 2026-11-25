@@ -9,6 +9,7 @@
 | **Loại tài liệu** | Master Documentation Index & Thesis Mapping |
 | **Viết tắt** | PDF-Lingua |
 | **Phiên bản tài liệu** | 1.3 |
+| **Website trực tuyến (Live Demo)** | [https://pdflingua.vercel.app](https://pdflingua.vercel.app) |
 | **Ngày tạo** | 15/09/2026 |
 | **Ngày chỉnh sửa lần cuối** | 24/11/2026 |
 | **Trạng thái** | Hoàn thành (Release) |
@@ -39,6 +40,7 @@ Bảng điều hướng tổng hợp toàn bộ các tài liệu kỹ thuật, k
 | **16** | **Kịch Bản Thuyết Minh & Demo Đồ Án** | [`Docs/demo-script/README.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/demo-script/README.md) | Kịch bản chi tiết 7 phân đoạn (12-15 phút) trình diễn hội đồng: Guest mode, trích xuất 2 cột, dual-pane workspace, AI Copilot, VietQR và Admin dashboard. |
 | **17** | **Rà Soát An Toàn & Bàn Giao Repository** | [`Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/security-and-threat-modeling/repository-secret-and-sanitization-audit.md) | Báo cáo kiểm định an toàn 6 tầng, xác thực 0 rò rỉ khóa API/secret trên toàn bộ Git và mã nguồn, tích hợp công cụ quét tự động scan_secrets.py. |
 | **18** | **Hướng Dẫn Triển Khai Cloud** | [`Docs/installation-guide/cloud-deployment-guide.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/cloud-deployment-guide.md) | Kiến trúc triển khai đám mây phân tán: Frontend trên Vercel, Backend Docker trên Render, proxy hóa CORS và hướng dẫn tên miền .id.vn/.com. |
+| **19** | **Sao Lưu & Phục Hồi Database** | [`Docs/installation-guide/database-backup-and-recovery.md`](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/database-backup-and-recovery.md) | Chiến lược Online Hot Backup SQLite WAL, kịch bản khôi phục sự cố (RPO < 24h, RTO < 5 phút), công cụ tự động backup_db.py và lập lịch cron. |
 
 ---
 

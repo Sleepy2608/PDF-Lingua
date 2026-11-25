@@ -61,6 +61,14 @@ class SummarizeResponseData(BaseModel):
     execution_time_ms: int = Field(default=0, ge=0, description="Thoi gian thuc thi tinh bang mili giay")
     document_id: Optional[int] = Field(default=None, description="ID tai lieu lien ket")
     history_id: Optional[int] = Field(default=None, description="ID ban ghi lich su xu ly")
+    injection_detected: bool = Field(
+        default=False,
+        description="Co phat hien va vo hieu hoa dau hieu prompt injection khong",
+    )
+    moderation_flagged: bool = Field(
+        default=False,
+        description="Canh bao noi dung cau hoi vi pham tieu chuan an toan",
+    )
 
 
 class ChatTurn(BaseModel):
@@ -123,6 +131,14 @@ class ChatResponseData(BaseModel):
     execution_time_ms: int = Field(default=0, ge=0, description="Thoi gian thuc thi tinh bang mili giay")
     document_id: Optional[int] = Field(default=None, description="ID tai lieu lien ket")
     history_id: Optional[int] = Field(default=None, description="ID ban ghi lich su xu ly")
+    injection_detected: bool = Field(
+        default=False,
+        description="Co phat hien va vo hieu hoa dau hieu prompt injection khong",
+    )
+    moderation_flagged: bool = Field(
+        default=False,
+        description="Canh bao noi dung cau hoi vi pham tieu chuan an toan",
+    )
     daily_questions_remaining: Optional[int] = Field(
         default=None,
         ge=0,

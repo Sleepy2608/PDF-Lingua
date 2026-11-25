@@ -37,7 +37,7 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 - **Tuần 3 (Sprint 3: 27/10 - 03/11/2026) - Quản lý tài liệu, OCR nâng cao, dịch thuật cốt lõi & kiểm thử đo lường**: Quản lý kho file cá nhân, tiền xử lý OCR (deskew, rotate, blank page), động cơ dịch thuật `deep-translator`, chia đoạn chống timeout, xuất file TXT/PDF Unicode, kéo thả file, điều khoản dịch vụ; bộ test đánh giá độ chính xác tiếng Việt, layout metrics, benchmark hiệu năng, tối ưu bộ nhớ và xử lý song song.
 - **Tuần 4 (Sprint 4: 03/11 - 10/11/2026) - Dịch thuật fallback, xuất file, lịch sử, admin cơ bản & quyền lợi gói**: Xử lý lỗi dịch thuật đa tầng, kiểm thử file xuất, thiết kế bảng dữ liệu lịch sử, API xem/mở lại/xóa lịch sử, quyền lợi Free (20MB) vs Pro (100MB), Dashboard admin cơ bản, bộ test ma trận bảo mật (Security Matrix), giới hạn tải lên và tài liệu kiến trúc.
 - **Tuần 5 (Sprint 5: 10/11 - 17/11/2026) - Lịch sử Pro, Quản trị Admin, Hạn mức Free/Pro, Mở rộng, Thiết kế đồ án, Avatar & Quản lý gói/Hóa đơn (Billing)**: Lịch sử Pro, Admin Console nâng cao, phân quyền RBAC, Batch ZIP, DOCX export, PDF preview inline, nộp hồ sơ thiết kế đồ án (Kiến trúc `PDFL-269`, Use Case `PDFL-270`, Class Diagram `PDFL-271`), Avatar người dùng (`PDFL-272`, `PDFL-273`), Lịch sử thanh toán & hóa đơn (`PDFL-274`, `PDFL-275`), Quản lý gói & hạn mức (`PDFL-276`) và Thống kê sử dụng dịch vụ (`PDFL-262`). Đã hoàn thành trọn vẹn 41/41 work items (123 SP - 100% Done) đúng theo Jira Board.
-- **Tuần 6 (Sprint 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu**: Tích hợp mô hình ngôn ngữ lớn (LLM API), prompt tóm tắt, Map-Reduce cho tài liệu dài, Trợ lý AI chat hỏi đáp theo ngữ cảnh (RAG QA Chatbot), anti-hallucination guardrails, giao diện chat, hoàn thành trọn vẹn 26 work items (74 SP - 100% Done) đúng theo Jira Board.
+- **Tuần 6 (Sprint 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu, Tính Năng Mở Rộng & Triển Khai Hệ Thống**: Tích hợp mô hình ngôn ngữ lớn (LLM API), prompt tóm tắt, Map-Reduce cho tài liệu dài, Trợ lý AI chat hỏi đáp theo ngữ cảnh (RAG QA Chatbot), anti-hallucination guardrails, giao diện chat, kiểm thử đa kích thước màn hình, lưu/tải lại bản dịch theo trang, thanh toán Pro, phản hồi lỗi, truy xuất nguồn AI, hàng đợi tác vụ, đa ngôn ngữ tiếng Anh, Welcome Dashboard, hướng dẫn sử dụng web, cập nhật quyền lợi RBAC và CI/CD workflow, hoàn thành trọn vẹn 37 work items (100 SP - 100% Done) đúng theo Jira Board.
 - **Tuần 7 (Sprint 7: 22/11 - 29/11/2026) - Kiểm thử toàn diện, Triển khai, Tài liệu bàn giao & Nghiệm thu đồ án**: Triển khai trọn gói 45 work items (98 Story Points: 69 SP Done / 29 SP To Do), hoàn tất báo cáo kỹ thuật (`PDFL-248`), slide thuyết trình (`PDFL-249`), kịch bản demo (`PDFL-250`), hướng dẫn sử dụng web (`PDFL-279`), bộ test case chức năng (`PDFL-199`), hình ảnh hướng dẫn (`PDFL-246`), rà soát an toàn repo (`PDFL-251`), phương án triển khai (`PDFL-228`) và tổng duyệt bảo vệ đồ án.
 
 ---
@@ -263,7 +263,7 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-238` | Phương án sao lưu và phục hồi database | EPIC 16 | Nguyễn Lê Huy Tâm | 2 | `kien_truc_he_thong.md` (11/11/2026) | **In Progress** |
 | `PDFL-244` | Mô tả cấu trúc thư mục và kiến trúc hệ thống | EPIC 16 | Nguyễn Lê Huy Tâm | 3 | `kien_truc_he_thong.md` (11/11/2026) | **Done** |
 | `PDFL-213` | Kiểm thử tài liệu dài khi dịch, tóm tắt và hỏi đáp AI | EPIC 15 | Nguyễn Lê Huy Tâm | 3 | `test_ai_summary_quality.py` (12/11) | **Done** |
-| `PDFL-222` | Hạn chế nội dung không đáng tin cậy ảnh hưởng trợ lý AI | EPIC 15 | Nguyễn Lê Huy Tâm | 2 | `test_ai_chat_api.py` (12/11/2026) | **In Progress** |
+| `PDFL-222` | Hạn chế nội dung không đáng tin cậy ảnh hưởng trợ lý AI | EPIC 15 | Nguyễn Lê Huy Tâm | 2 | `test_ai_service.py`, `test_ai_chat_api.py` (24/11/2026) | **Done** |
 
 > **Thống kê Tuần 4**:
 > - **Tổng số công việc hoàn thành**: 41 tasks (31 tasks Backlog + 10 tasks Bảo mật/Kiểm thử/Tài liệu)
@@ -326,8 +326,8 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 ---
 
 ### 📅 TUẦN 6 (Sprint 6: 17/11/2026 - 24/11/2026)
-- **Trọng tâm**: Tích hợp trí tuệ nhân tạo (LLM API) toàn diện: AI Tóm tắt văn bản tài liệu theo nhiều phong cách, thuật toán Map-Reduce chia đoạn tóm tắt cho tài liệu dài, Trợ lý AI hỏi đáp tài liệu theo ngữ cảnh (Contextual Document QA/RAG Chatbot), rào chắn hạn chế ảo giác (Anti-hallucination prompt boundary), giao diện chat và kiểm thử chất lượng AI.
-- **Trạng thái**: ✅ **100% Hoàn thành** - **26 Work Items** (26 Done / 0 In Progress / 0 To Do - **74 Story Points**) - *Đồng bộ 100% Jira Board*
+- **Trọng tâm**: Tích hợp trí tuệ nhân tạo (LLM API) toàn diện: AI Tóm tắt văn bản tài liệu theo nhiều phong cách, thuật toán Map-Reduce chia đoạn tóm tắt cho tài liệu dài, Trợ lý AI hỏi đáp tài liệu theo ngữ cảnh (Contextual Document QA/RAG Chatbot), rào chắn hạn chế ảo giác (Anti-hallucination prompt boundary), giao diện chat, mở rộng tính năng đa ngôn ngữ, trang chào mừng Welcome, thanh toán gói Pro, phân quyền RBAC và thiết lập luồng CI/CD.
+- **Trạng thái**: ✅ **100% Hoàn thành** - **37 Work Items** (37 Done / 0 In Progress / 0 To Do - **100 Story Points**) - *Đồng bộ 100% Jira Board*
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Người thực hiện | File / Minh chứng thực tế | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :--- | :---: |
@@ -357,10 +357,21 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-147` | Xử lý trường hợp tài liệu không có thông tin để trả lời | EPIC 10 | 3 | Nguyễn Lê Huy Tâm | Fallback "không tìm thấy thông tin" | **Done** |
 | `PDFL-50` | Xây dựng giao diện tóm tắt văn bản bằng AI | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Layout AI Summary widget | **Done** |
 | `PDFL-51` | Xây dựng giao diện trò chuyện với trợ lý AI | EPIC 03 | 3 | Nguyễn Lê Huy Tâm | Layout AI Copilot Chat panel | **Done** |
+| `PDFL-205` | Kiểm thử giao diện trên các kích thước màn hình khác nhau | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_frontend_sidebar.js`, responsive matrix | **Done** |
+| `PDFL-257` | Hỗ trợ lưu hoặc tải lại kết quả dịch theo từng trang | EPIC 11 | 3 | Huỳnh Đình Chấn | Lưu trữ cache phân trang và tải lại bản dịch | **Done** |
+| `PDFL-259` | Tích hợp thanh toán trực tuyến cho gói Pro | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | Cổng thanh toán VietQR / SePay tự động kích hoạt gói Pro | **Done** |
+| `PDFL-261` | Cho phép người dùng gửi phản hồi hoặc báo cáo lỗi | EPIC 11 | 2 | Nguyễn Lê Huy Tâm | Modal tiếp nhận ý kiến đóng góp & bug report | **Done** |
+| `PDFL-263` | Cải thiện khả năng truy xuất nguồn cho câu trả lời AI bằng cách tham chiếu trang hoặc đoạn văn liên quan | EPIC 10 | 2 | Nguyễn Lê Huy Tâm | AI Copilot citation & source chunk linking | **Done** |
+| `PDFL-264` | Xem xét sử dụng hàng đợi tác vụ cho các file lớn và quy trình OCR/AI kéo dài | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | Async background job queue processing | **Done** |
+| `PDFL-277` | Trang web hỗ trợ ngôn ngữ Tiếng Anh | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | Hệ thống đa ngôn ngữ song ngữ Anh - Việt | **Done** |
+| `PDFL-278` | Welcome Dashboard (Landing page khi người dùng mới lần vào web) | EPIC 11 | 3 | Nguyễn Lê Huy Tâm | Trang chào mừng độc lập `welcome.html` & Bento grid | **Done** |
+| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Hướng dẫn thao tác trải nghiệm ứng dụng web chi tiết | **Done** |
+| `PDFL-283` | RBAC for UI/UX frontend and benefit update | EPIC 03 | 2 | Nguyễn Lê Huy Tâm | Phân quyền vai trò người dùng và cập nhật quyền lợi Pro | **Done** |
+| `PDFL-284` | Simple CI/CD Workflow | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | Pipeline tự động hóa kiểm thử mã nguồn trên GitHub Actions | **Done** |
 
 > **Thống kê Tuần 6**:
-> - **Tổng số công việc hoàn thành**: 26 work items (100% Done)
-> - **Tổng Story Points**: 74 SP (Nguyễn Lê Huy Tâm: 74 SP - 100%)
+> - **Tổng số công việc hoàn thành**: 37 work items (37 Done / 0 In Progress / 0 To Do - **100% Done**)
+> - **Tổng Story Points**: 100 SP (Nguyễn Lê Huy Tâm: 95 SP | Huỳnh Đình Chấn: 5 SP)
 
 ---
 
@@ -379,7 +390,7 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 | `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key nhạy cảm | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Báo cáo rà soát an toàn & script quét secret (`scan_secrets.py`) | **Done** |
 | `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng | EPIC 15 | 5 | Huỳnh Đình Chấn | Bảng đặc tả ma trận test case chức năng | **To Do** |
 | `PDFL-246` | Cung cấp hình ảnh giao diện và hướng dẫn sử dụng | EPIC 16 | 8 | Huỳnh Đình Chấn | Bộ ảnh chụp giao diện và tài liệu hướng dẫn | **To Do** |
-| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 5 | Nguyễn Lê Huy Tâm | Hướng dẫn thao tác trải nghiệm ứng dụng web | **To Do** |
+| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 3 | Nguyễn Lê Huy Tâm | Hướng dẫn thao tác trải nghiệm ứng dụng web chi tiết | **Done** |
 | `PDFL-200` | Unit test cho các hàm xử lý nghiệp vụ quan trọng | EPIC 15 | 3 | Huy Tâm & Đình Chấn | `test_services.py`, `test_job_service.py` | **Done** |
 | `PDFL-201` | Kiểm thử API upload, trích xuất, OCR, dịch thuật và AI | EPIC 15 | 3 | Huy Tâm & Đình Chấn | `test_api_process.py`, `test_ai_api.py` | **Done** |
 | `PDFL-202` | Kiểm thử đăng ký, đăng nhập, phân quyền và gói Free/Pro | EPIC 15 | 3 | Huỳnh Đình Chấn | `test_auth.py`, `test_permissions.py` | **Done** |

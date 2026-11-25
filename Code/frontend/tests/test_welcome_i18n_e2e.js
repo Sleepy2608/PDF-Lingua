@@ -58,7 +58,7 @@ console.log('[PASS] Pricing tiers & feature lists translate to English');
 assert.strictEqual(i18n.t('footer_badge_rbac'), 'RBAC Access Control');
 assert.strictEqual(i18n.t('footer_tech_ocr'), 'Vietnamese OCR & Deskew');
 assert.strictEqual(i18n.t('footer_tech_layout'), 'Smart Layout Reading Order');
-assert.strictEqual(i18n.t('footer_contact_email'), 'Contact: huytamnguyenle2608@gmail.com');
+assert.strictEqual(i18n.t('footer_contact_email'), 'Contact: support.pdflingua@gmail.com');
 console.log('[PASS] Footer badges and core technology links translate to English');
 
 // 6. Verify Legal Modal

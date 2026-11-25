@@ -466,7 +466,7 @@ runTest('Footer: 4-column semantic layout with brand, nav, tech and legal', () =
 
 runTest('Footer: Includes security badges, email support, and GitHub repo with uptime removed', () => {
   assert.ok(htmlContent.includes('footer-cert-badge'), 'Missing .footer-cert-badge');
-  assert.ok(htmlContent.includes('huytamnguyenle2608@gmail.com'), 'Missing personal support email');
+  assert.ok(htmlContent.includes('support.pdflingua@gmail.com'), 'Missing project support email');
   assert.ok(htmlContent.includes('github.com/Sleepy2608/PDF-Lingua'), 'Missing GitHub repo URL');
   assert.strictEqual(htmlContent.includes('99.98% Uptime'), false, 'Uptime status must be removed');
   assert.ok(htmlContent.includes('welcome-footer-copy'), 'Missing copyright text container');

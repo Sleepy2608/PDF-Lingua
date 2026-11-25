@@ -17,10 +17,11 @@ from app.models.subscription import (  # noqa: F401
     Subscription,
     seed_pricing_plans,
 )
-from app.models.user import User  # noqa: F401
+from app.models.user import User, UserRole, seed_default_admin  # noqa: F401
 
 __all__ = [
     "User",
+    "UserRole",
     "Document",
     "ProcessingHistory",
     "ActionType",
@@ -29,4 +30,5 @@ __all__ = [
     "Subscription",
     "PaymentTransaction",
     "seed_pricing_plans",
+    "seed_default_admin",
 ]

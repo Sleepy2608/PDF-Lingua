@@ -235,7 +235,7 @@
             "footer_tech_mapreduce": "Tóm tắt phân tán Map-Reduce",
             "footer_tech_copilot": "Trợ lý Copilot hỏi đáp tài liệu",
             "footer_tech_export": "Xuất tệp Word .DOCX & ZIP",
-            "footer_contact_email": "Liên hệ: huytamnguyenle2608@gmail.com",
+            "footer_contact_email": "Liên hệ: support.pdflingua@gmail.com",
 
             // Legal Modal Detailed Content
             "terms_callout_title": "Tóm tắt quyền lợi:",
@@ -1586,7 +1586,7 @@
             "footer_tech_mapreduce": "Distributed Map-Reduce Summarization",
             "footer_tech_copilot": "Copilot Document Q&A Assistant",
             "footer_tech_export": "Word .DOCX & ZIP Export",
-            "footer_contact_email": "Contact: huytamnguyenle2608@gmail.com",
+            "footer_contact_email": "Contact: support.pdflingua@gmail.com",
 
             // Legal Modal Detailed Content
             "terms_callout_title": "Rights Overview:",

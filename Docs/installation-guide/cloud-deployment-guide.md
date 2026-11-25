@@ -57,7 +57,7 @@ flowchart TD
         Storage["Tệp lưu trữ cục bộ (/storage)"]
     end
     
-    Client -->|1. Truy cập https://pdf-lingua.vercel.app| Edge
+    Client -->|1. Truy cập https://pdflingua.vercel.app| Edge
     Edge --> FE
     Client -->|2. Gọi API tương đối /api/process| Proxy
     Proxy -->|3. Forward an toàn qua HTTPS nội bộ| Docker
@@ -146,7 +146,7 @@ Dự án đã tích hợp sẵn tệp cấu hình [Code/frontend/vercel.json](fi
    - **Build and Output Settings**: Giữ mặc định (không cần build command).
 5. Bấm nút **Deploy**.  
 Vercel sẽ đóng gói và phát hành website trong vòng chưa đầy 15 giây!  
-Website của bạn sẽ có địa chỉ chính thức: **`https://pdf-lingua.vercel.app`**.
+Website của bạn sẽ có địa chỉ chính thức: **`https://pdflingua.vercel.app`**.
 
 ---
 
@@ -174,7 +174,7 @@ Sau khi hệ thống online, thực hiện kiểm tra theo checklist sau:
 |:---:|---|---|---|
 | **1** | Kiểm tra Backend Health | Mở trình duyệt: `https://<backend-url>/health` | Trả về JSON: `{"status": "healthy", ...}` |
 | **2** | Kiểm tra Swagger API | Mở trình duyệt: `https://<backend-url>/docs` | Giao diện Swagger UI hiển thị đầy đủ các router |
-| **3** | Truy cập Landing Page | Mở trình duyệt: `https://pdf-lingua.vercel.app/welcome.html` | Tải nhanh dưới 1 giây, đầy đủ hình ảnh, CSS mượt mà |
+| **3** | Truy cập Landing Page | Mở trình duyệt: `https://pdflingua.vercel.app/welcome` | Tải nhanh dưới 1 giây, đầy đủ hình ảnh, CSS mượt mà |
 | **4** | Đăng nhập tài khoản | Đăng nhập tài khoản sinh viên tại giao diện chính | Nạp JWT token thành công, không gặp lỗi CORS |
 | **5** | Dịch tệp PDF thực tế | Tải lên tệp `test_pdfl1.pdf` và bấm bắt đầu dịch | Thanh tiến trình chạy mượt, chuyển sang Workspace song ngữ |
 | **6** | Thử nghiệm OCR | Tải lên tệp scan có chữ tiếng Việt | Động cơ Tesseract trích xuất chữ tiếng Việt có dấu chuẩn xác |
@@ -192,3 +192,7 @@ Sau khi hệ thống online, thực hiện kiểm tra theo checklist sau:
 
 ### 2. Tự động hóa CI/CD khi có cập nhật code mới:
 * Cả Vercel và Render đều được kết nối với repository GitHub của bạn. Mỗi khi bạn chạy lệnh `git push` lên nhánh chính, cả Frontend và Backend sẽ tự động build và cập nhật phiên bản mới nhất mà không cần thao tác thủ công.
+
+### 3. Phương án sao lưu & phục hồi cơ sở dữ liệu định kỳ:
+* Hệ thống tích hợp sẵn kịch bản sao lưu nóng trực tuyến [scripts/backup_db.py](file:///c:/University%20Coding%20Project/PDF-Lingua/Code/backend/scripts/backup_db.py) sử dụng SQLite Online Backup C-API (không gây khóa database khi người dùng đang thao tác).
+* Xem hướng dẫn thiết lập chi tiết, chỉ số RPO/RTO và kịch bản phục hồi thảm họa tại tài liệu: [database-backup-and-recovery.md](file:///c:/University%20Coding%20Project/PDF-Lingua/Docs/installation-guide/database-backup-and-recovery.md).

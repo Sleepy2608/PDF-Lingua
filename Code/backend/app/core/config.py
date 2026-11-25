@@ -49,6 +49,10 @@ class Settings:
     # Database
     DATABASE_URL: str = _resolve_database_url()
 
+    # Initial Admin Seeding (via environment variables, never hardcoded)
+    ADMIN_EMAIL: str | None = os.getenv("ADMIN_EMAIL", None)
+    ADMIN_PASSWORD: str | None = os.getenv("ADMIN_PASSWORD", None)
+
     # File Upload Constraints
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "temp_uploads/")
     STORAGE_DIR: str = os.getenv("STORAGE_DIR", "storage/documents")
@@ -77,6 +81,10 @@ class Settings:
     BAI_MODEL_SUMMARIZE: str = os.getenv("BAI_MODEL_SUMMARIZE", "gpt-5-mini")
     BAI_MODEL_CHAT: str = os.getenv("BAI_MODEL_CHAT", "gpt-5-mini")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_BASE_URL: str = os.getenv(
+        "GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"
+    )
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash-lite")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
     # CORS
@@ -88,7 +96,7 @@ class Settings:
     )
     VIETQR_BANK_ID: str = os.getenv("VIETQR_BANK_ID", "ICB")
     VIETQR_BANK_NAME: str = os.getenv("VIETQR_BANK_NAME", "VietinBank (CN Thủ Thiêm - Hội Sở)")
-    VIETQR_ACCOUNT_NUMBER: str = os.getenv("VIETQR_ACCOUNT_NUMBER", "0779562608")
+    VIETQR_ACCOUNT_NUMBER: str = os.getenv("VIETQR_ACCOUNT_NUMBER", "107882760609")
     VIETQR_ACCOUNT_NAME: str = os.getenv("VIETQR_ACCOUNT_NAME", "NGUYEN LE HUY TAM")
     TRANSACTION_EXPIRE_SECONDS: int = int(os.getenv("TRANSACTION_EXPIRE_SECONDS", "900"))
 
