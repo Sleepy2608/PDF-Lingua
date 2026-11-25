@@ -424,3 +424,100 @@ def test_admin_transactions_list_approve_and_reject(admin_test_env):
     assert res_completed.status_code == 200
     assert res_completed.json()["data"]["total_revenue_vnd"] >= monthly_plan.price_vnd
 
+
+# ── User Access Logs & Multi-IP Anomaly Detection ────────────────────────
+
+
+def test_network_ip_extraction_and_device_summary():
+    from types import SimpleNamespace
+    from app.core.network import extract_client_ip, parse_device_summary
+
+    req_xff = SimpleNamespace(
+        headers={"x-forwarded-for": "203.0.113.42, 10.0.0.1, 172.16.0.2"},
+        client=SimpleNamespace(host="127.0.0.1"),
+    )
+    assert extract_client_ip(req_xff) == "203.0.113.42"
+
+    req_real_ip = SimpleNamespace(
+        headers={"x-real-ip": "198.51.100.88"},
+        client=SimpleNamespace(host="127.0.0.1"),
+    )
+    assert extract_client_ip(req_real_ip) == "198.51.100.88"
+
+    req_direct = SimpleNamespace(
+        headers={},
+        client=SimpleNamespace(host="192.0.2.5"),
+    )
+    assert extract_client_ip(req_direct) == "192.0.2.5"
+
+    assert parse_device_summary("Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0") == "Chrome / Windows"
+    assert parse_device_summary("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) AppleWebKit/605.1.15 Safari/604.1") == "Safari / iOS"
+
+
+def test_admin_access_logs_and_multi_ip_warning(admin_test_env):
+    from app.core.security import hash_password
+    from app.models.access_log import UserAccessLog
+
+    db_session = admin_test_env["session"]
+    pro_user = admin_test_env["pro"]
+    free_user = admin_test_env["free"]
+    admin_headers = {"Authorization": f"Bearer {admin_test_env['admin_token']}"}
+    free_headers = {"Authorization": f"Bearer {admin_test_env['free_token']}"}
+
+    # Give pro_user a known password to exercise live /api/auth/login tracking
+    pro_user.hashed_password = hash_password("StrongPass123!")
+    db_session.commit()
+
+    # Login from 3 distinct IPs via X-Forwarded-For
+    ips_and_uas = [
+        ("203.0.113.10, 10.0.0.1", "Mozilla/5.0 (Windows NT 10.0) Chrome/120.0.0.0"),
+        ("198.51.100.20", "Mozilla/5.0 (Macintosh; Intel Mac OS X) Safari/605.1.15"),
+        ("192.0.2.30", "Mozilla/5.0 (Linux; Android 14) Chrome/121.0.0.0"),
+    ]
+    for ip_hdr, ua in ips_and_uas:
+        login_res = client.post(
+            "/api/auth/login",
+            json={"email": pro_user.email, "password": "StrongPass123!"},
+            headers={"X-Forwarded-For": ip_hdr, "User-Agent": ua},
+        )
+        assert login_res.status_code == 200
+
+    # 1. Non-admin forbidden on /api/admin/access-logs
+    res_forbidden = client.get("/api/admin/access-logs", headers=free_headers)
+    assert res_forbidden.status_code == 403
+
+    # 2. Verify /api/admin/users returns last_ip & multi_ip_warning for pro_user
+    res_users = client.get(f"/api/admin/users?search={pro_user.email}", headers=admin_headers)
+    assert res_users.status_code == 200
+    user_item = res_users.json()["data"]["items"][0]
+    assert user_item["last_ip"] == "192.0.2.30"
+    assert user_item["last_device"] == "Chrome / Android"
+    assert user_item["distinct_ip_count_24h"] == 3
+    assert user_item["multi_ip_warning"] is True
+
+    # 3. Verify /api/admin/access-logs returns logs, unique_ips_24h, and filters cleanly
+    res_logs = client.get(
+        f"/api/admin/access-logs?user_id={pro_user.id}&multi_ip_only=true",
+        headers=admin_headers,
+    )
+    assert res_logs.status_code == 200
+    log_data = res_logs.json()["data"]
+    assert log_data["total_count"] == 3
+    assert log_data["unique_ips_24h"] >= 3
+    assert log_data["multi_ip_users_count"] >= 1
+    assert [item["ip_address"] for item in log_data["items"]] == [
+        "192.0.2.30",
+        "198.51.100.20",
+        "203.0.113.10",
+    ]
+
+    # 4. Search by specific IP returns exact log
+    res_ip_search = client.get("/api/admin/access-logs?search=198.51.100.20", headers=admin_headers)
+    assert res_ip_search.status_code == 200
+    assert res_ip_search.json()["data"]["total_count"] == 1
+    assert res_ip_search.json()["data"]["items"][0]["device_summary"] == "Safari / macOS"
+
+    # Ensure free_user has no logs yet
+    assert db_session.query(UserAccessLog).filter(UserAccessLog.user_id == free_user.id).count() == 0
+
+
