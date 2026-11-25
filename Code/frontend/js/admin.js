@@ -34,6 +34,16 @@
   let txStatusFilter = 'all';
   let txSearchDebounceTimer = null;
 
+  // Tabs & Access Logs state
+  let activeAdminTab = 'overview';
+  let logPage = 1;
+  let logTotalPages = 1;
+  let logSearch = '';
+  let logMultiIpOnly = false;
+  let logFilterUserId = null;
+  let logFilterUserEmail = '';
+  let logSearchDebounceTimer = null;
+
   // ── Helper Utilities ────────────────────────────────────────────────────────
   function getStoredToken() {
     if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
@@ -370,6 +380,7 @@
         <td><div class="skeleton-pill" style="width: 80px; height: 22px; border-radius: 9999px;"></div></td>
         <td><div class="skeleton-pill" style="width: 44px; height: 16px;"></div></td>
         <td><div class="skeleton-pill" style="width: 110px; height: 14px;"></div></td>
+        <td><div class="skeleton-pill" style="width: 110px; height: 14px;"></div></td>
         <td class="text-right"><div class="skeleton-pill" style="width: 130px; height: 26px; border-radius: 6px; margin-left: auto;"></div></td>
       </tr>
     `).join('');
@@ -524,6 +535,24 @@
         `;
       }
 
+      let ipCellHtml = '<span class="admin-ip-none">Chưa ghi nhận</span>';
+      if (u.last_ip) {
+        const safeIp = escapeHtml(u.last_ip);
+        const safeDev = escapeHtml(u.last_device || 'Unknown Device');
+        const warnBadge = u.multi_ip_warning
+          ? `<button type="button" class="admin-multi-ip-badge font-mono" data-action="filter-ip" data-user-id="${u.id}" data-user-email="${email}" title="Nhấn để xem lịch sử IP">${u.distinct_ip_count_24h || 0} IP / 24h</button>`
+          : `<button type="button" class="btn-view-ip" data-action="filter-ip" data-user-id="${u.id}" data-user-email="${email}" title="Xem lịch sử IP">Xem IP</button>`;
+        ipCellHtml = `
+          <div class="admin-ip-cell">
+            <div class="admin-ip-top">
+              <span class="admin-ip-address font-mono">${safeIp}</span>
+              ${warnBadge}
+            </div>
+            <div class="admin-ip-device">${safeDev}</div>
+          </div>
+        `;
+      }
+
       html += `
         <tr>
           <td><span class="user-id-mono">#${u.id}</span></td>
@@ -539,6 +568,7 @@
           <td><span class="${roleBadgeClass}">${roleLabel}</span></td>
           <td><span class="${statusPillClass}">${statusLabel}</span></td>
           <td><span class="doc-count-mono">${u.document_count || 0}</span> <span class="doc-unit">tệp</span></td>
+          <td>${ipCellHtml}</td>
           <td><span class="date-mono">${formatDate(u.created_at)}</span></td>
           <td class="text-right">${actionButtons}</td>
         </tr>
@@ -701,10 +731,158 @@
   }
 
   // ── Master Loader ───────────────────────────────────────────────────────────
+  function switchAdminTab(tabName) {
+    const validTabs = ['overview', 'users', 'transactions'];
+    const targetTab = validTabs.includes(tabName) ? tabName : 'overview';
+    activeAdminTab = targetTab;
+
+    const panelMap = {
+      overview: document.getElementById('adminTabOverview'),
+      users: document.getElementById('adminTabUsers'),
+      transactions: document.getElementById('adminTabTransactions'),
+    };
+    const btnMap = {
+      overview: document.getElementById('adminTabBtnOverview'),
+      users: document.getElementById('adminTabBtnUsers'),
+      transactions: document.getElementById('adminTabBtnTransactions'),
+    };
+
+    validTabs.forEach((key) => {
+      if (panelMap[key]) {
+        panelMap[key].style.display = key === targetTab ? 'block' : 'none';
+      }
+      if (btnMap[key]) {
+        const isActive = key === targetTab;
+        btnMap[key].classList.toggle('active', isActive);
+        btnMap[key].setAttribute('aria-selected', isActive ? 'true' : 'false');
+      }
+    });
+  }
+
   function loadAllAdminData() {
     fetchAdminStats();
     fetchAdminUsers(1);
+    fetchAdminAccessLogs(1);
     fetchAdminTransactions(1);
+  }
+
+  // ── API Fetch & Actions: User Access & IP Audit Logs ───────────────────────
+  async function fetchAdminAccessLogs(page = 1) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    logPage = page;
+    const params = new URLSearchParams({
+      page: String(logPage),
+      limit: '10',
+    });
+    if (logSearch && logSearch.trim()) params.append('search', logSearch.trim());
+    if (logMultiIpOnly) params.append('multi_ip_only', 'true');
+    if (logFilterUserId) params.append('user_id', String(logFilterUserId));
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/access-logs?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.status === 200) {
+        const json = await res.json();
+        renderAdminAccessLogs(json.data);
+      }
+    } catch (err) {
+      console.error('[PDF-Lingua Admin] Error loading access logs:', err);
+    }
+  }
+
+  function renderAdminAccessLogs(data) {
+    if (!data) return;
+
+    const uniqueBadge = document.getElementById('adminUniqueIps24hBadge');
+    const multiBadge = document.getElementById('adminMultiIpUsersBadge');
+    const tabMultiBadge = document.getElementById('adminTabMultiIpBadge');
+    const multiCount = data.multi_ip_users_count || 0;
+
+    if (uniqueBadge) uniqueBadge.textContent = `IP duy nhất (24h): ${data.unique_ips_24h || 0}`;
+    if (multiBadge) multiBadge.textContent = `Cảnh báo đa IP: ${multiCount}`;
+    if (tabMultiBadge) {
+      tabMultiBadge.textContent = String(multiCount);
+      tabMultiBadge.style.display = multiCount > 0 ? 'inline-flex' : 'none';
+    }
+
+    const tbody = document.getElementById('adminAccessLogsTableBody');
+    const emptyEl = document.getElementById('adminAccessLogsEmpty');
+    const tableEl = document.getElementById('adminAccessLogsTable');
+    const pageInfo = document.getElementById('adminLogPaginationInfo');
+    const pageBadge = document.getElementById('adminLogCurrentPageBadge');
+    const prevBtn = document.getElementById('btnAdminLogPrevPage');
+    const nextBtn = document.getElementById('btnAdminLogNextPage');
+
+    logTotalPages = data.total_pages || 1;
+    if (pageInfo) pageInfo.textContent = `Trang ${data.page || 1} / ${logTotalPages} (Tổng ${data.total_count || 0} lượt)`;
+    if (pageBadge) pageBadge.textContent = String(data.page || 1);
+    if (prevBtn) prevBtn.disabled = (data.page || 1) <= 1;
+    if (nextBtn) nextBtn.disabled = (data.page || 1) >= logTotalPages;
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const items = data.items || [];
+    if (items.length === 0) {
+      if (tableEl) tableEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    if (tableEl) tableEl.style.display = 'table';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    items.forEach((log) => {
+      const tr = document.createElement('tr');
+      const safeEmail = escapeHtml(log.user_email || '');
+      const safeName = log.user_name ? escapeHtml(log.user_name) : '';
+      const safeIp = escapeHtml(log.ip_address || 'unknown');
+      const safeDevice = escapeHtml(log.device_summary || 'Unknown Device');
+      const actionCls = log.action === 'register' ? 'register' : 'login';
+      const actionLabel = log.action === 'register' ? 'Đăng ký' : 'Đăng nhập';
+      const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('vi-VN') : '-';
+
+      tr.innerHTML = `
+        <td>
+          <div class="user-cell-name">${safeName || safeEmail}</div>
+          <div class="user-cell-email">${safeEmail}</div>
+        </td>
+        <td><span class="admin-ip-address font-mono">${safeIp}</span></td>
+        <td><span class="admin-ip-device" style="color:#334155; font-size:0.8125rem;">${safeDevice}</span></td>
+        <td><span class="admin-log-action-pill ${actionCls}">${actionLabel}</span></td>
+        <td class="text-right font-mono" style="font-size:0.78rem; color:#64748B;">${dateStr}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterLogsByUser(userId, email) {
+    logFilterUserId = userId;
+    logFilterUserEmail = email || `User #${userId}`;
+    const chip = document.getElementById('adminLogUserFilterChip');
+    const chipLabel = document.getElementById('adminLogUserFilterLabel');
+    if (chip) chip.style.display = 'inline-flex';
+    if (chipLabel) chipLabel.textContent = `Lọc: ${logFilterUserEmail}`;
+    fetchAdminAccessLogs(1);
+    const logsCard = document.getElementById('adminAccessLogsCard');
+    if (logsCard && typeof logsCard.scrollIntoView === 'function') {
+      logsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function clearLogUserFilter() {
+    logFilterUserId = null;
+    logFilterUserEmail = '';
+    const chip = document.getElementById('adminLogUserFilterChip');
+    if (chip) chip.style.display = 'none';
+    fetchAdminAccessLogs(1);
   }
 
   // ── API Fetch & Actions: VietQR Transactions ───────────────────────────────
@@ -742,8 +920,14 @@
 
     const revBadge = document.getElementById('adminTxRevenueBadge');
     const pendBadge = document.getElementById('adminTxPendingBadge');
+    const tabPendingBadge = document.getElementById('adminTabPendingTxBadge');
+    const pendingCnt = data.pending_count || 0;
     if (revBadge) revBadge.textContent = `Doanh thu: ${data.total_revenue_display || '0đ'}`;
-    if (pendBadge) pendBadge.textContent = `Chờ duyệt: ${data.pending_count || 0}`;
+    if (pendBadge) pendBadge.textContent = `Chờ duyệt: ${pendingCnt}`;
+    if (tabPendingBadge) {
+      tabPendingBadge.textContent = String(pendingCnt);
+      tabPendingBadge.style.display = pendingCnt > 0 ? 'inline-flex' : 'none';
+    }
 
     const tbody = document.getElementById('adminTxTableBody');
     const emptyEl = document.getElementById('adminTxTableEmpty');
@@ -974,6 +1158,8 @@
               await executeRoleUpdate(userId, targetRole, email);
             },
           });
+        } else if (action === 'filter-ip') {
+          filterLogsByUser(userId, email);
         }
       });
     }
@@ -1081,6 +1267,54 @@
         }
       });
     }
+
+    // 8. Admin Navigation Tabs Switcher
+    const adminTabsBar = document.getElementById('adminTabsBar');
+    if (adminTabsBar) {
+      adminTabsBar.addEventListener('click', (e) => {
+        const tabBtn = e.target.closest('button[data-admin-tab]');
+        if (!tabBtn) return;
+        const tabName = tabBtn.getAttribute('data-admin-tab');
+        switchAdminTab(tabName);
+      });
+    }
+
+    // 9. Access Logs Toolbar & Pagination
+    const logSearchInput = document.getElementById('adminLogSearchInput');
+    if (logSearchInput) {
+      logSearchInput.addEventListener('input', (e) => {
+        logSearch = e.target.value;
+        clearTimeout(logSearchDebounceTimer);
+        logSearchDebounceTimer = setTimeout(() => fetchAdminAccessLogs(1), 350);
+      });
+    }
+
+    const logMultiSelect = document.getElementById('adminLogMultiIpFilter');
+    if (logMultiSelect) {
+      logMultiSelect.addEventListener('change', (e) => {
+        logMultiIpOnly = e.target.value === 'true';
+        fetchAdminAccessLogs(1);
+      });
+    }
+
+    const btnClearLogChip = document.getElementById('btnClearLogUserFilter');
+    if (btnClearLogChip) {
+      btnClearLogChip.addEventListener('click', clearLogUserFilter);
+    }
+
+    const btnLogPrev = document.getElementById('btnAdminLogPrevPage');
+    if (btnLogPrev) {
+      btnLogPrev.addEventListener('click', () => {
+        if (logPage > 1) fetchAdminAccessLogs(logPage - 1);
+      });
+    }
+
+    const btnLogNext = document.getElementById('btnAdminLogNextPage');
+    if (btnLogNext) {
+      btnLogNext.addEventListener('click', () => {
+        if (logPage < logTotalPages) fetchAdminAccessLogs(logPage + 1);
+      });
+    }
   }
 
   // ── Auto Initialization ─────────────────────────────────────────────────────
@@ -1105,6 +1339,10 @@
     fetchAdminTransactions,
     executeApproveTransaction,
     executeRejectTransaction,
+    switchAdminTab,
+    fetchAdminAccessLogs,
+    filterLogsByUser,
+    clearLogUserFilter,
   };
 })();
 

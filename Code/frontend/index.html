@@ -2877,6 +2877,45 @@
                             </div>
                         </div>
 
+                        <!-- Admin Navigation Tabs -->
+                        <div class="admin-tabs-bar" id="adminTabsBar" role="tablist" aria-label="Điều hướng quản trị viên">
+                            <button type="button" class="admin-tab-btn active" id="adminTabBtnOverview"
+                                data-admin-tab="overview" role="tab" aria-selected="true">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+                                    <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+                                    <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+                                    <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+                                </svg>
+                                <span data-i18n="admin_tab_overview">Tổng quan Dashboard</span>
+                            </button>
+                            <button type="button" class="admin-tab-btn" id="adminTabBtnUsers"
+                                data-admin-tab="users" role="tab" aria-selected="false">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span data-i18n="admin_tab_users">Tài khoản & Truy cập IP</span>
+                                <span class="admin-tab-badge warn font-mono" id="adminTabMultiIpBadge" style="display: none;">0</span>
+                            </button>
+                            <button type="button" class="admin-tab-btn" id="adminTabBtnTransactions"
+                                data-admin-tab="transactions" role="tab" aria-selected="false">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                                </svg>
+                                <span data-i18n="admin_tab_transactions">Giao dịch VietQR</span>
+                                <span class="admin-tab-badge pending font-mono" id="adminTabPendingTxBadge" style="display: none;">0</span>
+                            </button>
+                        </div>
+
+                        <!-- TAB 1: Overview Dashboard -->
+                        <div class="admin-tab-panel" id="adminTabOverview" role="tabpanel">
                         <!-- Admin Metrics Overview Bento Grid -->
                         <div class="admin-bento-grid">
                             <!-- Cell 1: Hero Metric (Spans 2 columns on desktop) -->
@@ -3084,7 +3123,10 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End #adminTabOverview -->
 
+                        <!-- TAB 2: User Accounts & IP Tracking -->
+                        <div class="admin-tab-panel" id="adminTabUsers" role="tabpanel" style="display: none;">
                         <!-- User Management Section -->
                         <div class="admin-table-card">
                             <div class="admin-table-header">
@@ -3158,6 +3200,7 @@
                                             <th data-i18n="admin_th_role">Vai trò</th>
                                             <th data-i18n="admin_th_status">Trạng thái</th>
                                             <th data-i18n="admin_th_docs">Tài liệu</th>
+                                            <th data-i18n="admin_th_ip">IP & Thiết bị gần nhất</th>
                                             <th data-i18n="admin_th_created">Ngày tham gia</th>
                                             <th class="text-right" data-i18n="admin_th_actions">Thao tác</th>
                                         </tr>
@@ -3208,8 +3251,107 @@
                             </div>
                         </div>
 
+                        <!-- User Access & IP Audit Logs Card -->
+                        <div class="admin-table-card admin-access-card" id="adminAccessLogsCard">
+                            <div class="admin-table-header">
+                                <div class="table-title-group">
+                                    <div class="table-icon-pill">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="table-title" data-i18n="admin_ip_logs_title">Nhật ký Truy cập theo IP & Thiết bị</h3>
+                                        <p class="table-subtitle" data-i18n="admin_ip_logs_subtitle">Theo dõi địa chỉ IP đăng nhập từ nhiều máy và phát hiện truy cập bất thường trong 24 giờ</p>
+                                    </div>
+                                </div>
+                                <div class="admin-tx-summary-pills">
+                                    <span class="tx-summary-pill ip-info font-mono" id="adminUniqueIps24hBadge">IP duy nhất (24h): 0</span>
+                                    <span class="tx-summary-pill pending font-mono" id="adminMultiIpUsersBadge">Cảnh báo đa IP: 0</span>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Toolbar -->
+                            <div class="admin-toolbar">
+                                <div class="admin-search-wrap">
+                                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="admin-search-input" id="adminLogSearchInput"
+                                        placeholder="Tìm theo email, địa chỉ IP hoặc thiết bị..."
+                                        data-i18n-attr="placeholder:admin_ip_search_placeholder">
+                                </div>
+                                <div class="admin-filter-wrap">
+                                    <select class="admin-filter-select" id="adminLogMultiIpFilter" aria-label="Lọc cảnh báo đa IP">
+                                        <option value="false" data-i18n="admin_ip_filter_all">Tất cả lượt truy cập</option>
+                                        <option value="true" data-i18n="admin_ip_filter_multi">Chỉ tài khoản dùng >= 3 IP (24h)</option>
+                                    </select>
+                                </div>
+                                <div class="admin-log-user-chip" id="adminLogUserFilterChip" style="display: none;">
+                                    <span id="adminLogUserFilterLabel" class="font-mono"></span>
+                                    <button type="button" id="btnClearLogUserFilter" title="Xóa bộ lọc tài khoản" aria-label="Xóa bộ lọc">&times;</button>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Table -->
+                            <div class="admin-table-wrapper">
+                                <table class="admin-users-table" id="adminAccessLogsTable">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="admin_ip_th_user">Người dùng</th>
+                                            <th data-i18n="admin_ip_th_address">Địa chỉ IP</th>
+                                            <th data-i18n="admin_ip_th_device">Thiết bị / Trình duyệt</th>
+                                            <th data-i18n="admin_ip_th_action">Hành động</th>
+                                            <th class="text-right" data-i18n="admin_ip_th_time">Thời gian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminAccessLogsTableBody">
+                                        <!-- Populated dynamically by admin.js -->
+                                    </tbody>
+                                </table>
+                                <div class="admin-table-empty" id="adminAccessLogsEmpty" style="display: none;">
+                                    <h4 class="empty-title" data-i18n="admin_ip_empty_title">Chưa có nhật ký truy cập nào</h4>
+                                    <p class="empty-text" data-i18n="admin_ip_empty_desc">Lịch sử địa chỉ IP và thiết bị khi người dùng đăng nhập sẽ được ghi nhận tại đây.</p>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Pagination Footer -->
+                            <div class="admin-pagination-footer" id="adminAccessLogsPagination">
+                                <div class="pagination-info font-mono" id="adminLogPaginationInfo">Trang 1 / 1</div>
+                                <div class="pagination-controls">
+                                    <button type="button" class="btn btn-admin-pager" id="btnAdminLogPrevPage" disabled>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                        <span>Trước</span>
+                                    </button>
+                                    <span class="pagination-current-page font-mono" id="adminLogCurrentPageBadge">1</span>
+                                    <button type="button" class="btn btn-admin-pager" id="btnAdminLogNextPage" disabled>
+                                        <span>Sau</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        </div> <!-- End #adminTabUsers -->
+
+                        <!-- TAB 3: VietQR Transactions & Pro Approval -->
+                        <div class="admin-tab-panel" id="adminTabTransactions" role="tabpanel" style="display: none;">
                         <!-- VietQR Transactions & Pro Approval Card -->
-                        <div class="admin-table-card admin-tx-card" id="adminTxCard">
+                        <div class="admin-table-card admin-tx-card" id="adminTxCard" style="margin-top: 0;">
                             <div class="admin-table-header">
                                 <div class="table-title-group">
                                     <div class="table-icon-pill">
@@ -3302,6 +3444,7 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End #adminTabTransactions -->
                     </div>
                 </section>
 

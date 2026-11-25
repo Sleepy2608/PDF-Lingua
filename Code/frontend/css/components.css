@@ -3362,6 +3362,183 @@
   border-color: #FCA5A5;
 }
 
+/* Admin Navigation Tabs Bar */
+.admin-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.25rem 0 1.5rem;
+  padding: 0.45rem;
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-tab-btn:hover {
+  background: #F8FAFC;
+  color: #0F172A;
+}
+
+.admin-tab-btn.active {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+}
+
+.admin-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-tab-badge.pending,
+.admin-tab-badge.warn {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+/* IP & Device Tracking Cell & Access Logs Card */
+.admin-access-card {
+  margin-top: 1.75rem;
+}
+
+.tx-summary-pill.ip-info {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.admin-ip-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-ip-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-ip-address {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.admin-ip-device {
+  font-size: 0.74rem;
+  color: #64748B;
+}
+
+.admin-ip-none {
+  font-size: 0.78rem;
+  color: #94A3B8;
+  font-style: italic;
+}
+
+.admin-multi-ip-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+  cursor: pointer;
+}
+
+.admin-multi-ip-badge:hover {
+  background: #FDE68A;
+}
+
+.btn-view-ip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  cursor: pointer;
+}
+
+.btn-view-ip:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+.admin-log-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.admin-log-user-chip button {
+  background: transparent;
+  border: none;
+  color: #1D4ED8;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.admin-log-action-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #E2E8F0;
+}
+
+.admin-log-action-pill.register {
+  background: #ECFDF5;
+  color: #047857;
+  border-color: #A7F3D0;
+}
+
 /* High-Impact Action Confirmation Modal */
 .admin-confirm-card {
   background: #FFFFFF;
