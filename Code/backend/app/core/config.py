@@ -84,7 +84,7 @@ class Settings:
     GEMINI_BASE_URL: str = os.getenv(
         "GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"
     )
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash-lite")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
     # CORS

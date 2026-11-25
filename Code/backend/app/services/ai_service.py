@@ -277,7 +277,7 @@ class AIService:
             self._gemini_api_keys = []
         self._gemini_key_index = 0
         self.gemini_base_url = (gemini_base_url or settings.GEMINI_BASE_URL).rstrip("/")
-        self.gemini_model = gemini_model or settings.GEMINI_MODEL or "gemini-2.0-flash"
+        self.gemini_model = gemini_model or settings.GEMINI_MODEL or "gemini-3.0-flash-lite"
 
     def sanitize_document_context(self, text: str) -> tuple[str, bool]:
         """
@@ -634,6 +634,7 @@ class AIService:
             masked_key = f"{current_key[:6]}...{current_key[-4:]}" if len(current_key) > 10 else "***"
             headers = {
                 "Authorization": f"Bearer {current_key}",
+                "x-goog-api-key": current_key,
                 "Content-Type": "application/json",
             }
 
@@ -647,6 +648,20 @@ class AIService:
                 status_code = e.response.status_code
                 error_body = e.response.text
                 last_exception = e
+
+                # If 404 (model not found), attempt fallback across 3.5 / 2.5 / 2.0 variants
+                if status_code == 404 and ("3.0" in model_name or "flash-lite" in model_name):
+                    for alt_m in ("gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"):
+                        try:
+                            alt_payload = dict(payload, model=alt_m)
+                            async with httpx.AsyncClient(timeout=self.REQUEST_TIMEOUT_SECONDS) as client:
+                                alt_resp = await client.post(endpoint, json=alt_payload, headers=headers)
+                                alt_resp.raise_for_status()
+                                data = alt_resp.json()
+                                return data["choices"][0]["message"]["content"].strip()
+                        except Exception:
+                            continue
+
                 if status_code in (429, 401, 403) and attempt < total_keys - 1:
                     logger.warning(
                         f"[AIService Gemini] Key {masked_key} returned HTTP {status_code}: {error_body}. "

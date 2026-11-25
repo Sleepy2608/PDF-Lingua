@@ -694,12 +694,12 @@ class TestGeminiLiveFallback:
         service = AIService(
             gemini_api_key="AIzaSyAlpha, AIzaSyBeta",
             gemini_base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-            gemini_model="gemini-2.0-flash",
+            gemini_model="gemini-3.0-flash-lite",
         )
         assert service.gemini_api_keys == ["AIzaSyAlpha", "AIzaSyBeta"]
         assert service.gemini_api_key == "AIzaSyAlpha"
         assert service.gemini_base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
-        assert service.gemini_model == "gemini-2.0-flash"
+        assert service.gemini_model == "gemini-3.0-flash-lite"
 
     def test_call_gemini_api_success(self):
         service = AIService(gemini_api_key="AIzaSyTest123")
@@ -715,6 +715,7 @@ class TestGeminiLiveFallback:
             mock_post.assert_called_once()
             call_kwargs = mock_post.call_args[1]
             assert "AIzaSyTest123" in call_kwargs["headers"]["Authorization"]
+            assert call_kwargs["headers"]["x-goog-api-key"] == "AIzaSyTest123"
 
     def test_chat_failover_from_bai_to_gemini(self):
         service = AIService(
@@ -728,7 +729,7 @@ class TestGeminiLiveFallback:
         mock_req_gemini = httpx.Request("POST", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")
         resp_gemini_200 = httpx.Response(
             status_code=200,
-            json={"choices": [{"message": {"content": "Giai dap thong minh truc tiep tu mo hinh Google Gemini 2.0 Flash."}}]},
+            json={"choices": [{"message": {"content": "Giai dap thong minh truc tiep tu mo hinh Google Gemini 3.0 Flash Lite."}}]},
             request=mock_req_gemini,
         )
 
@@ -745,8 +746,8 @@ class TestGeminiLiveFallback:
 
             assert result["fallback_used"] is False
             assert result["provider"] == "gemini"
-            assert result["model_used"] == "gemini-2.0-flash"
-            assert "Google Gemini 2.0 Flash" in result["answer"]
+            assert result["model_used"] == "gemini-3.0-flash-lite"
+            assert "Google Gemini 3.0 Flash Lite" in result["answer"]
 
     def test_summarize_failover_from_bai_to_gemini(self):
         service = AIService(
@@ -776,7 +777,7 @@ class TestGeminiLiveFallback:
 
             assert result["fallback_used"] is False
             assert result["provider"] == "gemini"
-            assert result["model_used"] == "gemini-2.0-flash"
+            assert result["model_used"] == "gemini-3.0-flash-lite"
             assert "tao boi Gemini" in result["summary"]
 
     def test_dual_failure_triggers_smart_offline_fallback(self):
