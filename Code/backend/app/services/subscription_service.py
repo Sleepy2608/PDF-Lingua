@@ -299,7 +299,7 @@ class SubscriptionService:
         encoded_info = quote(transfer_note)
         encoded_name = quote(settings.VIETQR_ACCOUNT_NAME.strip())
         return (
-            f"https://img.vietqr.io/image/{bank_id}-{account_no}-compact2.png"
+            f"https://img.vietqr.io/image/{bank_id}-{account_no}-qr_only.png"
             f"?amount={amount_vnd}&addInfo={encoded_info}&accountName={encoded_name}"
         )
 

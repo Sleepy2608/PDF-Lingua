@@ -92,7 +92,7 @@ class Settings:
     )
     VIETQR_BANK_ID: str = os.getenv("VIETQR_BANK_ID", "ICB")
     VIETQR_BANK_NAME: str = os.getenv("VIETQR_BANK_NAME", "VietinBank (CN Thủ Thiêm - Hội Sở)")
-    VIETQR_ACCOUNT_NUMBER: str = os.getenv("VIETQR_ACCOUNT_NUMBER", "0779562608")
+    VIETQR_ACCOUNT_NUMBER: str = os.getenv("VIETQR_ACCOUNT_NUMBER", "107882760609")
     VIETQR_ACCOUNT_NAME: str = os.getenv("VIETQR_ACCOUNT_NAME", "NGUYEN LE HUY TAM")
     TRANSACTION_EXPIRE_SECONDS: int = int(os.getenv("TRANSACTION_EXPIRE_SECONDS", "900"))
 
