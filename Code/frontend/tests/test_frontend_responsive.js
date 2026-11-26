@@ -454,6 +454,7 @@ async function setViewport(cdp, vp) {
     mobile: vp.mobile,
   });
   await cdp.eval(`return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))`);
+  await sleep(300);
 }
 
 async function waitForSettled(cdp, selector, timeoutMs = 1500) {
