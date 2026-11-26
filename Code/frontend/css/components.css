@@ -3784,6 +3784,251 @@
   border-color: #A7F3D0;
 }
 
+/* GitHub-Traffic-Style 14-Day Visitor & Unique IP Graphs */
+.admin-traffic-section {
+  margin-bottom: 1.5rem;
+}
+
+.admin-traffic-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.admin-traffic-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.admin-traffic-heading {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-title);
+  letter-spacing: -0.01em;
+}
+
+.admin-traffic-window-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  white-space: nowrap;
+}
+
+.admin-traffic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-traffic-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem 0.95rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+  position: relative;
+}
+
+.admin-traffic-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.admin-traffic-card-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.35;
+}
+
+.admin-traffic-count {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748B;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-traffic-legend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.58rem;
+  border-radius: 9999px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.traffic-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.traffic-legend-dot.total {
+  background: #2563EB;
+}
+
+.traffic-legend-dot.unique {
+  background: #16A34A;
+}
+
+.admin-traffic-chart-stage {
+  position: relative;
+  width: 100%;
+  min-height: 175px;
+}
+
+.admin-traffic-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  user-select: none;
+}
+
+.traffic-grid-line {
+  stroke: #E2E8F0;
+  stroke-width: 1;
+}
+
+.traffic-axis-line {
+  stroke: #CBD5E1;
+  stroke-width: 1;
+}
+
+.traffic-axis-label {
+  fill: #64748B;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.traffic-yaxis-title {
+  fill: #64748B;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+
+.traffic-crosshair-line {
+  stroke: #94A3B8;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+.traffic-line-path {
+  fill: none;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.traffic-data-dot {
+  transition: r 0.14s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.traffic-hit-zone {
+  fill: transparent;
+  cursor: crosshair;
+  outline: none;
+}
+
+.admin-traffic-tooltip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 12;
+  min-width: 124px;
+  padding: 0.48rem 0.68rem;
+  border-radius: 8px;
+  background: #0F172A;
+  color: #F8FAFC;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+  pointer-events: none;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.traffic-tooltip-date {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94A3B8;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-mono);
+}
+
+.traffic-tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.traffic-tooltip-label-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #E2E8F0;
+  white-space: nowrap;
+}
+
+.traffic-tooltip-val {
+  font-weight: 700;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .admin-traffic-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-traffic-card {
+    padding: 0.95rem 0.9rem 0.8rem;
+  }
+
+  .admin-traffic-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .traffic-line-path,
+  .traffic-data-dot {
+    transition: none !important;
+  }
+}
+
 /* High-Impact Action Confirmation Modal */
 .admin-confirm-card {
   background: #FFFFFF;

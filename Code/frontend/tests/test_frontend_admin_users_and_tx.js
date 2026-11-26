@@ -111,6 +111,9 @@ function createEnv(lang = 'vi') {
     'adminUsersCountBadge', 'adminUsersTableBody', 'adminTableEmptyState', 'adminUsersTable',
     'adminPaginationInfo', 'adminCurrentPageBadge', 'btnAdminPrevPage', 'btnAdminNextPage',
     'adminUniqueIps24hBadge', 'adminMultiIpUsersBadge', 'adminTabMultiIpBadge',
+    'adminTrafficSection', 'adminTrafficTotalCount', 'adminTrafficUniqueCount',
+    'adminTrafficTotalSvg', 'adminTrafficTotalChart', 'adminTrafficTotalTooltip',
+    'adminTrafficUniqueSvg', 'adminTrafficUniqueChart', 'adminTrafficUniqueTooltip',
     'adminAccessLogsCard', 'adminAccessLogsTableBody', 'adminAccessLogsEmpty', 'adminAccessLogsTable',
     'adminLogPaginationInfo', 'adminLogCurrentPageBadge', 'btnAdminLogPrevPage', 'btnAdminLogNextPage',
     'adminLogUserFilterChip', 'adminLogUserFilterLabel', 'btnClearLogUserFilter',
@@ -431,6 +434,62 @@ test('i18n Live Switch: Changing VI -> EN updates Users, IP Logs, and VietQR tab
   assert.strictEqual(env.elements.adminTxPendingBadge.textContent, 'Pending: 1');
   assert(env.elements.adminTxTableBody.innerHTML.includes('Pro Yearly Plan'), 'VietQR plan name must localize to English');
   assert(env.elements.adminTxTableBody.innerHTML.includes('Approve Pro'), 'VietQR approve button must localize to English');
+});
+
+test('Traffic Graphs: Renders 14-day Total Visits & Distinct-IP Unique Visitors SVG series and i18n labels', () => {
+  const env = createEnv('vi');
+  const dailySeries = Array.from({ length: 14 }, (_, idx) => {
+    const day = String(idx + 10).padStart(2, '0');
+    return {
+      date: `2026-11-${day}`,
+      total_visits: idx === 13 ? 7 : idx % 3,
+      unique_visitors: idx === 13 ? 3 : (idx % 3 > 0 ? 1 : 0),
+    };
+  });
+
+  env.admin.renderAdminAccessLogs({
+    unique_ips_24h: 3,
+    multi_ip_users_count: 0,
+    page: 1,
+    total_pages: 1,
+    total_count: 1,
+    traffic: {
+      window_days: 14,
+      total_visits: 19,
+      unique_visitors: 4,
+      daily: dailySeries,
+    },
+    items: [],
+  });
+
+  assert.strictEqual(env.elements.adminTrafficTotalCount.textContent, '19 Lượt truy cập');
+  assert.strictEqual(env.elements.adminTrafficUniqueCount.textContent, '4 IP duy nhất');
+
+  const totalSvg = env.elements.adminTrafficTotalSvg.innerHTML;
+  const uniqueSvg = env.elements.adminTrafficUniqueSvg.innerHTML;
+  assert(totalSvg.includes('class="traffic-line-path"'), 'Total visits SVG must render polyline path');
+  assert(uniqueSvg.includes('class="traffic-line-path"'), 'Unique IP SVG must render polyline path');
+  assert.strictEqual((uniqueSvg.match(/class="traffic-hit-zone"/g) || []).length, 14, 'Unique IP graph must render 14 interactive day zones');
+  assert(uniqueSvg.includes('23/11'), 'Vietnamese locale must render DD/MM date ticks');
+
+  env.i18n.setLanguage('en');
+  (env.docListeners.languageChanged || []).forEach((fn) => fn({ type: 'languageChanged', detail: { lang: 'en' } }));
+
+  assert.strictEqual(env.elements.adminTrafficTotalCount.textContent, '19 Visits');
+  assert.strictEqual(env.elements.adminTrafficUniqueCount.textContent, '4 Unique visitors');
+  assert(env.elements.adminTrafficUniqueSvg.innerHTML.includes('11/23'), 'English locale must switch date ticks to MM/DD');
+
+  // Fallback aggregation when backend omits `traffic`
+  const nowIso = new Date().toISOString();
+  env.admin.renderAdminAccessTraffic({
+    items: [
+      { ip_address: '10.0.0.1', created_at: nowIso },
+      { ip_address: '10.0.0.1', created_at: nowIso },
+      { ip_address: '10.0.0.2', created_at: nowIso },
+    ],
+  });
+  assert.strictEqual(env.elements.adminTrafficTotalCount.textContent, '3 Visits');
+  assert.strictEqual(env.elements.adminTrafficUniqueCount.textContent, '2 Unique visitors');
 });
 
 console.log('\n================================================================');

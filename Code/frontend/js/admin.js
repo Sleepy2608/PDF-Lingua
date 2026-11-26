@@ -863,9 +863,306 @@
     }
   }
 
+  // ── 14-Day GitHub-Traffic-Style IP Graphs ──────────────────────────────────
+  function normalizeAccessTraffic(data, windowDays = 14) {
+    const incoming = data && data.traffic && Array.isArray(data.traffic.daily) ? data.traffic : null;
+    if (incoming && incoming.daily.length > 0) {
+      return {
+        window_days: incoming.window_days || incoming.daily.length,
+        total_visits: Number(incoming.total_visits) || 0,
+        unique_visitors: Number(incoming.unique_visitors) || 0,
+        daily: incoming.daily.map((pt) => ({
+          date: String(pt.date || ''),
+          total_visits: Math.max(0, Number(pt.total_visits) || 0),
+          unique_visitors: Math.max(0, Number(pt.unique_visitors) || 0),
+        })),
+      };
+    }
+
+    // Fallback aggregation from logs array when backend omits `traffic`
+    const todayUtc = new Date();
+    const dailyMap = {};
+    const overallIps = new Set();
+    let totalVisits = 0;
+
+    const items = (data && Array.isArray(data.items)) ? data.items : [];
+    items.forEach((log) => {
+      if (!log || !log.created_at) return;
+      const d = new Date(log.created_at);
+      if (Number.isNaN(d.getTime())) return;
+      const dayKey = d.toISOString().slice(0, 10);
+      if (!dailyMap[dayKey]) dailyMap[dayKey] = { total: 0, ips: new Set() };
+      dailyMap[dayKey].total += 1;
+      totalVisits += 1;
+      const ip = String(log.ip_address || '').trim();
+      if (ip) {
+        dailyMap[dayKey].ips.add(ip);
+        overallIps.add(ip);
+      }
+    });
+
+    const daily = [];
+    for (let offset = windowDays - 1; offset >= 0; offset--) {
+      const dt = new Date(Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() - offset));
+      const key = dt.toISOString().slice(0, 10);
+      const entry = dailyMap[key];
+      daily.push({
+        date: key,
+        total_visits: entry ? entry.total : 0,
+        unique_visitors: entry ? entry.ips.size : 0,
+      });
+    }
+
+    return {
+      window_days: windowDays,
+      total_visits: totalVisits,
+      unique_visitors: overallIps.size,
+      daily,
+    };
+  }
+
+  function formatTrafficShortDate(isoDate) {
+    const parts = String(isoDate || '').split('-');
+    if (parts.length !== 3) return isoDate || '';
+    const lang = (window.i18n && typeof window.i18n.getLanguage === 'function')
+      ? window.i18n.getLanguage()
+      : 'vi';
+    return lang === 'en' ? `${parts[1]}/${parts[2]}` : `${parts[2]}/${parts[1]}`;
+  }
+
+  function computeNiceAxisScale(maxValue) {
+    const safeMax = Math.max(1, Number(maxValue) || 0);
+    if (safeMax <= 4) {
+      return { yMax: 4, ticks: [0, 1, 2, 3, 4] };
+    }
+    const rawStep = safeMax / 4;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const fraction = rawStep / magnitude;
+    let niceFraction = 10;
+    if (fraction <= 1) niceFraction = 1;
+    else if (fraction <= 2) niceFraction = 2;
+    else if (fraction <= 5) niceFraction = 5;
+    const step = Math.max(1, Math.ceil(niceFraction * magnitude));
+    const yMax = step * 4;
+    return { yMax, ticks: [0, step, step * 2, step * 3, yMax] };
+  }
+
+  function bindTrafficChartEvents(svgEl, stageEl, tooltipEl) {
+    if (!svgEl || svgEl._trafficEventsBound) return;
+    svgEl._trafficEventsBound = true;
+
+    const showPoint = (idx) => {
+      const state = svgEl._trafficState;
+      if (!state || !state.coords[idx]) return;
+      const pt = state.coords[idx];
+
+      if (state.crosshair) {
+        state.crosshair.setAttribute('x1', pt.x.toFixed(1));
+        state.crosshair.setAttribute('x2', pt.x.toFixed(1));
+        state.crosshair.style.display = 'block';
+      }
+      if (state.activeDot) {
+        state.activeDot.setAttribute('cx', pt.x.toFixed(1));
+        state.activeDot.setAttribute('cy', pt.y.toFixed(1));
+        state.activeDot.style.display = 'block';
+      }
+
+      if (tooltipEl && stageEl) {
+        tooltipEl.innerHTML = `
+          <div class="traffic-tooltip-date">${escapeHtml(pt.label)}</div>
+          <div class="traffic-tooltip-row">
+            <span class="traffic-tooltip-label-wrap">
+              <span class="traffic-legend-dot ${escapeHtml(state.dotClass)}"></span>
+              <span>${escapeHtml(state.seriesLabel)}</span>
+            </span>
+            <span class="traffic-tooltip-val">${escapeHtml(String(pt.value))}</span>
+          </div>
+        `;
+        tooltipEl.style.display = 'block';
+
+        const pctX = pt.x / state.vbWidth;
+        const pctY = pt.y / state.vbHeight;
+        const placeLeft = pctX > 0.64;
+        tooltipEl.style.left = placeLeft ? 'auto' : `calc(${(pctX * 100).toFixed(1)}% + 10px)`;
+        tooltipEl.style.right = placeLeft ? `calc(${((1 - pctX) * 100).toFixed(1)}% + 10px)` : 'auto';
+        tooltipEl.style.top = `max(6px, calc(${(pctY * 100).toFixed(1)}% - 36px))`;
+      }
+    };
+
+    const hidePoint = () => {
+      const state = svgEl._trafficState;
+      if (state && state.crosshair) state.crosshair.style.display = 'none';
+      if (state && state.activeDot) state.activeDot.style.display = 'none';
+      if (tooltipEl) tooltipEl.style.display = 'none';
+    };
+
+    if (typeof svgEl.addEventListener === 'function') {
+      svgEl.addEventListener('mousemove', (e) => {
+        const target = e.target;
+        const idxAttr = target && typeof target.getAttribute === 'function' ? target.getAttribute('data-pt-idx') : null;
+        if (idxAttr !== null && idxAttr !== '') {
+          showPoint(Number(idxAttr));
+        }
+      });
+      svgEl.addEventListener('focusin', (e) => {
+        const target = e.target;
+        const idxAttr = target && typeof target.getAttribute === 'function' ? target.getAttribute('data-pt-idx') : null;
+        if (idxAttr !== null && idxAttr !== '') {
+          showPoint(Number(idxAttr));
+        }
+      });
+      svgEl.addEventListener('mouseleave', hidePoint);
+      svgEl.addEventListener('focusout', hidePoint);
+    }
+  }
+
+  function renderSingleTrafficChart(opts) {
+    const svgEl = document.getElementById(opts.svgId);
+    const stageEl = document.getElementById(opts.stageId);
+    const tooltipEl = document.getElementById(opts.tooltipId);
+    if (!svgEl) return;
+
+    const vbWidth = 560;
+    const vbHeight = 220;
+    const padLeft = 52;
+    const padRight = 16;
+    const padTop = 14;
+    const padBottom = 42;
+    const plotW = vbWidth - padLeft - padRight;
+    const plotH = vbHeight - padTop - padBottom;
+
+    const points = opts.daily || [];
+    const values = points.map((p) => Number(p[opts.valueKey]) || 0);
+    const rawMax = values.length > 0 ? Math.max(...values) : 0;
+    const { yMax, ticks } = computeNiceAxisScale(rawMax);
+    const count = Math.max(1, points.length);
+
+    const coords = points.map((p, idx) => {
+      const x = count === 1 ? padLeft + plotW / 2 : padLeft + (idx / (count - 1)) * plotW;
+      const val = Number(p[opts.valueKey]) || 0;
+      const y = padTop + plotH - (val / yMax) * plotH;
+      return {
+        x,
+        y,
+        value: val,
+        label: formatTrafficShortDate(p.date),
+      };
+    });
+
+    const gradId = `${opts.svgId}AreaGrad`;
+    const gridRowsHtml = ticks.map((tickVal) => {
+      const yPos = (padTop + plotH - (tickVal / yMax) * plotH).toFixed(1);
+      return `
+        <line class="traffic-grid-line" x1="${padLeft}" y1="${yPos}" x2="${vbWidth - padRight}" y2="${yPos}" />
+        <text class="traffic-axis-label" x="${padLeft - 8}" y="${Number(yPos) + 3.5}" text-anchor="end">${tickVal}</text>
+      `;
+    }).join('');
+
+    const gridColsHtml = coords.map((pt) => {
+      const xPos = pt.x.toFixed(1);
+      return `
+        <line class="traffic-grid-line" x1="${xPos}" y1="${padTop}" x2="${xPos}" y2="${padTop + plotH}" opacity="0.55" />
+        <text class="traffic-axis-label" x="${xPos}" y="${padTop + plotH + 14}" text-anchor="end" transform="rotate(-40 ${xPos} ${padTop + plotH + 14})">${escapeHtml(pt.label)}</text>
+      `;
+    }).join('');
+
+    const linePts = coords.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+    const areaPts = coords.length > 0
+      ? `${coords[0].x.toFixed(1)},${(padTop + plotH).toFixed(1)} ${linePts} ${coords[coords.length - 1].x.toFixed(1)},${(padTop + plotH).toFixed(1)}`
+      : '';
+
+    const dotsHtml = coords.map((pt) => `
+      <circle class="traffic-data-dot" cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2.8" fill="#FFFFFF" stroke="${opts.strokeColor}" stroke-width="1.8" />
+    `).join('');
+
+    const slotW = count > 1 ? plotW / (count - 1) : plotW;
+    const hitZonesHtml = coords.map((pt, idx) => {
+      const rx = Math.max(padLeft, pt.x - slotW / 2).toFixed(1);
+      const rw = Math.min(slotW, vbWidth - padRight - Number(rx)).toFixed(1);
+      return `<rect class="traffic-hit-zone" data-pt-idx="${idx}" x="${rx}" y="${padTop}" width="${Math.max(12, Number(rw)).toFixed(1)}" height="${plotH}" tabindex="0" aria-label="${escapeHtml(pt.label)}: ${pt.value}" />`;
+    }).join('');
+
+    const yAxisTitleX = 14;
+    const yAxisTitleY = padTop + plotH / 2;
+
+    svgEl.innerHTML = `
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${opts.strokeColor}" stop-opacity="0.18" />
+          <stop offset="100%" stop-color="${opts.strokeColor}" stop-opacity="0.01" />
+        </linearGradient>
+      </defs>
+      <text class="traffic-yaxis-title" x="${yAxisTitleX}" y="${yAxisTitleY}" text-anchor="middle" transform="rotate(-90 ${yAxisTitleX} ${yAxisTitleY})">${escapeHtml(opts.yAxisLabel)}</text>
+      ${gridRowsHtml}
+      ${gridColsHtml}
+      <line class="traffic-axis-line" x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${padTop + plotH}" />
+      <line class="traffic-axis-line" x1="${padLeft}" y1="${padTop + plotH}" x2="${vbWidth - padRight}" y2="${padTop + plotH}" />
+      ${areaPts ? `<polygon class="traffic-area-fill" points="${areaPts}" fill="url(#${gradId})" />` : ''}
+      ${linePts ? `<polyline class="traffic-line-path" points="${linePts}" stroke="${opts.strokeColor}" />` : ''}
+      ${dotsHtml}
+      <line class="traffic-crosshair-line" id="${opts.svgId}Crosshair" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" style="display: none;" />
+      <circle class="traffic-active-dot" id="${opts.svgId}ActiveDot" cx="0" cy="0" r="4.5" fill="${opts.strokeColor}" stroke="#FFFFFF" stroke-width="2" style="display: none; pointer-events: none;" />
+      ${hitZonesHtml}
+    `;
+
+    svgEl._trafficState = {
+      coords,
+      vbWidth,
+      vbHeight,
+      dotClass: opts.dotClass,
+      seriesLabel: opts.seriesLabel,
+      crosshair: document.getElementById(`${opts.svgId}Crosshair`),
+      activeDot: document.getElementById(`${opts.svgId}ActiveDot`),
+    };
+    if (tooltipEl) tooltipEl.style.display = 'none';
+    bindTrafficChartEvents(svgEl, stageEl, tooltipEl);
+  }
+
+  function renderAdminAccessTraffic(data) {
+    const traffic = normalizeAccessTraffic(data, 14);
+    const totalEl = document.getElementById('adminTrafficTotalCount');
+    const uniqueEl = document.getElementById('adminTrafficUniqueCount');
+
+    if (totalEl) {
+      totalEl.textContent = t('admin_traffic_total_count', `${traffic.total_visits} Lượt truy cập`, {
+        count: traffic.total_visits,
+      });
+    }
+    if (uniqueEl) {
+      uniqueEl.textContent = t('admin_traffic_unique_count', `${traffic.unique_visitors} IP duy nhất`, {
+        count: traffic.unique_visitors,
+      });
+    }
+
+    renderSingleTrafficChart({
+      svgId: 'adminTrafficTotalSvg',
+      stageId: 'adminTrafficTotalChart',
+      tooltipId: 'adminTrafficTotalTooltip',
+      daily: traffic.daily,
+      valueKey: 'total_visits',
+      strokeColor: '#2563EB',
+      dotClass: 'total',
+      yAxisLabel: t('admin_traffic_total_yaxis', 'Lượt truy cập'),
+      seriesLabel: t('admin_traffic_total_series', 'Tổng lượt'),
+    });
+
+    renderSingleTrafficChart({
+      svgId: 'adminTrafficUniqueSvg',
+      stageId: 'adminTrafficUniqueChart',
+      tooltipId: 'adminTrafficUniqueTooltip',
+      daily: traffic.daily,
+      valueKey: 'unique_visitors',
+      strokeColor: '#16A34A',
+      dotClass: 'unique',
+      yAxisLabel: t('admin_traffic_unique_yaxis', 'IP duy nhất'),
+      seriesLabel: t('admin_traffic_unique_series', 'Duy nhất'),
+    });
+  }
+
   function renderAdminAccessLogs(data) {
     if (!data) return;
     lastAccessLogsData = data;
+    renderAdminAccessTraffic(data);
     const locale = getLocale();
 
     const uniqueBadge = document.getElementById('adminUniqueIps24hBadge');
@@ -1492,6 +1789,7 @@
     switchAdminTab,
     fetchAdminAccessLogs,
     renderAdminAccessLogs,
+    renderAdminAccessTraffic,
     filterLogsByUser,
     clearLogUserFilter,
   };

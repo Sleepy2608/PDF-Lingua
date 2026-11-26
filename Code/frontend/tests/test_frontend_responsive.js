@@ -1094,10 +1094,28 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
       document.getElementById('adminAccessLogsEmpty').style.display = 'none';
       document.getElementById('adminAccessLogsTableBody').innerHTML =
         '<tr><td><div class="user-cell-meta"><div class="user-cell-avatar">Q</div><div><div class="user-cell-name">Quan Tri Vien</div><div class="user-cell-email">admin@pdflingua.edu.vn</div></div></div></td><td><span class="admin-ip-address font-mono">127.0.0.1</span></td><td><span class="admin-ip-device">Edge / Windows</span></td><td><span class="admin-log-action-pill login" id="testLogActionPill"><span class="status-dot"></span>Dang nhap</span></td><td><span class="date-mono">03:48:13 26/11/2026</span></td></tr>';
-      document.getElementById('adminAccessLogsCard')?.scrollIntoView();
+      if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.renderAdminAccessTraffic === 'function') {
+        window.pdfLinguaAdmin.renderAdminAccessTraffic({
+          traffic: {
+            window_days: 14,
+            total_visits: 18,
+            unique_visitors: 5,
+            daily: Array.from({ length: 14 }, (_, i) => ({
+              date: '2026-11-' + String(i + 13).padStart(2, '0'),
+              total_visits: (i % 5) + 1,
+              unique_visitors: (i % 3) + 1,
+            })),
+          },
+        });
+      }
+      document.getElementById('adminTrafficSection')?.scrollIntoView();
     `);
     await sleep(80);
     const res = await evalWithHelpers(cdp, `
+      const totalCard = H.rectOf('#adminTrafficTotalCard');
+      const uniqueCard = H.rectOf('#adminTrafficUniqueCard');
+      const totalSvg = H.rectOf('#adminTrafficTotalSvg');
+      const uniqueSvg = H.rectOf('#adminTrafficUniqueSvg');
       const card = H.rectOf('#adminAccessLogsCard');
       const wrap = H.rectOf('#adminAccessLogsCard .admin-table-wrapper');
       const logSearch = H.rectOf('#adminLogSearchInput');
@@ -1106,6 +1124,10 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
       return {
         vw: H.vw,
         docOvX: H.docOvX,
+        totalCard,
+        uniqueCard,
+        totalSvg,
+        uniqueSvg,
         card,
         wrap,
         logSearch,
@@ -1114,6 +1136,10 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
       };
     `);
     assert.strictEqual(res.docOvX, 0, `Access logs section horizontal overflow: ${res.docOvX}px`);
+    assert.ok(res.totalCard && res.totalCard.left >= 0 && res.totalCard.right <= res.vw + 1, 'Total traffic chart card exceeds viewport');
+    assert.ok(res.uniqueCard && res.uniqueCard.left >= 0 && res.uniqueCard.right <= res.vw + 1, 'Unique IP traffic chart card exceeds viewport');
+    assert.ok(res.totalSvg && res.totalSvg.height > 80 && res.totalSvg.right <= res.totalCard.right + 1, 'Total traffic SVG must render inside card bounds');
+    assert.ok(res.uniqueSvg && res.uniqueSvg.height > 80 && res.uniqueSvg.right <= res.uniqueCard.right + 1, 'Unique IP traffic SVG must render inside card bounds');
     assert.ok(res.card && res.card.right <= res.vw + 1, 'Access logs card exceeds viewport');
     assert.ok(res.wrap && ['auto', 'scroll'].includes(res.wrap.overflowX), 'Access logs table wrapper must allow horizontal scrolling');
     assert.ok(res.logSearch && res.logSearch.left >= res.card.left + 12, 'Access logs search input must have toolbar padding');
