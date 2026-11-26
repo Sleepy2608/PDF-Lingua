@@ -3415,9 +3415,9 @@
 }
 
 #historyPaginationFooter .pagination-current-page {
-  background: var(--text-primary, #0F172A);
+  background: #E5322D;
   color: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 2px 6px rgba(229, 50, 45, 0.28);
 }
 
 /* Admin VietQR Transactions & Revenue Card */
@@ -3786,16 +3786,16 @@
 
 /* GitHub-Traffic-Style 14-Day Visitor & Unique IP Graphs */
 .admin-traffic-section {
-  margin-bottom: 0;
+  margin-bottom: 2rem;
 }
 
 .admin-traffic-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.25rem 0.25rem 0;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding: 0.25rem 0.25rem 0.25rem;
 }
 
 .admin-traffic-title-row {
