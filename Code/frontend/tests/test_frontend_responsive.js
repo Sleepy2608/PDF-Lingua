@@ -1021,28 +1021,49 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
     }
   });
 
-  await runner.run(vp.name, 'Admin Section: User table wrapper scrolls cleanly and toolbar fits card', async () => {
+  await runner.run(vp.name, 'Admin Section: Users & IP tables, pills, and toolbar stay single-line and inside bounds', async () => {
     await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
     await cdp.eval(`
       const usersTabBtn = document.getElementById('sideNavAdminUsers');
       if (usersTabBtn) usersTabBtn.click();
       const overviewTab = document.getElementById('adminTabOverview');
       const usersTab = document.getElementById('adminTabUsers');
+      const txTab = document.getElementById('adminTabTransactions');
       if (overviewTab) overviewTab.style.display = 'none';
+      if (txTab) txTab.style.display = 'none';
       if (usersTab) usersTab.style.display = 'block';
       document.getElementById('adminTableEmptyState').style.display = 'none';
       document.getElementById('adminUsersTableBody').innerHTML =
-        '<tr><td>#1024</td><td>nguyenvana@pdflingua.edu.vn</td><td><span class="badge">PRO</span></td><td><span class="badge">Active</span></td><td>12</td><td>22/11/2026</td><td><button class="btn-action btn-action-role">Doi vai tro</button> <button class="btn-action btn-action-lock">Khoa</button></td></tr>';
+        '<tr><td><span class="user-id-mono">#9</span></td><td><div class="user-cell-meta"><div class="user-cell-avatar role-avatar-admin">Q</div><div><div class="user-cell-name">Quan Tri Vien</div><div class="user-cell-email">admin@pdflingua.edu.vn</div></div></div></td><td><span class="role-badge admin" id="testAdminRolePill">QUAN TRI VIEN</span></td><td><span class="status-pill active" id="testAdminStatusPill"><span class="status-dot"></span>Hoat dong</span></td><td><span class="doc-count-mono">12</span> <span class="doc-unit">tep</span></td><td><div class="admin-ip-cell"><div class="admin-ip-top"><span class="admin-ip-address font-mono">127.0.0.1</span><button type="button" class="btn-view-ip">Xem IP</button></div><div class="admin-ip-device">Edge / Windows</div></div></td><td><span class="date-mono">13/11/2026 06:04</span></td><td class="text-right"><div class="user-actions-group"><button class="btn-action btn-action-role" id="testRoleActionBtn">Ha Mien phi</button><button class="btn-action btn-action-lock" id="testLockActionBtn">Khoa</button></div></td></tr>';
       document.querySelector('#adminTabUsers .admin-table-card')?.scrollIntoView();
     `);
     await sleep(80);
     const res = await evalWithHelpers(cdp, `
+      const card = H.rectOf('#adminTabUsers .admin-table-card');
+      const wrap = H.rectOf('#adminTabUsers .admin-table-wrapper');
+      const search = H.rectOf('#adminSearchInput');
+      const usersToolbar = H.checkContainerOverlap('#adminTabUsers .admin-toolbar');
+      const rolePill = H.rectOf('#testAdminRolePill');
+      const statusPill = H.rectOf('#testAdminStatusPill');
+      const roleBtn = H.rectOf('#testRoleActionBtn');
+      const lockBtn = H.rectOf('#testLockActionBtn');
+      const logsCard = H.rectOf('#adminAccessLogsCard');
+      const logSearch = H.rectOf('#adminLogSearchInput');
+      const logsToolbar = H.checkContainerOverlap('#adminAccessLogsCard .admin-toolbar');
       return {
         vw: H.vw,
         docOvX: H.docOvX,
-        card: H.rectOf('#adminTabUsers .admin-table-card'),
-        wrap: H.rectOf('#adminTabUsers .admin-table-wrapper'),
-        search: H.rectOf('#adminSearchInput'),
+        card,
+        wrap,
+        search,
+        usersToolbar,
+        rolePill,
+        statusPill,
+        roleBtn,
+        lockBtn,
+        logsCard,
+        logSearch,
+        logsToolbar,
       };
     `);
     assert.strictEqual(res.docOvX, 0, `Admin section horizontal overflow: ${res.docOvX}px`);
@@ -1051,7 +1072,68 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
     assert.ok(res.wrap.right <= res.card.right + 1, 'Admin table wrapper exceeds card bounds');
     if (res.search) {
       assert.ok(res.search.right <= res.card.right + 1, 'Admin search input exceeds card bounds');
+      assert.ok(res.search.left >= res.card.left + 12, 'Admin search input must have horizontal padding inside card');
     }
+    assert.strictEqual(res.usersToolbar.overlaps.length, 0, `Admin users toolbar sibling overlap: ${JSON.stringify(res.usersToolbar.overlaps)}`);
+    assert.strictEqual(res.usersToolbar.overflowPx, 0, `Admin users toolbar overflow: ${res.usersToolbar.overflowPx}px`);
+    assert.ok(res.rolePill && res.rolePill.height <= 32, `Role badge must stay single-line (height=${res.rolePill?.height})`);
+    assert.ok(res.statusPill && res.statusPill.height <= 32, `Status pill must stay single-line (height=${res.statusPill?.height})`);
+    assert.ok(res.roleBtn && res.roleBtn.height <= 34, `Role button must stay single-line (height=${res.roleBtn?.height})`);
+    assert.ok(res.lockBtn && res.lockBtn.height <= 34, `Lock button must stay single-line (height=${res.lockBtn?.height})`);
+    if (res.logsCard && res.logSearch) {
+      assert.ok(res.logSearch.left >= res.logsCard.left + 12, 'Access logs search input must have toolbar padding');
+      assert.ok(res.logSearch.right <= res.logsCard.right + 1, 'Access logs search input exceeds card bounds');
+      assert.strictEqual(res.logsToolbar.overlaps.length, 0, `Access logs toolbar sibling overlap: ${JSON.stringify(res.logsToolbar.overlaps)}`);
+    }
+  });
+
+  await runner.run(vp.name, 'Admin Section: VietQR transactions card, toolbar, and action buttons fit cleanly', async () => {
+    await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
+    await cdp.eval(`
+      const txTabBtn = document.getElementById('sideNavAdminTransactions');
+      if (txTabBtn) txTabBtn.click();
+      const overviewTab = document.getElementById('adminTabOverview');
+      const usersTab = document.getElementById('adminTabUsers');
+      const txTab = document.getElementById('adminTabTransactions');
+      if (overviewTab) overviewTab.style.display = 'none';
+      if (usersTab) usersTab.style.display = 'none';
+      if (txTab) txTab.style.display = 'block';
+      document.getElementById('adminTxTableEmpty').style.display = 'none';
+      document.getElementById('adminTxTableBody').innerHTML =
+        '<tr><td><span class="tx-code-chip font-mono">SUB-11-21422-0C</span></td><td><div class="user-cell-email">tam12@gmail.com</div></td><td><span class="tx-plan-pill yearly">Goi Pro Hang Nam</span></td><td><span class="tx-amount-mono">399.000d</span></td><td><span class="tx-status-pill pending" id="testTxStatusPill"><span class="tx-status-dot"></span>Cho duyet</span></td><td><span class="date-mono">04:31:38 14/11/2026</span></td><td class="text-right"><div class="user-actions-group"><button class="btn-tx-approve" id="testTxApproveBtn">Duyet Pro</button><button class="btn-tx-reject" id="testTxRejectBtn">Tu choi</button></div></td></tr>';
+      document.getElementById('adminTxCard')?.scrollIntoView();
+    `);
+    await sleep(80);
+    const res = await evalWithHelpers(cdp, `
+      const card = H.rectOf('#adminTxCard');
+      const wrap = H.rectOf('#adminTxCard .admin-table-wrapper');
+      const search = H.rectOf('#adminTxSearchInput');
+      const txToolbar = H.checkContainerOverlap('#adminTxCard .admin-toolbar');
+      const statusPill = H.rectOf('#testTxStatusPill');
+      const approveBtn = H.rectOf('#testTxApproveBtn');
+      const rejectBtn = H.rectOf('#testTxRejectBtn');
+      return {
+        vw: H.vw,
+        docOvX: H.docOvX,
+        card,
+        wrap,
+        search,
+        txToolbar,
+        statusPill,
+        approveBtn,
+        rejectBtn,
+      };
+    `);
+    assert.strictEqual(res.docOvX, 0, `VietQR section horizontal overflow: ${res.docOvX}px`);
+    assert.ok(res.card && res.card.right <= res.vw + 1, 'VietQR card exceeds viewport');
+    assert.ok(res.wrap && ['auto', 'scroll'].includes(res.wrap.overflowX), 'VietQR table wrapper must allow horizontal scrolling');
+    assert.ok(res.search && res.search.left >= res.card.left + 12, 'VietQR search input must have toolbar padding');
+    assert.ok(res.search.right <= res.card.right + 1, 'VietQR search input exceeds card bounds');
+    assert.strictEqual(res.txToolbar.overlaps.length, 0, `VietQR toolbar sibling overlap: ${JSON.stringify(res.txToolbar.overlaps)}`);
+    assert.strictEqual(res.txToolbar.overflowPx, 0, `VietQR toolbar overflow: ${res.txToolbar.overflowPx}px`);
+    assert.ok(res.statusPill && res.statusPill.height <= 32, `VietQR status pill wrapped (height=${res.statusPill?.height})`);
+    assert.ok(res.approveBtn && res.approveBtn.height <= 34, `Approve button wrapped (height=${res.approveBtn?.height})`);
+    assert.ok(res.rejectBtn && res.rejectBtn.height <= 34, `Reject button wrapped (height=${res.rejectBtn?.height})`);
   });
 }
 
