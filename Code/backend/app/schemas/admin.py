@@ -149,6 +149,26 @@ class AdminAccessLogItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AdminTrafficDayPoint(BaseModel):
+    """Daily access traffic metric with total visits and distinct-IP unique visitors."""
+
+    date: str = Field(..., description="Calendar date in YYYY-MM-DD (UTC).")
+    total_visits: int = Field(default=0, description="Total login/register access events on this day.")
+    unique_visitors: int = Field(default=0, description="Distinct client IP addresses on this day.")
+
+
+class AdminAccessTrafficSummary(BaseModel):
+    """Rolling 14-day traffic time series mirroring GitHub Visitors & Unique Visitors."""
+
+    window_days: int = Field(default=14, description="Number of rolling calendar days in window.")
+    total_visits: int = Field(default=0, description="Total access events across the window.")
+    unique_visitors: int = Field(default=0, description="Distinct client IP addresses across the entire window.")
+    daily: list[AdminTrafficDayPoint] = Field(
+        default_factory=list,
+        description="Continuous daily data points sorted ascending by date.",
+    )
+
+
 class AdminAccessLogListResponse(BaseModel):
     """Paginated user access log list with 24-hour IP anomaly metrics."""
 
@@ -159,3 +179,7 @@ class AdminAccessLogListResponse(BaseModel):
     total_pages: int = Field(..., description="Total available pages.")
     unique_ips_24h: int = Field(default=0, description="Total distinct IPs recorded system-wide in last 24h.")
     multi_ip_users_count: int = Field(default=0, description="Number of users with >= 3 distinct IPs in last 24h.")
+    traffic: AdminAccessTrafficSummary = Field(
+        default_factory=AdminAccessTrafficSummary,
+        description="14-day daily total visits and distinct-IP unique visitors summary.",
+    )

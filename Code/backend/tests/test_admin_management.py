@@ -430,6 +430,7 @@ def test_admin_transactions_list_approve_and_reject(admin_test_env):
 
 def test_network_ip_extraction_and_device_summary():
     from types import SimpleNamespace
+
     from app.core.network import extract_client_ip, parse_device_summary
 
     req_xff = SimpleNamespace(
@@ -519,5 +520,71 @@ def test_admin_access_logs_and_multi_ip_warning(admin_test_env):
 
     # Ensure free_user has no logs yet
     assert db_session.query(UserAccessLog).filter(UserAccessLog.user_id == free_user.id).count() == 0
+
+
+def test_admin_access_traffic_unique_ip_series(admin_test_env):
+    """Verify 14-day GitHub-Traffic-style daily & overall distinct-IP visitor counting."""
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.access_log import UserAccessLog
+
+    db_session = admin_test_env["session"]
+    pro_user = admin_test_env["pro"]
+    free_user = admin_test_env["free"]
+    admin_headers = {"Authorization": f"Bearer {admin_test_env['admin_token']}"}
+
+    now_utc = datetime.now(timezone.utc)
+    today_dt = datetime(now_utc.year, now_utc.month, now_utc.day, 9, 0, tzinfo=timezone.utc)
+    yesterday_dt = today_dt - timedelta(days=1)
+    stale_dt = today_dt - timedelta(days=20)
+
+    db_session.add_all(
+        [
+            # Today: 3 visits across 2 distinct IPs (203.0.113.10 appears twice)
+            UserAccessLog(user_id=pro_user.id, ip_address="203.0.113.10", action="login", created_at=today_dt),
+            UserAccessLog(
+                user_id=free_user.id,
+                ip_address="203.0.113.10",
+                action="login",
+                created_at=today_dt + timedelta(hours=1),
+            ),
+            UserAccessLog(
+                user_id=pro_user.id,
+                ip_address="198.51.100.20",
+                action="login",
+                created_at=today_dt + timedelta(hours=2),
+            ),
+            # Yesterday: 2 visits sharing 203.0.113.10 again + 1 new IP (192.0.2.30)
+            UserAccessLog(user_id=pro_user.id, ip_address="203.0.113.10", action="login", created_at=yesterday_dt),
+            UserAccessLog(
+                user_id=free_user.id,
+                ip_address="192.0.2.30",
+                action="register",
+                created_at=yesterday_dt + timedelta(minutes=30),
+            ),
+            # Outside 14-day window: must be excluded
+            UserAccessLog(user_id=free_user.id, ip_address="192.0.2.99", action="login", created_at=stale_dt),
+        ]
+    )
+    db_session.commit()
+
+    res = client.get("/api/admin/access-logs", headers=admin_headers)
+    assert res.status_code == 200
+    traffic = res.json()["data"]["traffic"]
+
+    assert traffic["window_days"] == 14
+    assert len(traffic["daily"]) == 14
+    assert traffic["total_visits"] == 5
+    # Distinct across the 14-day window: 203.0.113.10, 198.51.100.20, 192.0.2.30 -> 3 (not 4, excludes 192.0.2.99)
+    assert traffic["unique_visitors"] == 3
+
+    by_date = {pt["date"]: pt for pt in traffic["daily"]}
+    today_key = today_dt.date().isoformat()
+    yesterday_key = yesterday_dt.date().isoformat()
+
+    assert by_date[today_key] == {"date": today_key, "total_visits": 3, "unique_visitors": 2}
+    assert by_date[yesterday_key] == {"date": yesterday_key, "total_visits": 2, "unique_visitors": 2}
+    assert traffic["daily"][0]["date"] <= traffic["daily"][-1]["date"]
+
 
 

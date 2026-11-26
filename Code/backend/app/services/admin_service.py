@@ -24,8 +24,10 @@ from app.models.user import User, UserRole
 from app.schemas.admin import (
     AdminAccessLogItem,
     AdminAccessLogListResponse,
+    AdminAccessTrafficSummary,
     AdminServiceUsageStats,
     AdminStatsResponse,
+    AdminTrafficDayPoint,
     AdminTransactionItem,
     AdminTransactionListResponse,
     AdminUserListItem,
@@ -411,6 +413,64 @@ class AdminService:
     # ── User Access & IP Audit Logs ────────────────────────────────────
 
     @staticmethod
+    def _build_access_traffic_summary(db: Session, window_days: int = 14) -> AdminAccessTrafficSummary:
+        """
+        Compute a continuous daily traffic time series for the last `window_days` days.
+        Each unique IP address counts once per day (daily unique_visitors) and once
+        across the entire window (overall unique_visitors), matching GitHub Traffic semantics.
+        """
+        today_utc = datetime.now(timezone.utc).date()
+        start_date = today_utc - timedelta(days=window_days - 1)
+        start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=timezone.utc)
+
+        rows = (
+            db.query(UserAccessLog.created_at, UserAccessLog.ip_address)
+            .filter(UserAccessLog.created_at >= start_dt)
+            .all()
+        )
+
+        daily_counts: dict[str, int] = {}
+        daily_ips: dict[str, set[str]] = {}
+        overall_ips: set[str] = set()
+        total_visits = 0
+
+        for created_at, ip_address in rows:
+            if created_at is None:
+                continue
+            dt_utc = (
+                created_at.replace(tzinfo=timezone.utc)
+                if created_at.tzinfo is None
+                else created_at.astimezone(timezone.utc)
+            )
+            day_key = dt_utc.date().isoformat()
+            if dt_utc.date() < start_date:
+                continue
+            total_visits += 1
+            daily_counts[day_key] = daily_counts.get(day_key, 0) + 1
+            clean_ip = (ip_address or "").strip()
+            if clean_ip:
+                overall_ips.add(clean_ip)
+                daily_ips.setdefault(day_key, set()).add(clean_ip)
+
+        daily_points: list[AdminTrafficDayPoint] = []
+        for offset in range(window_days):
+            day_key = (start_date + timedelta(days=offset)).isoformat()
+            daily_points.append(
+                AdminTrafficDayPoint(
+                    date=day_key,
+                    total_visits=daily_counts.get(day_key, 0),
+                    unique_visitors=len(daily_ips.get(day_key, ())),
+                )
+            )
+
+        return AdminAccessTrafficSummary(
+            window_days=window_days,
+            total_visits=total_visits,
+            unique_visitors=len(overall_ips),
+            daily=daily_points,
+        )
+
+    @staticmethod
     def list_access_logs(
         db: Session,
         page: int = 1,
@@ -421,11 +481,14 @@ class AdminService:
     ) -> AdminAccessLogListResponse:
         """
         Query paginated user access logs (IP, device, action, timestamp)
-        along with 24-hour system-wide distinct IP and multi-IP anomaly summaries.
+        along with 24-hour system-wide distinct IP, multi-IP anomaly summaries,
+        and 14-day GitHub-Traffic-style daily visit and unique-IP metrics.
         """
         safe_page = max(1, page)
         safe_limit = min(max(1, limit), 100)
-        since_24h = datetime.now(timezone.utc) - timedelta(hours=24)
+        now_utc = datetime.now(timezone.utc)
+        since_24h = now_utc - timedelta(hours=24)
+        traffic_summary = AdminService._build_access_traffic_summary(db=db, window_days=14)
 
         unique_ips_24h = (
             db.query(func.count(func.distinct(UserAccessLog.ip_address)))
@@ -459,6 +522,7 @@ class AdminService:
                     total_pages=1,
                     unique_ips_24h=int(unique_ips_24h),
                     multi_ip_users_count=0,
+                    traffic=traffic_summary,
                 )
             query = query.filter(UserAccessLog.user_id.in_(multi_ip_user_ids))
 
@@ -510,5 +574,6 @@ class AdminService:
             total_pages=total_pages,
             unique_ips_24h=int(unique_ips_24h),
             multi_ip_users_count=len(multi_ip_user_ids),
+            traffic=traffic_summary,
         )
 
