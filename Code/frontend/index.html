@@ -3252,46 +3252,48 @@
                                         <p class="table-subtitle" data-i18n="admin_table_subtitle">Tra cứu, phân quyền
                                             hạn và kiểm soát trạng thái hoạt động tài khoản</p>
                                     </div>
+                                </div>
+                                <div class="admin-tx-summary-pills">
                                     <span class="table-count-badge font-mono" id="adminUsersCountBadge"
                                         data-i18n="admin_users_count_zero">0 tài khoản</span>
                                 </div>
+                            </div>
 
-                                <!-- Filter & Search Toolbar -->
-                                <div class="admin-toolbar">
-                                    <div class="admin-search-wrap">
-                                        <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <circle cx="11" cy="11" r="8"></circle>
-                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                        </svg>
-                                        <input type="text" id="adminSearchInput" class="admin-search-input"
-                                            placeholder="Tìm theo email hoặc họ tên..."
-                                            data-i18n-attr="placeholder:admin_search_placeholder">
-                                    </div>
+                            <!-- Filter & Search Toolbar -->
+                            <div class="admin-toolbar">
+                                <div class="admin-search-wrap">
+                                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="adminSearchInput" class="admin-search-input"
+                                        placeholder="Tìm theo email hoặc họ tên..."
+                                        data-i18n-attr="placeholder:admin_search_placeholder">
+                                </div>
 
-                                    <div class="admin-filter-wrap">
-                                        <select id="adminRoleFilter" class="admin-filter-select">
-                                            <option value="all" data-i18n="admin_filter_role_all">Tất cả vai trò
-                                            </option>
-                                            <option value="free" data-i18n="admin_filter_role_free">Người dùng Miễn phí
-                                            </option>
-                                            <option value="pro" data-i18n="admin_filter_role_pro">Tài khoản Pro</option>
-                                            <option value="admin" data-i18n="admin_filter_role_admin">Quản trị viên
-                                            </option>
-                                        </select>
-                                    </div>
+                                <div class="admin-filter-wrap">
+                                    <select id="adminRoleFilter" class="admin-filter-select">
+                                        <option value="all" data-i18n="admin_filter_role_all">Tất cả vai trò
+                                        </option>
+                                        <option value="free" data-i18n="admin_filter_role_free">Người dùng Miễn phí
+                                        </option>
+                                        <option value="pro" data-i18n="admin_filter_role_pro">Tài khoản Pro</option>
+                                        <option value="admin" data-i18n="admin_filter_role_admin">Quản trị viên
+                                        </option>
+                                    </select>
+                                </div>
 
-                                    <div class="admin-filter-wrap">
-                                        <select id="adminStatusFilter" class="admin-filter-select">
-                                            <option value="all" data-i18n="admin_filter_status_all">Tất cả trạng thái
-                                            </option>
-                                            <option value="true" data-i18n="admin_filter_status_active">Đang hoạt động
-                                            </option>
-                                            <option value="false" data-i18n="admin_filter_status_locked">Đã bị khóa
-                                            </option>
-                                        </select>
-                                    </div>
+                                <div class="admin-filter-wrap">
+                                    <select id="adminStatusFilter" class="admin-filter-select">
+                                        <option value="all" data-i18n="admin_filter_status_all">Tất cả trạng thái
+                                        </option>
+                                        <option value="true" data-i18n="admin_filter_status_active">Đang hoạt động
+                                        </option>
+                                        <option value="false" data-i18n="admin_filter_status_locked">Đã bị khóa
+                                        </option>
+                                    </select>
                                 </div>
                             </div>
 

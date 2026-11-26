@@ -927,6 +927,7 @@
       const tr = document.createElement('tr');
       const safeEmail = escapeHtml(log.user_email || '');
       const safeName = log.user_name ? escapeHtml(log.user_name) : '';
+      const initial = (log.user_name ? log.user_name.charAt(0) : (log.user_email ? log.user_email.charAt(0) : 'U')).toUpperCase();
       const safeIp = escapeHtml(log.ip_address || 'unknown');
       const safeDevice = escapeHtml(log.device_summary || unknownDevText);
       const actionCls = log.action === 'register' ? 'register' : 'login';
@@ -935,13 +936,18 @@
 
       tr.innerHTML = `
         <td>
-          <div class="user-cell-name">${safeName || safeEmail}</div>
-          <div class="user-cell-email">${safeEmail}</div>
+          <div class="user-cell-meta">
+            <div class="user-cell-avatar role-avatar-free">${escapeHtml(initial)}</div>
+            <div>
+              <div class="user-cell-name">${safeName || safeEmail}</div>
+              <div class="user-cell-email">${safeEmail}</div>
+            </div>
+          </div>
         </td>
         <td><span class="admin-ip-address font-mono">${safeIp}</span></td>
-        <td><span class="admin-ip-device" style="color:#334155; font-size:0.8125rem;">${safeDevice}</span></td>
-        <td><span class="admin-log-action-pill ${actionCls}">${actionLabel}</span></td>
-        <td class="text-right font-mono" style="font-size:0.78rem; color:#64748B;">${dateStr}</td>
+        <td><span class="admin-ip-device">${safeDevice}</span></td>
+        <td><span class="admin-log-action-pill ${actionCls}"><span class="tx-status-dot"></span>${actionLabel}</span></td>
+        <td class="text-right"><span class="date-mono">${dateStr}</span></td>
       `;
       tbody.appendChild(tr);
     });
@@ -1072,18 +1078,26 @@
       const tr = document.createElement('tr');
       const st = statusMap[tx.payment_status] || { label: tx.payment_status, cls: 'pending' };
       const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleString(locale) : '-';
-      const safeCode = String(tx.transaction_code || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const safeEmail = String(tx.user_email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const safePlan = String(tx.plan_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeCode = escapeHtml(tx.transaction_code || '');
+      const safeEmail = escapeHtml(tx.user_email || '');
+      const rawPlan = String(tx.plan_name || '');
+      const isYearlyPlan = /năm|year/i.test(rawPlan) || String(tx.billing_cycle || '').toLowerCase() === 'yearly';
+      const isMonthlyPlan = /tháng|month/i.test(rawPlan) || String(tx.billing_cycle || '').toLowerCase() === 'monthly';
+      const localizedPlan = isYearlyPlan
+        ? t('admin_tx_plan_yearly', rawPlan || 'Gói Pro Hàng Năm')
+        : (isMonthlyPlan ? t('admin_tx_plan_monthly', rawPlan || 'Gói Pro Hàng Tháng') : rawPlan);
+      const safePlan = escapeHtml(localizedPlan);
 
       let actionsHtml = `<span class="admin-self-tag font-mono">${processedText}</span>`;
       if (tx.payment_status === 'pending') {
         actionsHtml = `
-          <div style="display:inline-flex; gap:0.4rem; justify-content:flex-end;">
+          <div class="user-actions-group">
             <button type="button" class="btn-tx-approve" data-tx-action="approve" data-tx-code="${safeCode}" data-tx-email="${safeEmail}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               ${approveBtnText}
             </button>
             <button type="button" class="btn-tx-reject" data-tx-action="reject" data-tx-code="${safeCode}" data-tx-email="${safeEmail}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               ${rejectBtnText}
             </button>
           </div>
@@ -1091,14 +1105,14 @@
       }
 
       tr.innerHTML = `
-        <td class="font-mono">${safeCode}</td>
+        <td><span class="tx-code-chip font-mono">${safeCode}</span></td>
         <td>
           <div class="user-cell-email">${safeEmail}</div>
         </td>
-        <td>${safePlan}</td>
-        <td class="font-mono"><strong>${tx.amount_display}</strong></td>
-        <td><span class="tx-status-pill ${st.cls}">${st.label}</span></td>
-        <td class="font-mono" style="font-size:0.78rem; color:#64748B;">${dateStr}</td>
+        <td><span class="tx-plan-pill ${isYearlyPlan ? 'yearly' : ''}">${safePlan}</span></td>
+        <td><span class="tx-amount-mono">${escapeHtml(tx.amount_display || '')}</span></td>
+        <td><span class="tx-status-pill ${st.cls}"><span class="tx-status-dot"></span>${st.label}</span></td>
+        <td><span class="date-mono">${dateStr}</span></td>
         <td class="text-right">${actionsHtml}</td>
       `;
       tbody.appendChild(tr);
@@ -1462,16 +1476,19 @@
     fetchAdminStats,
     renderAdminStats,
     fetchAdminUsers,
+    renderAdminUsersTable,
     loadAllAdminData,
     openConfirmModal,
     closeConfirmModal,
     executeStatusUpdate,
     executeRoleUpdate,
     fetchAdminTransactions,
+    renderAdminTransactions,
     executeApproveTransaction,
     executeRejectTransaction,
     switchAdminTab,
     fetchAdminAccessLogs,
+    renderAdminAccessLogs,
     filterLogsByUser,
     clearLogUserFilter,
   };
