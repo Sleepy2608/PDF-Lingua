@@ -444,14 +444,40 @@ def test_ocr_page_limit_pro_user_allows_up_to_500_pages(client, db_session, monk
 
     files = {"file": ("scanned_200.pdf", b"%PDF-1.4 scanned", "application/pdf")}
 
-    from app.api.process import ocr_service, pdf_service, translation_service
+    from app.api.process import pdf_service, translation_service
+
+    captured_hybrid_args = {}
+
+    def fake_extract_hybrid_fast_path(
+        path,
+        ocr_service=None,
+        max_pages=None,
+        selected_pages=None,
+        **kw,
+    ):
+        captured_hybrid_args["max_pages"] = max_pages
+        captured_hybrid_args["selected_pages"] = selected_pages
+        return {
+            "document_type": "scanned",
+            "text": "Recognized text from 200 scanned pages.",
+            "page_count": 200,
+            "pages": [
+                {
+                    "page": 1,
+                    "text": "Recognized text from 200 scanned pages.",
+                    "type": "scanned",
+                    "is_ocr_used": True,
+                    "is_blank": False,
+                }
+            ],
+            "fast_path_used": False,
+            "ocr_pages_count": 200,
+        }
+
     monkeypatch.setattr(pdf_service, "validate_pdf", lambda path, *a, **kw: {"is_valid": True, "page_count": 200, "error": None})
     monkeypatch.setattr(pdf_service, "is_scanned_pdf", lambda path, *a, **kw: True)
     monkeypatch.setattr(pdf_service, "extract_text", lambda path, *a, **kw: "")
-    monkeypatch.setattr(ocr_service, "extract_text_from_scanned_pdf", lambda path, **kw: {
-        "success": True,
-        "text": "Recognized text from 200 scanned pages.",
-    })
+    monkeypatch.setattr(pdf_service, "extract_hybrid_fast_path", fake_extract_hybrid_fast_path)
     monkeypatch.setattr(translation_service, "translate_text", lambda text, **kw: {
         "translated_text": "Bản dịch từ văn bản quét.",
         "engine_used": "mock",
@@ -464,7 +490,10 @@ def test_ocr_page_limit_pro_user_allows_up_to_500_pages(client, db_session, monk
         data={"target_lang": "vi"},
     )
     assert res.status_code == 200
-    assert res.json()["success"] is True
+    body = res.json()
+    assert body["success"] is True
+    assert body["data"]["is_ocr_used"] is True
+    assert captured_hybrid_args["max_pages"] == 500
 
 
 def test_ocr_page_limit_pro_user_exceeding_500_pages(client, db_session, monkeypatch):

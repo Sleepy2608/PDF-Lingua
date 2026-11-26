@@ -28,6 +28,9 @@ from app.schemas.common import ApiResponse
 from app.schemas.processing_history import (
     HistoryCleanupResponse,
     HistoryDeleteResponse,
+    PageTranslationItem,
+    PageTranslationListResponse,
+    PageTranslationUpdateRequest,
     ProcessingHistoryResponse,
     ProcessingResultResponse,
 )
@@ -202,6 +205,166 @@ async def get_history_result(
     return ApiResponse(
         data=ProcessingResultResponse.model_validate(result_data),
         message="Truy xuất kết quả xử lý tài liệu thành công.",
+    )
+
+
+@router.get("/{history_id}/pages", response_model=ApiResponse[PageTranslationListResponse])
+async def get_history_pages(
+    history_id: Annotated[int, Path(gt=0, description="ID định danh bản ghi lịch sử (> 0).")],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Lấy danh sách kết quả dịch theo từng trang của một bản ghi lịch sử.
+    Chỉ chủ sở hữu hoặc ADMIN mới có quyền truy xuất (Anti-IDOR).
+    Các bản ghi cũ chưa lưu mảng `pages` sẽ trả về danh sách rỗng.
+    """
+    if history_id <= 0:
+        raise BadRequestException(
+            message="history_id phải là số nguyên dương (> 0).",
+            error_code="INVALID_HISTORY_ID",
+            details={"history_id": history_id},
+        )
+
+    is_admin = current_user.role == UserRole.ADMIN
+    logger.info(
+        f"[HistoryAPI] User {current_user.email} (id={current_user.id}, role={current_user.role}) "
+        f"requesting page list for history_id={history_id}."
+    )
+
+    try:
+        pages_data = history_service.get_history_pages(
+            db=db,
+            history_id=history_id,
+            current_user_id=current_user.id,
+            is_admin=is_admin,
+        )
+    except SQLAlchemyError as exc:
+        logger.error(f"[HistoryAPI] Database error fetching pages for history_id={history_id}: {exc}")
+        raise AppException(
+            message="Lỗi cơ sở dữ liệu khi truy vấn danh sách trang đã dịch. Vui lòng thử lại sau.",
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="DATABASE_ERROR",
+            details=None,
+        ) from exc
+
+    return ApiResponse(
+        data=PageTranslationListResponse.model_validate(pages_data),
+        message=f"Lấy danh sách {pages_data['total_pages']} trang kết quả dịch thành công.",
+    )
+
+
+@router.get("/{history_id}/pages/{page_number}", response_model=ApiResponse[PageTranslationItem])
+async def get_history_page_detail(
+    history_id: Annotated[int, Path(gt=0, description="ID định danh bản ghi lịch sử (> 0).")],
+    page_number: Annotated[int, Path(gt=0, description="Số thứ tự trang gốc trong tài liệu (>= 1).")],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Truy xuất kết quả dịch của một trang cụ thể theo số trang gốc.
+    Trả về 404 nếu lịch sử hoặc trang không tồn tại hoặc thuộc về người dùng khác.
+    """
+    if history_id <= 0:
+        raise BadRequestException(
+            message="history_id phải là số nguyên dương (> 0).",
+            error_code="INVALID_HISTORY_ID",
+            details={"history_id": history_id},
+        )
+    if page_number <= 0:
+        raise BadRequestException(
+            message="page_number phải là số nguyên dương (>= 1).",
+            error_code="INVALID_PAGE_NUMBER",
+            details={"page_number": page_number},
+        )
+
+    is_admin = current_user.role == UserRole.ADMIN
+    logger.info(
+        f"[HistoryAPI] User {current_user.email} (id={current_user.id}, role={current_user.role}) "
+        f"requesting page={page_number} for history_id={history_id}."
+    )
+
+    try:
+        page_data = history_service.get_history_page_result(
+            db=db,
+            history_id=history_id,
+            page_number=page_number,
+            current_user_id=current_user.id,
+            is_admin=is_admin,
+        )
+    except SQLAlchemyError as exc:
+        logger.error(
+            f"[HistoryAPI] Database error fetching page={page_number} for history_id={history_id}: {exc}"
+        )
+        raise AppException(
+            message="Lỗi cơ sở dữ liệu khi truy vấn kết quả dịch theo trang. Vui lòng thử lại sau.",
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="DATABASE_ERROR",
+            details=None,
+        ) from exc
+
+    return ApiResponse(
+        data=PageTranslationItem.model_validate(page_data),
+        message=f"Truy xuất kết quả dịch trang {page_number} thành công.",
+    )
+
+
+@router.put("/{history_id}/pages/{page_number}", response_model=ApiResponse[PageTranslationItem])
+async def update_history_page_result(
+    history_id: Annotated[int, Path(gt=0, description="ID định danh bản ghi lịch sử (> 0).")],
+    page_number: Annotated[int, Path(gt=0, description="Số thứ tự trang gốc cần cập nhật (>= 1).")],
+    payload: PageTranslationUpdateRequest = ...,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Cập nhật nội dung dịch của một trang cụ thể trong kết quả lịch sử và đồng bộ
+    lại văn bản dịch tổng thể của tài liệu.
+    """
+    if history_id <= 0:
+        raise BadRequestException(
+            message="history_id phải là số nguyên dương (> 0).",
+            error_code="INVALID_HISTORY_ID",
+            details={"history_id": history_id},
+        )
+    if page_number <= 0:
+        raise BadRequestException(
+            message="page_number phải là số nguyên dương (>= 1).",
+            error_code="INVALID_PAGE_NUMBER",
+            details={"page_number": page_number},
+        )
+
+    is_admin = current_user.role == UserRole.ADMIN
+    logger.info(
+        f"[HistoryAPI] User {current_user.email} (id={current_user.id}, role={current_user.role}) "
+        f"updating page={page_number} for history_id={history_id}."
+    )
+
+    try:
+        updated_page = history_service.save_history_page_result(
+            db=db,
+            history_id=history_id,
+            page_number=page_number,
+            translated_text=payload.translated_text,
+            original_text=payload.original_text,
+            target_lang=payload.target_lang,
+            current_user_id=current_user.id,
+            is_admin=is_admin,
+        )
+    except SQLAlchemyError as exc:
+        logger.error(
+            f"[HistoryAPI] Database error updating page={page_number} for history_id={history_id}: {exc}"
+        )
+        raise AppException(
+            message="Lỗi cơ sở dữ liệu khi lưu kết quả dịch theo trang. Vui lòng thử lại sau.",
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="DATABASE_ERROR",
+            details=None,
+        ) from exc
+
+    return ApiResponse(
+        data=PageTranslationItem.model_validate(updated_page),
+        message=f"Cập nhật kết quả dịch trang {page_number} thành công.",
     )
 
 

@@ -368,11 +368,11 @@ def test_endpoint_consistency_between_sync_and_async_jobs(
     # Mock text extraction & translation so sync endpoint doesn't perform heavy OCR
     monkeypatch.setattr(
         "app.api.process.pdf_service.is_scanned_pdf",
-        lambda path, max_pages=None: False,
+        lambda path, max_pages=None, selected_pages=None: False,
     )
     monkeypatch.setattr(
         "app.api.process.pdf_service.extract_text",
-        lambda path, max_pages=None: "Sample digital PDF content.",
+        lambda path, max_pages=None, selected_pages=None: "Sample digital PDF content.",
     )
     monkeypatch.setattr(
         "app.api.process.translation_service.translate_text",

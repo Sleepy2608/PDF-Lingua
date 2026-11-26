@@ -19,6 +19,26 @@ from typing import Any, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
 
 from app.models.processing_history import ActionType, ProcessingStatus
+from app.schemas.process import (
+    PageTranslationItem,
+    PageTranslationListResponse,
+    PageTranslationUpdateRequest,
+)
+
+__all__ = [
+    "MAX_ERROR_MESSAGE_LENGTH",
+    "sanitize_error_message",
+    "ProcessingHistoryBase",
+    "ProcessingHistoryCreate",
+    "ProcessingHistoryUpdate",
+    "ProcessingHistoryResponse",
+    "ProcessingResultResponse",
+    "HistoryDeleteResponse",
+    "HistoryCleanupResponse",
+    "PageTranslationItem",
+    "PageTranslationListResponse",
+    "PageTranslationUpdateRequest",
+]
 
 MAX_ERROR_MESSAGE_LENGTH = 1000
 
@@ -223,6 +243,15 @@ class ProcessingResultResponse(BaseModel):
     is_ocr_used: Optional[bool] = Field(default=False, description="Xác định có sử dụng OCR nhận dạng quang học.")
     execution_time_ms: Optional[int] = Field(default=None, ge=0, description="Thời gian thực thi tính bằng mili-giây.")
     created_at: Optional[datetime] = Field(default=None, description="Thời điểm hoàn tất xử lý (UTC).")
+    pages: list[PageTranslationItem] = Field(
+        default_factory=list,
+        description="Danh sách kết quả trích xuất và dịch thuật chi tiết theo từng trang.",
+    )
+
+    @field_validator("pages", mode="before")
+    @classmethod
+    def default_pages_list(cls, value: Any) -> Any:
+        return [] if value is None else value
 
     @field_serializer("created_at")
     def serialize_created_at(self, dt: Optional[datetime], _info) -> Optional[str]:

@@ -36,6 +36,42 @@
   let isFitMode = false;
   let listenersInitialized = false;
   let resizeTimer = null;
+  const pageChangeListeners = new Set();
+
+  /**
+   * Register a callback invoked whenever a PDF page finishes rendering.
+   */
+  function onPageChange(callback) {
+    if (typeof callback === 'function') {
+      pageChangeListeners.add(callback);
+    }
+  }
+
+  /**
+   * Unregister a previously registered page change callback.
+   */
+  function offPageChange(callback) {
+    pageChangeListeners.delete(callback);
+  }
+
+  /**
+   * Notify subscribers and emit a window CustomEvent when current page updates.
+   */
+  function notifyPageChange(pageNumber, totalPages) {
+    pageChangeListeners.forEach((cb) => {
+      try {
+        cb(pageNumber, totalPages);
+      } catch (_e) {}
+    });
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      try {
+        const evt = (typeof CustomEvent === 'function')
+          ? new CustomEvent('pdfl:preview-page-change', { detail: { pageNumber, totalPages } })
+          : { type: 'pdfl:preview-page-change', detail: { pageNumber, totalPages } };
+        window.dispatchEvent(evt);
+      } catch (_e) {}
+    }
+  }
 
   // Zoom bounds
   const MIN_SCALE = 0.4;
@@ -405,6 +441,7 @@
       setLoadingState(false);
       clearPreviewError();
       updateControlsUI();
+      notifyPageChange(currentPageNum, totalPageCount);
       return true;
 
     } catch (err) {
@@ -740,6 +777,8 @@
     cleanupPdfPreview,
     initPdfPreviewListeners,
     handleViewportResize,
+    onPageChange,
+    offPageChange,
     getCurrentPage: () => currentPageNum,
     getTotalPages: () => totalPageCount,
     getCurrentScale: () => currentScale,
