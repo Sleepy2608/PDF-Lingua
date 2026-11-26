@@ -236,7 +236,14 @@
                                     <a href="#admin-users" class="sidebar-submenu-item"
                                         id="sideNavAdminUsers" data-admin-tab="users" role="menuitem">
                                         <span class="submenu-dot" aria-hidden="true"></span>
-                                        <span class="submenu-item-text" data-i18n="admin_tab_users">Tài khoản & Truy cập IP</span>
+                                        <span class="submenu-item-text" data-i18n="admin_tab_users">Quản lý Tài khoản</span>
+                                    </a>
+                                </li>
+                                <li role="none">
+                                    <a href="#admin-access-logs" class="sidebar-submenu-item"
+                                        id="sideNavAdminAccessLogs" data-admin-tab="access-logs" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="admin_tab_access_logs">Truy cập IP</span>
                                         <span class="admin-tab-badge warn font-mono" id="adminTabMultiIpBadge" style="display: none;">0</span>
                                     </a>
                                 </li>
@@ -3358,7 +3365,10 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End #adminTabUsers -->
 
+                        <!-- TAB 3: User Access & IP Audit Logs -->
+                        <div class="admin-tab-panel" id="adminTabAccessLogs" role="tabpanel" style="display: none;">
                         <!-- User Access & IP Audit Logs Card -->
                         <div class="admin-table-card admin-access-card" id="adminAccessLogsCard">
                             <div class="admin-table-header">
@@ -3459,12 +3469,12 @@
                                 </div>
                             </div>
                         </div>
-                        </div> <!-- End #adminTabUsers -->
+                        </div> <!-- End #adminTabAccessLogs -->
 
-                        <!-- TAB 3: VietQR Transactions & Pro Approval -->
+                        <!-- TAB 4: VietQR Transactions & Pro Approval -->
                         <div class="admin-tab-panel" id="adminTabTransactions" role="tabpanel" style="display: none;">
                         <!-- VietQR Transactions & Pro Approval Card -->
-                        <div class="admin-table-card admin-tx-card" id="adminTxCard" style="margin-top: 0;">
+                        <div class="admin-table-card admin-tx-card" id="adminTxCard">
                             <div class="admin-table-header">
                                 <div class="table-title-group">
                                     <div class="table-icon-pill">

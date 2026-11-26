@@ -146,9 +146,11 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     sideNavAdminSubmenu: new MockElement('sideNavAdminSubmenu', 'ul'),
     sideNavAdminOverview: new MockElement('sideNavAdminOverview', 'a'),
     sideNavAdminUsers: new MockElement('sideNavAdminUsers', 'a'),
+    sideNavAdminAccessLogs: new MockElement('sideNavAdminAccessLogs', 'a'),
     sideNavAdminTransactions: new MockElement('sideNavAdminTransactions', 'a'),
     adminTabOverview: new MockElement('adminTabOverview', 'div'),
     adminTabUsers: new MockElement('adminTabUsers', 'div'),
+    adminTabAccessLogs: new MockElement('adminTabAccessLogs', 'div'),
     adminTabTransactions: new MockElement('adminTabTransactions', 'div'),
     btnOpenAccountModal: new MockElement('btnOpenAccountModal', 'button'),
     btnLogin: new MockElement('btnLogin', 'button'),
@@ -2308,11 +2310,12 @@ async function main() {
     assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'false', 'Pricing parent aria-expanded collapses on exit');
   });
 
-  await runTest('Admin Group Navigation: Expandable Admin dropdown & 3 submenu items switch panels cleanly', () => {
+  await runTest('Admin Group Navigation: Expandable Admin dropdown & 4 submenu items switch panels cleanly', () => {
     assert.ok(htmlSource.includes('id="sideNavAdminChevron"'), 'sideNavAdminChevron must exist in HTML');
     assert.ok(htmlSource.includes('id="sideNavAdminSubmenu"'), 'sideNavAdminSubmenu must exist in HTML');
     assert.ok(htmlSource.includes('id="sideNavAdminOverview"'), 'sideNavAdminOverview must exist in HTML');
     assert.ok(htmlSource.includes('id="sideNavAdminUsers"'), 'sideNavAdminUsers must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavAdminAccessLogs"'), 'sideNavAdminAccessLogs must exist in HTML');
     assert.ok(htmlSource.includes('id="sideNavAdminTransactions"'), 'sideNavAdminTransactions must exist in HTML');
     assert.ok(!htmlSource.includes('id="adminTabsBar"'), 'Inline #adminTabsBar should be replaced by sidebar dropdown');
 
@@ -2336,9 +2339,14 @@ async function main() {
     assert.strictEqual(elements.sideNavAdminUsers.classList.contains('active'), true, 'Users submenu item becomes active');
     assert.strictEqual(elements.sideNavAdminOverview.classList.contains('active'), false, 'Overview clears active state');
 
+    elements.sideNavAdminAccessLogs.click();
+    assert.strictEqual(elements.sideNavAdminAccessLogs.classList.contains('active'), true, 'Access Logs submenu item becomes active');
+    assert.strictEqual(elements.sideNavAdminUsers.classList.contains('active'), false, 'Users clears active state');
+
     elements.sideNavAdminTransactions.click();
     assert.strictEqual(elements.sideNavAdminTransactions.classList.contains('active'), true, 'Transactions submenu item becomes active');
-    assert.deepStrictEqual(adminCalls, ['overview', 'users', 'transactions'], 'Admin submenu items delegate target tab to openAdminView');
+    assert.strictEqual(elements.sideNavAdminAccessLogs.classList.contains('active'), false, 'Access Logs clears active state');
+    assert.deepStrictEqual(adminCalls, ['overview', 'users', 'access-logs', 'transactions'], 'Admin submenu items delegate target tab to openAdminView');
 
     elements.sideNavAdminChevron.click();
     assert.strictEqual(elements.sideNavAdminItem.classList.contains('is-expanded'), false, 'Clicking Admin chevron collapses submenu');

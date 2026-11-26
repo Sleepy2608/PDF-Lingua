@@ -106,8 +106,8 @@ function createEnv(lang = 'vi') {
   i18nCtx.window.i18n.setLanguage(lang);
 
   const ids = [
-    'adminSection', 'adminTabOverview', 'adminTabUsers', 'adminTabTransactions',
-    'sideNavAdminOverview', 'sideNavAdminUsers', 'sideNavAdminTransactions',
+    'adminSection', 'adminTabOverview', 'adminTabUsers', 'adminTabAccessLogs', 'adminTabTransactions',
+    'sideNavAdminOverview', 'sideNavAdminUsers', 'sideNavAdminAccessLogs', 'sideNavAdminTransactions',
     'adminUsersCountBadge', 'adminUsersTableBody', 'adminTableEmptyState', 'adminUsersTable',
     'adminPaginationInfo', 'adminCurrentPageBadge', 'btnAdminPrevPage', 'btnAdminNextPage',
     'adminUniqueIps24hBadge', 'adminMultiIpUsersBadge', 'adminTabMultiIpBadge',
@@ -318,7 +318,14 @@ test('Access Audit Logs: Renders badges, login/register pills, and filters by us
   assert(html.includes('admin-log-action-pill register'), 'Register log must use register pill');
   assert(html.includes('Đăng ký') && html.includes('Đăng nhập'), 'Must localize action labels');
 
+  env.admin.switchAdminTab('users');
+  assert.strictEqual(env.elements.adminTabUsers.style.display, 'block');
+  assert.strictEqual(env.elements.adminTabAccessLogs.style.display, 'none');
+
   env.admin.filterLogsByUser(11, 'tam12@gmail.com');
+  assert.strictEqual(env.elements.adminTabAccessLogs.style.display, 'block', 'filterLogsByUser must switch to dedicated access-logs tab');
+  assert.strictEqual(env.elements.adminTabUsers.style.display, 'none', 'filterLogsByUser must hide users tab panel');
+  assert.strictEqual(env.elements.sideNavAdminAccessLogs.classList.contains('active'), true, 'Access Logs sidebar item must become active');
   assert.strictEqual(env.elements.adminLogUserFilterChip.style.display, 'inline-flex');
   assert.strictEqual(env.elements.adminLogUserFilterLabel.textContent, 'Lọc: tam12@gmail.com');
 });

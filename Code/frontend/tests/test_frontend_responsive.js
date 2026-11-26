@@ -1021,15 +1021,17 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
     }
   });
 
-  await runner.run(vp.name, 'Admin Section: Users & IP tables, pills, and toolbar stay single-line and inside bounds', async () => {
+  await runner.run(vp.name, 'Admin Section: Users table, pills, and toolbar stay single-line and inside bounds', async () => {
     await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
     await cdp.eval(`
       const usersTabBtn = document.getElementById('sideNavAdminUsers');
       if (usersTabBtn) usersTabBtn.click();
       const overviewTab = document.getElementById('adminTabOverview');
       const usersTab = document.getElementById('adminTabUsers');
+      const accessLogsTab = document.getElementById('adminTabAccessLogs');
       const txTab = document.getElementById('adminTabTransactions');
       if (overviewTab) overviewTab.style.display = 'none';
+      if (accessLogsTab) accessLogsTab.style.display = 'none';
       if (txTab) txTab.style.display = 'none';
       if (usersTab) usersTab.style.display = 'block';
       document.getElementById('adminTableEmptyState').style.display = 'none';
@@ -1047,9 +1049,6 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
       const statusPill = H.rectOf('#testAdminStatusPill');
       const roleBtn = H.rectOf('#testRoleActionBtn');
       const lockBtn = H.rectOf('#testLockActionBtn');
-      const logsCard = H.rectOf('#adminAccessLogsCard');
-      const logSearch = H.rectOf('#adminLogSearchInput');
-      const logsToolbar = H.checkContainerOverlap('#adminAccessLogsCard .admin-toolbar');
       return {
         vw: H.vw,
         docOvX: H.docOvX,
@@ -1061,9 +1060,6 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
         statusPill,
         roleBtn,
         lockBtn,
-        logsCard,
-        logSearch,
-        logsToolbar,
       };
     `);
     assert.strictEqual(res.docOvX, 0, `Admin section horizontal overflow: ${res.docOvX}px`);
@@ -1080,11 +1076,51 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
     assert.ok(res.statusPill && res.statusPill.height <= 32, `Status pill must stay single-line (height=${res.statusPill?.height})`);
     assert.ok(res.roleBtn && res.roleBtn.height <= 34, `Role button must stay single-line (height=${res.roleBtn?.height})`);
     assert.ok(res.lockBtn && res.lockBtn.height <= 34, `Lock button must stay single-line (height=${res.lockBtn?.height})`);
-    if (res.logsCard && res.logSearch) {
-      assert.ok(res.logSearch.left >= res.logsCard.left + 12, 'Access logs search input must have toolbar padding');
-      assert.ok(res.logSearch.right <= res.logsCard.right + 1, 'Access logs search input exceeds card bounds');
-      assert.strictEqual(res.logsToolbar.overlaps.length, 0, `Access logs toolbar sibling overlap: ${JSON.stringify(res.logsToolbar.overlaps)}`);
-    }
+  });
+
+  await runner.run(vp.name, 'Admin Section: IP Access Audit Logs card, toolbar, and action pills fit cleanly', async () => {
+    await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
+    await cdp.eval(`
+      const logsTabBtn = document.getElementById('sideNavAdminAccessLogs');
+      if (logsTabBtn) logsTabBtn.click();
+      const overviewTab = document.getElementById('adminTabOverview');
+      const usersTab = document.getElementById('adminTabUsers');
+      const accessLogsTab = document.getElementById('adminTabAccessLogs');
+      const txTab = document.getElementById('adminTabTransactions');
+      if (overviewTab) overviewTab.style.display = 'none';
+      if (usersTab) usersTab.style.display = 'none';
+      if (txTab) txTab.style.display = 'none';
+      if (accessLogsTab) accessLogsTab.style.display = 'block';
+      document.getElementById('adminAccessLogsEmpty').style.display = 'none';
+      document.getElementById('adminAccessLogsTableBody').innerHTML =
+        '<tr><td><div class="user-cell-meta"><div class="user-cell-avatar">Q</div><div><div class="user-cell-name">Quan Tri Vien</div><div class="user-cell-email">admin@pdflingua.edu.vn</div></div></div></td><td><span class="admin-ip-address font-mono">127.0.0.1</span></td><td><span class="admin-ip-device">Edge / Windows</span></td><td><span class="admin-log-action-pill login" id="testLogActionPill"><span class="status-dot"></span>Dang nhap</span></td><td><span class="date-mono">03:48:13 26/11/2026</span></td></tr>';
+      document.getElementById('adminAccessLogsCard')?.scrollIntoView();
+    `);
+    await sleep(80);
+    const res = await evalWithHelpers(cdp, `
+      const card = H.rectOf('#adminAccessLogsCard');
+      const wrap = H.rectOf('#adminAccessLogsCard .admin-table-wrapper');
+      const logSearch = H.rectOf('#adminLogSearchInput');
+      const logsToolbar = H.checkContainerOverlap('#adminAccessLogsCard .admin-toolbar');
+      const actionPill = H.rectOf('#testLogActionPill');
+      return {
+        vw: H.vw,
+        docOvX: H.docOvX,
+        card,
+        wrap,
+        logSearch,
+        logsToolbar,
+        actionPill,
+      };
+    `);
+    assert.strictEqual(res.docOvX, 0, `Access logs section horizontal overflow: ${res.docOvX}px`);
+    assert.ok(res.card && res.card.right <= res.vw + 1, 'Access logs card exceeds viewport');
+    assert.ok(res.wrap && ['auto', 'scroll'].includes(res.wrap.overflowX), 'Access logs table wrapper must allow horizontal scrolling');
+    assert.ok(res.logSearch && res.logSearch.left >= res.card.left + 12, 'Access logs search input must have toolbar padding');
+    assert.ok(res.logSearch.right <= res.card.right + 1, 'Access logs search input exceeds card bounds');
+    assert.strictEqual(res.logsToolbar.overlaps.length, 0, `Access logs toolbar sibling overlap: ${JSON.stringify(res.logsToolbar.overlaps)}`);
+    assert.strictEqual(res.logsToolbar.overflowPx, 0, `Access logs toolbar overflow: ${res.logsToolbar.overflowPx}px`);
+    assert.ok(res.actionPill && res.actionPill.height <= 32, `Access log action pill wrapped (height=${res.actionPill?.height})`);
   });
 
   await runner.run(vp.name, 'Admin Section: VietQR transactions card, toolbar, and action buttons fit cleanly', async () => {
@@ -1094,9 +1130,11 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
       if (txTabBtn) txTabBtn.click();
       const overviewTab = document.getElementById('adminTabOverview');
       const usersTab = document.getElementById('adminTabUsers');
+      const accessLogsTab = document.getElementById('adminTabAccessLogs');
       const txTab = document.getElementById('adminTabTransactions');
       if (overviewTab) overviewTab.style.display = 'none';
       if (usersTab) usersTab.style.display = 'none';
+      if (accessLogsTab) accessLogsTab.style.display = 'none';
       if (txTab) txTab.style.display = 'block';
       document.getElementById('adminTxTableEmpty').style.display = 'none';
       document.getElementById('adminTxTableBody').innerHTML =

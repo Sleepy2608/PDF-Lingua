@@ -1089,6 +1089,7 @@
     const sideNavAdminChevron = document.getElementById('sideNavAdminChevron');
     const sideNavAdminOverview = document.getElementById('sideNavAdminOverview');
     const sideNavAdminUsers = document.getElementById('sideNavAdminUsers');
+    const sideNavAdminAccessLogs = document.getElementById('sideNavAdminAccessLogs');
     const sideNavAdminTransactions = document.getElementById('sideNavAdminTransactions');
 
     if (sideNavAdminChevron) {
@@ -1123,6 +1124,7 @@
     [
       { el: sideNavAdminOverview, tab: 'overview' },
       { el: sideNavAdminUsers, tab: 'users' },
+      { el: sideNavAdminAccessLogs, tab: 'access-logs' },
       { el: sideNavAdminTransactions, tab: 'transactions' },
     ].forEach(({ el, tab }) => {
       if (!el) return;
@@ -1254,14 +1256,16 @@
   function setActiveAdminSubmenu(subTab) {
     const subOverview = document.getElementById('sideNavAdminOverview');
     const subUsers = document.getElementById('sideNavAdminUsers');
+    const subAccessLogs = document.getElementById('sideNavAdminAccessLogs');
     const subTransactions = document.getElementById('sideNavAdminTransactions');
     const map = {
       overview: subOverview,
       users: subUsers,
+      'access-logs': subAccessLogs,
       transactions: subTransactions,
     };
 
-    [subOverview, subUsers, subTransactions].forEach((el) => {
+    [subOverview, subUsers, subAccessLogs, subTransactions].forEach((el) => {
       if (!el) return;
       if (el.classList) el.classList.remove('active');
       if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-current');
@@ -1275,7 +1279,7 @@
   }
 
   function navigateToAdminSubView(subTab) {
-    const targetTab = (subTab === 'users' || subTab === 'transactions') ? subTab : 'overview';
+    const targetTab = (subTab === 'users' || subTab === 'access-logs' || subTab === 'transactions') ? subTab : 'overview';
     const sideNavAdmin = document.getElementById('sideNavAdmin');
     if (sideNavAdmin) setActiveNavItem(sideNavAdmin);
     setAdminGroupExpanded(true);
@@ -1304,9 +1308,11 @@
 
       const tabOverview = document.getElementById('adminTabOverview');
       const tabUsers = document.getElementById('adminTabUsers');
+      const tabAccessLogs = document.getElementById('adminTabAccessLogs');
       const tabTransactions = document.getElementById('adminTabTransactions');
       if (tabOverview) tabOverview.style.display = targetTab === 'overview' ? 'block' : 'none';
       if (tabUsers) tabUsers.style.display = targetTab === 'users' ? 'block' : 'none';
+      if (tabAccessLogs) tabAccessLogs.style.display = targetTab === 'access-logs' ? 'block' : 'none';
       if (tabTransactions) tabTransactions.style.display = targetTab === 'transactions' ? 'block' : 'none';
     }
 
@@ -3844,6 +3850,7 @@
           navKey === 'admin' ||
           navKey === 'admin-overview' ||
           navKey === 'admin-users' ||
+          navKey === 'admin-access-logs' ||
           navKey === 'admin-transactions'
         ) {
           const el = document.getElementById('sideNavAdmin');
@@ -3852,6 +3859,8 @@
           const subTab =
             navKey === 'admin-users'
               ? 'users'
+              : navKey === 'admin-access-logs'
+              ? 'access-logs'
               : navKey === 'admin-transactions'
               ? 'transactions'
               : 'overview';

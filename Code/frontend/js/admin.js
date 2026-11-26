@@ -788,18 +788,20 @@
 
   // ── Master Loader ───────────────────────────────────────────────────────────
   function switchAdminTab(tabName) {
-    const validTabs = ['overview', 'users', 'transactions'];
+    const validTabs = ['overview', 'users', 'access-logs', 'transactions'];
     const targetTab = validTabs.includes(tabName) ? tabName : 'overview';
     activeAdminTab = targetTab;
 
     const panelMap = {
       overview: document.getElementById('adminTabOverview'),
       users: document.getElementById('adminTabUsers'),
+      'access-logs': document.getElementById('adminTabAccessLogs'),
       transactions: document.getElementById('adminTabTransactions'),
     };
     const btnMap = {
       overview: document.getElementById('sideNavAdminOverview'),
       users: document.getElementById('sideNavAdminUsers'),
+      'access-logs': document.getElementById('sideNavAdminAccessLogs'),
       transactions: document.getElementById('sideNavAdminTransactions'),
     };
 
@@ -962,6 +964,7 @@
     if (chipLabel) {
       chipLabel.textContent = t('admin_ip_filter_chip', `Lọc: ${logFilterUserEmail}`, { email: logFilterUserEmail });
     }
+    switchAdminTab('access-logs');
     fetchAdminAccessLogs(1);
     const logsCard = document.getElementById('adminAccessLogsCard');
     if (logsCard && typeof logsCard.scrollIntoView === 'function') {
