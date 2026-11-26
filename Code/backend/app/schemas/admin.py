@@ -58,6 +58,11 @@ class AdminUserListItem(BaseModel):
     role: UserRole = Field(..., description="Privilege role: free | pro | admin.")
     is_active: bool = Field(..., description="Account status: True (Active), False (Locked).")
     document_count: int = Field(default=0, description="Total documents uploaded by this user.")
+    last_ip: Optional[str] = Field(None, description="Most recent client IP recorded during login/register.")
+    last_device: Optional[str] = Field(None, description="Most recent browser/OS summary.")
+    last_login_at: Optional[datetime] = Field(None, description="Timestamp of the most recent recorded access.")
+    distinct_ip_count_24h: int = Field(default=0, description="Distinct IP addresses seen in the last 24 hours.")
+    multi_ip_warning: bool = Field(default=False, description="True if account accessed from >= 3 distinct IPs in 24h.")
     created_at: datetime = Field(..., description="Timestamp when the account was registered.")
     updated_at: datetime = Field(..., description="Timestamp of the last profile or role update.")
 
@@ -123,3 +128,58 @@ class AdminTransactionListResponse(BaseModel):
     total_revenue_display: str = Field(default="0đ", description="Formatted total revenue.")
     pending_count: int = Field(default=0, description="Total pending transactions waiting for approval.")
     completed_count: int = Field(default=0, description="Total completed transactions.")
+
+
+# ── User Access & IP Audit Logs ───────────────────────────────────
+
+class AdminAccessLogItem(BaseModel):
+    """Single user access audit record showing IP, device, and action timestamp."""
+
+    id: int = Field(..., description="Unique log record ID.")
+    user_id: int = Field(..., description="Authenticated user ID.")
+    user_email: str = Field(..., description="User account email.")
+    user_name: Optional[str] = Field(None, description="User display name.")
+    user_role: UserRole = Field(..., description="User role tier.")
+    ip_address: str = Field(..., description="Client IP address resolved behind reverse proxy.")
+    device_summary: Optional[str] = Field(None, description="Human-readable browser/OS label.")
+    user_agent: Optional[str] = Field(None, description="Raw User-Agent header.")
+    action: str = Field(..., description="Auth action type: login | register.")
+    created_at: datetime = Field(..., description="Timestamp of access event.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminTrafficDayPoint(BaseModel):
+    """Daily access traffic metric with total visits and distinct-IP unique visitors."""
+
+    date: str = Field(..., description="Calendar date in YYYY-MM-DD (UTC).")
+    total_visits: int = Field(default=0, description="Total login/register access events on this day.")
+    unique_visitors: int = Field(default=0, description="Distinct client IP addresses on this day.")
+
+
+class AdminAccessTrafficSummary(BaseModel):
+    """Rolling 14-day traffic time series mirroring GitHub Visitors & Unique Visitors."""
+
+    window_days: int = Field(default=14, description="Number of rolling calendar days in window.")
+    total_visits: int = Field(default=0, description="Total access events across the window.")
+    unique_visitors: int = Field(default=0, description="Distinct client IP addresses across the entire window.")
+    daily: list[AdminTrafficDayPoint] = Field(
+        default_factory=list,
+        description="Continuous daily data points sorted ascending by date.",
+    )
+
+
+class AdminAccessLogListResponse(BaseModel):
+    """Paginated user access log list with 24-hour IP anomaly metrics."""
+
+    items: list[AdminAccessLogItem] = Field(..., description="Current page of access log items.")
+    total_count: int = Field(..., description="Total matching log records.")
+    page: int = Field(..., description="Current page number.")
+    limit: int = Field(..., description="Items per page.")
+    total_pages: int = Field(..., description="Total available pages.")
+    unique_ips_24h: int = Field(default=0, description="Total distinct IPs recorded system-wide in last 24h.")
+    multi_ip_users_count: int = Field(default=0, description="Number of users with >= 3 distinct IPs in last 24h.")
+    traffic: AdminAccessTrafficSummary = Field(
+        default_factory=AdminAccessTrafficSummary,
+        description="14-day daily total visits and distinct-IP unique visitors summary.",
+    )

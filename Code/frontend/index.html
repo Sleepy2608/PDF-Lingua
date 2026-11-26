@@ -203,9 +203,10 @@
                                 </li>
                             </ul>
                         </li>
-                        <li id="sideNavAdminItem" style="display: none;">
-                            <a href="#admin" class="sidebar-nav-item" id="sideNavAdmin" data-tooltip="Quản trị hệ thống"
-                                data-i18n-attr="data-tooltip:common_admin">
+                        <li class="sidebar-nav-group" id="sideNavAdminItem" style="display: none;">
+                            <a href="#admin" class="sidebar-nav-item sidebar-nav-group-toggle" id="sideNavAdmin"
+                                data-tooltip="Quản trị hệ thống" data-i18n-attr="data-tooltip:common_admin"
+                                aria-expanded="false" aria-controls="sideNavAdminSubmenu">
                                 <span class="nav-item-icon nav-icon-admin">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -213,7 +214,48 @@
                                     </svg>
                                 </span>
                                 <span class="nav-item-text" data-i18n="common_admin">Quản trị hệ thống</span>
+                                <span class="nav-group-chevron" id="sideNavAdminChevron" aria-hidden="true">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </span>
                             </a>
+                            <ul class="sidebar-submenu" id="sideNavAdminSubmenu" role="menu"
+                                aria-label="Chức năng Quản trị hệ thống"
+                                data-i18n-attr="aria-label:admin_submenu_aria">
+                                <li role="none">
+                                    <a href="#admin-overview" class="sidebar-submenu-item"
+                                        id="sideNavAdminOverview" data-admin-tab="overview" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="admin_tab_overview">Tổng quan hệ thống</span>
+                                    </a>
+                                </li>
+                                <li role="none">
+                                    <a href="#admin-users" class="sidebar-submenu-item"
+                                        id="sideNavAdminUsers" data-admin-tab="users" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="admin_tab_users">Quản lý Tài khoản</span>
+                                    </a>
+                                </li>
+                                <li role="none">
+                                    <a href="#admin-access-logs" class="sidebar-submenu-item"
+                                        id="sideNavAdminAccessLogs" data-admin-tab="access-logs" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="admin_tab_access_logs">Số lượng truy cập</span>
+                                        <span class="admin-tab-badge warn font-mono" id="adminTabMultiIpBadge" style="display: none;">0</span>
+                                    </a>
+                                </li>
+                                <li role="none">
+                                    <a href="#admin-transactions" class="sidebar-submenu-item"
+                                        id="sideNavAdminTransactions" data-admin-tab="transactions" role="menuitem">
+                                        <span class="submenu-dot" aria-hidden="true"></span>
+                                        <span class="submenu-item-text" data-i18n="admin_tab_transactions">Giao dịch</span>
+                                        <span class="admin-tab-badge pending font-mono" id="adminTabPendingTxBadge" style="display: none;">0</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                 </div>
@@ -2983,6 +3025,8 @@
                             </div>
                         </div>
 
+                        <!-- TAB 1: Overview Dashboard -->
+                        <div class="admin-tab-panel" id="adminTabOverview" role="tabpanel">
                         <!-- Admin Metrics Overview Bento Grid -->
                         <div class="admin-bento-grid">
                             <!-- Cell 1: Hero Metric (Spans 2 columns on desktop) -->
@@ -3008,11 +3052,11 @@
                                 <!-- Proportional Distribution Bar -->
                                 <div class="bento-dist-bar" id="statUsersDistBar">
                                     <div class="dist-seg dist-free" id="distSegFree" style="width: 70%;"
-                                        title="Tài khoản Miễn phí"></div>
+                                        title="Tài khoản Miễn phí" data-i18n-attr="title:admin_seg_free_title"></div>
                                     <div class="dist-seg dist-pro" id="distSegPro" style="width: 20%;"
-                                        title="Tài khoản Pro"></div>
+                                        title="Tài khoản Pro" data-i18n-attr="title:admin_seg_pro_title"></div>
                                     <div class="dist-seg dist-admin" id="distSegAdmin" style="width: 10%;"
-                                        title="Tài khoản Quản trị"></div>
+                                        title="Tài khoản Quản trị" data-i18n-attr="title:admin_seg_admin_title"></div>
                                 </div>
                                 <div class="bento-pills-row">
                                     <span class="badge-sub free" id="statFreeUsers">Miễn phí: --</span>
@@ -3103,22 +3147,23 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <span class="bento-cell-label">Phân Bổ Mức Độ Sử Dụng Dịch Vụ</span>
-                                            <p class="bento-cell-desc">Thống kê tỷ trọng các tính năng cốt lõi được
+                                            <span class="bento-cell-label" data-i18n="admin_services_title">Phân Bổ Mức Độ Sử Dụng Dịch Vụ</span>
+                                            <p class="bento-cell-desc" data-i18n="admin_services_desc">Thống kê tỷ trọng các tính năng cốt lõi được
                                                 người dùng thực hiện thành công</p>
                                         </div>
                                     </div>
                                     <div class="services-total-pill font-mono">
-                                        <span>Tổng cộng:</span>
+                                        <span data-i18n="admin_services_total_prefix">Tổng cộng:</span>
                                         <strong id="statServicesTotal">0</strong>
-                                        <span>lượt</span>
+                                        <span data-i18n="admin_services_unit">lượt</span>
                                     </div>
                                 </div>
 
                                 <!-- Multi-segment Distribution Track -->
                                 <div class="bento-services-track-wrap">
                                     <div class="bento-dist-bar bento-services-dist-bar" id="statServicesDistBar"
-                                        role="progressbar" aria-label="Phân bổ mức độ sử dụng dịch vụ" aria-valuenow="0"
+                                        role="progressbar" aria-label="Phân bổ mức độ sử dụng dịch vụ"
+                                        data-i18n-attr="aria-label:admin_services_title" aria-valuenow="0"
                                         aria-valuemin="0" aria-valuemax="100">
                                         <div class="dist-seg dist-extract" id="distSegExtract" style="width: 0%;"
                                             title="Trích xuất: 0 lượt (0%)" data-service="extract"></div>
@@ -3130,7 +3175,7 @@
                                             title="Trợ lý AI Copilot: 0 lượt (0%)" data-service="chat"></div>
                                     </div>
                                     <div class="bento-services-empty-hint" id="statServicesEmptyHint"
-                                        style="display: none;">
+                                        data-i18n="admin_services_empty" style="display: none;">
                                         Chưa có lượt xử lý dịch vụ nào được ghi nhận
                                     </div>
                                 </div>
@@ -3140,7 +3185,7 @@
                                     <div class="service-stat-item" id="serviceStatExtract">
                                         <div class="service-stat-head">
                                             <span class="service-dot dot-extract"></span>
-                                            <span class="service-name">Trích xuất văn bản</span>
+                                            <span class="service-name" data-i18n="admin_service_extract">Trích xuất văn bản</span>
                                         </div>
                                         <div class="service-stat-body">
                                             <span class="service-count font-mono tabular-nums"
@@ -3153,7 +3198,7 @@
                                     <div class="service-stat-item" id="serviceStatTranslate">
                                         <div class="service-stat-head">
                                             <span class="service-dot dot-translate"></span>
-                                            <span class="service-name">Dịch thuật tài liệu</span>
+                                            <span class="service-name" data-i18n="admin_service_translate">Dịch thuật tài liệu</span>
                                         </div>
                                         <div class="service-stat-body">
                                             <span class="service-count font-mono tabular-nums"
@@ -3166,7 +3211,7 @@
                                     <div class="service-stat-item" id="serviceStatSummarize">
                                         <div class="service-stat-head">
                                             <span class="service-dot dot-summarize"></span>
-                                            <span class="service-name">Tóm tắt AI</span>
+                                            <span class="service-name" data-i18n="admin_service_summarize">Tóm tắt AI</span>
                                         </div>
                                         <div class="service-stat-body">
                                             <span class="service-count font-mono tabular-nums"
@@ -3179,7 +3224,7 @@
                                     <div class="service-stat-item" id="serviceStatChat">
                                         <div class="service-stat-head">
                                             <span class="service-dot dot-chat"></span>
-                                            <span class="service-name">Trợ lý AI Copilot</span>
+                                            <span class="service-name" data-i18n="admin_service_chat">Trợ lý AI Copilot</span>
                                         </div>
                                         <div class="service-stat-body">
                                             <span class="service-count font-mono tabular-nums"
@@ -3190,7 +3235,10 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End #adminTabOverview -->
 
+                        <!-- TAB 2: User Accounts & IP Tracking -->
+                        <div class="admin-tab-panel" id="adminTabUsers" role="tabpanel" style="display: none;">
                         <!-- User Management Section -->
                         <div class="admin-table-card">
                             <div class="admin-table-header">
@@ -3211,46 +3259,48 @@
                                         <p class="table-subtitle" data-i18n="admin_table_subtitle">Tra cứu, phân quyền
                                             hạn và kiểm soát trạng thái hoạt động tài khoản</p>
                                     </div>
-                                    <span class="table-count-badge font-mono" id="adminUsersCountBadge">0 tài
-                                        khoản</span>
+                                </div>
+                                <div class="admin-tx-summary-pills">
+                                    <span class="table-count-badge font-mono" id="adminUsersCountBadge"
+                                        data-i18n="admin_users_count_zero">0 tài khoản</span>
+                                </div>
+                            </div>
+
+                            <!-- Filter & Search Toolbar -->
+                            <div class="admin-toolbar">
+                                <div class="admin-search-wrap">
+                                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="adminSearchInput" class="admin-search-input"
+                                        placeholder="Tìm theo email hoặc họ tên..."
+                                        data-i18n-attr="placeholder:admin_search_placeholder">
                                 </div>
 
-                                <!-- Filter & Search Toolbar -->
-                                <div class="admin-toolbar">
-                                    <div class="admin-search-wrap">
-                                        <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <circle cx="11" cy="11" r="8"></circle>
-                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                        </svg>
-                                        <input type="text" id="adminSearchInput" class="admin-search-input"
-                                            placeholder="Tìm theo email hoặc họ tên..."
-                                            data-i18n-attr="placeholder:admin_search_placeholder">
-                                    </div>
+                                <div class="admin-filter-wrap">
+                                    <select id="adminRoleFilter" class="admin-filter-select">
+                                        <option value="all" data-i18n="admin_filter_role_all">Tất cả vai trò
+                                        </option>
+                                        <option value="free" data-i18n="admin_filter_role_free">Người dùng Miễn phí
+                                        </option>
+                                        <option value="pro" data-i18n="admin_filter_role_pro">Tài khoản Pro</option>
+                                        <option value="admin" data-i18n="admin_filter_role_admin">Quản trị viên
+                                        </option>
+                                    </select>
+                                </div>
 
-                                    <div class="admin-filter-wrap">
-                                        <select id="adminRoleFilter" class="admin-filter-select">
-                                            <option value="all" data-i18n="admin_filter_role_all">Tất cả vai trò
-                                            </option>
-                                            <option value="free" data-i18n="admin_filter_role_free">Người dùng Miễn phí
-                                            </option>
-                                            <option value="pro" data-i18n="admin_filter_role_pro">Tài khoản Pro</option>
-                                            <option value="admin" data-i18n="admin_filter_role_admin">Quản trị viên
-                                            </option>
-                                        </select>
-                                    </div>
-
-                                    <div class="admin-filter-wrap">
-                                        <select id="adminStatusFilter" class="admin-filter-select">
-                                            <option value="all" data-i18n="admin_filter_status_all">Tất cả trạng thái
-                                            </option>
-                                            <option value="true" data-i18n="admin_filter_status_active">Đang hoạt động
-                                            </option>
-                                            <option value="false" data-i18n="admin_filter_status_locked">Đã bị khóa
-                                            </option>
-                                        </select>
-                                    </div>
+                                <div class="admin-filter-wrap">
+                                    <select id="adminStatusFilter" class="admin-filter-select">
+                                        <option value="all" data-i18n="admin_filter_status_all">Tất cả trạng thái
+                                        </option>
+                                        <option value="true" data-i18n="admin_filter_status_active">Đang hoạt động
+                                        </option>
+                                        <option value="false" data-i18n="admin_filter_status_locked">Đã bị khóa
+                                        </option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -3264,6 +3314,7 @@
                                             <th data-i18n="admin_th_role">Vai trò</th>
                                             <th data-i18n="admin_th_status">Trạng thái</th>
                                             <th data-i18n="admin_th_docs">Tài liệu</th>
+                                            <th data-i18n="admin_th_ip">IP & Thiết bị gần nhất</th>
                                             <th data-i18n="admin_th_created">Ngày tham gia</th>
                                             <th class="text-right" data-i18n="admin_th_actions">Thao tác</th>
                                         </tr>
@@ -3291,7 +3342,8 @@
 
                             <!-- Pagination Footer -->
                             <div class="admin-pagination-footer" id="adminPagination">
-                                <div class="pagination-info font-mono" id="adminPaginationInfo">Trang 1 / 1</div>
+                                <div class="pagination-info font-mono" id="adminPaginationInfo"
+                                    data-i18n="admin_page_default">Trang 1 / 1</div>
                                 <div class="pagination-controls">
                                     <button type="button" class="btn btn-admin-pager" id="btnAdminPrevPage" disabled>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -3299,11 +3351,11 @@
                                             stroke-linejoin="round">
                                             <polyline points="15 18 9 12 15 6"></polyline>
                                         </svg>
-                                        <span>Trước</span>
+                                        <span data-i18n="admin_btn_prev">Trước</span>
                                     </button>
                                     <span class="pagination-current-page font-mono" id="adminCurrentPageBadge">1</span>
                                     <button type="button" class="btn btn-admin-pager" id="btnAdminNextPage" disabled>
-                                        <span>Sau</span>
+                                        <span data-i18n="admin_btn_next">Sau</span>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -3313,7 +3365,175 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End #adminTabUsers -->
 
+                        <!-- TAB 3: User Access & IP Audit Logs -->
+                        <div class="admin-tab-panel" id="adminTabAccessLogs" role="tabpanel" style="display: none;">
+                        <!-- GitHub-Traffic-Style 14-Day Visitors & Unique IP Graphs -->
+                        <section class="admin-traffic-section" id="adminTrafficSection" aria-label="Lưu lượng truy cập theo IP trong 14 ngày"
+                            data-i18n-attr="aria-label:admin_traffic_aria">
+                            <div class="admin-traffic-section-header">
+                                <div class="admin-traffic-title-row">
+                                    <div class="table-icon-pill">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="admin-traffic-heading" data-i18n="admin_traffic_heading">Lưu lượng truy cập</h3>
+                                        <p class="admin-traffic-subheading" data-i18n="admin_traffic_subheading">Thống kê số lượt truy cập và địa chỉ IP duy nhất trong 14 ngày gần nhất</p>
+                                    </div>
+                                </div>
+                                <span class="admin-traffic-window-pill font-mono" data-i18n="admin_traffic_window_badge">14 ngày gần nhất</span>
+                            </div>
+
+                            <div class="admin-traffic-grid" id="adminTrafficGrid">
+                                <!-- Left Card: Total Access Visits (14 days) -->
+                                <article class="admin-traffic-card" id="adminTrafficTotalCard">
+                                    <div class="admin-traffic-card-head">
+                                        <div class="admin-traffic-card-meta">
+                                            <h4 class="admin-traffic-card-title" data-i18n="admin_traffic_total_title">Tổng lượt truy cập</h4>
+                                            <div class="admin-traffic-count font-mono" id="adminTrafficTotalCount" data-i18n="admin_traffic_total_default">0 Lượt truy cập</div>
+                                        </div>
+                                        <span class="admin-traffic-legend-pill">
+                                            <span class="traffic-legend-dot total" aria-hidden="true"></span>
+                                            <span data-i18n="admin_traffic_total_series">Tổng lượt</span>
+                                        </span>
+                                    </div>
+                                    <div class="admin-traffic-chart-stage" id="adminTrafficTotalChart">
+                                        <svg class="admin-traffic-svg" id="adminTrafficTotalSvg" viewBox="0 0 560 210" preserveAspectRatio="xMidYMid meet" role="img"
+                                            aria-label="Biểu đồ tổng lượt truy cập 14 ngày" data-i18n-attr="aria-label:admin_traffic_total_title"></svg>
+                                        <div class="admin-traffic-tooltip" id="adminTrafficTotalTooltip" style="display: none;"></div>
+                                    </div>
+                                </article>
+
+                                <!-- Right Card: Unique Visitors by Distinct IP (14 days) -->
+                                <article class="admin-traffic-card" id="adminTrafficUniqueCard">
+                                    <div class="admin-traffic-card-head">
+                                        <div class="admin-traffic-card-meta">
+                                            <h4 class="admin-traffic-card-title" data-i18n="admin_traffic_unique_title">Khách truy cập duy nhất (IP)</h4>
+                                            <div class="admin-traffic-count font-mono" id="adminTrafficUniqueCount" data-i18n="admin_traffic_unique_default">0 IP duy nhất</div>
+                                        </div>
+                                        <span class="admin-traffic-legend-pill">
+                                            <span class="traffic-legend-dot unique" aria-hidden="true"></span>
+                                            <span data-i18n="admin_traffic_unique_series">Duy nhất</span>
+                                        </span>
+                                    </div>
+                                    <div class="admin-traffic-chart-stage" id="adminTrafficUniqueChart">
+                                        <svg class="admin-traffic-svg" id="adminTrafficUniqueSvg" viewBox="0 0 560 210" preserveAspectRatio="xMidYMid meet" role="img"
+                                            aria-label="Biểu đồ khách truy cập duy nhất theo IP 14 ngày" data-i18n-attr="aria-label:admin_traffic_unique_title"></svg>
+                                        <div class="admin-traffic-tooltip" id="adminTrafficUniqueTooltip" style="display: none;"></div>
+                                    </div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <!-- User Access & IP Audit Logs Card -->
+                        <div class="admin-table-card admin-access-card" id="adminAccessLogsCard" style="margin-top: 1.25rem;">
+                            <div class="admin-table-header">
+                                <div class="table-title-group">
+                                    <div class="table-icon-pill">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="table-title" data-i18n="admin_ip_logs_title">Nhật ký Truy cập theo IP & Thiết bị</h3>
+                                        <p class="table-subtitle" data-i18n="admin_ip_logs_subtitle">Theo dõi địa chỉ IP đăng nhập từ nhiều máy và phát hiện truy cập bất thường trong 24 giờ</p>
+                                    </div>
+                                </div>
+                                <div class="admin-tx-summary-pills">
+                                    <span class="tx-summary-pill ip-info font-mono" id="adminUniqueIps24hBadge"
+                                        data-i18n="admin_ip_unique_default">IP duy nhất (24h): 0</span>
+                                    <span class="tx-summary-pill pending font-mono" id="adminMultiIpUsersBadge"
+                                        data-i18n="admin_ip_multi_default">Cảnh báo đa IP: 0</span>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Toolbar -->
+                            <div class="admin-toolbar">
+                                <div class="admin-search-wrap">
+                                    <svg class="search-icon-svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="admin-search-input" id="adminLogSearchInput"
+                                        placeholder="Tìm theo email, địa chỉ IP hoặc thiết bị..."
+                                        data-i18n-attr="placeholder:admin_ip_search_placeholder">
+                                </div>
+                                <div class="admin-filter-wrap">
+                                    <select class="admin-filter-select" id="adminLogMultiIpFilter" aria-label="Lọc cảnh báo đa IP"
+                                        data-i18n-attr="aria-label:admin_ip_filter_aria">
+                                        <option value="false" data-i18n="admin_ip_filter_all">Tất cả lượt truy cập</option>
+                                        <option value="true" data-i18n="admin_ip_filter_multi">Chỉ tài khoản dùng >= 3 IP (24h)</option>
+                                    </select>
+                                </div>
+                                <div class="admin-log-user-chip" id="adminLogUserFilterChip" style="display: none;">
+                                    <span id="adminLogUserFilterLabel" class="font-mono"></span>
+                                    <button type="button" id="btnClearLogUserFilter" title="Xóa bộ lọc tài khoản" aria-label="Xóa bộ lọc"
+                                        data-i18n-attr="title:admin_ip_clear_filter_title,aria-label:admin_ip_clear_filter_aria">&times;</button>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Table -->
+                            <div class="admin-table-wrapper">
+                                <table class="admin-users-table" id="adminAccessLogsTable">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="admin_ip_th_user">Người dùng</th>
+                                            <th data-i18n="admin_ip_th_address">Địa chỉ IP</th>
+                                            <th data-i18n="admin_ip_th_device">Thiết bị / Trình duyệt</th>
+                                            <th data-i18n="admin_ip_th_action">Hành động</th>
+                                            <th class="text-right" data-i18n="admin_ip_th_time">Thời gian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminAccessLogsTableBody">
+                                        <!-- Populated dynamically by admin.js -->
+                                    </tbody>
+                                </table>
+                                <div class="admin-table-empty" id="adminAccessLogsEmpty" style="display: none;">
+                                    <h4 class="empty-title" data-i18n="admin_ip_empty_title">Chưa có nhật ký truy cập nào</h4>
+                                    <p class="empty-text" data-i18n="admin_ip_empty_desc">Lịch sử địa chỉ IP và thiết bị khi người dùng đăng nhập sẽ được ghi nhận tại đây.</p>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Pagination Footer -->
+                            <div class="admin-pagination-footer" id="adminAccessLogsPagination">
+                                <div class="pagination-info font-mono" id="adminLogPaginationInfo"
+                                    data-i18n="admin_page_default">Trang 1 / 1</div>
+                                <div class="pagination-controls">
+                                    <button type="button" class="btn btn-admin-pager" id="btnAdminLogPrevPage" disabled>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                        <span data-i18n="admin_btn_prev">Trước</span>
+                                    </button>
+                                    <span class="pagination-current-page font-mono" id="adminLogCurrentPageBadge">1</span>
+                                    <button type="button" class="btn btn-admin-pager" id="btnAdminLogNextPage" disabled>
+                                        <span data-i18n="admin_btn_next">Sau</span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        </div> <!-- End #adminTabAccessLogs -->
+
+                        <!-- TAB 4: VietQR Transactions & Pro Approval -->
+                        <div class="admin-tab-panel" id="adminTabTransactions" role="tabpanel" style="display: none;">
                         <!-- VietQR Transactions & Pro Approval Card -->
                         <div class="admin-table-card admin-tx-card" id="adminTxCard">
                             <div class="admin-table-header">
@@ -3327,13 +3547,15 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="table-title">Giao dịch & Duyệt nâng cấp Pro (VietQR)</h3>
-                                        <p class="table-subtitle">Theo dõi doanh thu, đối soát mã chuyển khoản và kích hoạt gói Pro cho người dùng</p>
+                                        <h3 class="table-title" data-i18n="admin_tx_title">Giao dịch & Duyệt nâng cấp Pro (VietQR)</h3>
+                                        <p class="table-subtitle" data-i18n="admin_tx_subtitle">Theo dõi doanh thu, đối soát mã chuyển khoản và kích hoạt gói Pro cho người dùng</p>
                                     </div>
                                 </div>
                                 <div class="admin-tx-summary-pills">
-                                    <span class="tx-summary-pill revenue font-mono" id="adminTxRevenueBadge">Doanh thu: 0đ</span>
-                                    <span class="tx-summary-pill pending font-mono" id="adminTxPendingBadge">Chờ duyệt: 0</span>
+                                    <span class="tx-summary-pill revenue font-mono" id="adminTxRevenueBadge"
+                                        data-i18n="admin_tx_revenue_default">Doanh thu: 0đ</span>
+                                    <span class="tx-summary-pill pending font-mono" id="adminTxPendingBadge"
+                                        data-i18n="admin_tx_pending_default">Chờ duyệt: 0</span>
                                 </div>
                             </div>
 
@@ -3347,15 +3569,17 @@
                                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                     </svg>
                                     <input type="text" class="admin-search-input" id="adminTxSearchInput"
-                                        placeholder="Tìm theo mã giao dịch, email hoặc nội dung CK...">
+                                        placeholder="Tìm theo mã giao dịch, email hoặc nội dung CK..."
+                                        data-i18n-attr="placeholder:admin_tx_search_placeholder">
                                 </div>
                                 <div class="admin-filter-wrap">
-                                    <select class="admin-filter-select" id="adminTxStatusFilter" aria-label="Lọc trạng thái giao dịch">
-                                        <option value="all">Tất cả trạng thái</option>
-                                        <option value="pending">Chờ duyệt</option>
-                                        <option value="completed">Thành công</option>
-                                        <option value="failed">Đã từ chối</option>
-                                        <option value="expired">Hết hạn</option>
+                                    <select class="admin-filter-select" id="adminTxStatusFilter" aria-label="Lọc trạng thái giao dịch"
+                                        data-i18n-attr="aria-label:admin_tx_filter_aria">
+                                        <option value="all" data-i18n="admin_tx_filter_all">Tất cả trạng thái</option>
+                                        <option value="pending" data-i18n="admin_tx_status_pending">Chờ duyệt</option>
+                                        <option value="completed" data-i18n="admin_tx_status_completed">Thành công</option>
+                                        <option value="failed" data-i18n="admin_tx_status_failed">Đã từ chối</option>
+                                        <option value="expired" data-i18n="admin_tx_status_expired">Hết hạn</option>
                                     </select>
                                 </div>
                             </div>
@@ -3365,13 +3589,13 @@
                                 <table class="admin-users-table" id="adminTxTable">
                                     <thead>
                                         <tr>
-                                            <th>Mã GD</th>
-                                            <th>Người dùng</th>
-                                            <th>Gói cước</th>
-                                            <th>Số tiền</th>
-                                            <th>Trạng thái</th>
-                                            <th>Thời gian</th>
-                                            <th class="text-right">Thao tác</th>
+                                            <th data-i18n="admin_tx_th_code">Mã GD</th>
+                                            <th data-i18n="admin_tx_th_user">Người dùng</th>
+                                            <th data-i18n="admin_tx_th_plan">Gói cước</th>
+                                            <th data-i18n="admin_tx_th_amount">Số tiền</th>
+                                            <th data-i18n="admin_tx_th_status">Trạng thái</th>
+                                            <th data-i18n="admin_tx_th_time">Thời gian</th>
+                                            <th class="text-right" data-i18n="admin_tx_th_actions">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody id="adminTxTableBody">
@@ -3379,14 +3603,15 @@
                                     </tbody>
                                 </table>
                                 <div class="admin-table-empty" id="adminTxTableEmpty" style="display: none;">
-                                    <h4 class="empty-title">Chưa có giao dịch thanh toán nào</h4>
-                                    <p class="empty-text">Các giao dịch nâng cấp gói Pro qua VietQR sẽ hiển thị tại đây để bạn đối soát và duyệt.</p>
+                                    <h4 class="empty-title" data-i18n="admin_tx_empty_title">Chưa có giao dịch thanh toán nào</h4>
+                                    <p class="empty-text" data-i18n="admin_tx_empty_desc">Các giao dịch nâng cấp gói Pro qua VietQR sẽ hiển thị tại đây để bạn đối soát và duyệt.</p>
                                 </div>
                             </div>
 
                             <!-- Transaction Pagination Footer -->
                             <div class="admin-pagination-footer" id="adminTxPagination">
-                                <div class="pagination-info font-mono" id="adminTxPaginationInfo">Trang 1 / 1</div>
+                                <div class="pagination-info font-mono" id="adminTxPaginationInfo"
+                                    data-i18n="admin_page_default">Trang 1 / 1</div>
                                 <div class="pagination-controls">
                                     <button type="button" class="btn btn-admin-pager" id="btnAdminTxPrevPage" disabled>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -3394,11 +3619,11 @@
                                             stroke-linejoin="round">
                                             <polyline points="15 18 9 12 15 6"></polyline>
                                         </svg>
-                                        <span>Trước</span>
+                                        <span data-i18n="admin_btn_prev">Trước</span>
                                     </button>
                                     <span class="pagination-current-page font-mono" id="adminTxCurrentPageBadge">1</span>
                                     <button type="button" class="btn btn-admin-pager" id="btnAdminTxNextPage" disabled>
-                                        <span>Sau</span>
+                                        <span data-i18n="admin_btn_next">Sau</span>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                             stroke-linejoin="round">
@@ -3408,6 +3633,7 @@
                                 </div>
                             </div>
                         </div>
+                        </div> <!-- End #adminTabTransactions -->
                     </div>
                 </section>
 

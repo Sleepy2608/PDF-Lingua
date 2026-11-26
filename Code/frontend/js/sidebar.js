@@ -1086,32 +1086,53 @@
       });
     });
 
-    if (sideNavAdmin) {
-      sideNavAdmin.addEventListener('click', (e) => {
-        e.preventDefault();
-        try {
-          sessionStorage.removeItem(ACTIVE_VIEW_KEY);
-        } catch (_err) { }
-        setActiveNavItem(sideNavAdmin);
-        const pricingSection = document.getElementById('pricingSection');
-        const documentsSection = document.getElementById('documentsSection');
-        const historySection = document.getElementById('historySection');
-        if (pricingSection) pricingSection.style.display = 'none';
-        if (documentsSection) documentsSection.style.display = 'none';
-        if (historySection) historySection.style.display = 'none';
-        if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
-          window.pdfLinguaAdmin.openAdminView();
-        } else {
-          const adminSection = document.getElementById('adminSection');
-          const heroSection = document.getElementById('heroSection');
-          const workspaceSection = document.getElementById('workspaceSection');
-          if (workspaceSection) workspaceSection.style.display = 'none';
-          if (adminSection) adminSection.style.display = 'block';
-          if (heroSection) heroSection.style.display = 'none';
-        }
-        if (window.innerWidth < 768) closeMobileSidebar();
+    const sideNavAdminChevron = document.getElementById('sideNavAdminChevron');
+    const sideNavAdminOverview = document.getElementById('sideNavAdminOverview');
+    const sideNavAdminUsers = document.getElementById('sideNavAdminUsers');
+    const sideNavAdminAccessLogs = document.getElementById('sideNavAdminAccessLogs');
+    const sideNavAdminTransactions = document.getElementById('sideNavAdminTransactions');
+
+    if (sideNavAdminChevron) {
+      sideNavAdminChevron.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        const adminGroup = document.getElementById('sideNavAdminItem');
+        const nextExpanded = adminGroup ? !adminGroup.classList.contains('is-expanded') : true;
+        setAdminGroupExpanded(nextExpanded);
       });
     }
+
+    if (sideNavAdmin) {
+      sideNavAdmin.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        const adminSection = document.getElementById('adminSection');
+        const adminGroup = document.getElementById('sideNavAdminItem');
+        const appSidebar = document.getElementById('appSidebar');
+        const isAdminVisible = adminSection && adminSection.style.display !== 'none';
+        const isSidebarCollapsed = appSidebar && appSidebar.classList.contains('collapsed');
+
+        if (isAdminVisible && !isSidebarCollapsed) {
+          const nextExpanded = adminGroup ? !adminGroup.classList.contains('is-expanded') : true;
+          setAdminGroupExpanded(nextExpanded);
+          return;
+        }
+
+        navigateToAdminSubView('overview');
+      });
+    }
+
+    [
+      { el: sideNavAdminOverview, tab: 'overview' },
+      { el: sideNavAdminUsers, tab: 'users' },
+      { el: sideNavAdminAccessLogs, tab: 'access-logs' },
+      { el: sideNavAdminTransactions, tab: 'transactions' },
+    ].forEach(({ el, tab }) => {
+      if (!el) return;
+      el.addEventListener('click', (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        navigateToAdminSubView(tab);
+      });
+    });
 
     // Top header navigation links delegation
     if (typeof document.querySelectorAll === 'function') {
@@ -1220,6 +1241,84 @@
     if (window.innerWidth < 768) closeMobileSidebar();
   }
 
+  function setAdminGroupExpanded(expanded) {
+    const group = document.getElementById('sideNavAdminItem');
+    const toggle = document.getElementById('sideNavAdmin');
+    const isExp = Boolean(expanded);
+    if (group && group.classList) {
+      group.classList.toggle('is-expanded', isExp);
+    }
+    if (toggle && typeof toggle.setAttribute === 'function') {
+      toggle.setAttribute('aria-expanded', isExp ? 'true' : 'false');
+    }
+  }
+
+  function setActiveAdminSubmenu(subTab) {
+    const subOverview = document.getElementById('sideNavAdminOverview');
+    const subUsers = document.getElementById('sideNavAdminUsers');
+    const subAccessLogs = document.getElementById('sideNavAdminAccessLogs');
+    const subTransactions = document.getElementById('sideNavAdminTransactions');
+    const map = {
+      overview: subOverview,
+      users: subUsers,
+      'access-logs': subAccessLogs,
+      transactions: subTransactions,
+    };
+
+    [subOverview, subUsers, subAccessLogs, subTransactions].forEach((el) => {
+      if (!el) return;
+      if (el.classList) el.classList.remove('active');
+      if (typeof el.removeAttribute === 'function') el.removeAttribute('aria-current');
+    });
+
+    const target = subTab ? map[subTab] : null;
+    if (target) {
+      if (target.classList) target.classList.add('active');
+      if (typeof target.setAttribute === 'function') target.setAttribute('aria-current', 'page');
+    }
+  }
+
+  function navigateToAdminSubView(subTab) {
+    const targetTab = (subTab === 'users' || subTab === 'access-logs' || subTab === 'transactions') ? subTab : 'overview';
+    const sideNavAdmin = document.getElementById('sideNavAdmin');
+    if (sideNavAdmin) setActiveNavItem(sideNavAdmin);
+    setAdminGroupExpanded(true);
+    setActiveAdminSubmenu(targetTab);
+
+    try {
+      sessionStorage.removeItem(ACTIVE_VIEW_KEY);
+    } catch (_err) { }
+
+    const pricingSection = document.getElementById('pricingSection');
+    const documentsSection = document.getElementById('documentsSection');
+    const historySection = document.getElementById('historySection');
+    if (pricingSection) pricingSection.style.display = 'none';
+    if (documentsSection) documentsSection.style.display = 'none';
+    if (historySection) historySection.style.display = 'none';
+
+    if (window.pdfLinguaAdmin && typeof window.pdfLinguaAdmin.openAdminView === 'function') {
+      window.pdfLinguaAdmin.openAdminView(targetTab);
+    } else {
+      const adminSection = document.getElementById('adminSection');
+      const heroSection = document.getElementById('heroSection');
+      const workspaceSection = document.getElementById('workspaceSection');
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'block';
+      if (heroSection) heroSection.style.display = 'none';
+
+      const tabOverview = document.getElementById('adminTabOverview');
+      const tabUsers = document.getElementById('adminTabUsers');
+      const tabAccessLogs = document.getElementById('adminTabAccessLogs');
+      const tabTransactions = document.getElementById('adminTabTransactions');
+      if (tabOverview) tabOverview.style.display = targetTab === 'overview' ? 'block' : 'none';
+      if (tabUsers) tabUsers.style.display = targetTab === 'users' ? 'block' : 'none';
+      if (tabAccessLogs) tabAccessLogs.style.display = targetTab === 'access-logs' ? 'block' : 'none';
+      if (tabTransactions) tabTransactions.style.display = targetTab === 'transactions' ? 'block' : 'none';
+    }
+
+    if (window.innerWidth < 768) closeMobileSidebar();
+  }
+
   function setActiveNavItem(targetItem) {
     const allItems = document.querySelectorAll('.sidebar-nav-item');
     allItems.forEach((item) => item.classList.remove('active'));
@@ -1229,6 +1328,12 @@
     if (!targetItem || targetItem !== sideNavPricing) {
       setActivePricingSubmenu(null);
       setPricingGroupExpanded(false);
+    }
+
+    const sideNavAdmin = document.getElementById('sideNavAdmin');
+    if (!targetItem || targetItem !== sideNavAdmin) {
+      setActiveAdminSubmenu(null);
+      setAdminGroupExpanded(false);
     }
 
     if (typeof document.querySelectorAll === 'function') {
@@ -3741,9 +3846,25 @@
         } else if (navKey === 'history') {
           const el = document.getElementById('sideNavHistory');
           if (el) setActiveNavItem(el);
-        } else if (navKey === 'admin') {
+        } else if (
+          navKey === 'admin' ||
+          navKey === 'admin-overview' ||
+          navKey === 'admin-users' ||
+          navKey === 'admin-access-logs' ||
+          navKey === 'admin-transactions'
+        ) {
           const el = document.getElementById('sideNavAdmin');
           if (el) setActiveNavItem(el);
+          setAdminGroupExpanded(true);
+          const subTab =
+            navKey === 'admin-users'
+              ? 'users'
+              : navKey === 'admin-access-logs'
+              ? 'access-logs'
+              : navKey === 'admin-transactions'
+              ? 'transactions'
+              : 'overview';
+          setActiveAdminSubmenu(subTab);
         } else if (navKey === 'ai-copilot' || navKey === 'copilot') {
           const el = document.getElementById('sideNavAiCopilot');
           if (el) setActiveNavItem(el);
@@ -3788,6 +3909,9 @@
         navigateToPricingSubView: navigateToPricingSubView,
         setPricingGroupExpanded: setPricingGroupExpanded,
         setActivePricingSubmenu: setActivePricingSubmenu,
+        navigateToAdminSubView: navigateToAdminSubView,
+        setAdminGroupExpanded: setAdminGroupExpanded,
+        setActiveAdminSubmenu: setActiveAdminSubmenu,
         setActiveNav: setActiveNav,
         setActiveNavItem: setActiveNavItem,
         openDocumentDetailModal: openDocumentDetailModal,

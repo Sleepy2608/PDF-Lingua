@@ -34,7 +34,43 @@
   let txStatusFilter = 'all';
   let txSearchDebounceTimer = null;
 
+  // Tabs & Access Logs state
+  let activeAdminTab = 'overview';
+  let logPage = 1;
+  let logTotalPages = 1;
+  let logSearch = '';
+  let logMultiIpOnly = false;
+  let logFilterUserId = null;
+  let logFilterUserEmail = '';
+  let logSearchDebounceTimer = null;
+
+  // Cached payloads for instant re-render on language change
+  let lastStatsData = null;
+  let lastUsersItems = null;
+  let lastAccessLogsData = null;
+  let lastTransactionsData = null;
+
   // ── Helper Utilities ────────────────────────────────────────────────────────
+  function t(key, fallback, params) {
+    if (window.i18n && typeof window.i18n.t === 'function') {
+      const translated = window.i18n.t(key, params);
+      if (translated && translated !== key) return translated;
+    }
+    let result = fallback;
+    if (params && typeof params === 'object') {
+      Object.keys(params).forEach((paramKey) => {
+        result = result.replace(new RegExp('\\{' + paramKey + '\\}', 'g'), params[paramKey]);
+      });
+    }
+    return result;
+  }
+
+  function getLocale() {
+    const lang = (window.i18n && typeof window.i18n.getLanguage === 'function')
+      ? window.i18n.getLanguage()
+      : 'vi';
+    return lang === 'en' ? 'en-US' : 'vi-VN';
+  }
   function getStoredToken() {
     if (window.pdfLinguaAuth && typeof window.pdfLinguaAuth.getStoredToken === 'function') {
       return window.pdfLinguaAuth.getStoredToken();
@@ -104,7 +140,7 @@
   }
 
   // ── Navigation & View Switching ─────────────────────────────────────────────
-  function openAdminView() {
+  function openAdminView(initialTab) {
     const user = getCurrentUser();
     if (!user || user.role !== 'admin') {
       const msg = (window.i18n && typeof window.i18n.t === 'function')
@@ -136,7 +172,12 @@
       window.pdfLinguaAuth.closeAccountModal();
     }
 
-    // Load fresh data
+    // Switch to requested tab and load fresh data
+    if (initialTab) {
+      switchAdminTab(initialTab);
+    } else {
+      switchAdminTab(activeAdminTab || 'overview');
+    }
     loadAllAdminData();
   }
 
@@ -175,26 +216,29 @@
         const stats = json.data;
         renderAdminStats(stats);
       } else if (res.status === 401 || res.status === 403) {
-        notifyUser('Phiên làm việc hết hạn hoặc bạn không có quyền Admin.', 'error');
+        notifyUser(t('admin_session_expired_toast', 'Phiên làm việc hết hạn hoặc bạn không có quyền Admin.'), 'error');
         closeAdminView();
       }
     } catch (err) {
       console.error('[PDF-Lingua Admin] Error loading stats:', err);
-      const msg = (window.i18n && typeof window.i18n.t === 'function')
-        ? window.i18n.t('admin_stats_conn_error')
-        : 'Không thể kết nối đến máy chủ để tải số liệu thống kê.';
-      notifyUser(msg, 'error');
+      notifyUser(t('admin_stats_conn_error', 'Không thể kết nối đến máy chủ để tải số liệu thống kê.'), 'error');
     }
   }
 
   function renderAdminStats(stats) {
     if (!stats) return;
+    lastStatsData = stats;
+    const locale = getLocale();
 
-    const freeLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_free') : 'Miễn phí';
-    const adminLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_admin') : 'Quản trị';
-    const activeLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_active') : 'Hoạt động';
-    const lockedLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_locked') : 'Đã khóa';
-    const bytesLabel = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_bytes_label') : 'byte dữ liệu';
+    const freeLabel = t('common_free', 'Miễn phí');
+    const adminLabel = t('common_admin', 'Quản trị');
+    const activeLabel = t('admin_status_active', 'Hoạt động');
+    const lockedLabel = t('admin_status_locked', 'Đã khóa');
+    const bytesLabel = t('admin_bytes_label', 'byte dữ liệu');
+    const extractShort = t('admin_service_extract_short', 'Trích xuất');
+    const translateShort = t('admin_service_translate_short', 'Dịch thuật');
+    const summarizeShort = t('admin_service_summarize', 'Tóm tắt AI');
+    const chatShort = t('admin_service_chat', 'Trợ lý AI Copilot');
 
     // Card 1: Users
     const elTotalUsers = document.getElementById('statTotalUsers');
@@ -207,7 +251,7 @@
     const proCount = stats.pro_users || 0;
     const adminCount = stats.admin_users || 0;
 
-    if (elTotalUsers) elTotalUsers.textContent = total.toLocaleString('vi-VN');
+    if (elTotalUsers) elTotalUsers.textContent = total.toLocaleString(locale);
     if (elFreeUsers) elFreeUsers.textContent = `${freeLabel}: ${freeCount}`;
     if (elProUsers) elProUsers.textContent = `Pro: ${proCount}`;
     if (elAdminUsers) elAdminUsers.textContent = `${adminLabel}: ${adminCount}`;
@@ -216,6 +260,9 @@
     const segFree = document.getElementById('distSegFree');
     const segPro = document.getElementById('distSegPro');
     const segAdmin = document.getElementById('distSegAdmin');
+    if (segFree) segFree.title = t('admin_seg_free_title', 'Tài khoản Miễn phí');
+    if (segPro) segPro.title = t('admin_seg_pro_title', 'Tài khoản Pro');
+    if (segAdmin) segAdmin.title = t('admin_seg_admin_title', 'Tài khoản Quản trị');
 
     if (total > 0) {
       const freePct = Math.round((freeCount / total) * 100);
@@ -241,7 +288,7 @@
 
     // Card 3: Documents
     const elTotalDocs = document.getElementById('statTotalDocs');
-    if (elTotalDocs) elTotalDocs.textContent = (stats.total_documents || 0).toLocaleString('vi-VN');
+    if (elTotalDocs) elTotalDocs.textContent = (stats.total_documents || 0).toLocaleString(locale);
 
     // Card 4: Storage
     const elTotalStorage = document.getElementById('statTotalStorage');
@@ -249,7 +296,7 @@
 
     const bytes = stats.total_storage_bytes || 0;
     if (elTotalStorage) elTotalStorage.textContent = formatBytes(bytes);
-    if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString('vi-VN')} ${bytesLabel}`;
+    if (elStorageRaw) elStorageRaw.textContent = `${bytes.toLocaleString(locale)} ${bytesLabel}`;
 
     // Card 5: Service Usage Breakdown
     const services = stats.services || {};
@@ -261,7 +308,7 @@
 
     const elServicesTotal = document.getElementById('statServicesTotal');
     if (elServicesTotal) {
-      elServicesTotal.textContent = totalActions.toLocaleString('vi-VN');
+      elServicesTotal.textContent = totalActions.toLocaleString(locale);
     }
 
     const elExtractCount = document.getElementById('statExtractCount');
@@ -269,10 +316,10 @@
     const elSummarizeCount = document.getElementById('statSummarizeCount');
     const elChatCount = document.getElementById('statChatCount');
 
-    if (elExtractCount) elExtractCount.textContent = extractCount.toLocaleString('vi-VN');
-    if (elTranslateCount) elTranslateCount.textContent = translateCount.toLocaleString('vi-VN');
-    if (elSummarizeCount) elSummarizeCount.textContent = summarizeCount.toLocaleString('vi-VN');
-    if (elChatCount) elChatCount.textContent = chatCount.toLocaleString('vi-VN');
+    if (elExtractCount) elExtractCount.textContent = extractCount.toLocaleString(locale);
+    if (elTranslateCount) elTranslateCount.textContent = translateCount.toLocaleString(locale);
+    if (elSummarizeCount) elSummarizeCount.textContent = summarizeCount.toLocaleString(locale);
+    if (elChatCount) elChatCount.textContent = chatCount.toLocaleString(locale);
 
     const elExtractPct = document.getElementById('statExtractPct');
     const elTranslatePct = document.getElementById('statTranslatePct');
@@ -304,19 +351,35 @@
 
       if (segExtract) {
         segExtract.style.width = `${rawExtractPct}%`;
-        segExtract.title = `Trích xuất: ${extractCount.toLocaleString('vi-VN')} lượt (${extractPct}%)`;
+        segExtract.title = t('admin_services_tooltip', `${extractShort}: ${extractCount.toLocaleString(locale)} lượt (${extractPct}%)`, {
+          name: extractShort,
+          count: extractCount.toLocaleString(locale),
+          pct: extractPct,
+        });
       }
       if (segTranslate) {
         segTranslate.style.width = `${rawTranslatePct}%`;
-        segTranslate.title = `Dịch thuật: ${translateCount.toLocaleString('vi-VN')} lượt (${translatePct}%)`;
+        segTranslate.title = t('admin_services_tooltip', `${translateShort}: ${translateCount.toLocaleString(locale)} lượt (${translatePct}%)`, {
+          name: translateShort,
+          count: translateCount.toLocaleString(locale),
+          pct: translatePct,
+        });
       }
       if (segSummarize) {
         segSummarize.style.width = `${rawSummarizePct}%`;
-        segSummarize.title = `Tóm tắt AI: ${summarizeCount.toLocaleString('vi-VN')} lượt (${summarizePct}%)`;
+        segSummarize.title = t('admin_services_tooltip', `${summarizeShort}: ${summarizeCount.toLocaleString(locale)} lượt (${summarizePct}%)`, {
+          name: summarizeShort,
+          count: summarizeCount.toLocaleString(locale),
+          pct: summarizePct,
+        });
       }
       if (segChat) {
         segChat.style.width = `${rawChatPct}%`;
-        segChat.title = `Trợ lý AI Copilot: ${chatCount.toLocaleString('vi-VN')} lượt (${chatPct}%)`;
+        segChat.title = t('admin_services_tooltip', `${chatShort}: ${chatCount.toLocaleString(locale)} lượt (${chatPct}%)`, {
+          name: chatShort,
+          count: chatCount.toLocaleString(locale),
+          pct: chatPct,
+        });
       }
 
       if (servicesProgressBar) {
@@ -331,19 +394,19 @@
 
       if (segExtract) {
         segExtract.style.width = '0%';
-        segExtract.title = 'Trích xuất: 0 lượt (0%)';
+        segExtract.title = t('admin_services_tooltip', `${extractShort}: 0 lượt (0%)`, { name: extractShort, count: 0, pct: 0 });
       }
       if (segTranslate) {
         segTranslate.style.width = '0%';
-        segTranslate.title = 'Dịch thuật: 0 lượt (0%)';
+        segTranslate.title = t('admin_services_tooltip', `${translateShort}: 0 lượt (0%)`, { name: translateShort, count: 0, pct: 0 });
       }
       if (segSummarize) {
         segSummarize.style.width = '0%';
-        segSummarize.title = 'Tóm tắt AI: 0 lượt (0%)';
+        segSummarize.title = t('admin_services_tooltip', `${summarizeShort}: 0 lượt (0%)`, { name: summarizeShort, count: 0, pct: 0 });
       }
       if (segChat) {
         segChat.style.width = '0%';
-        segChat.title = 'Trợ lý AI Copilot: 0 lượt (0%)';
+        segChat.title = t('admin_services_tooltip', `${chatShort}: 0 lượt (0%)`, { name: chatShort, count: 0, pct: 0 });
       }
 
       if (servicesProgressBar) {
@@ -369,6 +432,7 @@
         <td><div class="skeleton-pill" style="width: 72px; height: 22px; border-radius: 9999px;"></div></td>
         <td><div class="skeleton-pill" style="width: 80px; height: 22px; border-radius: 9999px;"></div></td>
         <td><div class="skeleton-pill" style="width: 44px; height: 16px;"></div></td>
+        <td><div class="skeleton-pill" style="width: 110px; height: 14px;"></div></td>
         <td><div class="skeleton-pill" style="width: 110px; height: 14px;"></div></td>
         <td class="text-right"><div class="skeleton-pill" style="width: 130px; height: 26px; border-radius: 6px; margin-left: auto;"></div></td>
       </tr>
@@ -421,33 +485,30 @@
         renderAdminUsersTable(data.items || []);
         renderPaginationControls();
       } else if (res.status === 401 || res.status === 403) {
-        notifyUser('Phiên làm việc hết hạn hoặc bạn không có quyền Admin.', 'error');
+        notifyUser(t('admin_session_expired_toast', 'Phiên làm việc hết hạn hoặc bạn không có quyền Admin.'), 'error');
         closeAdminView();
       } else {
-        const loadUsersFailMsg = (window.i18n && typeof window.i18n.t === 'function')
-          ? window.i18n.t('admin_load_users_failed')
-          : 'Không thể tải danh sách người dùng.';
-        notifyUser(loadUsersFailMsg, 'error');
+        notifyUser(t('admin_load_users_failed', 'Không thể tải danh sách người dùng.'), 'error');
       }
     } catch (err) {
       console.error('[PDF-Lingua Admin] Error loading user list:', err);
-      notifyUser('Lỗi kết nối khi tải danh sách người dùng.', 'error');
+      notifyUser(t('admin_load_users_conn_error', 'Lỗi kết nối khi tải danh sách người dùng.'), 'error');
     } finally {
       isFetching = false;
     }
   }
 
   function renderAdminUsersTable(users) {
+    lastUsersItems = users || [];
+    const locale = getLocale();
     const tbody = document.getElementById('adminUsersTableBody');
     const emptyState = document.getElementById('adminTableEmptyState');
     const tableEl = document.getElementById('adminUsersTable');
     const countBadge = document.getElementById('adminUsersCountBadge');
 
-    const accountsUnit = (window.i18n && typeof window.i18n.t === 'function')
-      ? window.i18n.t('admin_accounts_count_unit')
-      : 'tài khoản';
+    const accountsUnit = t('admin_accounts_count_unit', 'tài khoản');
     if (countBadge) {
-      countBadge.textContent = `${totalCount.toLocaleString('vi-VN')} ${accountsUnit}`;
+      countBadge.textContent = `${totalCount.toLocaleString(locale)} ${accountsUnit}`;
     }
 
     if (!users || users.length === 0) {
@@ -463,17 +524,22 @@
     const currentAdmin = getCurrentUser();
     const currentAdminId = currentAdmin ? currentAdmin.id : -1;
 
-    const unnamedText = (window.i18n && typeof window.i18n.t === 'function')
-      ? window.i18n.t('admin_unnamed_user')
-      : 'Chưa đặt tên';
-    const freeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_free') : 'Miễn phí';
-    const adminText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('common_admin') : 'Quản trị';
-    const activeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_active') : 'Hoạt động';
-    const lockedText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_status_locked') : 'Đã khóa';
-    const btnLockText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_lock') : 'Khóa';
-    const btnUnlockText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_unlock') : 'Mở khóa';
-    const btnDemoteFreeText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_demote_free') : 'Hạ Miễn phí';
-    const btnGrantProText = (window.i18n && typeof window.i18n.t === 'function') ? window.i18n.t('admin_btn_grant_pro') : 'Cấp Pro';
+    const unnamedText = t('admin_unnamed_user', 'Chưa đặt tên');
+    const freeText = t('common_free', 'Miễn phí');
+    const adminText = t('common_admin', 'Quản trị');
+    const activeText = t('admin_status_active', 'Hoạt động');
+    const lockedText = t('admin_status_locked', 'Đã khóa');
+    const btnLockText = t('admin_btn_lock', 'Khóa');
+    const btnUnlockText = t('admin_btn_unlock', 'Mở khóa');
+    const btnDemoteFreeText = t('admin_btn_demote_free', 'Hạ Miễn phí');
+    const btnGrantProText = t('admin_btn_grant_pro', 'Cấp Pro');
+    const selfAccountText = t('admin_self_account_tag', '(Tài khoản hiện tại)');
+    const ipNotRecordedText = t('admin_ip_not_recorded', 'Chưa ghi nhận');
+    const unknownDeviceText = t('admin_unknown_device', 'Thiết bị chưa rõ');
+    const ipBadgeTitle = t('admin_ip_badge_title', 'Nhấn để xem lịch sử IP');
+    const viewIpText = t('admin_btn_view_ip', 'Xem IP');
+    const viewIpTitle = t('admin_btn_view_ip_title', 'Xem lịch sử IP');
+    const docUnitText = t('admin_doc_unit', 'tệp');
 
     let html = '';
     users.forEach((u) => {
@@ -505,7 +571,7 @@
       // Action buttons with tactile feedback and crisp SVG icons
       let actionButtons = '';
       if (isSelf) {
-        actionButtons = `<span class="admin-self-tag">(Tài khoản hiện tại)</span>`;
+        actionButtons = `<span class="admin-self-tag">${selfAccountText}</span>`;
       } else {
         const toggleStatusBtn = u.is_active
           ? `<button type="button" class="btn-action btn-action-lock" data-action="lock" data-user-id="${u.id}" data-user-email="${email}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> ${btnLockText}</button>`
@@ -524,6 +590,24 @@
         `;
       }
 
+      let ipCellHtml = `<span class="admin-ip-none">${ipNotRecordedText}</span>`;
+      if (u.last_ip) {
+        const safeIp = escapeHtml(u.last_ip);
+        const safeDev = escapeHtml(u.last_device || unknownDeviceText);
+        const warnBadge = u.multi_ip_warning
+          ? `<button type="button" class="admin-multi-ip-badge font-mono" data-action="filter-ip" data-user-id="${u.id}" data-user-email="${email}" title="${ipBadgeTitle}">${u.distinct_ip_count_24h || 0} IP / 24h</button>`
+          : `<button type="button" class="btn-view-ip" data-action="filter-ip" data-user-id="${u.id}" data-user-email="${email}" title="${viewIpTitle}">${viewIpText}</button>`;
+        ipCellHtml = `
+          <div class="admin-ip-cell">
+            <div class="admin-ip-top">
+              <span class="admin-ip-address font-mono">${safeIp}</span>
+              ${warnBadge}
+            </div>
+            <div class="admin-ip-device">${safeDev}</div>
+          </div>
+        `;
+      }
+
       html += `
         <tr>
           <td><span class="user-id-mono">#${u.id}</span></td>
@@ -538,7 +622,8 @@
           </td>
           <td><span class="${roleBadgeClass}">${roleLabel}</span></td>
           <td><span class="${statusPillClass}">${statusLabel}</span></td>
-          <td><span class="doc-count-mono">${u.document_count || 0}</span> <span class="doc-unit">tệp</span></td>
+          <td><span class="doc-count-mono">${u.document_count || 0}</span> <span class="doc-unit">${docUnitText}</span></td>
+          <td>${ipCellHtml}</td>
           <td><span class="date-mono">${formatDate(u.created_at)}</span></td>
           <td class="text-right">${actionButtons}</td>
         </tr>
@@ -575,7 +660,7 @@
 
     if (!modal) return;
 
-    if (titleEl) titleEl.textContent = config.title || 'Xác nhận thao tác trọng yếu';
+    if (titleEl) titleEl.textContent = config.title || t('admin_confirm_title', 'Xác nhận thao tác trọng yếu');
     if (descEl) descEl.textContent = config.desc || '';
     if (targetEmailEl) targetEmailEl.textContent = config.email || '';
 
@@ -588,9 +673,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-danger';
-        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        proceedBtn.textContent = config.confirmBtnText || ((window.i18n && typeof window.i18n.t === 'function')
           ? window.i18n.t('admin_confirm_lock_btn')
-          : 'Khóa tài khoản này';
+          : 'Khóa tài khoản này');
       }
     } else if (config.actionType === 'success') {
       if (iconWrap) {
@@ -600,9 +685,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
-        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        proceedBtn.textContent = config.confirmBtnText || ((window.i18n && typeof window.i18n.t === 'function')
           ? window.i18n.t('admin_confirm_unlock_btn')
-          : 'Mở khóa tài khoản';
+          : 'Mở khóa tài khoản');
       }
     } else {
       if (iconWrap) {
@@ -612,9 +697,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
-        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        proceedBtn.textContent = config.confirmBtnText || ((window.i18n && typeof window.i18n.t === 'function')
           ? window.i18n.t('admin_confirm_change_btn')
-          : 'Xác nhận thay đổi';
+          : 'Xác nhận thay đổi');
       }
     }
 
@@ -657,12 +742,12 @@
         fetchAdminUsers(currentPage);
         fetchAdminStats();
       } else {
-        const errMsg = json.message || 'Thao tác không thành công.';
+        const errMsg = json.message || t('admin_action_failed', 'Thao tác không thành công.');
         notifyUser(errMsg, 'error');
       }
     } catch (err) {
       console.error('[PDF-Lingua Admin] Status update error:', err);
-      notifyUser('Lỗi kết nối máy chủ khi cập nhật trạng thái.', 'error');
+      notifyUser(t('admin_status_conn_error', 'Lỗi kết nối máy chủ khi cập nhật trạng thái.'), 'error');
     }
   }
 
@@ -683,28 +768,513 @@
 
       const json = await res.json();
       if (res.status === 200) {
-        const toastMsg = (window.i18n && typeof window.i18n.t === 'function')
-          ? window.i18n.t('admin_toast_role_updated', { email: userEmail, role: newRole.toUpperCase() })
-          : `Đã cập nhật vai trò ${userEmail} thành ${newRole.toUpperCase()}!`;
+        const toastMsg = t('admin_toast_role_updated', `Đã cập nhật vai trò ${userEmail} thành ${newRole.toUpperCase()}!`, {
+          email: userEmail,
+          role: newRole.toUpperCase(),
+        });
         notifyUser(toastMsg, 'success');
         // Refresh table & stats
         fetchAdminUsers(currentPage);
         fetchAdminStats();
       } else {
-        const errMsg = json.message || 'Thao tác đổi quyền không thành công.';
+        const errMsg = json.message || t('admin_role_action_failed', 'Thao tác đổi quyền không thành công.');
         notifyUser(errMsg, 'error');
       }
     } catch (err) {
       console.error('[PDF-Lingua Admin] Role update error:', err);
-      notifyUser('Lỗi kết nối máy chủ khi thay đổi vai trò.', 'error');
+      notifyUser(t('admin_role_conn_error', 'Lỗi kết nối máy chủ khi cập nhật vai trò.'), 'error');
     }
   }
 
   // ── Master Loader ───────────────────────────────────────────────────────────
+  function switchAdminTab(tabName) {
+    const validTabs = ['overview', 'users', 'access-logs', 'transactions'];
+    const targetTab = validTabs.includes(tabName) ? tabName : 'overview';
+    activeAdminTab = targetTab;
+
+    const panelMap = {
+      overview: document.getElementById('adminTabOverview'),
+      users: document.getElementById('adminTabUsers'),
+      'access-logs': document.getElementById('adminTabAccessLogs'),
+      transactions: document.getElementById('adminTabTransactions'),
+    };
+    const btnMap = {
+      overview: document.getElementById('sideNavAdminOverview'),
+      users: document.getElementById('sideNavAdminUsers'),
+      'access-logs': document.getElementById('sideNavAdminAccessLogs'),
+      transactions: document.getElementById('sideNavAdminTransactions'),
+    };
+
+    validTabs.forEach((key) => {
+      if (panelMap[key]) {
+        panelMap[key].style.display = key === targetTab ? 'block' : 'none';
+      }
+      if (btnMap[key]) {
+        const isActive = key === targetTab;
+        btnMap[key].classList.toggle('active', isActive);
+        if (isActive) {
+          btnMap[key].setAttribute('aria-current', 'page');
+        } else {
+          btnMap[key].removeAttribute('aria-current');
+        }
+      }
+    });
+
+    if (window.PDFLinguaSidebar && typeof window.PDFLinguaSidebar.setActiveAdminSubmenu === 'function') {
+      window.PDFLinguaSidebar.setActiveAdminSubmenu(targetTab);
+    }
+  }
+
   function loadAllAdminData() {
     fetchAdminStats();
     fetchAdminUsers(1);
+    fetchAdminAccessLogs(1);
     fetchAdminTransactions(1);
+  }
+
+  // ── API Fetch & Actions: User Access & IP Audit Logs ───────────────────────
+  async function fetchAdminAccessLogs(page = 1) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    logPage = page;
+    const params = new URLSearchParams({
+      page: String(logPage),
+      limit: '10',
+    });
+    if (logSearch && logSearch.trim()) params.append('search', logSearch.trim());
+    if (logMultiIpOnly) params.append('multi_ip_only', 'true');
+    if (logFilterUserId) params.append('user_id', String(logFilterUserId));
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/access-logs?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.status === 200) {
+        const json = await res.json();
+        renderAdminAccessLogs(json.data);
+      }
+    } catch (err) {
+      console.error('[PDF-Lingua Admin] Error loading access logs:', err);
+    }
+  }
+
+  // ── 14-Day GitHub-Traffic-Style IP Graphs ──────────────────────────────────
+  function normalizeAccessTraffic(data, windowDays = 14) {
+    const incoming = data && data.traffic && Array.isArray(data.traffic.daily) ? data.traffic : null;
+    if (incoming && incoming.daily.length > 0) {
+      return {
+        window_days: incoming.window_days || incoming.daily.length,
+        total_visits: Number(incoming.total_visits) || 0,
+        unique_visitors: Number(incoming.unique_visitors) || 0,
+        daily: incoming.daily.map((pt) => ({
+          date: String(pt.date || ''),
+          total_visits: Math.max(0, Number(pt.total_visits) || 0),
+          unique_visitors: Math.max(0, Number(pt.unique_visitors) || 0),
+        })),
+      };
+    }
+
+    // Fallback aggregation from logs array when backend omits `traffic`
+    const todayUtc = new Date();
+    const dailyMap = {};
+    const overallIps = new Set();
+    let totalVisits = 0;
+
+    const items = (data && Array.isArray(data.items)) ? data.items : [];
+    items.forEach((log) => {
+      if (!log || !log.created_at) return;
+      const d = new Date(log.created_at);
+      if (Number.isNaN(d.getTime())) return;
+      const dayKey = d.toISOString().slice(0, 10);
+      if (!dailyMap[dayKey]) dailyMap[dayKey] = { total: 0, ips: new Set() };
+      dailyMap[dayKey].total += 1;
+      totalVisits += 1;
+      const ip = String(log.ip_address || '').trim();
+      if (ip) {
+        dailyMap[dayKey].ips.add(ip);
+        overallIps.add(ip);
+      }
+    });
+
+    const daily = [];
+    for (let offset = windowDays - 1; offset >= 0; offset--) {
+      const dt = new Date(Date.UTC(todayUtc.getUTCFullYear(), todayUtc.getUTCMonth(), todayUtc.getUTCDate() - offset));
+      const key = dt.toISOString().slice(0, 10);
+      const entry = dailyMap[key];
+      daily.push({
+        date: key,
+        total_visits: entry ? entry.total : 0,
+        unique_visitors: entry ? entry.ips.size : 0,
+      });
+    }
+
+    return {
+      window_days: windowDays,
+      total_visits: totalVisits,
+      unique_visitors: overallIps.size,
+      daily,
+    };
+  }
+
+  function formatTrafficShortDate(isoDate) {
+    const parts = String(isoDate || '').split('-');
+    if (parts.length !== 3) return isoDate || '';
+    const lang = (window.i18n && typeof window.i18n.getLanguage === 'function')
+      ? window.i18n.getLanguage()
+      : 'vi';
+    return lang === 'en' ? `${parts[1]}/${parts[2]}` : `${parts[2]}/${parts[1]}`;
+  }
+
+  function computeNiceAxisScale(maxValue) {
+    const safeMax = Math.max(1, Number(maxValue) || 0);
+    if (safeMax <= 4) {
+      return { yMax: 4, ticks: [0, 1, 2, 3, 4] };
+    }
+    const rawStep = safeMax / 4;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const fraction = rawStep / magnitude;
+    let niceFraction = 10;
+    if (fraction <= 1) niceFraction = 1;
+    else if (fraction <= 2) niceFraction = 2;
+    else if (fraction <= 5) niceFraction = 5;
+    const step = Math.max(1, Math.ceil(niceFraction * magnitude));
+    const yMax = step * 4;
+    return { yMax, ticks: [0, step, step * 2, step * 3, yMax] };
+  }
+
+  function bindTrafficChartEvents(svgEl, stageEl, tooltipEl) {
+    if (!svgEl || svgEl._trafficEventsBound) return;
+    svgEl._trafficEventsBound = true;
+
+    const showPoint = (idx) => {
+      const state = svgEl._trafficState;
+      if (!state || !state.coords[idx]) return;
+      const pt = state.coords[idx];
+
+      if (state.crosshair) {
+        state.crosshair.setAttribute('x1', pt.x.toFixed(1));
+        state.crosshair.setAttribute('x2', pt.x.toFixed(1));
+        state.crosshair.style.display = 'block';
+      }
+      if (state.activeDot) {
+        state.activeDot.setAttribute('cx', pt.x.toFixed(1));
+        state.activeDot.setAttribute('cy', pt.y.toFixed(1));
+        state.activeDot.style.display = 'block';
+      }
+
+      if (tooltipEl && stageEl) {
+        tooltipEl.innerHTML = `
+          <div class="traffic-tooltip-date">${escapeHtml(pt.label)}</div>
+          <div class="traffic-tooltip-row">
+            <span class="traffic-tooltip-label-wrap">
+              <span class="traffic-legend-dot ${escapeHtml(state.dotClass)}"></span>
+              <span>${escapeHtml(state.seriesLabel)}</span>
+            </span>
+            <span class="traffic-tooltip-val">${escapeHtml(String(pt.value))}</span>
+          </div>
+        `;
+        tooltipEl.style.display = 'block';
+
+        const pctX = pt.x / state.vbWidth;
+        const pctY = pt.y / state.vbHeight;
+        const placeLeft = pctX > 0.64;
+        tooltipEl.style.left = placeLeft ? 'auto' : `calc(${(pctX * 100).toFixed(1)}% + 10px)`;
+        tooltipEl.style.right = placeLeft ? `calc(${((1 - pctX) * 100).toFixed(1)}% + 10px)` : 'auto';
+        tooltipEl.style.top = `max(6px, calc(${(pctY * 100).toFixed(1)}% - 36px))`;
+      }
+    };
+
+    const hidePoint = () => {
+      const state = svgEl._trafficState;
+      if (state && state.crosshair) state.crosshair.style.display = 'none';
+      if (state && state.activeDot) state.activeDot.style.display = 'none';
+      if (tooltipEl) tooltipEl.style.display = 'none';
+    };
+
+    if (typeof svgEl.addEventListener === 'function') {
+      svgEl.addEventListener('mousemove', (e) => {
+        const target = e.target;
+        const idxAttr = target && typeof target.getAttribute === 'function' ? target.getAttribute('data-pt-idx') : null;
+        if (idxAttr !== null && idxAttr !== '') {
+          showPoint(Number(idxAttr));
+        }
+      });
+      svgEl.addEventListener('focusin', (e) => {
+        const target = e.target;
+        const idxAttr = target && typeof target.getAttribute === 'function' ? target.getAttribute('data-pt-idx') : null;
+        if (idxAttr !== null && idxAttr !== '') {
+          showPoint(Number(idxAttr));
+        }
+      });
+      svgEl.addEventListener('mouseleave', hidePoint);
+      svgEl.addEventListener('focusout', hidePoint);
+    }
+  }
+
+  function renderSingleTrafficChart(opts) {
+    const svgEl = document.getElementById(opts.svgId);
+    const stageEl = document.getElementById(opts.stageId);
+    const tooltipEl = document.getElementById(opts.tooltipId);
+    if (!svgEl) return;
+
+    const vbWidth = 560;
+    const vbHeight = 210;
+    const padLeft = 48;
+    const padRight = 14;
+    const padTop = 16;
+    const padBottom = 28;
+    const plotW = vbWidth - padLeft - padRight;
+    const plotH = vbHeight - padTop - padBottom;
+
+    const points = opts.daily || [];
+    const values = points.map((p) => Number(p[opts.valueKey]) || 0);
+    const rawMax = values.length > 0 ? Math.max(...values) : 0;
+    const { yMax, ticks } = computeNiceAxisScale(rawMax);
+    const count = Math.max(1, points.length);
+
+    const coords = points.map((p, idx) => {
+      const x = count === 1 ? padLeft + plotW / 2 : padLeft + (idx / (count - 1)) * plotW;
+      const val = Number(p[opts.valueKey]) || 0;
+      const y = padTop + plotH - (val / yMax) * plotH;
+      return {
+        x,
+        y,
+        value: val,
+        label: formatTrafficShortDate(p.date),
+      };
+    });
+
+    const gradId = `${opts.svgId}AreaGrad`;
+    const gridRowsHtml = ticks.map((tickVal) => {
+      const yPos = (padTop + plotH - (tickVal / yMax) * plotH).toFixed(1);
+      return `
+        <line class="traffic-grid-line horizontal" x1="${padLeft}" y1="${yPos}" x2="${vbWidth - padRight}" y2="${yPos}" />
+        <text class="traffic-axis-label" x="${padLeft - 8}" y="${Number(yPos) + 3.5}" text-anchor="end">${tickVal}</text>
+      `;
+    }).join('');
+
+    const gridColsHtml = coords.map((pt) => {
+      const xPos = pt.x.toFixed(1);
+      return `
+        <line class="traffic-grid-line" x1="${xPos}" y1="${padTop}" x2="${xPos}" y2="${padTop + plotH}" opacity="0.65" />
+        <text class="traffic-axis-label" x="${xPos}" y="${padTop + plotH + 16}" text-anchor="middle">${escapeHtml(pt.label)}</text>
+      `;
+    }).join('');
+
+    const linePts = coords.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ');
+    const areaPts = coords.length > 0
+      ? `${coords[0].x.toFixed(1)},${(padTop + plotH).toFixed(1)} ${linePts} ${coords[coords.length - 1].x.toFixed(1)},${(padTop + plotH).toFixed(1)}`
+      : '';
+
+    const dotsHtml = coords.map((pt) => `
+      <circle class="traffic-data-dot" cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2.5" fill="#FFFFFF" stroke="${opts.strokeColor}" stroke-width="1.8" />
+    `).join('');
+
+    const slotW = count > 1 ? plotW / (count - 1) : plotW;
+    const hitZonesHtml = coords.map((pt, idx) => {
+      const rx = Math.max(padLeft, pt.x - slotW / 2).toFixed(1);
+      const rw = Math.min(slotW, vbWidth - padRight - Number(rx)).toFixed(1);
+      return `<rect class="traffic-hit-zone" data-pt-idx="${idx}" x="${rx}" y="${padTop}" width="${Math.max(12, Number(rw)).toFixed(1)}" height="${plotH}" tabindex="0" aria-label="${escapeHtml(pt.label)}: ${pt.value}" />`;
+    }).join('');
+
+    const yAxisTitleX = 14;
+    const yAxisTitleY = padTop + plotH / 2;
+
+    svgEl.innerHTML = `
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${opts.strokeColor}" stop-opacity="0.18" />
+          <stop offset="100%" stop-color="${opts.strokeColor}" stop-opacity="0.01" />
+        </linearGradient>
+      </defs>
+      <text class="traffic-yaxis-title" x="${yAxisTitleX}" y="${yAxisTitleY}" text-anchor="middle" transform="rotate(-90 ${yAxisTitleX} ${yAxisTitleY})">${escapeHtml(opts.yAxisLabel)}</text>
+      ${gridRowsHtml}
+      ${gridColsHtml}
+      <line class="traffic-axis-line" x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${padTop + plotH}" />
+      <line class="traffic-axis-line" x1="${padLeft}" y1="${padTop + plotH}" x2="${vbWidth - padRight}" y2="${padTop + plotH}" />
+      ${areaPts ? `<polygon class="traffic-area-fill" points="${areaPts}" fill="url(#${gradId})" />` : ''}
+      ${linePts ? `<polyline class="traffic-line-path" points="${linePts}" stroke="${opts.strokeColor}" />` : ''}
+      ${dotsHtml}
+      <line class="traffic-crosshair-line" id="${opts.svgId}Crosshair" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" style="display: none;" />
+      <circle class="traffic-active-dot" id="${opts.svgId}ActiveDot" cx="0" cy="0" r="4.5" fill="${opts.strokeColor}" stroke="#FFFFFF" stroke-width="2" style="display: none; pointer-events: none;" />
+      ${hitZonesHtml}
+    `;
+
+    svgEl._trafficState = {
+      coords,
+      vbWidth,
+      vbHeight,
+      dotClass: opts.dotClass,
+      seriesLabel: opts.seriesLabel,
+      crosshair: document.getElementById(`${opts.svgId}Crosshair`),
+      activeDot: document.getElementById(`${opts.svgId}ActiveDot`),
+    };
+    if (tooltipEl) tooltipEl.style.display = 'none';
+    bindTrafficChartEvents(svgEl, stageEl, tooltipEl);
+  }
+
+  function renderAdminAccessTraffic(data) {
+    const traffic = normalizeAccessTraffic(data, 14);
+    const totalEl = document.getElementById('adminTrafficTotalCount');
+    const uniqueEl = document.getElementById('adminTrafficUniqueCount');
+
+    if (totalEl) {
+      totalEl.textContent = t('admin_traffic_total_count', `${traffic.total_visits} Lượt truy cập`, {
+        count: traffic.total_visits,
+      });
+    }
+    if (uniqueEl) {
+      uniqueEl.textContent = t('admin_traffic_unique_count', `${traffic.unique_visitors} IP duy nhất`, {
+        count: traffic.unique_visitors,
+      });
+    }
+
+    renderSingleTrafficChart({
+      svgId: 'adminTrafficTotalSvg',
+      stageId: 'adminTrafficTotalChart',
+      tooltipId: 'adminTrafficTotalTooltip',
+      daily: traffic.daily,
+      valueKey: 'total_visits',
+      strokeColor: '#2563EB',
+      dotClass: 'total',
+      yAxisLabel: t('admin_traffic_total_yaxis', 'Lượt truy cập'),
+      seriesLabel: t('admin_traffic_total_series', 'Tổng lượt'),
+    });
+
+    renderSingleTrafficChart({
+      svgId: 'adminTrafficUniqueSvg',
+      stageId: 'adminTrafficUniqueChart',
+      tooltipId: 'adminTrafficUniqueTooltip',
+      daily: traffic.daily,
+      valueKey: 'unique_visitors',
+      strokeColor: '#16A34A',
+      dotClass: 'unique',
+      yAxisLabel: t('admin_traffic_unique_yaxis', 'IP duy nhất'),
+      seriesLabel: t('admin_traffic_unique_series', 'Duy nhất'),
+    });
+  }
+
+  function renderAdminAccessLogs(data) {
+    if (!data) return;
+    lastAccessLogsData = data;
+    renderAdminAccessTraffic(data);
+    const locale = getLocale();
+
+    const uniqueBadge = document.getElementById('adminUniqueIps24hBadge');
+    const multiBadge = document.getElementById('adminMultiIpUsersBadge');
+    const tabMultiBadge = document.getElementById('adminTabMultiIpBadge');
+    const multiCount = data.multi_ip_users_count || 0;
+
+    if (uniqueBadge) {
+      uniqueBadge.textContent = t('admin_ip_unique_badge', `IP duy nhất (24h): ${data.unique_ips_24h || 0}`, {
+        count: data.unique_ips_24h || 0,
+      });
+    }
+    if (multiBadge) {
+      multiBadge.textContent = t('admin_ip_multi_badge', `Cảnh báo đa IP: ${multiCount}`, {
+        count: multiCount,
+      });
+    }
+    if (tabMultiBadge) {
+      tabMultiBadge.textContent = String(multiCount);
+      tabMultiBadge.style.display = multiCount > 0 ? 'inline-flex' : 'none';
+    }
+
+    const tbody = document.getElementById('adminAccessLogsTableBody');
+    const emptyEl = document.getElementById('adminAccessLogsEmpty');
+    const tableEl = document.getElementById('adminAccessLogsTable');
+    const pageInfo = document.getElementById('adminLogPaginationInfo');
+    const pageBadge = document.getElementById('adminLogCurrentPageBadge');
+    const prevBtn = document.getElementById('btnAdminLogPrevPage');
+    const nextBtn = document.getElementById('btnAdminLogNextPage');
+
+    logTotalPages = data.total_pages || 1;
+    if (pageInfo) {
+      pageInfo.textContent = t(
+        'admin_ip_pagination_info',
+        `Trang ${data.page || 1} / ${logTotalPages} (Tổng ${data.total_count || 0} lượt)`,
+        { current: data.page || 1, total: logTotalPages, count: data.total_count || 0 }
+      );
+    }
+    if (pageBadge) pageBadge.textContent = String(data.page || 1);
+    if (prevBtn) prevBtn.disabled = (data.page || 1) <= 1;
+    if (nextBtn) nextBtn.disabled = (data.page || 1) >= logTotalPages;
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const items = data.items || [];
+    if (items.length === 0) {
+      if (tableEl) tableEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    if (tableEl) tableEl.style.display = 'table';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const unknownDevText = t('admin_unknown_device', 'Thiết bị chưa rõ');
+    const registerActionText = t('admin_action_register', 'Đăng ký');
+    const loginActionText = t('admin_action_login', 'Đăng nhập');
+
+    items.forEach((log) => {
+      const tr = document.createElement('tr');
+      const safeEmail = escapeHtml(log.user_email || '');
+      const safeName = log.user_name ? escapeHtml(log.user_name) : '';
+      const initial = (log.user_name ? log.user_name.charAt(0) : (log.user_email ? log.user_email.charAt(0) : 'U')).toUpperCase();
+      const safeIp = escapeHtml(log.ip_address || 'unknown');
+      const safeDevice = escapeHtml(log.device_summary || unknownDevText);
+      const actionCls = log.action === 'register' ? 'register' : 'login';
+      const actionLabel = log.action === 'register' ? registerActionText : loginActionText;
+      const dateStr = log.created_at ? new Date(log.created_at).toLocaleString(locale) : '-';
+
+      tr.innerHTML = `
+        <td>
+          <div class="user-cell-meta">
+            <div class="user-cell-avatar role-avatar-free">${escapeHtml(initial)}</div>
+            <div>
+              <div class="user-cell-name">${safeName || safeEmail}</div>
+              <div class="user-cell-email">${safeEmail}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="admin-ip-address font-mono">${safeIp}</span></td>
+        <td><span class="admin-ip-device">${safeDevice}</span></td>
+        <td><span class="admin-log-action-pill ${actionCls}"><span class="tx-status-dot"></span>${actionLabel}</span></td>
+        <td class="text-right"><span class="date-mono">${dateStr}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterLogsByUser(userId, email) {
+    logFilterUserId = userId;
+    logFilterUserEmail = email || `User #${userId}`;
+    const chip = document.getElementById('adminLogUserFilterChip');
+    const chipLabel = document.getElementById('adminLogUserFilterLabel');
+    if (chip) chip.style.display = 'inline-flex';
+    if (chipLabel) {
+      chipLabel.textContent = t('admin_ip_filter_chip', `Lọc: ${logFilterUserEmail}`, { email: logFilterUserEmail });
+    }
+    switchAdminTab('access-logs');
+    fetchAdminAccessLogs(1);
+    const logsCard = document.getElementById('adminAccessLogsCard');
+    if (logsCard && typeof logsCard.scrollIntoView === 'function') {
+      logsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function clearLogUserFilter() {
+    logFilterUserId = null;
+    logFilterUserEmail = '';
+    const chip = document.getElementById('adminLogUserFilterChip');
+    if (chip) chip.style.display = 'none';
+    fetchAdminAccessLogs(1);
   }
 
   // ── API Fetch & Actions: VietQR Transactions ───────────────────────────────
@@ -739,11 +1309,27 @@
 
   function renderAdminTransactions(data) {
     if (!data) return;
+    lastTransactionsData = data;
+    const locale = getLocale();
 
     const revBadge = document.getElementById('adminTxRevenueBadge');
     const pendBadge = document.getElementById('adminTxPendingBadge');
-    if (revBadge) revBadge.textContent = `Doanh thu: ${data.total_revenue_display || '0đ'}`;
-    if (pendBadge) pendBadge.textContent = `Chờ duyệt: ${data.pending_count || 0}`;
+    const tabPendingBadge = document.getElementById('adminTabPendingTxBadge');
+    const pendingCnt = data.pending_count || 0;
+    if (revBadge) {
+      revBadge.textContent = t('admin_tx_revenue_badge', `Doanh thu: ${data.total_revenue_display || '0đ'}`, {
+        amount: data.total_revenue_display || '0đ',
+      });
+    }
+    if (pendBadge) {
+      pendBadge.textContent = t('admin_tx_pending_badge', `Chờ duyệt: ${pendingCnt}`, {
+        count: pendingCnt,
+      });
+    }
+    if (tabPendingBadge) {
+      tabPendingBadge.textContent = String(pendingCnt);
+      tabPendingBadge.style.display = pendingCnt > 0 ? 'inline-flex' : 'none';
+    }
 
     const tbody = document.getElementById('adminTxTableBody');
     const emptyEl = document.getElementById('adminTxTableEmpty');
@@ -754,7 +1340,13 @@
     const nextBtn = document.getElementById('btnAdminTxNextPage');
 
     txTotalPages = data.total_pages || 1;
-    if (pageInfo) pageInfo.textContent = `Trang ${data.page || 1} / ${txTotalPages} (Tổng ${data.total_count || 0} giao dịch)`;
+    if (pageInfo) {
+      pageInfo.textContent = t(
+        'admin_tx_pagination_info',
+        `Trang ${data.page || 1} / ${txTotalPages} (Tổng ${data.total_count || 0} giao dịch)`,
+        { current: data.page || 1, total: txTotalPages, count: data.total_count || 0 }
+      );
+    }
     if (pageBadge) pageBadge.textContent = String(data.page || 1);
     if (prevBtn) prevBtn.disabled = (data.page || 1) <= 1;
     if (nextBtn) nextBtn.disabled = (data.page || 1) >= txTotalPages;
@@ -773,43 +1365,54 @@
     if (emptyEl) emptyEl.style.display = 'none';
 
     const statusMap = {
-      pending: { label: 'Chờ duyệt', cls: 'pending' },
-      completed: { label: 'Thành công', cls: 'completed' },
-      failed: { label: 'Đã từ chối', cls: 'failed' },
-      expired: { label: 'Hết hạn', cls: 'expired' },
+      pending: { label: t('admin_tx_status_pending', 'Chờ duyệt'), cls: 'pending' },
+      completed: { label: t('admin_tx_status_completed', 'Đã xử lý'), cls: 'completed' },
+      failed: { label: t('admin_tx_status_failed', 'Đã từ chối'), cls: 'failed' },
+      expired: { label: t('admin_tx_status_expired', 'Hết hạn'), cls: 'expired' },
     };
+    const processedText = t('admin_tx_processed', 'Đã xử lý');
+    const approveBtnText = t('admin_tx_btn_approve', 'Hoàn tất');
+    const rejectBtnText = t('admin_tx_btn_reject', 'Từ chối');
 
     items.forEach((tx) => {
       const tr = document.createElement('tr');
       const st = statusMap[tx.payment_status] || { label: tx.payment_status, cls: 'pending' };
-      const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleString('vi-VN') : '-';
-      const safeCode = String(tx.transaction_code || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const safeEmail = String(tx.user_email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const safePlan = String(tx.plan_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleString(locale) : '-';
+      const safeCode = escapeHtml(tx.transaction_code || '');
+      const safeEmail = escapeHtml(tx.user_email || '');
+      const rawPlan = String(tx.plan_name || '');
+      const isYearlyPlan = /năm|year/i.test(rawPlan) || String(tx.billing_cycle || '').toLowerCase() === 'yearly';
+      const isMonthlyPlan = /tháng|month/i.test(rawPlan) || String(tx.billing_cycle || '').toLowerCase() === 'monthly';
+      const localizedPlan = isYearlyPlan
+        ? t('admin_tx_plan_yearly', rawPlan || 'Gói Pro Hàng Năm')
+        : (isMonthlyPlan ? t('admin_tx_plan_monthly', rawPlan || 'Gói Pro Hàng Tháng') : rawPlan);
+      const safePlan = escapeHtml(localizedPlan);
 
-      let actionsHtml = '<span class="admin-self-tag font-mono">Đã xử lý</span>';
+      let actionsHtml = `<span class="admin-self-tag font-mono">${processedText}</span>`;
       if (tx.payment_status === 'pending') {
         actionsHtml = `
-          <div style="display:inline-flex; gap:0.4rem; justify-content:flex-end;">
+          <div class="user-actions-group">
             <button type="button" class="btn-tx-approve" data-tx-action="approve" data-tx-code="${safeCode}" data-tx-email="${safeEmail}">
-              Duyệt Pro
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              ${approveBtnText}
             </button>
             <button type="button" class="btn-tx-reject" data-tx-action="reject" data-tx-code="${safeCode}" data-tx-email="${safeEmail}">
-              Từ chối
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              ${rejectBtnText}
             </button>
           </div>
         `;
       }
 
       tr.innerHTML = `
-        <td class="font-mono">${safeCode}</td>
+        <td><span class="tx-code-chip font-mono">${safeCode}</span></td>
         <td>
           <div class="user-cell-email">${safeEmail}</div>
         </td>
-        <td>${safePlan}</td>
-        <td class="font-mono"><strong>${tx.amount_display}</strong></td>
-        <td><span class="tx-status-pill ${st.cls}">${st.label}</span></td>
-        <td class="font-mono" style="font-size:0.78rem; color:#64748B;">${dateStr}</td>
+        <td><span class="tx-plan-pill ${isYearlyPlan ? 'yearly' : ''}">${safePlan}</span></td>
+        <td><span class="tx-amount-mono">${escapeHtml(tx.amount_display || '')}</span></td>
+        <td><span class="tx-status-pill ${st.cls}"><span class="tx-status-dot"></span>${st.label}</span></td>
+        <td><span class="date-mono">${dateStr}</span></td>
         <td class="text-right">${actionsHtml}</td>
       `;
       tbody.appendChild(tr);
@@ -830,13 +1433,13 @@
       });
       const json = await res.json();
       if (res.ok) {
-        notifyUser(json.message || `Đã duyệt giao dịch ${transactionCode} thành công.`, 'success');
+        notifyUser(json.message || t('admin_tx_approve_success', `Đã duyệt giao dịch ${transactionCode} thành công.`, { code: transactionCode }), 'success');
         loadAllAdminData();
       } else {
-        notifyUser(json.message || 'Không thể duyệt giao dịch.', 'error');
+        notifyUser(json.message || t('admin_tx_approve_failed', 'Không thể duyệt giao dịch.'), 'error');
       }
     } catch (err) {
-      notifyUser('Lỗi kết nối máy chủ khi duyệt giao dịch.', 'error');
+      notifyUser(t('admin_tx_approve_conn_error', 'Lỗi kết nối máy chủ khi duyệt giao dịch.'), 'error');
     }
   }
 
@@ -854,13 +1457,13 @@
       });
       const json = await res.json();
       if (res.ok) {
-        notifyUser(json.message || `Đã từ chối giao dịch ${transactionCode}.`, 'info');
-        fetchAdminTransactions(txPage);
+        notifyUser(json.message || t('admin_tx_reject_success', `Đã từ chối giao dịch ${transactionCode}.`, { code: transactionCode }), 'info');
+        loadAllAdminData();
       } else {
-        notifyUser(json.message || 'Không thể từ chối giao dịch.', 'error');
+        notifyUser(json.message || t('admin_tx_reject_failed', 'Không thể từ chối giao dịch.'), 'error');
       }
     } catch (err) {
-      notifyUser('Lỗi kết nối máy chủ khi từ chối giao dịch.', 'error');
+      notifyUser(t('admin_tx_reject_conn_error', 'Lỗi kết nối máy chủ khi từ chối giao dịch.'), 'error');
     }
   }
 
@@ -944,8 +1547,11 @@
 
         if (action === 'lock') {
           openConfirmModal({
-            title: 'Khóa tài khoản người dùng',
-            desc: `Bạn có chắc chắn muốn KHÓA tài khoản này? Người dùng sẽ bị thu hồi quyền truy cập và bị từ chối mọi yêu cầu xử lý tài liệu ngay lập tức.`,
+            title: t('admin_confirm_lock_title', 'Khóa tài khoản người dùng'),
+            desc: t(
+              'admin_confirm_lock_desc',
+              'Bạn có chắc chắn muốn KHÓA tài khoản này? Người dùng sẽ bị thu hồi quyền truy cập và bị từ chối mọi yêu cầu xử lý tài liệu ngay lập tức.'
+            ),
             email: email,
             actionType: 'danger',
             onConfirm: async () => {
@@ -954,8 +1560,11 @@
           });
         } else if (action === 'unlock') {
           openConfirmModal({
-            title: 'Mở khóa tài khoản người dùng',
-            desc: `Bạn có chắc chắn muốn MỞ KHÓA tài khoản này? Người dùng sẽ được phục hồi quyền đăng nhập và xử lý tài liệu.`,
+            title: t('admin_confirm_unlock_title', 'Mở khóa tài khoản người dùng'),
+            desc: t(
+              'admin_confirm_unlock_desc',
+              'Bạn có chắc chắn muốn MỞ KHÓA tài khoản này? Người dùng sẽ được phục hồi quyền đăng nhập và xử lý tài liệu.'
+            ),
             email: email,
             actionType: 'success',
             onConfirm: async () => {
@@ -964,16 +1573,24 @@
           });
         } else if (action === 'change-role') {
           const targetRole = btn.getAttribute('data-target-role') || 'pro';
-          const roleDisplayName = targetRole === 'pro' ? 'Gói Pro' : 'Gói Miễn phí';
+          const roleDisplayName = targetRole === 'pro'
+            ? t('admin_plan_pro', 'Gói Pro')
+            : t('admin_plan_free', 'Gói Miễn phí');
           openConfirmModal({
-            title: 'Thay đổi cấp bậc tài khoản',
-            desc: `Bạn có chắc chắn muốn chuyển vai trò của tài khoản này sang "${roleDisplayName}"?`,
+            title: t('admin_confirm_role_title', 'Thay đổi cấp bậc tài khoản'),
+            desc: t(
+              'admin_confirm_role_desc',
+              `Bạn có chắc chắn muốn chuyển vai trò của tài khoản này sang "${roleDisplayName}"?`,
+              { role: roleDisplayName }
+            ),
             email: email,
             actionType: 'warning',
             onConfirm: async () => {
               await executeRoleUpdate(userId, targetRole, email);
             },
           });
+        } else if (action === 'filter-ip') {
+          filterLogsByUser(userId, email);
         }
       });
     }
@@ -1060,20 +1677,30 @@
 
         if (action === 'approve') {
           openConfirmModal({
-            title: 'Duyệt thanh toán & Kích hoạt gói Pro',
-            desc: `Xác nhận đã nhận chuyển khoản cho mã giao dịch "${txCode}" và nâng cấp tài khoản lên Pro VIP?`,
+            title: t('admin_confirm_tx_approve_title', 'Hoàn tất xử lý giao dịch'),
+            desc: t(
+              'admin_confirm_tx_approve_desc',
+              `Xác nhận đã nhận chuyển khoản cho mã giao dịch "${txCode}" và hoàn tất xử lý kích hoạt gói cước?`,
+              { code: txCode }
+            ),
             email: email,
             actionType: 'warning',
+            confirmBtnText: t('admin_confirm_tx_approve_btn', 'Hoàn tất'),
             onConfirm: async () => {
               await executeApproveTransaction(txCode);
             },
           });
         } else if (action === 'reject') {
           openConfirmModal({
-            title: 'Từ chối giao dịch thanh toán',
-            desc: `Bạn có chắc muốn đánh dấu giao dịch "${txCode}" là thất bại / từ chối?`,
+            title: t('admin_confirm_tx_reject_title', 'Từ chối giao dịch thanh toán'),
+            desc: t(
+              'admin_confirm_tx_reject_desc',
+              `Bạn có chắc muốn từ chối giao dịch "${txCode}"? Gói dịch vụ của người dùng (nếu có) sẽ tự động bị hủy.`,
+              { code: txCode }
+            ),
             email: email,
             actionType: 'danger',
+            confirmBtnText: t('admin_confirm_tx_reject_btn', 'Từ chối giao dịch'),
             onConfirm: async () => {
               await executeRejectTransaction(txCode);
             },
@@ -1081,6 +1708,60 @@
         }
       });
     }
+
+    // 8. Access Logs Toolbar & Pagination
+    const logSearchInput = document.getElementById('adminLogSearchInput');
+    if (logSearchInput) {
+      logSearchInput.addEventListener('input', (e) => {
+        logSearch = e.target.value;
+        clearTimeout(logSearchDebounceTimer);
+        logSearchDebounceTimer = setTimeout(() => fetchAdminAccessLogs(1), 350);
+      });
+    }
+
+    const logMultiSelect = document.getElementById('adminLogMultiIpFilter');
+    if (logMultiSelect) {
+      logMultiSelect.addEventListener('change', (e) => {
+        logMultiIpOnly = e.target.value === 'true';
+        fetchAdminAccessLogs(1);
+      });
+    }
+
+    const btnClearLogChip = document.getElementById('btnClearLogUserFilter');
+    if (btnClearLogChip) {
+      btnClearLogChip.addEventListener('click', clearLogUserFilter);
+    }
+
+    const btnLogPrev = document.getElementById('btnAdminLogPrevPage');
+    if (btnLogPrev) {
+      btnLogPrev.addEventListener('click', () => {
+        if (logPage > 1) fetchAdminAccessLogs(logPage - 1);
+      });
+    }
+
+    const btnLogNext = document.getElementById('btnAdminLogNextPage');
+    if (btnLogNext) {
+      btnLogNext.addEventListener('click', () => {
+        if (logPage < logTotalPages) fetchAdminAccessLogs(logPage + 1);
+      });
+    }
+
+    // Re-render dynamic admin tables & stats immediately when language changes
+    document.addEventListener('languageChanged', () => {
+      if (lastStatsData) renderAdminStats(lastStatsData);
+      if (lastUsersItems) {
+        renderAdminUsersTable(lastUsersItems);
+        renderPaginationControls();
+      }
+      if (lastAccessLogsData) renderAdminAccessLogs(lastAccessLogsData);
+      if (lastTransactionsData) renderAdminTransactions(lastTransactionsData);
+      if (logFilterUserId) {
+        const chipLabel = document.getElementById('adminLogUserFilterLabel');
+        if (chipLabel) {
+          chipLabel.textContent = t('admin_ip_filter_chip', `Lọc: ${logFilterUserEmail}`, { email: logFilterUserEmail });
+        }
+      }
+    });
   }
 
   // ── Auto Initialization ─────────────────────────────────────────────────────
@@ -1097,14 +1778,22 @@
     fetchAdminStats,
     renderAdminStats,
     fetchAdminUsers,
+    renderAdminUsersTable,
     loadAllAdminData,
     openConfirmModal,
     closeConfirmModal,
     executeStatusUpdate,
     executeRoleUpdate,
     fetchAdminTransactions,
+    renderAdminTransactions,
     executeApproveTransaction,
     executeRejectTransaction,
+    switchAdminTab,
+    fetchAdminAccessLogs,
+    renderAdminAccessLogs,
+    renderAdminAccessTraffic,
+    filterLogsByUser,
+    clearLogUserFilter,
   };
 })();
 

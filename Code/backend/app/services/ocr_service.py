@@ -1,9 +1,11 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Optional
-from PIL import Image, ImageEnhance, ImageOps
+from typing import Any, Optional
+
 import pytesseract
+from PIL import Image, ImageEnhance, ImageOps
+
 try:
     import pypdfium2 as pdfium
 except ImportError:
@@ -453,6 +455,7 @@ class OCRService:
                 del page
             else:
                 import io
+
                 import pymupdf
                 doc = pymupdf.open(str(pdf_path))
                 if page_idx >= len(doc):
@@ -567,8 +570,8 @@ class OCRService:
 
         # 1. PARALLEL PATH (ThreadPoolExecutor với isolated resources)
         # Chỉ chạy parallel khi tổng số trang > 1 và effective_workers > 1
+        results_by_idx: dict[int, dict[str, Any]] = {}
         if effective_workers > 1:
-            results_by_idx: dict[int, dict[str, Any]] = {}
             try:
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor(max_workers=effective_workers) as executor:
@@ -696,6 +699,7 @@ class OCRService:
                             pass
             else:
                 import io
+
                 import pymupdf
                 doc = pymupdf.open(str(pdf_path))
                 total_pages = min(len(doc), max_pages)

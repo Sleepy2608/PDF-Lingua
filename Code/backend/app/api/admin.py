@@ -20,6 +20,7 @@ from app.core.dependencies import get_db, require_roles
 from app.core.logger import logger
 from app.models.user import User, UserRole
 from app.schemas.admin import (
+    AdminAccessLogListResponse,
     AdminStatsResponse,
     AdminTransactionListResponse,
     AdminUserListItem,
@@ -208,9 +209,9 @@ async def approve_transaction(
     db: Session = Depends(get_db),
 ):
     """
-    Approve a pending VietQR payment transaction and activate the user's Pro subscription.
+    Approve/complete a pending VietQR payment transaction and activate the user's Pro subscription.
     """
-    logger.info(f"[Admin] Admin {current_admin.email} approving transaction {transaction_code}.")
+    logger.info(f"[Admin] Admin {current_admin.email} approving/completing transaction {transaction_code}.")
     result = SubscriptionService.confirm_transaction_payment(
         db=db,
         transaction_code=transaction_code,
@@ -218,7 +219,7 @@ async def approve_transaction(
     )
     return ApiResponse(
         data=result,
-        message=f"Đã duyệt giao dịch {transaction_code} và kích hoạt gói Pro thành công.",
+        message=f"Đã hoàn tất xử lý giao dịch {transaction_code} và kích hoạt gói Pro thành công.",
     )
 
 
@@ -229,12 +230,46 @@ async def reject_transaction(
     db: Session = Depends(get_db),
 ):
     """
-    Reject/cancel a pending VietQR payment transaction.
+    Reject/cancel a pending VietQR payment transaction and revoke user active package if any.
     """
     logger.info(f"[Admin] Admin {current_admin.email} rejecting transaction {transaction_code}.")
     tx = AdminService.reject_transaction(db=db, transaction_code=transaction_code)
     return ApiResponse(
         data={"transaction_code": tx.transaction_code, "payment_status": tx.payment_status},
-        message=f"Đã từ chối giao dịch {tx.transaction_code}.",
+        message=f"Đã từ chối giao dịch {tx.transaction_code} và hủy gói cước của người dùng (nếu có).",
+    )
+
+
+# ── User Access & IP Audit Logs ───────────────────────────────────
+
+@router.get("/access-logs", response_model=ApiResponse[AdminAccessLogListResponse])
+async def list_access_logs(
+    page: int = Query(1, ge=1, description="Page number (1-based index)."),
+    limit: int = Query(15, ge=1, le=100, description="Items per page (1 to 100)."),
+    search: Optional[str] = Query(None, description="Search by email, name, IP address, or device."),
+    user_id: Optional[int] = Query(None, ge=1, description="Filter logs for a specific user ID."),
+    multi_ip_only: bool = Query(False, description="Filter to accounts with >= 3 distinct IPs in 24h."),
+    current_admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve paginated user access audit logs (IP address, browser/OS, timestamp)
+    for administrative security monitoring and multi-device anomaly detection.
+    """
+    logger.info(
+        f"[Admin] Admin {current_admin.email} querying access logs "
+        f"(page={page}, limit={limit}, search={search}, user_id={user_id}, multi_ip_only={multi_ip_only})."
+    )
+    result = AdminService.list_access_logs(
+        db=db,
+        page=page,
+        limit=limit,
+        search=search,
+        user_id=user_id,
+        multi_ip_only=multi_ip_only,
+    )
+    return ApiResponse(
+        data=result,
+        message=f"Lấy nhật ký truy cập thành công ({result.total_count} lượt).",
     )
 

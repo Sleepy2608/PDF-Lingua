@@ -112,15 +112,15 @@ def calculate_table_structure_score(reference: str, hypothesis: str) -> float:
     Tính điểm Table Structure (0.0 - 100.0%):
     Đánh giá khả năng giữ cấu trúc bảng biểu (hàng, cột, phân cách ký tự).
     """
-    ref_lines = [l.strip() for l in normalize_text(reference).split("\n") if l.strip()]
-    hyp_lines = [l.strip() for l in normalize_text(hypothesis).split("\n") if l.strip()]
+    ref_lines = [line.strip() for line in normalize_text(reference).split("\n") if line.strip()]
+    hyp_lines = [line.strip() for line in normalize_text(hypothesis).split("\n") if line.strip()]
 
     # Tìm các hàng bảng biểu (chứa nhiều khoảng trắng cách cột hoặc thanh phân cách |, +)
     def is_table_row(line: str) -> bool:
         return "|" in line or "+" in line or len(re.split(r"\s{2,}", line)) >= 2
 
-    ref_table_rows = [l for l in ref_lines if is_table_row(l)]
-    hyp_table_rows = [l for l in hyp_lines if is_table_row(l)]
+    ref_table_rows = [line for line in ref_lines if is_table_row(line)]
+    hyp_table_rows = [line for line in hyp_lines if is_table_row(line)]
 
     if not ref_table_rows and not hyp_table_rows:
         return 100.0
@@ -162,7 +162,6 @@ def calculate_column_order_score(reference: str, hypothesis: str) -> float:
 
     # Chia văn bản thành các khối lớn
     ref_paras = _split_paragraphs(ref_norm)
-    hyp_paras = _split_paragraphs(hyp_norm)
 
     if len(ref_paras) <= 1:
         # Nếu tài liệu đơn cột, điểm column order tuân theo độ tương đồng chuỗi

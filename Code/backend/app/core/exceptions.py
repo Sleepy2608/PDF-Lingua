@@ -140,7 +140,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
             content={
                 "success": False,
                 "error_code": f"HTTP_{exc.status_code}",
-                "message": str(exc.detail),
+                "message": f"{exc.detail}",
                 "details": None,
             },
         )

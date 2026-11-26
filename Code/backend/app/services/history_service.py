@@ -17,7 +17,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
-
 from app.core.exceptions import (
     AppException,
     BadRequestException,

@@ -3,7 +3,8 @@ import re
 import statistics
 import urllib.parse
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
+
 try:
     import pdfplumber
 except ImportError:

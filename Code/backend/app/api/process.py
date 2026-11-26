@@ -528,8 +528,9 @@ async def create_processing_job(
         )
 
     authenticated_user_id = current_user.id if current_user is not None else None
+    safe_filename = file.filename or "document.pdf"
     job = job_manager.create_job(
-        filename=file.filename,
+        filename=safe_filename,
         target_lang=target_lang,
         user_id=authenticated_user_id,
     )
@@ -542,7 +543,7 @@ async def create_processing_job(
         args=(
             job.job_id,
             tmp_path,
-            file.filename,
+            safe_filename,
             target_lang,
             max_allowed_pages,
             file_size_mb,
@@ -586,7 +587,7 @@ async def cancel_processing_job(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
 
     if job.user_id is not None:
-        if authenticated_user_id is None:
+        if current_user is None or authenticated_user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Vui lòng đăng nhập để thao tác với tác vụ này.",
@@ -602,7 +603,7 @@ async def cancel_processing_job(
         job_id,
         user_id=authenticated_user_id,
     )
-    if not success:
+    if not success or updated_job is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message,
@@ -742,7 +743,11 @@ async def upload_and_translate(
                 ),
             )
 
-        is_scanned = pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
+        is_scanned = (
+            pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
+            if selected_pages is not None
+            else pdf_service.is_scanned_pdf(tmp_path, max_pages=max_allowed_pages)
+        )
         is_ocr_used = False
         original_text = ""
         extracted_pages: list[dict[str, Any]] = []
@@ -752,8 +757,10 @@ async def upload_and_translate(
                 getattr(pdf_service.extract_text, "__func__", None) is not _ORIGINAL_EXTRACT_TEXT
             )
             if is_extract_text_patched:
-                original_text = pdf_service.extract_text(
-                    tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages
+                original_text = (
+                    pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages, selected_pages=selected_pages)
+                    if selected_pages is not None
+                    else pdf_service.extract_text(tmp_path, max_pages=max_allowed_pages)
                 )
             else:
                 extracted_pages = pdf_service.extract_pages(
@@ -805,18 +812,19 @@ async def upload_and_translate(
         )
 
         execution_time_ms = max(1, int((time.time() - start_time) * 1000))
+        safe_filename = file.filename or "document.pdf"
         document_id: Optional[int] = None
         history_id: Optional[int] = None
         if current_user is not None:
             try:
                 stored_filename, rel_path, _ = storage_service.save_document_file(
                     user_id=current_user.id,
-                    original_filename=file.filename,
+                    original_filename=safe_filename,
                     content=content,
                 )
                 doc_record = Document(
                     user_id=current_user.id,
-                    original_filename=file.filename,
+                    original_filename=safe_filename,
                     stored_filename=stored_filename,
                     stored_path=rel_path,
                     file_size_bytes=len(content),
@@ -856,7 +864,7 @@ async def upload_and_translate(
                         user_id=current_user.id,
                         result_data={
                             "document_id": document_id,
-                            "filename": file.filename,
+                            "filename": safe_filename,
                             "page_count": effective_page_count,
                             "file_size_mb": round(len(content) / (1024 * 1024), 2),
                             "target_lang": target_lang,
@@ -880,7 +888,7 @@ async def upload_and_translate(
         response_data = ProcessResponseData(
             document_id=document_id,
             history_id=history_id,
-            filename=file.filename,
+            filename=safe_filename,
             page_count=effective_page_count,
             file_size_mb=round(len(content) / (1024 * 1024), 2),
             target_lang=target_lang,
@@ -1368,13 +1376,17 @@ async def batch_download_results(
             if hist.result_path:
                 result_dict = storage_service.read_result_file(hist.user_id, hist.result_path)
 
-            raw_filename = (
-                (result_dict and result_dict.get("filename"))
-                or (hist.document and hist.document.original_filename)
+            raw_filename = str(
+                (result_dict.get("filename") if isinstance(result_dict, dict) else None)
+                or (hist.document.original_filename if hist.document else None)
                 or f"document_{hid}.pdf"
             )
-            translated_text = (result_dict and result_dict.get("translated_text")) or ""
-            original_text = (result_dict and result_dict.get("original_text")) or ""
+            translated_text = str(
+                (result_dict.get("translated_text") if isinstance(result_dict, dict) else None) or ""
+            )
+            original_text = str(
+                (result_dict.get("original_text") if isinstance(result_dict, dict) else None) or ""
+            )
 
             if export_type == ExportTargetType.ORIGINAL:
                 content_text = original_text or translated_text

@@ -9,19 +9,31 @@ Encapsulates all administrative business logic:
 """
 
 import math
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import BadRequestException, NotFoundException
+from app.models.access_log import UserAccessLog
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
-from app.models.subscription import PaymentStatus, PaymentTransaction, PricingPlan
+from app.models.subscription import (
+    PaymentStatus,
+    PaymentTransaction,
+    PricingPlan,
+    Subscription,
+    SubscriptionStatus,
+)
 from app.models.user import User, UserRole
 from app.schemas.admin import (
+    AdminAccessLogItem,
+    AdminAccessLogListResponse,
+    AdminAccessTrafficSummary,
     AdminServiceUsageStats,
     AdminStatsResponse,
+    AdminTrafficDayPoint,
     AdminTransactionItem,
     AdminTransactionListResponse,
     AdminUserListItem,
@@ -141,9 +153,12 @@ class AdminService:
 
         users = query.order_by(User.id.desc()).offset(offset).limit(safe_limit).all()
 
-        # Batch query document counts to avoid N+1 queries
+        # Batch query document counts and access log summaries to avoid N+1 queries
         user_ids = [u.id for u in users]
         doc_counts: dict[int, int] = {}
+        latest_access_map: dict[int, UserAccessLog] = {}
+        distinct_ip_24h_map: dict[int, int] = {}
+
         if user_ids:
             counts_query = (
                 db.query(Document.user_id, func.count(Document.id))
@@ -153,19 +168,54 @@ class AdminService:
             )
             doc_counts = {uid: count for uid, count in counts_query}
 
-        items = [
-            AdminUserListItem(
-                id=u.id,
-                email=u.email,
-                full_name=u.full_name,
-                role=u.role,
-                is_active=u.is_active,
-                document_count=doc_counts.get(u.id, 0),
-                created_at=u.created_at,
-                updated_at=u.updated_at,
+            # Latest access log per user
+            recent_logs = (
+                db.query(UserAccessLog)
+                .filter(UserAccessLog.user_id.in_(user_ids))
+                .order_by(UserAccessLog.created_at.desc(), UserAccessLog.id.desc())
+                .all()
             )
-            for u in users
-        ]
+            for log in recent_logs:
+                if log.user_id not in latest_access_map:
+                    latest_access_map[log.user_id] = log
+
+            # Distinct IP count in last 24 hours per user
+            since_24h = datetime.now(timezone.utc) - timedelta(hours=24)
+            ip_counts_query = (
+                db.query(
+                    UserAccessLog.user_id,
+                    func.count(func.distinct(UserAccessLog.ip_address)),
+                )
+                .filter(
+                    UserAccessLog.user_id.in_(user_ids),
+                    UserAccessLog.created_at >= since_24h,
+                )
+                .group_by(UserAccessLog.user_id)
+                .all()
+            )
+            distinct_ip_24h_map = {uid: int(cnt) for uid, cnt in ip_counts_query}
+
+        items = []
+        for u in users:
+            last_log = latest_access_map.get(u.id)
+            ip_cnt = distinct_ip_24h_map.get(u.id, 0)
+            items.append(
+                AdminUserListItem(
+                    id=u.id,
+                    email=u.email,
+                    full_name=u.full_name,
+                    role=u.role,
+                    is_active=u.is_active,
+                    document_count=doc_counts.get(u.id, 0),
+                    last_ip=last_log.ip_address if last_log else None,
+                    last_device=last_log.device_summary if last_log else None,
+                    last_login_at=last_log.created_at if last_log else None,
+                    distinct_ip_count_24h=ip_cnt,
+                    multi_ip_warning=(ip_cnt >= 3),
+                    created_at=u.created_at,
+                    updated_at=u.updated_at,
+                )
+            )
 
         return AdminUserListResponse(
             items=items,
@@ -362,7 +412,198 @@ class AdminService:
                 error_code="INVALID_TRANSACTION_STATE",
             )
         tx.payment_status = PaymentStatus.FAILED.value
+
+        # Tu dong huy goi giao dich / subscription cua nguoi dung duoc chon (neu ho co so huu)
+        now = datetime.now(timezone.utc)
+        user_subs = (
+            db.query(Subscription)
+            .filter(
+                Subscription.user_id == tx.user_id,
+                Subscription.status.in_([
+                    SubscriptionStatus.ACTIVE.value,
+                    SubscriptionStatus.GRACE_PERIOD.value,
+                ]),
+            )
+            .all()
+        )
+        for sub in user_subs:
+            sub.status = SubscriptionStatus.CANCELLED.value
+            sub.auto_renew = False
+            sub.cancelled_at = now
+            sub.updated_at = now
+
+        target_user = db.query(User).filter(User.id == tx.user_id).first()
+        if target_user and target_user.role == UserRole.PRO:
+            target_user.role = UserRole.FREE
+
         db.commit()
         db.refresh(tx)
         return tx
+
+    # ── User Access & IP Audit Logs ────────────────────────────────────
+
+    @staticmethod
+    def _build_access_traffic_summary(db: Session, window_days: int = 14) -> AdminAccessTrafficSummary:
+        """
+        Compute a continuous daily traffic time series for the last `window_days` days.
+        Each unique IP address counts once per day (daily unique_visitors) and once
+        across the entire window (overall unique_visitors), matching GitHub Traffic semantics.
+        """
+        today_utc = datetime.now(timezone.utc).date()
+        start_date = today_utc - timedelta(days=window_days - 1)
+        start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=timezone.utc)
+
+        rows = (
+            db.query(UserAccessLog.created_at, UserAccessLog.ip_address)
+            .filter(UserAccessLog.created_at >= start_dt)
+            .all()
+        )
+
+        daily_counts: dict[str, int] = {}
+        daily_ips: dict[str, set[str]] = {}
+        overall_ips: set[str] = set()
+        total_visits = 0
+
+        for created_at, ip_address in rows:
+            if created_at is None:
+                continue
+            dt_utc = (
+                created_at.replace(tzinfo=timezone.utc)
+                if created_at.tzinfo is None
+                else created_at.astimezone(timezone.utc)
+            )
+            day_key = dt_utc.date().isoformat()
+            if dt_utc.date() < start_date:
+                continue
+            total_visits += 1
+            daily_counts[day_key] = daily_counts.get(day_key, 0) + 1
+            clean_ip = (ip_address or "").strip()
+            if clean_ip:
+                overall_ips.add(clean_ip)
+                daily_ips.setdefault(day_key, set()).add(clean_ip)
+
+        daily_points: list[AdminTrafficDayPoint] = []
+        for offset in range(window_days):
+            day_key = (start_date + timedelta(days=offset)).isoformat()
+            daily_points.append(
+                AdminTrafficDayPoint(
+                    date=day_key,
+                    total_visits=daily_counts.get(day_key, 0),
+                    unique_visitors=len(daily_ips.get(day_key, ())),
+                )
+            )
+
+        return AdminAccessTrafficSummary(
+            window_days=window_days,
+            total_visits=total_visits,
+            unique_visitors=len(overall_ips),
+            daily=daily_points,
+        )
+
+    @staticmethod
+    def list_access_logs(
+        db: Session,
+        page: int = 1,
+        limit: int = 15,
+        search: Optional[str] = None,
+        user_id: Optional[int] = None,
+        multi_ip_only: bool = False,
+    ) -> AdminAccessLogListResponse:
+        """
+        Query paginated user access logs (IP, device, action, timestamp)
+        along with 24-hour system-wide distinct IP, multi-IP anomaly summaries,
+        and 14-day GitHub-Traffic-style daily visit and unique-IP metrics.
+        """
+        safe_page = max(1, page)
+        safe_limit = min(max(1, limit), 100)
+        now_utc = datetime.now(timezone.utc)
+        since_24h = now_utc - timedelta(hours=24)
+        traffic_summary = AdminService._build_access_traffic_summary(db=db, window_days=14)
+
+        unique_ips_24h = (
+            db.query(func.count(func.distinct(UserAccessLog.ip_address)))
+            .filter(UserAccessLog.created_at >= since_24h)
+            .scalar()
+            or 0
+        )
+
+        # Find user IDs with >= 3 distinct IPs in last 24h
+        multi_ip_rows = (
+            db.query(UserAccessLog.user_id)
+            .filter(UserAccessLog.created_at >= since_24h)
+            .group_by(UserAccessLog.user_id)
+            .having(func.count(func.distinct(UserAccessLog.ip_address)) >= 3)
+            .all()
+        )
+        multi_ip_user_ids = [row[0] for row in multi_ip_rows]
+
+        query = db.query(UserAccessLog).join(User, UserAccessLog.user_id == User.id)
+
+        if user_id is not None:
+            query = query.filter(UserAccessLog.user_id == user_id)
+
+        if multi_ip_only:
+            if not multi_ip_user_ids:
+                return AdminAccessLogListResponse(
+                    items=[],
+                    total_count=0,
+                    page=safe_page,
+                    limit=safe_limit,
+                    total_pages=1,
+                    unique_ips_24h=int(unique_ips_24h),
+                    multi_ip_users_count=0,
+                    traffic=traffic_summary,
+                )
+            query = query.filter(UserAccessLog.user_id.in_(multi_ip_user_ids))
+
+        if search and search.strip():
+            kw = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    User.email.ilike(kw),
+                    User.full_name.ilike(kw),
+                    UserAccessLog.ip_address.ilike(kw),
+                    UserAccessLog.device_summary.ilike(kw),
+                )
+            )
+
+        total_count = query.count()
+        total_pages = max(1, math.ceil(total_count / safe_limit)) if total_count > 0 else 1
+        offset = (safe_page - 1) * safe_limit
+
+        records = (
+            query.order_by(UserAccessLog.created_at.desc(), UserAccessLog.id.desc())
+            .offset(offset)
+            .limit(safe_limit)
+            .all()
+        )
+
+        items: list[AdminAccessLogItem] = []
+        for log in records:
+            u = log.user or db.query(User).filter(User.id == log.user_id).first()
+            items.append(
+                AdminAccessLogItem(
+                    id=log.id,
+                    user_id=log.user_id,
+                    user_email=u.email if u else f"user-{log.user_id}",
+                    user_name=u.full_name if u else None,
+                    user_role=u.role if u else UserRole.FREE,
+                    ip_address=log.ip_address,
+                    device_summary=log.device_summary,
+                    user_agent=log.user_agent,
+                    action=log.action,
+                    created_at=log.created_at,
+                )
+            )
+
+        return AdminAccessLogListResponse(
+            items=items,
+            total_count=total_count,
+            page=safe_page,
+            limit=safe_limit,
+            total_pages=total_pages,
+            unique_ips_24h=int(unique_ips_24h),
+            multi_ip_users_count=len(multi_ip_user_ids),
+            traffic=traffic_summary,
+        )
 

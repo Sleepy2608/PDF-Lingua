@@ -4,7 +4,9 @@ Authentication API Router
 Endpoints for user registration, login, logout, and token refresh.
 """
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from typing import Optional, cast
+
+from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -14,7 +16,10 @@ from app.core.exceptions import (
     PayloadTooLargeException,
     UnsupportedMediaTypeException,
 )
+from app.core.logger import logger
+from app.core.network import extract_client_ip, parse_device_summary
 from app.core.security import create_access_token
+from app.models.access_log import UserAccessLog
 from app.models.user import User
 from app.schemas.common import ApiResponse, ErrorResponse
 from app.schemas.user import (
@@ -33,6 +38,27 @@ router = APIRouter()
 storage_service = StorageService()
 
 
+def _record_access_log(db: Session, user_id: int, request: Optional[Request], action: str) -> None:
+    """Best-effort audit record of user login or registration IP and device."""
+    try:
+        ip = extract_client_ip(request)
+        raw_ua = (request.headers.get("user-agent") if request is not None else None) or ""
+        ua_trimmed = raw_ua[:255] if raw_ua else None
+        device = parse_device_summary(raw_ua)
+        entry = UserAccessLog(
+            user_id=user_id,
+            ip_address=ip,
+            user_agent=ua_trimmed,
+            device_summary=device,
+            action=action,
+        )
+        db.add(entry)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.warning(f"[Auth] Failed to record access log for user {user_id}: {exc}")
+
+
 @router.post(
     "/register",
     response_model=ApiResponse[UserResponse],
@@ -42,6 +68,7 @@ storage_service = StorageService()
 )
 def register(
     user_in: UserCreate,
+    request: Request = cast(Request, None),
     db: Session = Depends(get_db),
 ) -> ApiResponse[UserResponse]:
     """
@@ -49,6 +76,7 @@ def register(
     Returns 201 Created and user information without exposing password or hash.
     """
     user = AuthService.register_user(db=db, user_in=user_in)
+    _record_access_log(db=db, user_id=user.id, request=request, action="register")
     return ApiResponse(
         success=True,
         message="Đăng ký tài khoản thành công.",
@@ -65,6 +93,7 @@ def register(
 )
 def login(
     credentials: UserLogin,
+    request: Request = cast(Request, None),
     db: Session = Depends(get_db),
 ) -> ApiResponse[TokenResponse]:
     """
@@ -73,6 +102,7 @@ def login(
     Raises 401 INVALID_CREDENTIALS for invalid email/password, or 403 ACCOUNT_INACTIVE for inactive accounts.
     """
     user = AuthService.authenticate_user(db=db, user_in=credentials)
+    _record_access_log(db=db, user_id=user.id, request=request, action="login")
     access_token = create_access_token(subject=user.id)
     return ApiResponse(
         success=True,
@@ -251,15 +281,10 @@ def upload_avatar(
 
     try:
         # Đưa con trỏ tệp về vị trí đầu trước khi đọc nhằm đảm bảo tính toàn vẹn dữ liệu
-        if hasattr(file, "file") and hasattr(file.file, "seek"):
-            file.file.seek(0)
-        elif hasattr(file, "seek"):
-            file.seek(0)
-
-        if hasattr(file, "file") and hasattr(file.file, "read"):
-            content = file.file.read()
-        else:
-            content = file.read()
+        raw_file = file.file
+        if hasattr(raw_file, "seek"):
+            raw_file.seek(0)
+        content = raw_file.read()
     except Exception as read_err:
         raise BadRequestException(
             message=f"Không thể đọc nội dung tệp tải lên: {read_err}",
