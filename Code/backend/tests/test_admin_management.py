@@ -411,13 +411,16 @@ def test_admin_transactions_list_approve_and_reject(admin_test_env):
     db_session.refresh(free_user)
     assert free_user.role == UserRole.PRO
 
-    # 4. Admin rejects tx_reject -> status becomes failed
+    # 4. Admin rejects tx_reject -> status becomes failed and automatically cancels user's pro subscription
     res_reject = client.post(
         "/api/admin/transactions/TX-ADMIN-TEST-002/reject",
         headers=admin_headers,
     )
     assert res_reject.status_code == 200
     assert res_reject.json()["data"]["payment_status"] == "failed"
+
+    db_session.refresh(free_user)
+    assert free_user.role == UserRole.FREE
 
     # 5. Revenue summary updated
     res_completed = client.get("/api/admin/transactions?status=completed", headers=admin_headers)

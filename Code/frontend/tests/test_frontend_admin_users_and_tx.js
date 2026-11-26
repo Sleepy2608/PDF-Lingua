@@ -370,7 +370,7 @@ test('VietQR Transactions: Renders summary KPIs, code chips, plan pills, and act
   assert(html.includes('tx-code-chip font-mono'), 'Transaction code must render inside styled chip');
   assert(html.includes('tx-plan-pill yearly'), 'Yearly plan must receive yearly accent pill class');
   assert(html.includes('Đã xử lý'), 'Completed transaction must render processed label');
-  assert(html.includes('btn-tx-approve') && html.includes('Duyệt Pro'), 'Pending transaction must render approve CTA');
+  assert(html.includes('btn-tx-approve') && html.includes('Hoàn tất'), 'Pending transaction must render complete/approve CTA');
   assert(html.includes('btn-tx-reject') && html.includes('Từ chối'), 'Pending transaction must render reject CTA');
 });
 
@@ -410,7 +410,7 @@ test('i18n Live Switch: Changing VI -> EN updates Users, IP Logs, and VietQR tab
     pending_count: 1,
     page: 1,
     total_pages: 1,
-    total_count: 1,
+    total_count: 2,
     items: [
       {
         transaction_code: 'SUB-01',
@@ -419,6 +419,14 @@ test('i18n Live Switch: Changing VI -> EN updates Users, IP Logs, and VietQR tab
         amount_display: '399.000đ',
         payment_status: 'pending',
         created_at: '2026-11-26T00:00:00Z',
+      },
+      {
+        transaction_code: 'SUB-02',
+        user_email: 'done@example.com',
+        plan_name: 'Gói Pro Hàng Tháng',
+        amount_display: '49.000đ',
+        payment_status: 'completed',
+        created_at: '2026-11-25T00:00:00Z',
       },
     ],
   });
@@ -433,7 +441,8 @@ test('i18n Live Switch: Changing VI -> EN updates Users, IP Logs, and VietQR tab
   assert.strictEqual(env.elements.adminTxRevenueBadge.textContent, 'Revenue: 49.000đ');
   assert.strictEqual(env.elements.adminTxPendingBadge.textContent, 'Pending: 1');
   assert(env.elements.adminTxTableBody.innerHTML.includes('Pro Yearly Plan'), 'VietQR plan name must localize to English');
-  assert(env.elements.adminTxTableBody.innerHTML.includes('Approve Pro'), 'VietQR approve button must localize to English');
+  assert(env.elements.adminTxTableBody.innerHTML.includes('Complete'), 'VietQR complete button must localize to English');
+  assert(env.elements.adminTxTableBody.innerHTML.includes('Processed'), 'VietQR completed transaction status must localize to Processed');
 });
 
 test('Traffic Graphs: Renders 14-day Total Visits & Distinct-IP Unique Visitors SVG series and i18n labels', () => {
@@ -490,6 +499,43 @@ test('Traffic Graphs: Renders 14-day Total Visits & Distinct-IP Unique Visitors 
   });
   assert.strictEqual(env.elements.adminTrafficTotalCount.textContent, '3 Visits');
   assert.strictEqual(env.elements.adminTrafficUniqueCount.textContent, '2 Unique visitors');
+});
+
+test('Confirm Modal: Custom confirm button text for transaction approval and rejection', () => {
+  const env = createEnv('vi');
+  const proceedBtn = env.elements.btnProceedAdminConfirm;
+
+  // 1. Transaction Approve
+  env.admin.openConfirmModal({
+    title: 'Hoàn tất xử lý giao dịch',
+    desc: 'Xác nhận hoàn tất xử lý giao dịch?',
+    email: 'user@example.com',
+    actionType: 'warning',
+    confirmBtnText: 'Hoàn tất',
+    onConfirm: async () => {},
+  });
+  assert.strictEqual(proceedBtn.textContent, 'Hoàn tất', 'Approve modal confirm button must be Hoàn tất');
+
+  // 2. Transaction Reject
+  env.admin.openConfirmModal({
+    title: 'Từ chối giao dịch thanh toán',
+    desc: 'Bạn có chắc muốn từ chối giao dịch?',
+    email: 'user@example.com',
+    actionType: 'danger',
+    confirmBtnText: 'Từ chối giao dịch',
+    onConfirm: async () => {},
+  });
+  assert.strictEqual(proceedBtn.textContent, 'Từ chối giao dịch', 'Reject modal confirm button must be Từ chối giao dịch');
+
+  // 3. Lock user default fallback
+  env.admin.openConfirmModal({
+    title: 'Khóa tài khoản',
+    desc: 'Khóa tài khoản này?',
+    email: 'user@example.com',
+    actionType: 'danger',
+    onConfirm: async () => {},
+  });
+  assert.strictEqual(proceedBtn.textContent, 'Khóa tài khoản này', 'Lock account modal should fall back to default lock button');
 });
 
 console.log('\n================================================================');

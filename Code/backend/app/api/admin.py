@@ -209,9 +209,9 @@ async def approve_transaction(
     db: Session = Depends(get_db),
 ):
     """
-    Approve a pending VietQR payment transaction and activate the user's Pro subscription.
+    Approve/complete a pending VietQR payment transaction and activate the user's Pro subscription.
     """
-    logger.info(f"[Admin] Admin {current_admin.email} approving transaction {transaction_code}.")
+    logger.info(f"[Admin] Admin {current_admin.email} approving/completing transaction {transaction_code}.")
     result = SubscriptionService.confirm_transaction_payment(
         db=db,
         transaction_code=transaction_code,
@@ -219,7 +219,7 @@ async def approve_transaction(
     )
     return ApiResponse(
         data=result,
-        message=f"Đã duyệt giao dịch {transaction_code} và kích hoạt gói Pro thành công.",
+        message=f"Đã hoàn tất xử lý giao dịch {transaction_code} và kích hoạt gói Pro thành công.",
     )
 
 
@@ -230,13 +230,13 @@ async def reject_transaction(
     db: Session = Depends(get_db),
 ):
     """
-    Reject/cancel a pending VietQR payment transaction.
+    Reject/cancel a pending VietQR payment transaction and revoke user active package if any.
     """
     logger.info(f"[Admin] Admin {current_admin.email} rejecting transaction {transaction_code}.")
     tx = AdminService.reject_transaction(db=db, transaction_code=transaction_code)
     return ApiResponse(
         data={"transaction_code": tx.transaction_code, "payment_status": tx.payment_status},
-        message=f"Đã từ chối giao dịch {tx.transaction_code}.",
+        message=f"Đã từ chối giao dịch {tx.transaction_code} và hủy gói cước của người dùng (nếu có).",
     )
 
 

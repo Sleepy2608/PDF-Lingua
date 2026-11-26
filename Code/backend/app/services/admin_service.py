@@ -19,7 +19,13 @@ from app.core.exceptions import BadRequestException, NotFoundException
 from app.models.access_log import UserAccessLog
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
-from app.models.subscription import PaymentStatus, PaymentTransaction, PricingPlan
+from app.models.subscription import (
+    PaymentStatus,
+    PaymentTransaction,
+    PricingPlan,
+    Subscription,
+    SubscriptionStatus,
+)
 from app.models.user import User, UserRole
 from app.schemas.admin import (
     AdminAccessLogItem,
@@ -406,6 +412,30 @@ class AdminService:
                 error_code="INVALID_TRANSACTION_STATE",
             )
         tx.payment_status = PaymentStatus.FAILED.value
+
+        # Tu dong huy goi giao dich / subscription cua nguoi dung duoc chon (neu ho co so huu)
+        now = datetime.now(timezone.utc)
+        user_subs = (
+            db.query(Subscription)
+            .filter(
+                Subscription.user_id == tx.user_id,
+                Subscription.status.in_([
+                    SubscriptionStatus.ACTIVE.value,
+                    SubscriptionStatus.GRACE_PERIOD.value,
+                ]),
+            )
+            .all()
+        )
+        for sub in user_subs:
+            sub.status = SubscriptionStatus.CANCELLED.value
+            sub.auto_renew = False
+            sub.cancelled_at = now
+            sub.updated_at = now
+
+        target_user = db.query(User).filter(User.id == tx.user_id).first()
+        if target_user and target_user.role == UserRole.PRO:
+            target_user.role = UserRole.FREE
+
         db.commit()
         db.refresh(tx)
         return tx

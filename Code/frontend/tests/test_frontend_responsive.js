@@ -1165,7 +1165,7 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
       if (txTab) txTab.style.display = 'block';
       document.getElementById('adminTxTableEmpty').style.display = 'none';
       document.getElementById('adminTxTableBody').innerHTML =
-        '<tr><td><span class="tx-code-chip font-mono">SUB-11-21422-0C</span></td><td><div class="user-cell-email">tam12@gmail.com</div></td><td><span class="tx-plan-pill yearly">Goi Pro Hang Nam</span></td><td><span class="tx-amount-mono">399.000d</span></td><td><span class="tx-status-pill pending" id="testTxStatusPill"><span class="tx-status-dot"></span>Cho duyet</span></td><td><span class="date-mono">04:31:38 14/11/2026</span></td><td class="text-right"><div class="user-actions-group"><button class="btn-tx-approve" id="testTxApproveBtn">Duyet Pro</button><button class="btn-tx-reject" id="testTxRejectBtn">Tu choi</button></div></td></tr>';
+        '<tr><td><span class="tx-code-chip font-mono">SUB-11-21422-0C</span></td><td><div class="user-cell-email">tam12@gmail.com</div></td><td><span class="tx-plan-pill yearly">Goi Pro Hang Nam</span></td><td><span class="tx-amount-mono">399.000d</span></td><td><span class="tx-status-pill pending" id="testTxStatusPill"><span class="tx-status-dot"></span>Cho duyet</span></td><td><span class="date-mono">04:31:38 14/11/2026</span></td><td class="text-right"><div class="user-actions-group"><button class="btn-tx-approve" id="testTxApproveBtn">Hoan tat</button><button class="btn-tx-reject" id="testTxRejectBtn">Tu choi</button></div></td></tr>';
       document.getElementById('adminTxCard')?.scrollIntoView();
     `);
     await sleep(80);

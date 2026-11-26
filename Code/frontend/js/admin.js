@@ -673,9 +673,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-danger';
-        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        proceedBtn.textContent = config.confirmBtnText || ((window.i18n && typeof window.i18n.t === 'function')
           ? window.i18n.t('admin_confirm_lock_btn')
-          : 'Khóa tài khoản này';
+          : 'Khóa tài khoản này');
       }
     } else if (config.actionType === 'success') {
       if (iconWrap) {
@@ -685,9 +685,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
-        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        proceedBtn.textContent = config.confirmBtnText || ((window.i18n && typeof window.i18n.t === 'function')
           ? window.i18n.t('admin_confirm_unlock_btn')
-          : 'Mở khóa tài khoản';
+          : 'Mở khóa tài khoản');
       }
     } else {
       if (iconWrap) {
@@ -697,9 +697,9 @@
       }
       if (proceedBtn) {
         proceedBtn.className = 'btn btn-gradient';
-        proceedBtn.textContent = (window.i18n && typeof window.i18n.t === 'function')
+        proceedBtn.textContent = config.confirmBtnText || ((window.i18n && typeof window.i18n.t === 'function')
           ? window.i18n.t('admin_confirm_change_btn')
-          : 'Xác nhận thay đổi';
+          : 'Xác nhận thay đổi');
       }
     }
 
@@ -1366,12 +1366,12 @@
 
     const statusMap = {
       pending: { label: t('admin_tx_status_pending', 'Chờ duyệt'), cls: 'pending' },
-      completed: { label: t('admin_tx_status_completed', 'Thành công'), cls: 'completed' },
+      completed: { label: t('admin_tx_status_completed', 'Đã xử lý'), cls: 'completed' },
       failed: { label: t('admin_tx_status_failed', 'Đã từ chối'), cls: 'failed' },
       expired: { label: t('admin_tx_status_expired', 'Hết hạn'), cls: 'expired' },
     };
     const processedText = t('admin_tx_processed', 'Đã xử lý');
-    const approveBtnText = t('admin_tx_btn_approve', 'Duyệt Pro');
+    const approveBtnText = t('admin_tx_btn_approve', 'Hoàn tất');
     const rejectBtnText = t('admin_tx_btn_reject', 'Từ chối');
 
     items.forEach((tx) => {
@@ -1458,7 +1458,7 @@
       const json = await res.json();
       if (res.ok) {
         notifyUser(json.message || t('admin_tx_reject_success', `Đã từ chối giao dịch ${transactionCode}.`, { code: transactionCode }), 'info');
-        fetchAdminTransactions(txPage);
+        loadAllAdminData();
       } else {
         notifyUser(json.message || t('admin_tx_reject_failed', 'Không thể từ chối giao dịch.'), 'error');
       }
@@ -1677,14 +1677,15 @@
 
         if (action === 'approve') {
           openConfirmModal({
-            title: t('admin_confirm_tx_approve_title', 'Duyệt thanh toán & Kích hoạt gói Pro'),
+            title: t('admin_confirm_tx_approve_title', 'Hoàn tất xử lý giao dịch'),
             desc: t(
               'admin_confirm_tx_approve_desc',
-              `Xác nhận đã nhận chuyển khoản cho mã giao dịch "${txCode}" và nâng cấp tài khoản lên Pro VIP?`,
+              `Xác nhận đã nhận chuyển khoản cho mã giao dịch "${txCode}" và hoàn tất xử lý kích hoạt gói cước?`,
               { code: txCode }
             ),
             email: email,
             actionType: 'warning',
+            confirmBtnText: t('admin_confirm_tx_approve_btn', 'Hoàn tất'),
             onConfirm: async () => {
               await executeApproveTransaction(txCode);
             },
@@ -1694,11 +1695,12 @@
             title: t('admin_confirm_tx_reject_title', 'Từ chối giao dịch thanh toán'),
             desc: t(
               'admin_confirm_tx_reject_desc',
-              `Bạn có chắc muốn đánh dấu giao dịch "${txCode}" là thất bại / từ chối?`,
+              `Bạn có chắc muốn từ chối giao dịch "${txCode}"? Gói dịch vụ của người dùng (nếu có) sẽ tự động bị hủy.`,
               { code: txCode }
             ),
             email: email,
             actionType: 'danger',
+            confirmBtnText: t('admin_confirm_tx_reject_btn', 'Từ chối giao dịch'),
             onConfirm: async () => {
               await executeRejectTransaction(txCode);
             },
