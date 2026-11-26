@@ -48,6 +48,8 @@ def _migrate_db_schema(bind_engine=None) -> None:
 
     target = bind_engine or engine
     inspector = inspect(target)
+    if inspector is None:
+        return
     existing_tables = inspector.get_table_names()
 
     if "users" in existing_tables:

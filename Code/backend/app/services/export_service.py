@@ -239,7 +239,7 @@ class ExportService:
                 if not para_clean:
                     continue
                 lines = para_clean.split("\n")
-                if is_summary and len(lines) > 1 and any(re.match(r"^(\s*[-*•]|\s*\d+[\.\)])", l) for l in lines):
+                if is_summary and len(lines) > 1 and any(re.match(r"^(\s*[-*•]|\s*\d+[\.\)])", line_item) for line_item in lines):
                     for line in lines:
                         line_clean = line.strip()
                         if not line_clean:
@@ -367,7 +367,7 @@ class ExportService:
                 if not para_clean:
                     continue
                 lines = para_clean.split("\n")
-                if is_summary and len(lines) > 1 and any(re.match(r"^(\s*[-*•]|\s*\d+[\.\)])", l) for l in lines):
+                if is_summary and len(lines) > 1 and any(re.match(r"^(\s*[-*•]|\s*\d+[\.\)])", line_item) for line_item in lines):
                     for line in lines:
                         line_clean = line.strip()
                         if not line_clean:

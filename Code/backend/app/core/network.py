@@ -5,10 +5,12 @@ Extracts the real client IP address safely behind reverse proxies (Render, Verce
 and parses human-readable browser / OS summaries from HTTP User-Agent headers.
 """
 
+from typing import Optional
+
 from fastapi import Request
 
 
-def extract_client_ip(request: Request) -> str:
+def extract_client_ip(request: Optional[Request]) -> str:
     """
     Resolve the client's real IP address.
     Priority:
@@ -31,7 +33,7 @@ def extract_client_ip(request: Request) -> str:
         return real_ip.strip()[:64]
 
     if request.client and request.client.host:
-        return str(request.client.host).strip()[:64]
+        return request.client.host.strip()[:64]
 
     return "unknown"
 

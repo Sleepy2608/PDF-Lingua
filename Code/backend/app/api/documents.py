@@ -9,8 +9,8 @@ Enforces:
 """
 
 import re
-from typing import Optional
 import unicodedata
+from typing import Optional
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status

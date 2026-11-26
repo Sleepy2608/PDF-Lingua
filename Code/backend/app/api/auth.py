@@ -4,6 +4,8 @@ Authentication API Router
 Endpoints for user registration, login, logout, and token refresh.
 """
 
+from typing import Optional, cast
+
 from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -36,11 +38,11 @@ router = APIRouter()
 storage_service = StorageService()
 
 
-def _record_access_log(db: Session, user_id: int, request: Request, action: str) -> None:
+def _record_access_log(db: Session, user_id: int, request: Optional[Request], action: str) -> None:
     """Best-effort audit record of user login or registration IP and device."""
     try:
         ip = extract_client_ip(request)
-        raw_ua = request.headers.get("user-agent") or ""
+        raw_ua = (request.headers.get("user-agent") if request is not None else None) or ""
         ua_trimmed = raw_ua[:255] if raw_ua else None
         device = parse_device_summary(raw_ua)
         entry = UserAccessLog(
@@ -66,7 +68,7 @@ def _record_access_log(db: Session, user_id: int, request: Request, action: str)
 )
 def register(
     user_in: UserCreate,
-    request: Request,
+    request: Request = cast(Request, None),
     db: Session = Depends(get_db),
 ) -> ApiResponse[UserResponse]:
     """
@@ -91,7 +93,7 @@ def register(
 )
 def login(
     credentials: UserLogin,
-    request: Request,
+    request: Request = cast(Request, None),
     db: Session = Depends(get_db),
 ) -> ApiResponse[TokenResponse]:
     """
@@ -279,15 +281,10 @@ def upload_avatar(
 
     try:
         # Đưa con trỏ tệp về vị trí đầu trước khi đọc nhằm đảm bảo tính toàn vẹn dữ liệu
-        if hasattr(file, "file") and hasattr(file.file, "seek"):
-            file.file.seek(0)
-        elif hasattr(file, "seek"):
-            file.seek(0)
-
-        if hasattr(file, "file") and hasattr(file.file, "read"):
-            content = file.file.read()
-        else:
-            content = file.read()
+        raw_file = file.file
+        if hasattr(raw_file, "seek"):
+            raw_file.seek(0)
+        content = raw_file.read()
     except Exception as read_err:
         raise BadRequestException(
             message=f"Không thể đọc nội dung tệp tải lên: {read_err}",

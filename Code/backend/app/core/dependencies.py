@@ -53,6 +53,11 @@ def get_current_user(
     payload = decode_access_token(credentials.credentials)
 
     sub = payload.get("sub")
+    if sub is None:
+        raise UnauthorizedException(
+            message="Token không hợp lệ (subject không hợp lệ).",
+            error_code="INVALID_TOKEN",
+        )
     try:
         user_id = int(sub)
     except (ValueError, TypeError):
@@ -118,7 +123,7 @@ def require_roles(
     for item in allowed_roles:
         if isinstance(item, (list, tuple, set)):
             for sub_item in item:
-                flattened.add(sub_item if isinstance(sub_item, UserRole) else UserRole(str(sub_item).lower()))
+                flattened.add(sub_item if isinstance(sub_item, UserRole) else UserRole(sub_item.lower()))
         else:
             flattened.add(item if isinstance(item, UserRole) else UserRole(str(item).lower()))
 

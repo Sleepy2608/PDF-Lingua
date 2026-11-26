@@ -1386,18 +1386,18 @@ class AIService:
         fallback_reason: str | None = None
         provider_used = "b.ai"
 
+        # Prepare messages before try block so Gemini fallback always has a bound list
+        messages = [{"role": "system", "content": self.COPILOT_SYSTEM_PROMPT}]
+        if conversation_history:
+            for turn in conversation_history[-6:]:
+                r = turn.get("role", "user")
+                c = turn.get("content", "")
+                if r in ("user", "assistant") and c:
+                    messages.append({"role": r, "content": c})
+
+        messages.append({"role": "user", "content": user_prompt})
+
         try:
-            # Prepare messages with history
-            messages = [{"role": "system", "content": self.COPILOT_SYSTEM_PROMPT}]
-            if conversation_history:
-                for turn in conversation_history[-6:]:
-                    r = turn.get("role", "user")
-                    c = turn.get("content", "")
-                    if r in ("user", "assistant") and c:
-                        messages.append({"role": r, "content": c})
-
-            messages.append({"role": "user", "content": user_prompt})
-
             answer_text = await self._call_bai_api(
                 messages=messages,
                 model=model_name,

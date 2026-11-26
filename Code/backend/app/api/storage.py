@@ -6,7 +6,6 @@ and secure cache headers.
 """
 
 import re
-from pathlib import Path
 
 from fastapi import APIRouter, status
 from fastapi.responses import FileResponse
