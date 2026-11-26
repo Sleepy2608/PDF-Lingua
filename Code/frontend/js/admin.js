@@ -1023,11 +1023,11 @@
     if (!svgEl) return;
 
     const vbWidth = 560;
-    const vbHeight = 220;
-    const padLeft = 52;
-    const padRight = 16;
-    const padTop = 14;
-    const padBottom = 42;
+    const vbHeight = 210;
+    const padLeft = 48;
+    const padRight = 14;
+    const padTop = 16;
+    const padBottom = 28;
     const plotW = vbWidth - padLeft - padRight;
     const plotH = vbHeight - padTop - padBottom;
 
@@ -1053,7 +1053,7 @@
     const gridRowsHtml = ticks.map((tickVal) => {
       const yPos = (padTop + plotH - (tickVal / yMax) * plotH).toFixed(1);
       return `
-        <line class="traffic-grid-line" x1="${padLeft}" y1="${yPos}" x2="${vbWidth - padRight}" y2="${yPos}" />
+        <line class="traffic-grid-line horizontal" x1="${padLeft}" y1="${yPos}" x2="${vbWidth - padRight}" y2="${yPos}" />
         <text class="traffic-axis-label" x="${padLeft - 8}" y="${Number(yPos) + 3.5}" text-anchor="end">${tickVal}</text>
       `;
     }).join('');
@@ -1061,8 +1061,8 @@
     const gridColsHtml = coords.map((pt) => {
       const xPos = pt.x.toFixed(1);
       return `
-        <line class="traffic-grid-line" x1="${xPos}" y1="${padTop}" x2="${xPos}" y2="${padTop + plotH}" opacity="0.55" />
-        <text class="traffic-axis-label" x="${xPos}" y="${padTop + plotH + 14}" text-anchor="end" transform="rotate(-40 ${xPos} ${padTop + plotH + 14})">${escapeHtml(pt.label)}</text>
+        <line class="traffic-grid-line" x1="${xPos}" y1="${padTop}" x2="${xPos}" y2="${padTop + plotH}" opacity="0.65" />
+        <text class="traffic-axis-label" x="${xPos}" y="${padTop + plotH + 16}" text-anchor="middle">${escapeHtml(pt.label)}</text>
       `;
     }).join('');
 
@@ -1072,7 +1072,7 @@
       : '';
 
     const dotsHtml = coords.map((pt) => `
-      <circle class="traffic-data-dot" cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2.8" fill="#FFFFFF" stroke="${opts.strokeColor}" stroke-width="1.8" />
+      <circle class="traffic-data-dot" cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2.5" fill="#FFFFFF" stroke="${opts.strokeColor}" stroke-width="1.8" />
     `).join('');
 
     const slotW = count > 1 ? plotW / (count - 1) : plotW;

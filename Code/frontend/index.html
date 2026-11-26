@@ -3374,17 +3374,27 @@
                             data-i18n-attr="aria-label:admin_traffic_aria">
                             <div class="admin-traffic-section-header">
                                 <div class="admin-traffic-title-row">
-                                    <h3 class="admin-traffic-heading" data-i18n="admin_traffic_heading">Lưu lượng truy cập</h3>
-                                    <span class="admin-traffic-window-pill font-mono" data-i18n="admin_traffic_window_badge">14 ngày gần nhất</span>
+                                    <div class="table-icon-pill">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="admin-traffic-heading" data-i18n="admin_traffic_heading">Lưu lượng truy cập</h3>
+                                        <p class="admin-traffic-subheading" data-i18n="admin_traffic_subheading">Thống kê số lượt truy cập và địa chỉ IP duy nhất trong 14 ngày gần nhất</p>
+                                    </div>
                                 </div>
+                                <span class="admin-traffic-window-pill font-mono" data-i18n="admin_traffic_window_badge">14 ngày gần nhất</span>
                             </div>
 
                             <div class="admin-traffic-grid" id="adminTrafficGrid">
                                 <!-- Left Card: Total Access Visits (14 days) -->
                                 <article class="admin-traffic-card" id="adminTrafficTotalCard">
                                     <div class="admin-traffic-card-head">
-                                        <div>
-                                            <h4 class="admin-traffic-card-title" data-i18n="admin_traffic_total_title">Tổng lượt truy cập (14 ngày qua)</h4>
+                                        <div class="admin-traffic-card-meta">
+                                            <h4 class="admin-traffic-card-title" data-i18n="admin_traffic_total_title">Tổng lượt truy cập</h4>
                                             <div class="admin-traffic-count font-mono" id="adminTrafficTotalCount" data-i18n="admin_traffic_total_default">0 Lượt truy cập</div>
                                         </div>
                                         <span class="admin-traffic-legend-pill">
@@ -3393,7 +3403,7 @@
                                         </span>
                                     </div>
                                     <div class="admin-traffic-chart-stage" id="adminTrafficTotalChart">
-                                        <svg class="admin-traffic-svg" id="adminTrafficTotalSvg" viewBox="0 0 560 220" preserveAspectRatio="xMidYMid meet" role="img"
+                                        <svg class="admin-traffic-svg" id="adminTrafficTotalSvg" viewBox="0 0 560 210" preserveAspectRatio="xMidYMid meet" role="img"
                                             aria-label="Biểu đồ tổng lượt truy cập 14 ngày" data-i18n-attr="aria-label:admin_traffic_total_title"></svg>
                                         <div class="admin-traffic-tooltip" id="adminTrafficTotalTooltip" style="display: none;"></div>
                                     </div>
@@ -3402,8 +3412,8 @@
                                 <!-- Right Card: Unique Visitors by Distinct IP (14 days) -->
                                 <article class="admin-traffic-card" id="adminTrafficUniqueCard">
                                     <div class="admin-traffic-card-head">
-                                        <div>
-                                            <h4 class="admin-traffic-card-title" data-i18n="admin_traffic_unique_title">Khách truy cập duy nhất (IP) trong 14 ngày qua</h4>
+                                        <div class="admin-traffic-card-meta">
+                                            <h4 class="admin-traffic-card-title" data-i18n="admin_traffic_unique_title">Khách truy cập duy nhất (IP)</h4>
                                             <div class="admin-traffic-count font-mono" id="adminTrafficUniqueCount" data-i18n="admin_traffic_unique_default">0 IP duy nhất</div>
                                         </div>
                                         <span class="admin-traffic-legend-pill">
@@ -3412,7 +3422,7 @@
                                         </span>
                                     </div>
                                     <div class="admin-traffic-chart-stage" id="adminTrafficUniqueChart">
-                                        <svg class="admin-traffic-svg" id="adminTrafficUniqueSvg" viewBox="0 0 560 220" preserveAspectRatio="xMidYMid meet" role="img"
+                                        <svg class="admin-traffic-svg" id="adminTrafficUniqueSvg" viewBox="0 0 560 210" preserveAspectRatio="xMidYMid meet" role="img"
                                             aria-label="Biểu đồ khách truy cập duy nhất theo IP 14 ngày" data-i18n-attr="aria-label:admin_traffic_unique_title"></svg>
                                         <div class="admin-traffic-tooltip" id="adminTrafficUniqueTooltip" style="display: none;"></div>
                                     </div>
@@ -3421,7 +3431,7 @@
                         </section>
 
                         <!-- User Access & IP Audit Logs Card -->
-                        <div class="admin-table-card admin-access-card" id="adminAccessLogsCard">
+                        <div class="admin-table-card admin-access-card" id="adminAccessLogsCard" style="margin-top: 1.25rem;">
                             <div class="admin-table-header">
                                 <div class="table-title-group">
                                     <div class="table-icon-pill">
