@@ -142,6 +142,14 @@ function createTestEnvironment(initialStorage = {}, mockFetchHandler = null) {
     sideNavPricingQuota: new MockElement('sideNavPricingQuota', 'a'),
     sideNavAdmin: new MockElement('sideNavAdmin', 'a'),
     sideNavAdminItem: new MockElement('sideNavAdminItem', 'li'),
+    sideNavAdminChevron: new MockElement('sideNavAdminChevron', 'span'),
+    sideNavAdminSubmenu: new MockElement('sideNavAdminSubmenu', 'ul'),
+    sideNavAdminOverview: new MockElement('sideNavAdminOverview', 'a'),
+    sideNavAdminUsers: new MockElement('sideNavAdminUsers', 'a'),
+    sideNavAdminTransactions: new MockElement('sideNavAdminTransactions', 'a'),
+    adminTabOverview: new MockElement('adminTabOverview', 'div'),
+    adminTabUsers: new MockElement('adminTabUsers', 'div'),
+    adminTabTransactions: new MockElement('adminTabTransactions', 'div'),
     btnOpenAccountModal: new MockElement('btnOpenAccountModal', 'button'),
     btnLogin: new MockElement('btnLogin', 'button'),
     btnNewFile: new MockElement('btnNewFile', 'button'),
@@ -2298,6 +2306,46 @@ async function main() {
     assert.strictEqual(elements.sideNavPricingQuota.getAttribute('aria-current'), null, 'Quota submenu removes aria-current on exit');
     assert.strictEqual(elements.sideNavPricingGroup.classList.contains('is-expanded'), false, 'Pricing group collapses on exit');
     assert.strictEqual(elements.sideNavPricing.getAttribute('aria-expanded'), 'false', 'Pricing parent aria-expanded collapses on exit');
+  });
+
+  await runTest('Admin Group Navigation: Expandable Admin dropdown & 3 submenu items switch panels cleanly', () => {
+    assert.ok(htmlSource.includes('id="sideNavAdminChevron"'), 'sideNavAdminChevron must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavAdminSubmenu"'), 'sideNavAdminSubmenu must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavAdminOverview"'), 'sideNavAdminOverview must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavAdminUsers"'), 'sideNavAdminUsers must exist in HTML');
+    assert.ok(htmlSource.includes('id="sideNavAdminTransactions"'), 'sideNavAdminTransactions must exist in HTML');
+    assert.ok(!htmlSource.includes('id="adminTabsBar"'), 'Inline #adminTabsBar should be replaced by sidebar dropdown');
+
+    const env = createTestEnvironment();
+    const { elements, sandbox } = env;
+    elements.adminSection.style.display = 'none';
+    const adminCalls = [];
+    sandbox.window.pdfLinguaAdmin = {
+      openAdminView: (tab) => {
+        adminCalls.push(tab);
+        elements.adminSection.style.display = 'block';
+      },
+    };
+
+    elements.sideNavAdmin.click();
+    assert.strictEqual(elements.adminSection.style.display, 'block', 'Clicking Admin parent opens #adminSection');
+    assert.strictEqual(elements.sideNavAdminItem.classList.contains('is-expanded'), true, 'Admin group expands on click');
+    assert.strictEqual(elements.sideNavAdminOverview.classList.contains('active'), true, 'Overview submenu item becomes active');
+
+    elements.sideNavAdminUsers.click();
+    assert.strictEqual(elements.sideNavAdminUsers.classList.contains('active'), true, 'Users submenu item becomes active');
+    assert.strictEqual(elements.sideNavAdminOverview.classList.contains('active'), false, 'Overview clears active state');
+
+    elements.sideNavAdminTransactions.click();
+    assert.strictEqual(elements.sideNavAdminTransactions.classList.contains('active'), true, 'Transactions submenu item becomes active');
+    assert.deepStrictEqual(adminCalls, ['overview', 'users', 'transactions'], 'Admin submenu items delegate target tab to openAdminView');
+
+    elements.sideNavAdminChevron.click();
+    assert.strictEqual(elements.sideNavAdminItem.classList.contains('is-expanded'), false, 'Clicking Admin chevron collapses submenu');
+
+    elements.sideNavDocuments.click();
+    assert.strictEqual(elements.sideNavAdminItem.classList.contains('is-expanded'), false, 'Leaving Admin view keeps group collapsed');
+    assert.strictEqual(elements.sideNavAdminTransactions.classList.contains('active'), false, 'Leaving Admin view clears submenu active state');
   });
 
   console.log('\n================================================================');

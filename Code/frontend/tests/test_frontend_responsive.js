@@ -1024,7 +1024,7 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
   await runner.run(vp.name, 'Admin Section: User table wrapper scrolls cleanly and toolbar fits card', async () => {
     await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
     await cdp.eval(`
-      const usersTabBtn = document.getElementById('adminTabBtnUsers');
+      const usersTabBtn = document.getElementById('sideNavAdminUsers');
       if (usersTabBtn) usersTabBtn.click();
       const overviewTab = document.getElementById('adminTabOverview');
       const usersTab = document.getElementById('adminTabUsers');

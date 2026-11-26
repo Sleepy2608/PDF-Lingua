@@ -529,6 +529,99 @@ runTest('Integration: fetchAdminStats triggers API request and updates Bento UI'
   assert.strictEqual(env.elements.distSegTranslate.style.width, '32%');
 });
 
+runTest('i18n Coverage: All admin HTML data-i18n keys resolve in both VI and EN dictionaries', () => {
+  const i18nSource = fs.readFileSync(path.resolve(__dirname, '../js/i18n.js'), 'utf8');
+  const i18nCtx = {
+    window: {},
+    document: {
+      documentElement: {},
+      querySelectorAll: () => [],
+      querySelector: () => null,
+      addEventListener: () => {},
+      dispatchEvent: () => {},
+      readyState: 'complete',
+    },
+    localStorage: { getItem: () => 'vi', setItem: () => {} },
+    CustomEvent: function (name, opts) { this.type = name; this.detail = opts?.detail; },
+  };
+  i18nCtx.window = i18nCtx;
+  vm.runInNewContext(i18nSource, i18nCtx);
+  const i18n = i18nCtx.window.i18n;
+  assert.ok(i18n, 'window.i18n must initialize');
+
+  const adminStart = htmlSource.indexOf('id="adminSection"');
+  const adminEnd = htmlSource.indexOf('id="processingModal"');
+  const sidebarStart = htmlSource.indexOf('id="sideNavAdminItem"');
+  const sidebarEnd = htmlSource.indexOf('id="sidebarRecentSection"');
+  const adminMarkup = htmlSource.slice(sidebarStart, sidebarEnd) + '\n' + htmlSource.slice(adminStart, adminEnd);
+
+  const keys = new Set();
+  for (const m of adminMarkup.matchAll(/data-i18n="([^"]+)"/g)) {
+    keys.add(m[1]);
+  }
+  for (const m of adminMarkup.matchAll(/data-i18n-attr="([^"]+)"/g)) {
+    m[1].split(',').forEach((pair) => {
+      const parts = pair.split(':');
+      if (parts.length === 2 && parts[1].trim()) keys.add(parts[1].trim());
+    });
+  }
+
+  assert.ok(keys.size >= 40, `Expected comprehensive admin i18n keys, found ${keys.size}`);
+  for (const lang of ['vi', 'en']) {
+    i18n.setLanguage(lang);
+    for (const key of keys) {
+      const translated = i18n.t(key);
+      assert.notStrictEqual(translated, key, `Missing ${lang} translation for key "${key}"`);
+      assert.ok(translated.trim().length > 0, `Empty ${lang} translation for key "${key}"`);
+    }
+  }
+});
+
+runTest('i18n Runtime Sync: Dynamic admin stats tooltips and labels switch cleanly to English', () => {
+  const i18nSource = fs.readFileSync(path.resolve(__dirname, '../js/i18n.js'), 'utf8');
+  const env = createAdminTestEnv();
+  const i18nSandbox = {
+    window: {},
+    document: {
+      documentElement: {},
+      querySelectorAll: () => [],
+      querySelector: () => null,
+      addEventListener: () => {},
+      dispatchEvent: () => {},
+      readyState: 'complete',
+    },
+    localStorage: { getItem: () => 'en', setItem: () => {} },
+    CustomEvent: function (name, opts) { this.type = name; this.detail = opts?.detail; },
+  };
+  i18nSandbox.window = i18nSandbox;
+  vm.runInNewContext(i18nSource, i18nSandbox);
+  i18nSandbox.window.i18n.setLanguage('en');
+
+  env.context.window.i18n = i18nSandbox.window.i18n;
+  env.admin.renderAdminStats({
+    total_users: 10,
+    active_users: 8,
+    locked_users: 2,
+    free_users: 7,
+    pro_users: 2,
+    admin_users: 1,
+    total_documents: 4,
+    total_storage_bytes: 1024,
+    services: {
+      extract_count: 5,
+      translate_count: 5,
+      summarize_count: 0,
+      chat_count: 0,
+      total_actions: 10,
+    },
+  });
+
+  assert.strictEqual(env.elements.statActiveUsers.textContent, 'Active: 8');
+  assert.strictEqual(env.elements.statLockedUsers.textContent, 'Locked: 2');
+  assert.strictEqual(env.elements.statStorageRaw.textContent, '1,024 bytes of data');
+  assert.strictEqual(env.elements.distSegExtract.title, 'Extract: 5 runs (50%)');
+});
+
 console.log('\n================================================================');
 console.log(`SUMMARY: ${passedTests}/${totalTests} tests passed (0 failed).`);
 console.log('================================================================');
