@@ -71,6 +71,7 @@ Code/backend/storage/
 # Personal stuffs & workspace
 graphify-out/
 .agents
+AGENTS.md
 .plan
 Code/backend/supabase/
 
