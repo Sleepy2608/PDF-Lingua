@@ -1022,6 +1022,46 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
     }
   });
 
+  await runner.run(vp.name, 'Admin Section: Overview Dashboard bento grid and service breakdown fit within viewport', async () => {
+    await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
+    await cdp.eval(`
+      const overviewTabBtn = document.getElementById('sideNavAdminOverview');
+      if (overviewTabBtn) overviewTabBtn.click();
+      const overviewTab = document.getElementById('adminTabOverview');
+      const usersTab = document.getElementById('adminTabUsers');
+      const accessLogsTab = document.getElementById('adminTabAccessLogs');
+      const txTab = document.getElementById('adminTabTransactions');
+      if (overviewTab) overviewTab.style.display = 'block';
+      if (usersTab) usersTab.style.display = 'none';
+      if (accessLogsTab) accessLogsTab.style.display = 'none';
+      if (txTab) txTab.style.display = 'none';
+      document.querySelector('#adminTabOverview .admin-bento-grid')?.scrollIntoView();
+    `);
+    await sleep(80);
+    const res = await evalWithHelpers(cdp, `
+      const grid = H.rectOf('#adminTabOverview .admin-bento-grid');
+      const heroCell = H.rectOf('#adminTabOverview .cell-hero-users');
+      const servicesCell = H.rectOf('#adminTabOverview .cell-services');
+      const servicesGrid = H.rectOf('#adminTabOverview .bento-services-grid');
+      return {
+        vw: H.vw,
+        docOvX: H.docOvX,
+        grid,
+        heroCell,
+        servicesCell,
+        servicesGrid,
+      };
+    `);
+    assert.strictEqual(res.docOvX, 0, `Admin overview dashboard horizontal overflow: ${res.docOvX}px`);
+    assert.ok(res.grid && res.grid.right <= res.vw + 1, 'Admin bento grid exceeds viewport');
+    if (res.heroCell) {
+      assert.ok(res.heroCell.right <= res.vw + 1, 'Hero user cell exceeds viewport');
+    }
+    if (res.servicesCell) {
+      assert.ok(res.servicesCell.right <= res.vw + 1, 'Services breakdown cell exceeds viewport');
+    }
+  });
+
   await runner.run(vp.name, 'Admin Section: Users table, pills, and toolbar stay single-line and inside bounds', async () => {
     await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
     await cdp.eval(`
