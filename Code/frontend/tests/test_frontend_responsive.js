@@ -1024,18 +1024,24 @@ async function testDocumentsHistoryAdmin(cdp, vp, runner) {
   await runner.run(vp.name, 'Admin Section: User table wrapper scrolls cleanly and toolbar fits card', async () => {
     await cdp.eval(SHOW_ONLY_SECTION('adminSection'));
     await cdp.eval(`
+      const usersTabBtn = document.getElementById('adminTabBtnUsers');
+      if (usersTabBtn) usersTabBtn.click();
+      const overviewTab = document.getElementById('adminTabOverview');
+      const usersTab = document.getElementById('adminTabUsers');
+      if (overviewTab) overviewTab.style.display = 'none';
+      if (usersTab) usersTab.style.display = 'block';
       document.getElementById('adminTableEmptyState').style.display = 'none';
       document.getElementById('adminUsersTableBody').innerHTML =
         '<tr><td>#1024</td><td>nguyenvana@pdflingua.edu.vn</td><td><span class="badge">PRO</span></td><td><span class="badge">Active</span></td><td>12</td><td>22/11/2026</td><td><button class="btn-action btn-action-role">Doi vai tro</button> <button class="btn-action btn-action-lock">Khoa</button></td></tr>';
-      document.querySelector('.admin-table-card')?.scrollIntoView();
+      document.querySelector('#adminTabUsers .admin-table-card')?.scrollIntoView();
     `);
     await sleep(80);
     const res = await evalWithHelpers(cdp, `
       return {
         vw: H.vw,
         docOvX: H.docOvX,
-        card: H.rectOf('.admin-table-card'),
-        wrap: H.rectOf('.admin-table-wrapper'),
+        card: H.rectOf('#adminTabUsers .admin-table-card'),
+        wrap: H.rectOf('#adminTabUsers .admin-table-wrapper'),
         search: H.rectOf('#adminSearchInput'),
       };
     `);
