@@ -112,12 +112,12 @@ Nếu có bất kỳ sự vi phạm nào về liêm chính học thuật, nhóm 
 - **  4.2. Hiện thực phân hệ lõi xử lý văn bản PDF và OCR nâng cao** .................... *Trang 28*
 - **  4.3. Hiện thực phân hệ Dịch thuật đa ngôn ngữ song song** .................... *Trang 30*
 - **  4.4. Hiện thực phân hệ AI Tóm tắt và Trợ lý hỏi đáp tài liệu (RAG)** .................... *Trang 31*
-- **  4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Native Ads** .................... *Trang 33*
-- **  4.6. Hiện thực phân hệ Quản trị hệ thống Admin và Giám sát hạn ngạch** .................... *Trang 34*
+- **  4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Chiến lược Kiếm tiền Kép** .................... *Trang 33*
+- **  4.6. Hiện thực phân hệ Quản trị hệ thống Admin Console, Kiểm toán IP & Bố cục Responsive** .................... *Trang 34*
 - **CHƯƠNG 5: KIỂM THỬ, ĐÁNH GIÁ CHẤT LƯỢNG VÀ QUY TRÌNH CI/CD** .................... *Trang 36*
 - **  5.1. Chiến lược kiểm thử tự động hóa (Test Pyramid)** .................... *Trang 36*
-- **  5.2. Kết quả kiểm thử Frontend (28/28 Suites PASSED)** .................... *Trang 37*
-- **  5.3. Kết quả kiểm thử Backend (12 Suites, 152 Test Cases PASSED)** .................... *Trang 38*
+- **  5.2. Kết quả kiểm thử Frontend (30/30 Suites PASSED)** .................... *Trang 37*
+- **  5.3. Kết quả kiểm thử Backend (16 Suites, 218 Test Cases PASSED)** .................... *Trang 38*
 - **  5.4. Đánh giá chất lượng bóc tách, OCR và dịch thuật (CER, WER)** .................... *Trang 39*
 - **  5.5. Đánh giá an toàn bảo mật và rà soát mã nguồn tự động** .................... *Trang 40*
 - **  5.6. Quy trình Tích hợp và Triển khai liên tục (CI/CD GitHub Actions)** .................... *Trang 41*
@@ -205,10 +205,10 @@ Dự án được tổ chức phát triển bài bản theo phương pháp Agile
 ## 4.4. Hiện thực phân hệ AI Tóm tắt và Trợ lý hỏi đáp tài liệu (RAG)
 
 
-## 4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Native Ads
+## 4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Chiến lược Kiếm tiền Kép
 
 
-## 4.6. Hiện thực phân hệ Quản trị hệ thống Admin và Giám sát hạn ngạch
+## 4.6. Hiện thực phân hệ Quản trị hệ thống Admin Console, Kiểm toán IP & Bố cục Responsive
 
 
 # CHƯƠNG 5: KIỂM THỬ, ĐÁNH GIÁ CHẤT LƯỢNG VÀ QUY TRÌNH CI/CD
@@ -217,10 +217,10 @@ Dự án được tổ chức phát triển bài bản theo phương pháp Agile
 ## 5.1. Chiến lược kiểm thử tự động hóa (Test Pyramid)
 
 
-## 5.2. Kết quả kiểm thử Frontend (28/28 Suites PASSED)
+## 5.2. Kết quả kiểm thử Frontend (30/30 Suites PASSED)
 
 
-## 5.3. Kết quả kiểm thử Backend (12 Suites, 152 Test Cases PASSED)
+## 5.3. Kết quả kiểm thử Backend (16 Suites, 218 Test Cases PASSED)
 
 
 ## 5.4. Đánh giá chất lượng bóc tách, OCR và dịch thuật (CER, WER)

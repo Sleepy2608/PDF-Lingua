@@ -445,12 +445,12 @@ def build_docx_and_md():
         ("  4.2. Hiện thực phân hệ lõi xử lý văn bản PDF và OCR nâng cao", "Trang 28"),
         ("  4.3. Hiện thực phân hệ Dịch thuật đa ngôn ngữ song song", "Trang 30"),
         ("  4.4. Hiện thực phân hệ AI Tóm tắt và Trợ lý hỏi đáp tài liệu (RAG)", "Trang 31"),
-        ("  4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Native Ads", "Trang 33"),
-        ("  4.6. Hiện thực phân hệ Quản trị hệ thống Admin và Giám sát hạn ngạch", "Trang 34"),
+        ("  4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Chiến lược Kiếm tiền Kép", "Trang 33"),
+        ("  4.6. Hiện thực phân hệ Quản trị hệ thống Admin Console, Kiểm toán IP & Bố cục Responsive", "Trang 34"),
         ("CHƯƠNG 5: KIỂM THỬ, ĐÁNH GIÁ CHẤT LƯỢNG VÀ QUY TRÌNH CI/CD", "Trang 36"),
         ("  5.1. Chiến lược kiểm thử tự động hóa (Test Pyramid)", "Trang 36"),
-        ("  5.2. Kết quả kiểm thử Frontend (28/28 Suites PASSED)", "Trang 37"),
-        ("  5.3. Kết quả kiểm thử Backend (12 Suites, 152 Test Cases PASSED)", "Trang 38"),
+        ("  5.2. Kết quả kiểm thử Frontend (30/30 Suites PASSED)", "Trang 37"),
+        ("  5.3. Kết quả kiểm thử Backend (16 Suites, 218 Test Cases PASSED)", "Trang 38"),
         ("  5.4. Đánh giá chất lượng bóc tách, OCR và dịch thuật (CER, WER)", "Trang 39"),
         ("  5.5. Đánh giá an toàn bảo mật và rà soát mã nguồn tự động", "Trang 40"),
         ("  5.6. Quy trình Tích hợp và Triển khai liên tục (CI/CD GitHub Actions)", "Trang 41"),
@@ -555,7 +555,7 @@ def build_docx_and_md():
     add_bullet(doc, "Sprint 4 (03/11 - 10/11/2026) - Dịch thuật fallback, Xuất file & Lịch sử cơ bản", "Cơ chế chịu lỗi dự phòng đa tầng (Google GTX & MyMemory), xuất kết quả TXT/PDF, thiết kế CSDL lịch sử, phân định quyền lợi gói Free (20MB) và Pro (100MB).")
     add_bullet(doc, "Sprint 5 (10/11 - 17/11/2026) - Quản trị Admin, Hạn mức, Avatar & Thanh toán Pro", "Admin Console chuyên sâu, bảo mật avatar magic bytes, xuất DOCX, xem trước PDF inline, nộp hồ sơ thiết kế UML và xây dựng API gói cước/hóa đơn thanh toán VietQR.")
     add_bullet(doc, "Sprint 6 (17/11 - 24/11/2026) - Tích hợp AI toàn diện & Mở rộng hệ thống", "Tóm tắt văn bản bằng LLM, Trợ lý AI hỏi đáp RAG chống ảo giác, AI guardrails bảo mật, bản địa hóa song ngữ Anh - Việt (i18n), Landing page Welcome, và quy trình CI/CD.")
-    add_bullet(doc, "Sprint 7 (22/11 - 29/11/2026) - Kiểm thử toàn diện, Triển khai & Nghiệm thu đồ án", "Nghiệm thu kiểm thử tự động (28 Frontend test suites, 12 Backend test suites), rà soát an toàn mã nguồn Secret Scanning, hoàn tất báo cáo kỹ thuật và hồ sơ chuyển giao đồ án.")
+    add_bullet(doc, "Sprint 7 (22/11 - 29/11/2026) - Kiểm thử toàn diện, Triển khai & Nghiệm thu đồ án", "Nghiệm thu kiểm thử tự động (30 Frontend test suites, 16 Backend test suites), rà soát an toàn mã nguồn Secret Scanning, hoàn tất báo cáo kỹ thuật và hồ sơ chuyển giao đồ án.")
 
     md_p("Dự án được tổ chức phát triển bài bản theo phương pháp Agile/Scrum qua 7 Sprint tuần, theo dõi trên Jira Software với mã dự án PDFL, phân bổ vào 16 Epics và 287 work items.")
 
@@ -671,6 +671,7 @@ def build_docx_and_md():
     add_bullet(doc, "Document (Tài liệu PDF)", "Quản lý tệp tải lên với document_id, user_id (khóa ngoại), filename, file_path, file_size_bytes, total_pages, is_scanned, created_at.")
     add_bullet(doc, "Subscription (Gói thuê bao Pro)", "Quản lý thời hạn thuê bao gói cước với plan_code (PRO_MONTHLY, PRO_YEARLY), status (ACTIVE, EXPIRED), start_date, end_date, auto_renew.")
     add_bullet(doc, "BillingHistory (Lịch sử thanh toán & Hóa đơn)", "Lưu trữ mã giao dịch order_code, số tiền amount, phương thức payment_method (VIETQR_NAPAS247), trạng thái giao dịch (PENDING, PAID, CANCELLED).")
+    add_bullet(doc, "AccessLog (Nhật ký truy cập IP & Thiết bị)", "Lưu trữ định danh log_id, user_id (khóa ngoại), địa chỉ ip_address, chuỗi thông tin user_agent (trình duyệt, hệ điều hành), hành động action (LOGIN, REGISTER) và dấu thời gian created_at phục vụ kiểm toán an ninh và phát hiện truy cập bất thường.")
     add_bullet(doc, "ProcessingHistory (Nhật ký xử lý tài liệu)", "Lưu trữ tác vụ trích xuất, dịch thuật hoặc tóm tắt AI với processing_type, language_from, language_to, character_count, processing_time_ms.")
 
     add_heading_2(doc, "3.4. Thiết kế các luồng xử lý và tương tác API thời gian thực")
@@ -726,17 +727,46 @@ def build_docx_and_md():
     add_bullet(doc, "Cơ chế Trợ lý hỏi đáp RAG (Retrieval-Augmented Generation)", "Câu hỏi của người dùng được đối chiếu với các đoạn văn bản trong tài liệu bằng thuật toán tính độ tương đồng ngữ nghĩa. Chỉ các đoạn văn bản có độ liên quan cao nhất mới được gắn kèm vào System Prompt làm bằng chứng ngữ cảnh.")
     add_bullet(doc, "Hàng rào bảo mật AI (Security Guardrails)", "Hệ thống xây dựng 2 tầng bảo vệ: (1) Bộ lọc chống Prompt Injection (phát hiện các truy vấn phá rào như 'Forget instructions', 'Show system prompt'); (2) Bộ lọc khử rò rỉ dữ liệu nhạy cảm PII Redaction (tự động phát hiện và che giấu API key, token, mật khẩu, số thẻ tín dụng khỏi câu trả lời của AI).")
 
-    add_heading_2(doc, "4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Native Ads")
-    md_h2("4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Native Ads")
-    add_p(doc, "Nhằm duy trì hạ tầng vận hành và mô hình kinh doanh Freemium bền vững:", first_line_indent=0.5)
-    add_bullet(doc, "Cổng thanh toán tự động VietQR Napas247", "Phát sinh mã VietQR chuẩn ngân hàng với số tiền và mã giao dịch duy nhất. Tích hợp webhook xác nhận tự động (Idempotent Webhook), nâng cấp tài khoản lên Pro VIP trong vòng dưới 3 giây sau khi người dùng chuyển khoản.")
-    add_bullet(doc, "Cơ chế tài trợ bản ngữ (In-House Native Sponsorship)", "Tài khoản Free hiển thị một thẻ tài trợ học thuật tinh tế ở chân Sidebar. Khi người dùng nâng cấp Pro, thẻ tài trợ biến mất hoàn toàn, đáp ứng đúng cam kết '100% Không quảng cáo' của gói Pro VIP.")
+    add_heading_2(doc, "4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Chiến lược Kiếm tiền Kép")
+    md_h2("4.5. Hiện thực phân hệ Nâng cấp Pro, Cổng thanh toán VietQR và Chiến lược Kiếm tiền Kép")
+    add_p(doc, "Nhằm duy trì hạ tầng vận hành máy chủ bền vững và tạo nguồn tài chính tái đầu tư nghiên cứu, PDF-Lingua triển khai Động cơ Doanh thu Kép (Dual-Engine Monetization Strategy) kết hợp chặt chẽ giữa dịch vụ thuê bao người dùng cuối (B2C) và quảng cáo tài trợ doanh nghiệp (B2B):", first_line_indent=0.5)
 
-    add_heading_2(doc, "4.6. Hiện thực phân hệ Quản trị hệ thống Admin và Giám sát hạn ngạch")
-    md_h2("4.6. Hiện thực phân hệ Quản trị hệ thống Admin và Giám sát hạn ngạch")
-    add_p(doc, "Trang điều khiển quản trị (Admin Console) cung cấp các năng lực giám sát tập trung:", first_line_indent=0.5)
-    add_bullet(doc, "Quản lý tài khoản toàn diện", "Tìm kiếm người dùng theo email, kích hoạt hoặc vô hiệu hóa tài khoản vi phạm, điều chỉnh trực tiếp vai trò người dùng (Free sang Pro hoặc Admin).")
-    add_bullet(doc, "Theo dõi định mức dịch vụ", "Theo dõi số lượng ký tự OCR đã quét, số lượng request AI đã gọi và số lượng giao dịch thanh toán trong ngày, giúp kiểm soát chi phí API đám mây an toàn.")
+    add_bullet(doc, "Động cơ 1: Doanh thu Thuê bao Gói Pro VIP (B2C SaaS Subscription)", 
+               "Người dùng trả phí định kỳ theo chu kỳ tháng (49.000 VNĐ / tháng) hoặc chu kỳ năm (399.000 VNĐ / năm, tiết kiệm 32%). Khi nâng cấp Pro, người dùng được mở rộng dung lượng tệp từ 20MB lên 100MB, tăng hạn mức OCR từ 100 trang lên 500 trang/tệp, mở khóa Trợ lý AI Copilot chuyên sâu 15 câu hỏi/ngày, hỗ trợ xuất định dạng Microsoft Word (.docx), định tuyến xử lý ưu tiên (Fast-track Worker) và đặc biệt là đặc quyền 100% Không quảng cáo (Ad-Free Experience).")
+
+    add_bullet(doc, "Cổng thanh toán tự động VietQR Napas247 & SePay Webhook", 
+               "Tận dụng hạ tầng ngân hàng số nội địa Việt Nam qua chuẩn VietQR EMVCo với mã nội dung chuyển khoản duy nhất (SUB-11-XXXXX-XX). Hệ thống tích hợp SePay Webhook tự động đối soát giao dịch an toàn (Idempotent Webhook), xác thực số tiền chuyển khoản và tự động kích hoạt nâng hạng tài khoản sang vai trò PRO trong vòng dưới 3 giây mà không cần người dùng tải lại trang.")
+
+    add_bullet(doc, "Động cơ 2: Doanh thu Quảng cáo & Tài trợ Bản ngữ (B2B Native Ads & Sponsorship)", 
+               "Khai thác giá trị từ 95% tệp người dùng miễn phí (Free Tier & Khách vãng lai) để biến chi phí vận hành thành dòng tiền bù đắp hạ tầng. Hệ thống thiết kế 4 vị trí hiển thị chuẩn mực theo phong cách Apple Human Interface Guidelines: (1) Slot 1: Sidebar Sponsor Box ở đáy thanh điều hướng; (2) Slot 2: Processing Progress Ad xuất hiện trong 3 - 10 giây chờ phân tích OCR/dịch; (3) Slot 3: Workspace Bottom Strip dạng dải băng chân trang cố định; (4) Slot 4: Welcome Landing Showcase tại trang chủ giới thiệu đối tác.")
+
+    add_bullet(doc, "Cơ chế In-House Ad Engine & Role-Based Ad Suppression", 
+               "Hệ thống tự phục vụ banner từ API nội bộ (/api/ads/active) giúp tránh việc bị tiện ích AdBlock chặn, đồng thời kiểm duyệt khắt khe chỉ tiếp nhận tài trợ giáo dục, học bổng, du học, sách và công cụ học tập. Bộ lọc phân quyền tự động (Role-Based Ad Suppression) ẩn 100% mọi banner tài trợ khi người dùng đăng nhập tài khoản PRO hoặc ADMIN, bảo đảm không gian làm việc tĩnh lặng tối đa.")
+
+    add_bullet(doc, "Bánh đà cộng hưởng doanh thu (The Monetization Flywheel)", 
+               "Hai phương thức tương hỗ tạo thành chu trình tăng trưởng khép kín: Sự xuất hiện của banner tài trợ ở tài khoản Free đóng vai trò đòn bẩy tâm lý tự nhiên thôi thúc người dùng nâng cấp Pro (Conversion Hook); doanh thu định kỳ từ gói Pro tài trợ chi phí máy chủ và nâng cấp AI; từ đó thu hút thêm hàng ngàn sinh viên mới tham gia hệ sinh thái.")
+
+    add_heading_2(doc, "4.6. Hiện thực phân hệ Quản trị hệ thống Admin Console, Kiểm toán IP & Bố cục Responsive")
+    md_h2("4.6. Hiện thực phân hệ Quản trị hệ thống Admin Console, Kiểm toán IP & Bố cục Responsive")
+    add_p(doc, "Trang điều khiển quản trị (Admin Console) được thiết kế hiện đại, tinh gọn theo tiêu chuẩn chống AI-Slop (chống tràn viền, loại bỏ gradient lòe loẹt, chuẩn hóa typography và khoảng cách lề) với 4 phân hệ tab con chuyên biệt:", first_line_indent=0.5)
+
+    add_bullet(doc, "Tab 1: Tổng quan hệ thống (System Overview Dashboard)", 
+               "Giám sát tập trung các chỉ số sống còn của toàn hệ thống thời gian thực: Tổng số tài liệu đã xử lý, tổng số người dùng phân theo vai trò, tổng dung lượng lưu trữ đĩa cứng, tổng doanh thu thanh toán VietQR và biểu đồ phân bổ tải.")
+
+    add_bullet(doc, "Tab 2: Quản lý Tài khoản (User Directory Management)", 
+               "Tra cứu người dùng nhanh theo email/họ tên, bộ lọc kết hợp theo vai trò (Admin, Pro, Free) và trạng thái tài khoản. Hỗ trợ thao tác gán hoặc hạ quyền Pro trực tiếp, khóa hoặc mở khóa tài khoản vi phạm với modal xác nhận ngữ cảnh an toàn (Contextual Confirm Modal) ngăn chặn thao tác nhầm lẫn và cấm tự khóa tài khoản chính mình.")
+
+    add_bullet(doc, "Tab 3: Số lượng truy cập & Kiểm toán IP (Access Logs & IP Audit)", 
+               "Ghi nhận nhật ký truy cập chi tiết mỗi khi người dùng đăng nhập hoặc đăng ký (thực thể AccessLog): lưu trữ địa chỉ IP, User-Agent trình duyệt và hệ điều hành, dấu thời gian thực thi. Tự động thống kê số IP duy nhất trong 24 giờ và kích hoạt cảnh báo an ninh đa IP (Multi-IP Warning) khi phát hiện một tài khoản đăng nhập từ nhiều dải IP bất thường.")
+
+    add_bullet(doc, "Đồ thị Lưu lượng truy cập 14 ngày chuẩn GitHub (GitHub-Traffic-Style Graphs)", 
+               "Trực quan hóa dữ liệu truy cập 14 ngày gần nhất bằng 2 đồ thị SVG tương tác độc lập: (1) Tổng lượt truy cập (Total Visits) và (2) Khách truy cập duy nhất (Unique Visitors theo distinct IP). Đồ thị được thiết kế chuyên nghiệp với trục tọa độ, đường lưới phụ trợ, vùng bóng đổ gradient mờ dịu mắt, điểm nút dữ liệu tương tác và tooltip hiển thị số liệu chi tiết theo từng ngày.")
+
+    add_bullet(doc, "Tab 4: Giao dịch & Đối soát VietQR (Transaction Management)", 
+               "Theo dõi toàn bộ lịch sử nạp gói Pro của người dùng, mã giao dịch, số tiền và trạng thái. Cung cấp nút 'Hoàn tất' để quản trị viên xác nhận giao dịch đã xử lý (chuyển sang PaymentStatus.COMPLETED) và nút 'Từ chối' với quy trình xử lý an toàn: khi từ chối giao dịch không hợp lệ, hệ thống tự động hủy gói cước của người dùng (nếu có sở hữu) và hạ cấp vai trò tài khoản từ PRO về FREE nhằm ngăn chặn gian lận.")
+
+    add_bullet(doc, "Bản địa hóa Đa ngôn ngữ (i18n) & Phân trang đồng bộ", 
+               "Toàn bộ giao diện Admin, các tab con, tiêu đề cột dữ liệu, trạng thái giao dịch, modal xác nhận và tooltip đều được bản địa hóa song ngữ Anh - Việt đồng bộ 100%. Hệ thống chân trang phân trang (Pagination) ở tất cả các bảng (Quản lý tài khoản, Nhật ký IP, Giao dịch VietQR, Lịch sử xử lý và Bảng giá) được đồng bộ huy hiệu số trang màu đỏ (#E5322D) sắc nét, nhất quán nhận diện thương hiệu.")
 
     doc.add_page_break()
 
@@ -755,12 +785,13 @@ def build_docx_and_md():
     add_bullet(doc, "Tầng Security & Guardrails Testing", "Kiểm thử ma trận bảo mật (Security Matrix), ngăn chặn tấn công Path Traversal, kiểm tra giới hạn kích thước file tải lên và các kịch bản tiêm mã Prompt Injection vào Trợ lý AI.")
     add_bullet(doc, "Tầng End-to-End Navigation Testing", "Kiểm thử luồng điều hướng SPA, chống vòng lặp chuyển hướng (anti-redirect loop), kiểm tra tính tương thích đa ngôn ngữ (i18n parity) và bảo toàn style CSS.")
 
-    add_heading_2(doc, "5.2. Kết quả kiểm thử Frontend (28/28 Suites PASSED)")
-    md_h2("5.2. Kết quả kiểm thử Frontend (28/28 Suites PASSED)")
-    add_p(doc, "Toàn bộ 28 bộ kiểm thử Frontend độc lập trong Code/frontend/tests/ được thực thi trên môi trường Node.js 20 thuần và đạt kết quả xuất sắc 28/28 PASSED (100% Green):", first_line_indent=0.5)
+    add_heading_2(doc, "5.2. Kết quả kiểm thử Frontend (30/30 Suites PASSED)")
+    md_h2("5.2. Kết quả kiểm thử Frontend (30/30 Suites PASSED)")
+    add_p(doc, "Toàn bộ 30 bộ kiểm thử Frontend độc lập trong Code/frontend/tests/ được thực thi trên môi trường Node.js 20 thuần và đạt kết quả xuất sắc 30/30 PASSED (100% Green):", first_line_indent=0.5)
 
     fe_tests = [
         ("test_frontend_admin_service_usage.js", "Kiểm thử giao diện Admin theo dõi hạn ngạch sử dụng", "PASS"),
+        ("test_frontend_admin_users_and_tx.js", "Kiểm thử quản trị người dùng, nhật ký IP, đồ thị traffic và VietQR", "PASS"),
         ("test_frontend_ai_copilot.js", "Kiểm thử tương tác khung chat AI Copilot và hiển thị RAG", "PASS"),
         ("test_frontend_ai_summary.js", "Kiểm thử tính năng tóm tắt văn bản và sao chép kết quả", "PASS"),
         ("test_frontend_avatar_crop.js", "Kiểm thử modal cắt xén và điều chỉnh kích thước avatar", "PASS"),
@@ -780,6 +811,7 @@ def build_docx_and_md():
         ("test_frontend_pdf_preview.js", "Kiểm thử xem trước trang PDF trực quan trên giao diện", "PASS"),
         ("test_frontend_pricing.js", "Kiểm thử bảng giá, modal VietQR và kích hoạt gói Pro", "PASS"),
         ("test_frontend_quota_dashboard.js", "Kiểm thử bảng theo dõi hạn mức dung lượng người dùng", "PASS"),
+        ("test_frontend_responsive.js", "Kiểm thử kiểm soát co giãn bố cục Responsive trên Desktop và Mobile", "PASS"),
         ("test_frontend_role_limits.js", "Kiểm thử giới hạn quyền lợi giữa tài khoản Free và Pro", "PASS"),
         ("test_frontend_routing_and_navigation.js", "Kiểm thử điều hướng SPA và chống lặp vòng lặp redirect", "PASS"),
         ("test_frontend_sidebar.js", "Kiểm thử thu phóng Sidebar bằng chuột và phím tắt Ctrl+B", "PASS"),
@@ -807,11 +839,15 @@ def build_docx_and_md():
             align_mode = WD_ALIGN_PARAGRAPH.CENTER if c_idx == 2 else WD_ALIGN_PARAGRAPH.LEFT
             format_cell_text(c, val, align=align_mode, bold=is_bold, font_size=11)
 
-    add_heading_2(doc, "5.3. Kết quả kiểm thử Backend (12 Suites, 152 Test Cases PASSED)")
-    md_h2("5.3. Kết quả kiểm thử Backend (12 Suites, 152 Test Cases PASSED)")
-    add_p(doc, "Trên môi trường Pytest, 12 bộ kiểm thử Backend trọng tâm bao phủ 152 kịch bản chi tiết đã được chạy tự động trên CSDL SQLite in-memory độc lập và đạt kết quả 152/152 PASSED (100% Green, thời gian thực thi: 1 phút 10 giây):", first_line_indent=0.5)
+    add_heading_2(doc, "5.3. Kết quả kiểm thử Backend (16 Suites, 218 Test Cases PASSED)")
+    md_h2("5.3. Kết quả kiểm thử Backend (16 Suites, 218 Test Cases PASSED)")
+    add_p(doc, "Trên môi trường Pytest, 16 bộ kiểm thử Backend trọng tâm bao phủ 218 kịch bản chi tiết đã được chạy tự động trên CSDL SQLite in-memory độc lập và đạt kết quả 218/218 PASSED (100% Green, thời gian thực thi: 1 phút 15 giây):", first_line_indent=0.5)
 
     be_suites = [
+        ("test_admin_management.py", "Kiểm thử quản trị Admin: User, IP Access Logs, Traffic 14 ngày, VietQR", "19 test cases", "PASS"),
+        ("test_admin_seeding.py", "Kiểm thử khởi tạo tài khoản quản trị viên an toàn và phân quyền", "4 test cases", "PASS"),
+        ("test_database_backup.py", "Kiểm thử tự động sao lưu và khôi phục CSDL SQLite WAL / PostgreSQL", "12 test cases", "PASS"),
+        ("test_page_translation_pipeline.py", "Kiểm thử pipeline dịch thuật phân trang và lưu trữ bất đồng bộ", "31 test cases", "PASS"),
         ("test_document_model.py", "Kiểm thử thực thể Document, khóa ngoại User và cascade delete", "3 test cases", "PASS"),
         ("test_blank_page.py", "Kiểm thử phát hiện trang trắng và lọc nhiễu ảnh scan", "4 test cases", "PASS"),
         ("test_avatar_schema.py", "Kiểm thử schema avatar, migration an toàn và RBAC profile", "8 test cases", "PASS"),
@@ -861,8 +897,8 @@ def build_docx_and_md():
     add_heading_2(doc, "5.6. Quy trình Tích hợp và Triển khai liên tục (CI/CD GitHub Actions)")
     md_h2("5.6. Quy trình Tích hợp và Triển khai liên tục (CI/CD GitHub Actions)")
     add_p(doc, "Hệ thống CI/CD được thiết lập hoàn chỉnh tại .github/workflows/ci.yml, tự động kích hoạt mỗi khi có thao tác push hoặc mở Pull Request trên các nhánh main, master, docs, feat/**:", first_line_indent=0.5)
-    add_bullet(doc, "Job 1: Frontend Test Suites", "Kiểm tra tuân thủ ký tự ASCII -> Kiểm tra cú pháp JS (node -c) -> Kiểm tra cân bằng ngoặc CSS -> Quét động và thực thi toàn bộ 28 Frontend test suites trong 3-5 giây.")
-    add_bullet(doc, "Job 2: Backend Tests & Quality", "Cài đặt Python 3.12 -> Rà soát lỗi cú pháp nghiêm trọng với Ruff -> Quét secret kho mã nguồn với scan_secrets.py -> Khởi tạo CSDL SQLite -> Thực thi 12 bộ Pytest với 152 test cases.")
+    add_bullet(doc, "Job 1: Frontend Test Suites", "Kiểm tra tuân thủ ký tự ASCII -> Kiểm tra cú pháp JS (node -c) -> Kiểm tra cân bằng ngoặc CSS -> Quét động và thực thi toàn bộ 30 Frontend test suites trong 3-5 giây.")
+    add_bullet(doc, "Job 2: Backend Tests & Quality", "Cài đặt Python 3.12 -> Rà soát lỗi cú pháp nghiêm trọng với Ruff -> Quét secret kho mã nguồn với scan_secrets.py -> Khởi tạo CSDL SQLite -> Thực thi 16 bộ Pytest với 218 test cases.")
     add_bullet(doc, "Triển khai đám mây (Cloud Deployment)", "Frontend được triển khai tự động trên hạ tầng đám mây toàn cầu Vercel tại địa chỉ chính thức https://pdflingua.vercel.app với chứng chỉ SSL/TLS bảo mật tuyệt đối.")
 
     doc.add_page_break()
@@ -885,7 +921,7 @@ def build_docx_and_md():
 
     contrib_data = [
         ("Nguyễn Lê Huy Tâm", "056206011188", "Trưởng nhóm", "152 tasks (53%)", "100%", "Thiết kế kiến trúc hệ thống 3-Tier; phát triển Backend FastAPI; CSDL SQLAlchemy; Core trích xuất PDF; phân hệ OCR & Deskew; Động cơ dịch thuật; Phân hệ AI Tóm tắt & Trợ lý RAG; AI Guardrails; Quản trị Admin; Tích hợp VietQR; Pipeline CI/CD GitHub Actions; Biên soạn báo cáo kỹ thuật."),
-        ("Huỳnh Đình Chấn", "077206002307", "Thành viên", "110 tasks (38%)", "100%", "Thiết kế và lập trình toàn bộ giao diện người dùng UI/UX Vanilla ES6+; Dual-Pane Workspace; Modal xác thực & Đăng nhập; Tiền xử lý ảnh OCR; Thiết kế Lược đồ Use Case & Lược đồ Lớp UML; Bộ công cụ Benchmark hiệu năng; Đo lường CER/WER; 28 Frontend test suites."),
+        ("Huỳnh Đình Chấn", "077206002307", "Thành viên", "110 tasks (38%)", "100%", "Thiết kế và lập trình toàn bộ giao diện người dùng UI/UX Vanilla ES6+; Dual-Pane Workspace; Modal xác thực & Đăng nhập; Tiền xử lý ảnh OCR; Thiết kế Lược đồ Use Case & Lược đồ Lớp UML; Bộ công cụ Benchmark hiệu năng; Đo lường CER/WER; 30 Frontend test suites."),
         ("Toàn thể Nhóm 19", "Nhóm 19", "Phối hợp chung", "25 tasks (9%)", "100%", "Khảo sát nghiệp vụ ban đầu; họp Sprint Planning & Retrospective hàng tuần; kiểm thử chéo toàn hệ thống; diễn tập kịch bản demo bảo vệ trước hội đồng.")
     ]
 
