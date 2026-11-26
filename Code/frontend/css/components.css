@@ -2221,17 +2221,25 @@
   display: inline-flex;
 }
 
+/* Ensure main viewport child stretches full width cleanly */
+.app-main-viewport > main {
+  width: 100%;
+  flex: 1;
+}
+
 /* Admin Section Layout */
 .admin-section {
+  width: 100%;
   padding: 2.5rem 0 5rem;
   background-color: var(--bg-subtle);
   min-height: calc(100vh - 72px);
 }
 
 .admin-container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 /* Admin Header Card */
@@ -3356,6 +3364,109 @@
   background: var(--text-primary, #0F172A);
   color: #FFFFFF;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+}
+
+/* Admin VietQR Transactions & Revenue Card */
+.admin-tx-card {
+  margin-top: 1.75rem;
+}
+
+.admin-tx-summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tx-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.tx-summary-pill.revenue {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+
+.tx-summary-pill.pending {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.tx-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tx-status-pill.pending {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.tx-status-pill.completed {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #6EE7B7;
+}
+
+.tx-status-pill.failed,
+.tx-status-pill.expired {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FCA5A5;
+}
+
+.btn-tx-approve {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: #059669;
+  border: 1px solid #047857;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-tx-approve:hover {
+  background: #047857;
+}
+
+.btn-tx-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-tx-reject:hover {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
 }
 
 /* High-Impact Action Confirmation Modal */

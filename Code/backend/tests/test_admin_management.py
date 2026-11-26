@@ -348,3 +348,79 @@ def test_admin_operations_on_nonexistent_user_returns_404(admin_test_env):
     res_role = client.patch(f"/api/admin/users/{non_existent_id}/role", json={"role": "pro"}, headers=headers)
     assert res_role.status_code == 404
     assert res_role.json()["error_code"] == "NOT_FOUND"
+
+
+# ── Admin VietQR Transaction Management ──────────────────────────────────
+
+
+def test_admin_transactions_list_approve_and_reject(admin_test_env):
+    from app.models.subscription import PaymentMethod, PaymentStatus, PaymentTransaction
+    from app.services.subscription_service import SubscriptionService
+
+    db_session = admin_test_env["session"]
+    free_user = admin_test_env["free"]
+    admin_headers = {"Authorization": f"Bearer {admin_test_env['admin_token']}"}
+    free_headers = {"Authorization": f"Bearer {admin_test_env['free_token']}"}
+
+    plans = SubscriptionService.ensure_plans_seeded(db_session)
+    monthly_plan = plans["pro_monthly"]
+
+    tx_pending = PaymentTransaction(
+        transaction_code="TX-ADMIN-TEST-001",
+        user_id=free_user.id,
+        plan_id=monthly_plan.id,
+        amount_vnd=monthly_plan.price_vnd,
+        payment_method=PaymentMethod.VIETQR.value,
+        payment_status=PaymentStatus.PENDING.value,
+        payment_note="PDFLINGUA TXADMINTEST001",
+    )
+    tx_reject = PaymentTransaction(
+        transaction_code="TX-ADMIN-TEST-002",
+        user_id=free_user.id,
+        plan_id=monthly_plan.id,
+        amount_vnd=monthly_plan.price_vnd,
+        payment_method=PaymentMethod.VIETQR.value,
+        payment_status=PaymentStatus.PENDING.value,
+        payment_note="PDFLINGUA TXADMINTEST002",
+    )
+    db_session.add(tx_pending)
+    db_session.add(tx_reject)
+    db_session.commit()
+
+    # 1. Non-admin forbidden
+    res_forbidden = client.get("/api/admin/transactions", headers=free_headers)
+    assert res_forbidden.status_code == 403
+
+    # 2. Admin lists transactions
+    res_list = client.get("/api/admin/transactions?status=pending", headers=admin_headers)
+    assert res_list.status_code == 200
+    data = res_list.json()["data"]
+    assert data["pending_count"] >= 2
+    codes = [item["transaction_code"] for item in data["items"]]
+    assert "TX-ADMIN-TEST-001" in codes
+    assert "TX-ADMIN-TEST-002" in codes
+
+    # 3. Admin approves tx_pending -> upgrades free_user to PRO
+    res_approve = client.post(
+        "/api/admin/transactions/TX-ADMIN-TEST-001/approve",
+        headers=admin_headers,
+    )
+    assert res_approve.status_code == 200
+    assert res_approve.json()["data"]["payment_status"] == "completed"
+
+    db_session.refresh(free_user)
+    assert free_user.role == UserRole.PRO
+
+    # 4. Admin rejects tx_reject -> status becomes failed
+    res_reject = client.post(
+        "/api/admin/transactions/TX-ADMIN-TEST-002/reject",
+        headers=admin_headers,
+    )
+    assert res_reject.status_code == 200
+    assert res_reject.json()["data"]["payment_status"] == "failed"
+
+    # 5. Revenue summary updated
+    res_completed = client.get("/api/admin/transactions?status=completed", headers=admin_headers)
+    assert res_completed.status_code == 200
+    assert res_completed.json()["data"]["total_revenue_vnd"] >= monthly_plan.price_vnd
+

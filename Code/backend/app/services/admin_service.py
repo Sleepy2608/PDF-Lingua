@@ -17,10 +17,13 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
+from app.models.subscription import PaymentStatus, PaymentTransaction, PricingPlan
 from app.models.user import User, UserRole
 from app.schemas.admin import (
     AdminServiceUsageStats,
     AdminStatsResponse,
+    AdminTransactionItem,
+    AdminTransactionListResponse,
     AdminUserListItem,
     AdminUserListResponse,
 )
@@ -235,4 +238,131 @@ class AdminService:
         db.commit()
         db.refresh(target_user)
         return target_user
+
+    # ── Payment & VietQR Transactions ──────────────────────────────────
+
+    @staticmethod
+    def _format_vnd(amount: int) -> str:
+        return f"{amount:,}".replace(",", ".") + "đ"
+
+    @staticmethod
+    def list_transactions(
+        db: Session,
+        page: int = 1,
+        limit: int = 10,
+        search: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> AdminTransactionListResponse:
+        """Query all payment transactions with optional status filter, search, and revenue totals."""
+        safe_page = max(1, page)
+        safe_limit = min(max(1, limit), 100)
+
+        # Global revenue & status counters
+        total_revenue_vnd = (
+            db.query(func.coalesce(func.sum(PaymentTransaction.amount_vnd), 0))
+            .filter(PaymentTransaction.payment_status == PaymentStatus.COMPLETED.value)
+            .scalar()
+            or 0
+        )
+        pending_count = (
+            db.query(func.count(PaymentTransaction.id))
+            .filter(PaymentTransaction.payment_status == PaymentStatus.PENDING.value)
+            .scalar()
+            or 0
+        )
+        completed_count = (
+            db.query(func.count(PaymentTransaction.id))
+            .filter(PaymentTransaction.payment_status == PaymentStatus.COMPLETED.value)
+            .scalar()
+            or 0
+        )
+
+        query = db.query(PaymentTransaction).join(User, PaymentTransaction.user_id == User.id)
+
+        if status and status.strip().lower() not in ("all", ""):
+            query = query.filter(PaymentTransaction.payment_status == status.strip().lower())
+
+        if search and search.strip():
+            kw = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    PaymentTransaction.transaction_code.ilike(kw),
+                    PaymentTransaction.payment_note.ilike(kw),
+                    User.email.ilike(kw),
+                    User.full_name.ilike(kw),
+                )
+            )
+
+        total_count = query.count()
+        total_pages = max(1, math.ceil(total_count / safe_limit))
+        offset = (safe_page - 1) * safe_limit
+
+        records = (
+            query.order_by(PaymentTransaction.created_at.desc())
+            .offset(offset)
+            .limit(safe_limit)
+            .all()
+        )
+
+        items: list[AdminTransactionItem] = []
+        for tx in records:
+            user = tx.user or db.query(User).filter(User.id == tx.user_id).first()
+            plan = tx.plan or db.query(PricingPlan).filter(PricingPlan.id == tx.plan_id).first()
+            items.append(
+                AdminTransactionItem(
+                    id=tx.id,
+                    transaction_code=tx.transaction_code,
+                    user_id=tx.user_id,
+                    user_email=user.email if user else f"user-{tx.user_id}",
+                    user_name=user.full_name if user else None,
+                    plan_code=plan.code if plan else "pro_monthly",
+                    plan_name=plan.name if plan else "Gói Pro VIP",
+                    amount_vnd=tx.amount_vnd,
+                    amount_display=AdminService._format_vnd(tx.amount_vnd),
+                    payment_method=tx.payment_method,
+                    payment_status=tx.payment_status,
+                    payment_note=tx.payment_note,
+                    paid_at=tx.paid_at,
+                    created_at=tx.created_at,
+                )
+            )
+
+        return AdminTransactionListResponse(
+            items=items,
+            total_count=total_count,
+            page=safe_page,
+            limit=safe_limit,
+            total_pages=total_pages,
+            total_revenue_vnd=int(total_revenue_vnd),
+            total_revenue_display=AdminService._format_vnd(int(total_revenue_vnd)),
+            pending_count=int(pending_count),
+            completed_count=int(completed_count),
+        )
+
+    @staticmethod
+    def reject_transaction(
+        db: Session,
+        transaction_code: str,
+    ) -> PaymentTransaction:
+        """Mark a pending payment transaction as failed/rejected."""
+        code = (transaction_code or "").strip()
+        tx = (
+            db.query(PaymentTransaction)
+            .filter(PaymentTransaction.transaction_code == code)
+            .first()
+        )
+        if not tx:
+            raise NotFoundException(
+                message=f"Không tìm thấy giao dịch '{code}'.",
+                details={"transaction_code": code},
+            )
+        if tx.payment_status != PaymentStatus.PENDING.value:
+            raise BadRequestException(
+                message=f"Chỉ có thể từ chối giao dịch đang ở trạng thái chờ duyệt (hiện tại: {tx.payment_status}).",
+                error_code="INVALID_TRANSACTION_STATE",
+            )
+        tx.payment_status = PaymentStatus.FAILED.value
+        db.commit()
+        db.refresh(tx)
+        return tx
 

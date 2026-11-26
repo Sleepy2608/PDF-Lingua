@@ -86,3 +86,40 @@ class UserRoleUpdateRequest(BaseModel):
     """Payload to elevate or demote a user role."""
 
     role: UserRole = Field(..., description="Target role to assign: free | pro | admin.")
+
+
+# ── Payment & VietQR Transaction Management ───────────────────────
+
+class AdminTransactionItem(BaseModel):
+    """Payment transaction summary item displayed in the admin billing table."""
+
+    id: int = Field(..., description="Unique transaction database ID.")
+    transaction_code: str = Field(..., description="Unique VietQR reference code.")
+    user_id: int = Field(..., description="ID of user who initiated the payment.")
+    user_email: str = Field(..., description="Email of the user.")
+    user_name: Optional[str] = Field(None, description="Display name of the user.")
+    plan_code: str = Field(..., description="Target plan code (pro_monthly / pro_yearly).")
+    plan_name: str = Field(..., description="Human-readable plan name.")
+    amount_vnd: int = Field(..., description="Amount in VND.")
+    amount_display: str = Field(..., description="Formatted VND string.")
+    payment_method: str = Field(..., description="Payment method (vietqr, etc.).")
+    payment_status: str = Field(..., description="Status: pending | completed | failed | expired.")
+    payment_note: Optional[str] = Field(None, description="Transfer memo / description.")
+    paid_at: Optional[datetime] = Field(None, description="Timestamp when confirmed.")
+    created_at: datetime = Field(..., description="Timestamp when created.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminTransactionListResponse(BaseModel):
+    """Paginated list of payment transactions with revenue & status summary."""
+
+    items: list[AdminTransactionItem] = Field(..., description="Current page of transaction items.")
+    total_count: int = Field(..., description="Total matching transactions.")
+    page: int = Field(..., description="Current page number.")
+    limit: int = Field(..., description="Items per page.")
+    total_pages: int = Field(..., description="Total pages available.")
+    total_revenue_vnd: int = Field(default=0, description="Total completed revenue in VND.")
+    total_revenue_display: str = Field(default="0đ", description="Formatted total revenue.")
+    pending_count: int = Field(default=0, description="Total pending transactions waiting for approval.")
+    completed_count: int = Field(default=0, description="Total completed transactions.")

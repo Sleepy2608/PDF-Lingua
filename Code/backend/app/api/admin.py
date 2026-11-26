@@ -21,13 +21,16 @@ from app.core.logger import logger
 from app.models.user import User, UserRole
 from app.schemas.admin import (
     AdminStatsResponse,
+    AdminTransactionListResponse,
     AdminUserListItem,
     AdminUserListResponse,
     UserRoleUpdateRequest,
     UserStatusUpdateRequest,
 )
 from app.schemas.common import ApiResponse
+from app.schemas.pricing import TransactionStatusResponse
 from app.services.admin_service import AdminService
+from app.services.subscription_service import SubscriptionService
 
 router = APIRouter(
     prefix="/api/admin",
@@ -164,5 +167,74 @@ async def update_user_role(
     return ApiResponse(
         data=item,
         message=f"Đã cập nhật vai trò của tài khoản {updated_user.email} thành {body.role.value.upper()}.",
+    )
+
+
+# ── Payment & VietQR Transaction Management ───────────────────────
+
+@router.get("/transactions", response_model=ApiResponse[AdminTransactionListResponse])
+async def list_transactions(
+    page: int = Query(1, ge=1, description="Page number (1-based index)."),
+    limit: int = Query(10, ge=1, le=100, description="Items per page (1 to 100)."),
+    search: Optional[str] = Query(None, description="Search by transaction code, note, or user email."),
+    status: Optional[str] = Query(None, description="Filter by status: pending | completed | failed | expired | all."),
+    current_admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve paginated payment transactions across all users for administrative review.
+    """
+    logger.info(
+        f"[Admin] Admin {current_admin.email} querying transactions "
+        f"(page={page}, limit={limit}, search={search}, status={status})."
+    )
+    result = AdminService.list_transactions(
+        db=db,
+        page=page,
+        limit=limit,
+        search=search,
+        status=status,
+    )
+    return ApiResponse(
+        data=result,
+        message=f"Lấy danh sách giao dịch thành công ({result.total_count} giao dịch).",
+    )
+
+
+@router.post("/transactions/{transaction_code}/approve", response_model=ApiResponse[TransactionStatusResponse])
+async def approve_transaction(
+    transaction_code: str,
+    current_admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+):
+    """
+    Approve a pending VietQR payment transaction and activate the user's Pro subscription.
+    """
+    logger.info(f"[Admin] Admin {current_admin.email} approving transaction {transaction_code}.")
+    result = SubscriptionService.confirm_transaction_payment(
+        db=db,
+        transaction_code=transaction_code,
+        acting_user=current_admin,
+    )
+    return ApiResponse(
+        data=result,
+        message=f"Đã duyệt giao dịch {transaction_code} và kích hoạt gói Pro thành công.",
+    )
+
+
+@router.post("/transactions/{transaction_code}/reject", response_model=ApiResponse[dict])
+async def reject_transaction(
+    transaction_code: str,
+    current_admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+):
+    """
+    Reject/cancel a pending VietQR payment transaction.
+    """
+    logger.info(f"[Admin] Admin {current_admin.email} rejecting transaction {transaction_code}.")
+    tx = AdminService.reject_transaction(db=db, transaction_code=transaction_code)
+    return ApiResponse(
+        data={"transaction_code": tx.transaction_code, "payment_status": tx.payment_status},
+        message=f"Đã từ chối giao dịch {tx.transaction_code}.",
     )
 
