@@ -521,7 +521,7 @@ async function main() {
                 amount_display: '39.000 VNĐ',
                 payment_method: 'vietqr',
                 payment_status: 'pending',
-                qr_code_url: 'assets/images/vietqr-pro.png',
+                qr_code_url: 'assets/images/qr-code-payment.png',
                 bank_info: {
                   bank_name: 'VietinBank (CN Thủ Thiêm - Hội Sở)',
                   account_number: '107882760609',
@@ -548,7 +548,7 @@ async function main() {
     assert.strictEqual(env.elements.checkoutTransferNote.textContent, 'PDL SUB 202611 8899');
     assert.strictEqual(env.elements.checkoutTotalAmount.textContent, '39.000 VNĐ');
     assert.strictEqual(env.elements.checkoutCountdownTimer.textContent, '15:00');
-    assert.ok(env.elements.checkoutQrImage.src.includes('vietqr-pro.png'));
+    assert.ok(env.elements.checkoutQrImage.src.includes('qr-code-payment.png'));
   });
 
   await runTest('VietQR Checkout Modal: In-modal cycle switcher updates breakdown to 350.000 VNĐ (365 ngày) & -118.000đ savings', async () => {

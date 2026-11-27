@@ -1255,7 +1255,7 @@
     }
   }
 
-  const DEFAULT_VIETQR_PRO_IMAGE = 'assets/images/vietqr-pro.png';
+  const DEFAULT_VIETQR_PRO_IMAGE = 'assets/images/qr-code-payment.png';
   const DEFAULT_BANK_INFO = {
     bank_name: 'VietinBank (CN Thủ Thiêm - Hội Sở)',
     account_number: '107882760609',
