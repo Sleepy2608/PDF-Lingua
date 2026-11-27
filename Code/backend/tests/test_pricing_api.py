@@ -624,3 +624,80 @@ def test_simulate_endpoint_allowed_in_production_for_admin_user(pricing_test_env
         )
         assert res_sim.status_code == 200
         assert res_sim.json()["data"]["payment_status"] == "completed"
+
+
+def test_webhook_pending_status_does_not_activate_subscription(pricing_test_env):
+    """Webhook reporting intermediate 'pending' status must NOT confirm payment or activate Pro."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    res_pending = client.post(
+        "/api/pricing/webhook",
+        json={
+            "transaction_code": tx_code,
+            "status": "pending",
+            "transfer_amount": 39000,
+        },
+        headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
+    )
+    assert res_pending.status_code == 200
+    assert res_pending.json()["data"]["payment_status"] == "pending"
+
+    # Verify user is still Free
+    res_status = client.get(f"/api/pricing/transactions/{tx_code}/status", headers=buyer_headers)
+    assert res_status.json()["data"]["payment_status"] == "pending"
+    assert res_status.json()["data"]["user_role"] == "free"
+
+
+def test_webhook_missing_transfer_amount_is_rejected(pricing_test_env):
+    """Webhook with completed status but missing transfer_amount must be rejected with 400."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    res_no_amount = client.post(
+        "/api/pricing/webhook",
+        json={
+            "transaction_code": tx_code,
+            "status": "completed",
+            "transfer_amount": None,
+        },
+        headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
+    )
+    assert res_no_amount.status_code == 400
+    assert res_no_amount.json()["error_code"] == "MISSING_TRANSFER_AMOUNT"
+
+    # Verify user is NOT upgraded
+    res_status = client.get(f"/api/pricing/transactions/{tx_code}/status", headers=buyer_headers)
+    assert res_status.json()["data"]["payment_status"] == "pending"
+    assert res_status.json()["data"]["user_role"] == "free"
+
+
+def test_webhook_invalid_status_is_rejected(pricing_test_env):
+    """Webhook with unknown/invalid status string must be rejected with 400."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    res_invalid = client.post(
+        "/api/pricing/webhook",
+        json={
+            "transaction_code": tx_code,
+            "status": "random_invalid_status",
+            "transfer_amount": 39000,
+        },
+        headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
+    )
+    assert res_invalid.status_code == 400
+    assert res_invalid.json()["error_code"] == "INVALID_PAYMENT_STATUS"
+
