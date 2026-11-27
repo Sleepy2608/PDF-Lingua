@@ -3352,11 +3352,25 @@
             const docName = document.getElementById('docNameDisplay');
 
             if (docName) docName.textContent = resultData.document_filename || resultData.filename || 'Tài liệu không tên';
-            if (paneOriginal) paneOriginal.innerText = resultData.original_text || '';
+            const origVal = resultData.original_text || '';
+            const transVal = (resultData.action_type === 'SUMMARIZE' && resultData.summary_text)
+              ? resultData.summary_text
+              : (resultData.translated_text || '');
+            if (paneOriginal) {
+              if (typeof paneOriginal.nodeType === 'number') {
+                paneOriginal.textContent = origVal;
+              } else {
+                paneOriginal.textContent = origVal;
+                paneOriginal.innerText = origVal;
+              }
+            }
             if (paneTranslated) {
-              paneTranslated.innerText = (resultData.action_type === 'SUMMARIZE' && resultData.summary_text)
-                ? resultData.summary_text
-                : (resultData.translated_text || '');
+              if (typeof paneTranslated.nodeType === 'number') {
+                paneTranslated.textContent = transVal;
+              } else {
+                paneTranslated.textContent = transVal;
+                paneTranslated.innerText = transVal;
+              }
             }
           }
 

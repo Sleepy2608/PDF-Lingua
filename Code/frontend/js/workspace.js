@@ -565,14 +565,14 @@ function initWorkspace() {
 
   if (btnCopyOriginal) {
     btnCopyOriginal.addEventListener('click', () => {
-      const text = document.getElementById('paneOriginal').innerText;
+      const text = getOriginalContent();
       copyText(text, btnCopyOriginal);
     });
   }
 
   if (btnCopyTranslated) {
     btnCopyTranslated.addEventListener('click', () => {
-      const text = document.getElementById('paneTranslated').innerText;
+      const text = getTranslatedContent();
       copyText(text, btnCopyTranslated);
     });
   }
@@ -756,17 +756,18 @@ function initWorkspace() {
     });
 
     paneOriginal.addEventListener('input', () => {
+      const latestOrig = readPaneText(paneOriginal);
       if (currentDocData) {
         if (currentPageViewMode === 'page' && Array.isArray(currentDocData.pages) && currentDocData.pages.length > 0) {
           const entry = getCurrentPageEntry();
           if (entry) {
-            entry.original_text = paneOriginal.innerText;
+            entry.original_text = latestOrig;
             const synced = rebuildAggregateDocumentText(currentDocData.pages);
             currentDocData.original_text = synced.original_text;
             saveWorkspaceDocToStorage(currentDocData);
           }
         } else {
-          currentDocData.original_text = paneOriginal.innerText;
+          currentDocData.original_text = latestOrig;
           saveWorkspaceDocToStorage(currentDocData);
         }
       }
@@ -775,13 +776,14 @@ function initWorkspace() {
     });
 
     paneTranslated.addEventListener('input', () => {
+      const latestTrans = readPaneText(paneTranslated);
       if (currentDocData) {
         if (currentPageViewMode === 'page' && Array.isArray(currentDocData.pages) && currentDocData.pages.length > 0 && currentTranslationPageNum !== null) {
-          pageTranslationDrafts[currentTranslationPageNum] = paneTranslated.innerText;
+          pageTranslationDrafts[currentTranslationPageNum] = latestTrans;
           updatePageStatusBadge('unsaved');
           updateSaveButtonDirtyState();
         } else {
-          currentDocData.translated_text = paneTranslated.innerText;
+          currentDocData.translated_text = latestTrans;
           saveWorkspaceDocToStorage(currentDocData);
         }
       }
@@ -1513,7 +1515,7 @@ async function handleRetranslate() {
 
     const paneTranslated = document.getElementById('paneTranslated');
     if (paneTranslated) {
-      paneTranslated.innerText = newTranslatedText;
+      setPaneText(paneTranslated, newTranslatedText);
     }
     updateCounters();
     updateExportUIState();
@@ -1537,7 +1539,101 @@ async function handleRetranslate() {
 }
 
 /**
+ * Kiểm tra phần tử DOM thực có đang được hiển thị (rendered) trên trang hay không.
+ * Khi phần tử hoặc phần tử cha bị `display: none` (ví dụ `#paneCardOriginal` trong Split View),
+ * getter `innerText` của trình duyệt sẽ fallback về `textContent` và làm mất toàn bộ thẻ `<br>` (xuống dòng).
+ */
+function isElementRendered(el) {
+  if (!el || typeof el.nodeType !== 'number') return false;
+  if (typeof el.getClientRects === 'function') {
+    return el.getClientRects().length > 0;
+  }
+  return el.offsetParent !== null;
+}
+
+/**
+ * Chuyển đổi cây DOM bên trong pane (`#text`, `<br>`, `<div>`, `<p>`) thành văn bản thuần
+ * bảo toàn đầy đủ khoảng trắng, xuống dòng (`\n`) và phân đoạn (`\n\n`) kể cả khi phần tử đang bị ẩn (`display: none`).
+ */
+function serializeDomNodeText(node) {
+  if (!node) return '';
+  if (node.nodeType === 3) {
+    return node.nodeValue || '';
+  }
+  if (node.nodeType !== 1) {
+    return '';
+  }
+  const tag = (node.tagName || '').toUpperCase();
+  if (tag === 'BR') {
+    return '\n';
+  }
+  const isBlock = (
+    tag === 'DIV' || tag === 'P' || tag === 'LI'
+    || tag === 'H1' || tag === 'H2' || tag === 'H3'
+    || tag === 'H4' || tag === 'H5' || tag === 'H6'
+  );
+  let result = '';
+  const children = node.childNodes || [];
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    const childTag = child.nodeType === 1 ? (child.tagName || '').toUpperCase() : '';
+    const childIsBlock = childTag === 'DIV' || childTag === 'P' || childTag === 'LI';
+    if (childIsBlock && result.length > 0 && !result.endsWith('\n')) {
+      result += '\n';
+    }
+    const chunk = serializeDomNodeText(child);
+    result += chunk;
+  }
+  if (isBlock && result.length > 0 && !result.endsWith('\n') && node.nextSibling) {
+    result += '\n';
+  }
+  return result;
+}
+
+/**
+ * Ghi văn bản vào pane gốc / bản dịch mà không tạo thẻ `<br>` thừa trong DOM thực.
+ * `.pane-body` đã có `white-space: pre-wrap` nên `textContent` hiển thị xuống dòng giống hệt `innerText`,
+ * đồng thời giữ nguyên `\n` khi phần tử bị ẩn trong Split View / PDF View.
+ */
+function setPaneText(el, text) {
+  if (!el) return;
+  const value = text == null ? '' : String(text);
+  if (typeof el.nodeType === 'number') {
+    el.textContent = value;
+  } else {
+    // Tương thích với mock Element trong các bộ kiểm thử Node VM
+    el.textContent = value;
+    el.innerText = value;
+  }
+}
+
+/**
+ * Đọc văn bản từ pane gốc / bản dịch một cách an toàn ở mọi chế độ hiển thị (Text / Split / PDF).
+ */
+function readPaneText(el) {
+  if (!el) return '';
+  if (typeof el.nodeType === 'number') {
+    if (isElementRendered(el) && typeof el.innerText === 'string') {
+      return el.innerText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    }
+    if (el.childNodes && el.childNodes.length > 0) {
+      return serializeDomNodeText(el).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    }
+    return (el.textContent || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  }
+  if (typeof el.innerText === 'string' && el.innerText.length > 0) {
+    return el.innerText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  }
+  if (typeof el.textContent === 'string' && el.textContent.length > 0) {
+    return el.textContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  }
+  return '';
+}
+
+/**
  * Lấy nội dung văn bản gốc từ DOM hoặc currentDocData.
+ * Khi `#paneOriginal` đang bị ẩn (Split View / PDF View), ưu tiên dữ liệu chuẩn từ `currentDocData.original_text`
+ * (vốn luôn được đồng bộ khi người dùng chỉnh sửa ở chế độ Text) để tránh lỗi mất xuống dòng do `display: none`.
  * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
  */
 function getOriginalContent() {
@@ -1552,8 +1648,15 @@ function getOriginalContent() {
     return currentDocData.original_text.trim();
   }
   const paneOriginal = document.getElementById('paneOriginal');
-  if (paneOriginal && (paneOriginal.innerText || '').trim()) {
-    return paneOriginal.innerText.trim();
+  const isRealHiddenDom = Boolean(paneOriginal && typeof paneOriginal.nodeType === 'number' && !isElementRendered(paneOriginal));
+  if (isRealHiddenDom) {
+    if (currentDocData && typeof currentDocData.original_text === 'string' && currentDocData.original_text.trim()) {
+      return currentDocData.original_text.trim();
+    }
+  }
+  const paneText = readPaneText(paneOriginal);
+  if (paneText && paneText.trim()) {
+    return paneText.trim();
   }
   if (currentDocData && typeof currentDocData.original_text === 'string' && currentDocData.original_text.trim()) {
     return currentDocData.original_text.trim();
@@ -1563,6 +1666,7 @@ function getOriginalContent() {
 
 /**
  * Lấy nội dung bản dịch từ DOM hoặc currentDocData.
+ * Bảo vệ tương tự khi `#paneTranslated` đang bị ẩn trong chế độ xem PDF hoặc tab PDF trên mobile.
  * Trả về chuỗi đã trim nếu có, ngược lại trả về chuỗi rỗng.
  */
 function getTranslatedContent() {
@@ -1577,8 +1681,15 @@ function getTranslatedContent() {
     return currentDocData.translated_text.trim();
   }
   const paneTranslated = document.getElementById('paneTranslated');
-  if (paneTranslated && (paneTranslated.innerText || '').trim()) {
-    return paneTranslated.innerText.trim();
+  const isRealHiddenDom = Boolean(paneTranslated && typeof paneTranslated.nodeType === 'number' && !isElementRendered(paneTranslated));
+  if (isRealHiddenDom) {
+    if (currentDocData && typeof currentDocData.translated_text === 'string' && currentDocData.translated_text.trim()) {
+      return currentDocData.translated_text.trim();
+    }
+  }
+  const paneText = readPaneText(paneTranslated);
+  if (paneText && paneText.trim()) {
+    return paneText.trim();
   }
   if (currentDocData && typeof currentDocData.translated_text === 'string' && currentDocData.translated_text.trim()) {
     return currentDocData.translated_text.trim();
@@ -1988,8 +2099,8 @@ function renderWorkspace(data) {
     ? data.summary_text
     : (data.translated_text || '');
 
-  if (paneOriginal) paneOriginal.innerText = data.original_text || '';
-  if (paneTranslated) paneTranslated.innerText = translatedContent;
+  setPaneText(paneOriginal, data.original_text || '');
+  setPaneText(paneTranslated, translatedContent);
 
   const targetLangSelect = document.getElementById('targetLangSelect');
   if (targetLangSelect && data.target_lang) {
@@ -2130,8 +2241,8 @@ function resetToUpload() {
 
   const paneOriginal = document.getElementById('paneOriginal');
   const paneTranslated = document.getElementById('paneTranslated');
-  if (paneOriginal) paneOriginal.innerText = '';
-  if (paneTranslated) paneTranslated.innerText = '';
+  setPaneText(paneOriginal, '');
+  setPaneText(paneTranslated, '');
 
   updateCounters();
   updateExportUIState();
@@ -2158,16 +2269,18 @@ function updateCounters() {
   const countTranslated = document.getElementById('countTranslated');
 
   if (paneOriginal && countOriginal) {
-    const chars = paneOriginal.innerText.length;
-    const words = paneOriginal.innerText.trim() ? paneOriginal.innerText.trim().split(/\s+/).length : 0;
+    const origText = readPaneText(paneOriginal);
+    const chars = origText.length;
+    const words = origText.trim() ? origText.trim().split(/\s+/).length : 0;
     countOriginal.textContent = isEnLanguage()
       ? `${words.toLocaleString()} words (${chars.toLocaleString()} chars)`
       : `${words.toLocaleString()} từ (${chars.toLocaleString()} ký tự)`;
   }
 
   if (paneTranslated && countTranslated) {
-    const chars = paneTranslated.innerText.length;
-    const words = paneTranslated.innerText.trim() ? paneTranslated.innerText.trim().split(/\s+/).length : 0;
+    const transText = readPaneText(paneTranslated);
+    const chars = transText.length;
+    const words = transText.trim() ? transText.trim().split(/\s+/).length : 0;
     countTranslated.textContent = isEnLanguage()
       ? `${words.toLocaleString()} words (${chars.toLocaleString()} chars)`
       : `${words.toLocaleString()} từ (${chars.toLocaleString()} ký tự)`;
@@ -2943,10 +3056,10 @@ function selectTranslationPage(pageNumber, options = {}) {
 
   const paneOriginal = document.getElementById('paneOriginal');
   const paneTranslated = document.getElementById('paneTranslated');
-  if (paneOriginal) paneOriginal.innerText = entry.original_text || '';
+  setPaneText(paneOriginal, entry.original_text || '');
   if (paneTranslated) {
     const hasDraft = Object.prototype.hasOwnProperty.call(pageTranslationDrafts, entry.page_number);
-    paneTranslated.innerText = hasDraft ? pageTranslationDrafts[entry.page_number] : (entry.translated_text || '');
+    setPaneText(paneTranslated, hasDraft ? pageTranslationDrafts[entry.page_number] : (entry.translated_text || ''));
   }
 
   clearPageBarError();
@@ -2975,8 +3088,8 @@ function setPageViewMode(mode, options = {}) {
   if (targetMode === 'all') {
     const paneOriginal = document.getElementById('paneOriginal');
     const paneTranslated = document.getElementById('paneTranslated');
-    if (paneOriginal) paneOriginal.innerText = (currentDocData && currentDocData.original_text) || '';
-    if (paneTranslated) paneTranslated.innerText = (currentDocData && currentDocData.translated_text) || '';
+    setPaneText(paneOriginal, (currentDocData && currentDocData.original_text) || '');
+    setPaneText(paneTranslated, (currentDocData && currentDocData.translated_text) || '');
     clearPageBarError();
     updateCounters();
     renderPageTranslationBar();
@@ -3080,7 +3193,7 @@ async function handleSaveCurrentPage() {
 
   const paneTranslated = document.getElementById('paneTranslated');
   const editedText = paneTranslated
-    ? paneTranslated.innerText
+    ? readPaneText(paneTranslated)
     : (Object.prototype.hasOwnProperty.call(pageTranslationDrafts, entry.page_number)
       ? pageTranslationDrafts[entry.page_number]
       : entry.translated_text);
@@ -3226,8 +3339,8 @@ async function handleReloadCurrentPage() {
         delete pageTranslationDrafts[entry.page_number];
         const paneOriginal = document.getElementById('paneOriginal');
         const paneTranslated = document.getElementById('paneTranslated');
-        if (paneOriginal) paneOriginal.innerText = reloadedItem.original_text || '';
-        if (paneTranslated) paneTranslated.innerText = reloadedItem.translated_text || '';
+        setPaneText(paneOriginal, reloadedItem.original_text || '');
+        setPaneText(paneTranslated, reloadedItem.translated_text || '');
         const synced = rebuildAggregateDocumentText(currentDocData.pages);
         currentDocData.translated_text = synced.translated_text;
         saveWorkspaceDocToStorage(currentDocData);
@@ -3261,8 +3374,8 @@ async function handleReloadCurrentPage() {
   delete pageTranslationDrafts[entry.page_number];
   const paneOriginal = document.getElementById('paneOriginal');
   const paneTranslated = document.getElementById('paneTranslated');
-  if (paneOriginal) paneOriginal.innerText = restored.original_text || '';
-  if (paneTranslated) paneTranslated.innerText = restored.translated_text || '';
+  setPaneText(paneOriginal, restored.original_text || '');
+  setPaneText(paneTranslated, restored.translated_text || '');
   const synced = rebuildAggregateDocumentText(currentDocData.pages);
   currentDocData.translated_text = synced.translated_text;
   saveWorkspaceDocToStorage(currentDocData);
@@ -3339,7 +3452,7 @@ async function handleRetranslateCurrentPage() {
 
     delete pageTranslationDrafts[entry.page_number];
     const paneTranslated = document.getElementById('paneTranslated');
-    if (paneTranslated) paneTranslated.innerText = newPageTranslated;
+    setPaneText(paneTranslated, newPageTranslated);
 
     // Persist retranslated page immediately for Authenticated users or Guest sessionStorage
     if (canUseAuthenticatedPageApi()) {
@@ -3477,6 +3590,8 @@ if (typeof window !== 'undefined') {
     getOriginalContent,
     getTranslatedContent,
     getSummaryContent,
+    setPaneText,
+    readPaneText,
     updateExportUIState,
     updateSummaryExportState,
     showToast,

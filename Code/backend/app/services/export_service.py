@@ -52,18 +52,43 @@ class ExportService:
         return "Helvetica"
 
     @staticmethod
+    def _normalize_export_text(text: str | None) -> str:
+        """
+        Chuẩn hóa nhẹ ký tự xuống dòng cho văn bản xuất:
+        - Đổi CRLF (`\r\n`) và CR (`\r`) về LF (`\n`).
+        - Bỏ khoảng trắng thừa ở cuối mỗi dòng (giữ nguyên khoảng trắng giữa các từ và thụt đầu dòng).
+        - Chuẩn hóa dòng chỉ chứa khoảng trắng thành dòng trống thực sự để tách đoạn chính xác.
+        - Thu gọn từ 3 dòng trống liên tiếp trở lên thành 2 (`\n\n`).
+        """
+        if not isinstance(text, str):
+            return ""
+        normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+        normalized = re.sub(r"[ \t]+\n", "\n", normalized)
+        normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+        return normalized.strip()
+
+    @classmethod
+    def _split_paragraphs(cls, text: str) -> list[str]:
+        """Tách văn bản thành các đoạn theo dòng trống, giữ nguyên ngắt dòng đơn bên trong mỗi đoạn."""
+        normalized = cls._normalize_export_text(text)
+        if not normalized:
+            return []
+        return [para.strip() for para in re.split(r"\n[ \t]*\n", normalized) if para.strip()]
+
+    @classmethod
     def _validate_export_inputs(
+        cls,
         content: str | None,
         original_content: str | None,
         target_type: ExportTargetType,
     ) -> tuple[str, str | None]:
         """
-        Kiểm tra nội dung đầu vào cho ExportService.
+        Kiểm tra và chuẩn hóa nội dung đầu vào cho ExportService.
         Từ chối None, chuỗi rỗng và chuỗi chỉ chứa whitespace.
         Ném ValueError cho từng loại xuất khi nội dung không hợp lệ.
         """
-        clean_content = (content or "").strip() if isinstance(content, str) else ""
-        clean_orig = (original_content or "").strip() if isinstance(original_content, str) else ""
+        clean_content = cls._normalize_export_text(content)
+        clean_orig = cls._normalize_export_text(original_content)
 
         if target_type == ExportTargetType.ORIGINAL:
             actual_content = clean_content or clean_orig
@@ -234,10 +259,7 @@ class ExportService:
         story.append(HRFlowable(width="100%", thickness=1, color=HexColor("#E2E8F0"), spaceAfter=12))
 
         def add_paragraphs(text: str, is_summary: bool = False):
-            for para in text.strip().split("\n\n"):
-                para_clean = para.strip()
-                if not para_clean:
-                    continue
+            for para_clean in self._split_paragraphs(text):
                 lines = para_clean.split("\n")
                 if is_summary and len(lines) > 1 and any(re.match(r"^(\s*[-*•]|\s*\d+[\.\)])", line_item) for line_item in lines):
                     for line in lines:
@@ -362,10 +384,7 @@ class ExportService:
             run.font.color.rgb = color_rgb
 
         def add_body_paragraphs(text: str, is_summary: bool = False):
-            for para in text.strip().split("\n\n"):
-                para_clean = para.strip()
-                if not para_clean:
-                    continue
+            for para_clean in self._split_paragraphs(text):
                 lines = para_clean.split("\n")
                 if is_summary and len(lines) > 1 and any(re.match(r"^(\s*[-*•]|\s*\d+[\.\)])", line_item) for line_item in lines):
                     for line in lines:
@@ -407,8 +426,8 @@ class ExportService:
         elif target_type == ExportTargetType.BILINGUAL:
             add_section_title("BẢN DỊCH SONG NGỮ")
             # Tạo bảng 2 cột cho bản dịch song ngữ đối chiếu
-            orig_paras = [p.strip() for p in (clean_orig or "").split("\n\n") if p.strip()]
-            trans_paras = [p.strip() for p in clean_content.split("\n\n") if p.strip()]
+            orig_paras = self._split_paragraphs(clean_orig or "")
+            trans_paras = self._split_paragraphs(clean_content)
             max_rows = max(len(orig_paras), len(trans_paras), 1)
 
             table = doc.add_table(rows=max_rows + 1, cols=2)
@@ -440,14 +459,17 @@ class ExportService:
                 left_text = orig_paras[i] if i < len(orig_paras) else ""
                 right_text = trans_paras[i] if i < len(trans_paras) else ""
 
-                row_cells[0].text = left_text
-                row_cells[1].text = right_text
-
-                for c in row_cells:
-                    if c.paragraphs and c.paragraphs[0].runs:
-                        c.paragraphs[0].runs[0].font.name = "Arial"
-                        c.paragraphs[0].runs[0].font.size = Pt(10)
-                        c.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+                for cell, cell_text in ((row_cells[0], left_text), (row_cells[1], right_text)):
+                    cell.text = ""
+                    p = cell.paragraphs[0]
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(4)
+                    p.paragraph_format.line_spacing = 1.15
+                    if cell_text:
+                        run = p.add_run(cell_text)
+                        run.font.name = "Arial"
+                        run.font.size = Pt(10)
+                        run.font.color.rgb = RGBColor(0x33, 0x41, 0x55)
 
             # Cố định độ rộng 2 cột (mỗi cột 3.33 inches)
             col_widths = [Inches(3.33), Inches(3.33)]

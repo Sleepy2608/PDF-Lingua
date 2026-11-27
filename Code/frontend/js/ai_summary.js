@@ -218,14 +218,23 @@
       return;
     }
 
-    // Retrieve text from original pane or translated pane
+    // Retrieve text safely (preferring workspace helpers so hidden Split-View panes never lose newlines)
     let textToSummarize = '';
+    if (typeof window !== 'undefined' && window.pdfLinguaWorkspace) {
+      if (typeof window.pdfLinguaWorkspace.getOriginalContent === 'function') {
+        textToSummarize = window.pdfLinguaWorkspace.getOriginalContent() || '';
+      }
+      if (!textToSummarize && typeof window.pdfLinguaWorkspace.getTranslatedContent === 'function') {
+        textToSummarize = window.pdfLinguaWorkspace.getTranslatedContent() || '';
+      }
+    }
+
     const paneOriginal = document.getElementById('paneOriginal');
     const paneTranslated = document.getElementById('paneTranslated');
 
-    if (paneOriginal && paneOriginal.innerText && paneOriginal.innerText.trim()) {
+    if (!textToSummarize && paneOriginal && paneOriginal.innerText && paneOriginal.innerText.trim()) {
       textToSummarize = paneOriginal.innerText.trim();
-    } else if (paneTranslated && paneTranslated.innerText && paneTranslated.innerText.trim()) {
+    } else if (!textToSummarize && paneTranslated && paneTranslated.innerText && paneTranslated.innerText.trim()) {
       textToSummarize = paneTranslated.innerText.trim();
     }
 

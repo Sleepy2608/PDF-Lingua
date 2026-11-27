@@ -461,10 +461,22 @@
   function getDocumentContext() {
     let text = '';
 
+    // Prefer workspace helpers when available (preserves newlines even when a pane is hidden in Split/PDF view)
+    if (typeof window !== 'undefined' && window.pdfLinguaWorkspace) {
+      if (typeof window.pdfLinguaWorkspace.getTranslatedContent === 'function') {
+        text = window.pdfLinguaWorkspace.getTranslatedContent() || '';
+      }
+      if (!text && typeof window.pdfLinguaWorkspace.getOriginalContent === 'function') {
+        text = window.pdfLinguaWorkspace.getOriginalContent() || '';
+      }
+    }
+
     // Check workspace translated pane first
-    const transPane = document.getElementById('paneTranslated') || document.getElementById('editorTranslated');
-    if (transPane && transPane.innerText && transPane.innerText.trim()) {
-      text = transPane.innerText.trim();
+    if (!text) {
+      const transPane = document.getElementById('paneTranslated') || document.getElementById('editorTranslated');
+      if (transPane && transPane.innerText && transPane.innerText.trim()) {
+        text = transPane.innerText.trim();
+      }
     }
 
     // Fallback to original document pane
