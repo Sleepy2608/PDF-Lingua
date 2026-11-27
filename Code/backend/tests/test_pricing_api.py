@@ -21,6 +21,7 @@ Verifies:
 """
 
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pytest
 from app.core.config import settings
@@ -573,3 +574,53 @@ def test_admin_subscribing_and_expiring_never_loses_admin_role(pricing_test_env)
     assert res_my.status_code == 200
     assert res_my.json()["data"]["current_role"] == "admin"
     assert res_my.json()["data"]["is_pro"] is True
+
+
+def test_simulate_endpoint_blocked_in_production_for_regular_user(pricing_test_env):
+    """Calling /simulate in production environment must return 403 Forbidden for non-admin users."""
+    headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+
+    # 1. Create a pending transaction
+    res_sub = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=headers,
+    )
+    assert res_sub.status_code == 201
+    tx_code = res_sub.json()["data"]["transaction_code"]
+
+    # 2. Simulate in production environment
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        res_sim = client.post(
+            f"/api/pricing/transactions/{tx_code}/simulate",
+            headers=headers,
+        )
+        assert res_sim.status_code == 403
+        body = res_sim.json()
+        assert body["error_code"] == "FEATURE_DISABLED_IN_PRODUCTION"
+
+    # 3. User remains free and transaction remains pending
+    res_status = client.get(f"/api/pricing/transactions/{tx_code}/status", headers=headers)
+    assert res_status.json()["data"]["payment_status"] == "pending"
+    assert res_status.json()["data"]["user_role"] == "free"
+
+
+def test_simulate_endpoint_allowed_in_production_for_admin_user(pricing_test_env):
+    """Admin users are allowed to use /simulate even in production for administrative verification."""
+    admin_headers = {"Authorization": f"Bearer {pricing_test_env['admin_token']}"}
+
+    res_sub = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=admin_headers,
+    )
+    assert res_sub.status_code == 201
+    tx_code = res_sub.json()["data"]["transaction_code"]
+
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        res_sim = client.post(
+            f"/api/pricing/transactions/{tx_code}/simulate",
+            headers=admin_headers,
+        )
+        assert res_sim.status_code == 200
+        assert res_sim.json()["data"]["payment_status"] == "completed"

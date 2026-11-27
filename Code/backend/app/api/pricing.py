@@ -23,10 +23,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.dependencies import get_current_user, get_db
-from app.core.exceptions import UnauthorizedException
+from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.logger import logger
 from app.models.subscription import PaymentMethod
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.pricing import (
     BillingHistoryResponse,
@@ -144,7 +144,19 @@ async def simulate_transaction_payment(
     """
     Simulate an immediate successful bank transfer for the specified transaction code
     (intended for local/dev testing and interactive demo verification).
+    Protected: Disabled in production environment unless caller has ADMIN privileges.
     """
+    is_dev = settings.APP_ENV.lower() == "development" or settings.DEBUG
+    if not is_dev and current_user.role != UserRole.ADMIN:
+        logger.warning(
+            f"[Pricing Security] User {current_user.email} (role={current_user.role}) "
+            f"attempted to call /simulate on production environment."
+        )
+        raise ForbiddenException(
+            message="Tính năng giả lập thanh toán chỉ khả dụng trong môi trường phát triển (Development) hoặc dành cho Quản trị viên.",
+            error_code="FEATURE_DISABLED_IN_PRODUCTION",
+        )
+
     logger.info(
         f"[Pricing] User {current_user.email} simulating payment completion for transaction={code}."
     )
