@@ -412,29 +412,8 @@ class AdminService:
                 error_code="INVALID_TRANSACTION_STATE",
             )
         tx.payment_status = PaymentStatus.FAILED.value
-
-        # Tu dong huy goi giao dich / subscription cua nguoi dung duoc chon (neu ho co so huu)
         now = datetime.now(timezone.utc)
-        user_subs = (
-            db.query(Subscription)
-            .filter(
-                Subscription.user_id == tx.user_id,
-                Subscription.status.in_([
-                    SubscriptionStatus.ACTIVE.value,
-                    SubscriptionStatus.GRACE_PERIOD.value,
-                ]),
-            )
-            .all()
-        )
-        for sub in user_subs:
-            sub.status = SubscriptionStatus.CANCELLED.value
-            sub.auto_renew = False
-            sub.cancelled_at = now
-            sub.updated_at = now
-
-        target_user = db.query(User).filter(User.id == tx.user_id).first()
-        if target_user and target_user.role == UserRole.PRO:
-            target_user.role = UserRole.FREE
+        tx.updated_at = now
 
         db.commit()
         db.refresh(tx)
