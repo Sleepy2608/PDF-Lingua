@@ -21,6 +21,7 @@ class Job:
     filename: str
     target_lang: str
     user_id: Optional[int] = None
+    document_id: Optional[int] = None
     status: JobStatus = JobStatus.PENDING
     total_pages: int = 0
     processed_pages: int = 0
@@ -35,6 +36,8 @@ class Job:
     execution_time_ms: Optional[int] = None
     history_id: Optional[int] = None
     _cancel_event: threading.Event = field(default_factory=threading.Event, repr=False)
+    _finalizing: bool = field(default=False, repr=False)
+    _history_recorded: bool = field(default=False, repr=False)
 
     @property
     def is_cancelled(self) -> bool:
@@ -43,11 +46,13 @@ class Job:
     def to_dict(self) -> dict[str, Any]:
         res_exec_time = self.result.get("execution_time_ms") if isinstance(self.result, dict) else None
         res_hist_id = self.result.get("history_id") if isinstance(self.result, dict) else None
+        res_doc_id = self.result.get("document_id") if isinstance(self.result, dict) else None
         return {
             "job_id": self.job_id,
             "filename": self.filename,
             "target_lang": self.target_lang,
             "user_id": self.user_id,
+            "document_id": self.document_id if self.document_id is not None else res_doc_id,
             "status": self.status.value,
             "total_pages": self.total_pages,
             "processed_pages": self.processed_pages,
@@ -77,13 +82,81 @@ class JobManager:
         self._max_retained_jobs = max_retained_jobs
         self._job_ttl_seconds = job_ttl_seconds
 
-    def create_job(self, filename: str, target_lang: str, user_id: Optional[int] = None) -> Job:
+    def create_job(
+        self,
+        filename: str,
+        target_lang: str,
+        user_id: Optional[int] = None,
+        document_id: Optional[int] = None,
+    ) -> Job:
         with self._lock:
             self._cleanup_expired_jobs_locked()
             job_id = str(uuid.uuid4())
-            job = Job(job_id=job_id, filename=filename, target_lang=target_lang, user_id=user_id)
+            job = Job(
+                job_id=job_id,
+                filename=filename,
+                target_lang=target_lang,
+                user_id=user_id,
+                document_id=document_id,
+            )
             self._jobs[job_id] = job
             return job
+
+    def set_document_id(self, job_id: str, document_id: int) -> None:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job:
+                job.document_id = document_id
+
+    def try_begin_finalizing(self, job_id: str) -> bool:
+        """
+        Đánh dấu nguyên tử (atomic) rằng tác vụ bắt đầu giai đoạn chốt kết quả SUCCESS.
+        Nếu tác vụ đã nhận tín hiệu hủy hoặc đã ở trạng thái kết thúc, trả về False để
+        tránh race condition ghi đè giữa luồng hoàn tất và yêu cầu hủy.
+        """
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if not job or job.is_cancelled or job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
+                return False
+            job._finalizing = True
+            return True
+
+    def claim_history_recording(self, job_id: str) -> bool:
+        """
+        Đảm bảo mỗi Job chỉ ghi đúng một bản ghi lịch sử kết thúc (SUCCESS hoặc FAILED)
+        ngay cả khi endpoint /cancel và worker thread chạy đồng thời.
+        """
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if not job:
+                return False
+            if job._history_recorded or job.history_id is not None:
+                return False
+            job._history_recorded = True
+            return True
+
+    def set_history_id(self, job_id: str, history_id: Optional[int]) -> None:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job:
+                if history_id is not None:
+                    job.history_id = history_id
+                    job._history_recorded = True
+                else:
+                    # Cho phép thử lại nếu thao tác ghi DB bị lỗi trước khi có history_id
+                    if job.history_id is None:
+                        job._history_recorded = False
+
+    def has_active_job_for_document(self, document_id: int) -> bool:
+        with self._lock:
+            for job in self._jobs.values():
+                if (
+                    job.document_id == document_id
+                    and job.status in (JobStatus.PENDING, JobStatus.PROCESSING)
+                    and not job.is_cancelled
+                ):
+                    return True
+            return False
 
     def get_job(self, job_id: str) -> Optional[Job]:
         with self._lock:
@@ -243,13 +316,14 @@ class JobManager:
         self,
         job_id: str,
         user_id: Optional[int] = None,
-        reason: str = "Tác vụ đã bị hủy.",
+        reason: str = "Người dùng đã hủy tác vụ xử lý.",
     ) -> tuple[bool, str, Optional[Job]]:
         """
         Hủy tác vụ một cách an toàn và dứt khoát.
         Phân biệt rõ ràng với ngừng theo dõi SSE (unsubscribe):
         - Hủy job: Thay đổi trạng thái Job sang CANCELLED, phát sự kiện hủy qua _cancel_event.
         - Ngừng theo dõi: Chỉ ngắt kết nối subscriber queue của client mà job vẫn tiếp tục chạy.
+        - Từ chối hủy nếu tác vụ đang ở bước chốt kết quả (_finalizing) hoặc đã kết thúc.
         """
         with self._lock:
             job = self._jobs.get(job_id)
@@ -262,14 +336,19 @@ class JobManager:
             if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
                 return False, f"Không thể hủy tác vụ vì đã ở trạng thái {job.status.value}.", job
 
+            if job._finalizing:
+                return False, "Không thể hủy tác vụ vì quá trình xử lý đã vừa hoàn tất.", job
+
+            now = time.time()
             job.status = JobStatus.CANCELLED
             job.message = reason
-            job.error = "Tác vụ đã bị hủy."
-            job.updated_at = time.time()
-            job.completed_at = time.time()
+            job.error = reason
+            job.execution_time_ms = max(1, int((now - job.created_at) * 1000))
+            job.updated_at = now
+            job.completed_at = now
             job._cancel_event.set()
             self._notify_subscribers_locked(job)
-            return True, "Hủy tác vụ thành công.", job
+            return True, "Đã hủy tác vụ xử lý.", job
 
     def is_job_cancelled(self, job_id: str) -> bool:
         """Kiểm tra xem tác vụ đã nhận tín hiệu hủy hay chưa (thread-safe)"""
