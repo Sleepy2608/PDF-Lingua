@@ -8,8 +8,8 @@
   - Kế hoạch 7 Sprint chi tiết: [Sprint_Plan.md](./Sprint_Plan.md)
   - Product Backlog chi tiết: [PDF_Lingua_Jira_Backlog.md](./PDF_Lingua_Jira_Backlog.md)
   - Báo cáo phân công thực hiện EPIC 15 & 16: [phan_cong_thuc_hien_epic15_epic16.md](../.plan/.extra/phan_cong_thuc_hien_epic15_epic16.md)
-- **Thời gian thực hiện**: 13/10/2026 - 01/12/2026 (7 tuần / 7 Sprint)
-- **Ngày cập nhật lần cuối**: `16/11/2026` (Đồng bộ hóa 100% từ Tuần 1 đến Tuần 6 theo tiến độ thực tế Git commit, test suite và Jira Board)
+- **Thời gian thực hiện**: 13/10/2026 - 01/12/2026 (8 tuần / 8 Sprint)
+- **Ngày cập nhật lần cuối**: `27/11/2026` (Đồng bộ hóa 100% từ Tuần 1 đến Tuần 8 theo tiến độ thực tế Git commit, test suite và Jira Cloud)
 
 ---
 
@@ -29,7 +29,7 @@ Dự án được xây dựng và phát triển toàn diện bởi 2 thành viê
 Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile với chu kỳ **1 tuần / 1 Sprint** trong 4 giai đoạn chính:
 
 ```
-[Tuần 1 - 3: Core Logic & Gói Free] -> [Tuần 4 - 5: Tính Năng Pro & Admin] -> [Tuần 6: Tích Hợp AI Toàn Diện] -> [Tuần 7: Kiểm Thử, Triển Khai & Bàn Giao Nghiệm Thu]
+[Tuần 1 - 3: Core Logic & Gói Free] -> [Tuần 4 - 5: Tính Năng Pro & Admin] -> [Tuần 6: Tích Hợp AI Toàn Diện] -> [Tuần 7 - 8: Triển Khai, Kiểm Thử Toàn Diện & Nghiệm Thu]
 ```
 
 - **Tuần 1 (Sprint 1: 13/10 - 20/10/2026) - Phân tích yêu cầu, thiết kế hệ thống & khởi tạo khung dự án**: Khảo sát nghiệp vụ, Use Case, Activity, ERD, kiến trúc phần mềm, khởi tạo repo GitHub, Backend FastAPI, Frontend HTML/CSS/JS, cấu hình `.env`, `.gitignore`, kết nối DB, logging, healthcheck, CORS.
@@ -37,7 +37,9 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 - **Tuần 3 (Sprint 3: 27/10 - 03/11/2026) - Quản lý tài liệu, OCR nâng cao, dịch thuật cốt lõi & kiểm thử đo lường**: Quản lý kho file cá nhân, tiền xử lý OCR (deskew, rotate, blank page), động cơ dịch thuật `deep-translator`, chia đoạn chống timeout, xuất file TXT/PDF Unicode, kéo thả file, điều khoản dịch vụ; bộ test đánh giá độ chính xác tiếng Việt, layout metrics, benchmark hiệu năng, tối ưu bộ nhớ và xử lý song song.
 - **Tuần 4 (Sprint 4: 03/11 - 10/11/2026) - Dịch thuật fallback, xuất file, lịch sử, admin cơ bản & quyền lợi gói**: Xử lý lỗi dịch thuật đa tầng, kiểm thử file xuất, thiết kế bảng dữ liệu lịch sử, API xem/mở lại/xóa lịch sử, quyền lợi Free (20MB) vs Pro (100MB), Dashboard admin cơ bản, bộ test ma trận bảo mật (Security Matrix), giới hạn tải lên và tài liệu kiến trúc.
 - **Tuần 5 (Sprint 5: 10/11 - 17/11/2026) - Lịch sử Pro, Quản trị Admin, Hạn mức Free/Pro, Mở rộng, Thiết kế đồ án, Avatar & Quản lý gói/Hóa đơn (Billing)**: Lịch sử Pro, Admin Console nâng cao, phân quyền RBAC, Batch ZIP, DOCX export, PDF preview inline, nộp hồ sơ thiết kế đồ án (Kiến trúc `PDFL-269`, Use Case `PDFL-270`, Class Diagram `PDFL-271`), Avatar người dùng (`PDFL-272`, `PDFL-273`), Lịch sử thanh toán & hóa đơn (`PDFL-274`, `PDFL-275`), Quản lý gói & hạn mức (`PDFL-276`) và Thống kê sử dụng dịch vụ (`PDFL-262`). Đã hoàn thành trọn vẹn 41/41 work items (123 SP - 100% Done) đúng theo Jira Board.
-- **Tuần 6 (Sprint 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu, Tính Năng Mở Rộng & Triển Khai Hệ Thống**: Tích hợp mô hình ngôn ngữ lớn (LLM API), prompt tóm tắt, Map-Reduce cho tài liệu dài, Trợ lý AI chat hỏi đáp theo ngữ cảnh (RAG QA Chatbot), anti-hallucination guardrails, giao diện chat, kiểm thử đa kích thước màn hình, lưu/tải lại bản dịch theo trang, thanh toán Pro, phản hồi lỗi, truy xuất nguồn AI, hàng đợi tác vụ, đa ngôn ngữ tiếng Anh, Welcome Dashboard, hướng dẫn sử dụng web, cập nhật quyền lợi RBAC và CI/CD workflow, hoàn thành trọn vẹn 37 work items (100 SP - 100% Done) đúng theo Jira Board.
+- **Tuần 6 (Sprint 6: 17/11 - 24/11/2026) - Tích Hợp AI: Tóm Tắt Văn Bản & Trợ Lý Hỏi Đáp Tài Liệu, Tính Năng Mở Rộng & Triển Khai Hệ Thống**: Tích hợp mô hình ngôn ngữ lớn (LLM API), prompt tóm tắt, Map-Reduce cho tài liệu dài, Trợ lý AI chat hỏi đáp theo ngữ cảnh (RAG QA Chatbot), anti-hallucination guardrails, giao diện chat, kiểm thử đa kích thước màn hình, lưu/tải lại bản dịch theo trang, thanh toán Pro, phản hồi lỗi, truy xuất nguồn AI, hàng đợi tác vụ, đa ngôn ngữ tiếng Anh, Welcome Dashboard, hướng dẫn sử dụng web, cập nhật quyền lợi RBAC và CI/CD workflow, hoàn thành trọn vẹn 37 work items (114 SP - 100% Done) đúng theo Jira Board.
+- **Tuần 7 (Sprint 7: 22/11 - 29/11/2026) - Triển Khai Website, Nghiệm Thu Đồ Án, Admin Visitors & Vá Lỗi**: Triển khai website chính thức, hoàn thiện báo cáo phân tích thiết kế, theo dõi khách truy cập (Visitors & Transition) trong Admin console, mở rộng chiến lược kiếm tiền/gói cước, và vá các lỗi quan trọng (JWT secret key fallback, Webhook verification, Admin transaction rejection, Bulk-adding translation), ghi nhận 31 work items (95 SP - 20 Done / 7 In Progress / 4 To Do) khớp Jira Board.
+- **Tuần 8 (Sprint 8: 23/11 - 30/11/2026) - Kiểm Thử Chuyên Sâu, An Toàn Bảo Mật & Tối Ưu Môi Trường Triển Khai**: Hoàn thành toàn diện 35 bài kiểm thử tự động chuyên sâu: Unit test, API test, OCR/Deskew/Orientation test, Tiếng Việt có dấu, tài liệu dài, kiểm thử tải file lớn, benchmark hiệu năng, giải phóng bộ nhớ, và cấu hình an toàn production (SQLite WAL, CORS, HTTPS, OCR server), ghi nhận 35/35 work items (69 SP - 100% Done) khớp Jira Board.
 - **Tuần 7 (Sprint 7: 22/11 - 29/11/2026) - Kiểm thử toàn diện, Triển khai, Tài liệu bàn giao & Nghiệm thu đồ án**: Triển khai trọn gói 45 work items (98 Story Points: 69 SP Done / 29 SP To Do), hoàn tất báo cáo kỹ thuật (`PDFL-248`), slide thuyết trình (`PDFL-249`), kịch bản demo (`PDFL-250`), hướng dẫn sử dụng web (`PDFL-279`), bộ test case chức năng (`PDFL-199`), hình ảnh hướng dẫn (`PDFL-246`), rà soát an toàn repo (`PDFL-251`), phương án triển khai (`PDFL-228`) và tổng duyệt bảo vệ đồ án.
 
 ---
@@ -436,16 +438,16 @@ Hệ thống được tổ chức phát triển theo phương pháp Scrum/Agile 
 
 ---
 
-## 4. BÁO CÁO TỔNG HỢP ĐÓNG GÓP TOÀN DỰ ÁN (TUẦN 1 - TUẦN 7)
+## 4. BÁO CÁO TỔNG HỢP ĐÓNG GÓP TOÀN DỰ ÁN (TUẦN 1 - TUẦN 8)
 
-### 📊 Bảng Ma Trận Tổng Hợp Đóng Góp Qua 7 Tuần
+### 📊 Bảng Ma Trận Tổng Hợp Đóng Góp Qua 8 Tuần
 
-| Chỉ số đánh giá | Nguyễn Lê Huy Tâm (Trưởng nhóm) | Huỳnh Đình Chấn (Thành viên) | Cả hai thành viên | Tổng toàn dự án |
+| Chỉ số đánh giá | Nguyễn Lê Huy Tâm (Trưởng nhóm) | Huỳnh Đình Chấn (Thành viên) | Nhóm / Chưa phân công | Tổng toàn dự án |
 | :--- | :---: | :---: | :---: | :---: |
-| **Tổng số Commit trên Git** | **204 commits** (58.0%) | **148 commits** (42.0%) | 352 commits | **352 commits** (100%) |
-| **Tổng Story Points đảm trách (Tuần 1 - 7)** | **423 SP** (55.4%) | **326 SP** (42.7%) | **14 SP** (1.8%) | **763 SP** (100%) |
-| **Số lượng Work Items Jira đảm trách** | **152 tasks** | **110 tasks** | 25 tasks | **287 tasks** |
-| **Tỷ lệ hoàn thành công việc được giao** | **98.0%** (149 Done / 0 In Prog / 3 To Do) | **97.3%** (107 Done / 0 In Prog / 3 To Do) | 92.0% (23 Done / 2 To Do) | **97.2%** (279 Done / 0 In Prog / 8 To Do) |
+| **Tổng số Commit trên Git** | **416 commits** (67.5%) | **196 commits** (31.8%) | 4 commits (bot/CI) | **616 commits** (100%) |
+| **Tổng Story Points đảm trách (Tuần 1 - 8)** | **518 SP** (66.1%) | **266 SP** (33.9%) | 0 SP | **784 SP** (100%) |
+| **Số lượng Work Items Jira đảm trách** | **190 tasks** (63.5%) | **90 tasks** (30.1%) | 19 epics/tasks (6.4%) | **299 tasks** (100%) |
+| **Tỷ lệ hoàn thành công việc được giao** | **98.9%** (188 Done / 2 In Prog / 0 To Do) | **90.0%** (81 Done / 5 In Prog / 4 To Do) | 57.9% (11 Done / 7 In Prog / 1 To Do) | **93.6%** (280 Done / 14 In Prog / 5 To Do) |
 | **Số file Test Suite tự động xây dựng** | 14 test suites | 18 test suites | 4 test suites chung | **36 test files** |
 
 ---

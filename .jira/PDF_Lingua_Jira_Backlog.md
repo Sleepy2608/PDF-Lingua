@@ -39,6 +39,7 @@ Bảng dưới đây tổng hợp 17 Epic chính trong lộ trình phát triển
 | 15 | **EPIC 15** | Kiểm thử, bảo mật và tối ưu | Viết Unit/Integration tests, kiểm thử an toàn file, SQL injection, XSS, rate limit và tối ưu hiệu năng. |
 | 16 | **EPIC 16** | Triển khai, tài liệu và bàn giao | Triển khai Frontend & Backend lên server/cloud, viết tài liệu README, API docs và chuẩn bị demo. |
 | 17 | **EPIC 17** | Tính năng mở rộng & Nâng cao trải nghiệm người dùng | Các tính năng giá trị gia tăng (xử lý file theo lô, tải file DOCX, xem trước PDF, Dark mode, thanh toán trực tuyến, đặt lại mật khẩu,...). |
+| 18 | **EPIC 18** | Các hình thức quảng cáo cho người dùng và kiếm tiền | Chiến lược kiếm tiền từ quảng cáo, tích hợp gói dịch vụ bổ sung, điều chỉnh gói Pro và tối ưu doanh thu. |
 
 ---
 
@@ -351,6 +352,8 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-270: Lược đồ usecase (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
 - PDFL-271: Lược đồ lớp (Deadline chủ đề 3: Nộp thuyết minh chi tiết thiết kế).
 - PDFL-279: Hướng dẫn sử dụng web.
+- PDFL-287: Viết báo cáo tổng kết đồ án (Words).
+- PDFL-288: Triển khai trên website.
 
 ## EPIC 17 - Tính năng mở rộng & Nâng cao trải nghiệm người dùng
 
@@ -369,3 +372,22 @@ Lưu ý: Gói Pro là quyền lợi dịch vụ, không phải vai trò quản t
 - PDFL-264: Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối.
 - PDFL-265: Xem xét sử dụng hàng đợi tác vụ cho các file lớn và quy trình OCR/AI kéo dài.
 - PDFL-272: Thiết kế tính năng tải lên ảnh đại diện cho người dùng.
+- PDFL-277: Trang web hỗ trợ ngôn ngữ Tiếng Anh.
+- PDFL-278: Welcome Dashboard (Landing page khi người dùng mới ấn vào web).
+- PDFL-295: Enhancing bug reports from users.
+
+
+## EPIC 18 - Các hình thức quảng cáo cho người dùng và kiếm tiền
+
+- PDFL-289: Monetization strategy by using ads.
+- PDFL-291: Add an extra paid plan (pricing plans) with better benefits.
+
+---
+
+## Danh sách lỗi và bảo mật đã vá (Bug Fixes)
+
+- PDFL-286: Bulk-adding PDF files not translating after uploading successfully.
+- PDFL-296: Upgrade to Pro for free via the "/simulate" endpoint.
+- PDFL-297: Admin's rejection not working properly.
+- PDFL-298: The webhook accepts a "pending" status and skips the amount check.
+- PDFL-299: Fix secret key with a default fallback is exposed.
