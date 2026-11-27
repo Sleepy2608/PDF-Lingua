@@ -29,6 +29,7 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
+from app.core.logger import logger
 from app.models.subscription import (
     PRO_SHARED_FEATURES,
     BillingCycle,
@@ -717,14 +718,47 @@ class SubscriptionService:
                 },
             )
 
-        if payload.status.strip().lower() == PaymentStatus.FAILED.value:
+        status_norm = (payload.status or "").strip().lower()
+
+        # 1. Trạng thái thất bại / hủy bỏ từ cổng thanh toán
+        if status_norm in (PaymentStatus.FAILED.value, "cancelled", "rejected", "error"):
             if tx.payment_status == PaymentStatus.PENDING.value:
                 tx.payment_status = PaymentStatus.FAILED.value
+                now = datetime.now(timezone.utc)
+                tx.updated_at = now
                 db.commit()
                 db.refresh(tx)
             return SubscriptionService._build_transaction_status_response(db, tx)
 
-        if payload.transfer_amount is not None and payload.transfer_amount < tx.amount_vnd:
+        # 2. Trạng thái chờ xử lý (pending / processing / waiting) - không kích hoạt gói Pro
+        if status_norm in (PaymentStatus.PENDING.value, "processing", "waiting"):
+            logger.info(
+                f"[Webhook] Transaction {tx.transaction_code} received intermediate status '{payload.status}'. "
+                f"Subscription is not activated until payment is completed."
+            )
+            return SubscriptionService._build_transaction_status_response(db, tx)
+
+        # 3. Trạng thái không hợp lệ
+        if status_norm not in (PaymentStatus.COMPLETED.value, "success", "paid"):
+            raise BadRequestException(
+                message=f"Trạng thái thanh toán '{payload.status}' không hợp lệ hoặc chưa hoàn tất.",
+                error_code="INVALID_PAYMENT_STATUS",
+                details={"received_status": payload.status},
+            )
+
+        # 4. Khi hoàn tất (completed): BẮT BUỘC phải có số tiền chuyển khoản hợp lệ
+        if payload.transfer_amount is None or payload.transfer_amount <= 0:
+            raise BadRequestException(
+                message="Dữ liệu webhook không hợp lệ: bắt buộc phải có số tiền chuyển khoản (transfer_amount).",
+                error_code="MISSING_TRANSFER_AMOUNT",
+                details={
+                    "expected_amount_vnd": tx.amount_vnd,
+                    "received_amount_vnd": payload.transfer_amount,
+                },
+            )
+
+        # 5. BẮT BUỘC số tiền chuyển khoản phải đủ
+        if payload.transfer_amount < tx.amount_vnd:
             raise BadRequestException(
                 message=(
                     f"Số tiền chuyển khoản ({payload.transfer_amount} VNĐ) "

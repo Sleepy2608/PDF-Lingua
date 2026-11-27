@@ -411,7 +411,7 @@ def test_admin_transactions_list_approve_and_reject(admin_test_env):
     db_session.refresh(free_user)
     assert free_user.role == UserRole.PRO
 
-    # 4. Admin rejects tx_reject -> status becomes failed and automatically cancels user's pro subscription
+    # 4. Admin rejects tx_reject -> status becomes failed; does NOT cancel user's active pro subscription
     res_reject = client.post(
         "/api/admin/transactions/TX-ADMIN-TEST-002/reject",
         headers=admin_headers,
@@ -419,8 +419,9 @@ def test_admin_transactions_list_approve_and_reject(admin_test_env):
     assert res_reject.status_code == 200
     assert res_reject.json()["data"]["payment_status"] == "failed"
 
+    # Crucial security check: User's active PRO subscription from tx_pending remains intact and role remains PRO
     db_session.refresh(free_user)
-    assert free_user.role == UserRole.FREE
+    assert free_user.role == UserRole.PRO
 
     # 5. Revenue summary updated
     res_completed = client.get("/api/admin/transactions?status=completed", headers=admin_headers)
@@ -588,6 +589,74 @@ def test_admin_access_traffic_unique_ip_series(admin_test_env):
     assert by_date[today_key] == {"date": today_key, "total_visits": 3, "unique_visitors": 2}
     assert by_date[yesterday_key] == {"date": yesterday_key, "total_visits": 2, "unique_visitors": 2}
     assert traffic["daily"][0]["date"] <= traffic["daily"][-1]["date"]
+
+
+def test_admin_reject_pending_transaction_does_not_revoke_existing_active_subscription(admin_test_env):
+    """
+    Regression Test: Rejecting a pending/unpaid order must ONLY mark that transaction as failed.
+    It must NEVER cancel an active Pro subscription that the user previously purchased and paid for.
+    """
+    from app.models.subscription import PaymentMethod, PaymentStatus, PaymentTransaction, Subscription, SubscriptionStatus
+    from app.services.subscription_service import SubscriptionService
+
+    db_session = admin_test_env["session"]
+    free_user = admin_test_env["free"]
+    admin_headers = {"Authorization": f"Bearer {admin_test_env['admin_token']}"}
+
+    plans = SubscriptionService.ensure_plans_seeded(db_session)
+    monthly_plan = plans["pro_monthly"]
+    yearly_plan = plans["pro_yearly"]
+
+    # 1. User purchased and paid for a Yearly Pro subscription
+    tx_paid = PaymentTransaction(
+        transaction_code="TX-PAID-001",
+        user_id=free_user.id,
+        plan_id=yearly_plan.id,
+        amount_vnd=yearly_plan.price_vnd,
+        payment_method=PaymentMethod.VIETQR.value,
+        payment_status=PaymentStatus.PENDING.value,
+        payment_note="PDFLINGUA TXPAID001",
+    )
+    db_session.add(tx_paid)
+    db_session.commit()
+
+    # Admin approves tx_paid -> User is now PRO with active subscription
+    res_approve = client.post("/api/admin/transactions/TX-PAID-001/approve", headers=admin_headers)
+    assert res_approve.status_code == 200
+    db_session.refresh(free_user)
+    assert free_user.role == UserRole.PRO
+
+    sub = db_session.query(Subscription).filter(
+        Subscription.user_id == free_user.id,
+        Subscription.status == SubscriptionStatus.ACTIVE.value,
+    ).first()
+    assert sub is not None
+
+    # 2. Later, user creates another order for monthly plan but does not pay
+    tx_unpaid = PaymentTransaction(
+        transaction_code="TX-UNPAID-002",
+        user_id=free_user.id,
+        plan_id=monthly_plan.id,
+        amount_vnd=monthly_plan.price_vnd,
+        payment_method=PaymentMethod.VIETQR.value,
+        payment_status=PaymentStatus.PENDING.value,
+        payment_note="PDFLINGUA TXUNPAID002",
+    )
+    db_session.add(tx_unpaid)
+    db_session.commit()
+
+    # 3. Admin rejects the unpaid order
+    res_reject = client.post("/api/admin/transactions/TX-UNPAID-002/reject", headers=admin_headers)
+    assert res_reject.status_code == 200
+    assert res_reject.json()["data"]["payment_status"] == "failed"
+
+    # 4. User's paid subscription MUST STILL BE ACTIVE and role MUST REMAIN PRO!
+    db_session.refresh(free_user)
+    db_session.refresh(sub)
+    assert free_user.role == UserRole.PRO
+    assert sub.status == SubscriptionStatus.ACTIVE.value
+    assert sub.cancelled_at is None
+
 
 
 

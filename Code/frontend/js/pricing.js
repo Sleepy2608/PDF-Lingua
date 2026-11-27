@@ -1058,6 +1058,24 @@
       });
     }
 
+    // Dev only: Chỉ kích hoạt và hiển thị nút giả lập thanh toán trên môi trường development (localhost/127.0.0.1)
+    const isDevHost = (typeof window !== 'undefined' && (
+      !window.location ||
+      !window.location.hostname ||
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === '0.0.0.0' ||
+      window.location.port === '5500' ||
+      window.location.port === '8000'
+    ));
+    if (btnSimulate) {
+      if (isDevHost) {
+        btnSimulate.style.display = 'inline-flex';
+      } else {
+        btnSimulate.style.display = 'none';
+      }
+    }
+
     if (btnSimulate) {
       btnSimulate.addEventListener('click', (e) => {
         e.preventDefault();

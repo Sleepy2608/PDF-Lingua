@@ -21,9 +21,10 @@ Verifies:
 """
 
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pytest
-from app.core.config import settings
+from app.core.config import settings, validate_security_configuration
 from app.core.database import Base
 from app.core.dependencies import get_db
 from app.core.security import create_access_token
@@ -573,3 +574,182 @@ def test_admin_subscribing_and_expiring_never_loses_admin_role(pricing_test_env)
     assert res_my.status_code == 200
     assert res_my.json()["data"]["current_role"] == "admin"
     assert res_my.json()["data"]["is_pro"] is True
+
+
+def test_simulate_endpoint_blocked_in_production_for_regular_user(pricing_test_env):
+    """Calling /simulate in production environment must return 403 Forbidden for non-admin users."""
+    headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+
+    # 1. Create a pending transaction
+    res_sub = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=headers,
+    )
+    assert res_sub.status_code == 201
+    tx_code = res_sub.json()["data"]["transaction_code"]
+
+    # 2. Simulate in production environment
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        res_sim = client.post(
+            f"/api/pricing/transactions/{tx_code}/simulate",
+            headers=headers,
+        )
+        assert res_sim.status_code == 403
+        body = res_sim.json()
+        assert body["error_code"] == "FEATURE_DISABLED_IN_PRODUCTION"
+
+    # 3. User remains free and transaction remains pending
+    res_status = client.get(f"/api/pricing/transactions/{tx_code}/status", headers=headers)
+    assert res_status.json()["data"]["payment_status"] == "pending"
+    assert res_status.json()["data"]["user_role"] == "free"
+
+
+def test_simulate_endpoint_allowed_in_production_for_admin_user(pricing_test_env):
+    """Admin users are allowed to use /simulate even in production for administrative verification."""
+    admin_headers = {"Authorization": f"Bearer {pricing_test_env['admin_token']}"}
+
+    res_sub = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=admin_headers,
+    )
+    assert res_sub.status_code == 201
+    tx_code = res_sub.json()["data"]["transaction_code"]
+
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        res_sim = client.post(
+            f"/api/pricing/transactions/{tx_code}/simulate",
+            headers=admin_headers,
+        )
+        assert res_sim.status_code == 200
+        assert res_sim.json()["data"]["payment_status"] == "completed"
+
+
+def test_webhook_pending_status_does_not_activate_subscription(pricing_test_env):
+    """Webhook reporting intermediate 'pending' status must NOT confirm payment or activate Pro."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    res_pending = client.post(
+        "/api/pricing/webhook",
+        json={
+            "transaction_code": tx_code,
+            "status": "pending",
+            "transfer_amount": 39000,
+        },
+        headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
+    )
+    assert res_pending.status_code == 200
+    assert res_pending.json()["data"]["payment_status"] == "pending"
+
+    # Verify user is still Free
+    res_status = client.get(f"/api/pricing/transactions/{tx_code}/status", headers=buyer_headers)
+    assert res_status.json()["data"]["payment_status"] == "pending"
+    assert res_status.json()["data"]["user_role"] == "free"
+
+
+def test_webhook_missing_transfer_amount_is_rejected(pricing_test_env):
+    """Webhook with completed status but missing transfer_amount must be rejected with 400."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    res_no_amount = client.post(
+        "/api/pricing/webhook",
+        json={
+            "transaction_code": tx_code,
+            "status": "completed",
+            "transfer_amount": None,
+        },
+        headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
+    )
+    assert res_no_amount.status_code == 400
+    assert res_no_amount.json()["error_code"] == "MISSING_TRANSFER_AMOUNT"
+
+    # Verify user is NOT upgraded
+    res_status = client.get(f"/api/pricing/transactions/{tx_code}/status", headers=buyer_headers)
+    assert res_status.json()["data"]["payment_status"] == "pending"
+    assert res_status.json()["data"]["user_role"] == "free"
+
+
+def test_webhook_invalid_status_is_rejected(pricing_test_env):
+    """Webhook with unknown/invalid status string must be rejected with 400."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    res_invalid = client.post(
+        "/api/pricing/webhook",
+        json={
+            "transaction_code": tx_code,
+            "status": "random_invalid_status",
+            "transfer_amount": 39000,
+        },
+        headers={"X-Webhook-Secret": settings.PAYMENT_WEBHOOK_SECRET},
+    )
+    assert res_invalid.status_code == 400
+    assert res_invalid.json()["error_code"] == "INVALID_PAYMENT_STATUS"
+
+
+def test_validate_security_configuration_raises_in_production_with_default_secret_key():
+    """Startup check must raise RuntimeError in production if SECRET_KEY is default or weak."""
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        with patch.object(settings, "SECRET_KEY", settings.DEFAULT_DEV_SECRET_KEY):
+            with pytest.raises(RuntimeError, match="SECRET_KEY is missing"):
+                validate_security_configuration()
+
+
+def test_validate_security_configuration_raises_in_production_with_default_webhook_secret():
+    """Startup check must raise RuntimeError in production if PAYMENT_WEBHOOK_SECRET is default."""
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        with patch.object(settings, "SECRET_KEY", "custom-strong-secret-key-32-chars-length"), patch.object(
+            settings, "PAYMENT_WEBHOOK_SECRET", settings.DEFAULT_DEV_WEBHOOK_SECRET
+        ):
+            with pytest.raises(RuntimeError, match="PAYMENT_WEBHOOK_SECRET is missing"):
+                validate_security_configuration()
+
+
+def test_validate_security_configuration_passes_in_production_with_strong_secrets():
+    """Startup check must pass cleanly in production when both keys are properly configured."""
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        with patch.object(settings, "SECRET_KEY", "custom-strong-secret-key-32-chars-length"), patch.object(
+            settings, "PAYMENT_WEBHOOK_SECRET", "custom-strong-webhook-secret-32-chars"
+        ):
+            # Must not raise
+            validate_security_configuration()
+
+
+def test_webhook_rejected_on_production_if_default_secret_configured(pricing_test_env):
+    """Calling /webhook on production when secret is default must return 401 WEBHOOK_NOT_CONFIGURED."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        res = client.post(
+            "/api/pricing/webhook",
+            json={
+                "transaction_code": tx_code,
+                "status": "completed",
+                "transfer_amount": 39000,
+            },
+            headers={"X-Webhook-Secret": settings.DEFAULT_DEV_WEBHOOK_SECRET},
+        )
+        assert res.status_code == 401
+        assert res.json()["error_code"] == "WEBHOOK_NOT_CONFIGURED"
+
+

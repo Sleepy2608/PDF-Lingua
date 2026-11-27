@@ -230,13 +230,13 @@ async def reject_transaction(
     db: Session = Depends(get_db),
 ):
     """
-    Reject/cancel a pending VietQR payment transaction and revoke user active package if any.
+    Reject/cancel a pending VietQR payment transaction.
     """
     logger.info(f"[Admin] Admin {current_admin.email} rejecting transaction {transaction_code}.")
     tx = AdminService.reject_transaction(db=db, transaction_code=transaction_code)
     return ApiResponse(
         data={"transaction_code": tx.transaction_code, "payment_status": tx.payment_status},
-        message=f"Đã từ chối giao dịch {tx.transaction_code} và hủy gói cước của người dùng (nếu có).",
+        message=f"Đã từ chối giao dịch {tx.transaction_code}.",
     )
 
 
