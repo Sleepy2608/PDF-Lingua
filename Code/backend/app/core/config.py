@@ -24,6 +24,10 @@ for env_path in _env_candidates:
         break
 
 
+DEFAULT_DEV_SECRET_KEY: str = "dev-secret-key-pdf-lingua-min-32-chars"
+DEFAULT_DEV_WEBHOOK_SECRET: str = "dev-webhook-secret-pdf-lingua"
+
+
 def _resolve_database_url() -> str:
     raw_url = os.getenv("DATABASE_URL", "sqlite:///./pdf_lingua.db")
     if raw_url.startswith("sqlite:///./"):
@@ -42,7 +46,8 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8000"))
 
     # Security & JWT
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-pdf-lingua-min-32-chars")
+    DEFAULT_DEV_SECRET_KEY: str = DEFAULT_DEV_SECRET_KEY
+    SECRET_KEY: str = os.getenv("SECRET_KEY", DEFAULT_DEV_SECRET_KEY)
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
@@ -91,8 +96,9 @@ class Settings:
     FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:5500")
 
     # Payment & VietQR Configuration
+    DEFAULT_DEV_WEBHOOK_SECRET: str = DEFAULT_DEV_WEBHOOK_SECRET
     PAYMENT_WEBHOOK_SECRET: str = os.getenv(
-        "PAYMENT_WEBHOOK_SECRET", "dev-webhook-secret-pdf-lingua"
+        "PAYMENT_WEBHOOK_SECRET", DEFAULT_DEV_WEBHOOK_SECRET
     )
     VIETQR_BANK_ID: str = os.getenv("VIETQR_BANK_ID", "ICB")
     VIETQR_BANK_NAME: str = os.getenv("VIETQR_BANK_NAME", "VietinBank (CN Thủ Thiêm - Hội Sở)")
@@ -102,3 +108,29 @@ class Settings:
 
 
 settings = Settings()
+
+
+def validate_security_configuration() -> None:
+    """
+    Validate critical security settings on startup.
+    In production mode (APP_ENV == 'production' or not DEBUG):
+    Strictly forbids default or weak secret keys to prevent token forgery and webhook spoofing.
+    """
+    is_prod = settings.APP_ENV.lower() == "production" or not settings.DEBUG
+    if is_prod:
+        if settings.SECRET_KEY == DEFAULT_DEV_SECRET_KEY or len(settings.SECRET_KEY) < 32:
+            raise RuntimeError(
+                "CRITICAL SECURITY CONFIGURATION ERROR: SECRET_KEY is missing, too short (<32 chars), "
+                "or using the default development secret in production. "
+                "Configure a secure, random SECRET_KEY in your environment variables."
+            )
+        if (
+            settings.PAYMENT_WEBHOOK_SECRET == DEFAULT_DEV_WEBHOOK_SECRET
+            or len(settings.PAYMENT_WEBHOOK_SECRET) < 16
+        ):
+            raise RuntimeError(
+                "CRITICAL SECURITY CONFIGURATION ERROR: PAYMENT_WEBHOOK_SECRET is missing, too short (<16 chars), "
+                "or using the default development secret in production. "
+                "Configure a unique PAYMENT_WEBHOOK_SECRET in your environment variables."
+            )
+

@@ -193,6 +193,16 @@ async def payment_webhook(
             provided_secret = parts[1].strip()
 
     expected_secret = settings.PAYMENT_WEBHOOK_SECRET
+    if (
+        (settings.APP_ENV.lower() == "production" or not settings.DEBUG)
+        and expected_secret == settings.DEFAULT_DEV_WEBHOOK_SECRET
+    ):
+        logger.error("[Pricing Webhook] Rejected: PAYMENT_WEBHOOK_SECRET is unconfigured on production.")
+        raise UnauthorizedException(
+            message="Cổng Webhook thanh toán chưa được cấu hình khóa bảo mật trên môi trường production.",
+            error_code="WEBHOOK_NOT_CONFIGURED",
+        )
+
     if not provided_secret or not secrets.compare_digest(provided_secret, expected_secret):
         raise UnauthorizedException(
             message="Khóa bí mật Webhook không hợp lệ hoặc bị thiếu.",

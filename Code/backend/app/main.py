@@ -14,7 +14,7 @@ from app.api.pricing import router as pricing_router
 from app.api.process import compat_router as process_compat_router
 from app.api.process import router as process_router
 from app.api.storage import router as storage_router
-from app.core.config import settings
+from app.core.config import settings, validate_security_configuration
 from app.core.database import check_db_connection, init_db
 from app.core.exceptions import setup_exception_handlers
 from app.core.logger import logger
@@ -23,6 +23,7 @@ from app.core.logger import logger
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Application lifespan: run startup tasks before serving requests."""
+    validate_security_configuration()
     logger.info("[Startup] Initialising database tables...")
     init_db()
     logger.info("[Startup] PDF-Lingua backend is ready.")

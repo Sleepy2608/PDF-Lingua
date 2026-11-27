@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
-from app.core.config import settings
+from app.core.config import settings, validate_security_configuration
 from app.core.database import Base
 from app.core.dependencies import get_db
 from app.core.security import create_access_token
@@ -700,4 +700,56 @@ def test_webhook_invalid_status_is_rejected(pricing_test_env):
     )
     assert res_invalid.status_code == 400
     assert res_invalid.json()["error_code"] == "INVALID_PAYMENT_STATUS"
+
+
+def test_validate_security_configuration_raises_in_production_with_default_secret_key():
+    """Startup check must raise RuntimeError in production if SECRET_KEY is default or weak."""
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        with patch.object(settings, "SECRET_KEY", settings.DEFAULT_DEV_SECRET_KEY):
+            with pytest.raises(RuntimeError, match="SECRET_KEY is missing"):
+                validate_security_configuration()
+
+
+def test_validate_security_configuration_raises_in_production_with_default_webhook_secret():
+    """Startup check must raise RuntimeError in production if PAYMENT_WEBHOOK_SECRET is default."""
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        with patch.object(settings, "SECRET_KEY", "custom-strong-secret-key-32-chars-length"), patch.object(
+            settings, "PAYMENT_WEBHOOK_SECRET", settings.DEFAULT_DEV_WEBHOOK_SECRET
+        ):
+            with pytest.raises(RuntimeError, match="PAYMENT_WEBHOOK_SECRET is missing"):
+                validate_security_configuration()
+
+
+def test_validate_security_configuration_passes_in_production_with_strong_secrets():
+    """Startup check must pass cleanly in production when both keys are properly configured."""
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        with patch.object(settings, "SECRET_KEY", "custom-strong-secret-key-32-chars-length"), patch.object(
+            settings, "PAYMENT_WEBHOOK_SECRET", "custom-strong-webhook-secret-32-chars"
+        ):
+            # Must not raise
+            validate_security_configuration()
+
+
+def test_webhook_rejected_on_production_if_default_secret_configured(pricing_test_env):
+    """Calling /webhook on production when secret is default must return 401 WEBHOOK_NOT_CONFIGURED."""
+    buyer_headers = {"Authorization": f"Bearer {pricing_test_env['free_token']}"}
+    tx_code = client.post(
+        "/api/pricing/subscribe",
+        json={"plan_code": "pro_monthly"},
+        headers=buyer_headers,
+    ).json()["data"]["transaction_code"]
+
+    with patch.object(settings, "APP_ENV", "production"), patch.object(settings, "DEBUG", False):
+        res = client.post(
+            "/api/pricing/webhook",
+            json={
+                "transaction_code": tx_code,
+                "status": "completed",
+                "transfer_amount": 39000,
+            },
+            headers={"X-Webhook-Secret": settings.DEFAULT_DEV_WEBHOOK_SECRET},
+        )
+        assert res.status_code == 401
+        assert res.json()["error_code"] == "WEBHOOK_NOT_CONFIGURED"
+
 
