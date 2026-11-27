@@ -1851,10 +1851,28 @@
     const formattedLang = formatTargetLang(doc.target_lang);
     const isEn = isEnLanguage();
     const isOcr = Boolean(doc.is_ocr_used);
-    const ocrText = isOcr ? (isEn ? 'OCR Scan' : 'Quét OCR') : (isEn ? 'Digital PDF' : 'PDF Số');
-    const ocrBadgeHtml = isOcr
-      ? `<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>${ocrText}</span>`
-      : `<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>${ocrText}</span>`;
+    const procStatus = String(doc.processing_status || '').toUpperCase();
+    const errTooltip = doc.latest_error_message
+      ? escapeHtml(doc.latest_error_message)
+      : (isEn ? 'Processing was cancelled by user' : 'Người dùng đã hủy tác vụ xử lý');
+
+    let ocrBadgeHtml = '';
+    if (procStatus === 'CANCELLED') {
+      const cancelLabel = isEn ? 'Cancelled' : 'Đã hủy';
+      ocrBadgeHtml = `<span class="doc-method-badge doc-method-cancelled" title="${errTooltip}"><span class="doc-method-dot"></span>${cancelLabel}</span>`;
+    } else if (procStatus === 'FAILED') {
+      const failedLabel = isEn ? 'Failed' : 'Thất bại';
+      ocrBadgeHtml = `<span class="doc-method-badge doc-method-failed" title="${errTooltip}"><span class="doc-method-dot"></span>${failedLabel}</span>`;
+    } else if (procStatus === 'PROCESSING') {
+      const procLabel = isEn ? 'Processing' : 'Đang xử lý';
+      ocrBadgeHtml = `<span class="doc-method-badge doc-method-processing"><span class="doc-method-dot"></span>${procLabel}</span>`;
+    } else {
+      const ocrText = isOcr ? (isEn ? 'OCR Scan' : 'Quét OCR') : (isEn ? 'Digital PDF' : 'PDF Số');
+      ocrBadgeHtml = isOcr
+        ? `<span class="doc-method-badge doc-method-ocr"><span class="doc-method-dot"></span>${ocrText}</span>`
+        : `<span class="doc-method-badge doc-method-digital"><span class="doc-method-dot"></span>${ocrText}</span>`;
+    }
+
     const formattedDate = formatDate(doc.created_at) || '--';
     const rowNumber = typeof index === 'number' ? index + 1 : 1;
     const pageUnit = isEn ? (pageCount === 1 ? ' page' : ' pages') : ' trang';
@@ -1864,6 +1882,20 @@
     const downloadTitle = isEn ? 'Download PDF' : 'Tải xuống PDF';
     const downloadLabel = isEn ? `Download ${escapeHtml(filename)}` : `Tải xuống ${escapeHtml(filename)}`;
     const downloadBtnText = isEn ? 'Download' : 'Tải xuống';
+    const reprocessTitle = isEn ? 'Reprocess this PDF' : 'Xử lý lại tài liệu này';
+    const reprocessBtnText = isEn ? 'Reprocess' : 'Xử lý lại';
+    const showReprocessBtn = procStatus === 'CANCELLED' || procStatus === 'FAILED';
+    const reprocessBtnHtml = showReprocessBtn
+      ? `
+          <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-reprocess-btn" title="${reprocessTitle}" aria-label="${reprocessTitle}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            <span>${reprocessBtnText}</span>
+          </button>
+        `
+      : '';
 
     tr.innerHTML = `
       <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
@@ -1879,6 +1911,7 @@
       <td class="date-mono doc-cell-date">${escapeHtml(formattedDate)}</td>
       <td class="text-right">
         <div class="doc-row-actions user-actions-group">
+          ${reprocessBtnHtml}
           <button type="button" class="btn btn-secondary btn-sm doc-action-btn doc-table-detail-btn" title="${detailTitle}" aria-label="${detailLabel}">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1897,6 +1930,14 @@
         </div>
       </td>
     `;
+
+    const reprocessBtn = tr.querySelector('.doc-table-reprocess-btn');
+    if (reprocessBtn) {
+      reprocessBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        reprocessStoredDocument(doc, token, reprocessBtn);
+      });
+    }
 
     const detailBtn = tr.querySelector('.doc-table-detail-btn');
     if (detailBtn) {
@@ -1930,6 +1971,7 @@
     const btnCloseFooter = document.getElementById('btnCloseDocumentDetailFooter');
     const btnDownload = document.getElementById('btnDocDetailDownload');
     const btnDelete = document.getElementById('btnDocDetailDelete');
+    const btnReprocess = document.getElementById('btnDocDetailReprocess');
 
     if (btnCloseTop) {
       btnCloseTop.addEventListener('click', (e) => {
@@ -1965,6 +2007,86 @@
         e.preventDefault();
         handleDocumentDetailDeleteIntent();
       });
+    }
+
+    if (btnReprocess) {
+      btnReprocess.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentDetailDoc) {
+          const docToRun = currentDetailDoc;
+          const token = getStoredAuthToken();
+          closeDocumentDetailModal();
+          reprocessStoredDocument(docToRun, token, null);
+        }
+      });
+    }
+  }
+
+  /**
+   * Nạp lại tệp PDF đã lưu (tài liệu bị hủy/thất bại) vào vùng chọn tệp để người dùng xử lý lại.
+   */
+  async function reprocessStoredDocument(doc, token, buttonEl) {
+    if (!doc || !doc.id) return false;
+    const authToken = token || getStoredAuthToken();
+    if (!authToken) {
+      if (typeof showToast === 'function') {
+        showToast('Vui lòng đăng nhập để xử lý lại tài liệu.', 'warning');
+      }
+      return false;
+    }
+    if (buttonEl) buttonEl.disabled = true;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${encodeURIComponent(doc.id)}/download`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      if (!response.ok) {
+        throw new Error('Không thể tải tệp PDF gốc từ máy chủ để xử lý lại.');
+      }
+      const blob = await response.blob();
+      const filename = doc.original_filename || `document_${doc.id}.pdf`;
+      const pdfFile = (typeof File === 'function')
+        ? new File([blob], filename, { type: 'application/pdf' })
+        : blob;
+
+      // Chuyển về màn hình Dịch PDF (Upload) và chọn sẵn tệp
+      const documentsSection = document.getElementById('documentsSection');
+      const historySection = document.getElementById('historySection');
+      const workspaceSection = document.getElementById('workspaceSection');
+      const pricingSection = document.getElementById('pricingSection');
+      const adminSection = document.getElementById('adminSection');
+      const heroSection = document.getElementById('heroSection');
+      if (documentsSection) documentsSection.style.display = 'none';
+      if (historySection) historySection.style.display = 'none';
+      if (workspaceSection) workspaceSection.style.display = 'none';
+      if (pricingSection) pricingSection.style.display = 'none';
+      if (adminSection) adminSection.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'block';
+
+      const targetLangSelect = document.getElementById('targetLangSelect');
+      if (targetLangSelect && doc.target_lang) {
+        targetLangSelect.value = doc.target_lang;
+      }
+
+      if (window.pdfLinguaUpload && typeof window.pdfLinguaUpload.clearBatchQueue === 'function') {
+        window.pdfLinguaUpload.clearBatchQueue();
+      }
+      if (window.pdfLinguaUpload && typeof window.pdfLinguaUpload.handleFile === 'function') {
+        window.pdfLinguaUpload.handleFile(pdfFile);
+      } else if (window.pdfLinguaUpload && typeof window.pdfLinguaUpload.setSelectedFile === 'function') {
+        window.pdfLinguaUpload.setSelectedFile(pdfFile);
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`Đã nạp lại "${filename}". Nhấn "Bắt đầu dịch" để xử lý lại.`, 'info');
+      }
+      return true;
+    } catch (err) {
+      if (typeof showToast === 'function') {
+        showToast((err && err.message) || 'Không thể xử lý lại tài liệu này.', 'error');
+      }
+      return false;
+    } finally {
+      if (buttonEl) buttonEl.disabled = false;
     }
   }
 
@@ -2424,9 +2546,11 @@
     const pageCountEl = document.getElementById('docDetailPageCount');
     const targetLangEl = document.getElementById('docDetailTargetLang');
     const ocrStatusEl = document.getElementById('docDetailOcrStatus');
+    const procStatusEl = document.getElementById('docDetailProcessingStatus');
     const createdAtEl = document.getElementById('docDetailCreatedAt');
     const btnDownload = document.getElementById('btnDocDetailDownload');
     const btnDelete = document.getElementById('btnDocDetailDelete');
+    const btnReprocess = document.getElementById('btnDocDetailReprocess');
 
     if (heroFilenameEl) heroFilenameEl.textContent = '---';
     if (heroSubEl) heroSubEl.textContent = 'Mã tài liệu: #---';
@@ -2436,13 +2560,15 @@
     if (pageCountEl) pageCountEl.textContent = '---';
     if (targetLangEl) targetLangEl.textContent = '---';
     if (ocrStatusEl) ocrStatusEl.innerHTML = '---';
+    if (procStatusEl) procStatusEl.innerHTML = '---';
     if (createdAtEl) createdAtEl.textContent = '---';
     if (btnDownload && btnDownload.dataset) delete btnDownload.dataset.docId;
     if (btnDelete && btnDelete.dataset) delete btnDelete.dataset.docId;
+    if (btnReprocess) btnReprocess.style.display = 'none';
   }
 
   /**
-   * Render document metadata into the 7 fields of #documentDetailModal
+   * Render document metadata into #documentDetailModal
    */
   function populateDocumentDetailMetadata(targetDoc) {
     const docData = targetDoc || {};
@@ -2454,6 +2580,8 @@
       : '1 trang';
     const formattedLang = formatTargetLang(docData.target_lang);
     const isOcr = Boolean(docData.is_ocr_used);
+    const procStatus = String(docData.processing_status || '').toUpperCase();
+    const errReason = docData.latest_error_message ? escapeHtml(docData.latest_error_message) : '';
     const formattedDate = formatDate(docData.created_at) || '---';
 
     const heroFilenameEl = document.getElementById('docDetailHeroFilename');
@@ -2464,9 +2592,11 @@
     const pageCountEl = document.getElementById('docDetailPageCount');
     const targetLangEl = document.getElementById('docDetailTargetLang');
     const ocrStatusEl = document.getElementById('docDetailOcrStatus');
+    const procStatusEl = document.getElementById('docDetailProcessingStatus');
     const createdAtEl = document.getElementById('docDetailCreatedAt');
     const btnDownload = document.getElementById('btnDocDetailDownload');
     const btnDelete = document.getElementById('btnDocDetailDelete');
+    const btnReprocess = document.getElementById('btnDocDetailReprocess');
 
     if (heroFilenameEl) heroFilenameEl.textContent = filename;
     if (heroSubEl) heroSubEl.textContent = `Mã tài liệu: ${docIdText}`;
@@ -2479,6 +2609,20 @@
       ocrStatusEl.innerHTML = isOcr
         ? '<span class="meta-pill ocr">Quét OCR</span>'
         : '<span class="meta-pill digital">PDF Số</span>';
+    }
+    if (procStatusEl) {
+      if (procStatus === 'CANCELLED') {
+        procStatusEl.innerHTML = `<span class="doc-method-badge doc-method-cancelled"><span class="doc-method-dot"></span>Đã hủy</span>${errReason ? `<div class="text-muted" style="font-size:0.78rem;margin-top:4px;">${errReason}</div>` : ''}`;
+      } else if (procStatus === 'FAILED') {
+        procStatusEl.innerHTML = `<span class="doc-method-badge doc-method-failed"><span class="doc-method-dot"></span>Thất bại</span>${errReason ? `<div class="text-muted" style="font-size:0.78rem;margin-top:4px;">${errReason}</div>` : ''}`;
+      } else if (procStatus === 'PROCESSING') {
+        procStatusEl.innerHTML = '<span class="doc-method-badge doc-method-processing"><span class="doc-method-dot"></span>Đang xử lý</span>';
+      } else {
+        procStatusEl.innerHTML = '<span class="status-pill active history-status-pill-success"><span class="status-dot"></span>Thành công</span>';
+      }
+    }
+    if (btnReprocess) {
+      btnReprocess.style.display = (procStatus === 'CANCELLED' || procStatus === 'FAILED') ? 'inline-flex' : 'none';
     }
     if (createdAtEl) createdAtEl.textContent = formattedDate;
 
@@ -2499,6 +2643,7 @@
     const contentEl = document.getElementById('documentDetailContent');
     const btnDownload = document.getElementById('btnDocDetailDownload');
     const btnDelete = document.getElementById('btnDocDetailDelete');
+    const btnReprocess = document.getElementById('btnDocDetailReprocess');
 
     if (loadingEl) loadingEl.style.display = state === 'loading' ? 'flex' : 'none';
     if (contentEl) contentEl.style.display = state === 'content' ? 'block' : 'none';
@@ -2900,7 +3045,8 @@
         }
 
         const actionType = actionFilterEl && actionFilterEl.value !== 'all' ? actionFilterEl.value : null;
-        const status = statusFilterEl && statusFilterEl.value !== 'all' ? statusFilterEl.value : null;
+        const rawStatusFilter = statusFilterEl ? String(statusFilterEl.value || 'all').toUpperCase() : 'ALL';
+        const status = (rawStatusFilter === 'SUCCESS' || rawStatusFilter === 'FAILED') ? rawStatusFilter : null;
 
         const skip = (historyCurrentPage - 1) * HISTORY_PAGE_SIZE;
         const fetchLimit = HISTORY_PAGE_SIZE + 1; // Fetch 1 extra to detect next page
@@ -2991,7 +3137,10 @@
         const btnPrevPage = document.getElementById('btnHistoryPrevPage');
         const btnNextPage = document.getElementById('btnHistoryNextPage');
 
-        const rawList = Array.isArray(records) ? records : [];
+        const rawList = (Array.isArray(records) ? records : []).filter((item) => {
+          const st = String((item && item.status) || '').toUpperCase();
+          return st === 'SUCCESS' || st === 'FAILED';
+        });
         const query = searchInput && typeof searchInput.value === 'string'
           ? searchInput.value.trim().toLowerCase()
           : '';
@@ -3048,7 +3197,7 @@
 
         const filename = record.document_filename || ('Tài liệu #' + record.document_id);
         const actionType = String(record.action_type || 'EXTRACT').toUpperCase();
-        const status = String(record.status || 'PENDING').toUpperCase();
+        const status = String(record.status || 'FAILED').toUpperCase();
         const executionTime = formatExecutionTime(record.execution_time_ms, record);
         const formattedDate = formatDateTime(record.created_at);
         const rowNumber = typeof index === 'number' ? (historyCurrentPage - 1) * HISTORY_PAGE_SIZE + index + 1 : 1;
@@ -3065,7 +3214,7 @@
         }
         const actionBadgeHtml = `<span class="history-action-text ${actionClass}">${actionText}</span>`;
 
-        // Status Badge & Action Buttons
+        // Status Badge & Action Buttons (chỉ hỗ trợ 2 trạng thái cuối: SUCCESS và FAILED)
         let statusBadgeHtml = '';
         let actionBtnHtml = '';
 
@@ -3080,9 +3229,12 @@
           <span>Chi tiết</span>
         </button>
       `;
-        } else if (status === 'FAILED') {
+        } else {
+          const failedTitle = record.error_message
+            ? escapeHtml(record.error_message)
+            : 'Nhấn để xem chi tiết lỗi';
           statusBadgeHtml = `
-        <span class="status-pill locked history-status-pill-failed" data-history-id="${record.id}" title="Nhấn để xem chi tiết lỗi">
+        <span class="status-pill locked history-status-pill-failed" data-history-id="${record.id}" title="${failedTitle}">
           <svg class="status-lock-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -3101,25 +3253,10 @@
           <span>Chi tiết lỗi</span>
         </button>
       `;
-        } else {
-          statusBadgeHtml = '<span class="status-pill pending history-status-pill-pending" title="Đang thực thi"><span class="status-dot"></span>Đang xử lý</span>';
-          actionBtnHtml = '<span class="history-running-indicator font-mono">Đang chạy...</span>';
         }
 
         // Delete Button
-        let deleteBtnHtml = '';
-        if (status === 'PENDING') {
-          deleteBtnHtml = `
-        <button type="button" class="doc-action-btn history-btn-delete disabled" disabled title="Không thể xóa khi đang xử lý" aria-label="Không thể xóa khi đang xử lý">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-          <span>Xóa</span>
-        </button>
-      `;
-        } else {
-          deleteBtnHtml = `
+        const deleteBtnHtml = `
         <button type="button" class="doc-action-btn history-btn-delete" data-history-id="${record.id}" title="Xóa bản ghi lịch sử" aria-label="Xóa">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -3128,7 +3265,6 @@
           <span>Xóa</span>
         </button>
       `;
-        }
 
         tr.innerHTML = `
       <td class="history-cell-stt font-mono text-muted text-center">${rowNumber}</td>
@@ -3177,7 +3313,7 @@
 
         // Click handler for Deleting History
         const btnDelete = tr.querySelector('.history-btn-delete');
-        if (btnDelete && status !== 'PENDING') {
+        if (btnDelete) {
           btnDelete.addEventListener('click', (e) => {
             e.stopPropagation();
             openHistoryDeleteConfirmModal({
