@@ -1914,8 +1914,6 @@
                                             </option>
                                             <option value="SUCCESS" data-i18n="history_filter_status_success">Thành công
                                                 (SUCCESS)</option>
-                                            <option value="PENDING" data-i18n="history_filter_status_pending">Đang xử lý
-                                                (PENDING)</option>
                                             <option value="FAILED" data-i18n="history_filter_status_failed">Thất bại
                                                 (FAILED)</option>
                                         </select>
@@ -5580,6 +5578,11 @@
                             <span class="account-detail-value" id="docDetailOcrStatus">---</span>
                         </div>
                         <div class="account-detail-item">
+                            <span class="account-detail-label" data-i18n="doc_detail_lbl_processing_status">Trạng thái xử lý</span>
+                            <span class="account-detail-value" id="docDetailProcessingStatus"
+                                style="text-align: right; max-width: 65%;">---</span>
+                        </div>
+                        <div class="account-detail-item">
                             <span class="account-detail-label" data-i18n="doc_detail_lbl_created">Ngày tải lên</span>
                             <span class="account-detail-value font-mono" id="docDetailCreatedAt">---</span>
                         </div>
@@ -5601,6 +5604,15 @@
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
                     <button type="button" class="btn btn-secondary btn-sm" id="btnCloseDocumentDetailFooter"
                         data-i18n="common_close">Đóng</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnDocDetailReprocess"
+                        style="display: none;" title="Xử lý lại tài liệu này">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        <span id="docDetailReprocessText">Xử lý lại</span>
+                    </button>
                     <button type="button" class="btn btn-gradient btn-sm" id="btnDocDetailDownload"
                         title="Tải xuống PDF" data-i18n-attr="title:doc_detail_btn_download">
                         <span class="btn-spinner" id="docDetailDownloadSpinner" aria-hidden="true"
@@ -5652,27 +5664,29 @@
     </div>
 
     <!-- History Error Detail Modal -->
-    <div class="modal-overlay" id="historyErrorModal" role="dialog" aria-modal="true"
+    <div class="modal-backdrop" id="historyErrorModal" role="dialog" aria-modal="true"
         aria-labelledby="historyErrorModalTitle" hidden style="display: none;">
-        <div class="account-modal-card history-error-card">
-            <div class="account-modal-header history-error-header">
-                <div class="history-error-header-icon" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
+        <div class="modal-dialog account-modal-dialog history-error-card">
+            <div class="modal-header history-error-header">
+                <div class="history-error-header-left">
+                    <div class="history-error-header-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="modal-title" id="historyErrorModalTitle" data-i18n="history_error_title">Chi tiết
+                            sự cố xử lý</h2>
+                        <p class="modal-subtitle font-mono" id="historyErrorModalSub"><span
+                                data-i18n="history_error_code_prefix">Mã bản ghi lịch sử: #</span>---</p>
+                    </div>
                 </div>
-                <div class="account-header-info">
-                    <h2 class="account-modal-title" id="historyErrorModalTitle" data-i18n="history_error_title">Chi tiết
-                        sự cố xử lý</h2>
-                    <p class="account-modal-desc font-mono" id="historyErrorModalSub"><span
-                            data-i18n="history_error_code_prefix">Mã bản ghi lịch sử: #</span>---</p>
-                </div>
-                <button type="button" class="modal-close-btn" id="btnCloseHistoryErrorModal" aria-label="Đóng cửa sổ"
+                <button type="button" class="modal-close" id="btnCloseHistoryErrorModal" aria-label="Đóng cửa sổ"
                     data-i18n-attr="aria-label:common_close">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>

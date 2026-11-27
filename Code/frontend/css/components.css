@@ -4488,6 +4488,36 @@
   background: #F59E0B;
 }
 
+.doc-method-cancelled {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.doc-method-cancelled .doc-method-dot {
+  background: #EF4444;
+}
+
+.doc-method-failed {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+.doc-method-failed .doc-method-dot {
+  background: #DC2626;
+}
+
+.doc-method-processing {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.doc-method-processing .doc-method-dot {
+  background: #64748B;
+}
+
 /* Action buttons in row */
 .doc-row-actions {
   display: inline-flex;
@@ -5073,19 +5103,27 @@
 
 /* History Error Diagnostic Modal */
 .history-error-card {
-  max-width: 580px;
+  max-width: 540px;
   width: 100%;
 }
 
 .history-error-header {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 0.85rem;
 }
 
+.history-error-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
 .history-error-header-icon {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md, 10px);
   background: #FFF1F2;
   border: 1px solid #FECDD3;
@@ -5097,10 +5135,11 @@
 }
 
 .history-diagnostic-meta-card {
-  margin-bottom: 1.15rem;
+  margin-bottom: 1rem;
   background: var(--bg-subtle, #F8FAFC);
   border: 1px solid var(--border-light, #E2E8F0);
   border-radius: var(--radius-md, 10px);
+  padding: 0.25rem 0.75rem;
 }
 
 .history-docname-val {
@@ -5113,7 +5152,7 @@
 .history-error-console-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .history-error-console-label {
@@ -5124,18 +5163,17 @@
 }
 
 .history-error-box {
-  background: #0F172A;
-  border: 1px solid #1E293B;
-  color: #F87171;
-  padding: 0.95rem 1.1rem;
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  color: #9F1239;
+  padding: 0.9rem 1rem;
   border-radius: var(--radius-md, 10px);
-  font-size: 0.8125rem;
-  line-height: 1.6;
+  font-size: 0.84rem;
+  line-height: 1.55;
   word-break: break-word;
   white-space: pre-wrap;
-  max-height: 240px;
+  max-height: 220px;
   overflow-y: auto;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .history-error-box::-webkit-scrollbar {
@@ -5143,23 +5181,24 @@
 }
 
 .history-error-box::-webkit-scrollbar-track {
-  background: #1E293B;
+  background: #FFE4E6;
   border-radius: 4px;
 }
 
 .history-error-box::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #FDA4AF;
   border-radius: 4px;
 }
 
 .history-error-box::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: #FB7185;
 }
 
 .history-error-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  margin-top: 1.25rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border-light, #E2E8F0);
 }
