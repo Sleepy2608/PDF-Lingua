@@ -49,7 +49,7 @@ async def list_user_histories(
     ] = None,
     status: Annotated[
         Optional[str],
-        Query(description="Lọc theo trạng thái thực thi: PENDING | SUCCESS | FAILED."),
+        Query(description="Lọc theo trạng thái thực thi: SUCCESS | FAILED."),
     ] = None,
     document_id: Annotated[
         Optional[int],
@@ -105,6 +105,7 @@ async def list_user_histories(
             action_type=action_type,
             status=status,
             document_id=document_id,
+            exclude_pending=True,
         )
     except SQLAlchemyError as exc:
         logger.error(f"[HistoryAPI] Database error listing histories for user_id={target_user_id}: {exc}")

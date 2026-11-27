@@ -818,6 +818,7 @@ class HistoryService:
         action_type: Optional[ActionType | str] = None,
         status: Optional[ProcessingStatus | str] = None,
         document_id: Optional[int] = None,
+        exclude_pending: bool = False,
     ) -> list[ProcessingHistory]:
         """
         Query paginated processing history for a specific user.
@@ -895,6 +896,11 @@ class HistoryService:
 
             if norm_action is not None:
                 query = query.filter(ProcessingHistory.action_type == norm_action)
+
+            if exclude_pending:
+                if norm_status == ProcessingStatus.PENDING:
+                    return []
+                query = query.filter(ProcessingHistory.status != ProcessingStatus.PENDING)
 
             if norm_status is not None:
                 query = query.filter(ProcessingHistory.status == norm_status)
