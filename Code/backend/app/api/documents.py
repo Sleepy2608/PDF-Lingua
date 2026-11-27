@@ -15,18 +15,53 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.dependencies import get_current_user, get_db
 from app.core.logger import logger
 from app.models.document import Document
+from app.models.processing_history import ProcessingStatus
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.document import DocumentResponse
+from app.services.job_service import job_manager
 from app.services.storage_service import StorageService
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 storage_service = StorageService()
+
+
+def _serialize_document_with_status(doc: Document) -> DocumentResponse:
+    """
+    Chuyển đổi ORM Document sang DocumentResponse kèm trạng thái xử lý gần nhất
+    suy ra từ ProcessingHistory và trạng thái tác vụ đang chạy (không cần đổi schema DB).
+    """
+    base = DocumentResponse.model_validate(doc)
+    histories = getattr(doc, "processing_histories", None) or []
+
+    # Chỉ xét các trạng thái cuối (SUCCESS / FAILED) mới nhất theo id giảm dần
+    final_histories = [
+        h for h in histories
+        if h.status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED)
+    ]
+    final_histories.sort(key=lambda h: (h.created_at, h.id), reverse=True)
+
+    if final_histories:
+        latest = final_histories[0]
+        if latest.status == ProcessingStatus.SUCCESS:
+            base.processing_status = "SUCCESS"
+            base.latest_error_message = None
+        else:
+            err_msg = (latest.error_message or "").strip()
+            lower_err = err_msg.lower()
+            is_cancelled = ("hủy" in lower_err) or ("cancel" in lower_err)
+            base.processing_status = "CANCELLED" if is_cancelled else "FAILED"
+            base.latest_error_message = err_msg or None
+    elif job_manager.has_active_job_for_document(doc.id):
+        base.processing_status = "PROCESSING"
+        base.latest_error_message = None
+
+    return base
 
 
 @router.get("", response_model=ApiResponse[list[DocumentResponse]])
@@ -40,7 +75,7 @@ async def list_user_documents(
     Admins can view all system documents or filter by specific user_id.
     Never trusts client-supplied user_id for non-admin callers (Anti-IDOR).
     """
-    query = db.query(Document)
+    query = db.query(Document).options(joinedload(Document.processing_histories))
     if current_user.role != UserRole.ADMIN:
         # Strictly enforce current authenticated user ID for non-admins
         query = query.filter(Document.user_id == current_user.id)
@@ -48,7 +83,7 @@ async def list_user_documents(
         query = query.filter(Document.user_id == user_id)
 
     documents = query.order_by(Document.created_at.desc()).all()
-    data = [DocumentResponse.model_validate(doc) for doc in documents]
+    data = [_serialize_document_with_status(doc) for doc in documents]
     return ApiResponse(
         data=data,
         message=f"Lấy danh sách {len(data)} tài liệu thành công.",
@@ -65,7 +100,11 @@ async def get_document_details(
     Retrieve document metadata by document ID.
     Enforces multi-tenant ownership check to prevent IDOR attacks.
     """
-    query = db.query(Document).filter(Document.id == document_id)
+    query = (
+        db.query(Document)
+        .options(joinedload(Document.processing_histories))
+        .filter(Document.id == document_id)
+    )
     if current_user.role != UserRole.ADMIN:
         query = query.filter(Document.user_id == current_user.id)
 
@@ -78,7 +117,7 @@ async def get_document_details(
         )
 
     return ApiResponse(
-        data=DocumentResponse.model_validate(doc),
+        data=_serialize_document_with_status(doc),
         message="Lấy thông tin tài liệu thành công.",
     )
 
