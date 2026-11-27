@@ -1,4 +1,4 @@
-# PDF-Lingua - Kế Hoạch 7 Sprint Phát Triển (Full Sprint Plan)
+# PDF-Lingua - Kế Hoạch 8 Sprint Phát Triển (Full Sprint Plan)
 
 - **Dự án**: **PDF Lingua** - Ứng dụng web trích xuất văn bản từ tài liệu PDF, dịch thuật đa ngôn ngữ, tích hợp AI tóm tắt và trợ lý hỏi đáp tài liệu thông minh.
 - **Thành viên nhóm**:
@@ -11,12 +11,11 @@
   - Bảng phân công nhiệm vụ chi tiết: [Assignment.md](./Assignment.md)
   - Báo cáo phân công thực hiện EPIC 15 & 16: [phan_cong_thuc_hien_epic15_epic16.md](../.plan/.extra/phan_cong_thuc_hien_epic15_epic16.md)
 - **Ngày khởi tạo kế hoạch**: `15/10/2026` (Bắt đầu chu kỳ Sprint 1)
-- **Ngày cập nhật lần cuối**: `23/11/2026` (Đồng bộ hóa 100% Sprint 1 đến Sprint 6 theo tiến độ thực tế Git commit và Jira Board)
+- **Ngày cập nhật lần cuối**: `27/11/2026` (Đồng bộ hóa 100% Sprint 1 đến Sprint 8 theo Jira Cloud và mã nguồn dự án)
 - **Tiến độ tổng quan**:
-  - **Sprint 1, 2, 3, 4**: Đã hoàn thành 100% (Khung kiến trúc, Tài khoản/Auth, Trích xuất PDF & OCR, Dịch thuật đa ngôn ngữ, Xuất file và toàn bộ các test suite nền tảng).
-  - **Sprint 5 (10/11 - 17/11/2026)**: Đã hoàn thành 100% trọn vẹn 41 work items (123 Story Points Done) đồng bộ chính xác theo Jira Board.
-  - **Sprint 6 (17/11 - 24/11/2026)**: Đã hoàn thành 100% 37 work items (100 Story Points Done) đúng theo bảng Jira Board.
-  - **Sprint 7 (22/11 - 29/11/2026)**: Kế hoạch và nghiệm thu 45 work items (37 Done - 69 SP / 8 To Do - 29 SP - tổng 98 Story Points) gồm kiểm thử toàn diện EPIC 15, tài liệu bàn giao EPIC 16 và hướng dẫn sử dụng web PDFL-279 đúng theo Jira Board.
+  - **Sprint 1, 2, 3, 4, 5, 6**: Đã hoàn thành 100% (Khung kiến trúc, Tài khoản/Auth, Trích xuất PDF & OCR, Dịch thuật đa ngôn ngữ, Xuất file, Lịch sử, Admin, Gói Free/Pro, AI Tóm tắt & Chatbot RAG, Đa ngôn ngữ, Landing Page, Avatar, Billing và CI/CD).
+  - **Sprint 7 (22/11 - 29/11/2026)**: 31 work items (20 Done - 67 SP / 7 In Progress - 20 SP / 4 To Do - 8 SP - tổng 95 Story Points) gồm nghiệm thu triển khai website, báo cáo tổng kết đồ án, theo dõi khách truy cập, vá các lỗi quan trọng, kiểm thử vai trò và kế hoạch mở rộng.
+  - **Sprint 8 (23/11 - 30/11/2026)**: Đã hoàn thành 100% trọn vẹn 35 work items (69 Story Points Done) gồm bộ test suite tự động 36 files (Unit, Integration, Security, Benchmark) và cấu hình hạ tầng triển khai.
 
 ---
 
@@ -419,70 +418,93 @@ Hệ thống được phát triển theo mô hình Scrum/Agile với chu kỳ **
 
 ---
 
-### 🔹 Sprint 7: Kiểm Thử Toàn Diện, Triển Khai Hệ Thống, Tài Liệu Bàn Giao & Nghiệm Thu Đồ Án
+### 🔹 Sprint 7: Triển Khai Hệ Thống, Nghiệm Thu Đồ Án, Giám Sát Admin & Vá Lỗi
 - **Thời gian**: 22/11/2026 - 29/11/2026 (Tuần 7)
-- **Mục tiêu**: Tập trung toàn lực vào giai đoạn nghiệm thu chất lượng phần mềm, đóng gói môi trường triển khai, hoàn thiện hồ sơ tài liệu đồ án (báo cáo phân tích thiết kế, hướng dẫn sử dụng web, tài liệu API, slide thuyết trình, kịch bản demo) và rà soát an toàn mã nguồn trước khi bàn giao.
-- **Trạng thái**: 📋 **Kế hoạch & Nghiệm thu** - **45 Work Items** (37 Done - 69 SP / 8 To Do - 29 SP - **Tổng 98 Story Points**) - *Đồng bộ 100% Jira Board (22 Nov - 29 Nov)*
+- **Mục tiêu**: Triển khai website chính thức, hoàn thiện báo cáo tổng kết đồ án, theo dõi người dùng & khách truy cập, rà soát bảo mật JWT/Webhook/Thanh toán, kiểm thử vai trò người dùng và chuẩn bị kịch bản nghiệm thu.
+- **Trạng thái**: 📋 **31 Work Items** (20 Done - 67 SP / 7 In Progress - 20 SP / 4 To Do - 8 SP - **Tổng 95 Story Points**) - *Đồng bộ 100% Jira Board*
 
-#### 1. Danh sách công việc nghiệm thu đồ án & tài liệu cuối kỳ (8 Work Items - 29 Story Points)
-*(Khớp đúng 100% danh sách task hiển thị trên giao diện Jira Sprint 7)*
+#### Danh sách công việc Sprint 7 chi tiết (31 Work Items)
 
 | Mã Task | Tên nhiệm vụ | Epic | Story Points | Mức độ ưu tiên | Người thực hiện | Trạng thái Jira |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| `PDFL-228` | Chọn nền tảng triển khai Frontend | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **Done** |
-| `PDFL-229` | Chọn nền tảng triển khai Backend Python | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
-| `PDFL-288` | Triển khai trên website | EPIC 16 | 5 | Highest | Cả hai thành viên | **Done** |
-| `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực và kiểm thử phần mềm | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **To Do** |
-| `PDFL-249` | Chuẩn bị slide thuyết trình | EPIC 16 | - | Lowest | Cả hai thành viên | **To Do** |
-| `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính | EPIC 16 | - | Lowest | Cả hai thành viên | **Done** |
-| `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
-| `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng | EPIC 15 | 5 | High | Huỳnh Đình Chấn | **To Do** |
-| `PDFL-246` | Cung cấp hình ảnh giao diện và hướng dẫn sử dụng | EPIC 16 | 8 | High | Huỳnh Đình Chấn | **To Do** |
-| `PDFL-279` | Hướng dẫn sử dụng web | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-199` | Xây dựng danh sách test case theo yêu cầu chức năng. | EPIC 15 | 5 | High | Đình Chấn Huỳnh | **In Progress** |
+| `PDFL-218` | Giới hạn tần suất request phù hợp để giảm lạm dụng. | EPIC 15 | 3 | Highest | Đình Chấn Huỳnh | **In Progress** |
+| `PDFL-222` | Hạn chế nội dung không đáng tin cậy trong tài liệu ảnh hưởng đến chỉ dẫn của trợ lý AI. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-228` | Chọn nền tảng triển khai Frontend. | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-229` | Chọn nền tảng triển khai Backend Python. | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-235` | Kiểm thử ứng dụng trên môi trường triển khai thực tế. | EPIC 16 | 5 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-238` | Xác định phương án sao lưu và phục hồi database. | EPIC 16 | 3 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-239` | Kiểm tra quy trình cập nhật phiên bản và khôi phục khi triển khai lỗi. | EPIC 16 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-246` | Cung cấp hình ảnh giao diện | EPIC 16 | 2 | High | Đình Chấn Huỳnh | **In Progress** |
+| `PDFL-248` | Viết báo cáo phân tích, thiết kế, hiện thực | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-249` | Chuẩn bị slide thuyết trình (Powerpoint) | EPIC 16 | 3 | Medium | Đình Chấn Huỳnh | **To Do** |
+| `PDFL-250` | Chuẩn bị kịch bản demo các chức năng chính. | EPIC 16 | 3 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-251` | Kiểm tra README, tài liệu, repository và loại bỏ API key hoặc dữ liệu nhạy cảm trước khi bàn giao. | EPIC 16 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-264` | Hỗ trợ nhiều chủ đề giao diện hoặc chế độ tối. | EPIC 17 | 3 | Low | Đình Chấn Huỳnh | **To Do** |
+| `PDFL-282` | Testing guests' features | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-283` | Testing free users' features | EPIC 15 | 3 | Highest | Đình Chấn Huỳnh | **In Progress** |
+| `PDFL-284` | Testing pro users' features | EPIC 15 | 5 | Highest | Đình Chấn Huỳnh | **In Progress** |
+| `PDFL-285` | Testing admin's features | EPIC 15 | 3 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-286` | Bulk-adding PDF files not translating after uploading successfully | - | 2 | Highest | Đình Chấn Huỳnh | **Done** |
+| `PDFL-287` | Viết báo cáo tổng kết đồ án (Words) | EPIC 16 | 3 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-288` | Triển khai trên website | EPIC 16 | 5 | Highest | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-289` | Monetization strategy by using ads | EPIC 18 | 5 | Medium | Nguyễn Lê Huy Tâm | **In Progress** |
+| `PDFL-291` | Add an extra paid plan (pricing plans) with better benefits | EPIC 18 | 2 | Medium | Đình Chấn Huỳnh | **To Do** |
+| `PDFL-292` | Pro plan adjustment | EPIC 13 | 2 | Medium | Đình Chấn Huỳnh | **To Do** |
+| `PDFL-293` | Allowing admin to track visitors and transition | EPIC 14 | 3 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-294` | Small tabs/frontend in Admin console for tracking visitors and transition | EPIC 03 | 3 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-295` | Enhancing bug reports from users | EPIC 17 | 3 | Medium | Nguyễn Lê Huy Tâm | **In Progress** |
+| `PDFL-296` | Upgrade to Pro for free via the "/simulate" endpoint | - | 2 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-297` | Admin's rejection not working properly | - | 2 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-298` | The webhook accepts a "pending" status and skips the amount check | - | 2 | Medium | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-299` | Fix secret key with a default fallback is exposed | - | 2 | Medium | Nguyễn Lê Huy Tâm | **Done** |
 
-#### 2. Danh sách các hạng mục kiểm thử & triển khai đã hoàn thành trong codebase (37 Work Items - 69 Story Points)
-*(Bàn giao nghiệm thu tự động qua bộ test suite 36 files và cấu hình triển khai thực tế)*
+---
 
-| Mã Task | Tên nhiệm vụ | Epic | Story Points | Thành viên chủ lực | Minh chứng mã nguồn / Test Suite | Trạng thái |
-| :--- | :--- | :---: | :---: | :---: | :--- | :---: |
-| `PDFL-200` | Unit test cho các hàm xử lý nghiệp vụ quan trọng | EPIC 15 | 3 | Huy Tâm & Đình Chấn | `test_services.py`, `test_job_service.py`, `test_storage_service.py` | **Done** |
-| `PDFL-201` | Kiểm thử API upload, trích xuất, OCR, dịch thuật và AI | EPIC 15 | 3 | Huy Tâm & Đình Chấn | `test_api_process.py`, `test_ai_api.py`, `test_background_jobs_api.py` | **Done** |
-| `PDFL-202` | Kiểm thử đăng ký, đăng nhập, phân quyền và gói Free/Pro | EPIC 15 | 3 | Huỳnh Đình Chấn | `test_auth.py`, `test_permissions.py`, `test_frontend_login.js` | **Done** |
-| `PDFL-203` | Kiểm thử lịch sử, xuất file và chức năng Admin | EPIC 15 | 3 | Huy Tâm & Đình Chấn | `test_history_api.py`, `test_docx_export.py`, `test_admin_management.py` | **Done** |
-| `PDFL-204` | Kiểm thử tích hợp toàn bộ luồng từ tải PDF đến tải kết quả | EPIC 15 | 3 | Nguyễn Lê Huy Tâm | `test_e2e_pipeline.py` (E2E End-to-End full flow) | **Done** |
-| `PDFL-206` | Kiểm thử các trường hợp lỗi và trường hợp biên | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | `test_files_lost_and_error_tasks.py`, `test_upload_security.py` | **Done** |
-| `PDFL-208` | Kiểm thử PDF scan (OCR, Deskew, xoay trang) | EPIC 15 | 3 | Huỳnh Đình Chấn | `test_ocr_pipeline.py`, `test_deskew.py`, `test_orientation.py` | **Done** |
-| `PDFL-209` | Kiểm thử PDF tiếng Việt có dấu và tài liệu đa ngôn ngữ | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_text_metrics.py`, dataset ground-truth tiếng Việt | **Done** |
-| `PDFL-210` | Kiểm thử PDF nhiều trang, nhiều cột hoặc bố cục phức tạp | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_layout_metrics.py` (bảo toàn thứ tự đọc và bảng biểu) | **Done** |
-| `PDFL-211` | Kiểm thử PDF bị hỏng, có mật khẩu hoặc không đọc được | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_blank_page.py`, `test_upload_security.py` | **Done** |
-| `PDFL-212` | Kiểm thử file nhỏ, sát giới hạn và vượt giới hạn dung lượng | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_size_page_limits_integration.py` (20MB Free / 100MB Pro) | **Done** |
-| `PDFL-213` | Kiểm thử tài liệu dài khi dịch, tóm tắt và hỏi đáp AI | EPIC 15 | 3 | Nguyễn Lê Huy Tâm | `test_translation_pipeline_tasks.py`, `test_ai_summary_quality.py` | **Done** |
-| `PDFL-215` | Đảm bảo mật khẩu người dùng không bao giờ lưu dạng văn bản thuần | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_auth.py`, thuật toán băm bcrypt trong `security.py` | **Done** |
-| `PDFL-216` | Đảm bảo API key và secret không bị đưa lên GitHub | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | Cấu hình `.gitignore`, `.env.example`, quét secret tự động | **Done** |
-| `PDFL-217` | Kiểm tra xác thực và phân quyền trên các API riêng tư | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_security_matrix.py`, `test_permissions.py` | **Done** |
-| `PDFL-219` | Kiểm soát dung lượng tải lên, số trang xử lý và thời gian chạy | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_size_page_limits_integration.py`, `test_memory_optimization.py` | **Done** |
-| `PDFL-220` | Ngăn chặn người dùng truy cập trái phép tài liệu của người khác | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | `test_document_access_control.py`, `test_history_delete.py` (Anti-IDOR) | **Done** |
-| `PDFL-221` | Xác định rõ chính sách lưu trữ, xóa và bảo vệ dữ liệu người dùng | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_history_delete.py`, chính sách tự động xóa sau 30 ngày | **Done** |
-| `PDFL-223` | Kiểm tra các lỗi phổ biến như SQL injection, XSS hoặc tải file độc hại | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | `test_upload_security.py`, `test_e2e_security_bypass.py` | **Done** |
-| `PDFL-224` | Đánh giá thời gian trích xuất, OCR, dịch thuật và xử lý AI | EPIC 15 | 2 | Huỳnh Đình Chấn | `benchmark_runner.py`, `test_benchmark_execution.py` | **Done** |
-| `PDFL-225` | Kiểm tra khả năng xử lý khi có nhiều yêu cầu gửi đến cùng lúc | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_parallel_pdf_processing.py`, benchmark đa luồng | **Done** |
-| `PDFL-226` | Tối ưu quy trình đọc, xử lý và lưu file để giảm chiếm dụng bộ nhớ | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_memory_optimization.py`, thu hồi tài nguyên PDF | **Done** |
-| `PDFL-227` | Thiết lập thông báo lỗi rõ ràng và cơ chế khôi phục phù hợp | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | Hệ thống `exceptions.py` tập trung, ghi log chuẩn `logger.py` | **Done** |
-| `PDFL-205` | Kiểm thử giao diện trên các kích thước màn hình phổ biến | EPIC 15 | 2 | Huỳnh Đình Chấn | `test_frontend_split_view.js`, `test_frontend_sidebar.js` | **Done** |
-| `PDFL-222` | Hạn chế việc đưa nội dung không đáng tin cậy vào prompt AI | EPIC 15 | 2 | Nguyễn Lê Huy Tâm | Rào chắn bảo vệ prompt chống injection trong `ai_service.py` | **Done** |
-| `PDFL-230` | Chọn nơi lưu trữ PDF và file kết quả | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | `storage_service.py` phân vùng lưu trữ theo user an toàn | **Done** |
-| `PDFL-231` | Thiết lập database cho môi trường triển khai | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | `database.py` hỗ trợ SQLite WAL và PostgreSQL linh hoạt | **Done** |
-| `PDFL-232` | Cấu hình biến môi trường và API key trên môi trường production | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | `config.py` đọc cấu hình chuẩn Pydantic Settings | **Done** |
-| `PDFL-233` | Cấu hình CORS, domain và HTTPS nếu nền tảng hỗ trợ | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | Middleware CORS tích hợp tại `main.py` | **Done** |
-| `PDFL-234` | Cài đặt các thành phần cần thiết cho OCR trên server | EPIC 16 | 2 | Huỳnh Đình Chấn | Tự động phát hiện và cấu hình đường dẫn Tesseract OCR | **Done** |
-| `PDFL-236` | Kiểm tra việc xử lý file lớn theo giới hạn đã công bố | EPIC 16 | 2 | Huỳnh Đình Chấn | `test_size_page_limits_integration.py` | **Done** |
-| `PDFL-237` | Thiết lập kiểm tra tình trạng hoạt động và theo dõi lỗi | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | Endpoint `GET /health` và middleware ghi log thời gian | **Done** |
-| `PDFL-238` | Xác định phương án sao lưu và phục hồi database | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | Chiến lược sao lưu snapshot WAL và dump DB trong kiến trúc | **Done** |
-| `PDFL-241` | Ghi rõ công nghệ sử dụng và yêu cầu cài đặt | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | Tài liệu đặc tả công nghệ chi tiết trong `README.md` | **Done** |
-| `PDFL-242` | Hướng dẫn thiết lập môi trường chạy trên máy cá nhân | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | `README.md` và script khởi chạy một click `run.bat` | **Done** |
-| `PDFL-243` | Hướng dẫn cấu hình .env và các dịch vụ bên ngoài | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | File mẫu `.env.example` và tài liệu giải thích từng biến | **Done** |
-| `PDFL-244` | Mô tả cấu trúc thư mục và kiến trúc hệ thống | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | Sơ đồ cây thư mục và kiến trúc module trong `README.md` | **Done** |
-| `PDFL-245` | Viết tài liệu API và ví dụ request/response | EPIC 16 | 2 | Nguyễn Lê Huy Tâm | Hệ thống OpenAPI Swagger UI tự động tại `/docs` | **Done** |
+### 🔹 Sprint 8: Kiểm Thử Chuyên Sâu, An Toàn Bảo Mật & Tối Ưu Môi Trường Triển Khai
+- **Thời gian**: 23/11/2026 - 30/11/2026 (Tuần 8)
+- **Mục tiêu**: Tập trung nghiệm thu toàn diện hệ thống kiểm thử tự động (Unit, API, OCR, Translation, Security, Benchmark) với bộ test suite 36 files và đóng gói cấu hình triển khai an toàn.
+- **Trạng thái**: ✅ **100% Hoàn Thành** - **35 Work Items** (35 Done - **Tổng 69 Story Points**) - *Đồng bộ 100% Jira Board*
+
+#### Danh sách công việc Sprint 8 chi tiết (35 Work Items)
+
+| Mã Task | Tên nhiệm vụ | Epic | Story Points | Mức độ ưu tiên | Người thực hiện | Trạng thái Jira |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| `PDFL-200` | Viết unit test cho các hàm xử lý nghiệp vụ quan trọng. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-201` | Kiểm thử API upload, trích xuất, OCR, dịch thuật và AI. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-202` | Kiểm thử đăng ký, đăng nhập, phân quyền và gói Free/Pro. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-203` | Kiểm thử lịch sử, xuất file và chức năng Admin. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-204` | Kiểm thử tích hợp toàn bộ luồng từ tải PDF đến tải kết quả. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-206` | Kiểm thử các trường hợp lỗi và trường hợp biên. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-208` | Kiểm thử PDF scan. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-209` | Kiểm thử PDF tiếng Việt có dấu và tài liệu đa ngôn ngữ. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-210` | Kiểm thử PDF nhiều trang, nhiều cột hoặc bố cục phức tạp. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-211` | Kiểm thử PDF bị hỏng, có mật khẩu hoặc không thể đọc. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-212` | Kiểm thử file nhỏ, file sát giới hạn và file vượt giới hạn dung lượng. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-213` | Kiểm thử tài liệu dài khi dịch thuật, tóm tắt và hỏi đáp AI. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-215` | Đảm bảo mật khẩu không được lưu dưới dạng văn bản thuần. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-216` | Đảm bảo API key và thông tin nhạy cảm không bị đưa lên GitHub. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-217` | Kiểm tra xác thực và phân quyền trên các API riêng tư. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-219` | Kiểm soát dung lượng, số trang, bộ nhớ và thời gian xử lý PDF. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-220` | Ngăn tài liệu hoặc lịch sử của người dùng này bị truy cập bởi người dùng khác. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-221` | Xác định chính sách lưu trữ, xóa và bảo vệ dữ liệu người dùng. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-223` | Kiểm tra các lỗi phổ biến như SQL injection, XSS và truy cập trái phép. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-224` | Đánh giá thời gian trích xuất, OCR, dịch và xử lý AI. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-225` | Kiểm tra nhiều request đồng thời và giới hạn tài nguyên. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-226` | Tối ưu quy trình đọc, xử lý và lưu file lớn. | EPIC 15 | 3 | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-227` | Thiết lập thông báo lỗi, logging và cách khôi phục khi xử lý thất bại. | EPIC 15 | 3 | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-230` | Chọn nơi lưu trữ PDF và file kết quả. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-231` | Thiết lập database cho môi trường triển khai. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-232` | Cấu hình biến môi trường và API key trên môi trường production. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-233` | Cấu hình CORS, domain và HTTPS nếu nền tảng hỗ trợ. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-234` | Cài đặt các thành phần cần thiết cho OCR trên server. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-236` | Kiểm tra việc xử lý file lớn theo giới hạn đã công bố. | EPIC 16 | - | High | Đình Chấn Huỳnh | **Done** |
+| `PDFL-237` | Thiết lập kiểm tra tình trạng hoạt động và theo dõi lỗi. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-241` | Ghi rõ công nghệ sử dụng và yêu cầu cài đặt. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-242` | Hướng dẫn thiết lập môi trường chạy trên máy cá nhân. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-243` | Hướng dẫn cấu hình .env và các dịch vụ bên ngoài. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-244` | Mô tả cấu trúc thư mục và kiến trúc hệ thống. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
+| `PDFL-245` | Viết tài liệu API và ví dụ request/response. | EPIC 16 | - | High | Nguyễn Lê Huy Tâm | **Done** |
 
 ---
 
