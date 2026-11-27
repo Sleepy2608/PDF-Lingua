@@ -18,6 +18,7 @@ from app.core.exceptions import (
 )
 from app.core.logger import logger
 from app.core.network import extract_client_ip, parse_device_summary
+from app.core.rate_limiter import RateLimiter
 from app.core.security import create_access_token
 from app.models.access_log import UserAccessLog
 from app.models.user import User
@@ -65,6 +66,7 @@ def _record_access_log(db: Session, user_id: int, request: Optional[Request], ac
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user account",
     description="Registers a new user with default 'free' role. Validates email and password, hashes password with bcrypt, and checks for duplicate email.",
+    dependencies=[Depends(RateLimiter(max_requests=3, window_seconds=60, scope="auth_register"))],
 )
 def register(
     user_in: UserCreate,
@@ -90,6 +92,7 @@ def register(
     status_code=status.HTTP_200_OK,
     summary="Authenticate user credentials",
     description="Authenticates an active user using email and password. Returns 200 OK with bearer access token and safe user information.",
+    dependencies=[Depends(RateLimiter(max_requests=5, window_seconds=60, scope="auth_login"))],
 )
 def login(
     credentials: UserLogin,

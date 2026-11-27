@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, get_db
 from app.core.exceptions import AppException, BadRequestException, ForbiddenException, NotFoundException
 from app.core.logger import logger
+from app.core.rate_limiter import RateLimiter
 from app.models.document import Document
 from app.models.processing_history import ActionType, ProcessingHistory, ProcessingStatus
 from app.models.user import User, UserRole
@@ -35,6 +36,7 @@ router = APIRouter(prefix="/api/ai", tags=["AI Intelligence"])
     response_model=ApiResponse[SummarizeResponseData],
     status_code=status.HTTP_200_OK,
     summary="Tom tat noi dung van ban bang AI (Danh rieng cho Pro VIP)",
+    dependencies=[Depends(RateLimiter(max_requests=10, window_seconds=60, scope="ai_summarize"))],
 )
 async def summarize_document(
     payload: SummarizeRequest,
@@ -170,6 +172,7 @@ async def summarize_document(
     response_model=ApiResponse[ChatResponseData],
     status_code=status.HTTP_200_OK,
     summary="Hoi dap thong minh voi AI Copilot ve tai lieu (Danh rieng cho Pro VIP)",
+    dependencies=[Depends(RateLimiter(max_requests=15, window_seconds=60, scope="ai_chat"))],
 )
 async def chat_copilot(
     payload: ChatRequest,

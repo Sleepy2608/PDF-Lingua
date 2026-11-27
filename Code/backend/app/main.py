@@ -31,17 +31,22 @@ async def lifespan(_app: FastAPI):
     logger.info("[Shutdown] PDF-Lingua backend shutting down.")
 
 
+is_production = settings.APP_ENV.lower() in ("production", "prod") or not settings.DEBUG
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="Backend API for PDF text extraction, OCR, translation, and AI assistant",
     version="1.0.0",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
     lifespan=lifespan,
 )
 
-# Enable CORS for frontend integration
+# Enable CORS with environment-aware whitelist
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
