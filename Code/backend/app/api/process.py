@@ -124,9 +124,73 @@ def get_user_limits(user: Optional[User]) -> tuple[int, int]:
     return settings.MAX_UPLOAD_SIZE_FREE_MB, max_pages
 
 
+USER_CANCELLED_ERROR_MESSAGE = "Người dùng đã hủy tác vụ xử lý."
+
+
 class JobCancelledException(Exception):
     """Ngoại lệ khi tác vụ nền bị hủy bởi người dùng"""
     pass
+
+
+def _persist_failed_history_once(
+    job_id: str,
+    user_id: Optional[int],
+    document_id: Optional[int],
+    error_message: str,
+    execution_time_ms: Optional[int] = None,
+    start_time: Optional[float] = None,
+) -> Optional[int]:
+    """
+    Ghi nhận duy nhất một bản ghi ProcessingHistory ở trạng thái FAILED cho job_id
+    (dùng cho cả trường hợp người dùng hủy tác vụ lẫn lỗi xử lý thực sự).
+    An toàn với race condition giữa endpoint /cancel và luồng background worker.
+    """
+    if user_id is None or document_id is None:
+        return None
+
+    if not job_manager.claim_history_recording(job_id):
+        job = job_manager.get_job(job_id)
+        return job.history_id if job else None
+
+    duration_ms = execution_time_ms
+    if duration_ms is None:
+        base_start = start_time if start_time is not None else time.time()
+        duration_ms = max(1, int((time.time() - base_start) * 1000))
+
+    fail_session = SessionLocal()
+    try:
+        from app.models.processing_history import ActionType, ProcessingStatus
+        from app.schemas.processing_history import ProcessingHistoryCreate
+        from app.services.history_service import history_service
+
+        hist_record = history_service.create_history(
+            fail_session,
+            ProcessingHistoryCreate(
+                user_id=user_id,
+                document_id=document_id,
+                action_type=ActionType.TRANSLATE,
+                status=ProcessingStatus.FAILED,
+                execution_time_ms=duration_ms,
+                error_message=error_message,
+            ),
+            reuse_pending=False,
+        )
+        job_manager.set_history_id(job_id, hist_record.id)
+        logger.info(
+            f"[Job {job_id}] Persisted FAILED history id={hist_record.id} for document_id={document_id} "
+            f"(reason={error_message!r})"
+        )
+        return hist_record.id
+    except Exception as fail_hist_err:
+        try:
+            fail_session.rollback()
+        except Exception:
+            pass
+        job_manager.set_history_id(job_id, None)
+        logger.warning(f"[Job {job_id}] Could not log failed/cancelled history: {fail_hist_err}")
+        return None
+    finally:
+        fail_session.close()
 
 
 def _execute_pdf_background_job(
@@ -139,19 +203,19 @@ def _execute_pdf_background_job(
     user_id: Optional[int] = None,
     file_size_bytes: Optional[int] = None,
     selected_pages: Optional[list[int]] = None,
+    document_id: Optional[int] = None,
 ) -> None:
     """
     Thực thi xử lý PDF trong Background Thread riêng biệt.
     Tận dụng Hybrid Fast Path, Lazy Loading và Parallel Processing.
     Được kiểm soát giới hạn tài nguyên bởi Semaphore.
-    Hỗ trợ xếp hàng PENDING khi vượt quá giới hạn và hủy tác vụ an toàn.
-    Nếu người dùng đã đăng nhập (user_id != None), tự động lưu file vật lý
-    và bản ghi Document vào cơ sở dữ liệu sau khi dịch thành công.
-    Hỗ trợ trích xuất theo dải trang chọn lọc selected_pages.
+    Hỗ trợ xếp hàng chờ khi vượt quá giới hạn và hủy tác vụ an toàn.
+    Với người dùng đã đăng nhập, tài liệu đã được lưu sẵn ngay khi tải lên (`document_id`)
+    nên dù tác vụ bị hủy hoặc thất bại, tài liệu vẫn tồn tại trong "Tài liệu của tôi"
+    và bản ghi lịch sử được ghi nhận sang trạng thái FAILED.
     """
     semaphore_acquired = False
     start_time = time.time()
-    document_id: Optional[int] = None
 
     try:
         job = job_manager.get_job(job_id)
@@ -164,6 +228,13 @@ def _execute_pdf_background_job(
         # Kiểm tra nếu job đã bị hủy trước khi vào hàng đợi
         if job_manager.is_job_cancelled(job_id):
             logger.info(f"[Job {job_id}] Đã bị hủy trước khi chạy.")
+            _persist_failed_history_once(
+                job_id=job_id,
+                user_id=user_id,
+                document_id=document_id,
+                error_message=USER_CANCELLED_ERROR_MESSAGE,
+                start_time=start_time,
+            )
             return
 
         # 1. Thử acquire semaphore không chờ (non-blocking)
@@ -186,17 +257,41 @@ def _execute_pdf_background_job(
 
         if not semaphore_acquired:
             logger.info(f"[Job {job_id}] Kết thúc do không acquire được semaphore hoặc đã bị hủy trong hàng đợi.")
+            if job_manager.is_job_cancelled(job_id):
+                _persist_failed_history_once(
+                    job_id=job_id,
+                    user_id=user_id,
+                    document_id=document_id,
+                    error_message=USER_CANCELLED_ERROR_MESSAGE,
+                    start_time=start_time,
+                )
             return
 
         if job_manager.is_job_cancelled(job_id):
             logger.info(f"[Job {job_id}] Đã bị hủy ngay sau khi acquire semaphore.")
+            _persist_failed_history_once(
+                job_id=job_id,
+                user_id=user_id,
+                document_id=document_id,
+                error_message=USER_CANCELLED_ERROR_MESSAGE,
+                start_time=start_time,
+            )
             return
 
         # 2. Đã chiếm slot worker: Bắt đầu xử lý
         try:
             validation = pdf_service.validate_pdf(tmp_path)
             if not validation["is_valid"]:
-                job_manager.set_failed(job_id, validation["error"] or "Tệp PDF không hợp lệ.")
+                err_msg = validation["error"] or "Tệp PDF không hợp lệ."
+                fail_ms = max(1, int((time.time() - start_time) * 1000))
+                job_manager.set_failed(job_id, err_msg, execution_time_ms=fail_ms)
+                _persist_failed_history_once(
+                    job_id=job_id,
+                    user_id=user_id,
+                    document_id=document_id,
+                    error_message=err_msg,
+                    execution_time_ms=fail_ms,
+                )
                 return
 
             if job_manager.is_job_cancelled(job_id):
@@ -204,15 +299,30 @@ def _execute_pdf_background_job(
 
             page_count = validation["page_count"]
             if page_count <= 0:
-                job_manager.set_failed(job_id, "Tài liệu PDF không có trang nào hợp lệ để xử lý.")
+                err_msg = "Tài liệu PDF không có trang nào hợp lệ để xử lý."
+                fail_ms = max(1, int((time.time() - start_time) * 1000))
+                job_manager.set_failed(job_id, err_msg, execution_time_ms=fail_ms)
+                _persist_failed_history_once(
+                    job_id=job_id,
+                    user_id=user_id,
+                    document_id=document_id,
+                    error_message=err_msg,
+                    execution_time_ms=fail_ms,
+                )
                 return
 
             effective_total = len(selected_pages) if selected_pages is not None else page_count
 
             if effective_total > max_allowed_pages:
-                job_manager.set_failed(
-                    job_id,
-                    f"Tài liệu yêu cầu xử lý {effective_total} trang, vượt quá giới hạn ({max_allowed_pages} trang).",
+                err_msg = f"Tài liệu yêu cầu xử lý {effective_total} trang, vượt quá giới hạn ({max_allowed_pages} trang)."
+                fail_ms = max(1, int((time.time() - start_time) * 1000))
+                job_manager.set_failed(job_id, err_msg, execution_time_ms=fail_ms)
+                _persist_failed_history_once(
+                    job_id=job_id,
+                    user_id=user_id,
+                    document_id=document_id,
+                    error_message=err_msg,
+                    execution_time_ms=fail_ms,
                 )
                 return
 
@@ -241,7 +351,16 @@ def _execute_pdf_background_job(
 
             original_text = extract_res.get("text", "")
             if not original_text.strip():
-                job_manager.set_failed(job_id, "Không thể trích xuất văn bản từ tài liệu này.")
+                err_msg = "Không thể trích xuất văn bản từ tài liệu này."
+                fail_ms = max(1, int((time.time() - start_time) * 1000))
+                job_manager.set_failed(job_id, err_msg, execution_time_ms=fail_ms)
+                _persist_failed_history_once(
+                    job_id=job_id,
+                    user_id=user_id,
+                    document_id=document_id,
+                    error_message=err_msg,
+                    execution_time_ms=fail_ms,
+                )
                 return
 
             is_ocr_used = bool(
@@ -268,37 +387,53 @@ def _execute_pdf_background_job(
             if job_manager.is_job_cancelled(job_id):
                 raise JobCancelledException()
 
+            # Chốt nguyên tử trước khi lưu kết quả SUCCESS để tránh race condition với /cancel
+            if not job_manager.try_begin_finalizing(job_id):
+                raise JobCancelledException()
+
             if user_id is not None:
                 db_session = SessionLocal()
                 try:
-                    raw_bytes = tmp_path.read_bytes()
-                    actual_size_bytes = file_size_bytes if file_size_bytes is not None else len(raw_bytes)
-                    stored_filename, rel_path, _ = storage_service.save_document_file(
-                        user_id=user_id,
-                        original_filename=filename,
-                        content=raw_bytes,
-                    )
-                    doc_record = Document(
-                        user_id=user_id,
-                        original_filename=filename,
-                        stored_filename=stored_filename,
-                        stored_path=rel_path,
-                        file_size_bytes=actual_size_bytes,
-                        page_count=effective_total,
-                        target_lang=target_lang,
-                        is_ocr_used=is_ocr_used,
-                    )
-                    db_session.add(doc_record)
-                    db_session.commit()
-                    db_session.refresh(doc_record)
-                    document_id = doc_record.id
-                    logger.info(
-                        f"[Job {job_id}] Saved document id={document_id} for user_id={user_id}"
-                    )
+                    if document_id is not None:
+                        existing_doc = (
+                            db_session.query(Document)
+                            .filter(Document.id == document_id, Document.user_id == user_id)
+                            .first()
+                        )
+                        if existing_doc is not None:
+                            existing_doc.page_count = effective_total
+                            existing_doc.is_ocr_used = is_ocr_used
+                            db_session.commit()
+                    else:
+                        raw_bytes = tmp_path.read_bytes()
+                        actual_size_bytes = file_size_bytes if file_size_bytes is not None else len(raw_bytes)
+                        stored_filename, rel_path, _ = storage_service.save_document_file(
+                            user_id=user_id,
+                            original_filename=filename,
+                            content=raw_bytes,
+                        )
+                        doc_record = Document(
+                            user_id=user_id,
+                            original_filename=filename,
+                            stored_filename=stored_filename,
+                            stored_path=rel_path,
+                            file_size_bytes=actual_size_bytes,
+                            page_count=effective_total,
+                            target_lang=target_lang,
+                            is_ocr_used=is_ocr_used,
+                        )
+                        db_session.add(doc_record)
+                        db_session.commit()
+                        db_session.refresh(doc_record)
+                        document_id = doc_record.id
+                        job_manager.set_document_id(job_id, document_id)
+                        logger.info(
+                            f"[Job {job_id}] Saved document id={document_id} for user_id={user_id}"
+                        )
                 except Exception as persist_err:
                     db_session.rollback()
                     logger.error(
-                        f"[Job {job_id}] Failed to persist document record for user_id={user_id}: {persist_err}"
+                        f"[Job {job_id}] Failed to persist/update document record for user_id={user_id}: {persist_err}"
                     )
                 finally:
                     db_session.close()
@@ -319,9 +454,9 @@ def _execute_pdf_background_job(
                 "pages": trans_res["pages"],
             }
 
-            # Lưu Processing History và kết quả xử lý lâu dài cho người dùng đã đăng nhập
+            # Lưu Processing History ở trạng thái cuối SUCCESS (không tạo bản ghi PENDING)
             history_id: Optional[int] = None
-            if user_id is not None and document_id is not None:
+            if user_id is not None and document_id is not None and job_manager.claim_history_recording(job_id):
                 hist_session = SessionLocal()
                 try:
                     from app.models.processing_history import ActionType, ProcessingStatus
@@ -334,7 +469,7 @@ def _execute_pdf_background_job(
                             user_id=user_id,
                             document_id=document_id,
                             action_type=ActionType.TRANSLATE,
-                            status=ProcessingStatus.PENDING,
+                            status=ProcessingStatus.SUCCESS,
                             execution_time_ms=execution_time_ms,
                         ),
                         reuse_pending=False,
@@ -347,6 +482,7 @@ def _execute_pdf_background_job(
                         result_data=result_data,
                         execution_time_ms=execution_time_ms,
                     )
+                    job_manager.set_history_id(job_id, history_id)
                     result_data["history_id"] = history_id
                     logger.info(
                         f"[Job {job_id}] Persisted processing history id={history_id} (duration={execution_time_ms}ms) and result file for user_id={user_id}"
@@ -356,6 +492,7 @@ def _execute_pdf_background_job(
                         hist_session.rollback()
                     except Exception:
                         pass
+                    job_manager.set_history_id(job_id, None)
                     logger.error(
                         f"[Job {job_id}] Failed to persist history record for user_id={user_id}: {hist_err}"
                     )
@@ -372,41 +509,36 @@ def _execute_pdf_background_job(
 
         except JobCancelledException:
             logger.info(f"[Job {job_id}] Đã dừng xử lý do nhận được tín hiệu hủy tác vụ.")
+            _persist_failed_history_once(
+                job_id=job_id,
+                user_id=user_id,
+                document_id=document_id,
+                error_message=USER_CANCELLED_ERROR_MESSAGE,
+                start_time=start_time,
+            )
         except Exception as e:
             logger.error(f"[Job {job_id}] Lỗi xử lý nền: {e}")
             fail_time_ms = max(1, int((time.time() - start_time) * 1000))
             job_manager.set_failed(job_id, str(e), execution_time_ms=fail_time_ms)
-            if user_id is not None and document_id is not None:
-                fail_session = SessionLocal()
-                try:
-                    from app.models.processing_history import ActionType, ProcessingStatus
-                    from app.schemas.processing_history import ProcessingHistoryCreate
-                    from app.services.history_service import history_service
-
-                    history_service.create_history(
-                        fail_session,
-                        ProcessingHistoryCreate(
-                            user_id=user_id,
-                            document_id=document_id,
-                            action_type=ActionType.TRANSLATE,
-                            status=ProcessingStatus.FAILED,
-                            execution_time_ms=fail_time_ms,
-                            error_message=str(e),
-                        ),
-                        reuse_pending=False,
-                    )
-                except Exception as fail_hist_err:
-                    try:
-                        fail_session.rollback()
-                    except Exception:
-                        pass
-                    logger.warning(f"[Job {job_id}] Could not log failed history: {fail_hist_err}")
-                finally:
-                    fail_session.close()
+            _persist_failed_history_once(
+                job_id=job_id,
+                user_id=user_id,
+                document_id=document_id,
+                error_message=str(e),
+                execution_time_ms=fail_time_ms,
+            )
 
     except Exception as outer_e:
         logger.error(f"[Job {job_id}] Lỗi chuẩn bị hoặc xếp hàng tác vụ: {outer_e}")
-        job_manager.set_failed(job_id, str(outer_e))
+        fail_time_ms = max(1, int((time.time() - start_time) * 1000))
+        job_manager.set_failed(job_id, str(outer_e), execution_time_ms=fail_time_ms)
+        _persist_failed_history_once(
+            job_id=job_id,
+            user_id=user_id,
+            document_id=document_id,
+            error_message=str(outer_e),
+            execution_time_ms=fail_time_ms,
+        )
     finally:
         if semaphore_acquired:
             _job_semaphore.release()
@@ -529,13 +661,52 @@ async def create_processing_job(
 
     authenticated_user_id = current_user.id if current_user is not None else None
     safe_filename = file.filename or "document.pdf"
+    file_size_bytes = len(content)
+    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
+
+    # Lưu sẵn bản ghi Document & tệp PDF vật lý ngay khi tệp hợp lệ cho người dùng đã đăng nhập
+    # để đảm bảo nếu tác vụ bị hủy hoặc thất bại giữa chừng, tài liệu vẫn hiển thị trong "Tài liệu của tôi"
+    # và lịch sử xử lý (FAILED) vẫn gắn được với document_id hợp lệ.
+    persisted_document_id: Optional[int] = None
+    if authenticated_user_id is not None:
+        doc_session = SessionLocal()
+        try:
+            stored_filename, rel_path, _ = storage_service.save_document_file(
+                user_id=authenticated_user_id,
+                original_filename=safe_filename,
+                content=content,
+            )
+            doc_record = Document(
+                user_id=authenticated_user_id,
+                original_filename=safe_filename,
+                stored_filename=stored_filename,
+                stored_path=rel_path,
+                file_size_bytes=file_size_bytes,
+                page_count=effective_page_count,
+                target_lang=target_lang,
+                is_ocr_used=False,
+            )
+            doc_session.add(doc_record)
+            doc_session.commit()
+            doc_session.refresh(doc_record)
+            persisted_document_id = doc_record.id
+            logger.info(
+                f"[Process] Persisted uploaded document id={persisted_document_id} for user_id={authenticated_user_id}"
+            )
+        except Exception as doc_err:
+            doc_session.rollback()
+            logger.error(
+                f"[Process] Failed to pre-persist document for user_id={authenticated_user_id}: {doc_err}"
+            )
+        finally:
+            doc_session.close()
+
     job = job_manager.create_job(
         filename=safe_filename,
         target_lang=target_lang,
         user_id=authenticated_user_id,
+        document_id=persisted_document_id,
     )
-    file_size_bytes = len(content)
-    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
 
     # Khởi chạy Worker trong luồng nền độc lập
     thread = threading.Thread(
@@ -550,6 +721,7 @@ async def create_processing_job(
             authenticated_user_id,
             file_size_bytes,
             selected_pages,
+            persisted_document_id,
         ),
         daemon=True,
     )
@@ -602,11 +774,24 @@ async def cancel_processing_job(
     success, message, updated_job = job_manager.cancel_job(
         job_id,
         user_id=authenticated_user_id,
+        reason=USER_CANCELLED_ERROR_MESSAGE,
     )
     if not success or updated_job is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message,
+        )
+
+    # Ghi nhận ngay bản ghi Lịch sử xử lý với trạng thái FAILED (lý do: người dùng hủy)
+    # trước khi trả phản hồi để danh sách Lịch sử xử lý và Tài liệu của tôi đồng bộ tức thì.
+    if updated_job.user_id is not None and updated_job.document_id is not None:
+        _persist_failed_history_once(
+            job_id=updated_job.job_id,
+            user_id=updated_job.user_id,
+            document_id=updated_job.document_id,
+            error_message=USER_CANCELLED_ERROR_MESSAGE,
+            execution_time_ms=updated_job.execution_time_ms,
+            start_time=updated_job.created_at,
         )
 
     return ApiResponse(
@@ -852,7 +1037,7 @@ async def upload_and_translate(
                             user_id=current_user.id,
                             document_id=document_id,
                             action_type=ActionType.TRANSLATE,
-                            status=ProcessingStatus.PENDING,
+                            status=ProcessingStatus.SUCCESS,
                             execution_time_ms=execution_time_ms,
                         ),
                         reuse_pending=False,

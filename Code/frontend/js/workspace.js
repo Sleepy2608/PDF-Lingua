@@ -858,6 +858,8 @@ let activeEventSource = null;
 let activePollTimer = null;
 let currentActiveJobId = null;
 let currentJobFileName = null;
+let activeUploadAbortController = null;
+let isUploadCancelRequested = false;
 
 function cleanupProgressTracking() {
   if (activeEventSource) {
@@ -1197,6 +1199,7 @@ function listenToJobProgress(jobId, btnProcessPdf) {
     const btn = btnProcessPdf || document.getElementById('btnProcessPdf');
     if (btn) btn.disabled = false;
     showToast(errorMsg || 'Xử lý tài liệu thất bại.', 'error');
+    syncSidebarAfterJobEnd();
   };
 
   // Polling fallback khi EventSource không khả dụng hoặc mạng ngắt kết nối
@@ -1334,6 +1337,8 @@ async function handleProcessPdf() {
 
   showProgressModal(true);
   updateProgress(15, 'Đang tải tệp PDF lên máy chủ...', 1);
+  isUploadCancelRequested = false;
+  activeUploadAbortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
 
   try {
     const authHeaders = getAuthHeaders();
@@ -1341,12 +1346,16 @@ async function handleProcessPdf() {
       method: 'POST',
       body: formData,
     };
+    if (activeUploadAbortController) {
+      fetchOptions.signal = activeUploadAbortController.signal;
+    }
     if (authHeaders['Authorization']) {
       fetchOptions.headers = authHeaders;
     }
 
     // Gửi yêu cầu khởi tạo Background Job (/jobs)
     const response = await fetch(`${API_BASE_URL}/jobs`, fetchOptions);
+    activeUploadAbortController = null;
 
     let result = null;
     try {
@@ -1428,6 +1437,14 @@ async function handleProcessPdf() {
       throw new Error('Máy chủ không trả về mã tác vụ (Job ID).');
     }
 
+    // Trường hợp người dùng bấm Hủy đúng lúc phản hồi khởi tạo job vừa về
+    if (isUploadCancelRequested) {
+      isUploadCancelRequested = false;
+      currentActiveJobId = jobId;
+      await cancelActiveJob();
+      return;
+    }
+
     const store = getWorkspaceSessionStorage();
     if (store) {
       try {
@@ -1450,6 +1467,12 @@ async function handleProcessPdf() {
     listenToJobProgress(jobId, btnProcessPdf);
 
   } catch (error) {
+    activeUploadAbortController = null;
+    if (isUploadCancelRequested || (error && error.name === 'AbortError')) {
+      isUploadCancelRequested = false;
+      handleJobCancelled(t('workspace_cancelled_success', 'Người dùng đã hủy tác vụ xử lý.'));
+      return;
+    }
     showProgressModal(false);
     if (btnProcessPdf) btnProcessPdf.disabled = false;
     const msg = error.message === 'Failed to fetch'
@@ -2387,13 +2410,40 @@ function closeBgWidget() {
 }
 
 /**
+ * Đồng bộ lại danh sách "Tài liệu của tôi" và "Lịch sử xử lý" sau khi job kết thúc / bị hủy / thất bại.
+ */
+function syncSidebarAfterJobEnd() {
+  if (typeof window !== 'undefined' && window.PDFLinguaSidebar) {
+    if (typeof window.PDFLinguaSidebar.fetchRecentDocuments === 'function') {
+      try { window.PDFLinguaSidebar.fetchRecentDocuments(true); } catch (_e) {}
+    }
+    if (typeof window.PDFLinguaSidebar.fetchProcessingHistories === 'function') {
+      try { window.PDFLinguaSidebar.fetchProcessingHistories(); } catch (_e) {}
+    }
+  }
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+    try {
+      window.dispatchEvent(new CustomEvent('pdfl:document-processed', { detail: { cancelledOrEnded: true } }));
+    } catch (_e) {}
+  }
+}
+
+/**
  * Hủy tác vụ xử lý đang chạy qua API backend POST /api/process/jobs/{job_id}/cancel.
+ * Xử lý an toàn cho cả 3 thời điểm: đang tải tệp lên, đang xử lý nền, hoặc vừa hoàn tất.
  */
 async function cancelActiveJob() {
   const btnCancel = document.getElementById('btnCancelJob');
   const originalHtml = btnCancel ? btnCancel.innerHTML : '';
 
   if (!currentActiveJobId) {
+    if (activeUploadAbortController) {
+      isUploadCancelRequested = true;
+      try {
+        activeUploadAbortController.abort();
+      } catch (_e) {}
+      return;
+    }
     showProgressModal(false);
     return;
   }
@@ -2425,8 +2475,10 @@ async function cancelActiveJob() {
       handleJobCancelled(result.message || t('workspace_cancelled_success', 'Đã hủy tác vụ xử lý thành công.'));
     } else {
       const errMsg = (result && (result.detail || result.message)) || t('workspace_cancelled_fail', 'Không thể hủy tác vụ xử lý.');
+      const lowerErr = String(errMsg).toLowerCase();
+      const alreadyCompleted = lowerErr.includes('completed') || lowerErr.includes('hoàn tất');
       showToast(errMsg, 'warning');
-      if (response.status === 400 || response.status === 404) {
+      if (!alreadyCompleted && (response.status === 400 || response.status === 404)) {
         handleJobCancelled(errMsg);
       }
     }
@@ -2454,6 +2506,8 @@ function handleJobCancelled(message) {
   cleanupProgressTracking();
   clearActiveJobFromStorage();
   currentActiveJobId = null;
+  activeUploadAbortController = null;
+  isUploadCancelRequested = false;
 
   const modal = document.getElementById('processingModal');
   if (modal) modal.style.display = 'none';
@@ -2465,6 +2519,7 @@ function handleJobCancelled(message) {
   if (btnProcessPdf) btnProcessPdf.disabled = false;
 
   showToast(message || t('workspace_cancelled_success', 'Đã hủy tác vụ xử lý thành công.'), 'info');
+  syncSidebarAfterJobEnd();
 }
 
 /**
