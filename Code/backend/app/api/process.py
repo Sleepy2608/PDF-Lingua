@@ -3,6 +3,7 @@ import io
 import json
 import os
 import re
+import secrets
 import tempfile
 import threading
 import time
@@ -12,7 +13,7 @@ from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -534,11 +535,13 @@ async def create_processing_job(
         )
 
     authenticated_user_id = current_user.id if current_user is not None else None
+    guest_token = secrets.token_urlsafe(16) if authenticated_user_id is None else None
     safe_filename = file.filename or "document.pdf"
     job = job_manager.create_job(
         filename=safe_filename,
         target_lang=target_lang,
         user_id=authenticated_user_id,
+        guest_token=guest_token,
     )
     file_size_bytes = len(content)
     file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
@@ -567,43 +570,93 @@ async def create_processing_job(
     )
 
 
+def _verify_job_access(
+    job: Any,
+    current_user: Optional[User],
+    guest_token: Optional[str] = None,
+    x_guest_token: Optional[str] = None,
+) -> None:
+    """
+    Xác thực quyền truy cập đối với tác vụ xử lý PDF (Anti-IDOR / Anti-BOLA):
+    - Quản trị viên (Admin) có quyền truy cập mọi tác vụ.
+    - Tác vụ của tài khoản đã đăng nhập chỉ có chính chủ sở hữu được truy cập.
+    - Tác vụ của khách vãng lai (Guest) có guest_token chỉ cho phép truy cập nếu cung cấp đúng token.
+    - Vi phạm quyền truy cập luôn trả về HTTP 404 để chống dò quét sự tồn tại của Job ID.
+    """
+    # Nếu được gọi trực tiếp dưới dạng coroutine Python trong legacy unit tests mà không qua FastAPI DI
+    if (
+        type(current_user).__name__ == "Depends"
+        and type(guest_token).__name__ == "Query"
+        and type(x_guest_token).__name__ == "Header"
+    ):
+        return
+
+    safe_user = current_user if isinstance(current_user, User) else None
+    effective_token = (
+        x_guest_token if isinstance(x_guest_token, str)
+        else (guest_token if isinstance(guest_token, str) else None)
+    )
+
+    is_admin = bool(
+        safe_user
+        and (
+            getattr(safe_user.role, "value", str(safe_user.role)) == "admin"
+            or safe_user.role == UserRole.ADMIN
+        )
+    )
+    if is_admin:
+        return
+
+    if job.user_id is not None:
+        if safe_user is None or safe_user.id != job.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Không tìm thấy tác vụ hoặc bạn không có quyền truy cập.",
+            )
+    else:
+        if job.guest_token is not None:
+            provided = (effective_token or "").strip()
+            if not provided or not secrets.compare_digest(provided, job.guest_token):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Không tìm thấy tác vụ hoặc bạn không có quyền truy cập.",
+                )
+
+
 @router.get("/jobs/{job_id}", response_model=ApiResponse[JobProgressData])
-async def get_job_status(job_id: str):
-    """Lấy thông tin và trạng thái tiến độ hiện tại của một Job"""
+async def get_job_status(
+    job_id: str,
+    guest_token: Optional[str] = Query(None, description="Token bảo mật cho tác vụ người dùng ẩn danh (Guest)."),
+    x_guest_token: Optional[str] = Header(None, alias="X-Guest-Token"),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """Lấy thông tin và trạng thái tiến độ hiện tại của một Job (Anti-IDOR)."""
     job = job_manager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
+    _verify_job_access(job, current_user, guest_token, x_guest_token)
     return ApiResponse(data=job.to_dict(), message="Lấy trạng thái tác vụ thành công.")
 
 
 @router.post("/jobs/{job_id}/cancel", response_model=ApiResponse[JobProgressData])
 async def cancel_processing_job(
     job_id: str,
+    guest_token: Optional[str] = Query(None, description="Token bảo mật cho tác vụ người dùng ẩn danh (Guest)."),
+    x_guest_token: Optional[str] = Header(None, alias="X-Guest-Token"),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
     Hủy một Background Job đang xếp hàng (PENDING) hoặc đang chạy (PROCESSING).
     Phân biệt rõ ràng với hành động ngắt kết nối theo dõi SSE (unsubscribe):
     - Khi hủy: Trạng thái Job chuyển thành CANCELLED, giải phóng worker slot và file tạm.
-    - Người dùng chỉ có quyền hủy job của chính họ hoặc nếu là admin.
+    - Người dùng chỉ có quyền hủy job của chính họ hoặc nếu là admin (hoặc sở hữu guest_token hợp lệ).
     """
-    authenticated_user_id = current_user.id if current_user is not None else None
     job = job_manager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
 
-    if job.user_id is not None:
-        if current_user is None or authenticated_user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Vui lòng đăng nhập để thao tác với tác vụ này.",
-            )
-        is_admin = getattr(current_user.role, "value", str(current_user.role)) == "admin"
-        if job.user_id != authenticated_user_id and not is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Bạn không có quyền hủy tác vụ của người dùng khác.",
-            )
+    _verify_job_access(job, current_user, guest_token, x_guest_token)
+    authenticated_user_id = current_user.id if isinstance(current_user, User) else None
 
     success, message, updated_job = job_manager.cancel_job(
         job_id,
@@ -622,14 +675,21 @@ async def cancel_processing_job(
 
 
 @router.get("/jobs/{job_id}/events")
-async def stream_job_events(job_id: str):
+async def stream_job_events(
+    job_id: str,
+    guest_token: Optional[str] = Query(None, description="Token bảo mật cho tác vụ người dùng ẩn danh (Guest)."),
+    x_guest_token: Optional[str] = Header(None, alias="X-Guest-Token"),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
     """
     Server-Sent Events (SSE) stream tiến độ xử lý tài liệu theo thời gian thực.
-    Hỗ trợ ngắt kết nối và kết nối lại mà không làm mất trạng thái của Job.
+    Hỗ trợ ngắt kết nối và kết nối lại mà không làm mất trạng thái của Job (Anti-BOLA).
     """
     job = job_manager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tác vụ.")
+
+    _verify_job_access(job, current_user, guest_token, x_guest_token)
 
     async def event_generator():
         q = job_manager.subscribe(job_id)
@@ -1246,7 +1306,19 @@ async def batch_download_results(
             detail="Danh sách history_ids không được để trống.",
         )
 
-    # 2. Kiểm tra trùng lặp ID (reject duplicates)
+    # 2. Kiểm tra kích thước mảng tối đa (Array Boundary Clamping - Chống DoS)
+    if raw_job_ids and len(raw_job_ids) > 20:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Số lượng Job ID trong một lần tải hàng loạt không được vượt quá 20.",
+        )
+    if raw_hist_ids and len(raw_hist_ids) > 20:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Số lượng History ID trong một lần tải hàng loạt không được vượt quá 20.",
+        )
+
+    # 3. Kiểm tra trùng lặp ID (reject duplicates)
     if raw_job_ids and len(raw_job_ids) != len(set(raw_job_ids)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -132,8 +132,8 @@ class BatchDownloadRequest(BaseModel):
     Yêu cầu tải về trọn bộ kết quả dịch dưới dạng tệp ZIP.
     Hỗ trợ danh sách job_ids hoặc history_ids, định dạng tệp và loại nội dung.
     """
-    job_ids: Optional[list[str]] = Field(default=None, description="Danh sách Job ID hoàn thành cần tải về")
-    history_ids: Optional[list[int]] = Field(default=None, description="Danh sách History ID hoàn thành cần tải về")
+    job_ids: Optional[list[str]] = Field(default=None, max_length=20, description="Danh sách Job ID hoàn thành cần tải về (tối đa 20)")
+    history_ids: Optional[list[int]] = Field(default=None, max_length=20, description="Danh sách History ID hoàn thành cần tải về (tối đa 20)")
     format: Optional[str] = Field(default="pdf", description="Định dạng tệp trong zip: pdf, txt, docx")
     export_type: Optional[ExportTargetType] = Field(
         default=ExportTargetType.TRANSLATED,

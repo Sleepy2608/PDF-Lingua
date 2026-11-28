@@ -12,26 +12,41 @@ from fastapi import Request
 
 def extract_client_ip(request: Optional[Request]) -> str:
     """
-    Resolve the client's real IP address.
+    Resolve the client's real IP address safely behind reverse proxies (Cloudflare, Render, Vercel, Nginx).
     Priority:
-      1. First address in `X-Forwarded-For` header (standard proxy chain)
-      2. `X-Real-IP` header
-      3. `request.client.host`
-      4. Fallback `'unknown'`
+      1. `CF-Connecting-IP` (Cloudflare edge proxy header, stripped and trusted)
+      2. `True-Client-IP` (Enterprise reverse proxy header)
+      3. `X-Real-IP` header
+      4. First address in `X-Forwarded-For` header
+      5. `request.client.host`
+      6. Fallback `'unknown'`
     """
     if request is None:
         return "unknown"
 
+    # 1. Cloudflare proxy header (tamper-proof when behind Cloudflare)
+    cf_ip = request.headers.get("cf-connecting-ip") or request.headers.get("CF-Connecting-IP")
+    if cf_ip and cf_ip.strip():
+        return cf_ip.strip()[:64]
+
+    # 2. Enterprise True-Client-IP
+    true_client_ip = request.headers.get("true-client-ip") or request.headers.get("True-Client-IP")
+    if true_client_ip and true_client_ip.strip():
+        return true_client_ip.strip()[:64]
+
+    # 3. Reverse proxy X-Real-IP
+    real_ip = request.headers.get("x-real-ip") or request.headers.get("X-Real-IP")
+    if real_ip and real_ip.strip():
+        return real_ip.strip()[:64]
+
+    # 4. Standard X-Forwarded-For chain
     xff = request.headers.get("x-forwarded-for") or request.headers.get("X-Forwarded-For")
     if xff:
         first_ip = xff.split(",")[0].strip()
         if first_ip:
             return first_ip[:64]
 
-    real_ip = request.headers.get("x-real-ip") or request.headers.get("X-Real-IP")
-    if real_ip and real_ip.strip():
-        return real_ip.strip()[:64]
-
+    # 5. Direct socket remote address
     if request.client and request.client.host:
         return request.client.host.strip()[:64]
 
