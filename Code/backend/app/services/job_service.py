@@ -21,6 +21,7 @@ class Job:
     filename: str
     target_lang: str
     user_id: Optional[int] = None
+    guest_token: Optional[str] = None
     status: JobStatus = JobStatus.PENDING
     total_pages: int = 0
     processed_pages: int = 0
@@ -43,7 +44,7 @@ class Job:
     def to_dict(self) -> dict[str, Any]:
         res_exec_time = self.result.get("execution_time_ms") if isinstance(self.result, dict) else None
         res_hist_id = self.result.get("history_id") if isinstance(self.result, dict) else None
-        return {
+        data = {
             "job_id": self.job_id,
             "filename": self.filename,
             "target_lang": self.target_lang,
@@ -62,6 +63,9 @@ class Job:
             "execution_time_ms": self.execution_time_ms if self.execution_time_ms is not None else res_exec_time,
             "history_id": self.history_id if self.history_id is not None else res_hist_id,
         }
+        if self.guest_token is not None:
+            data["guest_token"] = self.guest_token
+        return data
 
 
 class JobManager:
@@ -77,11 +81,23 @@ class JobManager:
         self._max_retained_jobs = max_retained_jobs
         self._job_ttl_seconds = job_ttl_seconds
 
-    def create_job(self, filename: str, target_lang: str, user_id: Optional[int] = None) -> Job:
+    def create_job(
+        self,
+        filename: str,
+        target_lang: str,
+        user_id: Optional[int] = None,
+        guest_token: Optional[str] = None,
+    ) -> Job:
         with self._lock:
             self._cleanup_expired_jobs_locked()
             job_id = str(uuid.uuid4())
-            job = Job(job_id=job_id, filename=filename, target_lang=target_lang, user_id=user_id)
+            job = Job(
+                job_id=job_id,
+                filename=filename,
+                target_lang=target_lang,
+                user_id=user_id,
+                guest_token=guest_token,
+            )
             self._jobs[job_id] = job
             return job
 

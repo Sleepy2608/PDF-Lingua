@@ -1022,7 +1022,12 @@ async function recoverActiveJob(savedJobId) {
 
   try {
     const authHeaders = getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/jobs/${savedJobId}`, {
+    const savedGuestToken = store ? store.getItem('pdfl_guest_token_' + savedJobId) : null;
+    if (savedGuestToken) {
+      authHeaders['X-Guest-Token'] = savedGuestToken;
+    }
+    const recoverQuery = savedGuestToken ? `?guest_token=${encodeURIComponent(savedGuestToken)}` : '';
+    const response = await fetch(`${API_BASE_URL}/jobs/${savedJobId}${recoverQuery}`, {
       method: 'GET',
       headers: authHeaders,
     });
@@ -1202,8 +1207,14 @@ function listenToJobProgress(jobId, btnProcessPdf) {
     if (activePollTimer) return;
     activePollTimer = setInterval(async () => {
       try {
+        const store = getWorkspaceSessionStorage();
+        const savedGuestToken = store ? store.getItem('pdfl_guest_token_' + jobId) : null;
         const authHeaders = getAuthHeaders();
-        const res = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
+        if (savedGuestToken) {
+          authHeaders['X-Guest-Token'] = savedGuestToken;
+        }
+        const pollQuery = savedGuestToken ? `?guest_token=${encodeURIComponent(savedGuestToken)}` : '';
+        const res = await fetch(`${API_BASE_URL}/jobs/${jobId}${pollQuery}`, {
           method: 'GET',
           headers: authHeaders,
         });
@@ -1232,7 +1243,10 @@ function listenToJobProgress(jobId, btnProcessPdf) {
 
   if (typeof EventSource !== 'undefined') {
     try {
-      const sseUrl = `${API_BASE_URL}/jobs/${jobId}/events`;
+      const store = getWorkspaceSessionStorage();
+      const savedGuestToken = store ? store.getItem('pdfl_guest_token_' + jobId) : null;
+      const sseQuery = savedGuestToken ? `?guest_token=${encodeURIComponent(savedGuestToken)}` : '';
+      const sseUrl = `${API_BASE_URL}/jobs/${jobId}/events${sseQuery}`;
       activeEventSource = new EventSource(sseUrl);
 
       activeEventSource.onmessage = (event) => {
@@ -2296,9 +2310,15 @@ async function cancelActiveJob() {
   }
 
   try {
+    const store = getWorkspaceSessionStorage();
+    const savedGuestToken = store ? store.getItem('pdfl_guest_token_' + currentActiveJobId) : null;
     const authHeaders = getAuthHeaders();
+    if (savedGuestToken) {
+      authHeaders['X-Guest-Token'] = savedGuestToken;
+    }
     const headers = Object.assign({ 'Content-Type': 'application/json' }, authHeaders);
-    const response = await fetch(`${API_BASE_URL}/jobs/${currentActiveJobId}/cancel`, {
+    const cancelQuery = savedGuestToken ? `?guest_token=${encodeURIComponent(savedGuestToken)}` : '';
+    const response = await fetch(`${API_BASE_URL}/jobs/${currentActiveJobId}/cancel${cancelQuery}`, {
       method: 'POST',
       headers: headers,
     });

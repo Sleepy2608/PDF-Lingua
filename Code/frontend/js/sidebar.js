@@ -1279,6 +1279,30 @@
   }
 
   function navigateToAdminSubView(subTab) {
+    const user = (typeof window.pdfLinguaAuth !== 'undefined' && typeof window.pdfLinguaAuth.getStoredUser === 'function')
+      ? window.pdfLinguaAuth.getStoredUser()
+      : null;
+    const token = (typeof window.pdfLinguaAuth !== 'undefined' && typeof window.pdfLinguaAuth.getAuthToken === 'function')
+      ? window.pdfLinguaAuth.getAuthToken()
+      : null;
+    const isAdmin = Boolean(user && user.role === 'admin' && token);
+    if (!isAdmin) {
+      const adminSection = document.getElementById('adminSection');
+      if (adminSection) adminSection.style.display = 'none';
+      try {
+        if (typeof history !== 'undefined' && typeof history.replaceState === 'function') {
+          history.replaceState(null, '', '#translate');
+        }
+      } catch (_e) {}
+      const msg = (window.i18n && typeof window.i18n.t === 'function')
+        ? window.i18n.t('admin_forbidden_toast')
+        : 'Bạn không có quyền truy cập khu vực quản trị.';
+      if (typeof showToast === 'function') {
+        showToast(msg, 'error');
+      }
+      return;
+    }
+
     const targetTab = (subTab === 'users' || subTab === 'access-logs' || subTab === 'transactions') ? subTab : 'overview';
     const sideNavAdmin = document.getElementById('sideNavAdmin');
     if (sideNavAdmin) setActiveNavItem(sideNavAdmin);
@@ -3853,6 +3877,29 @@
           navKey === 'admin-access-logs' ||
           navKey === 'admin-transactions'
         ) {
+          const user = (typeof window.pdfLinguaAuth !== 'undefined' && typeof window.pdfLinguaAuth.getStoredUser === 'function')
+            ? window.pdfLinguaAuth.getStoredUser()
+            : null;
+          const token = (typeof window.pdfLinguaAuth !== 'undefined' && typeof window.pdfLinguaAuth.getAuthToken === 'function')
+            ? window.pdfLinguaAuth.getAuthToken()
+            : null;
+          const isAdmin = Boolean(user && user.role === 'admin' && token);
+          if (!isAdmin) {
+            const adminSection = document.getElementById('adminSection');
+            if (adminSection) adminSection.style.display = 'none';
+            try {
+              if (typeof history !== 'undefined' && typeof history.replaceState === 'function') {
+                history.replaceState(null, '', '#translate');
+              }
+            } catch (_e) {}
+            const msg = (window.i18n && typeof window.i18n.t === 'function')
+              ? window.i18n.t('admin_forbidden_toast')
+              : 'Bạn không có quyền truy cập khu vực quản trị.';
+            if (typeof showToast === 'function') {
+              showToast(msg, 'error');
+            }
+            return;
+          }
           const el = document.getElementById('sideNavAdmin');
           if (el) setActiveNavItem(el);
           setAdminGroupExpanded(true);

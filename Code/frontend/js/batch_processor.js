@@ -314,9 +314,14 @@
           return;
         }
 
+        const guestToken = result.data ? result.data.guest_token : null;
         item.job_id = jobId;
+        if (guestToken) {
+          item.guest_token = guestToken;
+        }
         window.pdfLinguaBatchQueue.updateItem(item.id, {
           job_id: jobId,
+          guest_token: guestToken,
           status: 'processing',
           statusText: (window.i18n && typeof window.i18n.t === 'function')
             ? window.i18n.t('batch_status_processing')
@@ -347,7 +352,8 @@
       }
 
       try {
-        const sseUrl = `${BATCH_API_BASE_URL}/process/jobs/${jobId}/events`;
+        const query = item.guest_token ? `?guest_token=${encodeURIComponent(item.guest_token)}` : '';
+        const sseUrl = `${BATCH_API_BASE_URL}/process/jobs/${jobId}/events${query}`;
         const es = new EventSourceClass(sseUrl);
         this.activeStreams.set(jobId, es);
 
@@ -390,7 +396,11 @@
       const timer = setInterval(async () => {
         try {
           const authHeaders = this.getAuthHeaders();
-          const response = await fetch(`${BATCH_API_BASE_URL}/process/jobs/${jobId}`, {
+          if (item.guest_token) {
+            authHeaders['X-Guest-Token'] = item.guest_token;
+          }
+          const query = item.guest_token ? `?guest_token=${encodeURIComponent(item.guest_token)}` : '';
+          const response = await fetch(`${BATCH_API_BASE_URL}/process/jobs/${jobId}${query}`, {
             headers: authHeaders,
           });
           if (!response.ok) return;
