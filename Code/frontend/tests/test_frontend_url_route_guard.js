@@ -85,11 +85,14 @@ function createEnvironment(role = null, token = null) {
     },
     window: {
       innerWidth: 1024,
+      location: {
+        hash: '',
+      },
       addEventListener: () => {},
       scrollTo: () => {},
       pdfLinguaAuth: {
         getStoredUser: () => (role ? { email: 'test@example.com', role: role } : null),
-        getAuthToken: () => token,
+        getStoredToken: () => token,
       },
       i18n: {
         t: (k) => k,
@@ -106,7 +109,11 @@ function createEnvironment(role = null, token = null) {
       setItem: () => {},
     },
     localStorage: {
-      getItem: () => null,
+      getItem: (k) => {
+        if (k === 'pdfl_user') return role ? JSON.stringify({ email: 'test@example.com', role: role }) : null;
+        if (k === 'pdfl_token') return token;
+        return null;
+      },
       setItem: () => {},
     },
     showToast: (msg, type) => {
@@ -126,29 +133,53 @@ function createEnvironment(role = null, token = null) {
 
 console.log('Running Frontend URL Route Guard Tests...');
 
-// 1. Guest/Unauthenticated user attempts to navigate to Admin subview
+// 1. Guest/Unauthenticated user attempts URL hash manipulation to #admin-users
 {
   const { context, elements, toasts, historyCalls } = createEnvironment(null, null);
-  context.window.PDFLinguaSidebar.navigateToAdminSubView('users');
+  context.window.location.hash = '#admin-users';
+  context.window.PDFLinguaSidebar.enforceAdminUrlRouteGuard();
   assert.strictEqual(elements.adminSection.style.display, 'none', 'Admin section must remain hidden for guests');
-  assert(toasts.length > 0, 'Toast warning must be triggered');
+  assert(toasts.length > 0, 'Toast warning must be triggered for guest hash navigation');
   assert(historyCalls.includes('#translate'), 'URL hash must be reset to #translate');
-  console.log('  PASS: Guest user rejected from navigating to admin subview');
+  console.log('  PASS: Guest user rejected from accessing admin URL hash');
 }
 
-// 2. Free user attempts to navigate to Admin subview
+// 2. Free user attempts URL hash manipulation to #admin-transactions
 {
   const { context, elements, toasts, historyCalls } = createEnvironment('free', 'jwt-token-free');
-  context.window.PDFLinguaSidebar.navigateToAdminSubView('transactions');
+  context.window.location.hash = '#admin-transactions';
+  context.window.PDFLinguaSidebar.enforceAdminUrlRouteGuard();
   assert.strictEqual(elements.adminSection.style.display, 'none', 'Admin section must remain hidden for free users');
-  assert(toasts.length > 0, 'Toast warning must be triggered');
+  assert(toasts.length > 0, 'Toast warning must be triggered for free user hash navigation');
   assert(historyCalls.includes('#translate'), 'URL hash must be reset to #translate');
-  console.log('  PASS: Free user rejected from navigating to admin subview');
+  console.log('  PASS: Free user rejected from accessing admin URL hash');
 }
 
-// 3. Admin user with valid token successfully navigates to Admin subview
+// 3. Free user attempts to call navigateToAdminSubView directly
+{
+  const { context, elements, toasts, historyCalls } = createEnvironment('free', 'jwt-token-free');
+  context.window.PDFLinguaSidebar.navigateToAdminSubView('users');
+  assert.strictEqual(elements.adminSection.style.display, 'none', 'Admin section must remain hidden for free users');
+  assert(toasts.length > 0, 'Toast warning must be triggered on unauthorized navigateToAdminSubView');
+  assert(historyCalls.includes('#translate'), 'URL hash must be reset to #translate');
+  console.log('  PASS: Free user rejected from navigating to admin subview directly');
+}
+
+// 4. Free user attempts to call setActiveNav('admin-overview')
+{
+  const { context, elements, toasts, historyCalls } = createEnvironment('free', 'jwt-token-free');
+  context.window.PDFLinguaSidebar.setActiveNav('admin-overview');
+  assert.strictEqual(elements.adminSection.style.display, 'none', 'Admin section must remain hidden for free users');
+  assert(toasts.length > 0, 'Toast warning must be triggered on unauthorized setActiveNav');
+  assert(historyCalls.includes('#translate'), 'URL hash must be reset to #translate');
+  console.log('  PASS: Free user rejected from calling setActiveNav for admin');
+}
+
+// 5. Admin user with valid token successfully accesses admin view
 {
   const { context, elements, toasts } = createEnvironment('admin', 'jwt-token-admin');
+  context.window.location.hash = '#admin-overview';
+  context.window.PDFLinguaSidebar.enforceAdminUrlRouteGuard();
   context.window.PDFLinguaSidebar.navigateToAdminSubView('overview');
   assert.strictEqual(elements.adminSection.style.display, 'block', 'Admin section must be shown for admin user');
   assert.strictEqual(toasts.length, 0, 'No warning toast should be shown for admin');
