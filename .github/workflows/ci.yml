@@ -227,6 +227,7 @@ jobs:
         env:
           DATABASE_URL: "sqlite:///./ci_test.db"
           SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          RATE_LIMIT_ENABLED: "false"
           PYTHONPATH: "."
         run: |
           python -m pytest ../tests -v
@@ -235,6 +236,7 @@ jobs:
         env:
           DATABASE_URL: "sqlite:///./ci_test.db"
           SECRET_KEY: "ci-secret-key-for-testing-only-12345678"
+          RATE_LIMIT_ENABLED: "false"
           PYTHONPATH: "."
         run: |
           python -m pytest \
@@ -252,4 +254,5 @@ jobs:
             tests/test_ai_chat_api.py \
             tests/test_admin_seeding.py \
             tests/test_database_backup.py \
+            tests/test_production_security_hardening.py \
             -o testpaths="" -v

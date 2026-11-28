@@ -36,6 +36,13 @@ from tests.security_fixtures import (
 
 # ── Database & Storage Fixtures ──────────────────────────────────────────────
 
+@pytest.fixture(autouse=True)
+def disable_rate_limiting_during_tests(monkeypatch):
+    """Disable rate limiting during automated test execution to prevent test suite cross-interference."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
+
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
     """Provides a clean, isolated in-memory SQLite session with foreign keys enabled."""

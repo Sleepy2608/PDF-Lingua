@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
+from app.core.dependencies import get_db
 from app.core.rate_limiter import RateLimiter, SlidingWindowLimiter
 from app.main import app
 
@@ -26,10 +27,19 @@ def reset_limiter_state():
     RateLimiter.clear_all()
 
 
-@pytest.fixture
-def client():
-    """TestClient fixture bound to main application."""
-    return TestClient(app)
+@pytest.fixture(scope="function")
+def client(db_session):
+    """TestClient that overrides get_db dependency with test database session."""
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app, raise_server_exceptions=False) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
 
 
 # ── 1. CORS Security Whitelisting Tests ────────────────────────────────────────
@@ -108,52 +118,52 @@ def test_sliding_window_limiter_unit_logic():
 def test_rate_limiter_blocks_excessive_login_attempts(client):
     """Verify that exceeding login attempts triggers HTTP 429 with Retry-After header."""
     RateLimiter.clear_all()
+    with patch.object(settings, "RATE_LIMIT_ENABLED", True):
+        # Limit for login is 5 per minute
+        for _ in range(5):
+            resp = client.post(
+                "/api/auth/login",
+                json={"email": "nonexistent@test.com", "password": "WrongPassword123"},
+                headers={"X-Forwarded-For": "203.0.113.10"},
+            )
+            # Should be 401 or 400, but NOT 429
+            assert resp.status_code in (400, 401, 422)
 
-    # Limit for login is 5 per minute
-    for _ in range(5):
-        resp = client.post(
+        # 6th attempt from the same client IP must return HTTP 429
+        resp_blocked = client.post(
             "/api/auth/login",
             json={"email": "nonexistent@test.com", "password": "WrongPassword123"},
             headers={"X-Forwarded-For": "203.0.113.10"},
         )
-        # Should be 401 or 400, but NOT 429
-        assert resp.status_code in (400, 401, 422)
-
-    # 6th attempt from the same client IP must return HTTP 429
-    resp_blocked = client.post(
-        "/api/auth/login",
-        json={"email": "nonexistent@test.com", "password": "WrongPassword123"},
-        headers={"X-Forwarded-For": "203.0.113.10"},
-    )
-    assert resp_blocked.status_code == 429
-    data = resp_blocked.json()
-    assert data["success"] is False
-    assert data["error_code"] == "RATE_LIMIT_EXCEEDED"
-    assert "Retry-After" in resp_blocked.headers
-    assert int(resp_blocked.headers["Retry-After"]) >= 1
+        assert resp_blocked.status_code == 429
+        data = resp_blocked.json()
+        assert data["success"] is False
+        assert data["error_code"] == "RATE_LIMIT_EXCEEDED"
+        assert "Retry-After" in resp_blocked.headers
+        assert int(resp_blocked.headers["Retry-After"]) >= 1
 
 
 def test_rate_limiter_blocks_excessive_registration_attempts(client):
     """Verify that exceeding registration attempts triggers HTTP 429."""
     RateLimiter.clear_all()
+    with patch.object(settings, "RATE_LIMIT_ENABLED", True):
+        # Limit for register is 3 per minute
+        for i in range(3):
+            resp = client.post(
+                "/api/auth/register",
+                json={"email": f"test_spam_{i}@example.com", "password": "ValidPassword123"},
+                headers={"X-Forwarded-For": "203.0.113.20"},
+            )
+            assert resp.status_code in (201, 400, 422)
 
-    # Limit for register is 3 per minute
-    for i in range(3):
-        resp = client.post(
+        # 4th attempt from the same IP must be rate limited
+        resp_blocked = client.post(
             "/api/auth/register",
-            json={"email": f"test_spam_{i}@example.com", "password": "ValidPassword123"},
+            json={"email": "test_spam_extra@example.com", "password": "ValidPassword123"},
             headers={"X-Forwarded-For": "203.0.113.20"},
         )
-        assert resp.status_code in (201, 400, 422)
-
-    # 4th attempt from the same IP must be rate limited
-    resp_blocked = client.post(
-        "/api/auth/register",
-        json={"email": "test_spam_extra@example.com", "password": "ValidPassword123"},
-        headers={"X-Forwarded-For": "203.0.113.20"},
-    )
-    assert resp_blocked.status_code == 429
-    assert resp_blocked.json()["error_code"] == "RATE_LIMIT_EXCEEDED"
+        assert resp_blocked.status_code == 429
+        assert resp_blocked.json()["error_code"] == "RATE_LIMIT_EXCEEDED"
 
 
 def test_rate_limiter_bypassed_when_disabled(client):

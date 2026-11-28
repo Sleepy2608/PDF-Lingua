@@ -105,12 +105,21 @@ class RateLimiter:
         client_ip = extract_client_ip(request)
         identifier = client_ip
 
-        if (
-            self.use_user_id
-            and hasattr(request.state, "user_id")
-            and request.state.user_id
-        ):
-            identifier = f"user_{request.state.user_id}"
+        if self.use_user_id:
+            if hasattr(request.state, "user_id") and request.state.user_id:
+                identifier = f"user_{request.state.user_id}"
+            else:
+                auth = request.headers.get("authorization") or request.headers.get("Authorization")
+                if auth and auth.startswith("Bearer "):
+                    token = auth[7:].strip()
+                    try:
+                        from app.core.security import decode_access_token
+
+                        payload = decode_access_token(token)
+                        if payload and "sub" in payload:
+                            identifier = f"user_{payload['sub']}"
+                    except Exception:
+                        pass
 
         rate_key = f"{self.scope}:{identifier}"
         is_limited, retry_after = _global_limiter.check(
