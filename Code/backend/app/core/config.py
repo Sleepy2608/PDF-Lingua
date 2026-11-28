@@ -92,8 +92,46 @@ class Settings:
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash-lite")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
-    # CORS
+    # CORS Configuration
     FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:5500")
+    CORS_ALLOWED_ORIGINS: str = os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "https://pdflingua.vercel.app,https://pdf-lingua.vercel.app,http://localhost:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000,http://127.0.0.1:8000",
+    )
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Resolve list of allowed CORS origins based on environment."""
+        raw_env = os.getenv("CORS_ALLOWED_ORIGINS")
+        if raw_env:
+            return [orig.strip() for orig in raw_env.split(",") if orig.strip()]
+
+        is_prod = self.APP_ENV.lower() in ("production", "prod") or not self.DEBUG
+        if is_prod:
+            prod_origins = [
+                "https://pdflingua.vercel.app",
+                "https://pdf-lingua.vercel.app",
+            ]
+            if self.FRONTEND_ORIGIN and self.FRONTEND_ORIGIN.startswith("https://"):
+                if self.FRONTEND_ORIGIN not in prod_origins:
+                    prod_origins.append(self.FRONTEND_ORIGIN)
+            return prod_origins
+
+        dev_origins = [
+            "https://pdflingua.vercel.app",
+            "https://pdf-lingua.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+        ]
+        if self.FRONTEND_ORIGIN and self.FRONTEND_ORIGIN not in dev_origins:
+            dev_origins.append(self.FRONTEND_ORIGIN)
+        return dev_origins
+
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() in ("true", "1", "yes")
 
     # Payment & VietQR Configuration
     DEFAULT_DEV_WEBHOOK_SECRET: str = DEFAULT_DEV_WEBHOOK_SECRET

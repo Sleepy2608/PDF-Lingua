@@ -25,6 +25,7 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user, get_db
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.logger import logger
+from app.core.rate_limiter import RateLimiter
 from app.models.subscription import PaymentMethod
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
@@ -175,6 +176,7 @@ async def simulate_transaction_payment(
 @router.post(
     "/webhook",
     response_model=ApiResponse[TransactionStatusResponse],
+    dependencies=[Depends(RateLimiter(max_requests=60, window_seconds=60, scope="payment_webhook"))],
 )
 async def payment_webhook(
     body: PaymentWebhookRequest,

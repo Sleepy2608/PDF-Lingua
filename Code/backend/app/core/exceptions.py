@@ -116,12 +116,33 @@ class UnsupportedMediaTypeException(AppException):
         )
 
 
+class TooManyRequestsException(AppException):
+    """Exception raised when a client exceeds allowed request rate limits."""
+    def __init__(
+        self,
+        message: str = "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.",
+        error_code: str = "RATE_LIMIT_EXCEEDED",
+        retry_after: Optional[int] = None,
+        details: Optional[Any] = None,
+    ):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            error_code=error_code,
+            details=details,
+        )
+        self.retry_after = retry_after
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
     """Registers unified error handlers to ensure all errors return a standardized JSON format."""
 
     @app.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
         logger.warning(f"AppException on {request.method} {request.url.path}: [{exc.error_code}] {exc.message}")
+        headers: dict[str, str] = {}
+        if getattr(exc, "retry_after", None) is not None:
+            headers["Retry-After"] = str(exc.retry_after)
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -130,11 +151,15 @@ def setup_exception_handlers(app: FastAPI) -> None:
                 "message": exc.message,
                 "details": exc.details,
             },
+            headers=headers if headers else None,
         )
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         logger.warning(f"HTTPException on {request.method} {request.url.path}: {exc.status_code} - {exc.detail}")
+        headers: dict[str, str] = {}
+        if hasattr(exc, "headers") and exc.headers:
+            headers = dict(exc.headers)
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -143,6 +168,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
                 "message": f"{exc.detail}",
                 "details": None,
             },
+            headers=headers if headers else None,
         )
 
     @app.exception_handler(RequestValidationError)

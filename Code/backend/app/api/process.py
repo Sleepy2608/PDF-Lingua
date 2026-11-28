@@ -28,6 +28,7 @@ from app.core.dependencies import (
 )
 from app.core.exceptions import ForbiddenException, UnauthorizedException
 from app.core.logger import logger
+from app.core.rate_limiter import RateLimiter
 from app.models.document import Document
 from app.models.user import User, UserRole
 from app.schemas.common import ApiResponse
@@ -418,7 +419,12 @@ def _execute_pdf_background_job(
                 pass
 
 
-@router.post("/jobs", response_model=ApiResponse[JobProgressData], status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/jobs",
+    response_model=ApiResponse[JobProgressData],
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(RateLimiter(max_requests=20, window_seconds=60, scope="process_jobs"))],
+)
 async def create_processing_job(
     file: UploadFile = File(...),
     target_lang: str = Form("vi"),
